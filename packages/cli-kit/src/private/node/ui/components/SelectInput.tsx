@@ -27,7 +27,6 @@ export interface SelectInputProps<T> {
   hasMorePages?: boolean
   morePagesMessage?: string
   infoMessage?: string
-  limit?: number
   availableLines: number
   submitWithShortcuts?: boolean
   onSubmit?: (item: Item<T>) => void
@@ -122,7 +121,6 @@ function SelectInputInner<T>(
     hasMorePages = false,
     morePagesMessage,
     infoMessage,
-    limit,
     availableLines,
     submitWithShortcuts = false,
     onSubmit,
@@ -136,7 +134,15 @@ function SelectInputInner<T>(
     ...item,
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
-  const hasLimit = typeof limit !== 'undefined' && items.length > limit
+
+  // Calculate a safe estimate of the limit needed based on the space available
+  const numberOfGroups = new Set(items.map((item) => item.group)).size
+  const maxVisibleGroups = Math.floor(Math.min(availableLines / 3, numberOfGroups))
+  // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
+  const linesLostToGroups = numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
+  const limit = Math.max(2, availableLines - linesLostToGroups)
+  const hasLimit = items.length > limit
+
   const inputStack = useRef<string | null>(null)
 
   const state = useSelectState({

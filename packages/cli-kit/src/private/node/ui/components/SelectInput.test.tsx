@@ -409,7 +409,7 @@ describe('SelectInput', async () => {
       {label: 'tenth', value: 'tenth'},
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} limit={5} availableLines={10} />)
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} availableLines={10} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m

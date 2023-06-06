@@ -2,7 +2,6 @@ import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.j
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {messageWithPunctuation} from '../utilities.js'
-import {uniqBy} from '../../../../public/common/array.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
@@ -41,11 +40,6 @@ function SelectPrompt<T>({
   const [selectInputHeight, setSelectInputHeight] = useState(0)
   const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 4
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
-  const [limit, setLimit] = useState(choices.length)
-  const numberOfGroups = uniqBy(
-    choices.filter((choice) => choice.group),
-    'group',
-  ).length
 
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
@@ -63,20 +57,13 @@ function SelectPrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const availableLines = getAvailableLines()
+      const newAvailableLines = getAvailableLines()
 
-      // rough estimate of the limit needed based on the space available
-      const maxVisibleGroups = Math.floor(Math.min(availableLines / 3, numberOfGroups))
-      // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
-      const linesLostToGroups = numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
-      const newLimit = Math.max(2, availableLines - linesLostToGroups)
-
-      if (newLimit < limit) {
+      if (newAvailableLines < availableLines) {
         stdout.write(ansiEscapes.clearTerminal)
       }
 
-      setAvailableLines(availableLines)
-      setLimit(Math.min(newLimit, choices.length))
+      setAvailableLines(newAvailableLines)
     }
 
     onResize()
@@ -85,7 +72,7 @@ function SelectPrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, choices.length, numberOfGroups, stdout, limit])
+  }, [wrapperHeight, selectInputHeight, choices.length, stdout, availableLines])
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
@@ -133,7 +120,6 @@ function SelectPrompt<T>({
                 ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm`
                 : undefined
             }
-            limit={limit}
             availableLines={availableLines}
             ref={inputRef}
             submitWithShortcuts={submitWithShortcuts}
