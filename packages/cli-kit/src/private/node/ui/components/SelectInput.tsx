@@ -28,7 +28,7 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   infoMessage?: string
   limit?: number
-  availableLines?: number
+  availableLines: number
   submitWithShortcuts?: boolean
   onSubmit?: (item: Item<T>) => void
 }
