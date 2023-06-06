@@ -1,4 +1,4 @@
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {Extension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'

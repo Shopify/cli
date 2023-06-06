@@ -4,6 +4,8 @@ import {defaultFunctionsFlavors} from '../../../constants.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
 export const FunctionExtensionSchema = BaseSchema.extend({
@@ -87,6 +89,21 @@ const spec = createExtensionSpecification({
           }
         : undefined,
       enable_creation_ui: config.ui?.enable_create ?? true,
+    }
+  },
+  preDeployValidation: async (extension) => {
+    const wasmPath = extension.outputPath
+    const wasmExists = (await fileExists(wasmPath))
+      ? undefined
+      : {
+          id: extension.localIdentifier,
+          path: extension.outputPath,
+        }
+    if (!wasmExists) {
+      throw new AbortError(
+        outputContent`The function extension "${extension.name}" hasn't compiled the wasm in the expected path: ${extension.outputPath}`,
+        `Make sure the build command outputs the wasm in the expected directory.`,
+      )
     }
   },
 })

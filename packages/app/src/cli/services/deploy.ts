@@ -13,7 +13,6 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, FunctionExtension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
@@ -75,7 +74,7 @@ export async function deploy(options: DeployOptions) {
         {
           title: 'Running validation',
           task: async () => {
-            await validateExtensions(app)
+            await Promise.all([app.allExtensions.map((ext) => ext.preDeployValidation())])
           },
         },
         {
