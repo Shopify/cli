@@ -39,6 +39,8 @@ function SelectPrompt<T>({
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [selectInputHeight, setSelectInputHeight] = useState(0)
+  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 4
+  const [availableLines, setAvailableLines] = useState(getAvailableLines())
   const [limit, setLimit] = useState(choices.length)
   const numberOfGroups = uniqBy(
     choices.filter((choice) => choice.group),
@@ -61,14 +63,19 @@ function SelectPrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
+      const availableLines = getAvailableLines()
+
       // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
+      const maxVisibleGroups = Math.floor(Math.min(availableLines / 3, numberOfGroups))
+      // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
+      const linesLostToGroups = numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
+      const newLimit = Math.max(2, availableLines - linesLostToGroups)
 
       if (newLimit < limit) {
         stdout.write(ansiEscapes.clearTerminal)
       }
 
+      setAvailableLines(availableLines)
       setLimit(Math.min(newLimit, choices.length))
     }
 
@@ -127,6 +134,7 @@ function SelectPrompt<T>({
                 : undefined
             }
             limit={limit}
+            availableLines={availableLines}
             ref={inputRef}
             submitWithShortcuts={submitWithShortcuts}
             onSubmit={submitAnswer}

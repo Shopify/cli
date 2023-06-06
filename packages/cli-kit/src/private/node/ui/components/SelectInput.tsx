@@ -28,6 +28,7 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   infoMessage?: string
   limit?: number
+  availableLines?: number
   submitWithShortcuts?: boolean
   onSubmit?: (item: Item<T>) => void
 }
@@ -91,7 +92,7 @@ function Item<T>({
   }
 
   return (
-    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}>
+    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0} minHeight={title ? 2 : 1}>
       {title ? (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
@@ -122,6 +123,7 @@ function SelectInputInner<T>(
     morePagesMessage,
     infoMessage,
     limit,
+    availableLines,
     submitWithShortcuts = false,
     onSubmit,
   }: SelectInputProps<T>,
@@ -232,20 +234,25 @@ function SelectInputInner<T>(
       </Box>
     )
   } else {
+    const firstValue = state.visibleOptions[0]!.value
+    const firstIndex = itemsWithKeys.findIndex((item) => item.value === firstValue)
+    const itemsToDisplay = itemsWithKeys.slice(firstIndex)
     return (
       <Box flexDirection="column" ref={ref}>
-        {state.visibleOptions.map((item, index) => (
-          <Item
-            key={item.key}
-            item={item}
-            previousItem={state.visibleOptions[index - 1]}
-            highlightedTerm={highlightedTerm}
-            isSelected={item.value === state.value}
-            items={state.visibleOptions}
-            enableShortcuts={enableShortcuts}
-            hasAnyGroup={hasAnyGroup}
-          />
-        ))}
+        <Box flexDirection="column" height={availableLines} overflowY="hidden" flexWrap="nowrap">
+          {itemsToDisplay.map((item, index) => (
+            <Item
+              key={item.key}
+              item={item}
+              previousItem={itemsToDisplay[index - 1]}
+              highlightedTerm={highlightedTerm}
+              isSelected={item.value === state.value}
+              items={itemsToDisplay}
+              enableShortcuts={enableShortcuts}
+              hasAnyGroup={hasAnyGroup}
+            />
+          ))}
+        </Box>
 
         <Box marginTop={1} marginLeft={3} flexDirection="column">
           {hasMorePages ? (
@@ -254,7 +261,7 @@ function SelectInputInner<T>(
               {morePagesMessage ? `  ${morePagesMessage}` : null}
             </Text>
           ) : null}
-          {hasLimit ? <Text dimColor>{`Showing ${limit} of ${items.length} items.`}</Text> : null}
+          {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
           <Text dimColor>
             {infoMessage
               ? infoMessage
