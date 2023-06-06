@@ -190,7 +190,7 @@ function isGraphqlPackageAvailable(): boolean {
 /**
  * Parses the ignore file and returns the patterns that should be ignored.
  * @param filepath - Filepath to the ignore file.
- * @returns Returns the patterns that should be ignored.
+ * @returns A promise that resolves with the patterns that should be ignored.
  */
 export function parseIgnoreFile(filepath: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
