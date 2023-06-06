@@ -2,10 +2,11 @@ import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile, glob} from '@shopify/cli-kit/node/fs'
+import {copyFile, glob, fileExistsSync, createFileReadStream} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
+import {createInterface} from 'readline'
 import type {StdinOptions, build as esBuild} from 'esbuild'
 
 const require = createRequire(import.meta.url)
@@ -69,7 +70,13 @@ export async function bundleThemeExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-  const files = await glob(joinPath(extension.directory, '/**/*'))
+  const filepath = joinPath(extension.directory, '.shopifyignore')
+  const ignore = fileExistsSync(joinPath(filepath)) ? await parseIgnoreFile(filepath) : []
+  const files = await glob('**/*', {
+    absolute: true,
+    cwd: extension.directory,
+    ignore,
+  })
 
   await Promise.all(
     files.map(function (filepath) {
@@ -171,4 +178,35 @@ function isGraphqlPackageAvailable(): boolean {
   } catch {
     return false
   }
+}
+
+/**
+ * Parses the ignore file and returns the patterns that should be ignored.
+ * @param filepath - Filepath to the ignore file.
+ * @returns Returns the patterns that should be ignored.
+ */
+export function parseIgnoreFile(filepath: string): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const patterns: string[] = []
+
+    const readLineInterface = createInterface({
+      input: createFileReadStream(filepath),
+      crlfDelay: Infinity,
+    })
+
+    readLineInterface.on('line', (line: string) => {
+      const trimmedLine = line.trim()
+      if (trimmedLine.length > 0 && !trimmedLine.startsWith('#')) {
+        patterns.push(trimmedLine)
+      }
+    })
+
+    readLineInterface.on('close', () => {
+      resolve(patterns)
+    })
+
+    readLineInterface.on('error', (error: Error) => {
+      reject(error)
+    })
+  })
 }
