@@ -30,6 +30,6 @@ export default class Share extends ThemeCommand {
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    await execCLI2(['theme', 'share', flags.path, ...flagsToPass], {adminSession})
+    await execCLI2(['theme', 'share', flags.path, ...flagsToPass], {store, adminToken: adminSession.token})
   }
 }
