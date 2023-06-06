@@ -58,6 +58,9 @@ export interface AppInterface {
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   errors?: AppErrors
+  functionExtensions: ExtensionInstance[]
+  themeExtensions: ExtensionInstance[]
+  uiExtensions: ExtensionInstance[]
   hasExtensions: () => boolean
   hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
