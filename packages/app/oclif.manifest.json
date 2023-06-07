@@ -136,6 +136,13 @@
           "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
           "hidden": false,
           "multiple": false
+        },
+        "source-control-url": {
+          "name": "source-control-url",
+          "type": "option",
+          "description": "The git reference url of the deployment.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
