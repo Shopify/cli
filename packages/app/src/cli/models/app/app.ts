@@ -58,11 +58,7 @@ export interface AppInterface {
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   errors?: AppErrors
-  functionExtensions: ExtensionInstance[]
-  themeExtensions: ExtensionInstance[]
-  uiExtensions: ExtensionInstance[]
   hasExtensions: () => boolean
-  hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
 }
@@ -119,26 +115,10 @@ export class App implements AppInterface {
     return this.allExtensions.length > 0
   }
 
-  hasUIExtensions(): boolean {
-    return this.uiExtensions.length > 0
-  }
-
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
-  }
-
-  get functionExtensions(): ExtensionInstance[] {
-    return this.allExtensions.filter((extension) => extension.isFunctionExtension)
-  }
-
-  get themeExtensions(): ExtensionInstance[] {
-    return this.allExtensions.filter((extension) => extension.isThemeExtension)
-  }
-
-  get uiExtensions(): ExtensionInstance[] {
-    return this.allExtensions.filter((extension) => extension.isESBuildExtension)
   }
 }
 

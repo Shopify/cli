@@ -411,9 +411,9 @@ async function logMetadataForLoadedApp(
   await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
-    const extensionFunctionCount = app.functionExtensions.length
-    const extensionUICount = app.uiExtensions.length
-    const extensionThemeCount = app.themeExtensions.length
+    const extensionFunctionCount = app.allExtensions.filter((extension) => extension.isFunctionExtension).length
+    const extensionUICount = app.allExtensions.filter((extension) => extension.isESBuildExtension).length
+    const extensionThemeCount = app.allExtensions.filter((extension) => extension.isThemeExtension).length
 
     const extensionTotalCount = app.allExtensions.length
 

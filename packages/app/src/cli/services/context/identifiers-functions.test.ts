@@ -103,7 +103,7 @@ beforeAll(async () => {
   })
 
   FUNCTION_B = await testFunctionExtension({
-    dir: '/function',
+    dir: '/function b',
     config: {
       name: 'FUNCTION B',
       type: 'product_discounts',
