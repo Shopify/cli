@@ -71,7 +71,7 @@ vi.mock('./id-manual-matching')
 
 beforeAll(async () => {
   FUNCTION_A = await testFunctionExtension({
-    dir: '/function',
+    dir: '/FUNCTION_A',
     config: {
       name: 'FUNCTION A',
       type: 'product_discounts',
@@ -87,7 +87,7 @@ beforeAll(async () => {
   })
 
   FUNCTION_A_2 = await testFunctionExtension({
-    dir: '/function',
+    dir: '/FUNCTION_A_2',
     config: {
       name: 'FUNCTION A 2',
       type: 'product_discounts',
@@ -103,7 +103,7 @@ beforeAll(async () => {
   })
 
   FUNCTION_B = await testFunctionExtension({
-    dir: '/function b',
+    dir: '/FUNCTION_B',
     config: {
       name: 'FUNCTION B',
       type: 'product_discounts',
