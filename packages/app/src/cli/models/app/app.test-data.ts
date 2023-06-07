@@ -1,5 +1,4 @@
 import {App, AppInterface} from './app.js'
-import {FunctionExtension} from './extensions.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -110,7 +109,7 @@ interface TestFunctionExtensionOptions {
 
 export async function testFunctionExtension(
   opts: TestFunctionExtensionOptions = {},
-): Promise<ExtensionInstance & FunctionExtension> {
+): Promise<ExtensionInstance<FunctionConfigType>> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 

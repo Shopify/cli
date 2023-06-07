@@ -1,11 +1,13 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {FunctionExtension} from '../../models/app/extensions.js'
 import {
   UploadUrlGenerateMutation,
   UploadUrlGenerateMutationSchema,
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -21,14 +23,14 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/crypto')
 
 describe('uploadFunctionExtensions', () => {
-  let extension: FunctionExtension
+  let extension: ExtensionInstance<FunctionConfigType>
   let identifiers: Identifiers
   let token: string
 
-  beforeEach(() => {
-    extension = {
-      directory: '/function',
-      configuration: {
+  beforeEach(async () => {
+    extension = await testFunctionExtension({
+      dir: '/my-function',
+      config: {
         name: 'function',
         type: 'order_discounts',
         description: 'my function',
@@ -53,21 +55,8 @@ describe('uploadFunctionExtensions', () => {
         },
         metafields: [],
       },
-      configurationPath: '/function/shopify.function.extension.toml',
-      outputPath: '/function/dist/index.wasm',
-      inputQueryPath: '/function/input.graphql',
-      publishURL: (_) => Promise.resolve(''),
+    })
 
-      isJavaScript: false,
-      buildCommand: 'make build',
-      externalType: 'order_discounts',
-      idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
-      localIdentifier: 'my-function',
-      type: 'order_discounts',
-      graphQLType: 'order_discounts',
-      features: [],
-      usingExtensionsFramework: false,
-    }
     token = 'token'
     identifiers = {
       app: 'api=key',
