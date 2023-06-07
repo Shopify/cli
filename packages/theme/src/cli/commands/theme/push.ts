@@ -114,6 +114,6 @@ export default class Push extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
     const command = ['theme', 'push', flags.path, ...flagsToPass]
 
-    await execCLI2(command, {adminSession})
+    await execCLI2(command, {store, adminToken: adminSession.token})
   }
 }

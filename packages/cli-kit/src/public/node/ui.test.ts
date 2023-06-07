@@ -2,8 +2,15 @@ import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderTas
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {afterEach, describe, expect, test} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import supportsHyperlinks from 'supports-hyperlinks'
 import {Writable} from 'stream'
+
+vi.mock('supports-hyperlinks')
+
+beforeEach(() => {
+  vi.mocked(supportsHyperlinks).stdout = false
+})
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -166,13 +173,13 @@ describe('renderWarning', async () => {
       │    2. Second                                                                 │
       │                                                                              │
       │  Reference                                                                   │
-      │    • Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do         │
-      │      eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad  │
-      │       minim veniam, quis nostrud exercitation ullamco laboris nisi ut        │
-      │      aliquip ex ea commodo consequat.                                        │
+      │    • Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod │
+      │       tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim   │
+      │      veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea │
+      │       commodo consequat.                                                     │
       │    • Duis aute irure dolor in reprehenderit in voluptate velit esse cillum   │
       │      dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non  │
-      │       proident, sunt in culpa qui officia deserunt mollit anim id est        │
+      │      proident, sunt in culpa qui officia deserunt mollit anim id est         │
       │      laborum.                                                                │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -337,7 +344,9 @@ describe('renderTasks', async () => {
       await renderTasks([throwingTask])
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error: any) {
-      renderWarning({headline: error.message})
+      renderWarning({
+        headline: error.message,
+      })
     }
 
     // Then

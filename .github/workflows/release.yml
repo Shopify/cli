@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PNPM_VERSION: '8.5.1'
+  PNPM_VERSION: '8.6.1'
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:

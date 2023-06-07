@@ -320,7 +320,15 @@ function devThemeExtensionTarget(
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      await execCLI2(['extension', 'serve', ...args], {adminSession, storefrontToken, token, stdout, stderr, signal})
+      await execCLI2(['extension', 'serve', ...args], {
+        store: adminSession.storeFqdn,
+        adminToken: adminSession.token,
+        storefrontToken,
+        token,
+        stdout,
+        stderr,
+        signal,
+      })
     },
   }
 }
