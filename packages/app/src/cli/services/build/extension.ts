@@ -1,5 +1,5 @@
 import {AppInterface} from '../../models/app/app.js'
-import {UIExtension, FunctionExtension} from '../../models/app/extensions.js'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildJSFunction} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -58,7 +58,7 @@ export async function buildThemeExtension(extension: ExtensionInstance, options:
  * It builds the UI extensions.
  * @param options - Build options.
  */
-export async function buildUIExtension(extension: UIExtension, options: ExtensionBuildOptions): Promise<void> {
+export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
 
   await bundleExtension({

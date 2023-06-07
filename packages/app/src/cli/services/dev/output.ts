@@ -36,8 +36,8 @@ export async function outputUpdateURLsResult(
 }
 
 export function outputExtensionsMessages(app: AppInterface) {
-  outputFunctionsMessage(app.allExtensions.filter((ext) => ext.isFunctionExtension))
-  outputThemeExtensionsMessage(app.allExtensions.filter((ext) => ext.isThemeExtension))
+  outputFunctionsMessage(app.modules.filter((ext) => ext.isFunctionExtension))
+  outputThemeExtensionsMessage(app.modules.filter((ext) => ext.isThemeExtension))
 }
 
 export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {

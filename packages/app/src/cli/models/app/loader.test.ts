@@ -289,9 +289,9 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('my-extension')
+    expect(app.modules[0]!.configuration.name).toBe('my_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.modules[0]!.localIdentifier).toBe('my-extension')
   })
 
   test('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
@@ -315,9 +315,9 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('my-extension')
+    expect(app.modules[0]!.configuration.name).toBe('my_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.modules[0]!.localIdentifier).toBe('my-extension')
   })
 
   test('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
@@ -344,9 +344,9 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('custom_extension')
+    expect(app.modules[0]!.configuration.name).toBe('custom_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
+    expect(app.modules[0]!.localIdentifier).toBe('custom_extension')
   })
 
   test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -367,8 +367,8 @@ scopes = "read_products"
 
     // Then
     expect(app.name).toBe('my_app')
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.modules[0]!.configuration.name).toBe('my_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   test('loads the app with several extensions that have valid configurations', async () => {
@@ -399,10 +399,8 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    expect(app.modules).toHaveLength(2)
+    const extensions = app.modules.sort((extA, extB) => (extA.configuration.name < extB.configuration.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1]!.configuration.name).toBe('my_extension_2')
@@ -525,7 +523,7 @@ scopes = "read_products"
 
     // When
     const app = await load({directory: tmpDir, specifications})
-    const myFunction = app.allExtensions[0]!
+    const myFunction = app.modules[0]!
 
     // Then
     expect(myFunction.configuration.name).toBe('my-function')
@@ -569,10 +567,8 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const functions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    expect(app.modules).toHaveLength(2)
+    const functions = app.modules.sort((extA, extB) => (extA.configuration.name < extB.configuration.name ? -1 : 1))
     expect(functions[0]!.configuration.name).toBe('my-function-1')
     expect(functions[1]!.configuration.name).toBe('my-function-2')
     expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
@@ -602,7 +598,7 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    expect(app.modules[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   test(`defaults the function wasm path if not configured`, async () => {
@@ -625,7 +621,7 @@ scopes = "read_products"
     const app = await load({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
+    expect(app.modules[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
   })
 
   test(`updates metadata after loading`, async () => {

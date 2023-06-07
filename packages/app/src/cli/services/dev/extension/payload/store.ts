@@ -1,8 +1,8 @@
 import {UIExtensionPayload, ExtensionsEndpointPayload, DevNewExtensionPointSchema} from './models.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
-import {UIExtension} from '../../../../models/app/extensions.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 import {EventEmitter} from 'events'
@@ -127,7 +127,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
   }
 
   async updateExtension(
-    extension: UIExtension,
+    extension: ExtensionInstance,
     options: ExtensionDevOptions,
     development?: Partial<UIExtensionPayload['development']>,
   ) {

@@ -31,7 +31,7 @@ async function build(options: BuildOptions) {
           },
         }
       }),
-      ...options.app.allExtensions.map((ext) => {
+      ...options.app.modules.map((ext) => {
         return {
           prefix: ext.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {

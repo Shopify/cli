@@ -42,7 +42,7 @@ const LOCAL_APP = (functionExtensions: ExtensionInstance[]): AppInterface => {
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    allExtensions: functionExtensions,
+    modules: functionExtensions,
   })
 }
 

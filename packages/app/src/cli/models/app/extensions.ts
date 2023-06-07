@@ -3,7 +3,6 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {ExtensionFeature} from '../extensions/specification.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
-import {Result} from '@shopify/cli-kit/node/result'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
@@ -39,20 +38,4 @@ export type ThemeExtension = Extension & {
   configuration: BaseConfigType
   previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
   outputPath: string
-}
-
-export type UIExtension<TConfiguration extends BaseConfigType = BaseConfigType> = Extension & {
-  configuration: TConfiguration
-  entrySourceFilePath?: string
-  outputPath: string
-  devUUID: string
-  surface: string
-  dependency?: string
-  getBundleExtensionStdinContent(): string
-  validate(): Promise<Result<unknown, string>>
-  preDeployValidation(): Promise<void>
-  buildValidation(): Promise<void>
-  previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
-  shouldFetchCartUrl(): boolean
-  hasExtensionPointTarget(target: string): boolean
 }

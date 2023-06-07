@@ -1,4 +1,4 @@
-import {Extension, UIExtension} from './extensions.js'
+import {Extension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -56,7 +56,7 @@ export interface AppInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
-  allExtensions: ExtensionInstance[]
+  modules: ExtensionInstance[]
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -75,7 +75,7 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  allExtensions: ExtensionInstance[]
+  modules: ExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -101,7 +101,7 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.allExtensions = extensions
+    this.modules = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
   }
@@ -112,11 +112,11 @@ export class App implements AppInterface {
   }
 
   hasExtensions(): boolean {
-    return this.allExtensions.length > 0
+    return this.modules.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
-    return this.allExtensions.filter(
+    return this.modules.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }
@@ -132,7 +132,7 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
-  extension: UIExtension,
+  extension: ExtensionInstance,
   app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)

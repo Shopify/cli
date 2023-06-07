@@ -20,7 +20,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     await touchFile(joinPath(bundleDirectory, '.shopify'))
 
     await renderConcurrent({
-      processes: options.app.allExtensions.map((extension) => {
+      processes: options.app.modules.map((extension) => {
         return {
           prefix: extension.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {

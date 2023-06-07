@@ -21,7 +21,6 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -157,7 +156,7 @@ async function dev(options: DevOptions) {
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-  localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  localApp.modules.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,
@@ -167,8 +166,8 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
-  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
+  const previewableExtensions = localApp.modules.filter((ext) => ext.isPreviewable)
+  const draftableExtensions = localApp.modules.filter((ext) => ext.isDraftable)
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -215,7 +214,7 @@ async function dev(options: DevOptions) {
     )
   }
 
-  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
+  const themeExtensions = localApp.modules.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const extension = themeExtensions[0]!
@@ -411,7 +410,7 @@ interface DevUIExtensionsTargetOptions {
   id?: string
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
-  extensions: UIExtension[]
+  extensions: ExtensionInstance[]
 }
 
 async function devUIExtensionsTarget({
@@ -513,7 +512,7 @@ export function devDraftableExtensionTarget({
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
+async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl
