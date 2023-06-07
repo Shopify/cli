@@ -104,7 +104,7 @@ export async function deploy(options: DeployOptions) {
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
-  let deploymentId: number
+  let versionTag: string
   const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
@@ -153,8 +153,8 @@ export async function deploy(options: DeployOptions) {
               appModules.push(...functionExtensions)
             }
 
-            if (bundle || deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
-              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
+            if (bundle || unifiedDeployment) {
+              ;({validationErrors, versionTag} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 appModules: getArrayRejectingUndefined(appModules),
@@ -194,7 +194,7 @@ export async function deploy(options: DeployOptions) {
         identifiers,
         registrations,
         validationErrors,
-        deploymentId,
+        versionTag,
         deploymentMode,
       })
 
@@ -217,7 +217,7 @@ async function outputCompletionMessage({
   identifiers,
   registrations,
   validationErrors,
-  deploymentId,
+  versionTag,
   deploymentMode,
 }: {
   app: AppInterface
@@ -226,7 +226,7 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
-  deploymentId: number
+  versionTag: string
   deploymentMode: DeploymentMode
 }) {
   switch (deploymentMode) {
@@ -235,7 +235,7 @@ async function outputCompletionMessage({
     case 'unified':
       return renderSuccess({
         headline: 'New version released to users.',
-        body: 'See the rollout progress of your app version in the CLI or Partner Dashboard.',
+        body: '',
         nextSteps: [
           [
             'Run',
@@ -247,12 +247,12 @@ async function outputCompletionMessage({
     case 'unified-skip-release':
       return renderSuccess({
         headline: 'New version created.',
-        body: 'See the rollout progress of your app version in the CLI or Partner Dashboard.',
+        body: '',
         nextSteps: [
           [
             'Run',
             {
-              command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${deploymentId}`),
+              command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionTag}`),
             },
             'to release this version to users.',
           ],

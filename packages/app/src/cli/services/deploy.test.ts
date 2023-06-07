@@ -18,7 +18,7 @@ import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
-const versionId = 2
+const versionTag = 'unique-version-tag'
 
 vi.mock('./context.js')
 vi.mock('./deploy/upload.js')
@@ -441,7 +441,7 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version released to users.',
-      body: 'See the rollout progress of your app version in the CLI or Partner Dashboard.',
+      body: '',
       nextSteps: [
         [
           'Run',
@@ -476,11 +476,11 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version created.',
-      body: 'See the rollout progress of your app version in the CLI or Partner Dashboard.',
+      body: '',
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionId}`)},
+          {command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionTag}`)},
           'to release this version to users.',
         ],
       ],
@@ -536,7 +536,7 @@ async function testDeployBundle(
   })
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
-  vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], deploymentId: versionId})
+  vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], versionTag})
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},

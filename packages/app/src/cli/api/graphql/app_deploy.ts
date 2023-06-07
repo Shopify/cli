@@ -71,6 +71,7 @@ export interface AppDeploySchema {
     deployment: {
       uuid: string
       id: number
+      versionTag: string
       appModuleVersions: {
         uuid: string
         registrationUuid: string

@@ -117,7 +117,7 @@ interface ErrorCustomSection extends AlertCustomSection {
  */
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
-): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number}> {
+): Promise<{validationErrors: UploadExtensionValidationError[]; versionTag: string}> {
   const deploymentUUID = randomUUID()
   let signedURL
 
@@ -172,7 +172,7 @@ export async function uploadExtensionsBundle(
       return {uuid: ver.registrationUuid, errors: ver.validationErrors}
     })
 
-  return {validationErrors, deploymentId: result.appDeploy.deployment.id}
+  return {validationErrors, versionTag: result.appDeploy.deployment.versionTag}
 }
 
 const VALIDATION_ERRORS_TITLE = '\nValidation errors'
