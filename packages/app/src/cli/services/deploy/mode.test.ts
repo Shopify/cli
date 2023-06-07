@@ -1,4 +1,4 @@
-import {getDeploymentMode} from './mode.js'
+import {resolveDeploymentMode} from './mode.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeployContextOptions} from '../context.js'
 import {testApp} from '../../models/app/app.test-data.js'
@@ -39,7 +39,7 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-describe('getDeploymentMode', () => {
+describe('resolveDeploymentMode', () => {
   test('return legacy mode and display legacy banner when legacy deployment and discard upgrading', async () => {
     // Given
     const app = testApp()
@@ -49,7 +49,7 @@ describe('getDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const result = await getDeploymentMode(orgApp, options, TOKEN)
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
 
     // Then
     expect(result).equals('legacy')
@@ -84,7 +84,7 @@ describe('getDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const result = await getDeploymentMode(orgApp, options, TOKEN)
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
 
     // Then
     expect(result).equals('unified')
@@ -134,7 +134,7 @@ describe('getDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When / Then
-    await expect(getDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot(
+    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot(
       '"Error upgrading the app App to Deployments 2.0: error"',
     )
     expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -166,7 +166,7 @@ describe('getDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const result = await getDeploymentMode(orgApp, options, TOKEN)
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
 
     // Then
     expect(result).equals('unified')
@@ -195,7 +195,7 @@ describe('getDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    const result = await getDeploymentMode(orgApp, options, TOKEN)
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
 
     // Then
     expect(result).equals('unified-skip-release')
