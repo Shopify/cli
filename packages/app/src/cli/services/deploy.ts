@@ -63,7 +63,7 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundle = app.modules.some((ext) => ext.features.includes('bundling'))
+      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
       let bundlePath: string | undefined
 
       if (bundle) {
@@ -75,14 +75,16 @@ export async function deploy(options: DeployOptions) {
         {
           title: 'Running validation',
           task: async () => {
-            await Promise.all([app.modules.map((ext) => ext.preDeployValidation())])
+            await Promise.all([app.allExtensions.map((ext) => ext.preDeployValidation())])
           },
         },
         {
           title: unifiedDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             const extensions = await Promise.all(
-              options.app.modules.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment})),
+              options.app.allExtensions.flatMap((ext) =>
+                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
+              ),
             )
 
             if (bundle || unifiedDeployment) {
@@ -96,12 +98,12 @@ export async function deploy(options: DeployOptions) {
             }
 
             if (!useThemebundling()) {
-              const themeExtensions = options.app.modules.filter((ext) => ext.isThemeExtension)
+              const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
             if (!unifiedDeployment) {
-              const functions = options.app.modules.filter(
+              const functions = options.app.allExtensions.filter(
                 (ext) => ext.isFunctionExtension,
               ) as ExtensionInstance<FunctionConfigType>[]
               identifiers = await uploadFunctionExtensions(functions, {
@@ -217,13 +219,13 @@ async function outputCompletionMessage({
       title: 'Summary',
       body: {
         list: {
-          items: app.modules.map(outputDeployedButNotLiveMessage),
+          items: app.allExtensions.map(outputDeployedButNotLiveMessage),
         },
       },
     },
   ]
 
-  const nonFunctionExtensions = app.modules.filter((ext) => !ext.isFunctionExtension)
+  const nonFunctionExtensions = app.allExtensions.filter((ext) => !ext.isFunctionExtension)
   if (nonFunctionExtensions.length > 0) {
     customSections.push({
       title: 'Next steps',

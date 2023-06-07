@@ -132,11 +132,11 @@ class AppInfo {
       })
     }
 
-    augmentWithExtensions(this.app.modules, this.extensionSubSection.bind(this))
+    augmentWithExtensions(this.app.allExtensions, this.extensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
-      this.app.modules.forEach((extension) => {
+      this.app.allExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
     }

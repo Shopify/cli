@@ -55,7 +55,7 @@ export interface AppInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
-  modules: ExtensionInstance[]
+  allExtensions: ExtensionInstance[]
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -74,7 +74,7 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  modules: ExtensionInstance[]
+  allExtensions: ExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -100,7 +100,7 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.modules = extensions
+    this.allExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
   }
@@ -111,11 +111,11 @@ export class App implements AppInterface {
   }
 
   hasExtensions(): boolean {
-    return this.modules.length > 0
+    return this.allExtensions.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
-    return this.modules.filter(
+    return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }

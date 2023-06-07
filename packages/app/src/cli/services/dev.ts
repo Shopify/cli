@@ -156,7 +156,7 @@ async function dev(options: DevOptions) {
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-  localApp.modules.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
 
   const backendOptions = {
     apiKey,
@@ -166,8 +166,8 @@ async function dev(options: DevOptions) {
     hostname: exposedUrl,
   }
 
-  const previewableExtensions = localApp.modules.filter((ext) => ext.isPreviewable)
-  const draftableExtensions = localApp.modules.filter((ext) => ext.isDraftable)
+  const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -214,7 +214,7 @@ async function dev(options: DevOptions) {
     )
   }
 
-  const themeExtensions = localApp.modules.filter((ext) => ext.isThemeExtension)
+  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const extension = themeExtensions[0]!

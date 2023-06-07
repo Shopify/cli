@@ -34,7 +34,7 @@ beforeEach(() => {
 
 describe('deploy', () => {
   test('deploys the app with no extensions and beta flag', async () => {
-    const app = testApp({modules: []})
+    const app = testApp({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
@@ -59,7 +59,7 @@ describe('deploy', () => {
   })
 
   test("doesn't deploy the app with no extensions and no beta flag", async () => {
-    const app = testApp({modules: []})
+    const app = testApp({allExtensions: []})
 
     // When
     await testDeployBundle(app, {
@@ -80,7 +80,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({modules: [uiExtension]})
+    const app = testApp({allExtensions: [uiExtension]})
 
     // When
     await testDeployBundle(app)
@@ -101,7 +101,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    const app = testApp({modules: [themeExtension]})
+    const app = testApp({allExtensions: [themeExtension]})
 
     // When
     await testDeployBundle(app)
@@ -122,7 +122,7 @@ describe('deploy', () => {
   test('does not upload the extension bundle with 1 function and no beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
-    const app = testApp({modules: [functionExtension]})
+    const app = testApp({allExtensions: [functionExtension]})
 
     // When
     await testDeployBundle(app)
@@ -154,7 +154,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 function and beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
-    const app = testApp({modules: [functionExtension]})
+    const app = testApp({allExtensions: [functionExtension]})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
@@ -199,7 +199,7 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
-    const app = testApp({modules: [uiExtension, themeExtension]})
+    const app = testApp({allExtensions: [uiExtension, themeExtension]})
 
     // When
     await testDeployBundle(app)
@@ -223,7 +223,7 @@ describe('deploy', () => {
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({modules: [uiExtension]})
+    const app = testApp({allExtensions: [uiExtension]})
 
     // When
     await testDeployBundle(app)
@@ -265,7 +265,7 @@ describe('deploy', () => {
   test('shows a specific success message when deploying using the unified app deployment flow', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({modules: [uiExtension]})
+    const app = testApp({allExtensions: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -300,7 +300,7 @@ async function testDeployBundle(
 ) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  for (const extension of app.modules) {
+  for (const extension of app.allExtensions) {
     extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}

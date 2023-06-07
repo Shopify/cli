@@ -25,10 +25,10 @@ export async function ensureExtensionsIds(
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
 
   const includeFunctions = options.partnersApp?.betas?.unifiedAppDeployment ?? false
-  let localExtensions = options.app.modules.filter((ext) => !ext.isFunctionExtension)
+  let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
 
   if (includeFunctions) {
-    const functionExtensions = options.app.modules.filter((ext) => ext.isFunctionExtension)
+    const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
     functionExtensions.forEach((ext) => (ext.usingExtensionsFramework = true))
     localExtensions = localExtensions.concat(functionExtensions)
   }

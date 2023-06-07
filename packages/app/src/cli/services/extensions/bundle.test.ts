@@ -30,7 +30,7 @@ describe('bundleExtension()', () => {
           FOO: 'BAR',
         },
       },
-      modules: [extension],
+      allExtensions: [extension],
     })
     const esbuildWatch = vi.fn()
     const esbuildDispose = vi.fn()
@@ -113,7 +113,7 @@ describe('bundleExtension()', () => {
           FOO: 'BAR',
         },
       },
-      modules: [extension],
+      allExtensions: [extension],
     })
     const stdout: any = {
       write: vi.fn(),

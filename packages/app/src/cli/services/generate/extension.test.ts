@@ -55,7 +55,7 @@ describe('initialize a extension', async () => {
         specifications,
       })
       const app = await loadApp({directory: tmpDir, specifications})
-      const generatedExtension = app.modules[0]!
+      const generatedExtension = app.allExtensions[0]!
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedExtension.configuration.name).toBe(name)
@@ -86,7 +86,7 @@ describe('initialize a extension', async () => {
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
-      expect(loadedApp.modules.length).toEqual(2)
+      expect(loadedApp.allExtensions.length).toEqual(2)
     })
   })
 
@@ -324,7 +324,7 @@ describe('initialize a extension', async () => {
 
       // Then
       const app = await loadApp({directory: tmpDir, specifications})
-      const generatedFunction = app.modules[0]!
+      const generatedFunction = app.allExtensions[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
     })
@@ -365,7 +365,7 @@ describe('initialize a extension', async () => {
 
         // Then
         const app = await loadApp({directory: tmpDir, specifications})
-        const generatedFunction = app.modules[0]!
+        const generatedFunction = app.allExtensions[0]!
         expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
         expect(generatedFunction.configuration.name).toBe(name)
         expect(generatedFunction.entrySourceFilePath).toBe(joinPath(extensionDir, 'src', 'index.js'))
