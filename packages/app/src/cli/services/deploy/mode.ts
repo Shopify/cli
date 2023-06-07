@@ -106,7 +106,7 @@ async function upgradeDeploymentToUnified(app: OrganizationApp, token: string) {
           },
         }
         const result: SetBetaFlagSchema = await partnersRequest(query, token, variables)
-        if (result.setBetaFlag.userErrors) {
+        if (result.setBetaFlag.userErrors?.length > 0) {
           const errors = result.setBetaFlag.userErrors.map((error) => error.message).join(', ')
           throw new BugError(`Error upgrading the app ${app.title} to Deployments 2.0: ${errors}`)
         }
