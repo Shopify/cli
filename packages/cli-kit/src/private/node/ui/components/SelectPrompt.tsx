@@ -37,8 +37,8 @@ function SelectPrompt<T>({
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [selectInputHeight, setSelectInputHeight] = useState(0)
-  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 5
+  const [promptAreaHeight, setPromptAreaHeight] = useState(2)
+  const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
 
   const wrapperRef = useCallback((node) => {
@@ -48,22 +48,19 @@ function SelectPrompt<T>({
     }
   }, [])
 
-  const inputRef = useCallback((node) => {
+  const promptAreaRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setSelectInputHeight(height)
+      setPromptAreaHeight(height)
     }
   }, [])
 
   useLayoutEffect(() => {
     function onResize() {
       const newAvailableLines = getAvailableLines()
-
-      if (newAvailableLines < availableLines) {
-        stdout.write(ansiEscapes.clearTerminal)
+      if (newAvailableLines !== availableLines) {
+        setAvailableLines(newAvailableLines)
       }
-
-      setAvailableLines(newAvailableLines)
     }
 
     onResize()
@@ -72,7 +69,7 @@ function SelectPrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, choices.length, stdout, availableLines])
+  }, [wrapperHeight, promptAreaHeight, choices.length, stdout, availableLines])
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
@@ -91,17 +88,19 @@ function SelectPrompt<T>({
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
-      <Box>
-        <Box marginRight={2}>
-          <Text>?</Text>
+      <Box ref={promptAreaRef} flexDirection="column">
+        <Box>
+          <Box marginRight={2}>
+            <Text>?</Text>
+          </Box>
+          <TokenizedText item={messageWithPunctuation(message)} />
         </Box>
-        <TokenizedText item={messageWithPunctuation(message)} />
+        {infoTable && !submitted ? (
+          <Box marginLeft={7} marginTop={1}>
+            <InfoTable table={infoTable} />
+          </Box>
+        ) : null}
       </Box>
-      {infoTable && !submitted ? (
-        <Box marginLeft={7} marginTop={1}>
-          <InfoTable table={infoTable} />
-        </Box>
-      ) : null}
       {submitted ? (
         <Box>
           <Box marginRight={2}>
@@ -121,7 +120,6 @@ function SelectPrompt<T>({
                 : undefined
             }
             availableLines={availableLines}
-            ref={inputRef}
             submitWithShortcuts={submitWithShortcuts}
             onSubmit={submitAnswer}
           />

@@ -87,12 +87,9 @@ function AutocompletePrompt<T>({
   useLayoutEffect(() => {
     function onResize() {
       const newAvailableLines = getAvailableLines()
-
-      if (newAvailableLines < availableLines) {
-        stdout.write(ansiEscapes.clearTerminal)
+      if (newAvailableLines !== availableLines) {
+        setAvailableLines(newAvailableLines)
       }
-
-      setAvailableLines(newAvailableLines)
     }
 
     onResize()
