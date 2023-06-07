@@ -9,7 +9,7 @@ import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/mig
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
-import {DeploymentMode} from '../context.js'
+import {DeploymentMode} from '../deploy/mode.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'

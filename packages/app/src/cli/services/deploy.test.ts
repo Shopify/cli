@@ -1,4 +1,4 @@
-import {DeploymentMode, ensureDeployContext} from './context.js'
+import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
 import {
   uploadWasmBlob,
@@ -8,6 +8,7 @@ import {
 } from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
+import {DeploymentMode} from './deploy/mode.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
