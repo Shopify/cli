@@ -71,7 +71,7 @@ export async function bundleThemeExtension(
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
   const filepath = joinPath(extension.directory, '.shopifyignore')
-  const ignore = fileExistsSync(joinPath(filepath)) ? await parseIgnoreFile(filepath) : []
+  const ignore = fileExistsSync(filepath) ? await parseIgnoreFile(filepath) : []
   const files = await glob('**/*', {
     absolute: true,
     cwd: extension.directory,
