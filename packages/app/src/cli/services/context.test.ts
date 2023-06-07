@@ -19,7 +19,7 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {getDeploymentMode} from './deploy/mode.js'
+import {resolveDeploymentMode} from './deploy/mode.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -60,7 +60,7 @@ beforeEach(() => {
       await task.task({}, task)
     }
   })
-  vi.mocked(getDeploymentMode).mockResolvedValue('legacy')
+  vi.mocked(resolveDeploymentMode).mockResolvedValue('legacy')
 })
 
 const APP1: OrganizationApp = {

@@ -10,33 +10,24 @@ import {BugError} from '@shopify/cli-kit/node/error'
 
 export type DeploymentMode = 'legacy' | 'unified' | 'unified-skip-release'
 
-export async function getDeploymentMode(app: OrganizationApp, options: DeployContextOptions, token: string) {
+export async function resolveDeploymentMode(app: OrganizationApp, options: DeployContextOptions, token: string) {
   let deploymentMode: DeploymentMode = app.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  deploymentMode = await upgradeDeploymentMode(deploymentMode, options.app.packageManager, app, token)
-  if (deploymentMode === 'unified' && options.noRelease) {
-    deploymentMode = 'unified-skip-release'
-  }
-  return deploymentMode
-}
 
-async function upgradeDeploymentMode(
-  deploymentMode: DeploymentMode,
-  packageManager: PackageManager,
-  app: OrganizationApp,
-  token: string,
-) {
-  let displayUnified = deploymentMode !== 'legacy'
-  if (!displayUnified) {
-    displayDeployLegacyBanner(packageManager)
-    displayUnified = await upgradeDeploymentToUnified(app, token)
+  if (deploymentMode === 'legacy') {
+    displayDeployLegacyBanner(options.app.packageManager)
+    if (await upgradeDeploymentToUnified(app, token)) {
+      deploymentMode = 'unified'
+    }
   }
 
-  if (displayUnified) {
+  if (deploymentMode === 'unified') {
     displayDeployUnifiedBanner()
-    return 'unified'
+    if (options.noRelease) {
+      deploymentMode = 'unified-skip-release'
+    }
   }
 
-  return 'legacy'
+  return deploymentMode
 }
 
 function displayDeployUnifiedBanner() {
