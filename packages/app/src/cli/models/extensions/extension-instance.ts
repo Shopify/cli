@@ -11,7 +11,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {functionConfiguration, uploadWasmBlob} from '../../services/deploy/upload.js'
-import {DeploymentMode} from '../../services/context.js'
+import {DeploymentMode} from '../../services/deploy/mode.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
