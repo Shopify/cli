@@ -78,7 +78,7 @@ module ShopifyCLI
           assert_equal("text/css", response["Content-Type"])
           assert_equal(
             ::File.read("#{ShopifyCLI::ROOT}/test/fixtures/theme/assets/theme.css"),
-            response.body
+            response.body,
           )
         end
 
@@ -87,7 +87,7 @@ module ShopifyCLI
           assert_equal("application/javascript", response["Content-Type"])
           assert_equal(
             ::File.read("#{ShopifyCLI::ROOT}/test/fixtures/theme/assets/theme.css"),
-            response.body
+            response.body,
           )
         end
 
@@ -111,14 +111,14 @@ module ShopifyCLI
 
         def test_replace_local_images_in_reponse_body
           theme = stub("Theme", static_asset_paths: [
-            'assets/test-image.png',
-            'assets/test-image.png',
-            'assets/test-image.jpeg',
-            'assets/test-image.jpg',
-            'assets/test-vector.svg',
-            'assets/folha_de_estilo.css',
-            'assets/script.js',
-            'assets/static_object.json',
+            "assets/test-image.png",
+            "assets/test-image.png",
+            "assets/test-image.jpeg",
+            "assets/test-image.jpg",
+            "assets/test-vector.svg",
+            "assets/folha_de_estilo.css",
+            "assets/script.js",
+            "assets/static_object.json",
           ])
 
           original_html = <<~HTML
