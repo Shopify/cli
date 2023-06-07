@@ -1,8 +1,8 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {ExtensionFlavor} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 
+import {ExtensionFlavor} from '../app/template.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {TokenizedString} from '@shopify/cli-kit/node/output'

@@ -1,4 +1,3 @@
-import {Extension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -60,7 +59,7 @@ export interface AppInterface {
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
-  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
+  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
 }
 
 export class App implements AppInterface {
@@ -115,7 +114,7 @@ export class App implements AppInterface {
     return this.modules.length > 0
   }
 
-  extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
+  extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
     return this.modules.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )

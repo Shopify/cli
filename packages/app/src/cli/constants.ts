@@ -1,4 +1,4 @@
-import {ExtensionFlavor} from './models/app/extensions.js'
+import {ExtensionFlavor} from './models/app/template.js'
 
 export const configurationFileNames = {
   app: 'shopify.app.toml',
