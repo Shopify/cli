@@ -1,4 +1,4 @@
-import {ThemeExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -19,7 +19,7 @@ const ignoredFilePatterns = [
   '.gitkeep',
 ]
 
-export async function themeExtensionFiles(themeExtension: ThemeExtension): Promise<string[]> {
+export async function themeExtensionFiles(themeExtension: ExtensionInstance): Promise<string[]> {
   return glob(joinPath(themeExtension.directory, '*/*'), {
     ignore: ignoredFilePatterns.map((pattern) => joinPath(themeExtension.directory, '*', pattern)),
   })

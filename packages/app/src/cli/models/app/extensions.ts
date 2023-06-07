@@ -1,8 +1,6 @@
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
-import {BaseConfigType} from '../extensions/schemas.js'
 import {ExtensionFeature} from '../extensions/specification.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {TokenizedString} from '@shopify/cli-kit/node/output'
 
 export type ExtensionCategory = 'ui' | 'function' | 'theme'
 
@@ -32,10 +30,4 @@ export type FunctionExtension = Extension & {
   inputQueryPath: string
   isJavaScript: boolean
   usingExtensionsFramework: boolean
-}
-
-export type ThemeExtension = Extension & {
-  configuration: BaseConfigType
-  previewMessage(url: string, storeFqdn: string): TokenizedString | undefined
-  outputPath: string
 }

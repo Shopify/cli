@@ -1,6 +1,6 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
+import {FunctionExtension} from '../../models/app/extensions.js'
 import {
   UploadUrlGenerateMutation,
   UploadUrlGenerateMutationSchema,
@@ -26,6 +26,7 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -52,7 +53,7 @@ interface DeployThemeExtensionOptions {
  * @param options - The upload options
  */
 export async function uploadThemeExtensions(
-  themeExtensions: ThemeExtension[],
+  themeExtensions: ExtensionInstance[],
   options: DeployThemeExtensionOptions,
 ): Promise<void> {
   const {apiKey, identifiers, token} = options

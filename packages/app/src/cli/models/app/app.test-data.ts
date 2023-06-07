@@ -1,5 +1,5 @@
 import {App, AppInterface} from './app.js'
-import {FunctionExtension, ThemeExtension} from './extensions.js'
+import {FunctionExtension} from './extensions.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -65,7 +65,7 @@ export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = 
   return extension
 }
 
-export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeExtension> {
+export async function testThemeExtensions(): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
