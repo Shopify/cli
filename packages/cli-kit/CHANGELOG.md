@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.47.0-pre.0
+
+### Patch Changes
+
+- ad3894aea: Fix an issue in `shopify theme dev` and `shopify app dev` that was affecting image loading on local servers
+- ca2461e94: Fix theme dev re-authentication
+- 4ded88051: Show extensions as disabled during generation when they have reached their limit
+
 ## 3.46.0
 
 ### Minor Changes

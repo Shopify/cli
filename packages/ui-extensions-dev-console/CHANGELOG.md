@@ -1,5 +1,7 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.47.0-pre.0
+
 ## 3.46.0
 
 ### Patch Changes
