@@ -1,5 +1,5 @@
 import {list} from './list.js'
-import {columns} from './list.columns.js'
+import {columns, filteredColumns} from './list.columns.js'
 import {getDevelopmentTheme} from './local-storage.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
@@ -58,6 +58,38 @@ describe('list', () => {
     expect(renderTable).toBeCalledWith({
       rows: [{id: '#3', name: 'Theme 3', role: '[live]'}],
       columns,
+    })
+  })
+  test('should call the table render function, with only the name header specified', async () => {
+    vi.mocked(fetchStoreThemes).mockResolvedValue([
+      {id: 1, name: 'Theme 1', role: 'unpublished'},
+      {id: 2, name: 'Theme 2', role: 'demo'},
+      {id: 3, name: 'Theme 3', role: 'live'},
+      {id: 5, name: 'Theme 5', role: 'development'},
+    ] as Theme[])
+    const only = 'name'
+    const fColumns = filteredColumns(only, columns)
+    await list(session, {only})
+
+    expect(renderTable).toBeCalledWith({
+      rows: [{name: 'Theme 1'}, {name: 'Theme 2'}, {name: 'Theme 3'}, {name: 'Theme 5'}],
+      columns: fColumns,
+    })
+  })
+  test('should call the table render function, with only the id header specified', async () => {
+    vi.mocked(fetchStoreThemes).mockResolvedValue([
+      {id: 1, name: 'Theme 1', role: 'unpublished'},
+      {id: 2, name: 'Theme 2', role: 'demo'},
+      {id: 3, name: 'Theme 3', role: 'live'},
+      {id: 5, name: 'Theme 5', role: 'development'},
+    ] as Theme[])
+
+    await list(session, {only: 'id'})
+    const only = 'id'
+    const fColumns = filteredColumns(only, columns)
+    expect(renderTable).toBeCalledWith({
+      rows: [{id: '#1'}, {id: '#2'}, {id: '#3'}, {id: '#5'}],
+      columns: fColumns,
     })
   })
 })

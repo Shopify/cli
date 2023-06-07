@@ -1,7 +1,7 @@
 import ScalarDict from './ScalarDict.js'
 import {Row} from './Row.js'
 import React from 'react'
-import {Box} from 'ink'
+import {Box, Text} from 'ink'
 import {ForegroundColor} from 'chalk'
 
 export type TableColumn<T> = {
@@ -9,12 +9,13 @@ export type TableColumn<T> = {
 }
 
 export interface TableProps<T extends ScalarDict> {
+  noHeaders?: boolean
   rows: T[]
   columns: TableColumn<T>
 }
 
 // eslint-disable-next-line react/function-component-definition
-function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: TableProps<T>) {
+function Table<T extends ScalarDict>({rows, columns: columnsConfiguration, noHeaders}: TableProps<T>) {
   const columns = Object.entries(columnsConfiguration).map(([key, {header, color}]) => {
     const headerWidth = String(header || key).length
     const columnWidths = rows.map((row) => {
@@ -38,13 +39,20 @@ function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: Tabl
     {},
   )
 
-  return (
+  return noHeaders ? (
+    <>
+      {rows.map((row, index) => {
+        const key = `row-${index}`
+        const rowStr = Object.keys(row).reduce((accu, current) => `${accu} ${row[current]}`, '')
+        return <Text key={key}>{rowStr}</Text>
+      })}
+    </>
+  ) : (
     <Box flexDirection="column">
       <Row rowKey="heading" fillerChar=" " columns={columns} data={headings} ignoreColumnColor />
       <Row rowKey="separator" fillerChar="─" columns={columns} data={{}} ignoreColumnColor />
       {rows.map((row, index) => {
         const key = `row-${index}`
-
         return (
           <Box flexDirection="column" key={key}>
             <Row rowKey={`data-${key}`} fillerChar=" " columns={columns} data={row} />
