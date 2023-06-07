@@ -8,9 +8,10 @@ import {
   functionConfiguration,
 } from './deploy/upload.js'
 
-import {DeploymentMode, ensureDeployContext} from './context.js'
+import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {DeploymentMode} from './deploy/mode.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, FunctionExtension} from '../models/app/extensions.js'
