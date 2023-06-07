@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.46.3
+
+### Patch Changes
+
+- e7f248893: Fix an issue in `shopify theme dev` and `shopify app dev` that was affecting image loading on local servers
+- e7f248893: Fix an issue in `shopify theme dev` that was affecting asset loading on local servers, in some shops
+
 ## 3.46.2
 
 ### Patch Changes
