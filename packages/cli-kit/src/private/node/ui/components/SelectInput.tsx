@@ -103,8 +103,8 @@ function Item<T>({
         </Box>
       ) : null}
 
-      <Box key={item.key}>
-        <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+      <Box key={item.key} marginLeft={2}>
+        <Box marginRight={1} marginLeft={1}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
         <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
       </Box>
     </Box>
