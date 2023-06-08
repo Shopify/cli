@@ -8,7 +8,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 
 export default class VersionsList extends Command {
-  static description = 'Scaffold an Extension.'
+  static description = 'List deployed versions of your app.'
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {
@@ -23,10 +23,6 @@ export default class VersionsList extends Command {
 
   static args = {
     file: Args.string(),
-  }
-
-  public static analyticsNameOverride(): string | undefined {
-    return 'app scaffold extension'
   }
 
   public async run(): Promise<void> {

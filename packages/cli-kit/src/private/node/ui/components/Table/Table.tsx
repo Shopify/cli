@@ -1,9 +1,9 @@
 import ScalarDict from './ScalarDict.js'
 import {Row} from './Row.js'
+import {unstyled} from '../../../../../public/node/output.js'
 import React from 'react'
 import {Box} from 'ink'
 import {ForegroundColor} from 'chalk'
-import {unstyled} from '@shopify/cli-kit/node/output'
 
 export type TableColumn<T> = {
   [column in keyof T]: {header?: string; color?: ForegroundColor | 'dim'}

@@ -1,8 +1,8 @@
 import ScalarDict from './ScalarDict.js'
 import {Column} from './Column.js'
+import {unstyled} from '../../../../../public/node/output.js'
 import {Box, Text} from 'ink'
 import React from 'react'
-import {unstyled} from '@shopify/cli-kit/node/output'
 
 interface RowProps<T extends ScalarDict> {
   fillerChar: string
