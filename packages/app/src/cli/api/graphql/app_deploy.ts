@@ -26,6 +26,7 @@ export const AppDeploy = gql`
         id
         message
         versionTag
+        location
         appModuleVersions {
           uuid
           registrationUuid
@@ -72,6 +73,8 @@ export interface AppDeploySchema {
       uuid: string
       id: number
       versionTag: string
+      location: string
+      message: string
       appModuleVersions: {
         uuid: string
         registrationUuid: string

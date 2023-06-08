@@ -1,11 +1,11 @@
 /* eslint-disable require-atomic-updates */
 import {
-  UploadExtensionValidationError,
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
   uploadWasmBlob,
   functionConfiguration,
+  UploadExtensionsBundleOutput,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
@@ -21,7 +21,13 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_ex
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {
+  outputNewline,
+  outputInfo,
+  formatPackageManagerCommand,
+  outputToken,
+  outputContent,
+} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
@@ -103,8 +109,7 @@ export async function deploy(options: DeployOptions) {
   }
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
-  let validationErrors: UploadExtensionValidationError[] = []
-  let versionTag: string
+  let uploadExtensionsBundleResult: UploadExtensionsBundleOutput
   const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
@@ -154,7 +159,7 @@ export async function deploy(options: DeployOptions) {
             }
 
             if (bundle || unifiedDeployment) {
-              ;({validationErrors, versionTag} = await uploadExtensionsBundle({
+              uploadExtensionsBundleResult = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 appModules: getArrayRejectingUndefined(appModules),
@@ -163,7 +168,7 @@ export async function deploy(options: DeployOptions) {
                 extensionIds: identifiers.extensionIds,
                 message: options.message,
                 version: options.version,
-              }))
+              })
             }
 
             if (!useThemebundling()) {
@@ -193,9 +198,8 @@ export async function deploy(options: DeployOptions) {
         partnersOrganizationId: partnersApp.organizationId,
         identifiers,
         registrations,
-        validationErrors,
-        versionTag,
         deploymentMode,
+        uploadExtensionsBundleResult,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -216,52 +220,24 @@ async function outputCompletionMessage({
   partnersOrganizationId,
   identifiers,
   registrations,
-  validationErrors,
-  versionTag,
   deploymentMode,
+  uploadExtensionsBundleResult,
 }: {
   app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   partnersOrganizationId: string
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
-  validationErrors: UploadExtensionValidationError[]
-  versionTag: string
   deploymentMode: DeploymentMode
+  uploadExtensionsBundleResult?: UploadExtensionsBundleOutput
 }) {
-  switch (deploymentMode) {
-    case 'legacy':
-      break
-    case 'unified':
-      return renderSuccess({
-        headline: 'New version released to users.',
-        body: '',
-        nextSteps: [
-          [
-            'Run',
-            {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
-            'to see rollout progress.',
-          ],
-        ],
-      })
-    case 'unified-skip-release':
-      return renderSuccess({
-        headline: 'New version created.',
-        body: '',
-        nextSteps: [
-          [
-            'Run',
-            {
-              command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionTag}`),
-            },
-            'to release this version to users.',
-          ],
-        ],
-      })
+  if (deploymentMode !== 'legacy') {
+    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult!, app)
   }
 
   let headline: string
 
+  const validationErrors = uploadExtensionsBundleResult?.validationErrors ?? []
   if (validationErrors.length > 0) {
     headline = 'Deployed to Shopify, but fixes are needed.'
   } else {
@@ -325,5 +301,52 @@ async function outputCompletionMessage({
   renderSuccess({
     headline,
     customSections,
+  })
+}
+
+async function outputUnifiedCompletionMessage(
+  deploymentMode: DeploymentMode,
+  uploadExtensionsBundleResult: UploadExtensionsBundleOutput,
+  app: AppInterface,
+) {
+  const unifiedVersionMessage = uploadExtensionsBundleResult?.message ?? uploadExtensionsBundleResult?.versionTag
+  if (deploymentMode === 'unified') {
+    return uploadExtensionsBundleResult?.released
+      ? renderSuccess({
+          headline: 'New version released to users.',
+          body: outputContent`${outputToken.link(unifiedVersionMessage, uploadExtensionsBundleResult.location)}`.value,
+          nextSteps: [
+            [
+              'Run',
+              {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
+              'to see rollout progress.',
+            ],
+          ],
+        })
+      : renderInfo({
+          headline: 'New version created, but not released.',
+          body: outputContent`${outputToken.link(
+            unifiedVersionMessage,
+            uploadExtensionsBundleResult?.location,
+          )}\n\nThis version needs to be submitted for review and approved by Shopify before it can be released.`.value,
+        })
+  }
+
+  return renderSuccess({
+    headline: 'New version created.',
+    body: outputContent`${outputToken.link(unifiedVersionMessage, uploadExtensionsBundleResult.location)}`.value,
+    nextSteps: [
+      [
+        'Run',
+        {
+          command: formatPackageManagerCommand(
+            app.packageManager,
+            'release',
+            `--version=${uploadExtensionsBundleResult.versionTag}`,
+          ),
+        },
+        'to release this version to users.',
+      ],
+    ],
   })
 }

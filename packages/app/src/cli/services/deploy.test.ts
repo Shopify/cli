@@ -15,8 +15,8 @@ import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
+import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const versionTag = 'unique-version-tag'
 
@@ -364,7 +364,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},
@@ -441,7 +441,8 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version released to users.',
-      body: '',
+      body: outputContent`${outputToken.link('version message', 'https://partners.shopify.com/0/apps/0/versions/1')}`
+        .value,
       nextSteps: [
         [
           'Run',
@@ -449,6 +450,38 @@ describe('deploy', () => {
           'to see rollout progress.',
         ],
       ],
+    })
+  })
+
+  test('shows a specific success message when deploying using the unified app deployment flow but there is an error with the release', async () => {
+    // Given
+    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
+    const app = testApp({allExtensions: [uiExtension]})
+    vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
+
+    // When
+    await testDeployBundle(
+      app,
+      {
+        id: 'app-id2',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
+      {
+        noRelease: false,
+      },
+      false,
+    )
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: 'New version created, but not released.',
+      body: outputContent`${outputToken.link(
+        'version message',
+        'https://partners.shopify.com/0/apps/0/versions/1',
+      )}\n\nThis version needs to be submitted for review and approved by Shopify before it can be released.`.value,
     })
   })
 
@@ -476,7 +509,8 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version created.',
-      body: '',
+      body: outputContent`${outputToken.link('version message', 'https://partners.shopify.com/0/apps/0/versions/1')}`
+        .value,
       nextSteps: [
         [
           'Run',
@@ -497,6 +531,7 @@ async function testDeployBundle(
     message?: string
     version?: string
   },
+  released = true,
 ) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -536,7 +571,13 @@ async function testDeployBundle(
   })
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
-  vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], versionTag})
+  vi.mocked(uploadExtensionsBundle).mockResolvedValue({
+    validationErrors: [],
+    versionTag,
+    message: 'version message',
+    released,
+    location: 'https://partners.shopify.com/0/apps/0/versions/1',
+  })
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},
