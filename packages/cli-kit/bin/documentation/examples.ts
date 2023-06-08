@@ -4,6 +4,7 @@ import {
   renderAutocompletePrompt,
   renderConcurrent,
   renderConfirmationPrompt,
+  renderError,
   renderFatalError,
   renderInfo,
   renderSelectPrompt,
@@ -216,6 +217,20 @@ export const examples: {[key in string]: Example} = {
             },
           },
         ],
+        renderOptions: {
+          stdout: stdout as any,
+        },
+      })!
+    },
+  },
+  renderError: {
+    type: 'static',
+    basic: async () => {
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+
+      return renderError({
+        headline: "Version couldn't be released.",
+        body: 'This version needs to be submitted for review and approved by Shopify before it can be released.',
         renderOptions: {
           stdout: stdout as any,
         },
