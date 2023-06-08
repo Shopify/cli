@@ -16,7 +16,7 @@ import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 const versionTag = 'unique-version-tag'
 
@@ -480,8 +480,14 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version released to users.',
-      body: outputContent`${outputToken.link('version message', 'https://partners.shopify.com/0/apps/0/versions/1')}`
-        .value,
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+      ],
       nextSteps: [
         [
           'Run',
@@ -517,10 +523,16 @@ describe('deploy', () => {
     // Then
     expect(renderInfo).toHaveBeenCalledWith({
       headline: 'New version created, but not released.',
-      body: outputContent`${outputToken.link(
-        'version message',
-        'https://partners.shopify.com/0/apps/0/versions/1',
-      )}\n\nThis version needs to be submitted for review and approved by Shopify before it can be released.`.value,
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+        '\n\nThis app version needs to pass Shopify review before it can be released.',
+      ],
+      nextSteps: [['Submnit this version for review fron the Partners Dashboard.']],
     })
   })
 
@@ -548,8 +560,15 @@ describe('deploy', () => {
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version created.',
-      body: outputContent`${outputToken.link('version message', 'https://partners.shopify.com/0/apps/0/versions/1')}`
-        .value,
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+        '\nversion message',
+      ],
       nextSteps: [
         [
           'Run',

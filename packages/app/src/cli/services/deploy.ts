@@ -21,13 +21,7 @@ import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_ex
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {
-  outputNewline,
-  outputInfo,
-  formatPackageManagerCommand,
-  outputToken,
-  outputContent,
-} from '@shopify/cli-kit/node/output'
+import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
@@ -309,12 +303,11 @@ async function outputUnifiedCompletionMessage(
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput,
   app: AppInterface,
 ) {
-  const unifiedVersionMessage = uploadExtensionsBundleResult?.message ?? uploadExtensionsBundleResult?.versionTag
   if (deploymentMode === 'unified') {
     return uploadExtensionsBundleResult?.released
       ? renderSuccess({
           headline: 'New version released to users.',
-          body: outputContent`${outputToken.link(unifiedVersionMessage, uploadExtensionsBundleResult.location)}`.value,
+          body: [{link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}}],
           nextSteps: [
             [
               'Run',
@@ -325,16 +318,20 @@ async function outputUnifiedCompletionMessage(
         })
       : renderInfo({
           headline: 'New version created, but not released.',
-          body: outputContent`${outputToken.link(
-            unifiedVersionMessage,
-            uploadExtensionsBundleResult?.location,
-          )}\n\nThis version needs to be submitted for review and approved by Shopify before it can be released.`.value,
+          body: [
+            {link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}},
+            `\n\nThis app version needs to pass Shopify review before it can be released.`,
+          ],
+          nextSteps: [['Submnit this version for review fron the Partners Dashboard.']],
         })
   }
 
   return renderSuccess({
     headline: 'New version created.',
-    body: outputContent`${outputToken.link(unifiedVersionMessage, uploadExtensionsBundleResult.location)}`.value,
+    body: [
+      {link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}},
+      `\n${uploadExtensionsBundleResult?.message}`,
+    ],
     nextSteps: [
       [
         'Run',
