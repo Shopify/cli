@@ -2,6 +2,7 @@ import ScalarDict from './ScalarDict.js'
 import {Column} from './Column.js'
 import {Box, Text} from 'ink'
 import React from 'react'
+import {unstyled} from '@shopify/cli-kit/node/output'
 
 interface RowProps<T extends ScalarDict> {
   fillerChar: string
@@ -27,7 +28,7 @@ const Row = <T extends ScalarDict>({rowKey, columns, data, fillerChar, ignoreCol
         columns.map((column) => {
           const content = data[column.name]
           const key = `${rowKey}-cell-${column.name.toString()}`
-          const marginRight = column.width - String(content ?? '').length
+          const marginRight = column.width - unstyled(String(content ?? '')).length
 
           return (
             <Text key={key} color={ignoreColumnColor ? undefined : column.color}>

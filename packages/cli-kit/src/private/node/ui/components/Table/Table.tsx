@@ -3,6 +3,7 @@ import {Row} from './Row.js'
 import React from 'react'
 import {Box} from 'ink'
 import {ForegroundColor} from 'chalk'
+import {unstyled} from '@shopify/cli-kit/node/output'
 
 export type TableColumn<T> = {
   [column in keyof T]: {header?: string; color?: ForegroundColor | 'dim'}
@@ -24,7 +25,7 @@ function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: Tabl
         return 0
       }
 
-      return String(value).length
+      return unstyled(String(value)).length
     })
 
     return {
