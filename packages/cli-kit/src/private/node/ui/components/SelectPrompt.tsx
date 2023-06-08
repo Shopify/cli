@@ -37,7 +37,7 @@ function SelectPrompt<T>({
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [promptAreaHeight, setPromptAreaHeight] = useState(2)
+  const [promptAreaHeight, setPromptAreaHeight] = useState(1)
   const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
 

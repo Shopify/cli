@@ -57,8 +57,8 @@ function AutocompletePrompt<T>({
   const canSearch = initialChoices.length >= PAGE_SIZE
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [selectInputHeight, setSelectInputHeight] = useState(0)
-  const getAvailableLines = () => stdout.rows - (wrapperHeight - selectInputHeight) - 5
+  const [promptAreaHeight, setPromptAreaHeight] = useState(1)
+  const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
 
   const paginatedSearch = useCallback(
@@ -77,10 +77,10 @@ function AutocompletePrompt<T>({
     }
   }, [])
 
-  const inputRef = useCallback((node) => {
+  const promptAreaRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setSelectInputHeight(height)
+      setPromptAreaHeight(height)
     }
   }, [])
 
@@ -98,7 +98,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, availableLines])
+  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines])
 
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -160,7 +160,7 @@ function AutocompletePrompt<T>({
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
-      <Box>
+      <Box ref={promptAreaRef}>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
@@ -215,7 +215,6 @@ function AutocompletePrompt<T>({
             }
             hasMorePages={hasMorePages}
             morePagesMessage="Find what you're looking for by typing its name."
-            ref={inputRef}
             availableLines={availableLines}
             onSubmit={submitAnswer}
           />
