@@ -240,6 +240,7 @@ export interface DeployContextOptions {
   reset: boolean
   force: boolean
   noRelease: boolean
+  commitReference?: string
 }
 
 interface DeployContextOutput {
@@ -294,6 +295,11 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
   const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
+
+  if (deploymentMode === 'legacy' && options.commitReference) {
+    throw new AbortError('To add a source control url, please, upgrade this app to Deployments 2.0.')
+  }
+
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
