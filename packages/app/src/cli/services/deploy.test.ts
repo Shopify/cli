@@ -349,6 +349,45 @@ describe('deploy', () => {
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
+  test('uploads the extension bundle with 1 function and no beta flag but switch to unified', async () => {
+    // Given
+    const functionExtension = await testFunctionExtension()
+    const app = testApp({allExtensions: [functionExtension]})
+    const moduleId = 'module-id'
+    const mockedFunctionConfiguration = {
+      title: functionExtension.configuration.name,
+      description: functionExtension.configuration.description,
+      api_type: functionExtension.configuration.type,
+      api_version: functionExtension.configuration.apiVersion,
+      enable_creation_ui: true,
+      module_id: moduleId,
+    }
+    vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
+    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
+
+    // When
+    await testDeployBundle(app, undefined, undefined, 'unified')
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      appModules: [
+        {
+          uuid: functionExtension.localIdentifier,
+          config: JSON.stringify(mockedFunctionConfiguration),
+          context: '',
+        },
+      ],
+      token: 'api-token',
+      extensionIds: {},
+      bundlePath: undefined,
+      deploymentMode: 'unified',
+    })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+  })
+
   test('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
@@ -500,6 +539,7 @@ async function testDeployBundle(
     version?: string
   },
   commitReference?: string,
+  switchToDeploymentMode?: DeploymentMode,
 ) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -513,17 +553,19 @@ async function testDeployBundle(
     extensionsPayload[functionExtension.localIdentifier] = functionExtension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}
-  const deploymentMode: DeploymentMode = (function () {
-    if (partnersApp?.betas?.unifiedAppDeployment) {
-      if (options?.noRelease) {
-        return 'unified-skip-release'
+  const deploymentMode: DeploymentMode =
+    switchToDeploymentMode ??
+    (function () {
+      if (partnersApp?.betas?.unifiedAppDeployment) {
+        if (options?.noRelease) {
+          return 'unified-skip-release'
+        } else {
+          return 'unified'
+        }
       } else {
-        return 'unified'
+        return 'legacy'
       }
-    } else {
-      return 'legacy'
-    }
-  })()
+    })()
 
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app,
