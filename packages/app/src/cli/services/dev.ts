@@ -48,8 +48,8 @@ import {
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
-import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel.js'
 
 const MANIFEST_VERSION = '3'
 
