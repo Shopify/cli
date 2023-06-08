@@ -366,7 +366,7 @@ describe('deploy', () => {
     vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
-    await testDeployBundle(app, undefined, undefined, 'unified')
+    await testDeployBundle(app, undefined, undefined, undefined, 'unified')
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
