@@ -250,7 +250,11 @@ function SelectInputInner<T>(
     const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
-        <Box flexDirection="column" height={Math.max(minHeight, Math.min(availableLines, optionsHeight))} overflowY="hidden">
+        <Box
+          flexDirection="column"
+          height={Math.max(minHeight, Math.min(availableLines, optionsHeight))}
+          overflowY="hidden"
+        >
           {state.visibleOptions.map((item, index) => (
             <Item
               key={item.key}

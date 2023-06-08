@@ -258,7 +258,10 @@ export type SelectState<T> = Pick<State<T>, 'visibleOptionCount' | 'visibleFromI
   selectOption: (option: Option<T>) => void
 }
 
-type CreateDefaultStateProps<T> = Pick<UseSelectStateProps<T>, 'maxLinesLostToGroups' | 'visibleOptionCount' | 'defaultValue' | 'options'>
+type CreateDefaultStateProps<T> = Pick<
+  UseSelectStateProps<T>,
+  'maxLinesLostToGroups' | 'visibleOptionCount' | 'defaultValue' | 'options'
+>
 
 const createDefaultState = <T>({
   maxLinesLostToGroups,
@@ -290,8 +293,17 @@ const createDefaultState = <T>({
   }
 }
 
-export const useSelectState = <T>({visibleOptionCount, options, defaultValue, maxLinesLostToGroups}: UseSelectStateProps<T>) => {
-  const [state, dispatch] = useReducer(reducer, {visibleOptionCount, defaultValue, options, maxLinesLostToGroups}, createDefaultState)
+export const useSelectState = <T>({
+  visibleOptionCount,
+  options,
+  defaultValue,
+  maxLinesLostToGroups,
+}: UseSelectStateProps<T>) => {
+  const [state, dispatch] = useReducer(
+    reducer,
+    {visibleOptionCount, defaultValue, options, maxLinesLostToGroups},
+    createDefaultState,
+  )
   const [lastOptions, setLastOptions] = useState(options)
   const [lastVisibleOptionCount, setLastVisibleOptionCount] = useState(visibleOptionCount)
 
