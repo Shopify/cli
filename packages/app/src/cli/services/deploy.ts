@@ -64,8 +64,9 @@ export async function deploy(options: DeployOptions) {
   // eslint-disable-next-line prefer-const
   let {app, identifiers, partnersApp, token, deploymentMode} = await ensureDeployContext(options)
   const apiKey = identifiers.app
+  const unifiedDeployment = deploymentMode !== 'legacy'
 
-  if (!options.app.hasExtensions() && deploymentMode === 'legacy') {
+  if (!options.app.hasExtensions() && !unifiedDeployment) {
     renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
   }
@@ -110,7 +111,6 @@ export async function deploy(options: DeployOptions) {
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let uploadExtensionsBundleResult: UploadExtensionsBundleOutput
-  const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -144,7 +144,7 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            if (deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
+            if (unifiedDeployment) {
               const functionExtensions = await Promise.all(
                 options.app.extensions.function.map(async (extension) => {
                   const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
@@ -176,7 +176,7 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
-            if (!partnersApp.betas?.unifiedAppDeployment) {
+            if (!unifiedDeployment) {
               const functions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
               identifiers = await uploadFunctionExtensions(functions as unknown as FunctionExtension[], {
                 identifiers,
