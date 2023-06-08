@@ -85,7 +85,7 @@ export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeEx
     specification,
   })
 
-  extension.outputBundlePath = './my-extension'
+  extension.outputPath = './my-extension'
 
   return extension
 }

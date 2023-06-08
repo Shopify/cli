@@ -354,7 +354,7 @@ async function uploadFunctionExtension(
   extension: FunctionExtension,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
-  const {url} = await uploadWasmBlob(extension, options.apiKey, options.token)
+  const {url} = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, options.apiKey, options.token)
 
   let inputQuery: string | undefined
   if (await fileExists(extension.inputQueryPath)) {
@@ -397,29 +397,28 @@ ${outputToken.json(userErrors)}
 }
 
 export async function uploadWasmBlob(
-  extension: FunctionExtension,
+  extensionIdentifier: string,
+  wasmPath: string,
   apiKey: string,
   token: string,
 ): Promise<{url: string; moduleId: string}> {
   const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
-  const functionContent = await readFile(extension.buildWasmPath, {})
+  const functionContent = await readFile(wasmPath, {})
   const res = await fetch(url, {body: functionContent, headers, method: 'PUT'})
   const resBody = res.body?.read()?.toString() || ''
 
   if (res.status === 200) {
     return {url, moduleId}
   } else if (res.status === 400 && resBody.includes('EntityTooLarge')) {
-    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extension.localIdentifier} is too large. It must be less than ${maxSize}.`
+    const errorMessage = outputContent`The size of the Wasm binary file for Function ${extensionIdentifier} is too large. It must be less than ${maxSize}.`
     throw new AbortError(errorMessage)
   } else if (res.status >= 400 && res.status < 500) {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${
-      extension.localIdentifier
-    }. The server responded with status ${res.status.toString()} and body: ${resBody}`
+    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. The server responded with status ${res.status.toString()} and body: ${resBody}`
     throw new BugError(errorMessage)
   } else {
-    const errorMessage = outputContent`Something went wrong uploading the Function ${extension.localIdentifier}. Try again.`
+    const errorMessage = outputContent`Something went wrong uploading the Function ${extensionIdentifier}. Try again.`
     throw new AbortError(errorMessage)
   }
 }
@@ -445,39 +444,4 @@ async function getFunctionExtensionUploadURL(
     options.token,
   )
   return res.data.uploadUrlGenerate
-}
-
-export async function functionConfiguration(
-  extension: FunctionExtension,
-  moduleId: string,
-  appKey: string,
-): Promise<{[key: string]: unknown}> {
-  let inputQuery: string | undefined
-  if (await fileExists(extension.inputQueryPath)) {
-    inputQuery = await readFile(extension.inputQueryPath)
-  }
-
-  return {
-    title: extension.configuration.name,
-    module_id: moduleId,
-    description: extension.configuration.description,
-    app_key: appKey,
-    api_type: extension.configuration.type,
-    api_version: extension.configuration.apiVersion,
-    input_query: inputQuery,
-    input_query_variables: extension.configuration.input?.variables
-      ? {
-          single_json_metafield: extension.configuration.input.variables,
-        }
-      : undefined,
-    ui: extension.configuration.ui?.paths
-      ? {
-          app_bridge: {
-            details_path: extension.configuration.ui.paths.details,
-            create_path: extension.configuration.ui.paths.create,
-          },
-        }
-      : undefined,
-    enable_creation_ui: extension.configuration.ui?.enable_create ?? true,
-  }
 }

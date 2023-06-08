@@ -1,11 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {
-  uploadWasmBlob,
-  uploadExtensionsBundle,
-  uploadFunctionExtensions,
-  functionConfiguration,
-} from './deploy/upload.js'
+import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
@@ -163,14 +158,14 @@ describe('deploy', () => {
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
+      module_id: moduleId,
       description: functionExtension.configuration.description,
+      app_key: 'app-id',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.apiVersion,
       enable_creation_ui: true,
-      module_id: moduleId,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
-    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
     await testDeployBundle(app, {

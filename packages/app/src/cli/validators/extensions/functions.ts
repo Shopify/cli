@@ -15,12 +15,12 @@ export async function validateFunctionsWasmPresence(extensions: FunctionExtensio
   const extensionsWithoutWasm = (
     await Promise.all(
       extensions.map(async (extension) => {
-        const wasmPath = extension.buildWasmPath
+        const wasmPath = extension.outputPath
         return (await fileExists(wasmPath))
           ? undefined
           : {
               id: extension.localIdentifier,
-              path: extension.buildWasmPath,
+              path: extension.outputPath,
             }
       }),
     )

@@ -13,7 +13,7 @@ const require = createRequire(import.meta.url)
 export interface BundleOptions {
   minify: boolean
   env: {[variable: string]: string}
-  outputBundlePath: string
+  outputPath: string
   stdin: StdinOptions
   stdout: Writable
   stderr: Writable
@@ -75,7 +75,7 @@ export async function bundleThemeExtension(
     files.map(function (filepath) {
       if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
         const relativePathName = relativePath(extension.directory, filepath)
-        const outputFile = joinPath(extension.outputBundlePath, relativePathName)
+        const outputFile = joinPath(extension.outputPath, relativePathName)
         return copyFile(filepath, outputFile)
       }
     }),
@@ -109,7 +109,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
   const esbuildOptions: Parameters<typeof esContext>[0] = {
-    outfile: options.outputBundlePath,
+    outfile: options.outputPath,
     stdin: options.stdin,
     bundle: true,
     define,
