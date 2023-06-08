@@ -140,7 +140,7 @@
         "source-control-url": {
           "name": "source-control-url",
           "type": "option",
-          "description": "The git reference url of the deployment.",
+          "description": "URL associated with the new app version.",
           "hidden": false,
           "multiple": false
         }
