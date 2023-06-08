@@ -60,6 +60,11 @@ function AutocompletePrompt<T>({
   const [promptAreaHeight, setPromptAreaHeight] = useState(1)
   const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
+  const hasBeenFullscreen = useRef(false)
+  const isFullscreen = stdout && wrapperHeight >= stdout.rows - 1
+  if (isFullscreen) {
+    hasBeenFullscreen.current = true
+  }
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -73,7 +78,9 @@ function AutocompletePrompt<T>({
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setWrapperHeight(height)
+      if (wrapperHeight !== height) {
+        setWrapperHeight(height)
+      }
     }
   }, [])
 
@@ -88,6 +95,9 @@ function AutocompletePrompt<T>({
     function onResize() {
       const newAvailableLines = getAvailableLines()
       if (newAvailableLines !== availableLines) {
+        if (isFullscreen) {
+          stdout.write(ansiEscapes.clearTerminal)
+        }
         setAvailableLines(newAvailableLines)
       }
     }
@@ -138,6 +148,9 @@ function AutocompletePrompt<T>({
           // while we were waiting for the promise to resolve, the user
           // has emptied the search term, so we want to show the default
           // choices instead
+          if (hasBeenFullscreen.current) {
+            stdout.write(ansiEscapes.clearTerminal)
+          }
           if (searchTermRef.current.length === 0) {
             setSearchResults(paginatedInitialChoices)
             setHasMorePages(initialHasMorePages)
