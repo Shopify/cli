@@ -11,7 +11,6 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {functionConfiguration, uploadWasmBlob} from '../../services/deploy/upload.js'
-import {DeploymentMode} from '../../services/context.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -233,10 +232,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey, deploymentMode}: ExtensionBundleConfigOptions) {
+  async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
     let configValue = await this.deployConfig()
 
-    if (this.isFunctionExtension && (deploymentMode === 'unified' || deploymentMode === 'unified-skip-release')) {
+    if (this.isFunctionExtension && unifiedDeployment) {
       const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
       configValue = await functionConfiguration(this.functionExtension!, moduleId, apiKey)
     }
@@ -250,5 +249,5 @@ export interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   token: string
   apiKey: string
-  deploymentMode: DeploymentMode
+  unifiedDeployment: boolean
 }

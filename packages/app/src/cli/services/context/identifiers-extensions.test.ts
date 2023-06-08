@@ -8,7 +8,6 @@ import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {DeploymentMode} from '../context.js'
 import {createExtension} from '../dev/create-extension.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
