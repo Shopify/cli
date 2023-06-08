@@ -142,15 +142,16 @@ function SelectInputInner<T>(
 
   // Calculate a safe estimate of the limit needed based on the space available
   const numberOfGroups = new Set(items.map((item) => item.group)).size
-  const maxVisibleGroups = Math.floor(Math.min((availableLines + 1) / 3, numberOfGroups))
+  const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups))
   // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
-  const linesLostToGroups = numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
-  const limit = Math.max(2, availableLines - linesLostToGroups)
+  const maxLinesLostToGroups = numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
+  const limit = Math.max(2, availableLines - maxLinesLostToGroups)
   const hasLimit = items.length > limit
 
   const inputStack = useRef<string | null>(null)
 
   const state = useSelectState({
+    maxLinesLostToGroups,
     visibleOptionCount: limit,
     options: itemsWithKeys,
     defaultValue,
@@ -245,10 +246,11 @@ function SelectInputInner<T>(
       </Box>
     )
   } else {
-    const optionsHeight = items.length + linesLostToGroups
+    const optionsHeight = items.length + maxLinesLostToGroups
+    const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
-        <Box flexDirection="column" height={Math.min(availableLines, optionsHeight)} overflowY="hidden">
+        <Box flexDirection="column" height={Math.max(minHeight, Math.min(availableLines, optionsHeight))} overflowY="hidden">
           {state.visibleOptions.map((item, index) => (
             <Item
               key={item.key}
