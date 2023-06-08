@@ -303,11 +303,15 @@ async function outputUnifiedCompletionMessage(
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput,
   app: AppInterface,
 ) {
+  const linkAndMessage = [
+    {link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}},
+    uploadExtensionsBundleResult?.message ? `\n${uploadExtensionsBundleResult?.message}` : '',
+  ]
   if (deploymentMode === 'unified') {
     return uploadExtensionsBundleResult?.released
       ? renderSuccess({
           headline: 'New version released to users.',
-          body: [{link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}}],
+          body: linkAndMessage,
           nextSteps: [
             [
               'Run',
@@ -318,20 +322,14 @@ async function outputUnifiedCompletionMessage(
         })
       : renderInfo({
           headline: 'New version created, but not released.',
-          body: [
-            {link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}},
-            `\n\nThis app version needs to pass Shopify review before it can be released.`,
-          ],
+          body: [...linkAndMessage, `\n\nThis app version needs to pass Shopify review before it can be released.`],
           nextSteps: [['Submnit this version for review fron the Partners Dashboard.']],
         })
   }
 
   return renderSuccess({
     headline: 'New version created.',
-    body: [
-      {link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}},
-      `\n${uploadExtensionsBundleResult?.message}`,
-    ],
+    body: linkAndMessage,
     nextSteps: [
       [
         'Run',

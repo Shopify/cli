@@ -456,7 +456,7 @@ describe('deploy', () => {
     })
   })
 
-  test('shows a specific success message when deploying using the unified app deployment flow', async () => {
+  test('shows a specific success message when deploying using the unified app deployment flow without message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({allExtensions: [uiExtension]})
@@ -487,6 +487,7 @@ describe('deploy', () => {
             url: 'https://partners.shopify.com/0/apps/0/versions/1',
           },
         },
+        '',
       ],
       nextSteps: [
         [
@@ -516,6 +517,7 @@ describe('deploy', () => {
       },
       {
         noRelease: false,
+        message: 'version message',
       },
       false,
     )
@@ -530,6 +532,7 @@ describe('deploy', () => {
             url: 'https://partners.shopify.com/0/apps/0/versions/1',
           },
         },
+        '\nversion message',
         '\n\nThis app version needs to pass Shopify review before it can be released.',
       ],
       nextSteps: [['Submnit this version for review fron the Partners Dashboard.']],
@@ -554,6 +557,7 @@ describe('deploy', () => {
       },
       {
         noRelease: true,
+        message: 'version message',
       },
     )
 
@@ -635,7 +639,7 @@ async function testDeployBundle(
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],
     versionTag,
-    message: 'version message',
+    message: options?.message,
     released,
     location: 'https://partners.shopify.com/0/apps/0/versions/1',
   })
