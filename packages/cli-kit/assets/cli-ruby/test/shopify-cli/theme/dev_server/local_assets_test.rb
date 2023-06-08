@@ -8,6 +8,11 @@ module ShopifyCLI
   module Theme
     class DevServer
       class LocalAssetsTest < Minitest::Test
+        def setup
+          super
+          Environment.stubs(:store).returns("my-test-shop.myshopify.com")
+        end
+
         def test_replace_local_assets_in_reponse_body
           original_html = <<~HTML
             <html>
@@ -143,6 +148,34 @@ module ShopifyCLI
                 <div data-src="/assets/folha_de_estilo.css?v=111111111111"></div>
                 <div data-src="/assets/script.js?v=111111111111"></div>
               </body>
+            </html>
+          HTML
+
+          assert_equal(expected_html, serve(original_html, theme_mock: theme).body)
+        end
+
+        def test_replace_shop_assets_urls_in_reponse_body
+          theme = stub("Theme", static_asset_paths: [
+            "assets/component-list-menu.css",
+          ])
+
+          original_html = <<~HTML
+            <html>
+              <head>
+              <link rel="stylesheet" href="//my-test-shop.myshopify.com/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="http://my-test-shop.myshopify.com/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="https://my-test-shop.myshopify.com/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              </head>
+            </html>
+          HTML
+
+          expected_html = <<~HTML
+            <html>
+              <head>
+              <link rel="stylesheet" href="/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              </head>
             </html>
           HTML
 

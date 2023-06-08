@@ -4,11 +4,14 @@ import {
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
+  uploadWasmBlob,
+  functionConfiguration,
 } from './deploy/upload.js'
 
-import {DeploymentMode, ensureDeployContext} from './context.js'
+import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {DeploymentMode} from './deploy/mode.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {Extension, FunctionExtension} from '../models/app/extensions.js'
@@ -79,9 +82,32 @@ export async function deploy(options: DeployOptions) {
 
   outputNewline()
 
+  const appModules = await Promise.all(
+    options.app.extensions.ui.map(async (extension) => {
+      return {
+        uuid: identifiers.extensions[extension.localIdentifier]!,
+        config: JSON.stringify(await extension.deployConfig()),
+        context: '',
+      }
+    }),
+  )
+
+  if (useThemebundling()) {
+    const themeExtensions = await Promise.all(
+      options.app.extensions.theme.map(async (extension) => {
+        return {
+          uuid: identifiers.extensions[extension.localIdentifier]!,
+          config: '{"theme_extension": {"files": {}}}',
+          context: '',
+        }
+      }),
+    )
+    appModules.push(...themeExtensions)
+  }
+
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
-  let deploymentId: number
+  let versionTag: string
   const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
 
   await inTemporaryDirectory(async (tmpDir) => {
@@ -116,14 +142,22 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const appModules = await Promise.all(
-              options.app.allExtensions.flatMap((ext) =>
-                ext.bundleConfig({identifiers, token, apiKey, deploymentMode}),
-              ),
-            )
+            if (deploymentMode === 'unified' || deploymentMode === 'unified-skip-release') {
+              const functionExtensions = await Promise.all(
+                options.app.extensions.function.map(async (extension) => {
+                  const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
+                  return {
+                    uuid: identifiers.extensions[extension.localIdentifier]!,
+                    config: JSON.stringify(await functionConfiguration(extension, moduleId, apiKey)),
+                    context: '',
+                  }
+                }),
+              )
+              appModules.push(...functionExtensions)
+            }
 
             if (bundle || unifiedDeployment) {
-              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
+              ;({validationErrors, versionTag} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 appModules: getArrayRejectingUndefined(appModules),
@@ -141,7 +175,7 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
-            if (deploymentMode === 'legacy') {
+            if (!partnersApp.betas?.unifiedAppDeployment) {
               const functions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
               identifiers = await uploadFunctionExtensions(functions as unknown as FunctionExtension[], {
                 identifiers,
@@ -164,7 +198,7 @@ export async function deploy(options: DeployOptions) {
         identifiers,
         registrations,
         validationErrors,
-        deploymentId,
+        versionTag,
         deploymentMode,
       })
 
@@ -187,7 +221,7 @@ async function outputCompletionMessage({
   identifiers,
   registrations,
   validationErrors,
-  deploymentId,
+  versionTag,
   deploymentMode,
 }: {
   app: AppInterface
@@ -196,7 +230,7 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   validationErrors: UploadExtensionValidationError[]
-  deploymentId: number
+  versionTag: string
   deploymentMode: DeploymentMode
 }) {
   switch (deploymentMode) {
@@ -205,7 +239,7 @@ async function outputCompletionMessage({
     case 'unified':
       return renderSuccess({
         headline: 'New version released to users.',
-        body: 'See the rollout progress of your app version in the CLI or Partner Dashboard.',
+        body: '',
         nextSteps: [
           [
             'Run',
@@ -217,12 +251,12 @@ async function outputCompletionMessage({
     case 'unified-skip-release':
       return renderSuccess({
         headline: 'New version created.',
-        body: 'See the rollout progress of your app version in the CLI or Partner Dashboard.',
+        body: '',
         nextSteps: [
           [
             'Run',
             {
-              command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${deploymentId}`),
+              command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionTag}`),
             },
             'to release this version to users.',
           ],

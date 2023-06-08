@@ -2,6 +2,7 @@ import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.j
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
+import {InfoMessage} from './SelectPrompt.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -27,6 +28,7 @@ export interface AutocompletePromptProps<T> {
   hasMorePages?: boolean
   search: (term: string) => Promise<SearchResults<T>>
   abortSignal?: AbortSignal
+  infoMessage?: InfoMessage
 }
 
 enum PromptState {
@@ -47,6 +49,7 @@ function AutocompletePrompt<T>({
   search,
   hasMorePages: initialHasMorePages = false,
   abortSignal,
+  infoMessage,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
@@ -195,9 +198,17 @@ function AutocompletePrompt<T>({
         ) : null}
       </Box>
 
-      {infoTable && promptState !== PromptState.Submitted ? (
-        <Box marginLeft={7} marginTop={1}>
-          <InfoTable table={infoTable} />
+      {(infoTable || infoMessage) && promptState !== PromptState.Submitted ? (
+        <Box marginLeft={7} marginTop={1} flexDirection="column" gap={1}>
+          {infoMessage ? (
+            <Box flexDirection="column" gap={1}>
+              <Text color={infoMessage.title.color}>
+                <TokenizedText item={infoMessage.title.text} />
+              </Text>
+              <TokenizedText item={infoMessage.body} />
+            </Box>
+          ) : null}
+          {infoTable ? <InfoTable table={infoTable} /> : null}
         </Box>
       ) : null}
 

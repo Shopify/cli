@@ -19,6 +19,7 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {resolveDeploymentMode} from './deploy/mode.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -30,8 +31,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {renderInfo, renderTasks, renderWarning, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {renderWarning, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
@@ -46,6 +47,7 @@ vi.mock('../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('./deploy/mode.js')
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
@@ -59,6 +61,7 @@ beforeEach(() => {
       await task.task({}, task)
     }
   })
+  vi.mocked(resolveDeploymentMode).mockResolvedValue('legacy')
 })
 
 const APP1: OrganizationApp = {
@@ -395,6 +398,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.deploymentMode).toEqual('legacy')
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -423,6 +427,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
+    expect(got.deploymentMode).toEqual('legacy')
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -456,6 +461,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.deploymentMode).toEqual('legacy')
   })
 
   test("throws an app not found error if the app with the API key doesn't exist", async () => {
@@ -505,6 +511,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.deploymentMode).toEqual('legacy')
   })
 
   test('shows a warning banner when the unified app deployment beta is enabled', async () => {

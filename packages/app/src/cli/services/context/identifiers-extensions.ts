@@ -26,8 +26,7 @@ export async function ensureExtensionsIds(
 
   const includeFunctions = options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release'
   let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
-
-  if (includeFunctions) {
+  if (options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release') {
     const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
     functionExtensions.forEach((ext) => (ext.usingExtensionsFramework = true))
     localExtensions = localExtensions.concat(functionExtensions)

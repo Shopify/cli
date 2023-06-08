@@ -158,16 +158,16 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.0.2
         version: 4.0.2
       '@shopify/plugin-cloudflare':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-ngrok':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../plugin-ngrok
       abort-controller:
         specifier: 3.0.0
@@ -249,20 +249,20 @@ importers:
         specifier: 2.4.7
         version: 2.4.7
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.20.4
         version: 3.20.4(zod@3.21.4)
     devDependencies:
       '@shopify/app':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../app
       '@shopify/theme':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../theme
       '@types/node':
         specifier: 14.18.36
@@ -506,7 +506,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -628,7 +628,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
       node-fetch:
         specifier: 3.3.1
@@ -650,7 +650,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -669,7 +669,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
       '@shopify/ngrok':
         specifier: 4.3.2
@@ -691,7 +691,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.46.0
+        specifier: 3.47.0-pre.0
         version: link:../cli-kit
     devDependencies:
       '@types/node':

@@ -13,6 +13,7 @@ import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -23,7 +24,7 @@ import {loadAppName} from '../models/app/loader.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -289,70 +290,10 @@ export async function ensureThemeExtensionDevContext(
 
   return registration
 }
-
-export type DeploymentMode = 'legacy' | 'unified' | 'unified-skip-release'
-
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
-  const noRelease = options.noRelease
-  const deploymentMode: DeploymentMode = (function () {
-    if (partnersApp.betas?.unifiedAppDeployment) {
-      if (noRelease) {
-        return 'unified-skip-release'
-      } else {
-        return 'unified'
-      }
-    } else {
-      return 'legacy'
-    }
-  })()
-
-  if (deploymentMode === 'legacy') {
-    renderInfo({
-      headline: 'For an improved `deploy` command, turn on unified deployment.',
-      body: [
-        'When you turn on unified deployment for this app,',
-        {command: formatPackageManagerCommand(options.app.packageManager, 'deploy')},
-        'will:\n',
-        {
-          list: {
-            items: [
-              'Bundle all your extensions together to create an app version',
-              'Release your extensions and go live to users',
-            ],
-          },
-        },
-        '\nYou will no longer have to publish extensions from the Partner Dashboard.',
-      ],
-      reference: [
-        {
-          link: {
-            label: 'Introducing streamlined extension deployment from the CLI',
-            url: 'https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment',
-          },
-        },
-      ],
-    })
-  } else {
-    renderWarning({
-      headline: '`deploy` now releases changes to users.',
-      body: [
-        {command: formatPackageManagerCommand(options.app.packageManager, 'deploy')},
-        'will release all your extensions to users. You no longer have to publish extensions from the Partner Dashboard.',
-        '\n\nAdd the `--no-release` flag to create an app version without releasing it to users.',
-      ],
-      reference: [
-        {
-          link: {
-            label: 'Introducing streamlined extension deployment from the CLI',
-            url: 'https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment',
-          },
-        },
-      ],
-    })
-  }
-
+  const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({

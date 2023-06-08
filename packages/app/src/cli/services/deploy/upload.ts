@@ -1,4 +1,5 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
+import {DeploymentMode} from './mode.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {
@@ -21,7 +22,6 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
-import {DeploymentMode} from '../context.js'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -120,7 +120,7 @@ interface ErrorCustomSection extends AlertCustomSection {
  */
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
-): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number}> {
+): Promise<{validationErrors: UploadExtensionValidationError[]; versionTag: string}> {
   const deploymentUUID = randomUUID()
   let signedURL
 
@@ -176,7 +176,7 @@ export async function uploadExtensionsBundle(
       return {uuid: ver.registrationUuid, errors: ver.validationErrors}
     })
 
-  return {validationErrors, deploymentId: result.appDeploy.deployment.id}
+  return {validationErrors, versionTag: result.appDeploy.deployment.versionTag}
 }
 
 const VALIDATION_ERRORS_TITLE = '\nValidation errors'

@@ -2,7 +2,8 @@ import {LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {DeploymentMode} from '../context.js'
+
+import {DeploymentMode} from '../deploy/mode.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
