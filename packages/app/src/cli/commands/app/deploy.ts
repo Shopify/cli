@@ -52,7 +52,7 @@ export default class Deploy extends Command {
     }),
     'source-control-url': Flags.string({
       hidden: false,
-      description: 'The git reference url of the deployment.',
+      description: 'URL associated with the new app version.',
       env: 'SHOPIFY_FLAG_SOURCE_CONTROL_URL',
     }),
   }
