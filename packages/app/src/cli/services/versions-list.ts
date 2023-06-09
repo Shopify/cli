@@ -30,6 +30,7 @@ async function fetchDeployments(
       createdBy: deployment.createdBy?.displayName ?? '',
     }
   })
+
   return {
     deployments,
     totalResults: res.app.deployments.pageInfo.totalResults,

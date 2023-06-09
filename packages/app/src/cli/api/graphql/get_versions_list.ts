@@ -5,7 +5,7 @@ export const AppDeploymentsQuery = gql`
     app(apiKey: $apiKey) {
       id
       organizationId
-      deployments(first: 10) {
+      deployments {
         nodes {
           createdAt
           createdBy {
