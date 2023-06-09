@@ -1,8 +1,9 @@
+/* eslint-disable @shopify/prefer-module-scope-constants */
 import {manualMatchIds, ManualMatchResult} from './id-manual-matching.js'
 import {ExtensionRegistration} from '../dev/create-extension.js'
-import {UIExtension} from '../../models/app/extensions.js'
-import {describe, expect, vi, test} from 'vitest'
-import {ok} from '@shopify/cli-kit/node/result'
+import {testUIExtension} from '../../models/app/app.test-data.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {describe, expect, vi, test, beforeAll} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -21,95 +22,50 @@ const REGISTRATION_A_2 = {
   type: 'CHECKOUT_POST_PURCHASE',
 }
 
-const EXTENSION_A: UIExtension = {
-  idEnvironmentVariableName: 'EXTENSION_A_ID',
-  localIdentifier: 'EXTENSION_A',
-  configurationPath: '',
-  directory: '',
-  type: 'checkout_post_purchase',
-  graphQLType: 'CHECKOUT_POST_PURCHASE',
-  configuration: {
-    name: '',
-    type: 'checkout_post_purchase',
-    metafields: [],
-    capabilities: {network_access: false, block_progress: false, api_access: false},
-  },
-  outputBundlePath: '',
-  entrySourceFilePath: '',
-  devUUID: 'devUUID',
-  externalType: 'checkout_ui',
-  publishURL: (_) => Promise.resolve(''),
-  surface: 'surface',
-  features: [],
-  validate: () => Promise.resolve({} as any),
-  preDeployValidation: () => Promise.resolve(),
-  buildValidation: () => Promise.resolve(),
-  deployConfig: () => Promise.resolve({}),
-  previewMessage: (_) => undefined,
-  getBundleExtensionStdinContent: () => '',
-  shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
-}
+let EXTENSION_A: ExtensionInstance
+let EXTENSION_A_2: ExtensionInstance
+let EXTENSION_B: ExtensionInstance
 
-const EXTENSION_A_2: UIExtension = {
-  idEnvironmentVariableName: 'EXTENSION_A_2_ID',
-  localIdentifier: 'EXTENSION_A_2',
-  configurationPath: '',
-  directory: '',
-  type: 'checkout_post_purchase',
-  graphQLType: 'CHECKOUT_POST_PURCHASE',
-  configuration: {
-    name: '',
-    type: 'checkout_post_purchase',
-    metafields: [],
-    capabilities: {network_access: false, block_progress: false, api_access: false},
-  },
-  outputBundlePath: '',
-  entrySourceFilePath: '',
-  devUUID: 'devUUID',
-  externalType: 'checkout_ui',
-  surface: 'surface',
-  features: [],
-  preDeployValidation: () => Promise.resolve(),
-  buildValidation: () => Promise.resolve(),
-  deployConfig: () => Promise.resolve({}),
-  previewMessage: (_) => undefined,
-  publishURL: (_) => Promise.resolve(''),
-  validate: () => Promise.resolve(ok({})),
-  getBundleExtensionStdinContent: () => '',
-  shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
-}
+beforeAll(async () => {
+  EXTENSION_A = await testUIExtension({
+    configurationPath: '',
+    directory: '/EXTENSION_A',
+    configuration: {
+      name: 'EXTENSION A',
+      type: 'checkout_post_purchase',
+      metafields: [],
+      capabilities: {network_access: false, block_progress: false, api_access: false},
+    },
+    entrySourceFilePath: '',
+    devUUID: 'devUUID',
+  })
 
-const EXTENSION_B: UIExtension = {
-  idEnvironmentVariableName: 'EXTENSION_B_ID',
-  localIdentifier: 'EXTENSION_B',
-  configurationPath: '',
-  directory: '',
-  type: 'product_subscription',
-  graphQLType: 'CHECKOUT_POST_PURCHASE',
-  configuration: {
-    name: '',
-    type: 'checkout_post_purchase',
-    metafields: [],
-    capabilities: {network_access: false, block_progress: false, api_access: false},
-  },
-  outputBundlePath: '',
-  entrySourceFilePath: '',
-  devUUID: 'devUUID',
-  externalType: 'checkout_ui',
-  surface: 'surface',
-  features: [],
-  preDeployValidation: () => Promise.resolve(),
-  buildValidation: () => Promise.resolve(),
-  deployConfig: () => Promise.resolve({}),
-  previewMessage: (_) => undefined,
-  publishURL: (_) => Promise.resolve(''),
-  validate: () => Promise.resolve(ok({})),
-  getBundleExtensionStdinContent: () => '',
-  shouldFetchCartUrl: () => true,
-  hasExtensionPointTarget: (target: string) => true,
-}
+  EXTENSION_A_2 = await testUIExtension({
+    configurationPath: '',
+    directory: '/EXTENSION_A_2',
+    configuration: {
+      name: 'EXTENSION A 2',
+      type: 'checkout_post_purchase',
+      metafields: [],
+      capabilities: {network_access: false, block_progress: false, api_access: false},
+    },
+    entrySourceFilePath: '',
+    devUUID: 'devUUID',
+  })
+
+  EXTENSION_B = await testUIExtension({
+    configurationPath: '',
+    directory: '/EXTENSION_B',
+    configuration: {
+      name: 'EXTENSION B',
+      type: 'checkout_post_purchase',
+      metafields: [],
+      capabilities: {network_access: false, block_progress: false, api_access: false},
+    },
+    entrySourceFilePath: '',
+    devUUID: 'devUUID',
+  })
+})
 
 describe('manualMatch: when all sources are matched', () => {
   test('returns IDs', async () => {

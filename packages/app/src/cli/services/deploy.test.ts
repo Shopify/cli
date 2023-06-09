@@ -1,11 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {
-  uploadWasmBlob,
-  uploadExtensionsBundle,
-  uploadFunctionExtensions,
-  functionConfiguration,
-} from './deploy/upload.js'
+import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {DeploymentMode} from './deploy/mode.js'
@@ -262,7 +257,7 @@ describe('deploy', () => {
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
-      appModules: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''}],
+      appModules: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''}],
       token: 'api-token',
       extensionIds: {},
       deploymentMode: 'legacy',
@@ -275,6 +270,7 @@ describe('deploy', () => {
   test('does not upload the extension bundle with 1 function and no beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
     const app = testApp({allExtensions: [functionExtension]})
 
     // When
@@ -307,18 +303,20 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 function and beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
+
     const app = testApp({allExtensions: [functionExtension]})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
+      module_id: moduleId,
       description: functionExtension.configuration.description,
+      app_key: 'app-id',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.apiVersion,
       enable_creation_ui: true,
-      module_id: moduleId,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
-    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
     await testDeployBundle(app, {
@@ -352,18 +350,20 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 function and no beta flag but switch to unified', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
+
     const app = testApp({allExtensions: [functionExtension]})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
+      module_id: moduleId,
       description: functionExtension.configuration.description,
+      app_key: 'app-id',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.apiVersion,
       enable_creation_ui: true,
-      module_id: moduleId,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
-    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
     await testDeployBundle(app, undefined, undefined, false, 'unified')
@@ -382,6 +382,8 @@ describe('deploy', () => {
       extensionIds: {},
       bundlePath: undefined,
       deploymentMode: 'unified',
+      message: undefined,
+      version: undefined,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
@@ -403,7 +405,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},
@@ -598,14 +600,8 @@ async function testDeployBundle(
 ) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  for (const uiExtension of app.extensions.ui) {
-    extensionsPayload[uiExtension.localIdentifier] = uiExtension.localIdentifier
-  }
-  for (const themeExtension of app.extensions.theme) {
-    extensionsPayload[themeExtension.localIdentifier] = themeExtension.localIdentifier
-  }
-  for (const functionExtension of app.extensions.function) {
-    extensionsPayload[functionExtension.localIdentifier] = functionExtension.localIdentifier
+  for (const extension of app.allExtensions) {
+    extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}
   const deploymentMode: DeploymentMode =
@@ -634,6 +630,7 @@ async function testDeployBundle(
     token: 'api-token',
     deploymentMode,
   })
+
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({

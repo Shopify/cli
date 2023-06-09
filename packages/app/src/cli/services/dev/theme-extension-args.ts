@@ -1,8 +1,8 @@
-import {ThemeExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ensureThemeExtensionDevContext} from '../context.js'
 
 export async function themeExtensionArgs(
-  extension: ThemeExtension,
+  extension: ExtensionInstance,
   apiKey: string,
   token: string,
   options: {theme?: string; themeExtensionPort?: number; generateTmpTheme?: boolean; notify?: string},

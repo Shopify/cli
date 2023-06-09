@@ -3,8 +3,8 @@ import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.j
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {UIExtension} from '../../../models/app/extensions.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 
 export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
@@ -13,7 +13,7 @@ export type GetUIExtensionPayloadOptions = ExtensionDevOptions & {
 }
 
 export async function getUIExtensionPayload(
-  extension: UIExtension,
+  extension: ExtensionInstance,
   options: GetUIExtensionPayloadOptions,
 ): Promise<UIExtensionPayload> {
   const url = `${options.url}/extensions/${extension.devUUID}`
@@ -25,7 +25,7 @@ export async function getUIExtensionPayload(
       main: {
         name: 'main',
         url: `${url}/assets/main.js`,
-        lastUpdated: (await fileLastUpdatedTimestamp(extension.outputBundlePath)) ?? 0,
+        lastUpdated: (await fileLastUpdatedTimestamp(extension.outputPath)) ?? 0,
       },
     },
     capabilities: {
@@ -66,7 +66,7 @@ export async function getUIExtensionPayload(
   return defaultConfig
 }
 
-function getExtensionPoints(extensionPoints: UIExtension['configuration']['extensionPoints'], url: string) {
+function getExtensionPoints(extensionPoints: ExtensionInstance['configuration']['extensionPoints'], url: string) {
   if (isNewExtensionPointsSchema(extensionPoints)) {
     return extensionPoints.map((extensionPoint) => {
       const {target, resource} = extensionPoint

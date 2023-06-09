@@ -41,7 +41,7 @@ describe('updateExtensionDraft()', () => {
         },
       })
 
-      await writeFile(mockExtension.outputBundlePath, 'test content')
+      await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -126,7 +126,7 @@ describe('updateExtensionDraft()', () => {
         },
       })
 
-      await writeFile(mockExtension.outputBundlePath, 'test content')
+      await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
@@ -173,7 +173,7 @@ describe('updateExtensionConfig()', () => {
         type: 'web_pixel_extension',
       } as any)
 
-      await writeFile(mockExtension.outputBundlePath, 'test content')
+      await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionConfig({
         extension: mockExtension,
