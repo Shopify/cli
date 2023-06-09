@@ -1,7 +1,7 @@
 import ScalarDict from './ScalarDict.js'
 import {Row} from './Row.js'
 import React from 'react'
-import {Box, Text} from 'ink'
+import {Box} from 'ink'
 import {ForegroundColor} from 'chalk'
 
 export type TableColumn<T> = {
