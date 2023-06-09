@@ -350,6 +350,8 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 function and no beta flag but switch to unified', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
+
     const app = testApp({allExtensions: [functionExtension]})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
