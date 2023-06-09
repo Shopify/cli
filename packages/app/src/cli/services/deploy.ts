@@ -4,8 +4,6 @@ import {
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
-  uploadWasmBlob,
-  functionConfiguration,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
@@ -79,29 +77,6 @@ export async function deploy(options: DeployOptions) {
 
   outputNewline()
 
-  const appModules = await Promise.all(
-    options.app.extensions.ui.map(async (extension) => {
-      return {
-        uuid: identifiers.extensions[extension.localIdentifier]!,
-        config: JSON.stringify(await extension.deployConfig()),
-        context: '',
-      }
-    }),
-  )
-
-  if (useThemebundling()) {
-    const themeExtensions = await Promise.all(
-      options.app.extensions.theme.map(async (extension) => {
-        return {
-          uuid: identifiers.extensions[extension.localIdentifier]!,
-          config: '{"theme_extension": {"files": {}}}',
-          context: '',
-        }
-      }),
-    )
-    appModules.push(...themeExtensions)
-  }
-
   let registrations: AllAppExtensionRegistrationsQuerySchema
   let validationErrors: UploadExtensionValidationError[] = []
   let versionTag: string
@@ -138,19 +113,11 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            if (unifiedDeployment) {
-              const functionExtensions = await Promise.all(
-                options.app.extensions.function.map(async (extension) => {
-                  const {moduleId} = await uploadWasmBlob(extension, identifiers.app, token)
-                  return {
-                    uuid: identifiers.extensions[extension.localIdentifier]!,
-                    config: JSON.stringify(await functionConfiguration(extension, moduleId, apiKey)),
-                    context: '',
-                  }
-                }),
-              )
-              appModules.push(...functionExtensions)
-            }
+            const appModules = await Promise.all(
+              options.app.allExtensions.flatMap((ext) =>
+                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
+              ),
+            )
 
             if (bundle || unifiedDeployment) {
               ;({validationErrors, versionTag} = await uploadExtensionsBundle({

@@ -257,7 +257,7 @@ describe('deploy', () => {
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
-      appModules: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''}],
+      appModules: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''}],
       token: 'api-token',
       extensionIds: {},
       deploymentMode: 'legacy',
@@ -351,14 +351,14 @@ describe('deploy', () => {
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
+      module_id: moduleId,
       description: functionExtension.configuration.description,
+      app_key: 'app-id',
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.apiVersion,
       enable_creation_ui: true,
-      module_id: moduleId,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
-    vi.mocked(functionConfiguration).mockResolvedValue(mockedFunctionConfiguration)
 
     // When
     await testDeployBundle(app, undefined, undefined, 'unified')
@@ -377,6 +377,8 @@ describe('deploy', () => {
       extensionIds: {},
       bundlePath: undefined,
       deploymentMode: 'unified',
+      message: undefined,
+      version: undefined,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
@@ -398,7 +400,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},
