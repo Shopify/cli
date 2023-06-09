@@ -92,13 +92,7 @@ const spec = createExtensionSpecification({
     }
   },
   preDeployValidation: async (extension) => {
-    const wasmPath = extension.outputPath
-    const wasmExists = (await fileExists(wasmPath))
-      ? undefined
-      : {
-          id: extension.localIdentifier,
-          path: extension.outputPath,
-        }
+    const wasmExists = await fileExists(extension.outputPath)
     if (!wasmExists) {
       throw new AbortError(
         outputContent`The function extension "${extension.name}" hasn't compiled the wasm in the expected path: ${extension.outputPath}`,
