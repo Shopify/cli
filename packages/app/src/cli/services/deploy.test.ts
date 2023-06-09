@@ -300,14 +300,8 @@ async function testDeployBundle(
 ) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  for (const uiExtension of app.extensions.ui) {
-    extensionsPayload[uiExtension.localIdentifier] = uiExtension.localIdentifier
-  }
-  for (const themeExtension of app.extensions.theme) {
-    extensionsPayload[themeExtension.localIdentifier] = themeExtension.localIdentifier
-  }
-  for (const functionExtension of app.extensions.function) {
-    extensionsPayload[functionExtension.localIdentifier] = functionExtension.localIdentifier
+  for (const extension of app.allExtensions) {
+    extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}
 

@@ -1,4 +1,4 @@
-import {Extension, FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
+import {Extension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -57,14 +57,8 @@ export interface AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
-  extensions: {
-    ui: UIExtension[]
-    theme: ThemeExtension[]
-    function: FunctionExtension[]
-  }
   errors?: AppErrors
   hasExtensions: () => boolean
-  hasUIExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
 }
@@ -82,11 +76,6 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
-  extensions: {
-    ui: UIExtension[]
-    theme: ThemeExtension[]
-    function: FunctionExtension[]
-  }
 
   // eslint-disable-next-line max-params
   constructor(
@@ -103,12 +92,6 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
-    // Temporary workaround while we migrate to use appModule features.
-    const functionsExt = extensions.filter((extension) => extension.features.includes('function'))
-    const themes = extensions.filter((extension) => extension.features.includes('theme'))
-    const uis = extensions.filter(
-      (extension) => !extension.features.includes('function') && !extension.features.includes('theme'),
-    )
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
@@ -119,11 +102,6 @@ export class App implements AppInterface {
     this.webs = webs
     this.dotenv = dotenv
     this.allExtensions = extensions
-    this.extensions = {
-      ui: uis,
-      theme: themes,
-      function: functionsExt as unknown as FunctionExtension[],
-    }
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
   }
@@ -135,10 +113,6 @@ export class App implements AppInterface {
 
   hasExtensions(): boolean {
     return this.allExtensions.length > 0
-  }
-
-  hasUIExtensions(): boolean {
-    return this.extensions.ui.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
