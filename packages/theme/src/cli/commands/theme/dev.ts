@@ -113,6 +113,7 @@ export default class Dev extends ThemeCommand {
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
     const adminSession = await refreshTokens(store, flags.password)
+    const adminToken = flags.password ? adminSession.token : undefined
 
     if (flags.theme) {
       const filter = {filter: {theme: flags.theme}}
@@ -135,12 +136,15 @@ export default class Dev extends ThemeCommand {
 
     renderLinks(store, flags.theme!, flags.host, flags.port)
 
-    setInterval(() => {
-      outputDebug('Refreshing theme session tokens...')
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      refreshTokens(store, flags.password)
-    }, this.ThemeRefreshTimeoutInMs)
-    await execCLI2(command, {store, adminToken: adminSession.token})
+    if (!flags.password) {
+      setInterval(() => {
+        outputDebug('Refreshing theme session tokens...')
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        refreshTokens(store, flags.password)
+      }, this.ThemeRefreshTimeoutInMs)
+    }
+
+    await execCLI2(command, {store, adminToken})
   }
 }
 
