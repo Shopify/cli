@@ -1,6 +1,5 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {FunctionExtension, ThemeExtension} from '../../models/app/extensions.js'
 import {
   UploadUrlGenerateMutation,
   UploadUrlGenerateMutationSchema,
@@ -26,6 +25,8 @@ import {
   AppFunctionSetMutationSchema,
   AppFunctionSetVariables,
 } from '../../api/graphql/functions/app_function_set.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -52,7 +53,7 @@ interface DeployThemeExtensionOptions {
  * @param options - The upload options
  */
 export async function uploadThemeExtensions(
-  themeExtensions: ThemeExtension[],
+  themeExtensions: ExtensionInstance[],
   options: DeployThemeExtensionOptions,
 ): Promise<void> {
   const {apiKey, identifiers, token} = options
@@ -315,7 +316,7 @@ interface UploadFunctionExtensionsOptions {
  * @returns A promise that resolves with the identifiers.
  */
 export async function uploadFunctionExtensions(
-  extensions: FunctionExtension[],
+  extensions: ExtensionInstance<FunctionConfigType>[],
   options: UploadFunctionExtensionsOptions,
 ): Promise<Identifiers> {
   let identifiers = options.identifiers
@@ -351,7 +352,7 @@ interface UploadFunctionExtensionOptions {
 }
 
 async function uploadFunctionExtension(
-  extension: FunctionExtension,
+  extension: ExtensionInstance<FunctionConfigType>,
   options: UploadFunctionExtensionOptions,
 ): Promise<string> {
   const {url} = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, options.apiKey, options.token)

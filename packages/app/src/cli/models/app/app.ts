@@ -1,4 +1,3 @@
-import {Extension, UIExtension} from './extensions.js'
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -60,7 +59,7 @@ export interface AppInterface {
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
-  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => Extension[]
+  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
 }
 
 export class App implements AppInterface {
@@ -115,7 +114,7 @@ export class App implements AppInterface {
     return this.allExtensions.length > 0
   }
 
-  extensionsForType(specification: {identifier: string; externalIdentifier: string}): Extension[] {
+  extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
@@ -132,7 +131,7 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
-  extension: UIExtension,
+  extension: ExtensionInstance,
   app: AppInterface,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)

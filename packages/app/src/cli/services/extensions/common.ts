@@ -1,6 +1,6 @@
-import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {blocks} from '../../constants.js'
+import {ExtensionFlavor} from '../../models/app/template.js'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, findPathUp, mkdir} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'

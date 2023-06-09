@@ -4,7 +4,7 @@ import {setupBundlerAndFileWatcher} from './extension/bundler.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
 import {AppInterface} from '../../models/app/app.js'
-import {UIExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
@@ -32,7 +32,7 @@ export interface ExtensionDevOptions {
   /**
    * The extension to be built.
    */
-  extensions: UIExtension[]
+  extensions: ExtensionInstance[]
 
   /**
    * The app that contains the extension.

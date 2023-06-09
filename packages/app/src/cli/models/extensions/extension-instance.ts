@@ -1,7 +1,6 @@
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
-import {FunctionExtension} from '../app/extensions.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -207,16 +206,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return Boolean(this.entrySourceFilePath?.endsWith('.js') || this.entrySourceFilePath?.endsWith('.ts'))
   }
 
-  get functionExtension(): FunctionExtension | undefined {
-    if (!this.isFunctionExtension) return undefined
-    return this as unknown as FunctionExtension
-  }
-
   async build(options: ExtensionBuildOptions): Promise<void> {
     if (this.isThemeExtension) {
       return buildThemeExtension(this, options)
     } else if (this.isFunctionExtension) {
-      return buildFunctionExtension(this.functionExtension!, options)
+      return buildFunctionExtension(this, options)
     } else if (this.features.includes('esbuild')) {
       return buildUIExtension(this, options)
     }

@@ -2,8 +2,7 @@ import {versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
-import {ExtensionFlavor} from '../../models/app/extensions.js'
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {
   ensureDownloadedExtensionFlavorExists,
   ensureExtensionDirectoryExists,
