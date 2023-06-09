@@ -346,12 +346,18 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const identifiers: Identifiers = envIdentifiers as Identifiers
 
   if (!partnersApp.betas?.unifiedAppDeployment) {
     throw new AbortSilentError()
   }
 
+  // eslint-disable-next-line no-param-reassign
+  options = {
+    ...options,
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release'}),
+  }
   const result = {
     app: options.app,
     apiKey: partnersApp.apiKey,
