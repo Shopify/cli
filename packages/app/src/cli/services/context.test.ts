@@ -533,7 +533,7 @@ describe('ensureDeployContext', () => {
 
     // When/ Then
     await expect(ensureDeployContext(opts)).rejects.toThrowErrorMatchingInlineSnapshot(
-      '"To add a source control url, please, upgrade this app to Deployments 2.0."',
+      '"The `source-control-url` flag is not supported for this app."',
     )
 
     expect(fetchOrganizations).toHaveBeenCalledWith('token')

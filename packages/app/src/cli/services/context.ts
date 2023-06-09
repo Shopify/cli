@@ -297,7 +297,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
 
   if (deploymentMode === 'legacy' && options.commitReference) {
-    throw new AbortError('To add a source control url, please, upgrade this app to Deployments 2.0.')
+    throw new AbortError('The `source-control-url` flag is not supported for this app.')
   }
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
