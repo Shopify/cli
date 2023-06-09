@@ -62,7 +62,7 @@ describe('list', () => {
     })
   })
 
-  test('should render json rather then table', async () => {
+  test('should render json rather than table', async () => {
     const developmentThemeId = 5
     const themes = [
       {id: 1, name: 'Theme 1', role: 'unpublished'},
@@ -84,7 +84,7 @@ describe('list', () => {
     )
   })
 })
-test('should render json rather with correctly filtered data', async () => {
+test('should render json with correctly filtered data', async () => {
   const themes = [
     {id: 1, name: 'Theme 1', role: 'unpublished'},
     {id: 2, name: 'Theme 2', role: 'demo'},
