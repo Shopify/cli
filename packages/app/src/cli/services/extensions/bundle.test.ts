@@ -47,7 +47,7 @@ describe('bundleExtension()', () => {
     // When
     await bundleExtension({
       env: app.dotenv?.variables ?? {},
-      outputBundlePath: extension.outputBundlePath,
+      outputPath: extension.outputPath,
       minify: true,
       environment: 'production',
       stdin: {
@@ -74,7 +74,7 @@ describe('bundleExtension()', () => {
       resolveDir: 'mock/resolve/dir',
       loader: 'tsx',
     })
-    expect(options.outfile).toEqual(extension.outputBundlePath)
+    expect(options.outfile).toEqual(extension.outputPath)
     expect(options.loader).toEqual({
       '.esnext': 'ts',
       '.js': 'jsx',
@@ -137,7 +137,7 @@ describe('bundleExtension()', () => {
     // When
     await bundleExtension({
       env: app.dotenv?.variables ?? {},
-      outputBundlePath: extension.outputBundlePath,
+      outputPath: extension.outputPath,
       minify: true,
       environment: 'production',
       stdin: {

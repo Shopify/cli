@@ -10,7 +10,7 @@ import {
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
-import {functionConfiguration, uploadWasmBlob} from '../../services/deploy/upload.js'
+import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -40,7 +40,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   directory: string
   configuration: TConfiguration
   configurationPath: string
-  outputBundlePath: string
+  outputPath: string
 
   private useExtensionsFramework: boolean
   private specification: ExtensionSpecification
@@ -119,15 +119,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = basename(options.directory)
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
     this.useExtensionsFramework = false
-    this.outputBundlePath = this.directory
+    this.outputPath = this.directory
 
     if (this.features.includes('esbuild')) {
-      this.outputBundlePath = joinPath(this.directory, 'dist/main.js')
+      this.outputPath = joinPath(this.directory, 'dist/main.js')
+    }
+
+    if (this.isFunctionExtension) {
+      const config = this.configuration as unknown as FunctionConfigType
+      this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
   }
 
-  deployConfig(): Promise<{[key: string]: unknown} | undefined> {
-    return this.specification.deployConfig?.(this.configuration, this.directory) ?? Promise.resolve(undefined)
+  deployConfig(apiKey: string, moduleId?: string): Promise<{[key: string]: unknown} | undefined> {
+    return (
+      this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId) ??
+      Promise.resolve(undefined)
+    )
   }
 
   validate() {
@@ -187,11 +195,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build.command
   }
 
-  get buildWasmPath() {
-    const config = this.configuration as unknown as FunctionConfigType
-    return joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
-  }
-
   get inputQueryPath() {
     return joinPath(this.directory, 'input.graphql')
   }
@@ -216,15 +219,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
     if (this.type === 'tax_calculation') {
-      await touchFile(this.outputBundlePath)
-      await writeFile(this.outputBundlePath, '(()=>{})();')
+      await touchFile(this.outputPath)
+      await writeFile(this.outputPath, '(()=>{})();')
     }
   }
 
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
     const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
-    this.outputBundlePath = joinPath(bundleDirectory, extensionId, outputFile)
+
+    if (this.features.includes('bundling')) {
+      // Modules that are going to be inclued in the bundle should be built in the bundle directory
+      this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
+    }
+
     await this.build(options)
 
     if (this.isThemeExtension && useThemebundling()) {
@@ -233,11 +241,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    let configValue = await this.deployConfig()
+    let configValue = await this.deployConfig(apiKey, undefined)
 
-    if (this.isFunctionExtension && unifiedDeployment) {
-      const {moduleId} = await uploadWasmBlob(this.functionExtension!, identifiers.app, token)
-      configValue = await functionConfiguration(this.functionExtension!, moduleId, apiKey)
+    if (this.isFunctionExtension) {
+      if (unifiedDeployment) {
+        const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, identifiers.app, token)
+        configValue = await this.deployConfig(apiKey, moduleId)
+      } else {
+        return undefined
+      }
     }
 
     if (!configValue) return undefined

@@ -52,14 +52,13 @@ const FUNCTION_A: FunctionExtension = {
     metafields: [],
   },
   buildCommand: 'make build',
-  buildWasmPath: '/function/dist/index.wasm',
+  outputPath: '/function/dist/index.wasm',
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  deployConfig: () => Promise.resolve({}),
 }
 
 const FUNCTION_A_2: FunctionExtension = {
@@ -82,14 +81,13 @@ const FUNCTION_A_2: FunctionExtension = {
     metafields: [],
   },
   buildCommand: 'make build',
-  buildWasmPath: '/function/dist/index.wasm',
+  outputPath: '/function/dist/index.wasm',
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  deployConfig: () => Promise.resolve({}),
 }
 
 const FUNCTION_B: FunctionExtension = {
@@ -112,14 +110,13 @@ const FUNCTION_B: FunctionExtension = {
     metafields: [],
   },
   buildCommand: 'make build',
-  buildWasmPath: '/function/dist/index.wasm',
+  outputPath: '/function/dist/index.wasm',
   inputQueryPath: '/function/input.graphql',
   isJavaScript: false,
   externalType: 'function',
   usingExtensionsFramework: false,
   features: ['function'],
   publishURL: (_) => Promise.resolve(''),
-  deployConfig: () => Promise.resolve({}),
 }
 
 const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {

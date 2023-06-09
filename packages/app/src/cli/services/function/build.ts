@@ -107,7 +107,7 @@ function getESBuildOptions(directory: string, entryPoint: string, userFunction: 
 }
 
 export async function runJavy(fun: FunctionExtension, options: JSFunctionBuildOptions) {
-  return exec('npm', ['exec', '--', 'javy', 'compile', '-d', '-o', fun.buildWasmPath, 'dist/function.js'], {
+  return exec('npm', ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js'], {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
@@ -121,7 +121,7 @@ interface FunctionRunnerOptions {
 
 export async function runFunctionRunner(fun: FunctionExtension, options: FunctionRunnerOptions) {
   const outputAsJson = options.json ? ['--json'] : []
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath, ...outputAsJson], {
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson], {
     cwd: fun.directory,
     stdin: 'inherit',
     stdout: 'inherit',

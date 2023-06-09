@@ -48,6 +48,7 @@ import {
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -83,7 +84,10 @@ async function dev(options: DevOptions) {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
 
-  let tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+  let tunnelClient: TunnelClient | undefined
+  if (!options.tunnelUrl) {
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+  }
 
   const token = await ensureAuthenticatedPartners()
   const {
@@ -94,9 +98,9 @@ async function dev(options: DevOptions) {
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
 
-  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+  if (!options.tunnelUrl && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
-    tunnelClient.stopTunnel()
+    tunnelClient?.stopTunnel()
     tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
   }
 

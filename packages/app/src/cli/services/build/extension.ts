@@ -63,7 +63,7 @@ export async function buildUIExtension(extension: UIExtension, options: Extensio
 
   await bundleExtension({
     minify: true,
-    outputBundlePath: extension.outputBundlePath,
+    outputPath: extension.outputPath,
     stdin: {
       contents: extension.getBundleExtensionStdinContent(),
       resolveDir: extension.directory,
