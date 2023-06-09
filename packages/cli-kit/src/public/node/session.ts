@@ -43,18 +43,20 @@ ${outputToken.json(scopes)}
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param password - Optional password to use.
+ * @param forceRefresh - Optional flag to force a refresh of the token.
  * @returns The access token for the Storefront API.
  */
 export async function ensureAuthenticatedStorefront(
   scopes: string[] = [],
   password: string | undefined = undefined,
+  forceRefresh = false,
 ): Promise<string> {
   if (password) return password
 
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}})
+  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, forceRefresh)
   if (!tokens.storefront) {
     throw new BugError('No storefront token found after ensuring authenticated')
   }

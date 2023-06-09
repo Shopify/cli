@@ -9,7 +9,7 @@ env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  PNPM_VERSION: '8.5.1'
+  PNPM_VERSION: '8.6.1'
   RUBY_VERSION: '3.1.2'
   BUNDLER_VERSION: '2.3.18'
 

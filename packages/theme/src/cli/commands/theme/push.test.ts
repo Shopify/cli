@@ -33,7 +33,8 @@ describe('Push', () => {
 
     function expectCLI2ToHaveBeenCalledWith(command: string) {
       expect(execCLI2).toHaveBeenCalledWith(command.split(' '), {
-        adminSession,
+        store: 'example.myshopify.com',
+        adminToken: adminSession.token,
       })
     }
 

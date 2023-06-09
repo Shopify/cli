@@ -149,14 +149,10 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           return (
             <Box flexDirection="column" key={index}>
               {chunk.lines.map((line, index) => (
-                <Box key={index} flexDirection="row">
+                <Box key={index} flexDirection="row" gap={1}>
                   {showTimestamps ? (
-                    <Box>
-                      <Box marginRight={1}>
-                        <Text color={chunk.color}>
-                          {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}
-                        </Text>
-                      </Box>
+                    <Box gap={1}>
+                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
 
                       <Text bold color={chunk.color}>
                         {figures.lineVertical}
@@ -164,7 +160,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                     </Box>
                   ) : null}
 
-                  <Box width={prefixColumnSize} marginX={1}>
+                  <Box width={prefixColumnSize}>
                     <Text color={chunk.color}>{chunk.prefix}</Text>
                   </Box>
 
@@ -172,7 +168,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                     {figures.lineVertical}
                   </Text>
 
-                  <Box flexGrow={1} paddingLeft={1}>
+                  <Box flexGrow={1}>
                     <Text color={chunk.color}>{line}</Text>
                   </Box>
                 </Box>

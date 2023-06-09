@@ -11,10 +11,10 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
-import {Extension, FunctionExtension} from '../models/app/extensions.js'
 import {OrganizationApp} from '../models/organization.js'
-import {validateExtensions} from '../validators/extensions.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -75,7 +75,7 @@ export async function deploy(options: DeployOptions) {
         {
           title: 'Running validation',
           task: async () => {
-            await validateExtensions(app)
+            await Promise.all([app.allExtensions.map((ext) => ext.preDeployValidation())])
           },
         },
         {
@@ -103,8 +103,10 @@ export async function deploy(options: DeployOptions) {
             }
 
             if (!unifiedDeployment) {
-              const functions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
-              identifiers = await uploadFunctionExtensions(functions as unknown as FunctionExtension[], {
+              const functions = options.app.allExtensions.filter(
+                (ext) => ext.isFunctionExtension,
+              ) as ExtensionInstance<FunctionConfigType>[]
+              identifiers = await uploadFunctionExtensions(functions, {
                 identifiers,
                 token,
               })
@@ -181,7 +183,7 @@ async function outputCompletionMessage({
     headline = 'Deployed to Shopify!'
   }
 
-  const outputDeployedButNotLiveMessage = (extension: Extension) => {
+  const outputDeployedButNotLiveMessage = (extension: ExtensionInstance) => {
     const result = [`${extension.localIdentifier} is deployed to Shopify but not yet live`]
     const uuid = identifiers.extensions[extension.localIdentifier]
     const validationError = validationErrors.find((error) => error.uuid === uuid)
@@ -196,7 +198,7 @@ async function outputCompletionMessage({
     return result
   }
 
-  const outputNextStep = async (extension: Extension) => {
+  const outputNextStep = async (extension: ExtensionInstance) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
         return registration.uuid === identifiers.extensions[extension.localIdentifier]

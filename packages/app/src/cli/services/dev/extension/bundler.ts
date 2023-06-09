@@ -4,7 +4,8 @@ import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import {ExtensionInstance, ExtensionSpecification} from '../../../models/extensions/specification.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
@@ -35,7 +36,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     bundlers.push(
       bundleExtension({
         minify: false,
-        outputBundlePath: extension.outputBundlePath,
+        outputPath: extension.outputPath,
         environment: 'development',
         env: {
           ...(options.devOptions.app.dotenv?.variables ?? {}),
@@ -134,7 +135,7 @@ export async function setupDraftableExtensionBundler({
 }: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
-    outputBundlePath: extension.outputBundlePath,
+    outputPath: extension.outputPath,
     environment: 'development',
     env: {
       ...(app.dotenv?.variables ?? {}),
