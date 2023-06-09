@@ -122,6 +122,7 @@ describe('deploy', () => {
   test('does not upload the extension bundle with 1 function and no beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
     const app = testApp({allExtensions: [functionExtension]})
 
     // When
@@ -154,6 +155,8 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 function and beta flag', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
+    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
+
     const app = testApp({allExtensions: [functionExtension]})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
@@ -316,6 +319,7 @@ async function testDeployBundle(
     },
     token: 'api-token',
   })
+
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], deploymentId: 2})
