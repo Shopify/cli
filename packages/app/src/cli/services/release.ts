@@ -2,9 +2,10 @@ import {ensureReleaseContext} from './context.js'
 import {AppInterface} from '../models/app/app.js'
 import {AppVersionsDiffQuery, AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import {AppRelease, AppReleaseSchema} from '../api/graphql/app_release.js'
+import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 interface ReleaseOptions {
@@ -25,8 +26,7 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  // eslint-disable-next-line prefer-const
-  let {token, apiKey, app} = await ensureReleaseContext(options)
+  const {token, apiKey, app} = await ensureReleaseContext(options)
 
   const {
     app: {versionsDiff},
@@ -39,34 +39,7 @@ export async function release(options: ReleaseOptions) {
     throw new AbortError('Version not found')
   }
 
-  // eslint-disable-next-line no-console
-  console.log(JSON.stringify(versionsDiff))
-
-  const infoTable = []
-  const extensions = [...versionsDiff.added, ...versionsDiff.updated]
-
-  if (extensions.length > 0) {
-    infoTable.push({
-      header: 'Extensions',
-      items: extensions.map((extension) => extension.registrationTitle),
-    })
-  }
-
-  if (versionsDiff.removed.length > 0) {
-    infoTable.push({
-      header: 'Removed',
-      color: 'red',
-      helperText: 'Will be removed for users when this version is released.',
-      items: versionsDiff.removed.map((extension) => extension.registrationTitle),
-    })
-  }
-
-  const confirmRelease = await renderConfirmationPrompt({
-    message: `Release this version of ${app.name}?`,
-    infoTable,
-    confirmationMessage: 'Yes, release this version',
-    cancellationMessage: 'No, cancel',
-  })
+  const confirmRelease = await confirmReleasePrompt(app.name, versionsDiff)
 
   if (confirmRelease) {
     const appRelease: AppReleaseSchema = await partnersRequest(AppRelease, token, {
@@ -78,6 +51,7 @@ export async function release(options: ReleaseOptions) {
 
     if (release.userErrors.length > 0) {
       if (
+        // need to check that this is true
         release.userErrors[0]!.message.includes(
           'needs to be submitted for review and approved by Shopify before it can be released',
         )
