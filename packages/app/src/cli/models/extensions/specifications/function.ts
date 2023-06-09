@@ -39,7 +39,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
         .optional(),
     })
     .optional(),
-  targets: zod
+  targeting: zod
     .array(
       zod.object({
         target: zod.string(),
@@ -77,9 +77,9 @@ const spec = createExtensionSpecification({
     }
 
     const targets =
-      config.targets &&
+      config.targeting &&
       (await Promise.all(
-        config.targets.map(async (config) => {
+        config.targeting.map(async (config) => {
           let inputQuery
 
           if (config.input_query) {

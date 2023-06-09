@@ -106,13 +106,13 @@ describe('functionConfiguration', () => {
     })
   })
 
-  test('parses targets', async () => {
+  test('parses targeting array', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       extension.directory = tmpDir
       const inputQuery = 'query { f }'
       const inputQueryFileName = 'target1.graphql'
-      extension.configuration.targets = [
+      extension.configuration.targeting = [
         {target: 'some.api.target1', input_query: inputQueryFileName},
         {target: 'some.api.target2', export: 'run_target2'},
       ]
@@ -131,7 +131,7 @@ describe('functionConfiguration', () => {
 
   test('aborts when an target input query file is missing', async () => {
     // Given
-    extension.configuration.targets = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
+    extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
 
     // When & Then
     await expect(() => extension.deployConfig(appKey, moduleId)).rejects.toThrowError(AbortError)
