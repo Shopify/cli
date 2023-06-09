@@ -91,6 +91,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('function')
   }
 
+  get isESBuildExtension() {
+    return this.features.includes('esbuild')
+  }
+
   get isDraftable() {
     return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
   }
