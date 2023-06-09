@@ -5,7 +5,7 @@ import {AppRelease, AppReleaseSchema} from '../api/graphql/app_release.js'
 import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 interface ReleaseOptions {
@@ -41,15 +41,30 @@ export async function release(options: ReleaseOptions) {
 
   const confirmRelease = await confirmReleasePrompt(app.name, versionsDiff)
 
+  interface Context {
+    appRelease: AppReleaseSchema
+  }
+
   if (confirmRelease) {
-    const appRelease: AppReleaseSchema = await partnersRequest(AppRelease, token, {
-      apiKey,
-      appVersionId: options.version,
-    })
-    const release = appRelease.appRelease
+    const tasks = [
+      {
+        title: 'Releasing version',
+        task: async (context: Context) => {
+          context.appRelease = await partnersRequest(AppRelease, token, {
+            apiKey,
+            appVersionId: options.version,
+          })
+        },
+      },
+    ]
+
+    const {
+      appRelease: {appRelease: release},
+    } = await renderTasks<Context>(tasks)
+
     const deployment = release.deployment
 
-    if (release.userErrors.length > 0) {
+    if (release.userErrors?.length > 0) {
       if (
         // need to check that this is true
         release.userErrors[0]!.message.includes(
