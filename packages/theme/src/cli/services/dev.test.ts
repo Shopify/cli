@@ -1,8 +1,11 @@
-import {showDeprecationWarnings, REQUIRED_FOLDERS, validThemeDirectory} from './dev.js'
-import {describe, expect, test} from 'vitest'
+import {showDeprecationWarnings, REQUIRED_FOLDERS, validThemeDirectory, refreshTokens} from './dev.js'
+import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+
+vi.mock('@shopify/cli-kit/node/ruby')
 
 describe('validThemeDirectory', () => {
   test('should not consider an empty directory to be a valid theme directory', async () => {
@@ -58,5 +61,24 @@ describe('showDeprecationWarnings', () => {
 
     // Then
     expect(outputMock.output()).toMatch(/reserved for environments/)
+  })
+})
+
+describe('refreshTokens', () => {
+  test('returns the admin token and store', async () => {
+    // When
+    const result = await refreshTokens('my-store', 'my-password')
+
+    // Then
+    expect(result).toEqual({storeFqdn: 'my-store.myshopify.com', token: 'my-password'})
+  })
+
+  test('refreshes CLI2 cache with theme token command', async () => {
+    // When
+    await refreshTokens('my-store', 'my-password')
+
+    // Then
+    const expectedParams = ['theme', 'token', '--admin', 'my-password', '--sfr', 'my-password']
+    expect(execCLI2).toHaveBeenCalledWith(expectedParams)
   })
 })
