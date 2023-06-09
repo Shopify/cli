@@ -145,12 +145,14 @@ function AutocompletePrompt<T>({
       }, 100)
       paginatedSearch(term)
         .then((result) => {
+          if (searchResults.length !== result.data.length) {
+            if (hasBeenFullscreen.current) {
+              stdout.write(ansiEscapes.clearTerminal)
+            }
+          }
           // while we were waiting for the promise to resolve, the user
           // has emptied the search term, so we want to show the default
           // choices instead
-          if (hasBeenFullscreen.current) {
-            stdout.write(ansiEscapes.clearTerminal)
-          }
           if (searchTermRef.current.length === 0) {
             setSearchResults(paginatedInitialChoices)
             setHasMorePages(initialHasMorePages)
@@ -168,7 +170,7 @@ function AutocompletePrompt<T>({
           clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
-    [initialHasMorePages, paginatedInitialChoices, paginatedSearch],
+    [initialHasMorePages, paginatedInitialChoices, paginatedSearch, searchResults],
   )
 
   return isAborted ? null : (
