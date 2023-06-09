@@ -1,4 +1,4 @@
-import {showDeprecationWarnings, REQUIRED_FOLDERS, validThemeDirectory, refreshTokens} from './dev.js'
+import {showDeprecationWarnings, REQUIRED_FOLDERS, validThemeDirectory, refreshTokens, dev} from './dev.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -6,6 +6,51 @@ import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 vi.mock('@shopify/cli-kit/node/ruby')
+
+describe('dev', () => {
+  test('runs theme serve on CLI2 without passing a token when no password is used', async () => {
+    // When
+    const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
+    const options = {
+      adminSession,
+      directory: 'my-directory',
+      store: 'my-store',
+      theme: '123',
+      force: false,
+      flagsToPass: [],
+    }
+    await dev(options)
+
+    // Then
+    const expectedParams = ['theme', 'serve', 'my-directory']
+    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+      store: 'my-store',
+      adminToken: undefined,
+    })
+  })
+
+  test('runs theme serve on CLI2 passing a token when a password is used', async () => {
+    // When
+    const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
+    const options = {
+      adminSession,
+      directory: 'my-directory',
+      store: 'my-store',
+      theme: '123',
+      force: false,
+      flagsToPass: [],
+      password: 'my-token',
+    }
+    await dev(options)
+
+    // Then
+    const expectedParams = ['theme', 'serve', 'my-directory']
+    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+      store: 'my-store',
+      adminToken: 'my-token',
+    })
+  })
+})
 
 describe('validThemeDirectory', () => {
   test('should not consider an empty directory to be a valid theme directory', async () => {
