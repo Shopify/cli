@@ -599,6 +599,12 @@
             "development"
           ]
         },
+        "json": {
+          "name": "json",
+          "type": "boolean",
+          "description": "Return data as json",
+          "allowNo": false
+        },
         "name": {
           "name": "name",
           "type": "option",

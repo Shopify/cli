@@ -1,6 +1,6 @@
-import {columns, filteredColumns} from './list.columns.js'
+import {columns} from './list.columns.js'
 import {getDevelopmentTheme} from './local-storage.js'
-import {ALLOWED_ROLES, Header, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
+import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -10,9 +10,9 @@ export interface Options {
   role?: Role
   name?: string
   id?: number
-  only?: Header
-  noHeaders?: boolean
+  json?: boolean
 }
+
 
 export async function list(adminSession: AdminSession, options: Options) {
   const store = adminSession.storeFqdn
@@ -23,7 +23,6 @@ export async function list(adminSession: AdminSession, options: Options) {
     }, {}),
     theme: options.id?.toString() ?? options.name,
   })
-  const {only, noHeaders} = options
   let storeThemes = await fetchStoreThemes(adminSession)
   const developmentTheme = getDevelopmentTheme()
   const hostTheme = getHostTheme(store)
@@ -39,18 +38,15 @@ export async function list(adminSession: AdminSession, options: Options) {
         formattedRole += ' [yours]'
       }
     }
-    const formattedRow = {
+    return {
       id: `#${id}`,
       name,
       role: formattedRole,
     }
-    if (only) {
-      const single: {[key: string]: string} = {}
-      single[only] = formattedRow[only]
-      return single
-    }
-    return formattedRow
   })
-
-  renderTable({noHeaders, rows: themes, columns: filteredColumns(only, columns)})
+  if (options.json) {
+    process.stdout.write(JSON.stringify(themes))
+    return
+  }
+  renderTable({rows: themes, columns})
 }

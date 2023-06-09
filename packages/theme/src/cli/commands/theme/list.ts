@@ -1,6 +1,6 @@
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {list} from '../../services/list.js'
-import {ALLOWED_ROLES, Role, Header, ALLOWED_HEADER} from '../../utilities/theme-selector/fetch.js'
+import {ALLOWED_ROLES, Role} from '../../utilities/theme-selector/fetch.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
@@ -19,15 +19,10 @@ export default class List extends ThemeCommand {
       options: ALLOWED_ROLES,
       env: 'SHOPIFY_FLAG_ROLE',
     })(),
-    only: Flags.custom<Header>({
-      description: 'Only return specific header',
-      options: ALLOWED_HEADER,
-      env: 'SHOPIFY_FLAG_HEADER',
-    })(),
-    noHeaders: Flags.boolean({
+    json: Flags.boolean({
       default: false,
-      description: 'Remove all headers.',
-      env: 'SHOPIFY_FLAG_NO_HEADERS',
+      description: 'Return data as json',
+      env: 'SHOPIFY_FLAG_JSON',
     }),
     name: Flags.string({
       description: 'Only list themes that contain the given name.',

@@ -5,8 +5,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type Role = 'live' | 'development' | 'unpublished'
 export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
-export type Header = 'name' | 'id'
-export const ALLOWED_HEADER: Header[] = ['name', 'id']
 
 export async function fetchStoreThemes(session: AdminSession) {
   const store = session.storeFqdn
