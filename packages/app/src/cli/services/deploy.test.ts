@@ -535,9 +535,8 @@ describe('deploy', () => {
           },
         },
         '\nversion message',
-        '\n\nThis app version needs to pass Shopify review before it can be released.',
+        '\n\nThis app version needs to pass Shopify review before it can be released. Submit this version for review from the Partner Dashboard.',
       ],
-      nextSteps: [['Submnit this version for review fron the Partners Dashboard.']],
     })
   })
 

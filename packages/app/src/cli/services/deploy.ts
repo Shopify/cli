@@ -291,8 +291,10 @@ async function outputUnifiedCompletionMessage(
         })
       : renderInfo({
           headline: 'New version created, but not released.',
-          body: [...linkAndMessage, `\n\nThis app version needs to pass Shopify review before it can be released.`],
-          nextSteps: [['Submnit this version for review fron the Partners Dashboard.']],
+          body: [
+            ...linkAndMessage,
+            `\n\nThis app version needs to pass Shopify review before it can be released. Submit this version for review from the Partner Dashboard.`,
+          ],
         })
   }
 
