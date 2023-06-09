@@ -1,5 +1,4 @@
 import {App, AppInterface} from './app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from './extensions.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -34,7 +33,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   return newApp
 }
 
-export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): Promise<ExtensionInstance> {
+export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): Promise<ExtensionInstance> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   const configuration = uiExtension?.configuration ?? {
@@ -65,7 +64,7 @@ export async function testUIExtension(uiExtension: Partial<UIExtension> = {}): P
   return extension
 }
 
-export async function testThemeExtensions(): Promise<ExtensionInstance & ThemeExtension> {
+export async function testThemeExtensions(): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
@@ -105,11 +104,12 @@ interface TestFunctionExtensionOptions {
   dir?: string
   config?: FunctionConfigType
   entryPath?: string
+  usingExtensionFramework?: boolean
 }
 
 export async function testFunctionExtension(
   opts: TestFunctionExtensionOptions = {},
-): Promise<ExtensionInstance & FunctionExtension> {
+): Promise<ExtensionInstance<FunctionConfigType>> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
@@ -123,6 +123,7 @@ export async function testFunctionExtension(
     directory,
     specification,
   })
+  extension.usingExtensionsFramework = opts.usingExtensionFramework ?? false
   return extension
 }
 

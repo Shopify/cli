@@ -6,7 +6,7 @@ import {
 } from './store.js'
 import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
-import {UIExtension} from '../../../../models/app/extensions.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
@@ -251,7 +251,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, {hidden: true})
@@ -278,7 +278,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
@@ -309,7 +309,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions)
@@ -334,7 +334,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as UIExtension
+      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
       const onUpdateSpy = vi.fn()
 
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
@@ -353,7 +353,7 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '789', updated: 'extension'} as unknown as UIExtension
+      const updatedExtension = {devUUID: '789', updated: 'extension'} as unknown as ExtensionInstance
       const onUpdateSpy = vi.fn()
       const initialRawPayload = extensionsPayloadStore.getRawPayload()
 
