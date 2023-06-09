@@ -8,6 +8,7 @@ import {
   renderLinks,
   validThemeDirectory,
 } from '../../services/dev.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -113,13 +114,16 @@ export default class Dev extends ThemeCommand {
     const store = ensureThemeStore(flags)
     const adminSession = await refreshTokens(store, flags.password)
 
-    if (!flags.theme) {
+    if (flags.theme) {
+      const filter = {filter: {theme: flags.theme}}
+      const theme = await findOrSelectTheme(adminSession, filter)
+
+      flags = {...flags, theme: theme.id.toString()}
+    } else {
       const theme = await new DevelopmentThemeManager(adminSession).findOrCreate()
-      flags = {
-        ...flags,
-        theme: theme.id.toString(),
-        'overwrite-json': Boolean(flags['theme-editor-sync']) && theme.createdAtRuntime,
-      }
+      const overwriteJson = flags['theme-editor-sync'] && theme.createdAtRuntime
+
+      flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
