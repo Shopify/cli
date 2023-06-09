@@ -13,8 +13,8 @@ describe('getUIExtensionPayload', () => {
   test('returns the right payload', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputBundlePath = joinPath(tmpDir, 'main.js')
-      await touchFile(outputBundlePath)
+      const outputPath = joinPath(tmpDir, 'main.js')
+      await touchFile(outputPath)
       const signal: any = vi.fn()
       const stdout: any = vi.fn()
       const stderr: any = vi.fn()
@@ -24,7 +24,7 @@ describe('getUIExtensionPayload', () => {
       })
 
       const uiExtension = await testUIExtension({
-        outputBundlePath,
+        outputPath,
         directory: tmpDir,
         configuration: {
           name: 'test-ui-extension',

@@ -176,6 +176,7 @@ const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
         value: zod.string(),
         key: zod.string().length(1).optional(),
         group: zod.string().optional(),
+        disabled: zod.boolean().optional(),
       }),
     ),
     defaultValue: zod.string().optional(),

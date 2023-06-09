@@ -24,12 +24,16 @@ export async function fetchExtensionTemplates(
     token,
     {apiKey},
   )
-  const localTemplates = localExtensionTemplates(availableSpecifications)
-  return remoteTemplates.templateSpecifications.concat(localTemplates)
+  const allTemplates = remoteTemplates.templateSpecifications.concat(localExtensionTemplates())
+  return allTemplates.filter(
+    (template) =>
+      availableSpecifications.includes(template.identifier) ||
+      availableSpecifications.includes(template.types[0]!.type),
+  )
 }
 
-export function localExtensionTemplates(availableSpecifications: string[]): ExtensionTemplate[] {
-  const allLocalTemplates = [
+export function localExtensionTemplates(): ExtensionTemplate[] {
+  return [
     themeExtension,
     checkoutPostPurchaseExtension,
     checkoutUIExtension,
@@ -40,9 +44,4 @@ export function localExtensionTemplates(availableSpecifications: string[]): Exte
     UIExtension,
     webPixelUIExtension,
   ]
-  return allLocalTemplates.filter(
-    (template) =>
-      availableSpecifications.includes(template.identifier) ||
-      availableSpecifications.includes(template.types[0]!.type),
-  )
 }
