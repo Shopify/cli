@@ -2,6 +2,7 @@
 require "base64"
 require "json"
 require "shopify_cli/theme/extension/dev_server"
+require "shopify_cli/theme/ignore_filter"
 
 module Extension
   module Models
@@ -25,6 +26,7 @@ module Extension
         end
 
         def config(context)
+          @ignore_filter ||= ShopifyCLI::Theme::IgnoreFilter.from_path(context.root)
           current_size = 0
           current_liquid_size = 0
           Dir.chdir(context.root) do
@@ -90,12 +92,29 @@ module Extension
           ShopifyCLI::Theme::Extension::DevServer.start(@ctx, root, **properties)
         end
 
+        def ignore_path?(path)
+          is_ignored = ignored_by_ignore_filter?(path)
+
+          if is_ignored && @ctx
+            @ctx.debug("ignore #{path}")
+          end
+
+          is_ignored
+        end
+
         private
+
+        def ignored_by_ignore_filter?(path)
+          @ignore_filter&.ignore?(path)
+        end
 
         def validate(filename)
           dirname = File.dirname(filename)
           # Skip files in the root of the directory tree
           return false if dirname == "."
+
+          # Skip files that are ignored by the ignore filter
+          return false if ignore_path?(filename)
 
           unless SUPPORTED_BUCKETS.include?(dirname)
             raise Extension::Errors::InvalidFilenameError, "Invalid directory: #{dirname}"
