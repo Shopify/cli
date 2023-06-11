@@ -287,7 +287,7 @@ function SelectInputInner<T>(
               <Text dimColor>
                 {infoMessage
                   ? infoMessage
-                  : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
+                  : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
               </Text>
               {hasMorePages ? (
                 <Text>

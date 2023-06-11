@@ -116,7 +116,7 @@ function SelectPrompt<T>({
             items={choices}
             infoMessage={
               submitWithShortcuts
-                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm`
+                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm.`
                 : undefined
             }
             availableLines={availableLines}
