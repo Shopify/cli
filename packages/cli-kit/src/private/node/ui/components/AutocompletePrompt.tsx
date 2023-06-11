@@ -60,11 +60,7 @@ function AutocompletePrompt<T>({
   const [promptAreaHeight, setPromptAreaHeight] = useState(1)
   const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(getAvailableLines())
-  const hasBeenFullscreen = useRef(false)
-  const isFullscreen = stdout && wrapperHeight >= stdout.rows - 1
-  if (isFullscreen) {
-    hasBeenFullscreen.current = true
-  }
+  const isFullscreen = wrapperHeight >= stdout.rows - 1
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -145,11 +141,6 @@ function AutocompletePrompt<T>({
       }, 100)
       paginatedSearch(term)
         .then((result) => {
-          if (searchResults.length !== result.data.length) {
-            if (hasBeenFullscreen.current) {
-              stdout.write(ansiEscapes.clearTerminal)
-            }
-          }
           // while we were waiting for the promise to resolve, the user
           // has emptied the search term, so we want to show the default
           // choices instead
@@ -219,6 +210,7 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
+            initialItems={paginatedInitialChoices}
             enableShortcuts={false}
             emptyMessage="No results found."
             highlightedTerm={searchTerm}

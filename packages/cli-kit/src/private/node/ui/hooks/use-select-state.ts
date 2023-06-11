@@ -218,7 +218,7 @@ export interface UseSelectStateProps<T> {
    * Number of items to display.
    *
    */
-  visibleOptionCount?: number
+  visibleOptionCount: number
 
   /**
    * Options.

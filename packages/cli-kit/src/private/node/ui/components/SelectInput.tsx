@@ -16,6 +16,7 @@ declare module 'react' {
 }
 export interface SelectInputProps<T> {
   items: Item<T>[]
+  initialItems?: Item<T>[]
   onChange?: (item: Item<T> | undefined) => void
   enableShortcuts?: boolean
   focus?: boolean
@@ -114,7 +115,8 @@ function Item<T>({
 // eslint-disable-next-line react/function-component-definition
 function SelectInputInner<T>(
   {
-    items: initialItems,
+    items: rawItems,
+    initialItems,
     onChange,
     enableShortcuts = true,
     focus = true,
@@ -132,19 +134,25 @@ function SelectInputInner<T>(
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
+  initialItems = initialItems || rawItems
   const sortBy = require('lodash/sortBy')
-  const hasAnyGroup = initialItems.some((item) => typeof item.group !== 'undefined')
-  const items = sortBy(initialItems, 'group') as Item<T>[]
+  const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
+  const items = sortBy(rawItems, 'group') as Item<T>[]
   const itemsWithKeys = items.map((item, index) => ({
     ...item,
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
 
-  // Calculate a safe estimate of the limit needed based on the space available
-  const numberOfGroups = new Set(items.map((item) => item.group)).size
-  const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups))
-  // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
-  const maxLinesLostToGroups = numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
+  const maximumLinesLostToGroups = function(items: Item<T>[]): number {
+    // Calculate a safe estimate of the limit needed based on the space available
+    const numberOfGroups = new Set(items.map((item) => item.group)).size
+    const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups))
+    // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
+    return numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
+  }
+
+  const maxLinesLostToGroups = maximumLinesLostToGroups(items)
+
   const limit = Math.max(2, availableLines - maxLinesLostToGroups)
   const hasLimit = items.length > limit
 
@@ -173,8 +181,8 @@ function SelectInputInner<T>(
 
   const handleShortcuts = useCallback(
     (input: string) => {
-      if (state.visibleOptions.map((item) => item.key).includes(input)) {
-        const itemWithKey = state.visibleOptions.find((item) => item.key === input)
+      if (state.visibleOptions.map((item: Item<T>) => item.key).includes(input)) {
+        const itemWithKey = state.visibleOptions.find((item: Item<T>) => item.key === input)
         const item = items.find((item) => item.value === itemWithKey?.value)
 
         if (itemWithKey && !itemWithKey.disabled) {
@@ -239,14 +247,8 @@ function SelectInputInner<T>(
         <Text color="red">{errorMessage}</Text>
       </Box>
     )
-  } else if (items.length === 0) {
-    return (
-      <Box marginLeft={3}>
-        <Text dimColor>{emptyMessage}</Text>
-      </Box>
-    )
   } else {
-    const optionsHeight = items.length + maxLinesLostToGroups
+    const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
     const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
@@ -255,7 +257,7 @@ function SelectInputInner<T>(
           height={Math.max(minHeight, Math.min(availableLines, optionsHeight))}
           overflowY="hidden"
         >
-          {state.visibleOptions.map((item, index) => (
+          {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
             <Item
               key={item.key}
               item={item}
@@ -269,20 +271,27 @@ function SelectInputInner<T>(
           ))}
         </Box>
 
-        <Box marginTop={1} marginLeft={3} flexDirection="column">
-          {hasMorePages ? (
-            <Text>
-              <Text bold>1-{items.length} of many</Text>
-              {morePagesMessage ? `  ${morePagesMessage}` : null}
-            </Text>
-          ) : null}
-          {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
-          <Text dimColor>
-            {infoMessage
-              ? infoMessage
-              : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
-          </Text>
-        </Box>
+        {
+          items.length === 0 ?
+            <Box marginTop={1} marginLeft={3} height={2}>
+              <Text dimColor>{emptyMessage}</Text>
+            </Box> :
+
+            <Box marginTop={1} marginLeft={3} flexDirection="column">
+              <Text dimColor>
+                {infoMessage
+                  ? infoMessage
+                  : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
+              </Text>
+              {hasMorePages ? (
+                <Text>
+                  <Text bold>1-{items.length} of many</Text>
+                  {morePagesMessage ? `  ${morePagesMessage}` : null}
+                </Text>
+              ) : null}
+              {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
+            </Box>
+        }
       </Box>
     )
   }
