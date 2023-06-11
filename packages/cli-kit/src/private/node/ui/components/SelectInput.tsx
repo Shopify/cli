@@ -149,8 +149,9 @@ function SelectInputInner<T>(
 
   const maximumLinesLostToGroups = function(items: Item<T>[]): number {
     // Calculate a safe estimate of the limit needed based on the space available
-    const numberOfGroups = new Set(items.map((item) => item.group)).size
-    const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups))
+    const numberOfGroups = new Set(items.map((item) => item.group).filter((group) => group)).size
+    // Add 1 to numberOfGroups because we also have a default Other group
+    const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups + 1))
     // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
     return numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
   }
