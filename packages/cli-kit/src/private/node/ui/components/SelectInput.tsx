@@ -65,6 +65,7 @@ interface ItemProps<T> {
   highlightedTerm?: string
   enableShortcuts: boolean
   hasAnyGroup: boolean
+  maxKeyLength: number
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -76,6 +77,7 @@ function Item<T>({
   enableShortcuts,
   items,
   hasAnyGroup,
+  maxKeyLength,
 }: ItemProps<T>): JSX.Element {
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
@@ -104,9 +106,11 @@ function Item<T>({
         </Box>
       ) : null}
 
-      <Box key={item.key} marginLeft={2}>
-        <Box marginRight={1} marginLeft={1}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={labelColor}>{enableShortcuts ? `${item.key.toString().length == 1 ? ' ' : ''}(${item.key}) ${label}` : label}</Text>
+      <Box key={item.key} marginLeft={hasAnyGroup ? 3 : 0}>
+        <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
+        <Box marginLeft={enableShortcuts ? maxKeyLength - item.key.length : 0}>
+          <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        </Box>
       </Box>
     </Box>
   )
@@ -249,6 +253,7 @@ function SelectInputInner<T>(
     )
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
+    const maxKeyLength = initialItems.map((item) => item.key?.length ?? 0).reduce((a, b) => Math.max(a, b), 0)
     const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
@@ -267,6 +272,7 @@ function SelectInputInner<T>(
               items={state.visibleOptions}
               enableShortcuts={enableShortcuts}
               hasAnyGroup={hasAnyGroup}
+              maxKeyLength={maxKeyLength}
             />
           ))}
         </Box>
