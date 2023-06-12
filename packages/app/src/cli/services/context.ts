@@ -21,14 +21,28 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateQuery,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../api/graphql/development_preview.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {
+  outputContent,
+  outputInfo,
+  outputToken,
+  formatPackageManagerCommand,
+  outputNewline,
+  outputCompleted,
+  outputWarn,
+} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -181,6 +195,8 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     storeFqdn: selectedStore?.shopDomain,
     orgId,
   })
+
+  await enableDeveloperPreview(selectedApp, token)
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
     const packageManager = await getPackageManager(options.directory)
@@ -537,4 +553,46 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
     partner_id: tryParseInt(env.partnersApp.organizationId),
     api_key: env.identifiers.app,
   }))
+}
+
+export async function enableDeveloperPreview(app: OrganizationApp, token: string) {
+  return developerPreviewUpdate(app, token, true)
+}
+
+export async function disableDeveloperPreview(app: OrganizationApp, token: string) {
+  return developerPreviewUpdate(app, token, false)
+}
+
+async function developerPreviewUpdate(app: OrganizationApp, token: string, enabled: boolean) {
+  if (!app.betas?.unifiedAppDeployment) return
+
+  const tasks = [
+    {
+      title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
+      task: async () => {
+        const query = DevelopmentStorePreviewUpdateQuery
+        const variables: DevelopmentStorePreviewUpdateInput = {
+          input: {
+            apiKey: app.apiKey,
+            enabled,
+          },
+        }
+        const result: DevelopmentStorePreviewUpdateSchema = await partnersRequest(query, token, variables)
+
+        if (
+          result.developmentStorePreviewUpdate.userErrors?.length > 0 ||
+          result.developmentStorePreviewUpdate.app.developmentStorePreviewEnabled !== enabled
+        ) {
+          outputWarn(
+            `Unable to ${enabled ? 'enable' : 'disable'} developer preview. Please, access partners dashboard to ${
+              enabled ? 'enable' : 'disable'
+            } it.`,
+          )
+        }
+      },
+    },
+  ]
+  await renderTasks(tasks)
+  outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
+  outputNewline()
 }
