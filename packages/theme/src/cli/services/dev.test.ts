@@ -13,6 +13,7 @@ describe('dev', () => {
     const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
     const options = {
       adminSession,
+      storefrontToken: 'my-storefront-token',
       directory: 'my-directory',
       store: 'my-store',
       theme: '123',
@@ -26,6 +27,7 @@ describe('dev', () => {
     expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
       store: 'my-store',
       adminToken: undefined,
+      storefrontToken: undefined,
     })
   })
 
@@ -34,6 +36,7 @@ describe('dev', () => {
     const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
     const options = {
       adminSession,
+      storefrontToken: 'my-storefront-token',
       directory: 'my-directory',
       store: 'my-store',
       theme: '123',
@@ -48,6 +51,7 @@ describe('dev', () => {
     expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
       store: 'my-store',
       adminToken: 'my-token',
+      storefrontToken: 'my-storefront-token',
     })
   })
 })
@@ -110,14 +114,6 @@ describe('showDeprecationWarnings', () => {
 })
 
 describe('refreshTokens', () => {
-  test('returns the admin token and store', async () => {
-    // When
-    const result = await refreshTokens('my-store', 'my-password')
-
-    // Then
-    expect(result).toEqual({storeFqdn: 'my-store.myshopify.com', token: 'my-password'})
-  })
-
   test('refreshes CLI2 cache with theme token command', async () => {
     // When
     await refreshTokens('my-store', 'my-password')
