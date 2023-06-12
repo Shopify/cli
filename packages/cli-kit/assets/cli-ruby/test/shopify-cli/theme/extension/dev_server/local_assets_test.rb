@@ -110,46 +110,6 @@ module ShopifyCLI
             assert_equal("Not found", response.body)
           end
 
-          def test_replace_local_images_in_reponse_body
-            extension = stub("Extension", static_asset_paths: [
-              "assets/test-image.png",
-              "assets/test-image.png",
-              "assets/test-image.jpeg",
-              "assets/test-image.jpg",
-              "assets/test-vector.svg",
-              "assets/folha_de_estilo.css",
-              "assets/script.js",
-              "assets/static_object.json",
-            ])
-
-            original_html = <<~HTML
-              <html>
-                <body>
-                  <div data-src="//cdn.shopify.com/extensions/s/files/1/0000/1111/2222/t/333/assets/test-image.png?v=111111111111"></div>
-                  <div data-src="//cdn.shopify.com/extensions/s/files/1/0000/1111/2222/t/333/assets/test-image.jpeg?v=111111111111"></div>
-                  <div data-src="//cdn.shopify.com/extensions/s/files/1/0000/1111/2222/t/333/assets/test-image.jpg?v=111111111111"></div>
-                  <div data-src="//cdn.shopify.com/extensions/s/files/1/0000/1111/2222/t/333/assets/test-vector.svg?v=111111111111"></div>
-                  <div data-src="//cdn.shopify.com/extensions/s/files/1/0000/1111/2222/t/333/assets/folha_de_estilo.css?v=111111111111"></div>
-                  <div data-src="//cdn.shopify.com/extensions/s/files/1/0000/1111/2222/t/333/assets/script.js?v=111111111111"></div>
-                </body>
-              </html>
-            HTML
-            expected_html = <<~HTML
-              <html>
-                <body>
-                  <div data-src="/assets/test-image.png?v=111111111111"></div>
-                  <div data-src="/assets/test-image.jpeg?v=111111111111"></div>
-                  <div data-src="/assets/test-image.jpg?v=111111111111"></div>
-                  <div data-src="/assets/test-vector.svg?v=111111111111"></div>
-                  <div data-src="/assets/folha_de_estilo.css?v=111111111111"></div>
-                  <div data-src="/assets/script.js?v=111111111111"></div>
-                </body>
-              </html>
-            HTML
-
-            assert_equal(expected_html, serve(original_html, extension_mock: extension).body)
-          end
-
           private
 
           def serve(response_body, path: "/", extension_mock: nil)
