@@ -3,17 +3,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {selectApp} from '../select-app.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
-export const AppUpdateQuery = gql`
-  mutation appUpdate($apiKey: String!) {
-    appUpdate(input: {apiKey: $apiKey}) {
-      userErrors {
-        message
-        field
-      }
-    }
-  }
-`
+import {AppUpdateQuery} from '../../../api/graphql/push_config.js'
 
 export async function pushConfig(options: any) {
   const token = await ensureAuthenticatedPartners()
