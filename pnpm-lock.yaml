@@ -255,8 +255,8 @@ importers:
         specifier: 3.46.0
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
-        specifier: 3.20.4
-        version: 3.20.4
+        specifier: 3.21.1
+        version: 3.21.1
     devDependencies:
       '@shopify/app':
         specifier: 3.46.0
@@ -13527,10 +13527,10 @@ packages:
       readable-stream: 3.6.2
     dev: false
 
-  /zod-to-json-schema@3.20.4:
-    resolution: {integrity: sha512-Un9+kInJ2Zt63n6Z7mLqBifzzPcOyX+b+Exuzf7L1+xqck9Q2EPByyTRduV3kmSPaXaRer1JCsucubpgL1fipg==}
+  /zod-to-json-schema@3.21.1:
+    resolution: {integrity: sha512-y5g0MPxDq+YG/T+cHGPYH4PcBpyCqwK6wxeJ76MR563y0gk/14HKfebq8xHiItY7lkc9GDFygCnkvNDTvAhYAg==}
     peerDependencies:
-      zod: ^3.20.0
+      zod: ^3.21.4
     dev: false
 
   /zod@3.21.4:
