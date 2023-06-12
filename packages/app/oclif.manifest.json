@@ -56,6 +56,42 @@
       },
       "args": {}
     },
+    "app:config:link": {
+      "id": "app:config:link",
+      "description": "Fetch your app's config from the Partner Dashboard.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+      },
+      "args": {}
+    },
+    "app:config:push": {
+      "id": "app:config:push",
+      "description": "Push your app's config to the Partner Dashboard.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+      },
+      "args": {}
+    },
+    "app:config:use": {
+      "id": "app:config:use",
+      "description": "Set a particular configuration to use.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+      },
+      "args": {}
+    },
     "app:deploy": {
       "id": "app:deploy",
       "description": "Deploy your Shopify app.",
