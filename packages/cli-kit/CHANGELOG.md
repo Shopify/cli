@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.46.4
+
+### Patch Changes
+
+- 11315ec46: Remove image proxying through local server to enable proper functioning of Liquid filters
+
 ## 3.46.3
 
 ### Patch Changes
