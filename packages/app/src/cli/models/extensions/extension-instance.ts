@@ -31,6 +31,7 @@ import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
  *
  * This class holds the public interface to interact with extensions
  */
+
 export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
   entrySourceFilePath: string
   devUUID: string
@@ -250,8 +251,18 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       }
     }
 
+    const uuid = identifiers.extensions[this.localIdentifier]!
+
+    console.log('hey')
+
+    produceFlowExtensionPreview({uuid, type: this.type, outputPath: this.outputPath, configValue})
+
     if (!configValue) return undefined
-    return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
+    return {
+      uuid,
+      config: JSON.stringify(configValue),
+      context: '',
+    }
   }
 }
 
