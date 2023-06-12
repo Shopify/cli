@@ -476,7 +476,7 @@ importers:
         specifier: 17.0.2
         version: 17.0.2
       '@types/semver':
-        specifier: ^7.3.13
+        specifier: ^7.5.0
         version: 7.5.0
       '@vitest/coverage-istanbul':
         specifier: ^0.31.0
