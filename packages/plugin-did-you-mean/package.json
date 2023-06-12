@@ -29,12 +29,12 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "2.1.4",
+    "@oclif/core": "2.8.5",
     "@shopify/cli-kit": "3.47.0-pre.0",
     "n-gram": "2.0.2"
   },
   "devDependencies": {
-    "vite": "^4.3.6",
+    "vite": "^4.3.9",
     "vitest": "^0.31.0"
   },
   "engines": {
