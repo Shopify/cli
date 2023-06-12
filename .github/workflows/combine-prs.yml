@@ -1,5 +1,5 @@
 name: 'Combine PRs'
-
+# Source: https://github.com/hrvey/combine-prs-workflow
 # Controls when the action will run - in this case triggered manually
 on:
   workflow_dispatch:
