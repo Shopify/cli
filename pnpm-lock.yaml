@@ -143,7 +143,7 @@ importers:
         specifier: ^10.7.0
         version: 10.9.1(@types/node@14.18.36)(typescript@4.9.5)
       tslib:
-        specifier: ^2.5.0
+        specifier: ^2.5.2
         version: 2.5.2
       typescript:
         specifier: 4.9.5
