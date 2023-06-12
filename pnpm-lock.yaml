@@ -415,8 +415,8 @@ importers:
         specifier: 7.5.0
         version: 7.5.0
       simple-git:
-        specifier: 3.17.0
-        version: 3.17.0
+        specifier: 3.19.0
+        version: 3.19.0
       source-map-support:
         specifier: 0.5.21
         version: 0.5.21
@@ -888,8 +888,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       simple-git:
-        specifier: 3.17.0
-        version: 3.17.0
+        specifier: 3.19.0
+        version: 3.19.0
       tempy:
         specifier: 3.0.0
         version: 3.0.0
@@ -11472,8 +11472,8 @@ packages:
       - supports-color
     dev: true
 
-  /simple-git@3.17.0:
-    resolution: {integrity: sha512-JozI/s8jr3nvLd9yn2jzPVHnhVzt7t7QWfcIoDcqRIGN+f1IINGv52xoZti2kkYfoRhhRvzMSNPfogHMp97rlw==}
+  /simple-git@3.19.0:
+    resolution: {integrity: sha512-hyH2p9Ptxjf/xPuL7HfXbpYt9gKhC1yWDh3KYIAYJJePAKV7AEjLN4xhp7lozOdNiaJ9jlVvAbBymVlcS2jRiA==}
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
