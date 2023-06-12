@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 3.46.4
+
+### Patch Changes
+
+- 0e3d1c703: Fix session refresh for theme dev without password
+- 11315ec46: Remove image proxying through local server to enable proper functioning of Liquid filters
+- Updated dependencies [11315ec46]
+  - @shopify/cli-kit@3.46.4
+
 ## 3.46.3
 
 ### Patch Changes
