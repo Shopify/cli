@@ -7,6 +7,7 @@ require "shopify_cli/theme/dev_server"
 require "shopify_cli/theme/extension/host_theme"
 require "shopify_cli/theme/syncer"
 require "shopify_cli/theme/notifier"
+require "shopify_cli/theme/ignore_filter"
 
 require_relative "dev_server/local_assets"
 require_relative "dev_server/proxy_param_builder"
@@ -63,7 +64,8 @@ module ShopifyCLI
             ctx,
             extension: extension,
             project: project,
-            specification_handler: specification_handler
+            specification_handler: specification_handler,
+            ignore_filter: ignore_filter
           )
         end
 
@@ -122,6 +124,10 @@ module ShopifyCLI
             .new
             .with_extension(extension)
             .with_syncer(syncer)
+        end
+
+        def ignore_filter
+          @ignore_filter ||= ShopifyCLI::Theme::IgnoreFilter.from_path(root)
         end
 
         def setup_server

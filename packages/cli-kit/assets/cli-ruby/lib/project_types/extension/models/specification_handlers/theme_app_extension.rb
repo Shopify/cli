@@ -3,11 +3,16 @@ require "base64"
 require "json"
 require "shopify_cli/theme/extension/dev_server"
 require "shopify_cli/theme/ignore_filter"
+require "shopify_cli/theme/extension/ignore_helper"
 
 module Extension
   module Models
     module SpecificationHandlers
       class ThemeAppExtension < Default
+        include ShopifyCLI::Theme::Extension::IgnoreHelper
+
+        attr_reader :ignore_filter
+
         SUPPORTED_BUCKETS = %w(assets blocks snippets locales)
         BUNDLE_SIZE_LIMIT = 10 * 1024 * 1024 # 10MB
         LIQUID_SIZE_LIMIT = 100 * 1024 # 100kb
@@ -92,21 +97,7 @@ module Extension
           ShopifyCLI::Theme::Extension::DevServer.start(@ctx, root, **properties)
         end
 
-        def ignore_path?(path)
-          is_ignored = ignored_by_ignore_filter?(path)
-
-          if is_ignored && @ctx
-            @ctx.debug("ignore #{path}")
-          end
-
-          is_ignored
-        end
-
         private
-
-        def ignored_by_ignore_filter?(path)
-          @ignore_filter&.ignore?(path)
-        end
 
         def validate(filename)
           dirname = File.dirname(filename)
