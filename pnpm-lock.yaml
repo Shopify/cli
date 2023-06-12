@@ -564,8 +564,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0(@typescript-eslint/eslint-plugin@5.57.0)(eslint@8.41.0)
       eslint-plugin-vitest:
-        specifier: 0.1.4
-        version: 0.1.4(eslint@8.41.0)(typescript@4.9.5)
+        specifier: 0.2.5
+        version: 0.2.5(eslint@8.41.0)(typescript@4.9.5)
       execa:
         specifier: 5.1.1
         version: 5.1.1
@@ -6993,8 +6993,8 @@ packages:
       eslint: 8.41.0
       eslint-rule-composer: 0.3.0
 
-  /eslint-plugin-vitest@0.1.4(eslint@8.41.0)(typescript@4.9.5):
-    resolution: {integrity: sha512-R3/0Ch8KcQCZqKFfCxw+cQvUPdoQ6YF7yXV5/NZ9trQqoFDTUzu0vBYPSTJ7T8FLKi3nccR6ZsUvIBD2G0MXYg==}
+  /eslint-plugin-vitest@0.2.5(eslint@8.41.0)(typescript@4.9.5):
+    resolution: {integrity: sha512-b15PJg7pzGd2X/RK6yRIHhA0sPJnjwNHytMFpqL8Xhil4C7sMz3bVhsTSisBsZR7AvYcJZotVgwQoVGgk8Sm3Q==}
     engines: {node: 14.x || >= 16}
     peerDependencies:
       eslint: '>=8.0.0'
@@ -13564,7 +13564,7 @@ packages:
       eslint-plugin-react-hooks: 4.6.0(eslint@8.41.0)
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unused-imports: 2.0.0(@typescript-eslint/eslint-plugin@5.57.0)(eslint@8.41.0)
-      eslint-plugin-vitest: 0.1.4(eslint@8.41.0)(typescript@4.9.5)
+      eslint-plugin-vitest: 0.2.5(eslint@8.41.0)(typescript@4.9.5)
       execa: 5.1.1
     transitivePeerDependencies:
       - eslint-import-resolver-node
