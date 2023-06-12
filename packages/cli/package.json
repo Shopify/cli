@@ -95,7 +95,7 @@
   },
   "dependencies": {
     "@oclif/core": "2.8.5",
-    "@oclif/plugin-commands": "2.2.13",
+    "@oclif/plugin-commands": "2.2.15",
     "@oclif/plugin-help": "5.2.9",
     "@oclif/plugin-plugins": "2.4.7",
     "@shopify/cli-kit": "3.47.0-pre.0",
@@ -106,7 +106,7 @@
     "@shopify/app": "3.47.0-pre.0",
     "@shopify/theme": "3.47.0-pre.0",
     "@types/node": "14.18.36",
-    "@vitest/coverage-istanbul": "^0.31.0",
+    "@vitest/coverage-istanbul": "^0.31.4",
     "vite": "^4.3.9",
     "vitest": "^0.31.0"
   },
