@@ -1,12 +1,11 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {dev, showDeprecationWarnings} from '../../services/dev.js'
+import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -104,8 +103,7 @@ export default class Dev extends ThemeCommand {
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
 
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password, [], true)
-    const storefrontToken = await ensureAuthenticatedStorefront([], flags.password)
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
 
     if (flags.theme) {
       const filter = {filter: {theme: flags.theme}}
@@ -125,7 +123,7 @@ export default class Dev extends ThemeCommand {
       adminSession,
       storefrontToken,
       directory: flags.path,
-      store: ensureThemeStore(flags),
+      store,
       password: flags.password,
       theme: flags.theme!,
       host: flags.host,
