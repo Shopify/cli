@@ -295,8 +295,8 @@ importers:
         specifier: 3.0.0
         version: 3.0.0
       ansi-escapes:
-        specifier: 6.0.0
-        version: 6.0.0
+        specifier: 6.2.0
+        version: 6.2.0
       archiver:
         specifier: 5.3.1
         version: 5.3.1
@@ -4891,8 +4891,8 @@ packages:
       type-fest: 1.4.0
     dev: false
 
-  /ansi-escapes@6.0.0:
-    resolution: {integrity: sha512-IG23inYII3dWlU2EyiAiGj6Bwal5GzsgPMwjYGvc1HPE2dgbj4ZB5ToWBKSquKw74nB3TIuOwaI6/jSULzfgrw==}
+  /ansi-escapes@6.2.0:
+    resolution: {integrity: sha512-kzRaCqXnpzWs+3z5ABPQiVke+iq0KXkHo8xiWV4RPTi5Yli0l97BEQuhXV1s7+aSU/fu1kUuxgS4MsQ0fRuygw==}
     engines: {node: '>=14.16'}
     dependencies:
       type-fest: 3.11.0
@@ -8208,7 +8208,7 @@ packages:
         optional: true
     dependencies:
       '@types/react': 17.0.2
-      ansi-escapes: 6.0.0
+      ansi-escapes: 6.2.0
       auto-bind: 5.0.1
       chalk: 5.2.0
       cli-boxes: 3.0.0
