@@ -8,6 +8,7 @@ export const AppDeploymentsQuery = gql`
       deployments {
         nodes {
           createdAt
+          distributionPercentage
           createdBy {
             displayName
           }
@@ -31,6 +32,7 @@ export interface AppDeploymentsQuerySchema {
     deployments: {
       nodes: {
         createdAt: string
+        distributionPercentage: number
         createdBy?: {
           displayName?: string
         }

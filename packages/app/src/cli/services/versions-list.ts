@@ -26,7 +26,10 @@ async function fetchDeployments(
   const deployments = res.app.deployments.nodes.map((deployment) => {
     return {
       ...deployment,
-      status: deployment.status === 'active' ? colors.green(`★ ${deployment.status}`) : deployment.status,
+      status:
+        deployment.status === 'active'
+          ? colors.green(`★ ${deployment.status} (${deployment.distributionPercentage})`)
+          : deployment.status,
       createdBy: deployment.createdBy?.displayName ?? '',
     }
   })
