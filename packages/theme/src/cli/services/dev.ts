@@ -3,6 +3,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {access} from 'node:fs/promises'
 
 const DEFAULT_HOST = '127.0.0.1'
@@ -13,6 +14,7 @@ const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
 
 export interface DevOptions {
   adminSession: AdminSession
+  storefrontToken: string
   directory: string
   store: string
   password?: string
@@ -32,7 +34,13 @@ export async function dev(options: DevOptions) {
 
   renderLinks(options.store, options.theme, options.host, options.port)
 
-  if (!options.password) {
+  let adminToken: string | undefined = options.adminSession.token
+  let storefrontToken: string | undefined = options.storefrontToken
+
+  if (!options.password && useEmbeddedThemeCLI()) {
+    adminToken = undefined
+    storefrontToken = undefined
+
     setInterval(() => {
       outputDebug('Refreshing theme session tokens...')
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -40,8 +48,7 @@ export async function dev(options: DevOptions) {
     }, THEME_REFRESH_TIMEOUT_IN_MS)
   }
 
-  const adminToken = options.password ? options.adminSession.token : undefined
-  await execCLI2(command, {store: options.store, adminToken})
+  await execCLI2(command, {store: options.store, adminToken, storefrontToken})
 }
 
 export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST, port = DEFAULT_PORT) {
@@ -128,5 +135,4 @@ export async function refreshTokens(store: string, password: string | undefined)
   const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
   const storefrontToken = await ensureAuthenticatedStorefront([], password)
   await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
-  return adminSession
 }
