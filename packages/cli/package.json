@@ -94,7 +94,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "2.1.4",
+    "@oclif/core": "2.8.5",
     "@oclif/plugin-commands": "2.2.13",
     "@oclif/plugin-help": "5.2.9",
     "@oclif/plugin-plugins": "2.4.7",
