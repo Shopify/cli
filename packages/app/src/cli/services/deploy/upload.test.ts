@@ -1,16 +1,13 @@
-import {
-  deploymentErrorsToCustomSections,
-  uploadExtensionsBundle,
-  uploadFunctionExtensions,
-  functionConfiguration,
-} from './upload.js'
+import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {FunctionExtension} from '../../models/app/extensions.js'
 import {
   UploadUrlGenerateMutation,
   UploadUrlGenerateMutationSchema,
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -26,14 +23,14 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/crypto')
 
 describe('uploadFunctionExtensions', () => {
-  let extension: FunctionExtension
+  let extension: ExtensionInstance<FunctionConfigType>
   let identifiers: Identifiers
   let token: string
 
-  beforeEach(() => {
-    extension = {
-      directory: '/function',
-      configuration: {
+  beforeEach(async () => {
+    extension = await testFunctionExtension({
+      dir: '/my-function',
+      config: {
         name: 'function',
         type: 'order_discounts',
         description: 'my function',
@@ -58,21 +55,8 @@ describe('uploadFunctionExtensions', () => {
         },
         metafields: [],
       },
-      configurationPath: '/function/shopify.function.extension.toml',
-      buildWasmPath: '/function/dist/index.wasm',
-      inputQueryPath: '/function/input.graphql',
-      publishURL: (_) => Promise.resolve(''),
-      deployConfig: () => Promise.resolve({}),
-      isJavaScript: false,
-      buildCommand: 'make build',
-      externalType: 'order_discounts',
-      idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
-      localIdentifier: 'my-function',
-      type: 'order_discounts',
-      graphQLType: 'order_discounts',
-      features: [],
-      usingExtensionsFramework: false,
-    }
+    })
+
     token = 'token'
     identifiers = {
       app: 'api=key',
@@ -84,8 +68,8 @@ describe('uploadFunctionExtensions', () => {
   test('throws an error if the request to return the url errors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLError = new Error('upload error')
       vi.mocked(functionProxyRequest).mockRejectedValueOnce(uploadURLError)
 
@@ -101,8 +85,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -129,8 +113,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -169,8 +153,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -209,8 +193,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -247,8 +231,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -285,8 +269,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -313,8 +297,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -368,8 +352,8 @@ describe('uploadFunctionExtensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -436,8 +420,8 @@ describe('uploadFunctionExtensions', () => {
       // Given
       const uploadUrl = `test://test.com/moduleId.wasm`
       const createdID = 'ulid'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -500,8 +484,8 @@ describe('uploadFunctionExtensions', () => {
       extension.configuration.ui!.paths = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -554,8 +538,8 @@ describe('uploadFunctionExtensions', () => {
       extension.configuration.input = undefined
 
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -606,8 +590,8 @@ describe('uploadFunctionExtensions', () => {
       extension.configuration.ui!.enable_create = false
 
       const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -665,8 +649,8 @@ describe('uploadFunctionExtensions', () => {
       identifiers.extensions[extension.localIdentifier] = existingID
       const uploadUrl = `test://test.com/moduleId.wasm`
       const updatedID = 'ulid'
-      extension.buildWasmPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.buildWasmPath, '')
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
       const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         data: {
           uploadUrlGenerate: {
@@ -1263,127 +1247,5 @@ describe('deploymentErrorsToCustomSections', () => {
         },
       },
     ])
-  })
-})
-
-describe('functionConfiguration', () => {
-  let extension: FunctionExtension
-  let identifiers: Identifiers
-  let token: string
-
-  beforeEach(() => {
-    extension = {
-      directory: '/function',
-      configuration: {
-        name: 'function',
-        type: 'order_discounts',
-        metafields: [],
-        description: 'my function',
-        build: {
-          command: 'make build',
-          path: 'dist/index.wasm',
-        },
-        ui: {
-          paths: {
-            create: '/create',
-            details: '/details/:id',
-          },
-          enable_create: true,
-        },
-        configurationUi: false,
-        apiVersion: '2022-07',
-        input: {
-          variables: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-      },
-      configurationPath: '/function/shopify.function.extension.toml',
-      buildWasmPath: '/function/dist/index.wasm',
-      inputQueryPath: 'input.graphql',
-      publishURL: (_) => Promise.resolve(''),
-      deployConfig: () => Promise.resolve({}),
-      isJavaScript: false,
-      buildCommand: 'make build',
-      externalType: 'order_discounts',
-      idEnvironmentVariableName: 'SHOPIFY_FUNCTION_ID',
-      localIdentifier: 'my-function',
-      type: 'order_discounts',
-      graphQLType: 'order_discounts',
-      usingExtensionsFramework: false,
-      features: [],
-    }
-    token = 'token'
-    identifiers = {
-      app: 'api=key',
-      extensions: {},
-      extensionIds: {},
-    }
-  })
-
-  test('returns a snake_case object with all possible fields', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const moduleId = 'module_id'
-      const appKey = 'app-key'
-      const inputQuery = 'inputQuery'
-      extension.inputQueryPath = joinPath(tmpDir, extension.inputQueryPath)
-      await writeFile(extension.inputQueryPath, inputQuery)
-
-      // When
-      const got = await functionConfiguration(extension, moduleId, appKey)
-
-      // Then
-      expect(got).toEqual({
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        app_key: appKey,
-        api_type: 'order_discounts',
-        api_version: extension.configuration.apiVersion,
-        ui: {
-          app_bridge: {
-            details_path: extension.configuration.ui!.paths!.details,
-            create_path: extension.configuration.ui!.paths!.create,
-          },
-        },
-        input_query: inputQuery,
-        input_query_variables: {
-          single_json_metafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        enable_creation_ui: true,
-        module_id: moduleId,
-      })
-    })
-  })
-
-  test('returns a snake_case object with only required fields', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const moduleId = 'module_id'
-      const appKey = 'app-key'
-      extension.configuration.input = undefined
-      extension.configuration.ui = undefined
-
-      // When
-      const got = await functionConfiguration(extension, moduleId, appKey)
-
-      // Then
-      expect(got).toEqual({
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        app_key: appKey,
-        api_type: 'order_discounts',
-        api_version: extension.configuration.apiVersion,
-        module_id: moduleId,
-        enable_creation_ui: true,
-        input_query: undefined,
-        input_query_variabels: undefined,
-        ui: undefined,
-      })
-    })
   })
 })

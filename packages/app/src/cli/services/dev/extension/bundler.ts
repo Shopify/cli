@@ -36,7 +36,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
     bundlers.push(
       bundleExtension({
         minify: false,
-        outputBundlePath: extension.outputBundlePath,
+        outputPath: extension.outputPath,
         environment: 'development',
         env: {
           ...(options.devOptions.app.dotenv?.variables ?? {}),
@@ -135,7 +135,7 @@ export async function setupDraftableExtensionBundler({
 }: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
-    outputBundlePath: extension.outputBundlePath,
+    outputPath: extension.outputPath,
     environment: 'development',
     env: {
       ...(app.dotenv?.variables ?? {}),

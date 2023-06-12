@@ -19,7 +19,7 @@ import {capitalize} from '@shopify/cli-kit/common/string'
  */
 export async function findOrSelectTheme(
   session: AdminSession,
-  options: {header: string; filter: FilterProps; developmentTheme?: number},
+  options: {header?: string; filter: FilterProps; developmentTheme?: number},
 ) {
   const themes = await fetchStoreThemes(session)
   const filter = new Filter(options.filter)
@@ -30,7 +30,7 @@ export async function findOrSelectTheme(
   }
 
   return renderSelectPrompt({
-    message: options.header,
+    message: options.header ?? '',
     choices: themes.map((theme) => {
       const yoursLabel = theme.id.toString() === getDevelopmentTheme() ? ' [yours]' : ''
 

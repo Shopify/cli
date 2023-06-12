@@ -21,7 +21,6 @@ import {
 } from '../utilities/app/http-reverse-proxy.js'
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {UIExtension} from '../models/app/extensions.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -48,6 +47,7 @@ import {
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -83,7 +83,10 @@ async function dev(options: DevOptions) {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
 
-  let tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+  let tunnelClient: TunnelClient | undefined
+  if (!options.tunnelUrl) {
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+  }
 
   const token = await ensureAuthenticatedPartners()
   const {
@@ -94,9 +97,9 @@ async function dev(options: DevOptions) {
     useCloudflareTunnels,
   } = await ensureDevContext(options, token)
 
-  if (!useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+  if (!options.tunnelUrl && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
-    tunnelClient.stopTunnel()
+    tunnelClient?.stopTunnel()
     tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
   }
 
@@ -412,7 +415,7 @@ interface DevUIExtensionsTargetOptions {
   id?: string
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
-  extensions: UIExtension[]
+  extensions: ExtensionInstance[]
 }
 
 async function devUIExtensionsTarget({
@@ -514,7 +517,7 @@ export function devDraftableExtensionTarget({
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-async function buildCartURLIfNeeded(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
+async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl

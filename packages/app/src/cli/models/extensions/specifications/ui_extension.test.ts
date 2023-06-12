@@ -183,7 +183,7 @@ Please check the configuration in ${tomlPath}`),
         })
 
         // When
-        const deployConfig = await uiExtension.deployConfig()
+        const deployConfig = await uiExtension.deployConfig('apiKey')
 
         // Then
         expect(loadLocales.loadLocalesConfig).toBeCalledWith(tmpDir, uiExtension.configuration.type)

@@ -1,8 +1,8 @@
 import {outputEnv} from './app/env/show.js'
 import {CachedAppInfo, getAppInfo} from './local-storage.js'
 import {AppInterface} from '../models/app/app.js'
-import {FunctionExtension, ThemeExtension, UIExtension} from '../models/app/extensions.js'
 import {configurationFileNames} from '../constants.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {linesToColumns} from '@shopify/cli-kit/common/string'
@@ -132,9 +132,7 @@ class AppInfo {
       })
     }
 
-    augmentWithExtensions(this.app.extensions.ui, this.uiExtensionSubSection.bind(this))
-    augmentWithExtensions(this.app.extensions.theme, this.themeExtensionSubSection.bind(this))
-    augmentWithExtensions(this.app.extensions.function, this.functionExtensionSubSection.bind(this))
+    augmentWithExtensions(this.app.allExtensions, this.extensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
@@ -167,7 +165,7 @@ class AppInfo {
     return `${subtitle}\n${linesToColumns([toplevel, ...sublevels])}${errorContent}`
   }
 
-  uiExtensionSubSection(extension: UIExtension): string {
+  extensionSubSection(extension: ExtensionInstance): string {
     const config = extension.configuration
     const details = [
       [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
@@ -180,27 +178,7 @@ class AppInfo {
     return `\n${linesToColumns(details)}`
   }
 
-  functionExtensionSubSection(extension: FunctionExtension): string {
-    const config = extension.configuration
-    const details = [
-      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configurationPath)],
-    ]
-
-    return `\n${linesToColumns(details)}`
-  }
-
-  themeExtensionSubSection(extension: ThemeExtension): string {
-    const config = extension.configuration
-    const details = [
-      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configurationPath)],
-    ]
-
-    return `\n${linesToColumns(details)}`
-  }
-
-  invalidExtensionSubSection(extension: UIExtension | FunctionExtension | ThemeExtension): string {
+  invalidExtensionSubSection(extension: ExtensionInstance): string {
     const error = this.app.errors?.getError(extension.configurationPath)
     if (!error) return ''
     const details = [

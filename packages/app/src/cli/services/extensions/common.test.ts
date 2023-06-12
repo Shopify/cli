@@ -3,8 +3,8 @@ import {
   ensureExtensionDirectoryExists,
   ensureLocalExtensionFlavorExists,
 } from './common.js'
-import {ExtensionFlavor} from '../../models/app/extensions.js'
 import {AppInterface} from '../../models/app/app.js'
+import {ExtensionFlavor} from '../../models/app/template.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'

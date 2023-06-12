@@ -1,8 +1,8 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {ExtensionFlavor} from '../app/extensions.js'
 import {blocks, defaultExtensionFlavors} from '../../constants.js'
 
+import {ExtensionFlavor} from '../app/template.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
@@ -29,7 +29,12 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
-  deployConfig?: (config: TConfiguration, directory: string) => Promise<{[key: string]: unknown} | undefined>
+  deployConfig?: (
+    config: TConfiguration,
+    directory: string,
+    apiKey: string,
+    moduleId?: string,
+  ) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>

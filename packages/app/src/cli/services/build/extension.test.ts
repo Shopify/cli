@@ -1,7 +1,8 @@
 import {buildFunctionExtension} from './extension.js'
-import {FunctionExtension} from '../../models/app/extensions.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {buildJSFunction} from '../function/build.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 
@@ -9,7 +10,7 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
 
 describe('buildFunctionExtension', () => {
-  let extension: FunctionExtension
+  let extension: ExtensionInstance<FunctionConfigType>
   let stdout: any
   let stderr: any
   let signal: any
