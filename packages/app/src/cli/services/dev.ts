@@ -1,4 +1,4 @@
-import {ensureDevContext} from './context.js'
+import {disableDeveloperPreview, ensureDevContext} from './context.js'
 import {
   generateFrontendURL,
   generatePartnersURLs,
@@ -34,7 +34,7 @@ import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
@@ -282,10 +282,17 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
+  const abortController = new AbortController()
+  abortController.signal.addEventListener('abort', async () => {
+    await disableDeveloperPreview({...remoteApp, apiSecretKeys: []}, token)
+    tunnelClient?.stopTunnel()
+  })
+
   if (proxyTargets.length === 0) {
     await renderDev(
       {
         processes: additionalProcesses,
+        abortController,
       },
       previewUrl,
     )
@@ -295,6 +302,7 @@ async function dev(options: DevOptions) {
       portNumber: proxyPort,
       proxyTargets,
       additionalProcesses,
+      abortController,
     })
   }
 }
