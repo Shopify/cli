@@ -191,8 +191,8 @@ importers:
         specifier: 1.18.1
         version: 1.18.1
       javy-cli:
-        specifier: 0.1.4
-        version: 0.1.4
+        specifier: 0.1.5
+        version: 0.1.5
       serve-static:
         specifier: 1.15.0
         version: 1.15.0
@@ -8631,8 +8631,8 @@ packages:
       filelist: 1.0.4
       minimatch: 3.1.2
 
-  /javy-cli@0.1.4:
-    resolution: {integrity: sha512-cSafsb8gXP4BnwjpogfU04ZUnbJ/uxPLzIc2dz6VeG70JB3yqdOhlf1r4cXlK7aloijs5vgz70ty4ogC0YEqpw==}
+  /javy-cli@0.1.5:
+    resolution: {integrity: sha512-nWLNLnFP6Ix539d7n+6ahEEMj4z/Ago9W7Po/zHwaDsQ6Vc2zlRNxw7DAZYMxl6juP1w6JsbHAnhkAKd/jg6lw==}
     hasBin: true
     dependencies:
       cachedir: 2.3.0
