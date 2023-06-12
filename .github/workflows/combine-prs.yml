@@ -145,7 +145,7 @@ jobs:
             await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Combined PR',
+              title: 'Dependabot - Combined updates PR',
               head: '${{ github.event.inputs.combineBranchName }}',
               base: baseBranch,
               body: body
