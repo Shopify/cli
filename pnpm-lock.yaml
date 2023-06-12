@@ -207,7 +207,7 @@ importers:
         specifier: ^1.17.11
         version: 1.17.11
       '@types/lodash-es':
-        specifier: ^4.17.6
+        specifier: ^4.17.7
         version: 4.17.7
       '@types/node':
         specifier: 14.18.36

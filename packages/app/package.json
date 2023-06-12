@@ -61,7 +61,7 @@
   "devDependencies": {
     "@types/diff": "^5.0.3",
     "@types/http-proxy": "^1.17.11",
-    "@types/lodash-es": "^4.17.6",
+    "@types/lodash-es": "^4.17.7",
     "@types/node": "14.18.36",
     "@types/serve-static": "^1.15.1",
     "@types/ws": "^8.5.4",
