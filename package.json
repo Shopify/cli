@@ -37,7 +37,7 @@
     "@nrwl/js": "15.9.2",
     "@nrwl/tao": "15.9.2",
     "@nrwl/workspace": "15.9.2",
-    "@octokit/core": "^4.2.0",
+    "@octokit/core": "^4.2.1",
     "@octokit/rest": "^19.0.7",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/typescript-configs": "^5.1.0",
