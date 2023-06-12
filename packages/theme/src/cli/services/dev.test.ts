@@ -114,6 +114,17 @@ describe('showDeprecationWarnings', () => {
 })
 
 describe('refreshTokens', () => {
+  test('returns the admin session and storefront token', async () => {
+    // When
+    const result = await refreshTokens('my-store', 'my-password')
+
+    // Then
+    expect(result).toEqual({
+      adminSession: {storeFqdn: 'my-store.myshopify.com', token: 'my-password'},
+      storefrontToken: 'my-password',
+    })
+  })
+
   test('refreshes CLI2 cache with theme token command', async () => {
     // When
     await refreshTokens('my-store', 'my-password')
