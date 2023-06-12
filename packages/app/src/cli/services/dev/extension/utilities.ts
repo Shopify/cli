@@ -1,4 +1,4 @@
-import {UIExtension} from '../../../models/app/extensions.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 
 import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
 
@@ -7,7 +7,11 @@ import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-v
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-export async function getCartPathFromExtensions(extensions: UIExtension[], store: string, checkoutCartUrl?: string) {
+export async function getCartPathFromExtensions(
+  extensions: ExtensionInstance[],
+  store: string,
+  checkoutCartUrl?: string,
+) {
   const hasUIExtension = extensions.filter((extension) => extension.shouldFetchCartUrl()).length > 0
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl

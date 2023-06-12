@@ -168,7 +168,7 @@ module ShopifyCLI
 
       def middleware_stack
         @app = Proxy.new(ctx, theme, param_builder)
-        @app = CdnFonts.new(@app, theme: theme)
+        @app = CdnFonts.new(ctx, @app, theme: theme)
         @app = LocalAssets.new(ctx, @app, theme)
         @app = HotReload.new(ctx, @app, broadcast_hooks: broadcast_hooks, watcher: watcher, mode: mode,
           script_injector: script_injector)

@@ -201,7 +201,7 @@ describe('NoOrgError', () => {
     const subject = NoOrgError('3')
 
     // When
-    const got = renderFatalError(subject)
+    renderFatalError(subject)
 
     // Then
     expect(mockOutput.error()).toMatchInlineSnapshot(`
@@ -215,7 +215,7 @@ describe('NoOrgError', () => {
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
       │    • Do you have access to the right Shopify Partners organization? The CLI  │
-      │       is loading this organization [2]                                       │
+      │      is loading this organization [2]                                        │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       [1] https://partners.shopify.com/signup

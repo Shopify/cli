@@ -1,4 +1,4 @@
-import {FunctionExtension} from '../../models/app/extensions.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild} from 'esbuild'
@@ -16,7 +16,7 @@ interface JSFunctionBuildOptions {
   useTasks?: boolean
 }
 
-export async function buildJSFunction(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+export async function buildJSFunction(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
   if (options.useTasks) {
     return buildJSFunctionWithTasks(fun, options)
   } else {
@@ -24,7 +24,7 @@ export async function buildJSFunction(fun: FunctionExtension, options: JSFunctio
   }
 }
 
-async function buildJSFunctionWithoutTasks(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+async function buildJSFunctionWithoutTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
   options.stdout.write(`Building GraphQL types...\n`)
   await buildGraphqlTypes(fun, options)
   options.stdout.write(`Bundling JS function...\n`)
@@ -34,7 +34,7 @@ async function buildJSFunctionWithoutTasks(fun: FunctionExtension, options: JSFu
   options.stdout.write(`Done!\n`)
 }
 
-export async function buildJSFunctionWithTasks(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+export async function buildJSFunctionWithTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
   await renderTasks([
     {
       title: 'Building GraphQL types',
@@ -72,7 +72,7 @@ export async function buildGraphqlTypes(
   })
 }
 
-export async function bundleExtension(fun: FunctionExtension, options: JSFunctionBuildOptions) {
+export async function bundleExtension(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -106,8 +106,8 @@ function getESBuildOptions(directory: string, entryPoint: string, userFunction: 
   return esbuildOptions
 }
 
-export async function runJavy(fun: FunctionExtension, options: JSFunctionBuildOptions) {
-  return exec('npm', ['exec', '--', 'javy', 'compile', '-d', '-o', fun.buildWasmPath, 'dist/function.js'], {
+export async function runJavy(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
+  return exec('npm', ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js'], {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
@@ -119,9 +119,9 @@ interface FunctionRunnerOptions {
   json: boolean
 }
 
-export async function runFunctionRunner(fun: FunctionExtension, options: FunctionRunnerOptions) {
+export async function runFunctionRunner(fun: ExtensionInstance, options: FunctionRunnerOptions) {
   const outputAsJson = options.json ? ['--json'] : []
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.buildWasmPath, ...outputAsJson], {
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson], {
     cwd: fun.directory,
     stdin: 'inherit',
     stdout: 'inherit',

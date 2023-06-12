@@ -2,8 +2,7 @@ import {versions} from '../../constants.js'
 import {AppInterface} from '../../models/app/app.js'
 import {buildGraphqlTypes} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
-import {ExtensionFlavor} from '../../models/app/extensions.js'
-import {ExtensionTemplate} from '../../models/app/template.js'
+import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {
   ensureDownloadedExtensionFlavorExists,
   ensureExtensionDirectoryExists,
@@ -13,7 +12,7 @@ import {
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
   DependencyVersion,
-  installNPMDependenciesRecursively,
+  installNodeModules,
   readAndParsePackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
@@ -142,6 +141,11 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
     taskList.push({
       title: 'Installing additional dependencies',
       task: async () => {
+        // We need to run `npm install` once to setup the workspace correctly
+        if (app.usesWorkspaces && app.packageManager === 'npm') {
+          await installNodeModules({packageManager: 'npm', directory: app.directory})
+        }
+
         const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
         await addNPMDependenciesIfNeeded(requiredDependencies, {
           packageManager: app.packageManager,
@@ -201,10 +205,9 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
               directory: app.directory,
             })
           }
-          await installNPMDependenciesRecursively({
+          await installNodeModules({
             packageManager,
             directory: app.directory,
-            deep: 0,
           })
         } else {
           await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)

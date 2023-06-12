@@ -1,10 +1,10 @@
-import {UIExtension} from '../../../../models/app/extensions.js'
+import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
 import {getUIExtensionResourceURL} from '../../../../utilities/extensions/configuration.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
 import {createError, H3Error, ServerResponse, sendError as h3SendError} from 'h3'
 
-export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOptions): string {
+export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
 
   if (extension.surface === 'checkout' && resourceUrl) {
@@ -34,7 +34,7 @@ export function getRedirectUrl(extension: UIExtension, options: ExtensionDevOpti
 
 export function getExtensionPointRedirectUrl(
   requestedTarget: string,
-  extension: UIExtension,
+  extension: ExtensionInstance,
   options: ExtensionDevOptions,
 ): string | undefined {
   const surface = getExtensionPointTargetSurface(requestedTarget)
@@ -59,7 +59,7 @@ export function getExtensionPointRedirectUrl(
   return rawUrl.toString()
 }
 
-export function getExtensionUrl(extension: UIExtension, options: ExtensionDevOptions): string {
+export function getExtensionUrl(extension: ExtensionInstance, options: ExtensionDevOptions): string {
   const extensionUrl = new URL(options.url)
   extensionUrl.pathname = `/extensions/${extension.devUUID}`
   return extensionUrl.toString()

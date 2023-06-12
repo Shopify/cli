@@ -10,18 +10,36 @@ export async function prompts() {
   await renderSelectPrompt({
     message: 'Associate your project with the org Castile Ventures?',
     choices: [
-      {label: 'first', value: 'first', key: 'f'},
+      {label: 'first', value: 'first', key: 'f', disabled: true},
       {label: 'second', value: 'second', key: 's'},
-      {label: 'third', value: 'third'},
-      {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
+      {label: 'third (limit reached)', value: 'third', disabled: true},
+      {label: 'fourth (limit reached)', value: 'fourth', disabled: true},
+      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a', disabled: true},
       {label: 'sixth', value: 'sixth', group: 'Automations'},
       {label: 'seventh', value: 'seventh'},
-      {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
+      {label: 'eighth (limit reached)', value: 'eighth', group: 'Merchant Admin', disabled: true},
       {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
       {label: 'tenth', value: 'tenth'},
     ],
     infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
+  })
+
+  await renderSelectPrompt({
+    message: 'Associate your project with the org Castile Ventures? (using a shortcut will submit)',
+    choices: [
+      {label: 'first', value: 'first', key: 'f'},
+      {label: 'second', value: 'second', key: 's'},
+      {label: 'third (limit reached)', value: 'third', disabled: true},
+      {label: 'fourth (limit reached)', value: 'fourth', disabled: true},
+      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
+      {label: 'sixth', value: 'sixth', group: 'Automations'},
+      {label: 'seventh', value: 'seventh'},
+      {label: 'eighth (limit reached)', value: 'eighth', group: 'Merchant Admin', disabled: true},
+      {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
+      {label: 'tenth', value: 'tenth'},
+    ],
+    infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
+    submitWithShortcuts: true,
   })
 
   // renderTextPrompt

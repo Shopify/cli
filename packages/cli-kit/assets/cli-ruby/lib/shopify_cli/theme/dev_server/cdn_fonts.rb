@@ -6,9 +6,9 @@ module ShopifyCLI
       class CdnFonts
         FONTS_PATH = "/fonts"
         FONTS_CDN = "https://fonts.shopifycdn.com"
-        FONTS_REGEX = %r{#{FONTS_CDN}}
 
-        def initialize(app, theme:)
+        def initialize(ctx, app, theme:)
+          @ctx = ctx
           @app = app
           @theme = theme
         end
@@ -69,7 +69,12 @@ module ShopifyCLI
         end
 
         def replace_font_urls(body)
-          [body.join.gsub(FONTS_REGEX, FONTS_PATH)]
+          fonts_regex = %r{#{FONTS_CDN}|((http:|https:)?//#{shop}/cdn/fonts)}
+          [body.join.gsub(fonts_regex, FONTS_PATH)]
+        end
+
+        def shop
+          @shop ||= ShopifyCLI::Theme::ThemeAdminAPI.new(@ctx).get_shop_or_abort
         end
       end
     end
