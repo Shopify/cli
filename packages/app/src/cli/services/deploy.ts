@@ -43,14 +43,6 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  renderInfo({
-    headline: ['Stay tuned for changes to', {command: 'deploy'}, {char: '.'}],
-    body: "When you upgrade to the late July CLI version, you'll be able to release all your extensions straight from the CLI. To track changes, you'll have a record of each app version you deploy.",
-    reference: [
-      {link: {url: 'https://shopify.dev/docs/apps/deployment/deployments-2.0', label: 'Introducing Deployments 2.0'}},
-    ],
-  })
-
   // eslint-disable-next-line prefer-const
   let {app, identifiers, partnersApp, token} = await ensureDeployContext(options)
   const apiKey = identifiers.app
