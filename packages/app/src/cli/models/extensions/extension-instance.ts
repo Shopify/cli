@@ -10,6 +10,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
+import {produceFlowExtensionPreview} from '../../services/flow/preview.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -252,8 +253,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     const uuid = identifiers.extensions[this.localIdentifier]!
-
-    console.log('hey')
 
     produceFlowExtensionPreview({uuid, type: this.type, outputPath: this.outputPath, configValue})
 

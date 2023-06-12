@@ -55,8 +55,6 @@ const produceFlowExtensionPreview = ({
     return
   }
 
-  console.log({configValue})
-
   let flowExtensionPreviewDestination = ''
   let preview = ''
   const fields = (configValue.fields as {[key: string]: string}[]) || []
