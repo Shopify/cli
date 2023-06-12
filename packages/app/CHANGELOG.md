@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 3.47.0-pre.0
+
+### Patch Changes
+
+- 3a7ad2396: Fix installing function dependencies when using npm with workspaces
+- 48a644c31: Display dev command footer when using no-update or/and no-tunnel
+- 2d91f1988: Add api key to template specifications query
+- 4ded88051: Show extensions as disabled during generation when they have reached their limit
+- 31ec34bc5: Fix app loader error message when not specification is found
+- 330119712: Fix APP_UNINSTALLED webhook triggered on app reset so it also works for frontend-only apps
+- Updated dependencies [ad3894aea]
+- Updated dependencies [ca2461e94]
+- Updated dependencies [4ded88051]
+  - @shopify/cli-kit@3.47.0-pre.0
+  - @shopify/plugin-cloudflare@3.47.0-pre.0
+  - @shopify/plugin-ngrok@3.47.0-pre.0
+
 ## 3.46.0
 
 ### Minor Changes

@@ -50,7 +50,7 @@ env:
   SHOPIFY_CONFIG: debug
   RUBY_VERSION: '3.1.2'
   BUNDLER_VERSION: '2.3.18'
-  PNPM_VERSION: '8.5.1'
+  PNPM_VERSION: '8.6.1'
   BUNDLE_GEMFILE: ${{ github.workspace }}/packages/cli-kit/assets/cli-ruby/Gemfile
   BUNDLE_WITHOUT: 'test:development'
 

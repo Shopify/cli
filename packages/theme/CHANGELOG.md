@@ -1,5 +1,20 @@
 # @shopify/theme
 
+## 3.47.0-pre.0
+
+### Minor Changes
+
+- 0224abe16: Introduce `shopify theme update init` and `shopify theme update check` commands
+
+### Patch Changes
+
+- ad3894aea: Fix an issue in `shopify theme dev` and `shopify app dev` that was affecting image loading on local servers
+- ca2461e94: Fix theme dev re-authentication
+- Updated dependencies [ad3894aea]
+- Updated dependencies [ca2461e94]
+- Updated dependencies [4ded88051]
+  - @shopify/cli-kit@3.47.0-pre.0
+
 ## 3.46.0
 
 ### Minor Changes

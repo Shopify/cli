@@ -33,7 +33,7 @@ const spec = createExtensionSpecification({
     }
   },
   buildValidation: async (extension) => {
-    const bundleSize = await fileSize(extension.outputBundlePath)
+    const bundleSize = await fileSize(extension.outputPath)
     if (bundleSize > BUNDLE_SIZE_LIMIT) {
       const humanReadableBundleSize = `${(bundleSize / kilobytes).toFixed(2)} kB`
       throw new AbortError(

@@ -1,6 +1,6 @@
 /* eslint-disable id-length */
 import {Text} from 'ink'
-import React, {FunctionComponent, useCallback, useLayoutEffect, useRef, useState} from 'react'
+import React, {memo, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import gradient from 'gradient-string'
 
 interface TextAnimationProps {
@@ -17,7 +17,7 @@ function rainbow(text: string, frame: number) {
 /**
  * `TextAnimation` applies a rainbow animation to text.
  */
-const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Element => {
+const TextAnimation = memo(({text}: TextAnimationProps): JSX.Element => {
   const frame = useRef(0)
   const [renderedFrame, setRenderedFrame] = useState(text)
   const timeout = useRef<NodeJS.Timeout>()
@@ -42,6 +42,8 @@ const TextAnimation: FunctionComponent<TextAnimationProps> = ({text}): JSX.Eleme
   }, [renderAnimation])
 
   return <Text>{renderedFrame}</Text>
-}
+})
+
+TextAnimation.displayName = 'TextAnimation'
 
 export {TextAnimation}

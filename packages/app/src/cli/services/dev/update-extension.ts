@@ -3,8 +3,8 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateSchema,
 } from '../../api/graphql/update_draft.js'
-import {UIExtension} from '../../models/app/extensions.js'
 import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -13,7 +13,7 @@ import {outputDebug, OutputMessage} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
-  extension: UIExtension
+  extension: ExtensionInstance
   token: string
   apiKey: string
   registrationId: string
@@ -29,7 +29,7 @@ export async function updateExtensionDraft({
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
-    const content = await readFile(extension.outputBundlePath)
+    const content = await readFile(extension.outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')
   }
@@ -37,7 +37,7 @@ export async function updateExtensionDraft({
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...(await extension.deployConfig()),
+      ...(await extension.deployConfig(apiKey)),
       serialized_script: encodedFile,
     }),
     context: undefined,
@@ -55,7 +55,7 @@ export async function updateExtensionDraft({
 }
 
 interface UpdateExtensionConfigOptions {
-  extension: UIExtension
+  extension: ExtensionInstance
   token: string
   apiKey: string
   registrationId: string

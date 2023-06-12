@@ -1,12 +1,13 @@
+/* eslint-disable @shopify/prefer-module-scope-constants */
 import {automaticMatchmaking} from './id-matching.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {ensureFunctionsIds} from './identifiers-functions.js'
 import {RemoteSource} from './identifiers.js'
 import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {AppInterface} from '../../models/app/app.js'
-import {FunctionExtension} from '../../models/app/extensions.js'
-import {testApp} from '../../models/app/app.test-data.js'
-import {beforeEach, describe, expect, vi, test} from 'vitest'
+import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -31,104 +32,21 @@ const REGISTRATION_B = {
   type: 'ORDER_DISCOUNTS',
 }
 
-const FUNCTION_A: FunctionExtension = {
-  idEnvironmentVariableName: 'FUNCTION_A_ID',
-  localIdentifier: 'FUNCTION_A',
-  configurationPath: '/function/shopify.function.extension.toml',
-  directory: '/function',
-  type: 'product_discounts',
-  graphQLType: 'PRODUCT_DISCOUNTS',
-  configuration: {
-    name: 'FUNCTION A',
-    type: 'product_discounts',
-    description: 'Function',
-    build: {
-      command: 'make build',
-      path: 'dist/index.wasm',
-    },
-    configurationUi: false,
-    apiVersion: '2022-07',
-    metafields: [],
-  },
-  buildCommand: 'make build',
-  buildWasmPath: '/function/dist/index.wasm',
-  inputQueryPath: '/function/input.graphql',
-  isJavaScript: false,
-  externalType: 'function',
-  usingExtensionsFramework: false,
-  features: ['function'],
-  publishURL: (_) => Promise.resolve(''),
-}
+let FUNCTION_A: ExtensionInstance
+let FUNCTION_A_2: ExtensionInstance
+let FUNCTION_B: ExtensionInstance
 
-const FUNCTION_A_2: FunctionExtension = {
-  idEnvironmentVariableName: 'FUNCTION_A_2_ID',
-  localIdentifier: 'FUNCTION_A_2',
-  configurationPath: '/function/shopify.function.extension.toml',
-  directory: '/function',
-  type: 'product_discounts',
-  graphQLType: 'PRODUCT_DISCOUNTS',
-  configuration: {
-    name: 'FUNCTION A 2',
-    type: 'product_discounts',
-    description: 'Function',
-    build: {
-      command: 'make build',
-      path: 'dist/index.wasm',
-    },
-    configurationUi: false,
-    apiVersion: '2022-07',
-    metafields: [],
-  },
-  buildCommand: 'make build',
-  buildWasmPath: '/function/dist/index.wasm',
-  inputQueryPath: '/function/input.graphql',
-  isJavaScript: false,
-  externalType: 'function',
-  usingExtensionsFramework: false,
-  features: ['function'],
-  publishURL: (_) => Promise.resolve(''),
-}
-
-const FUNCTION_B: FunctionExtension = {
-  idEnvironmentVariableName: 'FUNCTION_B_ID',
-  localIdentifier: 'FUNCTION_B',
-  configurationPath: '/function/shopify.function.extension.toml',
-  directory: '/function',
-  type: 'product_discounts',
-  graphQLType: 'PRODUCT_DISCOUNTS',
-  configuration: {
-    name: 'FUNCTION B',
-    type: 'product_discounts',
-    description: 'Function',
-    build: {
-      command: 'make build',
-      path: 'dist/index.wasm',
-    },
-    configurationUi: false,
-    apiVersion: '2022-07',
-    metafields: [],
-  },
-  buildCommand: 'make build',
-  buildWasmPath: '/function/dist/index.wasm',
-  inputQueryPath: '/function/input.graphql',
-  isJavaScript: false,
-  externalType: 'function',
-  usingExtensionsFramework: false,
-  features: ['function'],
-  publishURL: (_) => Promise.resolve(''),
-}
-
-const LOCAL_APP = (functionExtensions: FunctionExtension[]): AppInterface => {
+const LOCAL_APP = (functionExtensions: ExtensionInstance[]): AppInterface => {
   return testApp({
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
     configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
-    extensions: {ui: [], theme: [], function: functionExtensions},
+    allExtensions: functionExtensions,
   })
 }
 
-const options = (functionExtensions: FunctionExtension[], identifiers: any = {}) => {
+const options = (functionExtensions: ExtensionInstance[], identifiers: any = {}) => {
   return {
     app: LOCAL_APP(functionExtensions),
     token: 'token',
@@ -150,6 +68,56 @@ vi.mock('./prompts', async () => {
 })
 vi.mock('./id-matching')
 vi.mock('./id-manual-matching')
+
+beforeAll(async () => {
+  FUNCTION_A = await testFunctionExtension({
+    dir: '/FUNCTION_A',
+    config: {
+      name: 'FUNCTION A',
+      type: 'product_discounts',
+      description: 'Function',
+      build: {
+        command: 'make build',
+        path: 'dist/index.wasm',
+      },
+      configurationUi: false,
+      apiVersion: '2022-07',
+      metafields: [],
+    },
+  })
+
+  FUNCTION_A_2 = await testFunctionExtension({
+    dir: '/FUNCTION_A_2',
+    config: {
+      name: 'FUNCTION A 2',
+      type: 'product_discounts',
+      description: 'Function',
+      build: {
+        command: 'make build',
+        path: 'dist/index.wasm',
+      },
+      configurationUi: false,
+      apiVersion: '2022-07',
+      metafields: [],
+    },
+  })
+
+  FUNCTION_B = await testFunctionExtension({
+    dir: '/FUNCTION_B',
+    config: {
+      name: 'FUNCTION B',
+      type: 'product_discounts',
+      description: 'Function',
+      build: {
+        command: 'make build',
+        path: 'dist/index.wasm',
+      },
+      configurationUi: false,
+      apiVersion: '2022-07',
+      metafields: [],
+    },
+  })
+})
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')

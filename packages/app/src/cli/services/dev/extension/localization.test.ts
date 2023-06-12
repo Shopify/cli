@@ -28,7 +28,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
     type: 'checkout_ui_extension',
     graphQLType: 'graphQLType',
     devUUID: 'dev-uuid',
-    outputBundlePath: `${tmpDir}/dist/main.js`,
+    outputPath: `${tmpDir}/dist/main.js`,
     entrySourceFilePath: `${tmpDir}/dist/main.js`,
   })
   return getLocalization(extension, {...mockOptions, currentLocalizationPayload: currentLocalization})

@@ -15,7 +15,11 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
-import {addNPMDependenciesIfNeeded, addResolutionOrOverride} from '@shopify/cli-kit/node/node-package-manager'
+import {
+  installNodeModules,
+  addNPMDependenciesIfNeeded,
+  addResolutionOrOverride,
+} from '@shopify/cli-kit/node/node-package-manager'
 import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
@@ -28,6 +32,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
     ...actual,
     addNPMDependenciesIfNeeded: vi.fn(),
     addResolutionOrOverride: vi.fn(),
+    installNodeModules: vi.fn(),
   }
 })
 
@@ -50,7 +55,7 @@ describe('initialize a extension', async () => {
         specifications,
       })
       const app = await loadApp({directory: tmpDir, specifications})
-      const generatedExtension = app.extensions.ui[0]!
+      const generatedExtension = app.allExtensions[0]!
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedExtension.configuration.name).toBe(name)
@@ -81,7 +86,7 @@ describe('initialize a extension', async () => {
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
-      expect(loadedApp.extensions.ui.length).toEqual(2)
+      expect(loadedApp.allExtensions.length).toEqual(2)
     })
   })
 
@@ -319,55 +324,58 @@ describe('initialize a extension', async () => {
 
       // Then
       const app = await loadApp({directory: tmpDir, specifications})
-      const generatedFunction = app.extensions.function[0]!
+      const generatedFunction = app.allExtensions[0]!
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedFunction.configuration.name).toBe(name)
     })
   })
 
   test('generates a JS function', async () => {
-    await withTemporaryApp(async (tmpDir) => {
-      // Given
-      const name = 'my-fun-1'
-      const specification = allFunctionTemplates.find((spec) => spec.identifier === 'order_discounts')!
-      const extensionFlavor = 'vanilla-js'
+    await withTemporaryApp(
+      async (tmpDir) => {
+        // Given
+        const name = 'my-fun-1'
+        const specification = allFunctionTemplates.find((spec) => spec.identifier === 'order_discounts')!
+        const extensionFlavor = 'vanilla-js'
 
-      vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
-      vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
-      vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
-        await file.writeFile(
-          joinPath(destination, 'shopify.function.extension.toml'),
-          `name = "my-fun-1"
+        vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+        vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+        vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
+          await file.writeFile(
+            joinPath(destination, 'shopify.function.extension.toml'),
+            `name = "my-fun-1"
           type = "order_discounts"
           api_version = "2023-01"
-
           [build]
           path = "dist/function.wasm"`,
-        )
-        await file.mkdir(joinPath(destination, 'src'))
-        await file.writeFile(joinPath(destination, 'src', 'index'), '')
-      })
-      const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
+          )
+          await file.mkdir(joinPath(destination, 'src'))
+          await file.writeFile(joinPath(destination, 'src', 'index'), '')
+        })
+        const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
 
-      // When
-      const extensionDir = await createFromTemplate({
-        name,
-        extensionTemplate: specification,
-        extensionFlavor,
-        appDirectory: tmpDir,
-        specifications,
-      })
+        // When
+        const extensionDir = await createFromTemplate({
+          name,
+          extensionTemplate: specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
 
-      // Then
-      const app = await loadApp({directory: tmpDir, specifications})
-      const generatedFunction = app.extensions.function[0]!
-      expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
-      expect(generatedFunction.configuration.name).toBe(name)
-      expect(generatedFunction.entrySourceFilePath).toBe(joinPath(extensionDir, 'src', 'index.js'))
+        // Then
+        const app = await loadApp({directory: tmpDir, specifications})
+        const generatedFunction = app.allExtensions[0]!
+        expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
+        expect(generatedFunction.configuration.name).toBe(name)
+        expect(generatedFunction.entrySourceFilePath).toBe(joinPath(extensionDir, 'src', 'index.js'))
 
-      expect(addNPMDependenciesIfNeeded).toHaveBeenCalledOnce()
-      expect(buildGraphqlTypesSpy).toHaveBeenCalledOnce()
-    })
+        expect(installNodeModules).toHaveBeenCalledOnce()
+        expect(addNPMDependenciesIfNeeded).toHaveBeenCalledOnce()
+        expect(buildGraphqlTypesSpy).toHaveBeenCalledOnce()
+      },
+      {useWorkspaces: true},
+    )
   })
 
   test('throws an error if there is no folder for selected flavor', async () => {
@@ -419,18 +427,19 @@ async function createFromTemplate({
   })
   return result[0]!.directory
 }
-async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | void) {
+async function withTemporaryApp(
+  callback: (tmpDir: string) => Promise<void> | void,
+  options?: {useWorkspaces: boolean},
+) {
   await file.inTemporaryDirectory(async (tmpDir) => {
     const appConfigurationPath = joinPath(tmpDir, configurationFileNames.app)
     const webConfigurationPath = joinPath(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
-
     const appConfiguration = `
       name = "my_app"
       scopes = "read_products"
       `
     const webConfiguration = `
     type = "backend"
-
     [commands]
     build = "./build.sh"
     dev = "./test.sh"
@@ -438,7 +447,18 @@ async function withTemporaryApp(callback: (tmpDir: string) => Promise<void> | vo
     await file.writeFile(appConfigurationPath, appConfiguration)
     await file.mkdir(dirname(webConfigurationPath))
     await file.writeFile(webConfigurationPath, webConfiguration)
-    await file.writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify({dependencies: {}, devDependencies: {}}))
+
+    const packageJsonContents: {
+      workspaces?: string[]
+      dependencies: {[key: string]: string}
+      devDependencies: {[key: string]: string}
+    } = {dependencies: {}, devDependencies: {}}
+
+    if (options?.useWorkspaces) {
+      packageJsonContents.workspaces = ['extensions/*']
+    }
+
+    await file.writeFile(joinPath(tmpDir, 'package.json'), JSON.stringify(packageJsonContents))
     return callback(tmpDir)
   })
 }

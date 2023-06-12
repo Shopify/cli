@@ -6,7 +6,6 @@ import {
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
-import {UIExtension} from '../../../models/app/extensions.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -70,7 +69,7 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputBundlePath: 'directory/path/1/dist/main.js',
+        outputPath: 'directory/path/1/dist/main.js',
         stdin: {
           contents: "import './src/index.js';",
           resolveDir: 'directory/path/1',
@@ -93,7 +92,7 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputBundlePath: 'directory/path/2/dist/main.js',
+        outputPath: 'directory/path/2/dist/main.js',
         stdin: {
           contents: "import './src/index.js';",
           resolveDir: 'directory/path/2',
@@ -206,7 +205,7 @@ describe('setupBundlerAndFileWatcher()', () => {
 })
 
 describe('setupConfigWatcher()', async () => {
-  const mockExtension: UIExtension = await testUIExtension({
+  const mockExtension = await testUIExtension({
     devUUID: '1',
     directory: 'directory/path/1',
   })
@@ -344,7 +343,7 @@ describe('setupConfigWatcher()', async () => {
 })
 
 describe('setupNonPreviewableExtensionBundler()', async () => {
-  const mockExtension: UIExtension = await testUIExtension({
+  const mockExtension = await testUIExtension({
     devUUID: '1',
     directory: 'directory/path/1',
   })
@@ -382,7 +381,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputBundlePath: 'directory/path/1/dist/main.js',
+        outputPath: 'directory/path/1/dist/main.js',
         stdin: {
           contents: mockExtension.getBundleExtensionStdinContent(),
           resolveDir: 'directory/path/1',

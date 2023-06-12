@@ -1,6 +1,7 @@
-import {isEqual} from '../../../../public/common/lang.js'
 import {debounce} from '../../../../public/common/function.js'
-import React, {useState, useEffect, useRef, useCallback, forwardRef} from 'react'
+import {useSelectState} from '../hooks/use-select-state.js'
+import {handleCtrlC} from '../../ui.js'
+import React, {useRef, useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -13,23 +14,13 @@ declare module 'react' {
     render: (props: P, ref: React.Ref<T>) => JSX.Element | null,
   ): (props: P & React.RefAttributes<T>) => JSX.Element | null
 }
-
-function rotateArray<T>(array: T[], rotation?: number) {
-  const arrayCopy = array.slice()
-  return arrayCopy.splice(-(rotation ?? 0) % arrayCopy.length).concat(arrayCopy)
-}
-
-interface OnChangeOptions<T> {
-  item: Item<T> | undefined
-  usedShortcut: boolean
-}
 export interface SelectInputProps<T> {
   items: Item<T>[]
-  onChange: ({item, usedShortcut}: OnChangeOptions<T>) => void
+  onChange?: (item: Item<T> | undefined) => void
   enableShortcuts?: boolean
   focus?: boolean
   emptyMessage?: string
-  defaultValue?: Item<T>
+  defaultValue?: T
   highlightedTerm?: string
   loading?: boolean
   errorMessage?: string
@@ -37,6 +28,8 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   infoMessage?: string
   limit?: number
+  submitWithShortcuts?: boolean
+  onSubmit?: (item: Item<T>) => void
 }
 
 export interface Item<T> {
@@ -44,9 +37,11 @@ export interface Item<T> {
   value: T
   key?: string
   group?: string
+  helperText?: string
+  disabled?: boolean
 }
 
-interface ItemWithKey<T> extends Item<T> {
+export interface ItemWithKey<T> extends Item<T> {
   key: string
 }
 
@@ -65,7 +60,7 @@ interface ItemProps<T> {
   item: ItemWithKey<T>
   previousItem: ItemWithKey<T> | undefined
   items: ItemWithKey<T>[]
-  selectedIndex: number
+  isSelected: boolean
   highlightedTerm?: string
   enableShortcuts: boolean
   hasAnyGroup: boolean
@@ -75,15 +70,21 @@ interface ItemProps<T> {
 function Item<T>({
   item,
   previousItem,
-  selectedIndex,
+  isSelected,
   highlightedTerm,
   enableShortcuts,
   items,
   hasAnyGroup,
 }: ItemProps<T>): JSX.Element {
-  const isSelected = items.indexOf(item) === selectedIndex
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
+  let labelColor
+
+  if (isSelected) {
+    labelColor = 'cyan'
+  } else if (item.disabled) {
+    labelColor = 'dim'
+  }
 
   if (typeof previousItem === 'undefined' || item.group !== previousItem.group) {
     title = item.group ?? (hasAnyGroup ? 'Other' : undefined)
@@ -99,7 +100,7 @@ function Item<T>({
 
       <Box key={item.key}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={isSelected ? 'cyan' : undefined}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
       </Box>
     </Box>
   )
@@ -121,6 +122,8 @@ function SelectInputInner<T>(
     morePagesMessage,
     infoMessage,
     limit,
+    submitWithShortcuts = false,
+    onSubmit,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
@@ -131,92 +134,46 @@ function SelectInputInner<T>(
     ...item,
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
-  const defaultValueIndex = defaultValue ? items.findIndex((item) => item.value === defaultValue.value) : -1
-  const initialIndex = defaultValueIndex === -1 ? 0 : defaultValueIndex
   const hasLimit = typeof limit !== 'undefined' && items.length > limit
   const inputStack = useRef<string | null>(null)
-  const [selectedIndex, setSelectedIndex] = useState(initialIndex)
-  const [rotateIndex, setRotateIndex] = useState(0)
-  const slicedItemsWithKeys = hasLimit ? rotateArray(itemsWithKeys, rotateIndex).slice(0, limit) : itemsWithKeys
-  const previousItems = useRef<Item<T>[] | undefined>(undefined)
 
-  const changeSelection = useCallback(
-    ({
-      newSelectedIndex,
-      newRotateIndex,
-      usedShortcut = false,
-    }: {
-      newSelectedIndex: number
-      usedShortcut?: boolean
-      newRotateIndex?: number
-    }) => {
-      setSelectedIndex(newSelectedIndex)
-      if (typeof newRotateIndex !== 'undefined') setRotateIndex(newRotateIndex)
-
-      const rotatedItems = hasLimit ? rotateArray(items, newRotateIndex).slice(0, limit) : items
-
-      onChange({
-        item: rotatedItems[newSelectedIndex],
-        usedShortcut,
-      })
-    },
-    [hasLimit, items, limit, onChange],
-  )
+  const state = useSelectState({
+    visibleOptionCount: limit,
+    options: itemsWithKeys,
+    defaultValue,
+  })
 
   useEffect(() => {
-    if (items.length === 0) {
-      // reset selection when items are empty
-      onChange({
-        item: undefined,
-        usedShortcut: false,
-      })
-      // reset index when items change or the first time
-    } else if (!previousItems.current) {
-      changeSelection({newSelectedIndex: initialIndex, newRotateIndex: 0})
-    } else if (
-      !isEqual(
-        previousItems.current.map((item) => item.value),
-        items.map((item) => item.value),
-      )
-    ) {
-      changeSelection({newSelectedIndex: 0, newRotateIndex: 0})
+    if (typeof state.value !== 'undefined' && state.previousValue !== state.value) {
+      onChange?.(items.find((item) => item.value === state.value))
     }
-
-    previousItems.current = items
-  }, [changeSelection, initialIndex, items, onChange])
+  }, [state.previousValue, state.value, items, onChange])
 
   const handleArrows = (key: Key) => {
     if (key.upArrow) {
-      const lastIndex = items.length - 1
-      const atFirstIndex = selectedIndex === 0
-      const nextIndex = hasLimit ? selectedIndex : lastIndex
-      const nextRotateIndex = atFirstIndex ? rotateIndex + 1 : rotateIndex
-      const nextSelectedIndex = atFirstIndex ? nextIndex : selectedIndex - 1
-
-      changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
+      state.selectPreviousOption()
     } else if (key.downArrow) {
-      const atLastIndex = selectedIndex === (hasLimit ? limit : items.length) - 1
-      const nextIndex = hasLimit ? selectedIndex : 0
-      const nextRotateIndex = atLastIndex ? rotateIndex - 1 : rotateIndex
-      const nextSelectedIndex = atLastIndex ? nextIndex : selectedIndex + 1
-
-      changeSelection({newSelectedIndex: nextSelectedIndex, newRotateIndex: nextRotateIndex})
+      state.selectNextOption()
     }
   }
 
   const handleShortcuts = useCallback(
     (input: string) => {
-      if (slicedItemsWithKeys.map((item) => item.key).includes(input)) {
-        const itemWithKey = slicedItemsWithKeys.find((item) => item.key === input)
-        if (itemWithKey !== undefined) {
-          changeSelection({
-            newSelectedIndex: items.findIndex((item) => item.value === itemWithKey.value),
-            usedShortcut: true,
-          })
+      if (state.visibleOptions.map((item) => item.key).includes(input)) {
+        const itemWithKey = state.visibleOptions.find((item) => item.key === input)
+        const item = items.find((item) => item.value === itemWithKey?.value)
+
+        if (itemWithKey && !itemWithKey.disabled) {
+          // keep this order of operations so that there is no flickering
+          if (submitWithShortcuts && onSubmit && item) {
+            onSubmit(item)
+          }
+
+          state.selectOption({option: itemWithKey})
         }
       }
     },
-    [changeSelection, items, slicedItemsWithKeys],
+    [items, onSubmit, state, submitWithShortcuts],
   )
 
   // disable exhaustive-deps because we want to memoize the debounce function itself
@@ -231,6 +188,16 @@ function SelectInputInner<T>(
 
   useInput(
     (input, key) => {
+      handleCtrlC(input, key)
+
+      if (typeof state.value !== 'undefined' && key.return) {
+        const item = items.find((item) => item.value === state.value)
+
+        if (item && onSubmit) {
+          onSubmit(item)
+        }
+      }
+
       // check that no special modifier (shift, control, etc.) is being pressed
       if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
         const newInputStack = inputStack.current === null ? input : inputStack.current + input
@@ -267,14 +234,14 @@ function SelectInputInner<T>(
   } else {
     return (
       <Box flexDirection="column" ref={ref}>
-        {slicedItemsWithKeys.map((item, index) => (
+        {state.visibleOptions.map((item, index) => (
           <Item
             key={item.key}
             item={item}
-            previousItem={slicedItemsWithKeys[index - 1]}
+            previousItem={state.visibleOptions[index - 1]}
             highlightedTerm={highlightedTerm}
-            selectedIndex={selectedIndex}
-            items={slicedItemsWithKeys}
+            isSelected={item.value === state.value}
+            items={state.visibleOptions}
             enableShortcuts={enableShortcuts}
             hasAnyGroup={hasAnyGroup}
           />

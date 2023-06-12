@@ -1,13 +1,12 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
-import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {uniqBy} from '../../../../public/common/array.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
-import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
+import {Box, measureElement, Text, useApp, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
 
@@ -34,8 +33,6 @@ function SelectPrompt<T>({
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-  const initialValue =
-    typeof defaultValue === 'undefined' ? undefined : choices.find((choice) => choice.value === defaultValue)
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(undefined)
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
@@ -88,6 +85,7 @@ function SelectPrompt<T>({
       if (stdout && wrapperHeight >= stdout.rows) {
         stdout.write(ansiEscapes.clearTerminal)
       }
+      setAnswer(answer)
       setSubmitted(true)
       unmountInk()
       onSubmit(answer.value)
@@ -96,14 +94,6 @@ function SelectPrompt<T>({
   )
 
   const {isAborted} = useAbortSignal(abortSignal)
-
-  useInput((input, key) => {
-    handleCtrlC(input, key)
-
-    if (key.return && answer) {
-      submitAnswer(answer)
-    }
-  })
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
@@ -129,22 +119,17 @@ function SelectPrompt<T>({
       ) : (
         <Box marginTop={1}>
           <SelectInput
-            defaultValue={initialValue}
+            defaultValue={defaultValue}
             items={choices}
             infoMessage={
               submitWithShortcuts
                 ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm`
                 : undefined
             }
-            onChange={({item, usedShortcut}) => {
-              setAnswer(item)
-
-              if (submitWithShortcuts && usedShortcut && item) {
-                submitAnswer(item)
-              }
-            }}
             limit={limit}
             ref={inputRef}
+            submitWithShortcuts={submitWithShortcuts}
+            onSubmit={submitAnswer}
           />
         </Box>
       )}
