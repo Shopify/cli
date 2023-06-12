@@ -123,6 +123,16 @@ export function useThemebundling(env = process.env): boolean {
 }
 
 /**
+ * Returns true if the embedded CLI will be used for theme commands.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns False if SHOPIFY_CLI_BUNDLED_THEME_CLI is truthy.
+ */
+export function useEmbeddedThemeCLI(env = process.env): boolean {
+  return !isTruthy(env[environmentVariables.bundledThemeCLI])
+}
+
+/**
  * Return gitpodURL if we are running in gitpod.
  * Https://www.gitpod.io/docs/environment-variables#default-environment-variables.
  *
