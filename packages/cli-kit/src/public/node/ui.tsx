@@ -255,22 +255,22 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *                 • order-discount
  *
  *    Automations
- * >  (a) fifth
- *    (2) sixth
+ *    >  (a) fifth
+ *       (2) sixth
  *
  *    Merchant Admin
- *    (3) eighth
- *    (4) ninth
+ *       (3) eighth
+ *       (4) ninth
  *
  *    Other
- *    (f) first
- *    (s) second
- *    (7) third (limit reached)
- *    (8) fourth
- *    (9) seventh
- *    (10) tenth
+ *       (f) first
+ *       (s) second
+ *       (7) third (limit reached)
+ *       (8) fourth
+ *       (9) seventh
+ *      (10) tenth
  *
- *    Press ↑↓ arrows to select, enter to confirm
+ *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
 export async function renderSelectPrompt<T>({
@@ -313,7 +313,8 @@ export interface RenderConfirmationPromptOptions
  * >  (y) Yes, confirm changes
  *    (n) Cancel
  *
- *    Press ↑↓ arrows to select, enter or a shortcut to confirm
+ *    Press ↑↓ arrows to select, enter or a shortcut to
+ *    confirm.
  *
  */
 export async function renderConfirmationPrompt({
@@ -389,7 +390,7 @@ export interface RenderAutocompleteOptions<T>
  *    twenty-fourth
  *    twenty-fifth
  *
- *    Press ↑↓ arrows to select, enter to confirm
+ *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
 export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
