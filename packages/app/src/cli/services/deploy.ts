@@ -199,7 +199,7 @@ async function outputCompletionMessage({
   uploadExtensionsBundleResult?: UploadExtensionsBundleOutput
 }) {
   if (deploymentMode !== 'legacy') {
-    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult, app)
+    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult!, app)
   }
 
   let headline: string
@@ -277,12 +277,16 @@ async function outputUnifiedCompletionMessage(
   app: AppInterface,
 ) {
   const linkAndMessage = [
-    {link: {label: uploadExtensionsBundleResult?.versionTag, url: uploadExtensionsBundleResult.location}},
-    uploadExtensionsBundleResult?.message ? `\n${uploadExtensionsBundleResult?.message}` : '',
+    {link: {label: uploadExtensionsBundleResult.versionTag, url: uploadExtensionsBundleResult.location}},
+    uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
   ]
   if (deploymentMode === 'unified') {
-    return uploadExtensionsBundleResult?.released
-      ? renderSuccess({
+    return uploadExtensionsBundleResult.deployError
+      ? renderInfo({
+          headline: 'New version created, but not released.',
+          body: [...linkAndMessage, `\n\n${uploadExtensionsBundleResult.deployError}`],
+        })
+      : renderSuccess({
           headline: 'New version released to users.',
           body: linkAndMessage,
           nextSteps: [
@@ -291,13 +295,6 @@ async function outputUnifiedCompletionMessage(
               {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
               'to see rollout progress.',
             ],
-          ],
-        })
-      : renderInfo({
-          headline: 'New version created, but not released.',
-          body: [
-            ...linkAndMessage,
-            `\n\nThis app version needs to pass Shopify review before it can be released. Submit this version for review from the Partner Dashboard.`,
           ],
         })
   }

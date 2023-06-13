@@ -115,7 +115,7 @@ export interface UploadExtensionsBundleOutput {
   versionTag: string
   message?: string
   location: string
-  released: boolean
+  deployError?: string
 }
 
 type ErrorSectionBody = TokenItem
@@ -132,7 +132,7 @@ export async function uploadExtensionsBundle(
 ): Promise<UploadExtensionsBundleOutput> {
   const deploymentUUID = randomUUID()
   let signedURL
-  let released = true
+  let deployError
 
   if (options.bundlePath) {
     signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
@@ -174,7 +174,7 @@ export async function uploadExtensionsBundle(
     )
 
     if (result.appDeploy.deployment) {
-      released = false
+      deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
     } else {
       throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
     }
@@ -191,7 +191,7 @@ export async function uploadExtensionsBundle(
     versionTag: result.appDeploy.deployment.versionTag,
     location: result.appDeploy.deployment.location,
     message: result.appDeploy.deployment.message,
-    released,
+    deployError,
   }
 }
 
