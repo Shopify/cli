@@ -538,7 +538,7 @@ describe('ensureReleaseContext', () => {
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
 
     // When
     const got = await ensureReleaseContext({
@@ -556,7 +556,7 @@ describe('ensureReleaseContext', () => {
       },
       command: 'release',
     })
-    expect(got.app).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    expect(got.app).toEqual(app)
     expect(got.apiKey).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey)
     expect(got.token).toEqual('token')
   })

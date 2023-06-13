@@ -364,7 +364,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},

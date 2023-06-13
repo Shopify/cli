@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const AppRelease = gql`
-  mutation AppRelease($apiKey: String!, $appVersionId: ID) {
-    appRelease(input: {apiKey: $apiKey, appVersionId: $appVersionId}) {
+  mutation AppRelease($apiKey: String!, $deploymentId: ID, $versionTag: String) {
+    appRelease(input: {apiKey: $apiKey, deploymentId: $deploymentId, versionTag: $versionTag}) {
       deployment {
         versionTag
         message

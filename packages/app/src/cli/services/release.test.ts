@@ -9,6 +9,7 @@ import {AppRelease} from '../api/graphql/app_release.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
@@ -31,75 +32,19 @@ beforeEach(() => {
 })
 
 describe('release', () => {
-  test('throws an error if versionDiff is empty', async () => {
-    // Given
-    const app = testApp()
-    vi.mocked(partnersRequest).mockResolvedValueOnce({app: {versionsDiff: {}}})
-
-    // When
-    vi.mocked(ensureReleaseContext).mockResolvedValue({
-      app,
-      token: 'api-token',
-      apiKey: 'app-id',
-    })
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
-
-    await expect(() =>
-      release({
-        app,
-        reset: false,
-        force: false,
-        version: 'app-version',
-      }),
-    ).rejects.toThrow('Version not found')
-
-    // Then
-    expect(confirmReleasePrompt).not.toHaveBeenCalled()
-    expect(partnersRequest).not.toHaveBeenCalledWith(AppRelease, 'api-token', {
-      apiKey: 'app-id',
-      appVersionId: 'app-version',
-    })
-  })
-
   test("doesn't trigger mutations if the user doesn't confirm", async () => {
     // Given
     const app = testApp()
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {
-        versionsDiff: {
-          added: [],
-          updated: [{registrationTitle: 'extension-title', uuid: 'extension-uuid'}],
-          removed: [],
-        },
-      },
-    })
+    vi.mocked(confirmReleasePrompt).mockRejectedValue(new AbortSilentError())
 
-    vi.mocked(confirmReleasePrompt).mockResolvedValue(false)
-
-    // When
-    await testRelease(app, 'app-version')
-
-    // Then
-    expect(partnersRequest).not.toHaveBeenCalledWith(AppRelease, 'api-token', {
-      apiKey: 'app-id',
-      appVersionId: 'app-version',
-    })
+    // When/Then
+    await expect(testRelease(app, 'app-version')).rejects.toThrow(AbortSilentError)
   })
 
   test('triggers mutations if the user confirms', async () => {
     // Given
     const app = testApp()
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {
-        versionsDiff: {
-          added: [],
-          updated: [{registrationTitle: 'extension-title', uuid: 'extension-uuid'}],
-          removed: [],
-        },
-      },
-    })
-
-    vi.mocked(confirmReleasePrompt).mockResolvedValue(true)
+    vi.mocked(confirmReleasePrompt).mockResolvedValue()
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
@@ -126,7 +71,7 @@ describe('release', () => {
     // Then
     expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'api-token', {
       apiKey: 'app-id',
-      appVersionId: 'app-version',
+      versionTag: 'app-version',
     })
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
@@ -154,17 +99,7 @@ describe('release', () => {
   test('shows errors if there are any', async () => {
     // Given
     const app = testApp()
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {
-        versionsDiff: {
-          added: [],
-          updated: [{registrationTitle: 'extension-title', uuid: 'extension-uuid'}],
-          removed: [],
-        },
-      },
-    })
-
-    vi.mocked(confirmReleasePrompt).mockResolvedValue(true)
+    vi.mocked(confirmReleasePrompt).mockResolvedValue()
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
@@ -174,11 +109,6 @@ describe('release', () => {
       return {
         appRelease: {
           appRelease: {
-            deployment: {
-              location: 'https://example.com',
-              versionTag: '1.0.0',
-              message: 'message',
-            },
             userErrors: [
               {
                 message: 'some kind of error 1',
@@ -213,17 +143,7 @@ describe('release', () => {
   test('shows a custom error message when the version needs to be approved', async () => {
     // given
     const app = testApp()
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {
-        versionsDiff: {
-          added: [],
-          updated: [{registrationTitle: 'extension-title', uuid: 'extension-uuid'}],
-          removed: [],
-        },
-      },
-    })
-
-    vi.mocked(confirmReleasePrompt).mockResolvedValue(true)
+    vi.mocked(confirmReleasePrompt).mockResolvedValue()
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
@@ -261,7 +181,7 @@ describe('release', () => {
           },
         },
         '\nmessage',
-        '\n\nThis version needs to be submitted for review and approved by Shopify before it can be released.',
+        '\n\nneeds to be submitted for review and approved by Shopify before it can be released',
       ],
       headline: "Version couldn't be released.",
     })
