@@ -15,13 +15,13 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {camelize} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
+import {convertKeysToCamelCase} from '@shopify/cli-kit/common/object'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -43,7 +43,7 @@ async function loadConfigurationFile(
     )
   }
   const configurationContent = await readFile(filepath)
-  let configuration: object
+  let configuration: {[key: string]: unknown}
   try {
     configuration = decode(configurationContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,9 +60,7 @@ async function loadConfigurationFile(
     }
   }
   // Convert snake_case keys to camelCase before returning
-  return {
-    ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
-  }
+  return convertKeysToCamelCase(configuration)
 }
 
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(

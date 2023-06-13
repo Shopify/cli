@@ -1,3 +1,4 @@
+import {camelize} from './string.js'
 import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
 import {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
@@ -54,4 +55,37 @@ export function mapValues<T extends object, TResult>(
 ): {[P in keyof T]: TResult} {
   const lodashMapValues = require('lodash/mapValues.js')
   return lodashMapValues(source, callback)
+}
+
+/**
+ * Converts all keys of an object to camel case.
+ *
+ * @param obj - The object to convert.
+ * @returns A new object with all keys converted to camel case.
+ */
+export function convertKeysToCamelCase(obj: {[key: string]: unknown}): object {
+  const result: {[key: string]: unknown} = {}
+
+  // eslint-disable-next-line guard-for-in
+  for (const key in obj) {
+    const camelCaseKey = camelize(key)
+
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      if (Array.isArray(obj[key])) {
+        result[camelCaseKey] = (obj[key] as unknown[]).map((item) => {
+          if (typeof item === 'object' && item !== null) {
+            return convertKeysToCamelCase(item as {[key: string]: unknown})
+          } else {
+            return item
+          }
+        })
+      } else {
+        result[camelCaseKey] = convertKeysToCamelCase(obj[key] as {[key: string]: unknown})
+      }
+    } else {
+      result[camelCaseKey] = obj[key]
+    }
+  }
+
+  return result
 }

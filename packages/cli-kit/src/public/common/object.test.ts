@@ -1,4 +1,4 @@
-import {deepMergeObjects, mapValues, pickBy} from './object.js'
+import {convertKeysToCamelCase, deepMergeObjects, mapValues, pickBy} from './object.js'
 import {describe, expect, test} from 'vitest'
 
 describe('deepMergeObjects', () => {
@@ -62,5 +62,42 @@ describe('mapValues', () => {
 
     // Then
     expect(got).toEqual({fred: 40, pebbles: 1})
+  })
+})
+
+describe('convertKeysToCamelCase', () => {
+  test('converts all keys of an object to camel case', () => {
+    // Given
+    const obj = {
+      'first-name': 'Fred',
+      lastName: 'Flintstone',
+      nested_object: {
+        nested_key: 'nested_value',
+        otherKey: 'otherValue',
+      },
+      array: [
+        {first_key: 'first_value'},
+        {second_key: 'second_value'},
+        {new_array: [{nested_array: ['something', 'else']}]},
+      ],
+    }
+
+    // When
+    const got = convertKeysToCamelCase(obj)
+
+    // Then
+    expect(got).toEqual({
+      firstName: 'Fred',
+      lastName: 'Flintstone',
+      nestedObject: {
+        nestedKey: 'nested_value',
+        otherKey: 'otherValue',
+      },
+      array: [
+        {firstKey: 'first_value'},
+        {secondKey: 'second_value'},
+        {newArray: [{nestedArray: ['something', 'else']}]},
+      ],
+    })
   })
 })
