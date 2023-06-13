@@ -2,6 +2,7 @@ import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.j
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {messageWithPunctuation} from '../utilities.js'
+import {tokenItemToString} from './TokenizedText.js'
 import {uniqBy} from '../../../../public/common/array.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
@@ -101,7 +102,7 @@ function SelectPrompt<T>({
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
-        <TokenizedText item={messageWithPunctuation(message)} />
+        <TokenizedText item={message} />
       </Box>
       {infoTable && !submitted ? (
         <Box marginLeft={7} marginTop={1}>

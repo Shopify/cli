@@ -4,9 +4,64 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
+import {createRequire} from 'module'
+
+const require = createRequire(import.meta.url)
+const gitDiff = require('git-diff')
 
 export async function prompts() {
   // renderSelectPrompt
+  const baselineContent = `PUBLIC_STOREFRONT_ID="51242144"
+PUBLIC_STOREFRONT_API_TOKEN="54851233448511"
+CONTENTFUL_API_KEY="1706e3c3190ee8a71cd41343dfcf18fa282125ab"
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+PUBLIC_STORE_DOMAIN="hydrogen-preview.myshopify.com"
+ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
+  const currentContent = `PUBLIC STOREFRONT ID="40863422"
+PUBLIC_STOREFRONT_API_TOKEN="72b7532439ae17c24c16e587d6cc9325e5"
+CONTENTFUL_API_KEY="1706e3c3190ee8a71cd41343dfcf18fa282125ab"
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+filler
+PUBLIC_STORE_DOMAIN="snowdevil.myshopify.com"
+PRIVATE_STOREFRONT_API_TOKEN-"shpat_2257475ad5ddjfhef8db4355e5fc2011"
+ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
+
+  await renderConfirmationPrompt({
+    message: [
+      'Make the following changes to your',
+      {filePath: '.env'},
+      'file?\n',
+      '\n' + gitDiff(
+        baselineContent,
+        currentContent,
+        {
+          color: process.env.NO_COLOR !== '1',
+          flags: "--unified=1 --inter-hunk-context=1",
+        },
+      ).trim()
+    ],
+    defaultValue: true,
+    confirmationMessage: 'Yes, confirm changes',
+    cancellationMessage: 'No, make changes later',
+  })
+
   await renderSelectPrompt({
     message: 'Associate your project with the org Castile Ventures?',
     choices: [

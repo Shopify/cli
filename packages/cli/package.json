@@ -100,12 +100,14 @@
     "@oclif/plugin-plugins": "2.4.7",
     "@shopify/cli-kit": "3.47.0-pre.0",
     "@shopify/plugin-did-you-mean": "3.47.0-pre.0",
+    "git-diff": "^2.0.6",
     "zod-to-json-schema": "3.21.1"
   },
   "devDependencies": {
     "@shopify/app": "3.47.0-pre.0",
     "@shopify/theme": "3.47.0-pre.0",
     "@types/node": "14.18.36",
+    "@types/git-diff": "^2.0.0",
     "@vitest/coverage-istanbul": "^0.31.4",
     "vite": "^4.3.9",
     "vitest": "^0.31.0"
