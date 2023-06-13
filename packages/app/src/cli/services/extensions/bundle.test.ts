@@ -1,10 +1,10 @@
-import {inTemporaryDirectory, mkdir, touchFile, glob} from '@shopify/cli-kit/node/fs.js'
-import {joinPath, basename} from '@shopify/cli-kit/node/path.js'
+import {bundleExtension, bundleThemeExtensions} from './bundle.js'
+import {testUIExtension, testApp, testThemeExtensions} from '../../models/app/app.test-data.js'
+import {inTemporaryDirectory, mkdir, glob, touchFileSync} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {context as esContext} from 'esbuild'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {testUIExtension, testApp, testThemeExtensions} from '../../models/app/app.test-data.js'
-import {bundleExtension, bundleThemeExtensions} from './bundle.js'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -236,8 +236,8 @@ describe('bundleExtension()', () => {
         const ignoredFiles = ['.gitkeep', '.DS_Store', '.shopify.theme.extension.toml']
         await Promise.all(
           ['test.liquid', ...ignoredFiles].map(async (filename) => {
-            touchFile(joinPath(blocksPath, filename))
-            touchFile(joinPath(tmpDir, filename))
+            touchFileSync(joinPath(blocksPath, filename))
+            touchFileSync(joinPath(tmpDir, filename))
           }),
         )
 
