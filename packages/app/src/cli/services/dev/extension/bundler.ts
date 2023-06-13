@@ -172,6 +172,7 @@ interface SetupConfigWatcherOptions {
   stderr: Writable
   signal: AbortSignal
   specifications: ExtensionSpecification[]
+  app: AppInterface
 }
 
 export async function setupConfigWatcher({
@@ -183,12 +184,16 @@ export async function setupConfigWatcher({
   stderr,
   signal,
   specifications,
+  app,
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
   const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
     outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
-    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications}).catch((_: unknown) => {})
+    // First read the config from disk, then build the extension again
+    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications})
+      .then(() => extension.build({stdout, stderr, signal, app}))
+      .catch((_: unknown) => {})
   })
 
   signal.addEventListener('abort', () => {

@@ -47,6 +47,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
+  postBuildAction?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
 }
 
 /**

@@ -31,6 +31,7 @@ import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
  *
  * This class holds the public interface to interact with extensions
  */
+
 export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> {
   entrySourceFilePath: string
   devUUID: string
@@ -220,10 +221,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       await touchFile(this.outputPath)
       await writeFile(this.outputPath, '(()=>{})();')
     }
+
+    await this.specification.postBuildAction?.(this)
   }
 
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
+    this.devUUID = extensionId
     const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
 
     if (this.features.includes('bundling')) {
@@ -251,7 +255,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     if (!configValue) return undefined
-    return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
+    return {
+      uuid: identifiers.extensions[this.localIdentifier]!,
+      config: JSON.stringify(configValue),
+      context: '',
+    }
   }
 }
 

@@ -484,7 +484,17 @@ export function devDraftableExtensionTarget({
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
             const actions = [
-              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
+              setupConfigWatcher({
+                extension,
+                token,
+                apiKey,
+                registrationId,
+                stdout,
+                stderr,
+                signal,
+                specifications,
+                app,
+              }),
             ]
 
             // Only extensions with esbuild feature should be whatched using esbuild
@@ -502,6 +512,9 @@ export function devDraftableExtensionTarget({
                   signal,
                 }),
               )
+            } else {
+              // Initial build for non-esbuild extensions
+              extension.build({stdout, stderr, signal, app})
             }
             return actions
           })

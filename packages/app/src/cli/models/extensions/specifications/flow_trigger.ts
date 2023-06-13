@@ -1,7 +1,10 @@
+import {getTriggerPreview} from '../../../services/flow/preview.js'
 import {BaseSchema} from '../schemas.js'
 
 import {createExtensionSpecification} from '../specification.js'
+import {writeFileSync, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const FlowTriggerExtensionSchema = BaseSchema.extend({
   name: zod.string(),
@@ -36,6 +39,18 @@ const flowTriggerSpecification = createExtensionSpecification({
       description: config.task.description,
       fields: config.task.fields,
     }
+  },
+  postBuildAction: async (extension) => {
+    const directoryPath = joinPath(extension.outputPath, 'data')
+
+    if (!fileExistsSync(directoryPath)) {
+      await mkdir(directoryPath)
+    }
+
+    writeFileSync(
+      joinPath(directoryPath, 'payloadPreview.gql'),
+      getTriggerPreview(extension.devUUID, extension.configuration.task.fields),
+    )
   },
 })
 

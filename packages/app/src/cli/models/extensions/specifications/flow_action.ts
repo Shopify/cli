@@ -1,7 +1,8 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
+import {getActionPreview} from '../../../services/flow/preview.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {glob, readFile} from '@shopify/cli-kit/node/fs'
+import {glob, readFile, writeFileSync, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -71,6 +72,22 @@ const flowActionSpecification = createExtensionSpecification({
       return_type_ref: config.task.return_type_ref,
       schema_patch: await loadSchemaPatchFromPath(extensionPath, config.task.schema),
     }
+  },
+  postBuildAction: async (extension) => {
+    const directoryPath = joinPath(extension.outputPath, 'data')
+
+    if (!fileExistsSync(directoryPath)) {
+      await mkdir(directoryPath)
+    }
+
+    writeFileSync(
+      joinPath(directoryPath, 'payloadPreview.json'),
+      getActionPreview(
+        extension.configuration.task.title,
+        Boolean(extension.configuration.task.customConfigurationPageUrl),
+        extension.configuration.task.fields,
+      ),
+    )
   },
 })
 
