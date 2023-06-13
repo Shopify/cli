@@ -47,16 +47,24 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
     message: [
       'Make the following changes to your',
       {filePath: '.env'},
-      'file?\n',
-      '\n' + gitDiff(
-        baselineContent,
-        currentContent,
-        {
-          color: process.env.NO_COLOR !== '1',
-          flags: "--unified=1 --inter-hunk-context=1",
-        },
-      ).trim()
+      'file?',
     ],
+    additionalInfo: gitDiff(
+      baselineContent,
+      currentContent,
+      {
+        color: process.env.NO_COLOR !== '1',
+        flags: "--unified=1 --inter-hunk-context=1",
+      },
+    ).split('\n').map((line: string) => {
+      if (line.match(/^(\[36m)?@/)) {
+        return line
+      } else {
+        return line.replace(/([+\- ])/, (match) => {
+          return `${match} `
+        })
+      }
+    }).join('\n').trim(),
     defaultValue: true,
     confirmationMessage: 'Yes, confirm changes',
     cancellationMessage: 'No, make changes later',

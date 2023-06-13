@@ -16,6 +16,7 @@ export interface SelectPromptProps<T> {
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
+  additionalInfo?: string
   defaultValue?: T
   submitWithShortcuts?: boolean
   abortSignal?: AbortSignal
@@ -26,6 +27,7 @@ function SelectPrompt<T>({
   message,
   choices,
   infoTable,
+  additionalInfo,
   onSubmit,
   defaultValue,
   submitWithShortcuts = false,
@@ -107,6 +109,11 @@ function SelectPrompt<T>({
       {infoTable && !submitted ? (
         <Box marginLeft={7} marginTop={1}>
           <InfoTable table={infoTable} />
+        </Box>
+      ) : null}
+      {additionalInfo && !submitted ? (
+        <Box marginLeft={7} marginTop={1}>
+          <Text>{additionalInfo}</Text>
         </Box>
       ) : null}
       {submitted ? (
