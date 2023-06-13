@@ -5,7 +5,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {glob, inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {glob, inTemporaryDirectory, mkdir, touchFileSync} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('esbuild', async () => {
@@ -241,8 +241,8 @@ describe('bundleExtension()', () => {
         const ignoredFiles = ['.gitkeep', '.DS_Store', '.shopify.theme.extension.toml']
         await Promise.all(
           ['test.liquid', ...ignoredFiles].map(async (filename) => {
-            touchFile(joinPath(blocksPath, filename))
-            touchFile(joinPath(tmpDir, filename))
+            touchFileSync(joinPath(blocksPath, filename))
+            touchFileSync(joinPath(tmpDir, filename))
           }),
         )
 
