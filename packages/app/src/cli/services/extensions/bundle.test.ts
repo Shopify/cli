@@ -1,7 +1,9 @@
-import {bundleExtension} from './bundle.js'
-import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {bundleExtension, bundleThemeExtensions} from './bundle.js'
+import {testUIExtension, testApp, testThemeExtensions} from '../../models/app/app.test-data.js'
+import {inTemporaryDirectory, mkdir, glob, touchFileSync} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {context as esContext} from 'esbuild'
+import {describe, expect, test, vi} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('esbuild', async () => {
@@ -11,6 +13,7 @@ vi.mock('esbuild', async () => {
     context: vi.fn(),
   }
 })
+vi.mock('@shopify/cli-kit/node/ruby')
 
 describe('bundleExtension()', () => {
   test('invokes ESBuild with the right options and forwards the logs', async () => {
@@ -200,4 +203,54 @@ describe('bundleExtension()', () => {
       mangleCache: {},
     }
   }
+  describe('bundleThemeExtension()', () => {
+    test('should skip all ignored file patterns', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const themeExtension = await testThemeExtensions()
+        themeExtension.directory = tmpDir
+        const outputPath = joinPath(tmpDir, 'dist')
+        await mkdir(outputPath)
+        themeExtension.outputBundlePath = outputPath
+
+        const app = testApp({
+          directory: '/project',
+          dotenv: {
+            path: '/project/.env',
+            variables: {
+              FOO: 'BAR',
+            },
+          },
+        })
+
+        const stdout: any = {
+          write: vi.fn(),
+        }
+        const stderr: any = {
+          write: vi.fn(),
+        }
+
+        const blocksPath = joinPath(tmpDir, 'blocks')
+        await mkdir(blocksPath)
+
+        const ignoredFiles = ['.gitkeep', '.DS_Store', '.shopify.theme.extension.toml']
+        await Promise.all(
+          ['test.liquid', ...ignoredFiles].map(async (filename) => {
+            touchFileSync(joinPath(blocksPath, filename))
+            touchFileSync(joinPath(tmpDir, filename))
+          }),
+        )
+
+        // When
+        await bundleThemeExtensions({extensions: [themeExtension], app, stdout, stderr})
+
+        // Then
+        const filePaths = await glob(joinPath(themeExtension.outputBundlePath, '/**/*'))
+        const hasFiles = filePaths
+          .map((filePath) => basename(filePath))
+          .some((filename) => ignoredFiles.includes(filename))
+        expect(hasFiles).toEqual(false)
+      })
+    })
+  })
 })

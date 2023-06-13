@@ -77,7 +77,7 @@ export async function bundleThemeExtensions(options: ThemeExtensionBuildOptions)
 
         await Promise.all(
           files.map(function (filepath) {
-            if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
+            if (!(filepath.includes('.gitkeep') || filepath.includes('.toml') || filepath.includes('.DS_Store'))) {
               const relativePathName = relativePath(extension.directory, filepath)
               const outputFile = joinPath(extension.outputBundlePath, relativePathName)
               return copyFile(filepath, outputFile)
