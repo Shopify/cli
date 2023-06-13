@@ -7,8 +7,14 @@ import {parseConfigurationFile} from '../../../models/app/loader.js'
 import {AppConfigurationSchema} from '../../../models/app/app.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
+import {AppInterface} from '../../../models/app/app.js'
 
-export async function pushConfig(options: any) {
+export interface Options {
+  apiKey: string;
+  app: AppInterface;
+}
+
+export async function pushConfig(options: Options) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = options.apiKey || (await selectApp()).apiKey
   const query = PushConfig
