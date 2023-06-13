@@ -45,6 +45,9 @@ interface DeployOptions {
 
   /** App version identifier */
   version?: string
+
+  /** The git reference url of the deployment */
+  commitReference?: string
 }
 
 interface TasksContext {
@@ -129,7 +132,7 @@ export async function deploy(options: DeployOptions) {
                 extensionIds: identifiers.extensionIds,
                 message: options.message,
                 version: options.version,
-              })
+                commitReference: options.commitReference,
             }
 
             if (!useThemebundling()) {

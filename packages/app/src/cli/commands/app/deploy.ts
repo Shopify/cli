@@ -50,6 +50,11 @@ export default class Deploy extends Command {
         'Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.',
       env: 'SHOPIFY_FLAG_VERSION',
     }),
+    'source-control-url': Flags.string({
+      hidden: false,
+      description: 'URL associated with the new app version.',
+      env: 'SHOPIFY_FLAG_SOURCE_CONTROL_URL',
+    }),
   }
 
   async run(): Promise<void> {
@@ -69,6 +74,7 @@ export default class Deploy extends Command {
       noRelease: flags['no-release'],
       message: flags.message,
       version: flags.version,
+      commitReference: flags['source-control-url'],
     })
   }
 }

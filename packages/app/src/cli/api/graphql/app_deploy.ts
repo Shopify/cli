@@ -9,6 +9,7 @@ export const AppDeploy = gql`
     $skipPublish: Boolean
     $message: String
     $versionTag: String
+    $commitReference: String
   ) {
     appDeploy(
       input: {
@@ -19,6 +20,7 @@ export const AppDeploy = gql`
         skipPublish: $skipPublish
         message: $message
         versionTag: $versionTag
+        commitReference: $commitReference
       }
     ) {
       deployment {
@@ -60,6 +62,7 @@ export interface AppDeployVariables {
   skipPublish?: boolean
   message?: string
   versionTag?: string
+  commitReference?: string
 }
 
 interface ErrorDetail {
