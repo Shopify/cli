@@ -3,6 +3,8 @@ import Command from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {pushConfig} from '../../../services/app/config/push.js'
 import {Flags} from '@oclif/core'
+import {load as loadApp} from '../../../models/app/loader.js'
+import {loadExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 
 export default class ConfigPush extends Command {
   static hidden = true
@@ -22,6 +24,10 @@ export default class ConfigPush extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(ConfigPush)
 
-    await pushConfig({apiKey: flags['api-key']})
+    const specifications = await loadExtensionsSpecifications(this.config)
+
+    const app = await loadApp({specifications, directory: flags.path, mode: 'report'})
+
+    await pushConfig({app, apiKey: flags['api-key']})
   }
 }
