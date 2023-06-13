@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.46.5
+
+### Patch Changes
+
+- 1c8404eb2: Skip .DS_Dtore files when the theme app extension bundle content is created
+  - @shopify/cli-kit@3.46.5
+  - @shopify/plugin-ngrok@3.46.5
+  - @shopify/plugin-cloudflare@3.46.5
+
 ## 3.46.4
 
 ### Patch Changes

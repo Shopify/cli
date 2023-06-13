@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.46.5
+
+### Patch Changes
+
+- 3bb636692: Fix clean login on theme dev
+  - @shopify/cli-kit@3.46.5
+
 ## 3.46.4
 
 ### Patch Changes

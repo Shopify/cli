@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-cloudflare",
-  "version": "3.46.4",
+  "version": "3.46.5",
   "description": "Enables the creation of Cloudflare tunnels from `shopify app dev`, allowing previews from any device",
   "keywords": [
     "shopify",
@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@oclif/core": "2.1.4",
-    "@shopify/cli-kit": "3.46.4",
+    "@shopify/cli-kit": "3.46.5",
     "node-fetch": "3.3.1",
     "semver": "7.5.0"
   },
