@@ -19,6 +19,7 @@ const spec = createExtensionSpecification({
       name: config.name,
       description: config.description,
       renderer_version: result?.version,
+      extension_points: config.extensionPoints,
     }
   },
   previewMessage: () => undefined,
