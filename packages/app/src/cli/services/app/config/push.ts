@@ -1,17 +1,16 @@
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {selectApp} from '../select-app.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {PushConfig, PushConfigSchema} from '../../../api/graphql/push_config.js'
 import {parseConfigurationFile} from '../../../models/app/loader.js'
-import {AppConfigurationSchema} from '../../../models/app/app.js'
+import {AppConfigurationSchema, AppInterface} from '../../../models/app/app.js'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
-import {AppInterface} from '../../../models/app/app.js'
 
 export interface Options {
-  apiKey: string;
-  app: AppInterface;
+  apiKey: string
+  app: AppInterface
 }
 
 export async function pushConfig(options: Options) {

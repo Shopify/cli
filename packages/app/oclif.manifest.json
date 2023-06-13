@@ -524,6 +524,13 @@
           "description": "The environment to apply to the current command.",
           "hidden": true,
           "multiple": false
+        },
+        "api-key": {
+          "name": "api-key",
+          "type": "option",
+          "description": "The API key of your app.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
