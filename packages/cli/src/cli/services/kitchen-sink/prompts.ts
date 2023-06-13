@@ -14,31 +14,31 @@ export async function prompts() {
   const baselineContent = `PUBLIC_STOREFRONT_ID="51242144"
 PUBLIC_STOREFRONT_API_TOKEN="54851233448511"
 CONTENTFUL_API_KEY="1706e3c3190ee8a71cd41343dfcf18fa282125ab"
-filler
-filler
-filler
-filler
-filler
-filler
-filler
-filler
-filler
-filler
+filler1
+filler2
+filler3
+filler4
+filler5
+filler6
+filler7
+filler8
+filler9
+filler10
 PUBLIC_STORE_DOMAIN="hydrogen-preview.myshopify.com"
 ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
   const currentContent = `PUBLIC STOREFRONT ID="40863422"
 PUBLIC_STOREFRONT_API_TOKEN="72b7532439ae17c24c16e587d6cc9325e5"
 CONTENTFUL_API_KEY="1706e3c3190ee8a71cd41343dfcf18fa282125ab"
-filler
-filler
-filler
-filler
-filler
-filler
-filler
-filler
-filler
-filler
+filler1
+filler2
+filler3
+filler4
+filler5
+filler6
+filler7
+filler8
+filler9
+filler10
 PUBLIC_STORE_DOMAIN="snowdevil.myshopify.com"
 PRIVATE_STOREFRONT_API_TOKEN-"shpat_2257475ad5ddjfhef8db4355e5fc2011"
 ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
@@ -56,9 +56,9 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
         color: process.env.NO_COLOR !== '1',
         flags: "--unified=1 --inter-hunk-context=1",
       },
-    ).split('\n').map((line: string) => {
-      if (line.match(/^(\[36m)?@/)) {
-        return line
+    ).split('\n').map((line: string, index: number) => {
+      if (line.match(/^[^+\-]*@/)) {
+        return index === 0 ? line : line.replace('@@', '\n@@')
       } else {
         return line.replace(/([+\- ])/, (match) => {
           return `${match} `
