@@ -120,7 +120,7 @@ function Item<T>({
 function SelectInputInner<T>(
   {
     items: rawItems,
-    initialItems,
+    initialItems = rawItems,
     onChange,
     enableShortcuts = true,
     focus = true,
@@ -138,7 +138,6 @@ function SelectInputInner<T>(
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
-  initialItems = initialItems || rawItems
   const sortBy = require('lodash/sortBy')
   const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
   const items = sortBy(rawItems, 'group') as Item<T>[]
@@ -147,7 +146,7 @@ function SelectInputInner<T>(
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
 
-  const maximumLinesLostToGroups = function(items: Item<T>[]): number {
+  function maximumLinesLostToGroups(items: Item<T>[]): number {
     // Calculate a safe estimate of the limit needed based on the space available
     const numberOfGroups = new Set(items.map((item) => item.group).filter((group) => group)).size
     // Add 1 to numberOfGroups because we also have a default Other group
@@ -254,7 +253,9 @@ function SelectInputInner<T>(
     )
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
-    const maxKeyLength = initialItems.map((item) => item.key?.length ?? 0).reduce((a, b) => Math.max(a, b), 0)
+    const maxKeyLength = initialItems
+      .map((item) => item.key?.length ?? 0)
+      .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
     const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
@@ -278,27 +279,26 @@ function SelectInputInner<T>(
           ))}
         </Box>
 
-        {
-          items.length === 0 ?
-            <Box marginTop={1} marginLeft={3} height={2}>
-              <Text dimColor>{emptyMessage}</Text>
-            </Box> :
-
-            <Box marginTop={1} marginLeft={3} flexDirection="column">
-              <Text dimColor>
-                {infoMessage
-                  ? infoMessage
-                  : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
+        {items.length === 0 ? (
+          <Box marginTop={1} marginLeft={3} height={2}>
+            <Text dimColor>{emptyMessage}</Text>
+          </Box>
+        ) : (
+          <Box marginTop={1} marginLeft={3} flexDirection="column">
+            <Text dimColor>
+              {infoMessage
+                ? infoMessage
+                : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
+            </Text>
+            {hasMorePages ? (
+              <Text>
+                <Text bold>1-{items.length} of many</Text>
+                {morePagesMessage ? `  ${morePagesMessage}` : null}
               </Text>
-              {hasMorePages ? (
-                <Text>
-                  <Text bold>1-{items.length} of many</Text>
-                  {morePagesMessage ? `  ${morePagesMessage}` : null}
-                </Text>
-              ) : null}
-              {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
-            </Box>
-        }
+            ) : null}
+            {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
+          </Box>
+        )}
       </Box>
     )
   }

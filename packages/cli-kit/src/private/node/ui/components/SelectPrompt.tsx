@@ -38,8 +38,8 @@ function SelectPrompt<T>({
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(1)
-  const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
-  const [availableLines, setAvailableLines] = useState(getAvailableLines())
+  const currentAvailableLines = stdout.rows - promptAreaHeight - 5
+  const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
@@ -57,7 +57,7 @@ function SelectPrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = getAvailableLines()
+      const newAvailableLines = stdout.rows - promptAreaHeight - 5
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }

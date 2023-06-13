@@ -58,8 +58,8 @@ function AutocompletePrompt<T>({
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(1)
-  const getAvailableLines = () => stdout.rows - promptAreaHeight - 5
-  const [availableLines, setAvailableLines] = useState(getAvailableLines())
+  const currentAvailableLines = stdout.rows - promptAreaHeight - 5
+  const [availableLines, setAvailableLines] = useState(currentAvailableLines)
   const isFullscreen = wrapperHeight >= stdout.rows - 1
 
   const paginatedSearch = useCallback(
@@ -71,14 +71,17 @@ function AutocompletePrompt<T>({
     [search],
   )
 
-  const wrapperRef = useCallback((node) => {
-    if (node !== null) {
-      const {height} = measureElement(node)
-      if (wrapperHeight !== height) {
-        setWrapperHeight(height)
+  const wrapperRef = useCallback(
+    (node) => {
+      if (node !== null) {
+        const {height} = measureElement(node)
+        if (wrapperHeight !== height) {
+          setWrapperHeight(height)
+        }
       }
-    }
-  }, [])
+    },
+    [wrapperHeight],
+  )
 
   const promptAreaRef = useCallback((node) => {
     if (node !== null) {
@@ -89,7 +92,7 @@ function AutocompletePrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = getAvailableLines()
+      const newAvailableLines = stdout.rows - promptAreaHeight - 5
       if (newAvailableLines !== availableLines) {
         if (isFullscreen) {
           stdout.write(ansiEscapes.clearTerminal)
@@ -104,7 +107,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines])
+  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines, isFullscreen])
 
   const {isAborted} = useAbortSignal(abortSignal)
 
