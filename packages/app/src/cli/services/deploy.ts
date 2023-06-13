@@ -133,6 +133,7 @@ export async function deploy(options: DeployOptions) {
                 message: options.message,
                 version: options.version,
                 commitReference: options.commitReference,
+              })
             }
 
             if (!useThemebundling()) {
@@ -198,7 +199,7 @@ async function outputCompletionMessage({
   uploadExtensionsBundleResult?: UploadExtensionsBundleOutput
 }) {
   if (deploymentMode !== 'legacy') {
-    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult!, app)
+    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult, app)
   }
 
   let headline: string

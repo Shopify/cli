@@ -398,7 +398,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle(app, undefined, undefined, commitReference)
+    await testDeployBundle(app, undefined, undefined, false, commitReference, 'legacy')
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
