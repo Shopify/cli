@@ -1,12 +1,12 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile, glob, fileExistsSync, createFileReadStream} from '@shopify/cli-kit/node/fs'
+import {copyFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
-import {createInterface} from 'readline'
 import type {StdinOptions, build as esBuild} from 'esbuild'
 
 const require = createRequire(import.meta.url)
@@ -70,28 +70,13 @@ export async function bundleThemeExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-  const filepath = joinPath(extension.directory, '.shopifyignore')
-  const ignore = fileExistsSync(filepath) ? await parseIgnoreFile(filepath) : []
-  const files = await glob('**/*', {
-    absolute: true,
-    cwd: extension.directory,
-    ignore,
-  })
+  const files = await themeExtensionFiles(extension)
 
   await Promise.all(
     files.map(function (filepath) {
-      if (
-        !(
-          filepath.includes('.gitkeep') ||
-          filepath.includes('.toml') ||
-          filepath.includes('.DS_Store') ||
-          filepath.includes('.shopifyignore')
-        )
-      ) {
-        const relativePathName = relativePath(extension.directory, filepath)
-        const outputFile = joinPath(extension.outputPath, relativePathName)
-        return copyFile(filepath, outputFile)
-      }
+      const relativePathName = relativePath(extension.directory, filepath)
+      const outputFile = joinPath(extension.outputPath, relativePathName)
+      return copyFile(filepath, outputFile)
     }),
   )
 }
@@ -185,35 +170,4 @@ function isGraphqlPackageAvailable(): boolean {
   } catch {
     return false
   }
-}
-
-/**
- * Parses the ignore file and returns the patterns that should be ignored.
- * @param filepath - Filepath to the ignore file.
- * @returns A promise that resolves with the patterns that should be ignored.
- */
-export function parseIgnoreFile(filepath: string): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    const patterns: string[] = []
-
-    const readLineInterface = createInterface({
-      input: createFileReadStream(filepath),
-      crlfDelay: Infinity,
-    })
-
-    readLineInterface.on('line', (line: string) => {
-      const trimmedLine = line.trim()
-      if (trimmedLine.length > 0 && !trimmedLine.startsWith('#')) {
-        patterns.push(trimmedLine)
-      }
-    })
-
-    readLineInterface.on('close', () => {
-      resolve(patterns)
-    })
-
-    readLineInterface.on('error', (error: Error) => {
-      reject(error)
-    })
-  })
 }

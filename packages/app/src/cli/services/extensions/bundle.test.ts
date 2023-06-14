@@ -1,11 +1,11 @@
-import {bundleExtension, bundleThemeExtension, parseIgnoreFile} from './bundle.js'
+import {bundleExtension, bundleThemeExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {glob, inTemporaryDirectory, mkdir, touchFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {glob, inTemporaryDirectory, mkdir, touchFileSync} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('esbuild', async () => {
@@ -260,23 +260,6 @@ describe('bundleExtension()', () => {
           .some((filename) => ignoredFiles.includes(filename))
         expect(hasFiles).toEqual(false)
       })
-    })
-  })
-})
-
-describe('parseIgnoreFile()', () => {
-  test('returns the patterns that should be ignored', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const filePath = joinPath(tmpDir, '.shopifyignore')
-      const content = '#foo\nbar\nbaz\n'
-      await writeFile(filePath, content)
-
-      // When
-      const patterns = await parseIgnoreFile(filePath)
-
-      // Then
-      expect(patterns).toEqual(['bar', 'baz'])
     })
   })
 })
