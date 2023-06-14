@@ -459,7 +459,11 @@ interface RenderTasksOptions {
  * Installing dependencies ...
  */
 // eslint-disable-next-line max-params
-export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
+export async function renderTasks<TContext>(
+  tasks: Task<TContext>[],
+  {renderOptions}: RenderTasksOptions = {},
+  initialContext: TContext = {} as TContext,
+) {
   recordUIEvent({
     type: 'taskbar',
     properties: {
@@ -473,7 +477,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} />, {
+    render(<Tasks tasks={tasks} onComplete={resolve} initialContext={initialContext} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })

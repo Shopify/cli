@@ -151,12 +151,31 @@ module ShopifyCLI
         end
 
         def preview_message
+          location = adapt_location(extension.location)
           if Shopifolk.acting_as_shopify_organization?
-            parsed_uri = URI.parse(extension.location)
+            parsed_uri = URI.parse(extension.preview_message)
             shopify_org_url = "#{parsed_uri.scheme}://#{parsed_uri.host}/9082/impersonate"
-            ctx.message("serve.preview_message_1p", shopify_org_url, extension.location, theme.editor_url, address)
+            ctx.message("serve.preview_message_1p", shopify_org_url, enable_extension_message, location,
+              theme.editor_url, address)
           else
-            ctx.message("serve.preview_message", extension.location, theme.editor_url, address)
+            ctx.message("serve.preview_message", enable_extension_message, location, theme.editor_url, address)
+          end
+        end
+
+        def adapt_location(location)
+          return location if location.nil? || !ShopifyCLI::Environment.unified_deployment?
+
+          parts = location.split('/')
+          index = parts.index('extensions')
+
+          return parts[0..index].join('/')
+        end
+
+        def enable_extension_message
+          if ShopifyCLI::Environment.unified_deployment?
+            "Verify your Development store preview is on"
+          else
+            "Enable your theme app extension"
           end
         end
       end
