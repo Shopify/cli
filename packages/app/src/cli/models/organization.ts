@@ -24,6 +24,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   betas?: {
     unifiedAppDeployment?: boolean
   }
+  applicationUrl: string
 }
 
 export interface OrganizationStore {

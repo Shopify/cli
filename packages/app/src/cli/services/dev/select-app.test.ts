@@ -45,6 +45,7 @@ const APP1: OrganizationApp = {
   apiSecretKeys: [{secret: 'secret1'}],
   organizationId: '1',
   grantedScopes: [],
+  applicationUrl: 'https://example.com',
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -53,6 +54,7 @@ const APP2: OrganizationApp = {
   apiSecretKeys: [{secret: 'secret2'}],
   organizationId: '1',
   grantedScopes: [],
+  applicationUrl: 'https://example.com',
 }
 const APP_LIST = {
   nodes: [

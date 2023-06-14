@@ -44,6 +44,7 @@ describe('deploy', () => {
       title: 'app-title',
       grantedScopes: [],
       betas: {unifiedAppDeployment: true},
+      applicationUrl: 'https://example.com',
     })
 
     // Then
@@ -68,6 +69,7 @@ describe('deploy', () => {
       title: 'app-title',
       grantedScopes: [],
       betas: {unifiedAppDeployment: false},
+      applicationUrl: 'https://example.com',
     })
 
     // Then
@@ -177,6 +179,7 @@ describe('deploy', () => {
       title: 'app-title',
       grantedScopes: [],
       betas: {unifiedAppDeployment: true},
+      applicationUrl: 'https://example.com',
     })
 
     // Then
@@ -278,6 +281,7 @@ describe('deploy', () => {
       title: 'app-title',
       grantedScopes: [],
       betas: {unifiedAppDeployment: true},
+      applicationUrl: 'https://example.com',
     })
 
     // Then
@@ -316,6 +320,7 @@ async function testDeployBundle(
       organizationId: 'org-id',
       title: 'app-title',
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     },
     token: 'api-token',
   })

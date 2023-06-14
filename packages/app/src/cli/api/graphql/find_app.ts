@@ -15,6 +15,7 @@ export const FindAppQuery = gql`
       betas {
         unifiedAppDeployment
       }
+      applicationUrl
     }
   }
 `
@@ -33,5 +34,6 @@ export interface FindAppQuerySchema {
     betas?: {
       unifiedAppDeployment?: boolean
     }
+    applicationUrl: string
   }
 }

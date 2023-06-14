@@ -148,6 +148,7 @@ describe('requestAppInfo', () => {
       organizationId: 'orgid',
       apiSecretKeys: [],
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     })
 
     // When
@@ -166,6 +167,7 @@ describe('requestAppInfo', () => {
       organizationId: 'orgid',
       apiSecretKeys: [{secret: 'SECRET'}],
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     })
 
     // When

@@ -123,5 +123,6 @@ function testOrganizationApp() {
     organizationId: '1',
     apiKey: 'api-key',
     grantedScopes: [],
+    applicationUrl: 'https://example.com',
   }
 }

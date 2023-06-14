@@ -318,6 +318,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       organizationId: partnersApp.organizationId,
       grantedScopes: partnersApp.grantedScopes,
       betas: partnersApp.betas,
+      applicationUrl: partnersApp.applicationUrl,
     },
     identifiers,
     token,

@@ -58,6 +58,7 @@ const APP1: OrganizationApp = {
   betas: {
     unifiedAppDeployment: false,
   },
+  applicationUrl: 'https://example.com',
 }
 const APP2: OrganizationApp = {
   id: '2',
@@ -69,6 +70,7 @@ const APP2: OrganizationApp = {
   betas: {
     unifiedAppDeployment: false,
   },
+  applicationUrl: 'https://example.com',
 }
 
 const ORG1: Organization = {
