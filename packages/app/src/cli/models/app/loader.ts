@@ -265,11 +265,25 @@ class AppLoader {
     const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
+    this.validateWebs(webs)
 
     const webTomlsInStandardLocation = await glob(joinPath(this.appDirectory, `web/**/${configurationFileNames.web}`))
     const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
 
     return {webs, usedCustomLayout}
+  }
+
+  validateWebs(webs: Web[]) {
+    [WebType.Backend, WebType.Frontend].forEach((webType) => {
+      const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
+      if (websOfType.length > 1) {
+        this.abortOrReport(
+          outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
+          undefined,
+          websOfType[1]!.directory,
+        )
+      }
+    })
   }
 
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
