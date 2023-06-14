@@ -28,7 +28,7 @@ async function fetchDeployments(
       ...deployment,
       status:
         deployment.status === 'active'
-          ? colors.green(`★ ${deployment.status} (${deployment.distributionPercentage})`)
+          ? colors.green(`★ ${deployment.status} (${deployment.distributionPercentage}%)`)
           : deployment.status,
       createdBy: deployment.createdBy?.displayName ?? '',
     }
