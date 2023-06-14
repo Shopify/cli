@@ -40,6 +40,7 @@ describe('env show', () => {
       organizationId: '1',
       apiKey,
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)

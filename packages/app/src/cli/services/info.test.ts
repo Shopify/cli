@@ -98,6 +98,7 @@ describe('info', () => {
       organizationId: '1',
       apiKey: 'api-key',
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
@@ -143,6 +144,7 @@ describe('info', () => {
       organizationId: '1',
       apiKey: 'api-key',
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
@@ -212,6 +214,7 @@ describe('info', () => {
       organizationId: '1',
       apiKey: 'api-key',
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
     }
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)

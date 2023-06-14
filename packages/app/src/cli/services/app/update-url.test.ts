@@ -18,6 +18,7 @@ const APP1: OrganizationApp = {
   apiSecretKeys: [{secret: 'secret1'}],
   organizationId: '1',
   grantedScopes: [],
+  applicationUrl: 'https://example.com',
 }
 
 beforeEach(async () => {

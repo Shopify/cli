@@ -78,6 +78,7 @@ const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
   betas: {unifiedAppDeployment: true},
   apiKey: 'api-key',
   apiSecretKeys: [],
+  applicationUrl: 'https://example.com',
 }
 
 const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
@@ -87,6 +88,7 @@ const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
   grantedScopes: [],
   apiKey: 'api-key',
   apiSecretKeys: [],
+  applicationUrl: 'https://example.com',
 }
 
 const options = (
