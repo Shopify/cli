@@ -512,6 +512,38 @@ describe('ensureDeployContext', () => {
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
     expect(got.deploymentMode).toEqual('legacy')
   })
+
+  test('throws an error using legacy deployments and source control url flag', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+
+    // There is a cached app but it will be ignored
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    const opts = options(app)
+    opts.reset = true
+    opts.commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
+
+    // When/ Then
+    await expect(ensureDeployContext(opts)).rejects.toThrowErrorMatchingInlineSnapshot(
+      '"The `source-control-url` flag is not supported for this app."',
+    )
+
+    expect(fetchOrganizations).toHaveBeenCalledWith('token')
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      'token',
+    )
+  })
 })
 
 describe('ensureThemeExtensionDevContext', () => {

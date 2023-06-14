@@ -97,6 +97,9 @@ interface UploadExtensionsBundleOptions {
 
   /** App version identifier */
   version?: string
+
+  /** The git reference url of the deployment */
+  commitReference?: string
 }
 
 export interface UploadExtensionValidationError {
@@ -141,6 +144,7 @@ export async function uploadExtensionsBundle(
     skipPublish: !(options.deploymentMode === 'unified'),
     message: options.message,
     versionTag: options.version,
+    commitReference: options.commitReference,
   }
 
   if (signedURL) {

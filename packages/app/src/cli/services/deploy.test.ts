@@ -366,7 +366,7 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle(app, undefined, undefined, 'unified')
+    await testDeployBundle(app, undefined, undefined, undefined, 'unified')
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -395,9 +395,10 @@ describe('deploy', () => {
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
     const app = testApp({allExtensions: [uiExtension, themeExtension]})
+    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle(app, undefined, undefined, commitReference)
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -410,6 +411,7 @@ describe('deploy', () => {
       token: 'api-token',
       extensionIds: {},
       deploymentMode: 'legacy',
+      commitReference,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
@@ -538,6 +540,7 @@ async function testDeployBundle(
     message?: string
     version?: string
   },
+  commitReference?: string,
   switchToDeploymentMode?: DeploymentMode,
 ) {
   // Given
@@ -588,5 +591,6 @@ async function testDeployBundle(
     noRelease: Boolean(options?.noRelease),
     message: options?.message,
     version: options?.version,
+    ...(commitReference ? {commitReference} : {}),
   })
 }

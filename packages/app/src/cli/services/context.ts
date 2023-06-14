@@ -240,6 +240,7 @@ export interface DeployContextOptions {
   reset: boolean
   force: boolean
   noRelease: boolean
+  commitReference?: string
 }
 
 interface DeployContextOutput {
@@ -294,6 +295,11 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
   const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
+
+  if (deploymentMode === 'legacy' && options.commitReference) {
+    throw new AbortError('The `source-control-url` flag is not supported for this app.')
+  }
+
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
