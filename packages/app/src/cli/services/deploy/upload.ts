@@ -29,9 +29,11 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {cwd} from '@shopify/cli-kit/node/path'
 
 interface DeployThemeExtensionOptions {
   /** The application API key */
@@ -156,7 +158,7 @@ export async function uploadExtensionsBundle(
   }
 
   const mutation = AppDeploy
-  const result: AppDeploySchema = await partnersRequest(mutation, options.token, variables)
+  const result: AppDeploySchema = await handlePartnersErrors(() => partnersRequest(mutation, options.token, variables))
 
   if (result.appDeploy?.userErrors?.length > 0) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
@@ -342,7 +344,10 @@ export async function getExtensionUploadURL(apiKey: string, deploymentUUID: stri
     bundleFormat: 1,
   }
 
-  const result: GenerateSignedUploadUrlSchema = await partnersRequest(mutation, token, variables)
+  const result: GenerateSignedUploadUrlSchema = await handlePartnersErrors(() =>
+    partnersRequest(mutation, token, variables),
+  )
+
   if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
     const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
@@ -494,10 +499,28 @@ interface GetFunctionExtensionUploadURLOutput {
 async function getFunctionExtensionUploadURL(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res: UploadUrlGenerateMutationSchema = await functionProxyRequest(
-    options.apiKey,
-    UploadUrlGenerateMutation,
-    options.token,
+  const res: UploadUrlGenerateMutationSchema = await handlePartnersErrors(() =>
+    functionProxyRequest(options.apiKey, UploadUrlGenerateMutation, options.token),
   )
   return res.data.uploadUrlGenerate
+}
+
+async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {
+  try {
+    const result = await request()
+    return result
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    if (error.errors?.[0]?.extensions?.type === 'unsupported_client_version') {
+      const packageManager = await getPackageManager(cwd())
+
+      throw new AbortError(
+        {bold: '`deploy` is no longer supported in this CLI version.'},
+        ['Upgrade your CLI version to use the', {command: 'deploy'}, 'command.'],
+        [['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}]],
+      )
+    }
+
+    throw error
+  }
 }

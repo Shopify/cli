@@ -472,6 +472,132 @@
       },
       "args": {}
     },
+    "app:config:link": {
+      "id": "app:config:link",
+      "description": "Fetch your app's config from the Partner Dashboard.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "app:config:push": {
+      "id": "app:config:push",
+      "description": "Push your app's config to the Partner Dashboard.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "app:config:use": {
+      "id": "app:config:use",
+      "description": "Set a particular configuration to use.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
     "app:env:pull": {
       "id": "app:env:pull",
       "description": "Pull app and extensions environment variables.",

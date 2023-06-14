@@ -1,19 +1,11 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
-import {
-  showDeprecationWarnings,
-  currentDirectoryConfirmed,
-  renderLinks,
-  validThemeDirectory,
-} from '../../services/dev.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export default class Dev extends ThemeCommand {
   static description =
@@ -101,18 +93,17 @@ export default class Dev extends ThemeCommand {
     'notify',
   ]
 
-  // Tokens are valid for 120 min, better to be safe and refresh every 110 min
-  ThemeRefreshTimeoutInMs = 110 * 60 * 1000
-
   /**
    * Executes the theme serve command.
    * Every 110 minutes, it will refresh the session token.
    */
   async run(): Promise<void> {
     showDeprecationWarnings(this.argv)
+
     let {flags} = await this.parse(Dev)
     const store = ensureThemeStore(flags)
-    const adminSession = await refreshTokens(store, flags.password)
+
+    const {adminSession, storefrontToken} = await refreshTokens(store, flags.password)
 
     if (flags.theme) {
       const filter = {filter: {theme: flags.theme}}
@@ -127,26 +118,18 @@ export default class Dev extends ThemeCommand {
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Dev.cli2Flags})
-    const command = ['theme', 'serve', flags.path, ...flagsToPass]
 
-    if (!(await validThemeDirectory(flags.path)) && !(await currentDirectoryConfirmed(flags.force))) {
-      return
-    }
-
-    renderLinks(store, flags.theme!, flags.host, flags.port)
-
-    setInterval(() => {
-      outputDebug('Refreshing theme session tokens...')
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      refreshTokens(store, flags.password)
-    }, this.ThemeRefreshTimeoutInMs)
-    await execCLI2(command, {store, adminToken: adminSession.token})
+    await dev({
+      adminSession,
+      storefrontToken,
+      directory: flags.path,
+      store,
+      password: flags.password,
+      theme: flags.theme!,
+      host: flags.host,
+      port: flags.port,
+      force: flags.force,
+      flagsToPass,
+    })
   }
-}
-
-async function refreshTokens(store: string, password: string | undefined) {
-  const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
-  const storefrontToken = await ensureAuthenticatedStorefront([], password)
-  await execCLI2(['theme', 'token', '--admin', adminSession.token, '--sfr', storefrontToken])
-  return adminSession
 }
