@@ -17,6 +17,13 @@ type DeploymentLine = {
   status: string
 }
 
+function formatDate(date: Date) {
+  const components = date.toISOString().split('T')
+  const dateString = components[0] ?? date.toDateString()
+  const timeString = components[1]?.split('.')[0] ?? date.toTimeString()
+  return `${dateString} ${timeString}`
+}
+
 async function fetchDeployments(
   token: string,
   apiKey: string,
@@ -31,6 +38,7 @@ async function fetchDeployments(
           ? colors.green(`★ ${deployment.status} (${deployment.distributionPercentage}%)`)
           : deployment.status,
       createdBy: deployment.createdBy?.displayName ?? '',
+      createdAt: formatDate(new Date(deployment.createdAt)),
     }
   })
 
