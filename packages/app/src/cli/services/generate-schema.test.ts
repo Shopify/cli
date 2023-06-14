@@ -56,6 +56,7 @@ describe('generateSchemaService', () => {
         extension,
         apiKey,
         path,
+        stdout: false,
       })
 
       // Then
@@ -102,6 +103,7 @@ describe('generateSchemaService', () => {
       extension,
       apiKey,
       path: '',
+      stdout: true,
     })
 
     // Then
@@ -220,6 +222,7 @@ describe('generateSchemaService', () => {
         app,
         extension,
         path: '',
+        stdout: true,
       })
 
       await expect(result).rejects.toThrow()

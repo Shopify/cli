@@ -20,7 +20,7 @@ interface GenerateSchemaOptions {
   app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
   apiKey?: string
-  stdout?: boolean
+  stdout: boolean
   path: string
 }
 
@@ -29,7 +29,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   const token = await ensureAuthenticatedPartners()
   const {apiVersion: version, type} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
-  const stdout = options.stdout || false
+  const stdout = options.stdout
 
   if (!apiKey) {
     if (!isTerminalInteractive()) {
@@ -60,6 +60,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   if (stdout) {
     outputInfo(response.definition)
   } else {
-    await writeFile(joinPath(options.path, 'schema.graphql'), response.definition)
+    const outputPath = joinPath(options.path, 'schema.graphql')
+    await writeFile(outputPath, response.definition)
+    outputInfo(`GraphQL Schema for ${extension.localIdentifier} written to ${outputPath}`)
   }
 }
