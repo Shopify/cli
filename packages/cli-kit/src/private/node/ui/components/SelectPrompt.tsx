@@ -17,7 +17,6 @@ export interface SelectPromptProps<T> {
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
-  additionalInfo?: string
   gitDiff?: {
     baselineContent: string
     updatedContent: string
@@ -32,7 +31,6 @@ function SelectPrompt<T>({
   message,
   choices,
   infoTable,
-  additionalInfo,
   gitDiff,
   onSubmit,
   defaultValue,
@@ -120,11 +118,6 @@ function SelectPrompt<T>({
       {gitDiff && !submitted ? (
         <Box marginLeft={7} marginTop={1}>
           <GitDiff {...gitDiff} />
-        </Box>
-      ) : null}
-      {additionalInfo && !submitted ? (
-        <Box marginLeft={7} marginTop={1}>
-          <Text>{additionalInfo}</Text>
         </Box>
       ) : null}
       {submitted ? (
