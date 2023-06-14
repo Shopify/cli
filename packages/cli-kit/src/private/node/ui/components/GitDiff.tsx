@@ -6,7 +6,7 @@ import {unstyled, shouldDisplayColors} from '../../../../public/node/output.js'
 const require = createRequire(import.meta.url)
 const gitDiff = require('git-diff')
 
-interface DiffProps {
+export interface GitDiffProps {
   baselineContent: string
   updatedContent: string
 }
@@ -14,7 +14,7 @@ interface DiffProps {
 /**
  * `FilePath` displays a path to a file.
  */
-const GitDiff: FunctionComponent<DiffProps> = ({baselineContent, updatedContent}): JSX.Element => {
+const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedContent}): JSX.Element => {
   const rawDiffContents = gitDiff(
     baselineContent,
     updatedContent,
