@@ -1,11 +1,10 @@
 import {ensureReleaseContext} from './context.js'
 import {AppInterface} from '../models/app/app.js'
-import {AppRelease, AppReleaseSchema} from '../api/graphql/app_release.js'
+import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {renderError, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
@@ -21,10 +20,7 @@ interface ReleaseOptions {
   force: boolean
 
   /** App version tag */
-  version?: string
-
-  /** App version identifier */
-  versionId?: string
+  version: string
 }
 
 export async function release(options: ReleaseOptions) {
@@ -35,15 +31,16 @@ export async function release(options: ReleaseOptions) {
     appRelease: AppReleaseSchema
   }
 
+  const variables: AppReleaseVariables = {
+    apiKey,
+    versionTag: options.version,
+  }
+
   const tasks = [
     {
       title: 'Releasing version',
       task: async (context: Context) => {
-        context.appRelease = await partnersRequest(AppRelease, token, {
-          apiKey,
-          deploymentId: options.versionId,
-          versionTag: options.version,
-        })
+        context.appRelease = await partnersRequest(AppRelease, token, variables)
       },
     },
   ]
@@ -52,23 +49,26 @@ export async function release(options: ReleaseOptions) {
     appRelease: {appRelease: release},
   } = await renderTasks<Context>(tasks)
 
-  const deployment = release.deployment
+  let linkAndMessage: TokenItem = []
+  if (release.deployment) {
+    linkAndMessage = [
+      {link: {label: release.deployment.versionTag, url: release.deployment.location}},
+      release.deployment.message ? `\n${release.deployment.message}` : '',
+    ]
+  }
 
   if (release.userErrors?.length > 0) {
-    const errorsMessage = release.userErrors.map((error) => error.message).join(', ')
-    if (!deployment) throw new AbortError(errorsMessage)
     renderError({
-      headline: "Version couldn't be released.",
+      headline: "Version couldn't be released",
       body: [
-        {link: {url: deployment.location, label: deployment.versionTag}},
-        `\n${deployment.message}`,
-        `\n\n${errorsMessage}`,
+        ...linkAndMessage,
+        `${linkAndMessage.length > 0 ? '\n\n' : ''}${release.userErrors.map((error) => error.message).join(', ')}`,
       ],
     })
   } else {
     renderSuccess({
-      headline: 'Version released to users.',
-      body: [{link: {url: deployment.location, label: deployment.versionTag}}, `\n${deployment.message}`],
+      headline: 'Version released to users',
+      body: linkAndMessage,
       nextSteps: [
         [
           'Run',

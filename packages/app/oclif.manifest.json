@@ -402,19 +402,10 @@
           "type": "option",
           "description": "Version tag of the version you want to release.",
           "hidden": false,
+          "required": true,
           "multiple": false,
           "exclusive": [
             "app-version-id"
-          ]
-        },
-        "app-version-id": {
-          "name": "app-version-id",
-          "type": "option",
-          "description": "Version identifier of the version you want to release.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "version"
           ]
         }
       },

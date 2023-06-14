@@ -23,6 +23,11 @@ interface ErrorDetail {
   extension_title: string
 }
 
+export interface AppReleaseVariables {
+  apiKey: string
+  versionTag: string
+}
+
 export interface AppReleaseSchema {
   appRelease: {
     deployment: {

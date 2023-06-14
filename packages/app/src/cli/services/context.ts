@@ -349,7 +349,8 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
-  if (!partnersApp.betas?.unifiedAppDeployment) {
+  const deploymentMode: DeploymentMode = partnersApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
+  if (deploymentMode === 'legacy') {
     throw new AbortSilentError()
   }
 

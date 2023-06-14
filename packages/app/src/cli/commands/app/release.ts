@@ -30,12 +30,7 @@ export default class Release extends Command {
       description: 'Version tag of the version you want to release.',
       env: 'SHOPIFY_FLAG_VERSION',
       exclusive: ['app-version-id'],
-    }),
-    'app-version-id': Flags.string({
-      hidden: false,
-      description: 'Version identifier of the version you want to release.',
-      env: 'SHOPIFY_FLAG_VERSION_ID',
-      exclusive: ['version'],
+      required: true,
     }),
   }
 
@@ -54,7 +49,6 @@ export default class Release extends Command {
       reset: flags.reset,
       force: flags.force,
       version: flags.version,
-      versionId: flags['app-version-id'],
     })
   }
 }

@@ -83,7 +83,7 @@ describe('release', () => {
         },
         '\nmessage',
       ],
-      headline: 'Version released to users.',
+      headline: 'Version released to users',
       nextSteps: [
         [
           'Run',
@@ -96,7 +96,7 @@ describe('release', () => {
     })
   })
 
-  test('shows errors if there are any', async () => {
+  test('shows a custom error message without link and message if no deployment is returned', async () => {
     // Given
     const app = testApp()
     vi.mocked(confirmReleasePrompt).mockResolvedValue()
@@ -122,25 +122,17 @@ describe('release', () => {
       }
     })
 
-    vi.mocked(ensureReleaseContext).mockResolvedValue({
-      app,
-      token: 'api-token',
-      apiKey: 'app-id',
-    })
-    vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
+    // When
+    await testRelease(app, 'app-version')
 
     // Then
-    await expect(() =>
-      release({
-        app,
-        reset: false,
-        force: false,
-        version: 'app-version',
-      }),
-    ).rejects.toThrowError('some kind of error 1, some kind of error 2')
+    expect(renderError).toHaveBeenCalledWith({
+      body: ['some kind of error 1, some kind of error 2'],
+      headline: "Version couldn't be released",
+    })
   })
 
-  test('shows a custom error message when the version needs to be approved', async () => {
+  test('shows a custom error message with link and message if a deployment is returned', async () => {
     // given
     const app = testApp()
     vi.mocked(confirmReleasePrompt).mockResolvedValue()
@@ -183,7 +175,7 @@ describe('release', () => {
         '\nmessage',
         '\n\nneeds to be submitted for review and approved by Shopify before it can be released',
       ],
-      headline: "Version couldn't be released.",
+      headline: "Version couldn't be released",
     })
   })
 })
