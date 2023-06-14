@@ -116,7 +116,7 @@ module ShopifyCLI
         end
 
         def watcher
-          @watcher ||= Watcher.new(ctx, syncer: syncer, extension: extension, poll: poll)
+          @watcher ||= Watcher.new(ctx, syncer: syncer, extension: extension, poll: poll, ignore_filter: ignore_filter)
         end
 
         def param_builder
