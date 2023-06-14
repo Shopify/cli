@@ -115,7 +115,7 @@ class TunnelClientInstance implements TunnelClient {
           // Cloudflare crashed because Rosetta 2 is not installed
           this.currentStatus = {
             status: 'error',
-            message: `Error starting cloudflared tunnel. Missing Rosetta 2.`,
+            message: `Error starting cloudflared tunnel: Missing Rosetta 2.`,
             tryMessage: "Install it by running 'softwareupdate --install-rosetta' and try again",
           }
           return
