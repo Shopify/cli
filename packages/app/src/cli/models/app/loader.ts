@@ -273,8 +273,8 @@ class AppLoader {
     return {webs, usedCustomLayout}
   }
 
-  validateWebs(webs: Web[]) {
-    [WebType.Backend, WebType.Frontend].forEach((webType) => {
+  validateWebs(webs: Web[]): void {
+    ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
       if (websOfType.length > 1) {
         this.abortOrReport(
