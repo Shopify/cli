@@ -1,8 +1,9 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile, glob} from '@shopify/cli-kit/node/fs'
+import {copyFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
@@ -69,15 +70,13 @@ export async function bundleThemeExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-  const files = await glob(joinPath(extension.directory, '/**/*'))
+  const files = await themeExtensionFiles(extension)
 
   await Promise.all(
     files.map(function (filepath) {
-      if (!(filepath.includes('.gitkeep') || filepath.includes('.toml') || filepath.includes('.DS_Store'))) {
-        const relativePathName = relativePath(extension.directory, filepath)
-        const outputFile = joinPath(extension.outputPath, relativePathName)
-        return copyFile(filepath, outputFile)
-      }
+      const relativePathName = relativePath(extension.directory, filepath)
+      const outputFile = joinPath(extension.outputPath, relativePathName)
+      return copyFile(filepath, outputFile)
     }),
   )
 }
