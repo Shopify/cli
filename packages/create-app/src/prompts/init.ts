@@ -21,6 +21,7 @@ export const templateURLMap = {
   php: 'https://github.com/Shopify/shopify-app-template-php',
   ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
   none: 'https://github.com/Shopify/shopify-app-template-none',
+  remix: 'https://github.com/Shopify/shopify-app-template-remix',
 } as const
 
 const templateLabels: {[key: string]: string} = {
