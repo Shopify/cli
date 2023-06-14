@@ -295,7 +295,7 @@ export async function renderSelectPrompt<T>({
 }
 
 export interface RenderConfirmationPromptOptions
-  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'additionalInfo' | 'abortSignal'> {
+  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'additionalInfo' | 'gitDiff' | 'abortSignal'> {
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
@@ -320,6 +320,7 @@ export async function renderConfirmationPrompt({
   message,
   infoTable,
   additionalInfo,
+  gitDiff,
   confirmationMessage = 'Yes, confirm',
   cancellationMessage = 'No, cancel',
   renderOptions,
@@ -347,6 +348,7 @@ export async function renderConfirmationPrompt({
     message,
     infoTable,
     additionalInfo,
+    gitDiff,
     submitWithShortcuts: true,
     renderOptions,
     defaultValue,

@@ -1,6 +1,7 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {GitDiff} from './GitDiff.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {tokenItemToString} from './TokenizedText.js'
 import {uniqBy} from '../../../../public/common/array.js'
@@ -17,6 +18,10 @@ export interface SelectPromptProps<T> {
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
   additionalInfo?: string
+  gitDiff?: {
+    baselineContent: string
+    updatedContent: string
+  }
   defaultValue?: T
   submitWithShortcuts?: boolean
   abortSignal?: AbortSignal
@@ -28,6 +33,7 @@ function SelectPrompt<T>({
   choices,
   infoTable,
   additionalInfo,
+  gitDiff,
   onSubmit,
   defaultValue,
   submitWithShortcuts = false,
@@ -109,6 +115,11 @@ function SelectPrompt<T>({
       {infoTable && !submitted ? (
         <Box marginLeft={7} marginTop={1}>
           <InfoTable table={infoTable} />
+        </Box>
+      ) : null}
+      {gitDiff && !submitted ? (
+        <Box marginLeft={7} marginTop={1}>
+          <GitDiff {...gitDiff} />
         </Box>
       ) : null}
       {additionalInfo && !submitted ? (
