@@ -15,6 +15,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
       .transform((value) => (value.trim() === '' ? undefined : value))
       .optional(),
     path: zod.string().optional(),
+    watch: zod.union([zod.string(),zod.string().array()]).optional()
   }),
   configurationUi: zod.boolean().optional().default(true),
   ui: zod

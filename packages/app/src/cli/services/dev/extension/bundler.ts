@@ -4,11 +4,13 @@ import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import {buildFunctionExtension} from '../../../services/build/extension.js';
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -206,4 +208,46 @@ export async function setupConfigWatcher({
         )
       })
   })
+}
+
+interface SetupFunctionWatcherOptions {
+  extension: ExtensionInstance
+  app: AppInterface
+  stdout: Writable
+  stderr: Writable
+}
+
+export async function setupFunctionWatcher({
+  extension,
+  app,
+  stdout,
+  stderr
+}: SetupFunctionWatcherOptions) {
+  const {default: chokidar} = await import('chokidar')
+
+  outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout);
+
+  if (!extension.isJavaScript && extension.watchPaths.length == 0) {
+    outputWarn(`Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`)
+    return
+  }
+
+  const watchPaths: string[] = (extension.watchPaths as string[]) ?? [];
+  if (extension.isJavaScript && watchPaths.length == 0) {
+    watchPaths.push(joinPath('src', '**', '*.js'))
+    watchPaths.push(joinPath('src', '**', '*.ts'))
+  }
+  watchPaths.push(joinPath('**', 'input*.graphql'))
+
+  const paths = watchPaths.map(path => joinPath(extension.directory, path));
+  outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${paths}`, stdout)
+
+  //TODO: Abort if a build is already running
+  //TODO: Restart watch if config changes?
+  const functionWatcher = chokidar.watch(paths).on('change', path => {
+    outputDebug(`Function extension file at path ${path} changed`, stdout)
+    buildFunctionExtension(extension, {app, stdout, stderr, useTasks: false}).catch((_: unknown) => {});
+  });
+
+  //TODO: Signal listener
 }

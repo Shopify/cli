@@ -25,6 +25,7 @@ export async function buildJSFunction(fun: ExtensionInstance, options: JSFunctio
 }
 
 async function buildJSFunctionWithoutTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
+  options.stdout.write(`Building function ${fun.localIdentifier}...`)
   options.stdout.write(`Building GraphQL types...\n`)
   await buildGraphqlTypes(fun, options)
   options.stdout.write(`Bundling JS function...\n`)

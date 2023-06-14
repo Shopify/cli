@@ -95,7 +95,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isDraftable() {
-    return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
+    return !this.isPreviewable && !this.isThemeExtension
   }
 
   get features(): ExtensionFeature[] {
@@ -196,6 +196,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   get buildCommand() {
     const config = this.configuration as unknown as FunctionConfigType
     return config.build.command
+  }
+
+  get watchPaths() {
+    const config = this.configuration as unknown as FunctionConfigType
+    return config.build.watch ? [config.build.watch].flat() : []
   }
 
   get inputQueryPath() {

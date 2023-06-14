@@ -14,7 +14,7 @@ import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {setupConfigWatcher, setupDraftableExtensionBundler} from './dev/extension/bundler.js'
+import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -480,8 +480,9 @@ export function devDraftableExtensionTarget({
       await Promise.all(
         extensions
           .map((extension) => {
-            const registrationId = remoteExtensions[extension.localIdentifier]
-            if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+            //TODO: TEMP workaround
+            const registrationId = remoteExtensions[extension.localIdentifier] ?? '00000000-0000-0000-0000-000000000000'
+            // if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
             const actions = [
               setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
@@ -503,6 +504,19 @@ export function devDraftableExtensionTarget({
                 }),
               )
             }
+
+            // watch for Function changes that require a build and push
+            if (extension.isFunctionExtension) {
+              actions.push(
+                setupFunctionWatcher({
+                  extension,
+                  app,
+                  stdout,
+                  stderr
+                })
+              )
+            }
+
             return actions
           })
           .flat(),
