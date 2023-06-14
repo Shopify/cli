@@ -10,7 +10,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
-const organizationApp = (app: AppInterface, unified = false): OrganizationApp => {
+const organizationApp = (app: AppInterface): OrganizationApp => {
   return {
     id: '1',
     title: app.name,
@@ -19,7 +19,8 @@ const organizationApp = (app: AppInterface, unified = false): OrganizationApp =>
     apiSecretKeys: [],
     grantedScopes: [],
     betas: {
-      unifiedAppDeployment: unified,
+      unifiedAppDeployment: false,
+      unifiedAppDeploymentOptIn: true,
     },
   }
 }
@@ -45,7 +46,7 @@ describe('resolveDeploymentMode', () => {
     const app = testApp()
     const orgApp = organizationApp(app)
     const options = deploymentContext(app)
-    vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(false)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(false)
     const outputMock = mockAndCaptureOutput()
 
     // When
@@ -72,6 +73,43 @@ describe('resolveDeploymentMode', () => {
       [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
       "
     `)
+    expect(upgradePrompt).toHaveBeenCalled()
+  })
+
+  test("return legacy mode and don't display legacy banner when legacy deployment and not unified opt in", async () => {
+    // Given
+    const app = testApp()
+    const orgApp = organizationApp(app)
+    orgApp.betas!.unifiedAppDeploymentOptIn = false
+    const options = deploymentContext(app)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
+
+    // Then
+    expect(result).equals('legacy')
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Deployments 2.0 available now.                                              │
+      │                                                                              │
+      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │                                                                              │
+      │    • Bundle all your extensions into an app version                          │
+      │    • Release all your extensions to users straight from the CLI              │
+      │                                                                              │
+      │  This app will be upgraded automatically in September 2023.                  │
+      │                                                                              │
+      │  Reference                                                                   │
+      │    • Introducing Deployments 2.0 [1]                                         │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      "
+    `)
+    expect(upgradePrompt).not.toHaveBeenCalled()
   })
 
   test('return unified mode and display legacy and unified banner when legacy deployment and accept upgrading', async () => {
@@ -79,7 +117,7 @@ describe('resolveDeploymentMode', () => {
     const app = testApp()
     const orgApp = organizationApp(app)
     const options = deploymentContext(app)
-    vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValueOnce({setBetaFlag: {userErrors: undefined}})
     const outputMock = mockAndCaptureOutput()
 
@@ -122,6 +160,7 @@ describe('resolveDeploymentMode', () => {
       [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
       "
     `)
+    expect(upgradePrompt).toHaveBeenCalled()
   })
 
   test('throw an error and display legacy banner when legacy deployment, accept upgrading but receive an error', async () => {
@@ -129,7 +168,7 @@ describe('resolveDeploymentMode', () => {
     const app = testApp()
     const orgApp = organizationApp(app)
     const options = deploymentContext(app)
-    vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValueOnce({setBetaFlag: {userErrors: [{field: 'file', message: 'error'}]}})
     const outputMock = mockAndCaptureOutput()
 
@@ -156,13 +195,16 @@ describe('resolveDeploymentMode', () => {
       [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
       "
     `)
+    expect(upgradePrompt).toHaveBeenCalled()
   })
 
   test('return unified mode and display unified banner when unified deployment', async () => {
     // Given
     const app = testApp()
-    const orgApp = organizationApp(app, true)
+    const orgApp = organizationApp(app)
+    orgApp.betas!.unifiedAppDeployment = true
     const options = deploymentContext(app)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
     const outputMock = mockAndCaptureOutput()
 
     // When
@@ -185,13 +227,16 @@ describe('resolveDeploymentMode', () => {
       [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
       "
     `)
+    expect(upgradePrompt).not.toHaveBeenCalled()
   })
 
   test('return unified without release mode and display unified banner when unified deployment and use no-release', async () => {
     // Given
     const app = testApp()
-    const orgApp = organizationApp(app, true)
+    const orgApp = organizationApp(app)
+    orgApp.betas!.unifiedAppDeployment = true
     const options = deploymentContext(app, true)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
     const outputMock = mockAndCaptureOutput()
 
     // When
@@ -214,5 +259,6 @@ describe('resolveDeploymentMode', () => {
       [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
       "
     `)
+    expect(upgradePrompt).not.toHaveBeenCalled()
   })
 })

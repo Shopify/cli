@@ -74,6 +74,8 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
 }
 
 async function upgradeDeploymentToUnified(app: OrganizationApp, token: string) {
+  if (!app.betas?.unifiedAppDeploymentOptIn) return false
+
   const infoMessage: InfoMessage = {
     title: {
       color: 'red',
