@@ -76,12 +76,48 @@ describe('resolveDeploymentMode', () => {
     expect(upgradePrompt).toHaveBeenCalled()
   })
 
-  test("return legacy mode and don't display legacy banner when legacy deployment and not unified opt in", async () => {
+  test("return legacy mode and don't prompt to upgrade when legacy deployment and not unified opt in", async () => {
     // Given
     const app = testApp()
     const orgApp = organizationApp(app)
     orgApp.betas!.unifiedAppDeploymentOptIn = false
     const options = deploymentContext(app)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
+
+    // Then
+    expect(result).equals('legacy')
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Deployments 2.0 available now.                                              │
+      │                                                                              │
+      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │                                                                              │
+      │    • Bundle all your extensions into an app version                          │
+      │    • Release all your extensions to users straight from the CLI              │
+      │                                                                              │
+      │  This app will be upgraded automatically in September 2023.                  │
+      │                                                                              │
+      │  Reference                                                                   │
+      │    • Introducing Deployments 2.0 [1]                                         │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      "
+    `)
+    expect(upgradePrompt).not.toHaveBeenCalled()
+  })
+
+  test("return legacy mode and don't prompt to upgrade when legacy deployment and unified opt in but force deployments", async () => {
+    // Given
+    const app = testApp()
+    const orgApp = organizationApp(app)
+    const options = deploymentContext(app)
+    options.force = true
     const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
     const outputMock = mockAndCaptureOutput()
 
