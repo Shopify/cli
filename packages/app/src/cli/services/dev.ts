@@ -25,6 +25,7 @@ import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant
 import {load} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -102,6 +103,7 @@ async function dev(options: DevOptions) {
     localApp = await installAppDependencies(localApp)
   }
 
+  const frontendConfig = localApp.webs.find((web) => isWebType(web, WebType.Frontend))
   const backendConfig = localApp.webs.find((web) => isWebType(web, WebType.Backend))
   const webhooksPath =
     localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
@@ -124,22 +126,25 @@ async function dev(options: DevOptions) {
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
-  const initiateUpdateUrls = localApp.webs.length > 0 && options.update
+  let previewUrl
   let shouldUpdateURLs = false
 
-  if (initiateUpdateUrls) {
-    const newURLs = generatePartnersURLs(
-      exposedUrl,
-      localApp.webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-    )
-    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-      currentURLs,
-      appDirectory: localApp.directory,
-      cachedUpdateURLs,
-      newApp: remoteApp.newApp,
-    })
-    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
-    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+  if (frontendConfig || backendConfig) {
+    previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+    if (options.update) {
+      const newURLs = generatePartnersURLs(
+        exposedUrl,
+        localApp.webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+      )
+      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+        currentURLs,
+        appDirectory: localApp.directory,
+        cachedUpdateURLs,
+        newApp: remoteApp.newApp,
+      })
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+    }
   }
 
   // If we have a real UUID for an extension, use that instead of a random one
@@ -175,8 +180,6 @@ async function dev(options: DevOptions) {
 
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
   const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
-
-  let previewUrl
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
