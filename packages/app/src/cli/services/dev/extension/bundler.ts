@@ -215,13 +215,15 @@ interface SetupFunctionWatcherOptions {
   app: AppInterface
   stdout: Writable
   stderr: Writable
+  signal: AbortSignal
 }
 
 export async function setupFunctionWatcher({
   extension,
   app,
   stdout,
-  stderr
+  stderr,
+  signal
 }: SetupFunctionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -242,12 +244,42 @@ export async function setupFunctionWatcher({
   const paths = watchPaths.map(path => joinPath(extension.directory, path));
   outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${paths}`, stdout)
 
-  //TODO: Abort if a build is already running
-  //TODO: Restart watch if config changes?
+  let buildController : AbortController | null;
+
   const functionWatcher = chokidar.watch(paths).on('change', path => {
     outputDebug(`Function extension file at path ${path} changed`, stdout)
-    buildFunctionExtension(extension, {app, stdout, stderr, useTasks: false}).catch((_: unknown) => {});
+    if (buildController) {
+      //terminate any existing builds
+      buildController.abort()
+    }
+    buildController = new AbortController();
+    const buildSignal = buildController.signal;
+    buildFunctionExtension(extension, {
+      app,
+      stdout,
+      stderr,
+      useTasks: false,
+      signal: buildSignal
+    }).catch((_: unknown) => {
+      //no-op
+    }).finally(() => {
+      buildController = null;
+    })
   });
 
-  //TODO: Signal listener
+  signal.addEventListener('abort', () => {
+    outputDebug(`Closing function file watching for extension with ID ${extension.devUUID}`, stdout)
+    functionWatcher
+      .close()
+      .then(() => {
+        outputDebug(`Function file watching closed for extension with ${extension.devUUID}`, stdout)
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .catch((error: any) => {
+        outputDebug(
+          `Function file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
+          stderr,
+        )
+      })
+  })
 }

@@ -512,7 +512,8 @@ export function devDraftableExtensionTarget({
                   extension,
                   app,
                   stdout,
-                  stderr
+                  stderr,
+                  signal
                 })
               )
             }
