@@ -8,10 +8,15 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import * as output from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/local')
+
+vi.mock('../../../models/app/loader.ts')
 
 vi.mock('../models/app/identifiers.js', async () => {
   const identifiers: any = await vi.importActual('../models/app/identifiers.js')
@@ -37,17 +42,52 @@ describe('generateSchemaService', () => {
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 
-  test('performs GraphQL query to fetch the schema', async () => {
-    // Given
-    const app = testApp()
-    const extension = await testFunctionExtension()
-    const apiKey = 'api-key'
+  test('Save the latest GraphQL schema to ./[extension]/schema.graphql when stdout flag is ABSENT', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const app = testApp()
+      const extension = await testFunctionExtension({})
+      const apiKey = 'api-key'
+      const path = tmpDir
 
-    // When
-    const result = await generateSchemaService({app, extension, apiKey})
+      // When
+      await generateSchemaService({
+        app,
+        extension,
+        apiKey,
+        path,
+        stdout: false,
+      })
 
-    // Then
-    expect(result).toBe('schema')
+      // Then
+      const outputFile = await readFile(joinPath(tmpDir, 'schema.graphql'))
+      expect(outputFile).toEqual('schema')
+    })
+  })
+
+  test('Print the latest GraphQL schema to stdout when stdout flag is PRESENT', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const app = testApp()
+      const extension = await testFunctionExtension()
+      const apiKey = 'api-key'
+      const path = tmpDir
+      const stdout = true
+      const mockOutput = vi.fn()
+      vi.spyOn(output, 'outputInfo').mockImplementation(mockOutput)
+
+      // When
+      await generateSchemaService({
+        app,
+        extension,
+        apiKey,
+        path,
+        stdout,
+      })
+
+      // Then
+      expect(mockOutput).toHaveBeenCalledWith('schema')
+    })
   })
 
   test('aborts if a schema could not be generated', async () => {
@@ -58,7 +98,13 @@ describe('generateSchemaService', () => {
     request.mockImplementation(() => Promise.resolve({definition: null}))
 
     // When
-    const result = generateSchemaService({app, extension, apiKey})
+    const result = generateSchemaService({
+      app,
+      extension,
+      apiKey,
+      path: '',
+      stdout: true,
+    })
 
     // Then
     await expect(result).rejects.toThrow(AbortError)
@@ -97,7 +143,13 @@ describe('generateSchemaService', () => {
       } = extension
 
       // When
-      await generateSchemaService({app, extension, apiKey})
+      await generateSchemaService({
+        app,
+        extension,
+        apiKey,
+        path: '',
+        stdout: true,
+      })
 
       // Then
       expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
@@ -117,7 +169,12 @@ describe('generateSchemaService', () => {
       } = extension
 
       // When
-      await generateSchemaService({app, extension})
+      await generateSchemaService({
+        app,
+        extension,
+        path: '',
+        stdout: true,
+      })
 
       // Then
       expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
@@ -138,7 +195,12 @@ describe('generateSchemaService', () => {
       getAppIdentifiers.mockReturnValue({app: undefined})
 
       // When
-      await generateSchemaService({app, extension})
+      await generateSchemaService({
+        app,
+        extension,
+        path: '',
+        stdout: true,
+      })
 
       // Then
       expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
@@ -156,7 +218,12 @@ describe('generateSchemaService', () => {
       vi.mocked(isTerminalInteractive).mockReturnValue(false)
 
       // When
-      const result = generateSchemaService({app, extension})
+      const result = generateSchemaService({
+        app,
+        extension,
+        path: '',
+        stdout: true,
+      })
 
       await expect(result).rejects.toThrow()
       expect(request).not.toHaveBeenCalled()
