@@ -16,11 +16,11 @@ export interface Options {
 export async function pushConfig(options: Options) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = options.apiKey || (await selectApp()).apiKey
-  const query = PushConfig
+  const mutation = PushConfig
 
   const configuration = await parseConfigurationFile(AppConfigurationSchema, options.app.configurationPath, abort)
   const variables = {apiKey, ...configuration}
-  const result: PushConfigSchema = await partnersRequest(query, token, variables)
+  const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
   if (result.appUpdate.userErrors.length > 0) {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
