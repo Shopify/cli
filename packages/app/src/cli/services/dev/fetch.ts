@@ -14,6 +14,7 @@ import {
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
 
 export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
@@ -70,6 +71,20 @@ export async function fetchAppExtensionRegistrations({
 }): Promise<AllAppExtensionRegistrationsQuerySchema> {
   const query = AllAppExtensionRegistrationsQuery
   const result: AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
+    apiKey,
+  })
+  return result
+}
+
+export async function fetchActiveAppVersion({
+  token,
+  apiKey,
+}: {
+  token: string
+  apiKey: string
+}): Promise<ActiveAppVersionQuerySchema> {
+  const query = ActiveAppVersionQuery
+  const result: ActiveAppVersionQuerySchema = await partnersRequest(query, token, {
     apiKey,
   })
   return result
