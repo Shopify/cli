@@ -185,6 +185,23 @@ export function renderWarning(options: RenderAlertOptions) {
   return alert({...options, type: 'warning'})
 }
 
+/**
+ * Renders an error banner to the console.
+ * @example
+ * ╭─ error ──────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  Version couldn't be released.                           │
+ * │                                                          │
+ * │  This version needs to be submitted for review and       │
+ * │  approved by Shopify before it can be released.          │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
+ *
+ */
+export function renderError(options: RenderAlertOptions) {
+  return alert({...options, type: 'error'})
+}
+
 interface RenderFatalErrorOptions {
   renderOptions?: RenderOptions
 }

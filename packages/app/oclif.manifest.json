@@ -352,6 +352,72 @@
       },
       "args": {}
     },
+    "app:release": {
+      "id": "app:release",
+      "description": "Release an app version.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "api-key": {
+          "name": "api-key",
+          "type": "option",
+          "description": "The API key of your app.",
+          "hidden": false,
+          "multiple": false
+        },
+        "reset": {
+          "name": "reset",
+          "type": "boolean",
+          "description": "Reset all your settings.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "version": {
+          "name": "version",
+          "type": "option",
+          "description": "The name of the app version to release.",
+          "hidden": false,
+          "required": true,
+          "multiple": false,
+          "exclusive": [
+            "app-version-id"
+          ]
+        }
+      },
+      "args": {}
+    },
     "app:update-url": {
       "id": "app:update-url",
       "description": "Update your app and redirect URLs in the Partners Dashboard.",

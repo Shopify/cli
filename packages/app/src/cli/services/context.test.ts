@@ -16,6 +16,7 @@ import {
   ensureThemeExtensionDevContext,
   ensureGenerateContext,
   DeployContextOptions,
+  ensureReleaseContext,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
@@ -543,6 +544,53 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
     )
+  })
+})
+
+describe('ensureReleaseContext', () => {
+  test('throws an error if the beta flag is turned off', async () => {
+    // Given
+    const app = testApp()
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+
+    // Then
+    await expect(() =>
+      ensureReleaseContext({
+        app,
+        apiKey: 'key1',
+        reset: false,
+        force: false,
+      }),
+    ).rejects.toThrowError('')
+  })
+
+  test('updates app identifiers if the beta flag is turned on', async () => {
+    // Given
+    const app = testApp()
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
+
+    // When
+    const got = await ensureReleaseContext({
+      app,
+      apiKey: 'key2',
+      reset: false,
+      force: false,
+    })
+
+    // Then
+    expect(updateAppIdentifiers).toBeCalledWith({
+      app,
+      identifiers: {
+        app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey,
+      },
+      command: 'release',
+    })
+    expect(got.app).toEqual(app)
+    expect(got.apiKey).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey)
+    expect(got.token).toEqual('token')
   })
 })
 
