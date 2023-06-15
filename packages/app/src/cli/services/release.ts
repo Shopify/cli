@@ -1,4 +1,5 @@
 import {ensureReleaseContext} from './context.js'
+import {versionDiffByVersion} from './release/version-diff.js'
 import {AppInterface} from '../models/app/app.js'
 import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {confirmReleasePrompt} from '../prompts/release.js'
@@ -26,7 +27,9 @@ interface ReleaseOptions {
 export async function release(options: ReleaseOptions) {
   const {token, apiKey, app} = await ensureReleaseContext(options)
 
-  await confirmReleasePrompt(app.name)
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, options.version, token)
+
+  await confirmReleasePrompt(app.name, versionsDiff)
   interface Context {
     appRelease: AppReleaseSchema
   }
@@ -49,13 +52,10 @@ export async function release(options: ReleaseOptions) {
     appRelease: {appRelease: release},
   } = await renderTasks<Context>(tasks)
 
-  let linkAndMessage: TokenItem = []
-  if (release.deployment) {
-    linkAndMessage = [
-      {link: {label: release.deployment.versionTag, url: release.deployment.location}},
-      release.deployment.message ? `\n${release.deployment.message}` : '',
-    ]
-  }
+  const linkAndMessage: TokenItem = [
+    {link: {label: versionDetails.versionTag, url: versionDetails.location}},
+    versionDetails.message ? `\n${versionDetails.message}` : '',
+  ]
 
   if (release.userErrors?.length > 0) {
     renderError({
