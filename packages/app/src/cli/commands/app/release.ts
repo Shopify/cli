@@ -27,7 +27,7 @@ export default class Release extends Command {
     }),
     version: Flags.string({
       hidden: false,
-      description: 'Version tag of the version you want to release.',
+      description: 'The name of the app version to release.',
       env: 'SHOPIFY_FLAG_VERSION',
       exclusive: ['app-version-id'],
       required: true,

@@ -400,7 +400,7 @@
         "version": {
           "name": "version",
           "type": "option",
-          "description": "Version tag of the version you want to release.",
+          "description": "The name of the app version to release.",
           "hidden": false,
           "required": true,
           "multiple": false,
