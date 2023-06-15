@@ -349,7 +349,7 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
   }
 
   return {
-    logPrefix: ['web', ...options.web.configuration.roles].join('-'),
+    logPrefix: options.web.configuration.name ?? ['web', ...options.web.configuration.roles].join('-'),
     customPort: port,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await exec(cmd!, args, {

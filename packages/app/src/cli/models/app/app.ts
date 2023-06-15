@@ -32,6 +32,7 @@ const baseWebConfigurationSchema = zod.object({
     build: zod.string().optional(),
     dev: zod.string(),
   }),
+  name: zod.string().optional(),
 })
 const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
 export const WebConfigurationSchema = zod.union([

@@ -150,9 +150,14 @@ class AppInfo {
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
       if (web.configuration) {
-        web.configuration.roles.forEach((role) => {
-          sublevels.push([`    📂 ${role}`, relativePath(this.app.directory, web.directory)])
-        })
+        if (web.configuration.name) {
+          const {name, roles} = web.configuration
+          sublevels.push([`    📂 ${name} (${roles.join(',')})`, relativePath(this.app.directory, web.directory)])
+        } else {
+          web.configuration.roles.forEach((role) => {
+            sublevels.push([`    📂 ${role}`, relativePath(this.app.directory, web.directory)])
+          })
+        }
       } else if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
         if (error) {
