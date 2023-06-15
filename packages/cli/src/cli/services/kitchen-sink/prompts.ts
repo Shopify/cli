@@ -171,11 +171,7 @@ PRIVATE_STOREFRONT_API_TOKEN-"shpat_2257475ad5ddjfhef8db4355e5fc2011"
 ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
 
   await renderConfirmationPrompt({
-    message: [
-      'Make the following changes to your',
-      {filePath: '.env'},
-      'file?',
-    ],
+    message: ['Make the following changes to your', {filePath: '.env'}, 'file?'],
     gitDiff: {
       baselineContent,
       updatedContent,

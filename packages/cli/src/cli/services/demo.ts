@@ -159,10 +159,12 @@ const renderConfirmationPromptStepSchema = abstractDemoStepSchema.extend({
   properties: zod.object({
     message: headlineTokenSchema,
     infoTable: infoTableSchema.optional(),
-    gitDiff: zod.object({
-      baselineContent: zod.string(),
-      updatedContent: zod.string(),
-    }).optional(),
+    gitDiff: zod
+      .object({
+        baselineContent: zod.string(),
+        updatedContent: zod.string(),
+      })
+      .optional(),
     defaultValue: zod.boolean().optional(),
     confirmationMessage: zod.string(),
     cancellationMessage: zod.string(),
@@ -185,10 +187,12 @@ const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
     ),
     defaultValue: zod.string().optional(),
     infoTable: infoTableSchema.optional(),
-    gitDiff: zod.object({
-      baselineContent: zod.string(),
-      updatedContent: zod.string(),
-    }).optional(),
+    gitDiff: zod
+      .object({
+        baselineContent: zod.string(),
+        updatedContent: zod.string(),
+      })
+      .optional(),
   }),
 })
 type RenderSelectPromptStep = zod.infer<typeof renderSelectPromptStepSchema>

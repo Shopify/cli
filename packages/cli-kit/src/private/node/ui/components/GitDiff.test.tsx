@@ -12,12 +12,7 @@ describe('GitDiff', async () => {
   })
 
   test('renders correctly when changes exist', async () => {
-    const {lastFrame} = render(
-      <GitDiff
-        baselineContent="hello\n"
-        updatedContent="world\n"
-      />
-    )
+    const {lastFrame} = render(<GitDiff baselineContent="hello\n" updatedContent="world\n" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "@@ -1 +1 @@
@@ -27,12 +22,7 @@ describe('GitDiff', async () => {
   })
 
   test('renders correctly when changes exist and are several lines long', async () => {
-    const {lastFrame} = render(
-      <GitDiff
-        baselineContent="hello\nworld\n"
-        updatedContent="world\nhello\n"
-      />
-    )
+    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "@@ -1,2 +1,2 @@
@@ -43,12 +33,7 @@ describe('GitDiff', async () => {
   })
 
   test('renders correctly when changes exist and are several lines long and have no trailing newline', async () => {
-    const {lastFrame} = render(
-      <GitDiff
-        baselineContent="hello\nworld\n"
-        updatedContent="world\nhello"
-      />
-    )
+    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "@@ -1,2 +1,2 @@
@@ -79,9 +64,7 @@ sit
 amet
 foo
 qux`
-    const {lastFrame} = render(
-      <GitDiff baselineContent={baselineContent} updatedContent={updatedContent} />
-    )
+    const {lastFrame} = render(<GitDiff baselineContent={baselineContent} updatedContent={updatedContent} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "@@ -1,3 +1,3 @@
@@ -97,4 +80,3 @@ qux`
       \\\\  No newline at end of file"`)
   })
 })
-
