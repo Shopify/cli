@@ -584,7 +584,7 @@ describe('deploy', () => {
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionTag}`)},
+          {command: formatPackageManagerCommand(app.packageManager, 'shopify app release', `--version=${versionTag}`)},
           'to release this version to users.',
         ],
       ],

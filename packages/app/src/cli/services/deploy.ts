@@ -308,7 +308,7 @@ async function outputUnifiedCompletionMessage(
         {
           command: formatPackageManagerCommand(
             app.packageManager,
-            'release',
+            'shopify app release',
             `--version=${uploadExtensionsBundleResult.versionTag}`,
           ),
         },
