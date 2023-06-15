@@ -1,5 +1,9 @@
 import {ExtensionFlavor} from './models/app/extensions.js'
 
+export const environmentVariableNames = {
+  skipEsbuildReactDedeuplication: 'SHOPIFY_CLI_SKIP_ESBUILD_REACT_DEDUPLICATION',
+}
+
 export const configurationFileNames = {
   app: 'shopify.app.toml',
   extension: {

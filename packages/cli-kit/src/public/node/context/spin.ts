@@ -1,5 +1,5 @@
 import {fileExists, readFileSync} from '../fs.js'
-import {isTruthy} from '../../../private/node/context/utilities.js'
+import {isTruthy} from '../../../public/node/context/utilities.js'
 import {environmentVariables} from '../../../private/node/constants.js'
 import {captureOutput} from '../system.js'
 import {outputContent, outputToken} from '../../../public/node/output.js'

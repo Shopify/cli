@@ -1,13 +1,16 @@
 import {buildThemeExtensions, ThemeExtensionBuildOptions} from '../build/extension.js'
+import {environmentVariableNames} from '../../constants.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
-import {outputDebug} from '@shopify/cli-kit/node/output.js'
 
 const require = createRequire(import.meta.url)
 
@@ -161,32 +164,39 @@ function getPlugins(resolveDir: string | undefined): ESBuildPlugins {
     plugins.push(graphqlLoader())
   }
 
-  if (resolveDir) {
+  const skipReactDeduplication = isTruthy(
+    getEnvironmentVariables()[environmentVariableNames.skipEsbuildReactDedeuplication],
+  )
+  if (resolveDir && !skipReactDeduplication) {
     let resolvedReactPath: string | undefined
     try {
       resolvedReactPath = require.resolve('react', {paths: [resolveDir]})
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
-      // If weren't able to find React, that's fine. Extension may not be using it!
+      // If weren't able to find React, that's fine. It might not be used.
       outputDebug(`Unable to load React in ${resolveDir}, skipping React de-duplication`)
     }
 
     if (resolvedReactPath) {
       outputDebug(`Deduplicating React dependency for ${resolveDir}, using ${resolvedReactPath}`)
-      const DeduplicateReactPlugin: Plugin = {
-        name: 'dedup-react',
-        setup({onResolve}) {
-          onResolve({filter: /^react$/}, (args) => {
-            return {
-              path: resolvedReactPath,
-            }
-          })
-        },
-      }
-      plugins.push(DeduplicateReactPlugin)
+      plugins.push(deduplicateReactPlugin(resolvedReactPath))
     }
   }
 
   return plugins
+}
+
+function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
+  return {
+    name: 'shopify:deduplicate-react',
+    setup({onResolve}) {
+      onResolve({filter: /^react$/}, (args) => {
+        return {
+          path: resolvedReactPath,
+        }
+      })
+    },
+  }
 }
 
 /**

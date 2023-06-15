@@ -7,7 +7,7 @@ import {renderInfo} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 import {outputContent, outputInfo, outputToken} from '../../public/node/output.js'
 import {hashString} from '../../public/node/crypto.js'
-import {isTruthy} from '../../private/node/context/utilities.js'
+import {isTruthy} from '../../public/node/context/utilities.js'
 import {Command} from '@oclif/core'
 import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
