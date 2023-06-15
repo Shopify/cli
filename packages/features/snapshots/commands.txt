@@ -11,6 +11,7 @@
  app generate schema       @shopify/app                 
  app info                  @shopify/app                 
  app update-url            @shopify/app                 
+ app versions list         @shopify/app                 
  auth logout               @shopify/cli                 
  commands                  @oclif/plugin-commands       
  config autocorrect off    @shopify/plugin-did-you-mean 
@@ -28,6 +29,8 @@
  plugins uninstall         @oclif/plugin-plugins        
  plugins unlink            @oclif/plugin-plugins        
  plugins update            @oclif/plugin-plugins        
+ spin-please               @shopify/plugin-spin-please  
+ spin-please add           @shopify/plugin-spin-please  
  theme check               @shopify/theme               
  theme delete              @shopify/theme               
  theme dev                 @shopify/theme               
