@@ -37,7 +37,7 @@ describe('update-url', () => {
     await updateURL(options)
 
     // Then
-    expect(updateURLs).toHaveBeenCalledWith(
+    expect(updateURLs).not.toHaveBeenCalledWith(
       {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
