@@ -361,7 +361,7 @@ importers:
         specifier: 3.0.1
         version: 3.0.1
       git-diff:
-        specifier: ^2.0.6
+        specifier: 2.0.6
         version: 2.0.6
       gradient-string:
         specifier: 2.0.2
