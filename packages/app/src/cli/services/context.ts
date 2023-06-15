@@ -26,7 +26,7 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 
@@ -243,6 +243,19 @@ export interface DeployContextOptions {
   commitReference?: string
 }
 
+export interface ReleaseContextOptions {
+  app: AppInterface
+  apiKey?: string
+  reset: boolean
+  force: boolean
+}
+
+interface ReleaseContextOutput {
+  apiKey: string
+  token: string
+  app: AppInterface
+}
+
 interface DeployContextOutput {
   app: AppInterface
   token: string
@@ -334,6 +347,31 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   }
 
   await logMetadataForLoadedDeployContext(result)
+  return result
+}
+
+export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
+  const token = await ensureAuthenticatedPartners()
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const identifiers: Identifiers = envIdentifiers as Identifiers
+
+  const deploymentMode: DeploymentMode = partnersApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
+  if (deploymentMode === 'legacy') {
+    throw new AbortSilentError()
+  }
+
+  // eslint-disable-next-line no-param-reassign
+  options = {
+    ...options,
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release'}),
+  }
+  const result = {
+    app: options.app,
+    apiKey: partnersApp.apiKey,
+    token,
+  }
+
+  await logMetadataForLoadedReleaseContext(result, partnersApp.organizationId)
   return result
 }
 
@@ -542,5 +580,12 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(env.partnersApp.organizationId),
     api_key: env.identifiers.app,
+  }))
+}
+
+async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(partnerId),
+    api_key: env.apiKey,
   }))
 }
