@@ -30,6 +30,7 @@ async function fetchDeployments(
 ): Promise<{deployments: DeploymentLine[]; totalResults: number; organizationId: string; appId: string}> {
   const query = AppDeploymentsQuery
   const res: AppDeploymentsQuerySchema = await partnersRequest(query, token, {apiKey})
+
   const deployments = res.app.deployments.nodes.map((deployment) => {
     return {
       ...deployment,
@@ -67,6 +68,11 @@ export default async function versionList(options: VersionListOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await getAppApiKey(token, options)
   const {deployments, totalResults, organizationId, appId} = await fetchDeployments(token, apiKey)
+
+  if (deployments.length === 0) {
+    outputInfo('No app versions found for this app')
+    return
+  }
 
   renderTable({
     rows: deployments,
