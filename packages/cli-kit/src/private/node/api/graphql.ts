@@ -1,4 +1,4 @@
-import {RequestClientError, sanitizedHeadersOutput} from './headers.js'
+import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
@@ -29,7 +29,7 @@ export function errorHandler<T>(api: string): (error: unknown) => Error | unknow
       `)
       let mappedError: Error
       if (error.response.status < 500) {
-        mappedError = new RequestClientError(errorMessage, error.response.status)
+        mappedError = new GraphQLClientError(errorMessage, error.response.status, error.response.errors)
       } else {
         mappedError = new AbortError(errorMessage)
       }
