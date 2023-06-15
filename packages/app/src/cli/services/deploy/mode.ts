@@ -21,9 +21,10 @@ export async function resolveDeploymentMode(app: OrganizationApp, options: Deplo
   }
 
   if (deploymentMode === 'unified') {
-    displayDeployUnifiedBanner()
     if (options.noRelease) {
       deploymentMode = 'unified-skip-release'
+    } else {
+      displayDeployUnifiedBanner()
     }
   }
 

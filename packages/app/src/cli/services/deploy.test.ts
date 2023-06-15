@@ -45,12 +45,15 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: false},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: false},
+      },
     })
 
     // Then
@@ -70,19 +73,19 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: false,
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -100,19 +103,19 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: true,
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -129,19 +132,19 @@ describe('deploy', () => {
     const app = testApp()
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         message: 'Deployed from CLI with flag',
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith(
@@ -156,19 +159,19 @@ describe('deploy', () => {
     const app = testApp()
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         version: '1.1.0',
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith(
@@ -183,12 +186,15 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
     })
 
     // Then
@@ -208,12 +214,15 @@ describe('deploy', () => {
     const app = testApp({allExtensions: []})
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: false},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: false},
+      },
     })
 
     // Then
@@ -229,7 +238,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -251,7 +260,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [themeExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -274,7 +283,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [functionExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(uploadFunctionExtensions).toHaveBeenCalledWith(
@@ -319,12 +328,15 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
     })
 
     // Then
@@ -366,7 +378,7 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle(app, undefined, undefined, false, undefined, 'unified')
+    await testDeployBundle({app, released: false, switchToDeploymentMode: 'unified'})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -398,7 +410,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle(app, undefined, undefined, false, commitReference, 'legacy')
+    await testDeployBundle({app, released: false, commitReference, switchToDeploymentMode: 'legacy'})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -424,7 +436,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -467,22 +479,21 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: false,
       },
-      true,
-      undefined,
-      'unified',
-    )
+      released: true,
+      switchToDeploymentMode: 'unified',
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -513,23 +524,22 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id2',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: false,
         message: 'version message',
       },
-      false,
-      undefined,
-      'unified',
-    )
+      released: false,
+      switchToDeploymentMode: 'unified',
+    })
 
     // Then
     expect(renderInfo).toHaveBeenCalledWith({
@@ -554,20 +564,20 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: true,
         message: 'version message',
       },
-    )
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -592,19 +602,28 @@ describe('deploy', () => {
   })
 })
 
-async function testDeployBundle(
-  app: AppInterface,
-  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
+interface TestDeployBundleInput {
+  app: AppInterface
+  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   options?: {
     force?: boolean
     noRelease?: boolean
     message?: string
     version?: string
-  },
+  }
+  released?: boolean
+  commitReference?: string
+  switchToDeploymentMode?: DeploymentMode
+}
+
+async function testDeployBundle({
+  app,
+  partnersApp,
+  options,
   released = true,
-  commitReference?: string,
-  switchToDeploymentMode?: DeploymentMode,
-) {
+  commitReference,
+  switchToDeploymentMode,
+}: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
   for (const extension of app.allExtensions) {
