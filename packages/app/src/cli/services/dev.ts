@@ -505,6 +505,7 @@ export function devDraftableExtensionTarget({
               )
             }
 
+            // TODO: initial build and push of the function
             // watch for Function changes that require a build and push
             if (extension.isFunctionExtension) {
               actions.push(
@@ -513,7 +514,10 @@ export function devDraftableExtensionTarget({
                   app,
                   stdout,
                   stderr,
-                  signal
+                  signal,
+                  token,
+                  apiKey,
+                  registrationId
                 })
               )
             }

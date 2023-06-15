@@ -216,6 +216,9 @@ interface SetupFunctionWatcherOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
+  token: string
+  apiKey: string
+  registrationId: string
 }
 
 export async function setupFunctionWatcher({
@@ -223,7 +226,10 @@ export async function setupFunctionWatcher({
   app,
   stdout,
   stderr,
-  signal
+  signal,
+  token,
+  apiKey,
+  registrationId
 }: SetupFunctionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -252,8 +258,8 @@ export async function setupFunctionWatcher({
       //terminate any existing builds
       buildController.abort()
     }
-    buildController = new AbortController();
-    const buildSignal = buildController.signal;
+    buildController = new AbortController()
+    const buildSignal = buildController.signal
     buildFunctionExtension(extension, {
       app,
       stdout,
@@ -261,11 +267,17 @@ export async function setupFunctionWatcher({
       useTasks: false,
       signal: buildSignal
     }).catch((_: unknown) => {
-      //no-op
+      // don't deploy on build error
+      return
     }).finally(() => {
-      buildController = null;
+      buildController = null
+    }).then(() => {
+
+      //TODO: Update wasm blob?
+      updateExtensionDraft({extension, token, apiKey, registrationId, stderr}).catch((_: unknown) => {})
+
     })
-  });
+  })
 
   signal.addEventListener('abort', () => {
     outputDebug(`Closing function file watching for extension with ID ${extension.devUUID}`, stdout)
