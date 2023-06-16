@@ -1,25 +1,37 @@
 import {BaseSchema} from '../schemas.js'
-
 import {createExtensionSpecification} from '../specification.js'
+import {validateNonCommerceObjectShape} from '../../../services/flow/validation.js'
+import {serializeFields} from '../../../services/flow/serializeFields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowTriggerExtensionSchema = BaseSchema.extend({
   name: zod.string(),
+  description: zod.string().optional(),
   type: zod.literal('flow_trigger'),
-  task: zod.object({
-    title: zod.string(),
-    description: zod.string(),
-    fields: zod
-      .array(
-        zod.object({
-          name: zod.string(),
-          description: zod.string().optional(),
-          id: zod.string(),
-          ui_type: zod.string(),
-        }),
-      )
-      .min(1),
-  }),
+  extensions: zod
+    .array(
+      zod.object({
+        type: zod.literal('flow_trigger'),
+        schema: zod.string().optional(),
+        return_type_ref: zod.string().optional(),
+      }),
+    )
+    .min(1),
+  settings: zod
+    .object({
+      fields: zod
+        .array(
+          zod
+            .object({
+              key: zod.string().optional(),
+              description: zod.string().optional(),
+              type: zod.string(),
+            })
+            .refine((field) => validateNonCommerceObjectShape(field, 'flow_trigger')),
+        )
+        .optional(),
+    })
+    .optional(),
 })
 
 /**
@@ -30,11 +42,16 @@ const flowTriggerSpecification = createExtensionSpecification({
   schema: FlowTriggerExtensionSchema,
   singleEntryPath: false,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config, _) => {
+  deployConfig: async (config) => {
+    const {extensions} = config
+    const extension = extensions[0]!
+
     return {
-      title: config.task.title,
-      description: config.task.description,
-      fields: config.task.fields,
+      title: config.name,
+      description: config.description,
+      fields: serializeFields('flow_trigger', config.settings?.fields),
+      schema: extension.schema,
+      return_type_ref: extension.return_type_ref,
     }
   },
 })
