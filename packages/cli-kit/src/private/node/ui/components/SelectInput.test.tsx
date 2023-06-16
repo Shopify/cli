@@ -1,8 +1,8 @@
 import {SelectInput} from './SelectInput.js'
 import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
+import {platformAndArch} from '../../../../public/node/os.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
-import { platformAndArch } from '@shopify/cli-kit/node/os.js'
 
 const ARROW_UP = '\u001B[A'
 const ARROW_DOWN = '\u001B[B'
