@@ -43,6 +43,7 @@ module ShopifyCLI
           poll: false,
           editor_sync: false,
           overwrite_json: false,
+          open_browser: false,
           stable: false,
           mode: ReloadMode.default,
           includes: nil,
@@ -59,6 +60,7 @@ module ShopifyCLI
             poll,
             editor_sync,
             overwrite_json,
+            open_browser,
             stable,
             mode,
             includes,
@@ -84,6 +86,7 @@ module ShopifyCLI
         poll,
         editor_sync,
         overwrite_json,
+        open_browser,
         stable,
         mode,
         includes,
@@ -99,6 +102,7 @@ module ShopifyCLI
         @poll = poll
         @editor_sync = editor_sync
         @overwrite_json = overwrite_json
+        @open_browser = open_browser
         @stable = stable
         @mode = mode
         @includes = includes
@@ -184,7 +188,7 @@ module ShopifyCLI
           syncer.upload_theme!(delay_low_priority_files: true)
         end
 
-        ctx.open_browser_url!(address)
+        ctx.open_browser_url!(address) if @open_browser
       end
 
       def theme

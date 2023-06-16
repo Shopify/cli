@@ -36,6 +36,7 @@ module Theme
         end
         parser.on("-f", "--force") { flags[:force] = true }
         parser.on("--overwrite-json") { flags[:overwrite_json] = true }
+        parser.on("--open") { flags[:open_browser] = true }
         parser.on("-n", "--notify=PATH") { |path| flags[:notify] = path }
       end
 
