@@ -207,7 +207,7 @@ async function outputCompletionMessage({
       break
     case 'unified':
       return renderSuccess({
-        headline: 'New version released to users.',
+        headline: 'New version released to users',
         body: '',
         nextSteps: [
           [
@@ -219,7 +219,7 @@ async function outputCompletionMessage({
       })
     case 'unified-skip-release':
       return renderSuccess({
-        headline: 'New version created.',
+        headline: 'New version created',
         body: '',
         nextSteps: [
           [

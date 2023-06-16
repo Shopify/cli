@@ -406,7 +406,7 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},
@@ -483,7 +483,7 @@ describe('deploy', () => {
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'New version released to users.',
+      headline: 'New version released to users',
       body: '',
       nextSteps: [
         [
@@ -518,7 +518,7 @@ describe('deploy', () => {
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'New version created.',
+      headline: 'New version created',
       body: '',
       nextSteps: [
         [

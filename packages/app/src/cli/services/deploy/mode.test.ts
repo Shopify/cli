@@ -56,7 +56,7 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Deployments 2.0 available now                                               │
       │                                                                              │
       │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
       │                                                                              │
@@ -91,7 +91,7 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Deployments 2.0 available now                                               │
       │                                                                              │
       │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
       │                                                                              │
@@ -110,7 +110,7 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`deploy\` now releases changes to users                                      │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │
@@ -140,7 +140,7 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Deployments 2.0 available now                                               │
       │                                                                              │
       │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
       │                                                                              │
@@ -173,7 +173,7 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`deploy\` now releases changes to users                                      │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │
@@ -202,7 +202,7 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`deploy\` now releases changes to users                                      │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │

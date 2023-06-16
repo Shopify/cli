@@ -32,7 +32,7 @@ export async function resolveDeploymentMode(app: OrganizationApp, options: Deplo
 
 function displayDeployUnifiedBanner() {
   renderWarning({
-    headline: '`deploy` now releases changes to users.',
+    headline: '`deploy` now releases changes to users',
     body: ['All your extensions will be released to users, unless you add the `--no-release` flag.'],
     reference: [
       {
@@ -47,7 +47,7 @@ function displayDeployUnifiedBanner() {
 
 function displayDeployLegacyBanner(packageManager: PackageManager) {
   renderInfo({
-    headline: 'Deployments 2.0 available now.',
+    headline: 'Deployments 2.0 available now',
     body: [
       'When you upgrade this app to Deployments 2.0,',
       {command: formatPackageManagerCommand(packageManager, 'deploy')},
