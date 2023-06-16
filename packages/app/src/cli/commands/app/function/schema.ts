@@ -3,7 +3,6 @@ import {functionFlags, inFunctionContext} from '../../../services/function/commo
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class FetchSchema extends Command {
   static description = 'Fetch the latest GraphQL schema for a Function.'
@@ -17,12 +16,24 @@ export default class FetchSchema extends Command {
       required: false,
       env: 'SHOPIFY_FLAG_APP_API_KEY',
     }),
+    stdout: Flags.boolean({
+      description: 'Output the schema to stdout instead of writing to a file.',
+      required: false,
+      default: false,
+      env: 'SHOPIFY_FLAG_STDOUT',
+    }),
   }
 
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(FetchSchema)
     await inFunctionContext(this.config, flags.path, async (app, ourFunction) => {
-      outputInfo(await generateSchemaService({app, extension: ourFunction, apiKey: flags['api-key']}))
+      await generateSchemaService({
+        app,
+        extension: ourFunction,
+        apiKey: flags['api-key'],
+        stdout: flags.stdout,
+        path: flags.path,
+      })
     })
   }
 }

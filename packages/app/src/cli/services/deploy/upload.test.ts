@@ -986,7 +986,7 @@ describe('uploadExtensionsBundle', () => {
     })
   })
 
-  test('throws a specific error based on what is returned from partners when response includes a deployment', async () => {
+  test('return a deploy error message based on what is returned from partners when response includes a deployment', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
@@ -1001,6 +1001,7 @@ describe('uploadExtensionsBundle', () => {
             deployment: {
               uuid: 'deployment-uuid',
               id: 1,
+              versionTag: 'versionTag',
               appModuleVersions: [
                 {
                   uuid: 'app-module-uuid',
@@ -1012,7 +1013,7 @@ describe('uploadExtensionsBundle', () => {
             userErrors: [
               {
                 field: [],
-                message: 'Generic error message.',
+                message: 'No release error message.',
                 category: '',
                 details: [],
               },
@@ -1022,43 +1023,30 @@ describe('uploadExtensionsBundle', () => {
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       vi.mocked(randomUUID).mockReturnValue('random-uuid')
-      // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
 
-      // Then
-      try {
-        await uploadExtensionsBundle({
-          apiKey: 'app-id',
-          bundlePath: joinPath(tmpDir, 'test.zip'),
-          appModules: [
-            {uuid: '123', config: '{}', context: ''},
-            {uuid: '456', config: '{}', context: ''},
-          ],
-          token: 'api-token',
-          extensionIds: {
-            'amortizable-marketplace-ext': '123',
-            'amortizable-marketplace-ext-2': '456',
-          },
-          deploymentMode: 'unified',
-        })
+      // When
+      const result = await uploadExtensionsBundle({
+        apiKey: 'app-id',
+        bundlePath: joinPath(tmpDir, 'test.zip'),
+        appModules: [
+          {uuid: '123', config: '{}', context: ''},
+          {uuid: '456', config: '{}', context: ''},
+        ],
+        token: 'api-token',
+        extensionIds: {
+          'amortizable-marketplace-ext': '123',
+          'amortizable-marketplace-ext-2': '456',
+        },
+        deploymentMode: 'unified',
+      })
 
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (error: any) {
-        expect(error.message).toEqual('New version created, but not released.')
-        expect(error.customSections).toEqual([
-          {
-            body: 'Generic error message.',
-          },
-          {
-            title: 'Next Steps',
-            body: {
-              list: {
-                items: ['View details about this version in the Partner Dashboard.'],
-              },
-            },
-          },
-        ])
-      }
+      // Then
+      expect(result).toEqual({
+        validationErrors: [],
+        versionTag: 'versionTag',
+        deployError: 'No release error message.',
+      })
     })
   })
 })

@@ -266,7 +266,7 @@ describe('resolveDeploymentMode', () => {
     expect(upgradePrompt).not.toHaveBeenCalled()
   })
 
-  test('return unified without release mode and display unified banner when unified deployment and use no-release', async () => {
+  test('return unified without release mode and not display unified banner when unified deployment and use no-release', async () => {
     // Given
     const app = testApp()
     const orgApp = organizationApp(app)
@@ -280,21 +280,6 @@ describe('resolveDeploymentMode', () => {
 
     // Then
     expect(result).equals('unified-skip-release')
-    expect(outputMock.warn()).toMatchInlineSnapshot(`
-      "╭─ warning ────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
-      │                                                                              │
-      │  All your extensions will be released to users, unless you add the           │
-      │  \`--no-release\` flag.                                                        │
-      │                                                                              │
-      │  Reference                                                                   │
-      │    • Introducing Deployements 2.0 [1]                                        │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
-      "
-    `)
-    expect(upgradePrompt).not.toHaveBeenCalled()
+    expect(outputMock.warn()).toMatchInlineSnapshot('""')
   })
 })

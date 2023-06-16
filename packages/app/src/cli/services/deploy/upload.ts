@@ -112,6 +112,14 @@ export interface UploadExtensionValidationError {
   }[]
 }
 
+export interface UploadExtensionsBundleOutput {
+  validationErrors: UploadExtensionValidationError[]
+  versionTag: string
+  message?: string
+  location: string
+  deployError?: string
+}
+
 type ErrorSectionBody = TokenItem
 interface ErrorCustomSection extends AlertCustomSection {
   body: ErrorSectionBody
@@ -123,9 +131,10 @@ interface ErrorCustomSection extends AlertCustomSection {
  */
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
-): Promise<{validationErrors: UploadExtensionValidationError[]; versionTag: string}> {
+): Promise<UploadExtensionsBundleOutput> {
   const deploymentUUID = randomUUID()
   let signedURL
+  let deployError
 
   if (options.bundlePath) {
     signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
@@ -167,7 +176,7 @@ export async function uploadExtensionsBundle(
     )
 
     if (result.appDeploy.deployment) {
-      throw new AbortError({bold: 'New version created, but not released.'}, null, [], customSections)
+      deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
     } else {
       throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
     }
@@ -179,7 +188,13 @@ export async function uploadExtensionsBundle(
       return {uuid: ver.registrationUuid, errors: ver.validationErrors}
     })
 
-  return {validationErrors, versionTag: result.appDeploy.deployment.versionTag}
+  return {
+    validationErrors,
+    versionTag: result.appDeploy.deployment.versionTag,
+    location: result.appDeploy.deployment.location,
+    message: result.appDeploy.deployment.message,
+    deployError,
+  }
 }
 
 const VALIDATION_ERRORS_TITLE = '\nValidation errors'
