@@ -40,12 +40,12 @@ async function fetchDeployments(
           : deployment.status,
       createdBy: deployment.createdBy?.displayName ?? '',
       createdAt: formatDate(new Date(deployment.createdAt)),
-      message: message,
+      message,
     }
   })
 
   // 10 extra characters for the table formatting
-  let maxLineLength = process.stdout.columns - 10
+  const maxLineLength = process.stdout.columns - 10
   let maxMessageLength = maxLineLength
 
   // Calculate the max allowed length for the message column
@@ -65,9 +65,10 @@ async function fetchDeployments(
     }
   })
 
+  // Update the message column to fit the max length
   deployments.forEach((deployment) => {
     if (deployment.message.length > maxMessageLength) {
-      deployment.message = deployment.message.slice(0, maxMessageLength - 3) + '...'
+      deployment.message = `${deployment.message.slice(0, maxMessageLength - 3)}...`
     }
   })
 
