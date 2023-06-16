@@ -41,8 +41,14 @@ export default async function link(options: LinkOptions): Promise<void> {
 }
 
 async function loadLocalApp(options: LinkOptions): Promise<AppInterface> {
-  const specifications = await loadExtensionsSpecifications(options.commandConfig)
-  return load({specifications, directory: options.directory, mode: 'report'})
+  try {
+    const specifications = await loadExtensionsSpecifications(options.commandConfig)
+    const app = await load({specifications, directory: options.directory, mode: 'report'})
+    return app
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return {name: ''} as AppInterface
+  }
 }
 
 async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined): Promise<OrganizationApp> {
@@ -59,11 +65,11 @@ async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined)
 }
 
 function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
-  const mergedApp = localApp
+  const configuration = localApp.configuration || {}
 
-  mergedApp.configuration.credentials = {clientId: remoteApp.apiKey}
-  mergedApp.configuration.appInfo = {name: remoteApp.title}
-  mergedApp.configuration.web = {appUrl: remoteApp.applicationUrl}
+  configuration.clientId = remoteApp.apiKey
+  configuration.name = remoteApp.title
+  configuration.applicationUrl = remoteApp.applicationUrl
 
-  return mergedApp.configuration
+  return configuration
 }

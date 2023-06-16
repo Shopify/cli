@@ -55,15 +55,9 @@ describe('link', () => {
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `scopes = ""
 extensionDirectories = [ ]
-
-[credentials]
 clientId = "api-key"
-
-[appInfo]
 name = "app1"
-
-[web]
-appUrl = "https://example.com"
+applicationUrl = "https://example.com"
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -97,15 +91,9 @@ appUrl = "https://example.com"
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `scopes = ""
 extensionDirectories = [ ]
-
-[credentials]
 clientId = "api-key"
-
-[appInfo]
 name = "app1"
-
-[web]
-appUrl = "https://example.com"
+applicationUrl = "https://example.com"
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -173,6 +161,30 @@ appUrl = "https://example.com"
 
       // Then
       await expect(result).rejects.toThrow(/Invalid API key/)
+    })
+  })
+
+  test('generates the file when there is no shopify.app.toml', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(load).mockRejectedValue(new Error('Shopify.app.toml not found'))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(selectConfigName).mockResolvedValue('staging')
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const expectedContent = `clientId = "api-key"
+name = "app1"
+applicationUrl = "https://example.com"
+`
+      expect(content).toEqual(expectedContent)
     })
   })
 })

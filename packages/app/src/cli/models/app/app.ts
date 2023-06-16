@@ -10,21 +10,10 @@ export const AppConfigurationSchema = zod.object({
   scopes: zod.string().default(''),
   extensionDirectories: zod.array(zod.string()).optional(),
   webDirectories: zod.array(zod.string()).optional(),
-  credentials: zod
-    .object({
-      clientId: zod.string(),
-    })
-    .optional(),
-  appInfo: zod
-    .object({
-      name: zod.string(),
-    })
-    .optional(),
-  web: zod
-    .object({
-      appUrl: zod.string(),
-    })
-    .optional(),
+  clientId: zod.string().optional(),
+  name: zod.string().optional(),
+  applicationUrl: zod.string().optional(),
+  redirectUrl: zod.array(zod.string()).optional(),
 })
 
 export enum WebType {
