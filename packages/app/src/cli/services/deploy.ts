@@ -196,11 +196,10 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   deploymentMode: DeploymentMode
-  uploadExtensionsBundleResult?: UploadExtensionsBundleOutput
+  uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 }) {
   if (deploymentMode !== 'legacy') {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult!, app)
+    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult, app)
   }
 
   let headline: string
