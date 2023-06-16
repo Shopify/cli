@@ -7,7 +7,6 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
@@ -50,9 +49,10 @@ export interface BundleOptions {
 /**
  * Invokes ESBuild with the given options to bundle an extension.
  * @param options - ESBuild options
+ * @param processEnv - Environment variables for the running process (not those from .env)
  */
-export async function bundleExtension(options: BundleOptions) {
-  const esbuildOptions = getESBuildOptions(options)
+export async function bundleExtension(options: BundleOptions, processEnv = process.env) {
+  const esbuildOptions = getESBuildOptions(options, processEnv)
   const context = await esContext(esbuildOptions)
   if (options.watch) {
     await context.watch()
@@ -102,7 +102,7 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
   }
 }
 
-function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>[0] {
+function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
   const env: {[variable: string]: string} = options.env
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
@@ -123,7 +123,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>
     },
     legalComments: 'none',
     minify: options.minify,
-    plugins: getPlugins(options.stdin.resolveDir),
+    plugins: getPlugins(options.stdin.resolveDir, processEnv),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
   }
@@ -148,7 +148,7 @@ type ESBuildPlugins = Parameters<typeof esContext>[0]['plugins']
  * It returns the plugins that should be used with ESBuild.
  * @returns List of plugins.
  */
-function getPlugins(resolveDir: string | undefined): ESBuildPlugins {
+function getPlugins(resolveDir: string | undefined, processEnv = process.env): ESBuildPlugins {
   const plugins = []
 
   if (isGraphqlPackageAvailable()) {
@@ -156,9 +156,7 @@ function getPlugins(resolveDir: string | undefined): ESBuildPlugins {
     plugins.push(graphqlLoader())
   }
 
-  const skipReactDeduplication = isTruthy(
-    getEnvironmentVariables()[environmentVariableNames.skipEsbuildReactDedeuplication],
-  )
+  const skipReactDeduplication = isTruthy(processEnv[environmentVariableNames.skipEsbuildReactDedeuplication])
   if (resolveDir && !skipReactDeduplication) {
     let resolvedReactPath: string | undefined
     try {
