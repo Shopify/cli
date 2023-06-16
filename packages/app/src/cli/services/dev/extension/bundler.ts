@@ -243,7 +243,7 @@ export async function setupFunctionWatcher({
   outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout);
   const watchPaths = getFunctionWatchPaths(extension as ExtensionInstance<FunctionConfigType>);
   if (!watchPaths) {
-    outputWarn(`Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`)
+    outputWarn(`Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`, stdout)
     return
   }
 
