@@ -1,10 +1,12 @@
 import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {slugify} from '@shopify/cli-kit/common/string'
 
-export async function selectConfigName(directory: string): Promise<string> {
+export async function selectConfigName(directory: string, defaultValue = ''): Promise<string> {
   let configName = await renderTextPrompt({
     message: 'Configuration file name:',
+    defaultValue: slugify(defaultValue),
   })
 
   let overwriteFile = false

@@ -56,4 +56,20 @@ describe('selectConfigName', () => {
       expect(result).toEqual('pro')
     })
   })
+
+  test('shows the slugified name as default when provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(renderTextPrompt).mockResolvedValueOnce('staging')
+
+      // When
+      await selectConfigName(tmp, 'My app')
+
+      // Then
+      expect(renderTextPrompt).toHaveBeenCalledWith({
+        message: 'Configuration file name:',
+        defaultValue: 'my-app',
+      })
+    })
+  })
 })
