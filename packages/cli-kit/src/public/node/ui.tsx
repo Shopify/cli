@@ -34,6 +34,7 @@ import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/Text
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
+import {ConfigNamePrompt, ConfigNamePromptProps} from '../../private/node/ui/components/ConfigNamePrompt.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -493,6 +494,28 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
+  })
+}
+
+export interface RenderConfigNamePromptOptions extends Omit<ConfigNamePromptProps, 'onSubmit'> {
+  renderOptions?: RenderOptions
+}
+
+export async function renderConfigNamePrompt({
+  renderOptions,
+  ...props
+}: RenderConfigNamePromptOptions): Promise<string> {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'configNamePrompt', properties: arguments[0]})
+
+  // eslint-disable-next-line max-params
+  return new Promise((resolve, reject) => {
+    render(<ConfigNamePrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
