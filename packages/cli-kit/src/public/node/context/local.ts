@@ -1,5 +1,6 @@
 import {isSpin} from './spin.js'
-import {getCIMetadata, isTruthy, isSet, Metadata} from '../../../private/node/context/utilities.js'
+import {isTruthy} from './utilities.js'
+import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'

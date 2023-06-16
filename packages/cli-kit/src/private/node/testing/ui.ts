@@ -1,4 +1,4 @@
-import {isTruthy} from '../context/utilities.js'
+import {isTruthy} from '../../../public/node/context/utilities.js'
 import {Stdout} from '../ui.js'
 import {ReactElement} from 'react'
 import {render as inkRender} from 'ink'

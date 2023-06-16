@@ -86,7 +86,7 @@
               ],
               "static": [
                 "@oclif/core",
-                "../../private/node/context/utilities.js",
+                "./context/utilities.js",
                 "../../private/node/demo-recorder.js"
               ]
             }
