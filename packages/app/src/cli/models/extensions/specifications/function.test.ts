@@ -1,16 +1,19 @@
 import {FunctionConfigType} from './function.js'
-import {Identifiers} from '../../app/identifiers.js'
 import {testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test} from 'vitest'
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  let identifiers: Identifiers
-  let token: string
+  let moduleId: string
+  let appKey: string
 
   beforeEach(async () => {
+    moduleId = 'module_id'
+    appKey = 'app-key'
     extension = await testFunctionExtension({
       dir: '/function',
       config: {
@@ -44,8 +47,6 @@ describe('functionConfiguration', () => {
   test('returns a snake_case object with all possible fields', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const moduleId = 'module_id'
-      const appKey = 'app-key'
       const inputQuery = 'inputQuery'
       extension.directory = tmpDir
       await touchFile(extension.inputQueryPath)
@@ -81,10 +82,8 @@ describe('functionConfiguration', () => {
   })
 
   test('returns a snake_case object with only required fields', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (_tmpDir) => {
       // Given
-      const moduleId = 'module_id'
-      const appKey = 'app-key'
       extension.configuration.input = undefined
       extension.configuration.ui = undefined
 
@@ -105,5 +104,36 @@ describe('functionConfiguration', () => {
         ui: undefined,
       })
     })
+  })
+
+  test('parses targeting array', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.directory = tmpDir
+      const inputQuery = 'query { f }'
+      const inputQueryFileName = 'target1.graphql'
+      extension.configuration.targeting = [
+        {target: 'some.api.target1', input_query: inputQueryFileName},
+        {target: 'some.api.target2', export: 'run_target2'},
+      ]
+      await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
+
+      // When
+      const got = await extension.deployConfig(appKey, moduleId)
+
+      // Then
+      expect(got!.targets).toEqual([
+        {handle: 'some.api.target1', input_query: inputQuery},
+        {handle: 'some.api.target2', export: 'run_target2'},
+      ])
+    })
+  })
+
+  test('aborts when an target input query file is missing', async () => {
+    // Given
+    extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
+
+    // When & Then
+    await expect(() => extension.deployConfig(appKey, moduleId)).rejects.toThrowError(AbortError)
   })
 })

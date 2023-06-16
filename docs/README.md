@@ -16,7 +16,7 @@ The list below contains valuable resources for people interested in contributing
 * [Performance](./cli/performance.md)
 * [Debugging](./cli/debugging.md)
 * [ESLint rules](./cli/eslint-rules.md)
-* [Release process](./cli/release.md)
+* [Release process](./release.md)
 * [Testing strategy](./cli/testing-strategy.md)
 * [Cross-OS compatibility](./cli/cross-os-compatibility.md)
 * [Troubleshooting](./cli/troubleshooting.md)
