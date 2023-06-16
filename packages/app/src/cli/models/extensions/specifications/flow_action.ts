@@ -17,6 +17,7 @@ export const FlowActionExtensionSchema = BaseSchema.extend({
   extensions: zod
     .array(
       zod.object({
+        handle: zod.string(),
         type: zod.literal('flow_action'),
         runtime_url: zod.string().url().refine(startsWithHttps),
         validation_url: zod.string().url().refine(startsWithHttps).optional(),
@@ -54,7 +55,6 @@ export const FlowActionExtensionSchema = BaseSchema.extend({
     extension.validation_url,
   )
 })
-
 /**
  * Loads the schema from the partner defined file.
  */
@@ -91,6 +91,7 @@ const flowActionSpecification = createExtensionSpecification({
     const extension = extensions[0]!
 
     return {
+      handle: extension.handle,
       title: config.name,
       description: config.description,
       url: extension.runtime_url,
