@@ -25,7 +25,8 @@ interface ErrorDetail {
 
 export interface AppReleaseVariables {
   apiKey: string
-  versionTag: string
+  versionTag?: string
+  deploymentId?: number
 }
 
 export interface AppReleaseSchema {
