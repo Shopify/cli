@@ -7,31 +7,32 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowActionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
+  description: zod.string().optional(),
   type: zod.literal('flow_action'),
-  task: zod.object({
-    title: zod.string(),
-    description: zod.string(),
-    url: zod.string(),
+  extension: zod.object({
+    type: zod.literal('flow_action'),
+    handle: zod.string(),
+    runtime_url: zod.string(),
     validation_url: zod.string().optional(),
     custom_configuration_page_url: zod.string().optional(),
     custom_configuration_page_preview_url: zod.string().optional(),
     schema: zod.string().optional(),
     return_type_ref: zod.string().optional(),
+  }),
+  settings: zod.object({
     fields: zod
       .array(
         zod.object({
-          id: zod.string(),
+          key: zod.string(),
           name: zod.string(),
-          label: zod.string(),
           description: zod.string().optional(),
           required: zod.boolean(),
-          ui_type: zod.string(),
+          type: zod.string(),
         }),
       )
       .optional(),
   }),
 })
-
 /**
  * Loads the schema from the partner defined file.
  */
@@ -61,15 +62,16 @@ const flowActionSpecification = createExtensionSpecification({
   appModuleFeatures: (_) => [],
   deployConfig: async (config, extensionPath) => {
     return {
-      title: config.task.title,
-      description: config.task.description,
-      url: config.task.url,
-      fields: config.task.fields,
-      validation_url: config.task.validation_url,
-      custom_configuration_page_url: config.task.custom_configuration_page_url,
-      custom_configuration_page_preview_url: config.task.custom_configuration_page_preview_url,
-      return_type_ref: config.task.return_type_ref,
-      schema_patch: await loadSchemaPatchFromPath(extensionPath, config.task.schema),
+      handle: config.extension.handle,
+      title: config.name,
+      description: config.description,
+      url: config.extension.runtime_url,
+      fields: config.settings.fields,
+      validation_url: config.extension.validation_url,
+      custom_configuration_page_url: config.extension.custom_configuration_page_url,
+      custom_configuration_page_preview_url: config.extension.custom_configuration_page_preview_url,
+      schema: config.extension.schema,
+      return_type_ref: config.extension.return_type_ref,
     }
   },
 })

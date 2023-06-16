@@ -1,28 +1,25 @@
-name = "{{name}}"
+name = "{{ name }}"
+description = "Your description"
 type = "flow_action"
 
-[task]
-title = "extension-title"
-description = "extension-description"
-url = "https://runtime-endpoint.com"
-validation_url = "https://validation-url"
-custom_configuration_page_url = "https://custom-configuration-page-url"
-custom_configuration_page_preview_url = "https://custom-configuration-page-preview-url"
-return_type_ref = "SomeTypeFromSchema"
-schema = "./schema.graphql"
+[extension]
+type = "flow_action"
+handle = "{{ handle }}"
+runtime_url = "https://url.com/api/execute"
+validation_url = "https://url.com/api/validate"
+custom_configuration_page_url = "https://url.com/editor"
+custom_configuration_page_preview_url = "https://url.com/api/preview"
 
-[[task.fields]]
-name = "customer_id"
-label = "Customer ID"
-description = ""
-required = true
-id = "a-unique-uuid"
-ui_type = "commerce-object-id"
+[settings]
 
-[[task.fields]]
-name = "your-field-name"
-label = "your-field-label"
-description = ""
-required = true
-id = "a-unique-uuid"
-ui_type = "text-single-line"
+  [[settings.fields]]
+  key = "customer_id"
+  name = "Customer ID"
+  required = true
+  type = "customer_reference"
+
+  [[settings.fields]]
+  key = "your-field-key"
+  name = "field name"
+  required = true
+  type = "single_line_text_field"
