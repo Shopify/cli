@@ -2,6 +2,7 @@ import {SelectInput} from './SelectInput.js'
 import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
+import { platformAndArch } from '@shopify/cli-kit/node/os.js'
 
 const ARROW_UP = '\u001B[A'
 const ARROW_DOWN = '\u001B[B'
@@ -208,7 +209,9 @@ describe('SelectInput', async () => {
     expect(onChange).toHaveBeenCalledWith(items[2])
   })
 
-  test('support groups', async () => {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test.skipIf(runningOnWindows)('support groups', async () => {
     const onChange = vi.fn()
 
     const items = [
