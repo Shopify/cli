@@ -109,7 +109,17 @@ class TunnelClientInstance implements TunnelClient {
       stdout: customStdout,
       stderr: customStdout,
       signal: this.abortController.signal,
-      externalErrorHandler: async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      externalErrorHandler: async (error: any) => {
+        if (error.message.includes('Unknown system error -86')) {
+          // Cloudflare crashed because Rosetta 2 is not installed
+          this.currentStatus = {
+            status: 'error',
+            message: `Error starting cloudflared tunnel: Missing Rosetta 2.`,
+            tryMessage: "Install it by running 'softwareupdate --install-rosetta' and try again",
+          }
+          return
+        }
         // If already resolved, means that the CLI already received the tunnel URL.
         // Can't retry because the CLI is running with an invalid URL
         if (resolved) throw processCrashed()

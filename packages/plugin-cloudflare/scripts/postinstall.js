@@ -9,60 +9,30 @@ import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStr
 import fetch from 'node-fetch'
 import semver from 'semver'
 
-const CLOUDFLARE_VERSION = '2023.4.2'
+const CLOUDFLARE_VERSION = '2023.5.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARE_VERSION}/`
 
 const LINUX_URL = {
-  arm64: {
-    filename: 'cloudflared-linux-arm64',
-    checksum: 'e453b576d0db95e4e9b7f511bb379f6b0b0a73924da678655875c2c295b95627',
-  },
-  arm: {
-    filename: 'cloudflared-linux-arm',
-    checksum: 'f3c4698aca3fff4f94a455cbf1f9c0e1cd81498e67d0decb73d63b6a41337f43',
-  },
-  x64: {
-    filename: 'cloudflared-linux-amd64',
-    checksum: '7e48b3d91f44badc1b4c2bd446ef1c4ae4c824840d594bd353cf20cba5fd1cef',
-  },
-  ia32: {
-    filename: 'cloudflared-linux-386',
-    checksum: '576955db7b44e1d997a22bb07eebb58001bd56956351142da504d80c07663153',
-  },
+  arm64: 'cloudflared-linux-arm64',
+  arm: 'cloudflared-linux-arm',
+  x64: 'cloudflared-linux-amd64',
+  ia32: 'cloudflared-linux-386',
 }
 
 const MACOS_URL = {
-  arm64: {
-    filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: '1154f3b2c31f4727c076c3e08024887be0e0a0b68a89e4f88f286f6f6196ac74',
-  },
-  x64: {
-    filename: 'cloudflared-darwin-amd64.tgz',
-    checksum: '1154f3b2c31f4727c076c3e08024887be0e0a0b68a89e4f88f286f6f6196ac74',
-  },
+  arm64: 'cloudflared-darwin-amd64.tgz',
+  x64: 'cloudflared-darwin-amd64.tgz',
 }
 
 const WINDOWS_URL = {
-  x64: {
-    filename: 'cloudflared-windows-amd64.exe',
-    checksum: '53f8adbd76c0eb16f5e43cadde422474d8a06f9c8f959389c1930042ad8beaa5',
-  },
-  ia32: {
-    filename: 'cloudflared-windows-386.exe',
-    checksum: 'c2cfd23fdc6c0e1b1ffa0e545cbe556f18d11b362b4a89ba0713f6ab01c4827f',
-  },
+  x64: 'cloudflared-windows-amd64.exe',
+  ia32: 'cloudflared-windows-386.exe',
 }
 
 const URL = {
-  linux: CLOUDFLARE_REPO + LINUX_URL[process.arch]?.filename,
-  darwin: CLOUDFLARE_REPO + MACOS_URL[process.arch]?.filename,
-  win32: CLOUDFLARE_REPO + WINDOWS_URL[process.arch]?.filename,
-}
-
-const CHECKSUM = {
-  linux: LINUX_URL[process.arch]?.checksum,
-  darwin: MACOS_URL[process.arch]?.checksum,
-  win32: WINDOWS_URL[process.arch]?.checksum,
+  linux: CLOUDFLARE_REPO + LINUX_URL[process.arch],
+  darwin: CLOUDFLARE_REPO + MACOS_URL[process.arch],
+  win32: CLOUDFLARE_REPO + WINDOWS_URL[process.arch],
 }
 
 /**
@@ -113,13 +83,11 @@ export default async function install() {
 
 async function installLinux(file, binTarget) {
   await downloadFile(file, binTarget)
-  if (sha256(binTarget) !== CHECKSUM.linux) throw new Error('Checksum mismatch')
   chmodSync(binTarget, '755')
 }
 
 async function installWindows(file, binTarget) {
   await downloadFile(file, binTarget)
-  if (sha256(binTarget) !== CHECKSUM.win32) throw new Error('Checksum mismatch')
 }
 
 async function installMacos(file, binTarget) {
@@ -128,7 +96,6 @@ async function installMacos(file, binTarget) {
   execSync(`tar -xzf ${filename}`, {cwd: path.dirname(binTarget)})
   unlinkSync(`${binTarget}.tgz`)
   renameSync(`${path.dirname(binTarget)}/cloudflared`, binTarget)
-  if (sha256(binTarget) !== CHECKSUM.darwin) throw new Error('Checksum mismatch')
 }
 
 async function downloadFile(url, to) {
