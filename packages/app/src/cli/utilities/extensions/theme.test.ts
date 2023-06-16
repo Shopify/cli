@@ -1,5 +1,5 @@
-import {themeExtensionFiles} from './theme.js'
-import {ExtensionInstance} from '../../models/extensions/specification.js'
+import {themeExtensionFiles, parseIgnoreFile} from './theme.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -35,6 +35,23 @@ describe('themeExtensionConfig', () => {
 
       // Then
       await expect(themeExtensionFiles(themeExtension)).resolves.toStrictEqual([joinPath(tmpDir, 'blocks/test.liquid')])
+    })
+  })
+})
+
+describe('parseIgnoreFile()', () => {
+  test('returns the patterns that should be ignored', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, '.shopifyignore')
+      const content = '#foo\nbar\nbaz\n'
+      await writeFile(filePath, content)
+
+      // When
+      const patterns = await parseIgnoreFile(filePath)
+
+      // Then
+      expect(patterns).toEqual(['bar', 'baz'])
     })
   })
 })

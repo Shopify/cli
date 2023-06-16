@@ -2,13 +2,12 @@ import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.j
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
-import {handleCtrlC} from '../../ui.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} from 'react'
-import {Box, measureElement, Text, useApp, useInput, useStdout} from 'ink'
+import {Box, measureElement, Text, useApp, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
 import {uniqBy} from '@shopify/cli-kit/common/array'
@@ -112,20 +111,22 @@ function AutocompletePrompt<T>({
 
   const {isAborted} = useAbortSignal(abortSignal)
 
-  useInput((input, key) => {
-    handleCtrlC(input, key)
-
-    if (key.return && promptState === PromptState.Idle && answer) {
-      // -1 is for the last row with the terminal cursor
-      if (stdout && wrapperHeight >= stdout.rows - 1) {
-        stdout.write(ansiEscapes.clearTerminal)
+  const submitAnswer = useCallback(
+    (answer: SelectItem<T>) => {
+      if (promptState === PromptState.Idle) {
+        // -1 is for the last row with the terminal cursor
+        if (stdout && wrapperHeight >= stdout.rows - 1) {
+          stdout.write(ansiEscapes.clearTerminal)
+        }
+        setAnswer(answer)
+        setPromptState(PromptState.Submitted)
+        setSearchTerm('')
+        unmountInk()
+        onSubmit(answer.value)
       }
-      setPromptState(PromptState.Submitted)
-      setSearchTerm('')
-      unmountInk()
-      onSubmit(answer.value)
-    }
-  })
+    },
+    [promptState, stdout, wrapperHeight, onSubmit, unmountInk],
+  )
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 
@@ -212,9 +213,6 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
-            onChange={({item}) => {
-              setAnswer(item)
-            }}
             enableShortcuts={false}
             emptyMessage="No results found."
             highlightedTerm={searchTerm}
@@ -228,6 +226,7 @@ function AutocompletePrompt<T>({
             morePagesMessage="Find what you're looking for by typing its name."
             ref={inputRef}
             limit={limit}
+            onSubmit={submitAnswer}
           />
         </Box>
       )}

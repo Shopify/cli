@@ -17,5 +17,15 @@
     "@shopify/ui-extensions-test-utils": "3.25.0",
     "@shopify/workspace": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "afraid-bugs-press",
+    "blue-carpets-sin",
+    "cold-cooks-tease",
+    "dull-houses-taste",
+    "hot-schools-give",
+    "kind-melons-swim",
+    "orange-sloths-collect",
+    "small-fishes-sleep",
+    "tall-cycles-think"
+  ]
 }

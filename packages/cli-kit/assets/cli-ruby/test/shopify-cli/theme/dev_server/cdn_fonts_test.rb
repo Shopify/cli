@@ -7,6 +7,11 @@ module ShopifyCLI
   module Theme
     class DevServer
       class CdnFontsTest < Minitest::Test
+        def setup
+          super
+          Environment.stubs(:store).returns("my-test-shop.myshopify.com")
+        end
+
         def test_replace_local_assistant_n4_font_in_reponse_body
           original_html = <<~HTML
             <html>
@@ -55,6 +60,28 @@ module ShopifyCLI
             <html>
               <head>
                 <link rel="preload" as="font" href="/fonts/assistant/assistant_n4.bcd3d09dcb631dec5544b8fb7b154ff234a44630.woff2?hmac=0a2e92d6956b1312ef7d59f4850549a6e43a908ccf24df47f07b0b4c6da5837d" type="font/woff2" crossorigin=""><link rel="preload" as="font" href="/fonts/assistant/assistant_n4.bcd3d09dcb631dec5544b8fb7b154ff234a44630.woff2?hmac=0a2e92d6956b1312ef7d59f4850549a6e43a908ccf24df47f07b0b4c6da5837d" type="font/woff2" crossorigin="">
+              </head>
+            </html>
+          HTML
+          assert_equal(expected_html, serve(original_html).body)
+        end
+
+        def test_replace_shop_fonts_urls_in_reponse_body
+          original_html = <<~HTML
+            <html>
+              <head>
+              <link rel="preload" as="font" href="//my-test-shop.myshopify.com/cdn/fonts/assistant/assistant_n4.2222.woff2?h1=1111&hmac=0000" type="font/woff2" crossorigin="">
+              <link rel="preload" as="font" href="http://my-test-shop.myshopify.com/cdn/fonts/assistant/assistant_n4.2222.woff2?h1=1111&hmac=0000" type="font/woff2" crossorigin="">
+              <link rel="preload" as="font" href="https://my-test-shop.myshopify.com/cdn/fonts/assistant/assistant_n4.2222.woff2?h1=1111&hmac=0000" type="font/woff2" crossorigin="">
+              </head>
+            </html>
+          HTML
+          expected_html = <<~HTML
+            <html>
+              <head>
+              <link rel="preload" as="font" href="/fonts/assistant/assistant_n4.2222.woff2?h1=1111&hmac=0000" type="font/woff2" crossorigin="">
+              <link rel="preload" as="font" href="/fonts/assistant/assistant_n4.2222.woff2?h1=1111&hmac=0000" type="font/woff2" crossorigin="">
+              <link rel="preload" as="font" href="/fonts/assistant/assistant_n4.2222.woff2?h1=1111&hmac=0000" type="font/woff2" crossorigin="">
               </head>
             </html>
           HTML
@@ -122,10 +149,11 @@ module ShopifyCLI
         private
 
         def serve(response_body = "", path: "/", content_type: "text/html")
+          ctx = TestHelpers::FakeContext.new(root: root)
           app = lambda do |_env|
             [200, { "Content-Type" => content_type }, [response_body]]
           end
-          stack = CdnFonts.new(app, theme: theme)
+          stack = CdnFonts.new(ctx, app, theme: theme)
           request = Rack::MockRequest.new(stack)
           request.get(path)
         end
@@ -136,6 +164,7 @@ module ShopifyCLI
 
         def theme
           return @theme if @theme
+
           @theme = Theme.new(nil, root: root)
           @theme.stubs(shop: "my-test-shop.myshopify.com")
           @theme

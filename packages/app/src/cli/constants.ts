@@ -1,4 +1,4 @@
-import {ExtensionFlavor} from './models/app/extensions.js'
+import {ExtensionFlavor} from './models/app/template.js'
 
 export const environmentVariableNames = {
   skipEsbuildReactDedeuplication: 'SHOPIFY_CLI_SKIP_ESBUILD_REACT_DEDUPLICATION',

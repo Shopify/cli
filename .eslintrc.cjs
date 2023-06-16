@@ -5,11 +5,11 @@ module.exports = {
     project: './tsconfig.json',
     EXPERIMENTAL_useSourceOfProjectReferenceRedirect: true,
   },
-  plugins: ['@nrwl/nx'],
+  plugins: ['@nx'],
   // WARNING: If you want to add new rules/plugins, you need to add them to the eslint-plugin-cli package.
   extends: ['plugin:@shopify/cli/configs'],
   rules: {
-    '@nrwl/nx/enforce-module-boundaries': [
+    '@nx/enforce-module-boundaries': [
       'error',
       {
         allow: [],

@@ -8,6 +8,11 @@ module ShopifyCLI
   module Theme
     class DevServer
       class LocalAssetsTest < Minitest::Test
+        def setup
+          super
+          Environment.stubs(:store).returns("my-test-shop.myshopify.com")
+        end
+
         def test_replace_local_assets_in_reponse_body
           original_html = <<~HTML
             <html>
@@ -78,7 +83,7 @@ module ShopifyCLI
           assert_equal("text/css", response["Content-Type"])
           assert_equal(
             ::File.read("#{ShopifyCLI::ROOT}/test/fixtures/theme/assets/theme.css"),
-            response.body
+            response.body,
           )
         end
 
@@ -87,7 +92,7 @@ module ShopifyCLI
           assert_equal("application/javascript", response["Content-Type"])
           assert_equal(
             ::File.read("#{ShopifyCLI::ROOT}/test/fixtures/theme/assets/theme.css"),
-            response.body
+            response.body,
           )
         end
 
@@ -109,15 +114,43 @@ module ShopifyCLI
           assert_equal("Not found", response.body)
         end
 
+        def test_replace_shop_assets_urls_in_reponse_body
+          theme = stub("Theme", static_asset_paths: [
+            "assets/component-list-menu.css",
+          ])
+
+          original_html = <<~HTML
+            <html>
+              <head>
+              <link rel="stylesheet" href="//my-test-shop.myshopify.com/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="http://my-test-shop.myshopify.com/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="https://my-test-shop.myshopify.com/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              </head>
+            </html>
+          HTML
+
+          expected_html = <<~HTML
+            <html>
+              <head>
+              <link rel="stylesheet" href="/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              <link rel="stylesheet" href="/assets/component-list-menu.css?v=11111" media="print" onload="this.media='all'">
+              </head>
+            </html>
+          HTML
+
+          assert_equal(expected_html, serve(original_html, theme_mock: theme).body)
+        end
+
         private
 
-        def serve(response_body, path: "/")
+        def serve(response_body, path: "/", theme_mock: nil)
           app = lambda do |_env|
             [200, {}, [response_body]]
           end
           root = ShopifyCLI::ROOT + "/test/fixtures/theme"
           ctx = TestHelpers::FakeContext.new(root: root)
-          theme = Theme.new(ctx, root: root)
+          theme = theme_mock || Theme.new(ctx, root: root)
           stack = LocalAssets.new(ctx, app, theme)
           request = Rack::MockRequest.new(stack)
           request.get(path)

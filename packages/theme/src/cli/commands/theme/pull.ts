@@ -73,6 +73,6 @@ export default class Pull extends ThemeCommand {
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})
     const command = ['theme', 'pull', flags.path, ...flagsToPass]
 
-    await execCLI2(command, {adminSession})
+    await execCLI2(command, {store, adminToken: adminSession.token})
   }
 }

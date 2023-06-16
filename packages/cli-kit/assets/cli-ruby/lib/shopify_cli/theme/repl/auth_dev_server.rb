@@ -57,7 +57,7 @@ module ShopifyCLI
 
         def middleware_stack
           @app = proxy
-          @app = CdnFonts.new(app, theme: theme)
+          @app = CdnFonts.new(ctx, app, theme: theme)
           @app = AuthMiddleware.new(app, proxy, repl) { WebServer.shutdown }
         end
 

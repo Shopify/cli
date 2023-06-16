@@ -7,7 +7,8 @@ module ShopifyCLI
     module Extension
       class DevServer < ShopifyCLI::Theme::DevServer
         class LocalAssets < ShopifyCLI::Theme::DevServer::LocalAssets
-          TAE_ASSET_REGEX = %r{(http:|https:)?//cdn\.shopify\.com/extensions/.+?/(assets/.+?\.(?:css|js))}
+          SUPPORTED_EXTENSIONS = [:js, :css].join("|")
+          TAE_ASSET_REGEX = %r{(http:|https:)?//cdn\.shopify\.com/extensions/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
 
           private
 

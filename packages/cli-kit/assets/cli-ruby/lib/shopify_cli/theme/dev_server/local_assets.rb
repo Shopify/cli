@@ -4,8 +4,9 @@ module ShopifyCLI
   module Theme
     class DevServer
       class LocalAssets
-        THEME_REGEX = %r{//cdn\.shopify\.com/s/.+?/(assets/.+?\.(?:css|js))}
-        VANITY_THEME_REGEX = %r{/cdn/shop/.+?/(assets/.+?\.(?:css|js))}
+        SUPPORTED_EXTENSIONS = [:js, :css].join("|")
+        CDN_REGEX = %r{(//cdn)\.shopify\.com/s/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
+        VANITY_CDN_REGEX = %r{(/cdn)/shop/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
 
         class FileBody
           def initialize(path)
@@ -42,13 +43,17 @@ module ShopifyCLI
           end
         end
 
+        def shop_regex
+          %r{(http:|https:)?//#{shop}/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
+        end
+
         private
 
         def replace_asset_urls(body)
           replaced_body = body.join
-          [THEME_REGEX, VANITY_THEME_REGEX].each do |regex|
+          [CDN_REGEX, VANITY_CDN_REGEX, shop_regex].each do |regex|
             replaced_body = replaced_body.gsub(regex) do |match|
-              path = Regexp.last_match[1]
+              path = Regexp.last_match[2]
               @target.static_asset_paths.include?(path) ? "/#{path}" : match
             end
           end
@@ -85,6 +90,10 @@ module ShopifyCLI
           else
             serve_fail(404, "Not found")
           end
+        end
+
+        def shop
+          @shop ||= ShopifyCLI::Theme::ThemeAdminAPI.new(@ctx).get_shop_or_abort
         end
       end
     end

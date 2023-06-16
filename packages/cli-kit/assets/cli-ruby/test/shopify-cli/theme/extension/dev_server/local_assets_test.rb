@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+
 require "test_helper"
 require "shopify_cli/theme/extension/dev_server"
 require "rack/mock"
@@ -78,7 +79,7 @@ module ShopifyCLI
             assert_equal("text/css", response["Content-Type"])
             assert_equal(
               ::File.read("#{ShopifyCLI::ROOT}/test/fixtures/extension/assets/block1.css"),
-              response.body
+              response.body,
             )
           end
 
@@ -87,7 +88,7 @@ module ShopifyCLI
             assert_equal("application/javascript", response["Content-Type"])
             assert_equal(
               ::File.read("#{ShopifyCLI::ROOT}/test/fixtures/extension/assets/block1.css"),
-              response.body
+              response.body,
             )
           end
 
@@ -111,13 +112,13 @@ module ShopifyCLI
 
           private
 
-          def serve(response_body, path: "/")
+          def serve(response_body, path: "/", extension_mock: nil)
             app = lambda do |_env|
               [200, {}, [response_body]]
             end
             root = ShopifyCLI::ROOT + "/test/fixtures/extension"
             ctx = TestHelpers::FakeContext.new(root: root)
-            extension = AppExtension.new(ctx, root: root)
+            extension = extension_mock || AppExtension.new(ctx, root: root)
             stack = LocalAssets.new(ctx, app, extension)
             request = Rack::MockRequest.new(stack)
             request.get(path)

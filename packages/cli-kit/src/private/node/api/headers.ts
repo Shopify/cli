@@ -11,6 +11,16 @@ export class RequestClientError extends ExtendableError {
     this.statusCode = statusCode
   }
 }
+export class GraphQLClientError extends RequestClientError {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errors?: any[]
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public constructor(message: string, statusCode: number, errors?: any[]) {
+    super(message, statusCode)
+    this.errors = errors
+  }
+}
 
 /**
  * Removes the sensitive data from the headers and outputs them as a string.

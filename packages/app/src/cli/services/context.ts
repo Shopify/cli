@@ -18,8 +18,8 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {ThemeExtension} from '../models/app/extensions.js'
 import {loadAppName} from '../models/app/loader.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -270,7 +270,7 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
 }
 
 export async function ensureThemeExtensionDevContext(
-  extension: ThemeExtension,
+  extension: ExtensionInstance,
   apiKey: string,
   token: string,
 ): Promise<ExtensionRegistration> {

@@ -61,6 +61,12 @@ interface StorefrontRendererAPIOAuthOptions {
   scopes: StorefrontRendererScope[]
 }
 
+type BusinessPlatformScope = 'destinations' | string
+interface BusinessPlatformAPIOAuthOptions {
+  /** List of scopes to request permissions for. */
+  scopes: BusinessPlatformScope[]
+}
+
 /**
  * It represents the authentication requirements and
  * is the input necessary to trigger the authentication
@@ -70,12 +76,14 @@ export interface OAuthApplications {
   adminApi?: AdminAPIOAuthOptions
   storefrontRendererApi?: StorefrontRendererAPIOAuthOptions
   partnersApi?: PartnersAPIOAuthOptions
+  businessPlatformApi?: BusinessPlatformAPIOAuthOptions
 }
 
 export interface OAuthSession {
   admin?: AdminSession
   partners?: string
   storefront?: string
+  businessPlatform?: string
 }
 
 /**
@@ -316,6 +324,12 @@ async function tokensFor(applications: OAuthApplications, session: Session, fqdn
     const appId = applicationId('storefront-renderer')
     tokens.storefront = fqdnSession.applications[appId]?.accessToken
   }
+
+  if (applications.businessPlatformApi) {
+    const appId = applicationId('business-platform')
+    tokens.businessPlatform = fqdnSession.applications[appId]?.accessToken
+  }
+
   return tokens
 }
 
@@ -330,7 +344,8 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const admin = apps.adminApi?.scopes || []
   const partner = apps.partnersApi?.scopes || []
   const storefront = apps.storefrontRendererApi?.scopes || []
-  const requestedScopes = [...admin, ...partner, ...storefront]
+  const businessPlatform = apps.businessPlatformApi?.scopes || []
+  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform]
   return allDefaultScopes(requestedScopes)
 }
 
@@ -344,10 +359,12 @@ function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
   const adminScope = apps.adminApi?.scopes || []
   const partnerScope = apps.partnersApi?.scopes || []
   const storefrontScopes = apps.storefrontRendererApi?.scopes || []
+  const businessPlatformScopes = apps.businessPlatformApi?.scopes || []
   return {
     admin: apiScopes('admin', adminScope),
     partners: apiScopes('partners', partnerScope),
     storefront: apiScopes('storefront-renderer', storefrontScopes),
+    businessPlatform: apiScopes('business-platform', businessPlatformScopes),
   }
 }
 

@@ -1,6 +1,6 @@
 import {configurationFileNames} from '../../../constants.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance} from '../specification.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -183,7 +183,7 @@ Please check the configuration in ${tomlPath}`),
         })
 
         // When
-        const deployConfig = await uiExtension.deployConfig()
+        const deployConfig = await uiExtension.deployConfig('apiKey')
 
         // Then
         expect(loadLocales.loadLocalesConfig).toBeCalledWith(tmpDir, uiExtension.configuration.type)
