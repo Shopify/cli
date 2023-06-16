@@ -198,6 +198,7 @@ async function dev(options: DevOptions) {
   if (draftableExtensions.length > 0) {
     const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
       app: localApp,
+      partnersApp: remoteApp,
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
@@ -480,9 +481,8 @@ export function devDraftableExtensionTarget({
       await Promise.all(
         extensions
           .map((extension) => {
-            //TODO: TEMP workaround
-            const registrationId = remoteExtensions[extension.localIdentifier] ?? '00000000-0000-0000-0000-000000000000'
-            // if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+            const registrationId = remoteExtensions[extension.localIdentifier]
+            if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
             const actions = [
               setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
