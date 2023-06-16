@@ -338,6 +338,7 @@ describe('deploy', () => {
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
+      localization: {},
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 

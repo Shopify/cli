@@ -2,7 +2,7 @@ import {FunctionConfigType} from './function.js'
 import {testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
-import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, touchFile, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -90,6 +90,8 @@ describe('functionConfiguration', () => {
         },
         enable_creation_ui: true,
         module_id: moduleId,
+        localization: {},
+        targets: undefined,
       })
     })
   })
@@ -113,8 +115,10 @@ describe('functionConfiguration', () => {
         module_id: moduleId,
         enable_creation_ui: true,
         input_query: undefined,
-        input_query_variabels: undefined,
+        input_query_variables: undefined,
         ui: undefined,
+        localization: {},
+        targets: undefined,
       })
     })
   })
@@ -148,5 +152,38 @@ describe('functionConfiguration', () => {
 
     // When & Then
     await expect(() => extension.deployConfig({apiKey, token, unifiedDeployment})).rejects.toThrowError(AbortError)
+  })
+
+  test('parses locales', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.directory = tmpDir
+      const locales = {
+        extension: {
+          title: 'English Title',
+          description: 'English Description',
+        },
+      }
+
+      // Create the locales folder
+      const localesDir = joinPath(extension.directory, 'locales')
+      await mkdir(localesDir)
+
+      // Write the default.en.json file inside the locales folder
+      await writeFile(joinPath(localesDir, 'en.default.json'), JSON.stringify(locales))
+
+      // When
+      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+
+      // Then
+      const expectedLocalization = {
+        default_locale: 'en',
+        translations: {
+          en: 'eyJleHRlbnNpb24iOnsidGl0bGUiOiJFbmdsaXNoIFRpdGxlIiwiZGVzY3JpcHRpb24iOiJFbmdsaXNoIERlc2NyaXB0aW9uIn19',
+        },
+      }
+
+      expect(got!.localization).toEqual(expectedLocalization)
+    })
   })
 })
