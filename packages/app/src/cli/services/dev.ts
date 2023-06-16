@@ -215,6 +215,7 @@ async function dev(options: DevOptions) {
         extensions: draftableExtensions,
         remoteExtensions,
         specifications,
+        unifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false
       }),
     )
   }
@@ -463,7 +464,8 @@ interface DevDraftableExtensionsOptions {
   remoteExtensions: {
     [key: string]: string
   }
-  specifications: ExtensionSpecification[]
+  specifications: ExtensionSpecification[],
+  unifiedDeployment: boolean
 }
 
 export function devDraftableExtensionTarget({
@@ -474,6 +476,7 @@ export function devDraftableExtensionTarget({
   token,
   remoteExtensions,
   specifications,
+  unifiedDeployment
 }: DevDraftableExtensionsOptions) {
   return {
     prefix: 'extensions',
@@ -485,7 +488,7 @@ export function devDraftableExtensionTarget({
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
             const actions = [
-              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
+              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications, unifiedDeployment}),
             ]
 
             // Only extensions with esbuild feature should be whatched using esbuild
@@ -501,11 +504,13 @@ export function devDraftableExtensionTarget({
                   stderr,
                   stdout,
                   signal,
+                  unifiedDeployment
                 }),
               )
             }
 
             // TODO: initial build and push of the function
+            // TODO: only if unified deployments
             // watch for Function changes that require a build and push
             if (extension.isFunctionExtension) {
               actions.push(
@@ -517,7 +522,8 @@ export function devDraftableExtensionTarget({
                   signal,
                   token,
                   apiKey,
-                  registrationId
+                  registrationId,
+                  unifiedDeployment
                 })
               )
             }

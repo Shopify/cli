@@ -18,6 +18,7 @@ interface UpdateExtensionDraftOptions {
   apiKey: string
   registrationId: string
   stderr: Writable
+  unifiedDeployment: boolean
 }
 
 export async function updateExtensionDraft({
@@ -26,6 +27,7 @@ export async function updateExtensionDraft({
   apiKey,
   registrationId,
   stderr,
+  unifiedDeployment
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
@@ -34,11 +36,25 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  //TODO: Ensure wasm is updated here
+  const bundleConfig = await extension.bundleConfig({
+    identifiers: {
+      app: apiKey,
+      extensions: {
+        [extension.localIdentifier]: extension.devUUID
+      },
+      extensionIds: {
+        [extension.localIdentifier]: registrationId
+      }
+    },
+    apiKey,
+    token,
+    unifiedDeployment
+  });
+
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...(await extension.deployConfig(apiKey)),
+      ...bundleConfig?.config,
       serialized_script: encodedFile,
     }),
     context: undefined,
@@ -62,6 +78,7 @@ interface UpdateExtensionConfigOptions {
   registrationId: string
   stderr: Writable
   specifications: ExtensionSpecification[]
+  unifiedDeployment: boolean
 }
 
 export async function updateExtensionConfig({
@@ -71,6 +88,7 @@ export async function updateExtensionConfig({
   registrationId,
   stderr,
   specifications,
+  unifiedDeployment
 }: UpdateExtensionConfigOptions) {
   const abort = (errorMessage: OutputMessage) => {
     throw new AbortError(errorMessage)
@@ -85,5 +103,5 @@ export async function updateExtensionConfig({
   const configuration = await parseConfigurationFile(specification.schema, extension.configurationPath, abort)
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = configuration
-  return updateExtensionDraft({extension, token, apiKey, registrationId, stderr})
+  return updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
 }

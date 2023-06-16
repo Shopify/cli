@@ -12,6 +12,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
+import { FunctionConfigType } from '../../../models/extensions/specifications/function.js'
 
 export interface WatchEvent {
   path: string
@@ -122,6 +123,7 @@ interface SetupDraftableExtensionBundlerOptions {
   stderr: Writable
   stdout: Writable
   signal: AbortSignal
+  unifiedDeployment: boolean
 }
 
 export async function setupDraftableExtensionBundler({
@@ -134,6 +136,7 @@ export async function setupDraftableExtensionBundler({
   stderr,
   stdout,
   signal,
+  unifiedDeployment
 }: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
@@ -160,7 +163,7 @@ export async function setupDraftableExtensionBundler({
       )
       if (error) return
 
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stderr})
+      await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
     },
   })
 }
@@ -174,6 +177,7 @@ interface SetupConfigWatcherOptions {
   stderr: Writable
   signal: AbortSignal
   specifications: ExtensionSpecification[]
+  unifiedDeployment: boolean
 }
 
 export async function setupConfigWatcher({
@@ -185,12 +189,13 @@ export async function setupConfigWatcher({
   stderr,
   signal,
   specifications,
+  unifiedDeployment
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
   const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
     outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
-    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications}).catch((_: unknown) => {})
+    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications, unifiedDeployment}).catch((_: unknown) => {})
   })
 
   signal.addEventListener('abort', () => {
@@ -219,6 +224,7 @@ interface SetupFunctionWatcherOptions {
   token: string
   apiKey: string
   registrationId: string
+  unifiedDeployment: boolean
 }
 
 export async function setupFunctionWatcher({
@@ -229,30 +235,22 @@ export async function setupFunctionWatcher({
   signal,
   token,
   apiKey,
-  registrationId
+  registrationId,
+  unifiedDeployment
 }: SetupFunctionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
   outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout);
-
-  if (!extension.isJavaScript && extension.watchPaths.length == 0) {
+  const watchPaths = getFunctionWatchPaths(extension as ExtensionInstance<FunctionConfigType>);
+  if (!watchPaths) {
     outputWarn(`Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`)
     return
   }
 
-  const watchPaths: string[] = (extension.watchPaths as string[]) ?? [];
-  if (extension.isJavaScript && watchPaths.length == 0) {
-    watchPaths.push(joinPath('src', '**', '*.js'))
-    watchPaths.push(joinPath('src', '**', '*.ts'))
-  }
-  watchPaths.push(joinPath('**', 'input*.graphql'))
-
-  const paths = watchPaths.map(path => joinPath(extension.directory, path));
-  outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${paths}`, stdout)
-
+  outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${watchPaths}`, stdout)
   let buildController : AbortController | null;
 
-  const functionWatcher = chokidar.watch(paths).on('change', path => {
+  const functionWatcher = chokidar.watch(watchPaths).on('change', path => {
     outputDebug(`Function extension file at path ${path} changed`, stdout)
     if (buildController) {
       //terminate any existing builds
@@ -273,8 +271,7 @@ export async function setupFunctionWatcher({
       buildController = null
     }).then(() => {
 
-      //TODO: Update wasm blob?
-      updateExtensionDraft({extension, token, apiKey, registrationId, stderr}).catch((_: unknown) => {})
+      updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment}).catch((_: unknown) => {})
 
     })
   })
@@ -294,4 +291,19 @@ export async function setupFunctionWatcher({
         )
       })
   })
+}
+
+function getFunctionWatchPaths(extension: ExtensionInstance<FunctionConfigType>) {
+  if (!extension.isJavaScript && extension.watchPaths.length == 0) {
+    return null
+  }
+
+  const watchPaths: string[] = (extension.watchPaths as string[]) ?? []
+  if (extension.isJavaScript && watchPaths.length == 0) {
+    watchPaths.push(joinPath('src', '**', '*.js'))
+    watchPaths.push(joinPath('src', '**', '*.ts'))
+  }
+  watchPaths.push(joinPath('**', 'input*.graphql'))
+
+  return watchPaths.map(path => joinPath(extension.directory, path))
 }

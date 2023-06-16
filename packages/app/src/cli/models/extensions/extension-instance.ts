@@ -256,7 +256,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     if (!configValue) return undefined
-    return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
+    return {uuid: identifiers.extensions[this.localIdentifier]!, config: configValue, context: ''}
   }
 }
 
