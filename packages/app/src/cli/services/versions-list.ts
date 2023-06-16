@@ -6,7 +6,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import colors from '@shopify/cli-kit/node/colors'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type DeploymentLine = {
@@ -30,8 +30,8 @@ async function fetchDeployments(
 ): Promise<{deployments: DeploymentLine[]; totalResults: number; organizationId: string; appId: string}> {
   const query = AppDeploymentsQuery
   const res: AppDeploymentsQuerySchema = await partnersRequest(query, token, {apiKey})
-
   const deployments = res.app.deployments.nodes.map((deployment) => {
+    const message = deployment.message ?? ''
     return {
       ...deployment,
       status:
@@ -40,6 +40,34 @@ async function fetchDeployments(
           : deployment.status,
       createdBy: deployment.createdBy?.displayName ?? '',
       createdAt: formatDate(new Date(deployment.createdAt)),
+      message: message,
+    }
+  })
+
+  // 10 extra characters for the table formatting
+  let maxLineLength = process.stdout.columns - 10
+  let maxMessageLength = maxLineLength
+
+  // Calculate the max allowed length for the message column
+  deployments.forEach((deployment) => {
+    const combinedLength =
+      deployment.message.length +
+      deployment.versionTag.length +
+      unstyled(deployment.status).length +
+      deployment.createdAt.length +
+      deployment.createdBy.length
+    if (combinedLength > maxLineLength) {
+      const combinedWithoutMessageLength = combinedLength - deployment.message.length
+      const newMaxLength = Math.max(maxLineLength - combinedWithoutMessageLength, 10)
+      if (newMaxLength < maxMessageLength) {
+        maxMessageLength = newMaxLength
+      }
+    }
+  })
+
+  deployments.forEach((deployment) => {
+    if (deployment.message.length > maxMessageLength) {
+      deployment.message = deployment.message.slice(0, maxMessageLength - 3) + '...'
     }
   })
 
