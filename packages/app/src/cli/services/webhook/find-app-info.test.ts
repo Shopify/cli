@@ -2,6 +2,7 @@ import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
+import {testOrganizationApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -141,39 +142,32 @@ describe('requestAppInfo', () => {
 
   test('no secrets available', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue({
-      id: 'id',
-      title: 'title',
-      apiKey: anApiKey,
-      organizationId: 'orgid',
-      apiSecretKeys: [],
-      grantedScopes: [],
-      applicationUrl: 'https://example.com',
-    })
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(
+      testOrganizationApp({
+        apiKey: anApiKey,
+        apiSecretKeys: [],
+      }),
+    )
 
     // When
     const credentials = await requestAppInfo(aToken, anApiKey)
 
     // Then
-    expect(credentials).toEqual({clientId: 'id', apiKey: anApiKey})
+    expect(credentials).toEqual({clientId: '1', apiKey: anApiKey})
   })
 
   test('secrets available', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue({
-      id: 'id',
-      title: 'title',
-      apiKey: anApiKey,
-      organizationId: 'orgid',
-      apiSecretKeys: [{secret: 'SECRET'}],
-      grantedScopes: [],
-      applicationUrl: 'https://example.com',
-    })
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(
+      testOrganizationApp({
+        apiKey: anApiKey,
+      }),
+    )
 
     // When
     const credentials = await requestAppInfo(aToken, anApiKey)
 
     // Then
-    expect(credentials).toEqual({clientId: 'id', apiKey: anApiKey, clientSecret: 'SECRET'})
+    expect(credentials).toEqual({clientId: '1', apiKey: anApiKey, clientSecret: 'api-secret'})
   })
 })

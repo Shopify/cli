@@ -8,7 +8,8 @@ import {
   updateURLsPrompt,
   tunnelConfigurationPrompt,
 } from './dev.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationStore} from '../models/organization.js'
+import {testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {
   renderAutocompletePrompt,
@@ -30,24 +31,13 @@ const ORG2: Organization = {
   businessName: 'org2',
   betas: {},
 }
-const APP1: OrganizationApp = {
-  id: '1',
-  title: 'app1',
-  apiKey: 'key1',
-  apiSecretKeys: [{secret: 'secret1'}],
-  organizationId: '1',
-  grantedScopes: [],
-  applicationUrl: 'https://example.com',
-}
-const APP2: OrganizationApp = {
+const APP1 = testOrganizationApp({apiKey: 'key1'})
+const APP2 = testOrganizationApp({
   id: '2',
   title: 'app2',
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
-  organizationId: '1',
-  grantedScopes: [],
-  applicationUrl: 'https://example.com',
-}
+})
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',

@@ -25,6 +25,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
     unifiedAppDeployment?: boolean
   }
   applicationUrl: string
+  redirectUrlWhitelist: string[]
 }
 
 export interface OrganizationStore {

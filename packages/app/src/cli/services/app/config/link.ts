@@ -70,6 +70,7 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
   configuration.clientId = remoteApp.apiKey
   configuration.name = remoteApp.title
   configuration.applicationUrl = remoteApp.applicationUrl
+  configuration.redirectUrl = remoteApp.redirectUrlWhitelist
 
   return configuration
 }

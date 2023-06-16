@@ -8,6 +8,7 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
+import {OrganizationApp} from '../organization.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -31,6 +32,20 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
   return newApp
+}
+
+export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {
+  const defaultApp = {
+    id: '1',
+    title: 'app1',
+    apiKey: 'api-key',
+    apiSecretKeys: [{secret: 'api-secret'}],
+    organizationId: '1',
+    grantedScopes: [],
+    applicationUrl: 'https://example.com',
+    redirectUrlWhitelist: ['https://example.com/callback1'],
+  }
+  return {...defaultApp, ...app}
 }
 
 export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): Promise<ExtensionInstance> {

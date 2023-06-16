@@ -1,6 +1,5 @@
 import link, {LinkOptions} from './link.js'
-import {OrganizationApp} from '../../../models/organization.js'
-import {testApp} from '../../../models/app/app.test-data.js'
+import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {load} from '../../../models/app/loader.js'
 import {fetchOrCreateOrganizationApp} from '../../context.js'
@@ -13,15 +12,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const LOCAL_APP = testApp()
-const REMOTE_APP: OrganizationApp = {
-  id: '1',
-  title: 'app1',
-  apiKey: 'api-key',
-  apiSecretKeys: [{secret: 'secret1'}],
-  organizationId: '1',
-  grantedScopes: [],
-  applicationUrl: 'https://example.com',
-}
+const REMOTE_APP = testOrganizationApp()
 
 vi.mock('../../../prompts/config.js')
 vi.mock('../../../models/app/loader.js')
@@ -58,6 +49,7 @@ extensionDirectories = [ ]
 clientId = "api-key"
 name = "app1"
 applicationUrl = "https://example.com"
+redirectUrl = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -94,6 +86,7 @@ extensionDirectories = [ ]
 clientId = "api-key"
 name = "app1"
 applicationUrl = "https://example.com"
+redirectUrl = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -183,6 +176,7 @@ applicationUrl = "https://example.com"
       const expectedContent = `clientId = "api-key"
 name = "app1"
 applicationUrl = "https://example.com"
+redirectUrl = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
     })

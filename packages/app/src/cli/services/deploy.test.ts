@@ -3,7 +3,13 @@ import {deploy} from './deploy.js'
 import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
+import {
+  testApp,
+  testFunctionExtension,
+  testOrganizationApp,
+  testThemeExtensions,
+  testUIExtension,
+} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -19,6 +25,17 @@ vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../validators/extensions.js')
+
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
+  id: 'app-id',
+  organizationId: 'org-id',
+  betas: {unifiedAppDeployment: true},
+})
+
+const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
+  id: 'app-id',
+  organizationId: 'org-id',
+})
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -38,14 +55,7 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
-      applicationUrl: 'https://example.com',
-    })
+    await testDeployBundle(app, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -63,14 +73,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: []})
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: false},
-      applicationUrl: 'https://example.com',
-    })
+    await testDeployBundle(app, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA)
 
     // Then
     expect(uploadExtensionsBundle).not.toHaveBeenCalled()
@@ -173,14 +176,7 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
-      applicationUrl: 'https://example.com',
-    })
+    await testDeployBundle(app, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -275,14 +271,7 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
-      applicationUrl: 'https://example.com',
-    })
+    await testDeployBundle(app, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -315,13 +304,12 @@ async function testDeployBundle(
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app,
     identifiers,
-    partnersApp: partnersApp ?? {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      applicationUrl: 'https://example.com',
-    },
+    partnersApp:
+      partnersApp ??
+      testOrganizationApp({
+        id: 'app-id',
+        organizationId: 'org-id',
+      }),
     token: 'api-token',
   })
 

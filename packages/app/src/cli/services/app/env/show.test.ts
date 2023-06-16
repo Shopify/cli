@@ -3,7 +3,7 @@ import {fetchOrgAndApps, fetchOrganizations} from '../../dev/fetch.js'
 import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
-import {testApp} from '../../../models/app/app.test-data.js'
+import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
@@ -30,18 +30,8 @@ describe('env show', () => {
       website: '',
       apps: {nodes: []},
     }
-    const apiKey = 'api-key'
-    const apiSecret = 'api-secret'
-    const organizationApp = {
-      id: '123',
-      title: 'Test app',
-      appType: 'custom',
-      apiSecretKeys: [{secret: apiSecret}],
-      organizationId: '1',
-      apiKey,
-      grantedScopes: [],
-      applicationUrl: 'https://example.com',
-    }
+    const organizationApp = testOrganizationApp()
+
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
     vi.mocked(fetchOrgAndApps).mockResolvedValue({

@@ -19,10 +19,10 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
+import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
@@ -48,30 +48,16 @@ beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
-const APP1: OrganizationApp = {
-  id: '1',
-  title: 'app1',
+const APP1 = testOrganizationApp({
   apiKey: 'key1',
-  organizationId: '1',
   apiSecretKeys: [{secret: 'secret1'}],
-  grantedScopes: [],
-  betas: {
-    unifiedAppDeployment: false,
-  },
-  applicationUrl: 'https://example.com',
-}
-const APP2: OrganizationApp = {
+})
+const APP2 = testOrganizationApp({
   id: '2',
   title: 'app2',
   apiKey: 'key2',
-  organizationId: '1',
   apiSecretKeys: [{secret: 'secret2'}],
-  grantedScopes: [],
-  betas: {
-    unifiedAppDeployment: false,
-  },
-  applicationUrl: 'https://example.com',
-}
+})
 
 const ORG1: Organization = {
   id: '1',

@@ -1,7 +1,7 @@
 import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './context.js'
 import * as identifiers from '../models/app/identifiers.js'
-import {testApp, testFunctionExtension} from '../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testOrganizationApp} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
 import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -76,15 +76,11 @@ describe('generateSchemaService', () => {
 
     beforeEach(async () => {
       getAppIdentifiers.mockReturnValue({app: identifiersApiKey})
-      fetchOrCreateOrganizationApp.mockResolvedValue({
-        id: 'id',
-        title: 'title',
-        apiKey: promptApiKey,
-        organizationId: '1',
-        apiSecretKeys: [],
-        grantedScopes: [],
-        applicationUrl: 'https://example.com',
-      })
+      fetchOrCreateOrganizationApp.mockResolvedValue(
+        testOrganizationApp({
+          apiKey: promptApiKey,
+        }),
+      )
       vi.mocked(isTerminalInteractive).mockReturnValue(true)
     })
 

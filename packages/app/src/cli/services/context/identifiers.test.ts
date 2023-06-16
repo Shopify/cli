@@ -4,7 +4,7 @@ import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppInterface} from '../../models/app/app.js'
-import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
@@ -42,16 +42,9 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
   })
 }
 
-const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
-  id: 'app-id',
-  organizationId: 'org-id',
-  title: 'app-title',
-  grantedScopes: [],
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
   betas: {unifiedAppDeployment: true},
-  apiKey: 'api-key',
-  apiSecretKeys: [],
-  applicationUrl: 'https://example.com',
-}
+})
 
 const options = (
   uiExtensions: ExtensionInstance[],

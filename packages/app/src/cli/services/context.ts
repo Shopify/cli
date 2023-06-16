@@ -319,6 +319,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       grantedScopes: partnersApp.grantedScopes,
       betas: partnersApp.betas,
       applicationUrl: partnersApp.applicationUrl,
+      redirectUrlWhitelist: partnersApp.redirectUrlWhitelist,
     },
     identifiers,
     token,
