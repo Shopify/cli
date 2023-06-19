@@ -139,7 +139,7 @@ async function dev(options: DevOptions) {
 
   let previewUrl
   if (frontendConfig || backendConfig) {
-    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+    previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
     if (options.update) {
       const newURLs = generatePartnersURLs(
         exposedUrl,

@@ -36,7 +36,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       app: {
         title: 'mock-app-name',
         apiKey: 'mock-api-key',
-        url: 'https://mock-url.com?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWlu',
+        url: 'https://mock-store-fqdn.shopify.com/admin/oauth/redirect_from_cli?client_id=mock-api-key',
         mobileUrl:
           'https://mock-store-fqdn.shopify.com/admin/apps/mock-api-key?shop=mock-store-fqdn.shopify.com&host=bW9jay1zdG9yZS1mcWRuLnNob3BpZnkuY29tL2FkbWluL2FwcHMvbW9jay1hcGkta2V5',
       },
