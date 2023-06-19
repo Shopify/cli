@@ -25,7 +25,7 @@ async function fetchDeployments(
 ): Promise<{deployments: DeploymentLine[]; totalResults: number; organizationId: string; appId: string}> {
   const query = AppDeploymentsQuery
   const res: AppDeploymentsQuerySchema = await partnersRequest(query, token, {apiKey})
-  if (!res.app) throw new AbortError(`Invalid Client ID: ${apiKey}`)
+  if (!res.app) throw new AbortError(`Invalid API Key: ${apiKey}`)
 
   const deployments = res.app.deployments.nodes.map((deployment) => {
     const message = deployment.message ?? ''
