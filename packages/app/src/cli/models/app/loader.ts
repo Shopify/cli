@@ -280,7 +280,7 @@ class AppLoader {
         this.abortOrReport(
           outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
           undefined,
-          websOfType[1]!.directory,
+          joinPath(websOfType[1]!.directory, configurationFileNames.web),
         )
       }
     })

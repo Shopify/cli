@@ -158,12 +158,12 @@ class AppInfo {
             sublevels.push([`    📂 ${role}`, relativePath(this.app.directory, web.directory)])
           })
         }
-      } else if (this.app.errors) {
+      } else {
+        sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
+      }
+      if (this.app.errors) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
-        if (error) {
-          sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
-          errors.push(error)
-        }
+        if (error) errors.push(error)
       }
     })
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
