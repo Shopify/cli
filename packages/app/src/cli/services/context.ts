@@ -333,6 +333,9 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     ...options,
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
+
+  await disableDeveloperPreview(partnersApp, token)
+
   const result = {
     app: options.app,
     partnersApp: {
