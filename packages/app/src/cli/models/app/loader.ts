@@ -266,7 +266,7 @@ class AppLoader {
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
       return joinPath(this.appDirectory, webGlob, configurationFileNames.web)
     })
-    webConfigGlobs.push('!' + joinPath(this.appDirectory, '**/node_modules/**'))
+    webConfigGlobs.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
     const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
@@ -291,7 +291,7 @@ class AppLoader {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
     })
-    extensionConfigPaths.push('!' + joinPath(this.appDirectory, '**/node_modules/**'))
+    extensionConfigPaths.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
