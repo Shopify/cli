@@ -199,5 +199,12 @@ module ShopifyCLI
     def self.theme_access_password?
       admin_auth_token&.start_with?(THEME_ACCESS_PASSWORD_PREFIX)
     end
+
+    def self.unified_deployment?(env_variables: ENV)
+      env_variable_truthy?(
+        Constants::EnvironmentVariables::UNIFIED_DEPLOYMENT,
+        env_variables: env_variables
+      )
+    end
   end
 end

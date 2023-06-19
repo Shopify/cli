@@ -236,7 +236,7 @@ async function dev(options: DevOptions) {
       ensureAuthenticatedStorefront(),
       themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
     ])
-    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, deploymentMode === 'unified')
     additionalProcesses.push(devExt)
   }
 
@@ -320,6 +320,7 @@ function devThemeExtensionTarget(
   adminSession: AdminSession,
   storefrontToken: string,
   token: string,
+  unifiedDeployment = false,
 ): OutputProcess {
   return {
     prefix: 'extensions',
@@ -332,6 +333,7 @@ function devThemeExtensionTarget(
         stdout,
         stderr,
         signal,
+        unifiedDeployment,
       })
     },
   }
