@@ -16,7 +16,7 @@ export default class VersionsList extends Command {
     ...appFlags,
     'api-key': Flags.string({
       hidden: false,
-      description: "Application's API key that will be exposed at build time.",
+      description: "Application's API key to fetch versions for.",
       env: 'SHOPIFY_FLAG_API_KEY',
     }),
   }
