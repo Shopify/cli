@@ -291,6 +291,7 @@ class AppLoader {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
     })
+    extensionConfigPaths.push('!' + joinPath(this.appDirectory, '**/node_modules/**'))
     const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
