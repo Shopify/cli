@@ -33,7 +33,6 @@ module ShopifyCLI
       TTY = "SHOPIFY_CLI_TTY"
       RUN_AS_SUBPROCESS = "SHOPIFY_CLI_RUN_AS_SUBPROCESS"
       RUBY_BIN = "SHOPIFY_CLI_RUBY_BIN"
-      UNIFIED_DEPLOYMENT = "SHOPIFY_CLI_UNIFIED_DEPLOYMENT"
 
       # When true the CLI points to a local instance of
       # the partners dashboard and identity.

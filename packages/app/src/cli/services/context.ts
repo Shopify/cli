@@ -29,7 +29,7 @@ import {
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {
@@ -37,12 +37,9 @@ import {
   outputInfo,
   outputToken,
   formatPackageManagerCommand,
-  outputDebug,
-  outputWarn,
   outputNewline,
   outputCompleted,
-  OutputMessage,
-  Logger,
+  outputWarn,
 } from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -67,7 +64,6 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   useCloudflareTunnels: boolean
-  deploymentMode: DeploymentMode
 }
 
 /**
@@ -169,9 +165,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
 
-    await enableDeveloperPreview({app: selectedApp, token})
-    const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
+    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   }
 
   const [_selectedApp, _selectedStore] = await Promise.all([
@@ -202,15 +196,14 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     orgId,
   })
 
+  await enableDeveloperPreview(selectedApp, token)
+
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
     const packageManager = await getPackageManager(options.directory)
     showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  await enableDeveloperPreview({app: selectedApp, token})
-
-  const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -243,7 +236,6 @@ function buildOutput(
   app: OrganizationApp,
   store: OrganizationStore,
   useCloudflareTunnels: boolean,
-  deploymentMode: DeploymentMode,
   cachedInfo?: CachedAppInfo,
 ): DevContextOutput {
   return {
@@ -255,7 +247,6 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
-    deploymentMode,
   }
 }
 
@@ -337,9 +328,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     ...options,
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
-
-  await disableDeveloperPreview({app: partnersApp, token})
-
   const result = {
     app: options.app,
     partnersApp: {
@@ -567,65 +555,44 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   }))
 }
 
-interface DeveloperPreviewTasksContext {
-  app: OrganizationApp
-  token: string
-  enabled: boolean
-  logger: (content: OutputMessage, logger?: Logger) => void
+export async function enableDeveloperPreview(app: OrganizationApp, token: string) {
+  return developerPreviewUpdate(app, token, true)
 }
 
-export interface DeveloperPreviewInput {
-  app: OrganizationApp
-  token: string
-  hiddenOutput?: boolean
+export async function disableDeveloperPreview(app: OrganizationApp, token: string) {
+  return developerPreviewUpdate(app, token, false)
 }
 
-export async function enableDeveloperPreview(input: DeveloperPreviewInput) {
-  return developerPreviewUpdate(input, true)
-}
-
-export async function disableDeveloperPreview(input: DeveloperPreviewInput) {
-  return developerPreviewUpdate(input, false)
-}
-
-async function developerPreviewUpdate({app, token, hiddenOutput = false}: DeveloperPreviewInput, enabled: boolean) {
+async function developerPreviewUpdate(app: OrganizationApp, token: string, enabled: boolean) {
   if (!app.betas?.unifiedAppDeployment) return
 
-  if (hiddenOutput) {
-    await executeDeveloperPreviewUpdate({app, token, enabled, logger: outputDebug})
-    outputDebug(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
-  } else {
-    const tasks: Task<DeveloperPreviewTasksContext>[] = [
-      {
-        title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
-        task: executeDeveloperPreviewUpdate,
+  const tasks = [
+    {
+      title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
+      task: async () => {
+        const query = DevelopmentStorePreviewUpdateQuery
+        const variables: DevelopmentStorePreviewUpdateInput = {
+          input: {
+            apiKey: app.apiKey,
+            enabled,
+          },
+        }
+        const result: DevelopmentStorePreviewUpdateSchema = await partnersRequest(query, token, variables)
+
+        if (
+          result.developmentStorePreviewUpdate.userErrors?.length > 0 ||
+          result.developmentStorePreviewUpdate.app.developmentStorePreviewEnabled !== enabled
+        ) {
+          outputWarn(
+            `Unable to ${enabled ? 'enable' : 'disable'} developer preview. Please, access partners dashboard to ${
+              enabled ? 'enable' : 'disable'
+            } it.`,
+          )
+        }
       },
-    ]
-
-    await renderTasks(tasks, {}, {app, token, enabled, logger: outputWarn})
-    outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
-    outputNewline()
-  }
-}
-
-async function executeDeveloperPreviewUpdate({app, token, enabled, logger}: DeveloperPreviewTasksContext) {
-  const query = DevelopmentStorePreviewUpdateQuery
-  const variables: DevelopmentStorePreviewUpdateInput = {
-    input: {
-      apiKey: app.apiKey,
-      enabled,
     },
-  }
-  const result: DevelopmentStorePreviewUpdateSchema = await partnersRequest(query, token, variables)
-
-  if (
-    result.developmentStorePreviewUpdate.userErrors?.length > 0 ||
-    result.developmentStorePreviewUpdate.app.developmentStorePreviewEnabled !== enabled
-  ) {
-    logger(
-      `Unable to ${enabled ? 'enable' : 'disable'} developer preview. Please, access partners dashboard to ${
-        enabled ? 'enable' : 'disable'
-      } it.`,
-    )
-  }
+  ]
+  await renderTasks(tasks)
+  outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
+  outputNewline()
 }

@@ -178,7 +178,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           )
         }}
       </Static>
-      {footer && !isAborted ? (
+      {footer ? (
         <Box marginY={1} flexDirection="column" flexGrow={1}>
           {useShortcuts ? (
             <Box flexDirection="column">
