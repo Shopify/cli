@@ -223,7 +223,7 @@ scopes = "read_products"
     const web = app.webs[0]
     // Force npm to symlink the workspace directory
     await writeFile(
-      joinPath(web.directory, 'package.json'),
+      joinPath(web!.directory, 'package.json'),
       JSON.stringify({name: 'web', dependencies: {'empty-npm-package': '1.0.0'}, devDependencies: {}}),
     )
     await installNodeModules({
