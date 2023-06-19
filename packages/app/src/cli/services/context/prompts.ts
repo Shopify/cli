@@ -161,9 +161,6 @@ async function buildUnifiedDeploymentInfoPrompt(
     infoTable.push({header: 'Update', items: toUpdate.map((source) => source[0])})
   }
 
-  const dashboardActiveAppRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions.filter(
-    (module) => module.specification.options.managementExperience === 'dashboard',
-  )
   if (dashboardOnly.length > 0) {
     infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
   }

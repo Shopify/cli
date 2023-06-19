@@ -12,9 +12,9 @@ import {
   AllDevStoresByOrganizationSchema,
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
+import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
 
 export const NoOrgError = (organizationId?: string) => {
   const nextSteps = [
