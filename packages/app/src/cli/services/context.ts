@@ -64,6 +64,7 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   useCloudflareTunnels: boolean
+  deploymentMode: DeploymentMode
 }
 
 /**
@@ -165,7 +166,8 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
 
-    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
+    const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
+    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
   }
 
   const [_selectedApp, _selectedStore] = await Promise.all([
@@ -196,14 +198,15 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     orgId,
   })
 
-  await enableDeveloperPreview(selectedApp, token)
+  enableDeveloperPreview(selectedApp, token)
+  const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
     const packageManager = await getPackageManager(options.directory)
     showReusedValues(organization.businessName, cachedInfo, packageManager)
   }
 
-  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -236,6 +239,7 @@ function buildOutput(
   app: OrganizationApp,
   store: OrganizationStore,
   useCloudflareTunnels: boolean,
+  deploymentMode: DeploymentMode,
   cachedInfo?: CachedAppInfo,
 ): DevContextOutput {
   return {
@@ -247,6 +251,7 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
+    deploymentMode,
   }
 }
 

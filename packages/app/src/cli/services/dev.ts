@@ -95,6 +95,7 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
+    deploymentMode,
   } = await ensureDevContext(options, token)
 
   if (!options.tunnelUrl && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
@@ -201,7 +202,7 @@ async function dev(options: DevOptions) {
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
-      deploymentMode: 'legacy',
+      deploymentMode,
       token,
       envIdentifiers: prodEnvIdentifiers,
     })
