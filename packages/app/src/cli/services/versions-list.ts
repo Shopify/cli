@@ -7,6 +7,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
+import {formatDate} from '@shopify/cli-kit/common/string'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type DeploymentLine = {
@@ -15,13 +16,6 @@ type DeploymentLine = {
   message?: string
   versionTag: string
   status: string
-}
-
-function formatDate(date: Date) {
-  const components = date.toISOString().split('T')
-  const dateString = components[0] ?? date.toDateString()
-  const timeString = components[1]?.split('.')[0] ?? date.toTimeString()
-  return `${dateString} ${timeString}`
 }
 
 async function fetchDeployments(
