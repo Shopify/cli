@@ -66,14 +66,7 @@ class TunnelClientInstance implements TunnelClient {
       return
     }
 
-    const args: string[] = [
-      'tunnel',
-      '--url',
-      `http://localhost:${this.port}`,
-      '--no-autoupdate',
-      '--grace-period',
-      '0',
-    ]
+    const args: string[] = ['tunnel', '--url', `http://localhost:${this.port}`, '--no-autoupdate']
     const errors: string[] = []
 
     let connected = false

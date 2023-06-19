@@ -1,3 +1,4 @@
+import {treeKill} from './tree-kill.js'
 import {collectLog, consoleLog, Logger, LogLevel, outputWhereAppropriate} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {ReactElement} from 'react'
@@ -76,9 +77,9 @@ const renderString = (element: ReactElement, renderOptions?: RenderOptions): Ins
   }
 }
 
-export function handleCtrlC(input: string, key: Key, exit?: () => void) {
+export function handleCtrlC(input: string, key: Key) {
   if (input === 'c' && key.ctrl) {
     // Exceptions thrown in hooks aren't caught by our errorHandler.
-    if (exit) exit()
+    treeKill('SIGINT')
   }
 }

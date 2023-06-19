@@ -1,8 +1,9 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
-import {AbortController} from '../../../../public/node/abort.js'
+import {AbortSignal} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
+import {treeKill} from '../../tree-kill.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
@@ -18,13 +19,13 @@ interface Shortcut {
 }
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
+  abortSignal: AbortSignal
   showTimestamps?: boolean
   onInput?: (input: string, key: Key, exit: () => void) => void
   footer?: {
     shortcuts: Shortcut[]
     subTitle?: string
   }
-  abortController: AbortController
 }
 interface Chunk {
   color: TextProps['color']
@@ -72,10 +73,10 @@ enum ConcurrentOutputState {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
+  abortSignal,
   showTimestamps = true,
   onInput,
   footer,
-  abortController,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
@@ -114,22 +115,20 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         const stdout = writableStream(process, index)
         const stderr = writableStream(process, index)
 
-        await process.action(stdout, stderr, abortController.signal)
+        await process.action(stdout, stderr, abortSignal)
       }),
     )
   }
 
-  const {isAborted} = useAbortSignal(abortController.signal)
+  const {isAborted} = useAbortSignal(abortSignal)
 
   const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
 
   useInput(
     (input, key) => {
-      const exit = () => abortController.abort()
+      handleCtrlC(input, key)
 
-      handleCtrlC(input, key, exit)
-
-      onInput!(input, key, () => exit())
+      onInput!(input, key, () => treeKill('SIGINT'))
     },
     {isActive: typeof onInput !== 'undefined' && useShortcuts},
   )

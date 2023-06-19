@@ -39,7 +39,7 @@ import {Key as InkKey, RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
-export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
   renderOptions?: RenderOptions
 }
 
@@ -60,17 +60,17 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  *
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
-  const abortController = props.abortController ?? new AbortController()
+  const abortSignal = props.abortSignal ?? new AbortController().signal
 
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...props} abortController={abortController} />, {
+    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, {
       ...renderOptions,
       exitOnCtrlC: typeof props.onInput === 'undefined',
     })
   } else {
     return Promise.all(
       props.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
+        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
       }),
     )
   }
