@@ -203,4 +203,27 @@ describe('TextPrompt', () => {
     expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })
+
+  test('shows a preview footer when provided', async () => {
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={() => {}}
+        message="How tall are you in cm?"
+        previewPrefix={() => 'You are '}
+        previewValue={(value) => String(Number(value) / 100)}
+        previewSuffix={() => 'm tall.'}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, '180')
+    // color changes back to valid color
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  How tall are you in cm?
+      [36m>[39m  [36m180[7m [27m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         You are [36m1.8[39mm tall.
+      "
+    `)
+  })
 })
