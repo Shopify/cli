@@ -8,6 +8,7 @@ import {renderTable} from '@shopify/cli-kit/node/ui'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type DeploymentLine = {
@@ -24,6 +25,8 @@ async function fetchDeployments(
 ): Promise<{deployments: DeploymentLine[]; totalResults: number; organizationId: string; appId: string}> {
   const query = AppDeploymentsQuery
   const res: AppDeploymentsQuerySchema = await partnersRequest(query, token, {apiKey})
+  if (!res.app) throw new AbortError(`Invalid Client ID: ${apiKey}`)
+
   const deployments = res.app.deployments.nodes.map((deployment) => {
     const message = deployment.message ?? ''
     return {
