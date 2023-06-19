@@ -17,10 +17,10 @@ export default class ConfigLink extends Command {
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
     }),
-    name: Flags.string({
+    config: Flags.string({
       hidden: false,
       description: 'Name for the config file.',
-      env: 'SHOPIFY_FLAG_APP_CONFIG_NAME',
+      env: 'SHOPIFY_FLAG_APP_CONFIG',
     }),
   }
 
@@ -31,7 +31,7 @@ export default class ConfigLink extends Command {
       commandConfig: this.config,
       directory: flags.path,
       apiKey: flags['api-key'],
-      configName: flags.name,
+      configName: flags.config,
     }
     await link(options)
   }

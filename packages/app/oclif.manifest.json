@@ -490,8 +490,8 @@
           "hidden": false,
           "multiple": false
         },
-        "name": {
-          "name": "name",
+        "config": {
+          "name": "config",
           "type": "option",
           "description": "Name for the config file.",
           "hidden": false,
