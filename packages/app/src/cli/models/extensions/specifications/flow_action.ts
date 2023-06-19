@@ -81,7 +81,7 @@ const flowActionSpecification = createExtensionSpecification({
     }
 
     writeFileSync(
-      joinPath(directoryPath, 'payloadPreview.json'),
+      joinPath(directoryPath, 'payload-preview.json'),
       getActionPreview(
         extension.configuration.task.title,
         Boolean(extension.configuration.task.customConfigurationPageUrl),

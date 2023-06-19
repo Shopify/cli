@@ -48,7 +48,7 @@ const flowTriggerSpecification = createExtensionSpecification({
     }
 
     writeFileSync(
-      joinPath(directoryPath, 'payloadPreview.gql'),
+      joinPath(directoryPath, 'payload-preview.gql'),
       getTriggerPreview(extension.devUUID, extension.configuration.task.fields),
     )
   },
