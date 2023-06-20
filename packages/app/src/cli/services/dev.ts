@@ -162,6 +162,7 @@ async function dev(options: DevOptions) {
     scopes: localApp.configuration.scopes,
     apiSecret,
     backendPort,
+    frontendPort,
   }
 
   await Promise.all(
@@ -298,6 +299,7 @@ function isWebType(web: Web, type: WebType): boolean {
 interface DevWebOptions {
   web: Web
   backendPort: number
+  frontendPort: number
   apiKey: string
   apiSecret?: string
   hostname?: string
@@ -352,6 +354,7 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
       SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
     BACKEND_PORT: `${options.backendPort}`,
+    FRONTEND_PORT: `${options.frontendPort}`,
     APP_URL: options.hostname,
     APP_ENV: 'development',
   }
@@ -368,7 +371,6 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
         env: {
           ...env,
           PORT: `${port}`,
-          FRONTEND_PORT: `${port}`,
           // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
           SERVER_PORT: `${port}`,
         },
