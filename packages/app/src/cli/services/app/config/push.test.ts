@@ -68,4 +68,22 @@ describe('pushConfig', () => {
 
     await expect(result).rejects.toThrow(/failed to update app/)
   })
+
+  test('returns error if there is no client id', async () => {
+    const options: Options = {
+      app: testApp({
+        configurationPath: 'shopify.app.development.toml',
+        configuration: {
+          name: 'my-app',
+          scopes: 'read_products',
+          applicationUrl: 'https://my-apps-url.com',
+          redirectUrlAllowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+        },
+      }),
+    }
+
+    const result = pushConfig(options)
+
+    await expect(result).rejects.toThrow(/shopify.app.development.toml does not contain a client_id./)
+  })
 })
