@@ -61,6 +61,7 @@ declare global {
 
     interface UIExtension extends ExtensionPayload {
       extensionPoints: ExtensionPoint[]
+      apiVersion: string
     }
   }
 }

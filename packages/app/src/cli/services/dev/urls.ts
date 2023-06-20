@@ -103,7 +103,7 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
     const pollTunnelStatus = async () => {
       const result = tunnelClient.getTunnelStatus()
       outputDebug(`Polling tunnel status for ${tunnelClient.provider} (attempt ${retries}): ${result.status}`)
-      if (result.status === 'error') return reject(new BugError(result.message))
+      if (result.status === 'error') return reject(new BugError(result.message, result.tryMessage))
       if (result.status === 'connected') {
         resolve(result.url)
       } else {

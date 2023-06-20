@@ -13,7 +13,7 @@ export type TunnelStatusType =
   | {status: 'not-started'}
   | {status: 'starting'}
   | {status: 'connected'; url: string}
-  | {status: 'error'; message: string}
+  | {status: 'error'; message: string; tryMessage?: string}
 
 export class TunnelError extends ExtendableError {
   type: TunnelErrorType

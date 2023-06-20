@@ -45,8 +45,8 @@ describe('uploadFunctionExtensions', () => {
           },
           enable_create: true,
         },
-        configurationUi: false,
-        apiVersion: '2022-07',
+        configuration_ui: false,
+        api_version: '2022-07',
         input: {
           variables: {
             namespace: 'namespace',
@@ -331,7 +331,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -398,7 +398,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -462,7 +462,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -519,7 +519,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: undefined,
         enableCreationUi: true,
         inputQueryVariables: {
@@ -573,7 +573,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -625,7 +625,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,
@@ -692,7 +692,7 @@ describe('uploadFunctionExtensions', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         apiType: 'order_discounts',
-        apiVersion: extension.configuration.apiVersion,
+        apiVersion: extension.configuration.api_version,
         appBridge: {
           detailsPath: (extension.configuration.ui?.paths ?? {}).details,
           createPath: (extension.configuration.ui?.paths ?? {}).create,

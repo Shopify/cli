@@ -108,7 +108,7 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
-      extensionDirectories: ['extensions/*'],
+      extension_directories: ['extensions/*'],
     },
     nodeDependencies,
   })

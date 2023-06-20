@@ -16,7 +16,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
-    app.configuration ?? {scopes: '', extensionDirectories: []},
+    app.configuration ?? {scopes: '', extension_directories: []},
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [],
@@ -109,8 +109,8 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     build: {
       command: 'echo "hello world"',
     },
-    apiVersion: '2022-07',
-    configurationUi: true,
+    api_version: '2022-07',
+    configuration_ui: true,
     metafields: [],
   }
 }
