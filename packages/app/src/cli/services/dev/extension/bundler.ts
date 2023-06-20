@@ -271,7 +271,10 @@ export async function setupFunctionWatcher({
       buildController = null
     }).then(() => {
 
-      updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment}).catch((_: unknown) => {})
+      updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+        .catch((updateError: unknown) => {
+          outputWarn(`Error while deploying updated extension: ${JSON.stringify(updateError, null, 2)}`, stdout);
+        })
 
     })
   })
