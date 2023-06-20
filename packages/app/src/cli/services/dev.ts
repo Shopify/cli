@@ -514,7 +514,7 @@ export function devDraftableExtensionTarget({
               )
             } else {
               // Initial build for non-esbuild extensions
-              extension.build({stdout, stderr, signal, app})
+              actions.push(extension.build({stdout, stderr, signal, app}))
             }
             return actions
           })

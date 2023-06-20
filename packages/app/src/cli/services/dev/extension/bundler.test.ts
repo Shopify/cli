@@ -5,7 +5,7 @@ import {
   setupDraftableExtensionBundler,
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
-import {testUIExtension} from '../../../models/app/app.test-data.js'
+import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -19,6 +19,8 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../../models/app/loader.js')
 vi.mock('../update-extension.js')
+
+const app = testApp({})
 
 async function testBundlerAndFileWatcher() {
   const extension1 = await testUIExtension({
@@ -239,6 +241,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal,
       specifications,
+      app,
     })
 
     expect(chokidar.watch).toHaveBeenCalledWith(mockExtension.configurationPath)
@@ -263,6 +266,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal: abortController.signal,
       specifications,
+      app,
     })
 
     chokidarOnSpy.mock.calls[0][1]()
@@ -300,6 +304,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal: abortController.signal,
       specifications,
+      app,
     })
 
     abortController.abort()
@@ -330,6 +335,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal: abortController.signal,
       specifications,
+      app,
     })
 
     abortController.abort()

@@ -1,5 +1,5 @@
-import {describe, expect, test} from 'vitest'
 import {getTriggerPreview, getActionPreview} from './preview.js'
+import {describe, expect, test} from 'vitest'
 
 describe('getTriggerPreview', () => {
   test('generates a valid GraphQL payload', () => {

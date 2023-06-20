@@ -84,7 +84,7 @@ const flowActionSpecification = createExtensionSpecification({
       joinPath(directoryPath, 'payload-preview.json'),
       getActionPreview(
         extension.configuration.task.title,
-        Boolean(extension.configuration.task.customConfigurationPageUrl),
+        Boolean(extension.configuration.task.custom_configuration_page_url),
         extension.configuration.task.fields,
       ),
     )
