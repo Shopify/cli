@@ -13,9 +13,14 @@ export default class Dev extends Command {
     ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
-      hidden: false,
+      hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
     store: Flags.string({
       hidden: false,
@@ -94,6 +99,7 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+    const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -105,7 +111,7 @@ export default class Dev extends Command {
 
     await dev({
       directory: flags.path,
-      apiKey: flags['api-key'],
+      apiKey,
       storeFqdn: flags.store,
       reset: flags.reset,
       update: !flags['no-update'],

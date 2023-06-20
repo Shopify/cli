@@ -44,9 +44,14 @@ export default class AppGenerateExtension extends Command {
       default: false,
     }),
     'api-key': Flags.string({
-      hidden: false,
+      hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
   }
 
@@ -60,6 +65,7 @@ export default class AppGenerateExtension extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppGenerateExtension)
+    const apiKey = flags['client-id'] || flags['api-key']
 
     await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
@@ -70,7 +76,7 @@ export default class AppGenerateExtension extends Command {
     await generate({
       directory: flags.path,
       reset: flags.reset,
-      apiKey: flags['api-key'],
+      apiKey,
       type: flags.type,
       name: flags.name,
       cloneUrl: flags['clone-url'],
