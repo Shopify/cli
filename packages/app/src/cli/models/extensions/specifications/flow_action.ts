@@ -25,7 +25,7 @@ const FlowActionExtensionSchema = BaseSchema.extend({
           label: zod.string(),
           description: zod.string().optional(),
           required: zod.boolean(),
-          uiType: zod.string(),
+          ui_type: zod.string(),
         }),
       )
       .optional(),
