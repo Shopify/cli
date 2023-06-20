@@ -158,36 +158,31 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const organization = await fetchOrgFromId(orgId, token)
   const useCloudflareTunnels = organization.betas?.cliTunnelAlternative !== true
 
-  if (selectedApp && selectedStore) {
-    setAppInfo({
-      appId: selectedApp.apiKey,
-      directory: options.directory,
-      storeFqdn: selectedStore.shopDomain,
-      orgId,
-    })
+  if (!selectedApp || !selectedStore) {
+    const [_selectedApp, _selectedStore] = await Promise.all([
+      selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
+      selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
+    ])
 
-    const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-    return buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
-  }
+    if (_selectedApp) {
+      selectedApp = _selectedApp
+    } else {
+      const {apps} = await fetchOrgAndApps(orgId, token)
+      const localAppName = await loadAppName(options.directory)
+      selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
+    }
 
-  const [_selectedApp, _selectedStore] = await Promise.all([
-    selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
-    selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
-  ])
+    if (_selectedStore) {
+      selectedStore = _selectedStore
+    } else {
+      const allStores = await fetchAllDevStores(orgId, token)
+      selectedStore = await selectStore(allStores, organization, token)
+    }
 
-  if (_selectedApp) {
-    selectedApp = _selectedApp
-  } else {
-    const {apps} = await fetchOrgAndApps(orgId, token)
-    const localAppName = await loadAppName(options.directory)
-    selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
-  }
-
-  if (_selectedStore) {
-    selectedStore = _selectedStore
-  } else {
-    const allStores = await fetchAllDevStores(orgId, token)
-    selectedStore = await selectStore(allStores, organization, token)
+    if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
+      const packageManager = await getPackageManager(options.directory)
+      showReusedValues(organization.businessName, cachedInfo, packageManager)
+    }
   }
 
   setAppInfo({
@@ -200,12 +195,6 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-
-  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    const packageManager = await getPackageManager(options.directory)
-    showReusedValues(organization.businessName, cachedInfo, packageManager)
-  }
-
   const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result

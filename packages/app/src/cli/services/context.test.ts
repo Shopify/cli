@@ -240,6 +240,7 @@ describe('ensureDevContext', () => {
       remoteAppUpdated: true,
       useCloudflareTunnels: true,
       updateURLs: undefined,
+      deploymentMode: 'legacy',
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
@@ -270,6 +271,7 @@ describe('ensureDevContext', () => {
       remoteAppUpdated: true,
       useCloudflareTunnels: false,
       updateURLs: undefined,
+      deploymentMode: 'legacy',
     })
   })
 
@@ -290,6 +292,7 @@ describe('ensureDevContext', () => {
       remoteAppUpdated: false,
       useCloudflareTunnels: true,
       updateURLs: undefined,
+      deploymentMode: 'legacy',
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
@@ -339,12 +342,14 @@ describe('ensureDevContext', () => {
       remoteAppUpdated: true,
       useCloudflareTunnels: true,
       updateURLs: undefined,
+      deploymentMode: 'legacy',
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
       directory: INPUT_WITH_DATA.directory,
       storeFqdn: STORE1.shopDomain,
       orgId: ORG1.id,
+      title: APP2.title,
     })
     expect(fetchOrganizations).toBeCalled()
     expect(selectOrganizationPrompt).toBeCalled()
