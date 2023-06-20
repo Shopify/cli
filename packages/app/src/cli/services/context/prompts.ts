@@ -129,36 +129,27 @@ async function buildUnifiedDeploymentInfoPrompt(
 
   const infoTable: InfoTableSection[] = []
 
-  const nonDashboardActiveAppRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions.filter(
-    (module) => module.specification.options.managementExperience !== 'dashboard',
-  )
+  const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
+    .filter((module) => module.specification.options.managementExperience !== 'dashboard')
+    .map((remoteRegistration) => remoteRegistration.registrationUuid)
 
-  const toCreateFinal = [
-    ...new Set(
-      Object.entries(localRegistration)
-        .filter(
-          (validLocalRegistration) =>
-            !nonDashboardActiveAppRegistrations
-              .map((remoteRegistration) => remoteRegistration.registrationUuid)
-              .includes(validLocalRegistration[1]),
-        )
-        .map((source) => source[0])
-        .concat(toCreate.map((source) => source.localIdentifier)),
-    ),
-  ]
-
-  if (toCreateFinal.length > 0) {
-    infoTable.push({header: 'Add', items: toCreateFinal.map((source) => source)})
+  let toCreateFinal: string[] = []
+  const toUpdate: string[] = []
+  for (const [identifier, uuid] of Object.entries(localRegistration)) {
+    if (nonDashboardRemoteRegistrations.includes(uuid)) {
+      toUpdate.push(identifier)
+    } else {
+      toCreateFinal.push(identifier)
+    }
   }
 
-  const toUpdate = Object.entries(localRegistration).filter((validLocalRegistration) =>
-    nonDashboardActiveAppRegistrations
-      .map((remoteRegistration) => remoteRegistration.registrationUuid)
-      .includes(validLocalRegistration[1]),
-  )
+  toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
+  if (toCreateFinal.length > 0) {
+    infoTable.push({header: 'Add', items: toCreateFinal})
+  }
 
   if (toUpdate.length > 0) {
-    infoTable.push({header: 'Update', items: toUpdate.map((source) => source[0])})
+    infoTable.push({header: 'Update', items: toUpdate})
   }
 
   if (dashboardOnly.length > 0) {
