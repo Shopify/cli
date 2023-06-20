@@ -6,10 +6,10 @@ import {joinPath, dirname, cwd} from './path.js'
 import {AbortError, AbortSilentError} from './error.js'
 import {getEnvironmentVariables} from './environment.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
-import {firstPartyDev} from './context/local.js'
+import {firstPartyDev, useEmbeddedThemeCLI} from './context/local.js'
+import {outputContent, outputToken} from './output.js'
+import {isTruthy} from './context/utilities.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {outputContent, outputToken} from '../../public/node/output.js'
-import {isTruthy} from '../../private/node/context/utilities.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import envPaths from 'env-paths'
@@ -53,7 +53,7 @@ interface ExecCLI2Options {
  */
 export async function execCLI2(args: string[], options: ExecCLI2Options = {}): Promise<void> {
   const currentEnv = getEnvironmentVariables()
-  const embedded = !isTruthy(currentEnv.SHOPIFY_CLI_BUNDLED_THEME_CLI) && !currentEnv.SHOPIFY_CLI_2_0_DIRECTORY
+  const embedded = useEmbeddedThemeCLI(currentEnv) && !currentEnv.SHOPIFY_CLI_2_0_DIRECTORY
 
   await installCLIDependencies(options.stdout ?? process.stdout, embedded)
   const env: NodeJS.ProcessEnv = {

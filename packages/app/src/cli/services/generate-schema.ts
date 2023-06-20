@@ -12,12 +12,16 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
+import {writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface GenerateSchemaOptions {
   app: AppInterface
   extension: ExtensionInstance<FunctionConfigType>
   apiKey?: string
+  stdout: boolean
+  path: string
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
@@ -25,6 +29,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   const token = await ensureAuthenticatedPartners()
   const {apiVersion: version, type} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
+  const stdout = options.stdout
 
   if (!apiKey) {
     if (!isTerminalInteractive()) {
@@ -52,5 +57,11 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
     )
   }
 
-  return response.definition
+  if (stdout) {
+    outputInfo(response.definition)
+  } else {
+    const outputPath = joinPath(options.path, 'schema.graphql')
+    await writeFile(outputPath, response.definition)
+    outputInfo(`GraphQL Schema for ${extension.localIdentifier} written to ${outputPath}`)
+  }
 }

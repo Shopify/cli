@@ -14,11 +14,13 @@ module ShopifyCLI
 
           def_delegators :@listener, :add_observer, :changed, :notify_observers
 
-          def initialize(ctx, extension:, syncer:, poll: false)
+          def initialize(ctx, extension:, syncer:, poll: false, ignore_filter: nil)
             @ctx = ctx
             @extension = extension
             @syncer = syncer
-            @listener = FileSystemListener.new(root: @extension.root.to_s, force_poll: poll, ignore_regex: nil)
+            @ignore_filter = ignore_filter
+            @listener = FileSystemListener.new(root: @extension.root.to_s, force_poll: poll,
+              ignore_regex: @ignore_filter&.regexes)
 
             add_observer(self, :notify_updates)
           end

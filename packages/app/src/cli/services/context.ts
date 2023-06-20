@@ -31,7 +31,7 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {
   outputContent,
   outputInfo,
@@ -261,6 +261,20 @@ export interface DeployContextOptions {
   reset: boolean
   force: boolean
   noRelease: boolean
+  commitReference?: string
+}
+
+export interface ReleaseContextOptions {
+  app: AppInterface
+  apiKey?: string
+  reset: boolean
+  force: boolean
+}
+
+interface ReleaseContextOutput {
+  apiKey: string
+  token: string
+  app: AppInterface
 }
 
 interface DeployContextOutput {
@@ -315,6 +329,11 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
   const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
+
+  if (deploymentMode === 'legacy' && options.commitReference) {
+    throw new AbortError('The `source-control-url` flag is not supported for this app.')
+  }
+
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
@@ -352,6 +371,31 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   }
 
   await logMetadataForLoadedDeployContext(result)
+  return result
+}
+
+export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
+  const token = await ensureAuthenticatedPartners()
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
+  const identifiers: Identifiers = envIdentifiers as Identifiers
+
+  const deploymentMode: DeploymentMode = partnersApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
+  if (deploymentMode === 'legacy') {
+    throw new AbortSilentError()
+  }
+
+  // eslint-disable-next-line no-param-reassign
+  options = {
+    ...options,
+    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'release'}),
+  }
+  const result = {
+    app: options.app,
+    apiKey: partnersApp.apiKey,
+    token,
+  }
+
+  await logMetadataForLoadedReleaseContext(result, partnersApp.organizationId)
   return result
 }
 
@@ -603,4 +647,11 @@ async function developerPreviewUpdate(app: OrganizationApp, token: string, enabl
   await renderTasks(tasks)
   outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
   outputNewline()
+}
+
+async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(partnerId),
+    api_key: env.apiKey,
+  }))
 }

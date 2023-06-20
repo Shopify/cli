@@ -1,22 +1,4 @@
 {
-  "extends": "@nrwl/workspace/presets/npm.json",
-  "npmScope": "@shopify",
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/workspace/tasks-runners/default",
-      "options": {
-        "cacheableOperations": [
-          "build"
-        ],
-        "runtimeCacheInputs": [
-          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js || node ../bin/cache-inputs.js"
-        ]
-      }
-    }
-  },
-  "affected": {
-    "defaultBase": "main"
-  },
   "targetDefaults": {
     "clean": {
       "dependsOn": ["^clean"]
@@ -27,13 +9,28 @@
     "refresh-manifests": {
       "dependsOn": ["build"]
     },
-    "lint": {
-    },
+    "lint": {},
     "lint:fix": {
       "dependsOn": ["build"]
     },
     "type-check": {
       "dependsOn": ["^build"]
     }
+  },
+  "extends": "@nx/workspace/presets/npm.json",
+  "npmScope": "@shopify",
+  "tasksRunnerOptions": {
+    "default": {
+      "runner": "@nx/workspace/tasks-runners/default",
+      "options": {
+        "cacheableOperations": ["build"],
+        "runtimeCacheInputs": [
+          "node bin/cache-inputs.js || node ../../bin/cache-inputs.js || node ../bin/cache-inputs.js"
+        ]
+      }
+    }
+  },
+  "affected": {
+    "defaultBase": "main"
   }
 }

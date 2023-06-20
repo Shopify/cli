@@ -39,6 +39,15 @@ export const FunctionExtensionSchema = BaseSchema.extend({
         .optional(),
     })
     .optional(),
+  targeting: zod
+    .array(
+      zod.object({
+        target: zod.string(),
+        input_query: zod.string().optional(),
+        export: zod.string().optional(),
+      }),
+    )
+    .optional(),
 })
 
 const spec = createExtensionSpecification({
@@ -67,6 +76,20 @@ const spec = createExtensionSpecification({
       inputQuery = await readFile(inputQueryPath)
     }
 
+    const targets =
+      config.targeting &&
+      (await Promise.all(
+        config.targeting.map(async (config) => {
+          let inputQuery
+
+          if (config.input_query) {
+            inputQuery = await readInputQuery(joinPath(directory, config.input_query))
+          }
+
+          return {handle: config.target, export: config.export, input_query: inputQuery}
+        }),
+      ))
+
     return {
       title: config.name,
       module_id: moduleId,
@@ -89,6 +112,7 @@ const spec = createExtensionSpecification({
           }
         : undefined,
       enable_creation_ui: config.ui?.enable_create ?? true,
+      targets,
     }
   },
   preDeployValidation: async (extension) => {
@@ -101,5 +125,16 @@ const spec = createExtensionSpecification({
     }
   },
 })
+
+async function readInputQuery(path: string): Promise<string> {
+  if (await fileExists(path)) {
+    return readFile(path)
+  } else {
+    throw new AbortError(
+      `No input query file at ${path}.`,
+      `Create the file or remove the line referencing it in the extension's TOML.`,
+    )
+  }
+}
 
 export default spec

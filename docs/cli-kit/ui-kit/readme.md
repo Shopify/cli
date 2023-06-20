@@ -4,7 +4,7 @@
 - [Principles](#principles)
 - [API](#api)
   - [Static output](#static-output)
-    - [`renderInfo` / `renderWarning` / `renderSuccess`](#renderinfo--renderwarning--rendersuccess)
+    - [`renderInfo` / `renderWarning` / `renderSuccess` / `renderError`](#renderinfo--renderwarning--rendersuccess--rendererror)
     - [Errors](#errors)
     - [`renderText`](#rendertext)
   - [Prompts](#prompts)
@@ -54,7 +54,7 @@ Prompts and async tasks, on the other hand, return promises that must be awaited
 
 Static output is usually displayed in the form of banners with appropriate titles and border colors.
 
-#### `renderInfo` / `renderWarning` / `renderSuccess`
+#### `renderInfo` / `renderWarning` / `renderSuccess` / `renderError`
 
 All these functions take the same params. What changes are the color and the title of the box in the output. None of the params is required so you can choose to compose your banners however you prefer. Most banners will need a `headline`, which will be highlighted in **bold**, and a body containing some details. Check out the `simple` and `complete` examples above those functions to see how they can be used.
 

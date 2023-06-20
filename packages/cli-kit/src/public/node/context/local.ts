@@ -1,5 +1,6 @@
 import {isSpin} from './spin.js'
-import {getCIMetadata, isTruthy, isSet, Metadata} from '../../../private/node/context/utilities.js'
+import {isTruthy} from './utilities.js'
+import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
@@ -120,6 +121,16 @@ export function useDeviceAuth(env = process.env): boolean {
  */
 export function useThemebundling(env = process.env): boolean {
   return !isTruthy(env[environmentVariables.noThemeBundling])
+}
+
+/**
+ * Returns true if the embedded CLI will be used for theme commands.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns False if SHOPIFY_CLI_BUNDLED_THEME_CLI is truthy.
+ */
+export function useEmbeddedThemeCLI(env = process.env): boolean {
+  return !isTruthy(env[environmentVariables.bundledThemeCLI])
 }
 
 /**

@@ -10,7 +10,7 @@ import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 const versionTag = 'unique-version-tag'
@@ -45,12 +45,15 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: false},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: false},
+      },
     })
 
     // Then
@@ -70,19 +73,19 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: false,
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -100,19 +103,19 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: true,
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -129,19 +132,19 @@ describe('deploy', () => {
     const app = testApp()
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         message: 'Deployed from CLI with flag',
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith(
@@ -156,19 +159,19 @@ describe('deploy', () => {
     const app = testApp()
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         version: '1.1.0',
       },
-    )
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith(
@@ -183,12 +186,15 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
     })
 
     // Then
@@ -208,12 +214,15 @@ describe('deploy', () => {
     const app = testApp({allExtensions: []})
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: false},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: false},
+      },
     })
 
     // Then
@@ -229,7 +238,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -251,7 +260,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [themeExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -274,7 +283,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [functionExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(uploadFunctionExtensions).toHaveBeenCalledWith(
@@ -319,12 +328,15 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle(app, {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {unifiedAppDeployment: true},
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
     })
 
     // Then
@@ -366,7 +378,7 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle(app, undefined, undefined, 'unified')
+    await testDeployBundle({app, released: false, switchToDeploymentMode: 'unified'})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -395,9 +407,10 @@ describe('deploy', () => {
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
     const app = testApp({allExtensions: [uiExtension, themeExtension]})
+    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app, released: false, commitReference, switchToDeploymentMode: 'legacy'})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -405,11 +418,12 @@ describe('deploy', () => {
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
         {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
+        {uuid: themeExtension.localIdentifier, config: '{"theme_extension": {"files": {}}}', context: ''},
       ],
       token: 'api-token',
       extensionIds: {},
       deploymentMode: 'legacy',
+      commitReference,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
@@ -422,7 +436,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle(app)
+    await testDeployBundle({app})
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -458,37 +472,87 @@ describe('deploy', () => {
     })
   })
 
-  test('shows a specific success message when deploying using the unified app deployment flow', async () => {
+  test('shows a specific success message when deploying using the unified app deployment flow without message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({allExtensions: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: false,
       },
-    )
+      released: true,
+      switchToDeploymentMode: 'unified',
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version released to users.',
-      body: '',
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+        '',
+      ],
       nextSteps: [
         [
           'Run',
           {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
           'to see rollout progress.',
         ],
+      ],
+    })
+  })
+
+  test('shows a specific success message when deploying using the unified app deployment flow but there is an error with the release', async () => {
+    // Given
+    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
+    const app = testApp({allExtensions: [uiExtension]})
+    vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
+
+    // When
+    await testDeployBundle({
+      app,
+      partnersApp: {
+        id: 'app-id2',
+        organizationId: 'org-id',
+        title: 'app-title',
+        grantedScopes: [],
+        betas: {unifiedAppDeployment: true},
+      },
+      options: {
+        noRelease: false,
+        message: 'version message',
+      },
+      released: false,
+      switchToDeploymentMode: 'unified',
+    })
+
+    // Then
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: 'New version created, but not released.',
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+        '\nversion message',
+        '\n\nno release error',
       ],
     })
   })
@@ -500,28 +564,37 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle(
+    await testDeployBundle({
       app,
-      {
+      partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
       },
-      {
+      options: {
         noRelease: true,
+        message: 'version message',
       },
-    )
+    })
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'New version created.',
-      body: '',
+      body: [
+        {
+          link: {
+            label: 'unique-version-tag',
+            url: 'https://partners.shopify.com/0/apps/0/versions/1',
+          },
+        },
+        '\nversion message',
+      ],
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'release', `--version=${versionTag}`)},
+          {command: formatPackageManagerCommand(app.packageManager, 'shopify app release', `--version=${versionTag}`)},
           'to release this version to users.',
         ],
       ],
@@ -529,17 +602,28 @@ describe('deploy', () => {
   })
 })
 
-async function testDeployBundle(
-  app: AppInterface,
-  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
+interface TestDeployBundleInput {
+  app: AppInterface
+  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   options?: {
     force?: boolean
     noRelease?: boolean
     message?: string
     version?: string
-  },
-  switchToDeploymentMode?: DeploymentMode,
-) {
+  }
+  released?: boolean
+  commitReference?: string
+  switchToDeploymentMode?: DeploymentMode
+}
+
+async function testDeployBundle({
+  app,
+  partnersApp,
+  options,
+  released = true,
+  commitReference,
+  switchToDeploymentMode,
+}: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
   for (const extension of app.allExtensions) {
@@ -575,7 +659,13 @@ async function testDeployBundle(
 
   vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
-  vi.mocked(uploadExtensionsBundle).mockResolvedValue({validationErrors: [], versionTag})
+  vi.mocked(uploadExtensionsBundle).mockResolvedValue({
+    validationErrors: [],
+    versionTag,
+    message: options?.message,
+    ...(!released && {deployError: 'no release error'}),
+    location: 'https://partners.shopify.com/0/apps/0/versions/1',
+  })
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},
@@ -588,5 +678,6 @@ async function testDeployBundle(
     noRelease: Boolean(options?.noRelease),
     message: options?.message,
     version: options?.version,
+    ...(commitReference ? {commitReference} : {}),
   })
 }

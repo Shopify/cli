@@ -136,6 +136,13 @@
           "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
           "hidden": false,
           "multiple": false
+        },
+        "source-control-url": {
+          "name": "source-control-url",
+          "type": "option",
+          "description": "URL associated with the new app version.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
@@ -345,6 +352,72 @@
       },
       "args": {}
     },
+    "app:release": {
+      "id": "app:release",
+      "description": "Release an app version.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "api-key": {
+          "name": "api-key",
+          "type": "option",
+          "description": "The API key of your app.",
+          "hidden": false,
+          "multiple": false
+        },
+        "reset": {
+          "name": "reset",
+          "type": "boolean",
+          "description": "Reset all your settings.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "version": {
+          "name": "version",
+          "type": "option",
+          "description": "The name of the app version to release.",
+          "hidden": false,
+          "required": true,
+          "multiple": false,
+          "exclusive": [
+            "app-version-id"
+          ]
+        }
+      },
+      "args": {}
+    },
     "app:update-url": {
       "id": "app:update-url",
       "description": "Update your app and redirect URLs in the Partners Dashboard.",
@@ -460,6 +533,132 @@
           "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
           "hidden": false,
           "required": false,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "app:config:link": {
+      "id": "app:config:link",
+      "description": "Fetch your app's config from the Partner Dashboard.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "app:config:push": {
+      "id": "app:config:push",
+      "description": "Push your app's config to the Partner Dashboard.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        }
+      },
+      "args": {}
+    },
+    "app:config:use": {
+      "id": "app:config:use",
+      "description": "Set a particular configuration to use.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
           "multiple": false
         }
       },
@@ -668,6 +867,13 @@
           "description": "The API key to fetch the schema with.",
           "required": false,
           "multiple": false
+        },
+        "stdout": {
+          "name": "stdout",
+          "type": "boolean",
+          "description": "Output the schema to stdout instead of writing to a file.",
+          "required": false,
+          "allowNo": false
         }
       },
       "args": {}
@@ -844,6 +1050,13 @@
           "description": "The API key to fetch the schema with.",
           "required": false,
           "multiple": false
+        },
+        "stdout": {
+          "name": "stdout",
+          "type": "boolean",
+          "description": "Output the schema to stdout instead of writing to a file.",
+          "required": false,
+          "allowNo": false
         }
       },
       "args": {}

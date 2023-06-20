@@ -1,12 +1,16 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
+import {environmentVariableNames} from '../../constants.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile, glob} from '@shopify/cli-kit/node/fs'
+import {copyFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
-import type {StdinOptions, build as esBuild} from 'esbuild'
+import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
 
 const require = createRequire(import.meta.url)
 
@@ -45,9 +49,10 @@ export interface BundleOptions {
 /**
  * Invokes ESBuild with the given options to bundle an extension.
  * @param options - ESBuild options
+ * @param processEnv - Environment variables for the running process (not those from .env)
  */
-export async function bundleExtension(options: BundleOptions) {
-  const esbuildOptions = getESBuildOptions(options)
+export async function bundleExtension(options: BundleOptions, processEnv = process.env) {
+  const esbuildOptions = getESBuildOptions(options, processEnv)
   const context = await esContext(esbuildOptions)
   if (options.watch) {
     await context.watch()
@@ -69,15 +74,13 @@ export async function bundleThemeExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-  const files = await glob(joinPath(extension.directory, '/**/*'))
+  const files = await themeExtensionFiles(extension)
 
   await Promise.all(
     files.map(function (filepath) {
-      if (!(filepath.includes('.gitkeep') || filepath.includes('.toml'))) {
-        const relativePathName = relativePath(extension.directory, filepath)
-        const outputFile = joinPath(extension.outputPath, relativePathName)
-        return copyFile(filepath, outputFile)
-      }
+      const relativePathName = relativePath(extension.directory, filepath)
+      const outputFile = joinPath(extension.outputPath, relativePathName)
+      return copyFile(filepath, outputFile)
     }),
   )
 }
@@ -99,7 +102,7 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
   }
 }
 
-function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>[0] {
+function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
   const env: {[variable: string]: string} = options.env
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
@@ -120,7 +123,7 @@ function getESBuildOptions(options: BundleOptions): Parameters<typeof esContext>
     },
     legalComments: 'none',
     minify: options.minify,
-    plugins: getPlugins(),
+    plugins: getPlugins(options.stdin.resolveDir, processEnv),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
   }
@@ -145,7 +148,7 @@ type ESBuildPlugins = Parameters<typeof esContext>[0]['plugins']
  * It returns the plugins that should be used with ESBuild.
  * @returns List of plugins.
  */
-function getPlugins(): ESBuildPlugins {
+function getPlugins(resolveDir: string | undefined, processEnv = process.env): ESBuildPlugins {
   const plugins = []
 
   if (isGraphqlPackageAvailable()) {
@@ -153,7 +156,37 @@ function getPlugins(): ESBuildPlugins {
     plugins.push(graphqlLoader())
   }
 
+  const skipReactDeduplication = isTruthy(processEnv[environmentVariableNames.skipEsbuildReactDedeuplication])
+  if (resolveDir && !skipReactDeduplication) {
+    let resolvedReactPath: string | undefined
+    try {
+      resolvedReactPath = require.resolve('react', {paths: [resolveDir]})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // If weren't able to find React, that's fine. It might not be used.
+      outputDebug(`Unable to load React in ${resolveDir}, skipping React de-duplication`)
+    }
+
+    if (resolvedReactPath) {
+      outputDebug(`Deduplicating React dependency for ${resolveDir}, using ${resolvedReactPath}`)
+      plugins.push(deduplicateReactPlugin(resolvedReactPath))
+    }
+  }
+
   return plugins
+}
+
+function deduplicateReactPlugin(resolvedReactPath: string): Plugin {
+  return {
+    name: 'shopify:deduplicate-react',
+    setup({onResolve}) {
+      onResolve({filter: /^react$/}, (args) => {
+        return {
+          path: resolvedReactPath,
+        }
+      })
+    },
+  }
 }
 
 /**
