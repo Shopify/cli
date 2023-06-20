@@ -12,8 +12,8 @@ export const AppConfigurationSchema = zod.object({
   web_directories: zod.array(zod.string()).optional(),
   client_id: zod.string().optional(),
   name: zod.string().optional(),
-  application_url: zod.string().optional(),
-  redirect_url: zod.array(zod.string()).optional(),
+  app_url: zod.string().optional(),
+  redirect_url_allowlist: zod.array(zod.string()).optional(),
 })
 
 export enum WebType {

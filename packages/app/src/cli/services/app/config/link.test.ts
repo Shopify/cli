@@ -45,11 +45,11 @@ describe('link', () => {
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `scopes = ""
-extensionDirectories = [ ]
-clientId = "api-key"
+extension_directories = [ ]
+client_id = "api-key"
 name = "app1"
-applicationUrl = "https://example.com"
-redirectUrl = [ "https://example.com/callback1" ]
+app_url = "https://example.com"
+redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -82,11 +82,11 @@ redirectUrl = [ "https://example.com/callback1" ]
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `scopes = ""
-extensionDirectories = [ ]
-clientId = "api-key"
+extension_directories = [ ]
+client_id = "api-key"
 name = "app1"
-applicationUrl = "https://example.com"
-redirectUrl = [ "https://example.com/callback1" ]
+app_url = "https://example.com"
+redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -105,8 +105,10 @@ redirectUrl = [ "https://example.com/callback1" ]
       }
       vi.mocked(load).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+
       // When
       await link(options)
+
       // Then
       expect(selectConfigName).not.toHaveBeenCalled()
       expect(fileExistsSync(joinPath(tmp, 'shopify.app.default-value.toml'))).toBeTruthy()
@@ -171,10 +173,10 @@ redirectUrl = [ "https://example.com/callback1" ]
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `clientId = "api-key"
+      const expectedContent = `client_id = "api-key"
 name = "app1"
-applicationUrl = "https://example.com"
-redirectUrl = [ "https://example.com/callback1" ]
+app_url = "https://example.com"
+redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
     })
