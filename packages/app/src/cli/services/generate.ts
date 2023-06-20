@@ -54,6 +54,7 @@ async function generate(options: GenerateOptions) {
   const generatedExtensions = await generateExtensionTemplate(generateExtensionOptions)
 
   renderSuccessMessages(generatedExtensions, app.packageManager)
+  return generatedExtensions
 }
 
 async function buildPromptOptions(

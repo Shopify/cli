@@ -57,6 +57,7 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): Template
 export interface GeneratedExtension {
   directory: string
   extensionTemplate: ExtensionTemplate
+  helpURL?: string
 }
 
 interface ExtensionInitOptions {
@@ -87,7 +88,7 @@ export async function generateExtensionTemplate(
         extensionFlavor,
       }
       await extensionInit(initOptions)
-      return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate}
+      return {directory: relativizePath(directory), extensionTemplate: options.extensionTemplate, helpURL: spec.url}
     }),
   )
 }
