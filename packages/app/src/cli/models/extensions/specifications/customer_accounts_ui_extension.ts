@@ -8,15 +8,15 @@ const dependency = '@shopify/customer-account-ui-extensions'
 
 const CustomerAccountsSchema = BaseSchema.extend({
   categories: zod.array(zod.string()).optional(),
-  extensionPoints: zod.array(zod.string()).optional(),
+  extension_points: zod.array(zod.string()).optional(),
   localization: zod.any().optional(),
-  authenticatedRedirectStartUrl: zod
+  authenticated_redirect_start_url: zod
     .string()
     .url({
       message: 'authenticated_redirect_start_url must be a valid URL.',
     })
     .optional(),
-  authenticatedRedirectRedirectUrls: zod
+  authenticated_redirect_redirect_urls: zod
     .array(
       zod.string().url({
         message: 'authenticated_redirect_redirect_urls does contain invalid URLs.',
@@ -38,12 +38,12 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
   deployConfig: async (config, directory) => {
     return {
-      extension_points: config.extensionPoints,
+      extension_points: config.extension_points,
       name: config.name,
       categories: config.categories,
       localization: await loadLocalesConfig(directory, 'customer_accounts_ui'),
-      authenticated_redirect_start_url: config.authenticatedRedirectStartUrl,
-      authenticated_redirect_redirect_urls: config.authenticatedRedirectRedirectUrls,
+      authenticated_redirect_start_url: config.authenticated_redirect_start_url,
+      authenticated_redirect_redirect_urls: config.authenticated_redirect_redirect_urls,
     }
   },
   previewMessage: (host, uuid, _, storeFqdn) => {

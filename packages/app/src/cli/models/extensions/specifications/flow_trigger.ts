@@ -15,7 +15,7 @@ const FlowTriggerExtensionSchema = BaseSchema.extend({
           name: zod.string(),
           description: zod.string().optional(),
           id: zod.string(),
-          uiType: zod.string(),
+          ui_type: zod.string(),
         }),
       )
       .min(1),
