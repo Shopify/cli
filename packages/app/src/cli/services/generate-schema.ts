@@ -34,8 +34,8 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
   if (!apiKey) {
     if (!isTerminalInteractive()) {
       throw new AbortError(
-        outputContent`No API key was provided.`,
-        outputContent`Provide an API key with the --api-key flag.`,
+        outputContent`No Client ID was provided.`,
+        outputContent`Provide a Client ID with the --client-id flag.`,
       )
     }
 
