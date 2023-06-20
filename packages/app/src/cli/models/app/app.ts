@@ -36,8 +36,8 @@ const baseWebConfigurationSchema = zod.object({
 })
 const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
 export const WebConfigurationSchema = zod.union([
-  baseWebConfigurationSchema.extend({type: webTypes}),
   baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
+  baseWebConfigurationSchema.extend({type: webTypes}),
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
