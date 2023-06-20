@@ -36,10 +36,34 @@ const FlowActionExtensionSchema = BaseSchema.extend({
   const {task} = config
 
   if (task.customConfigurationPageUrl || task.customConfigurationPagePreviewUrl) {
-    if (!task.customConfigurationPageUrl || !task.customConfigurationPagePreviewUrl || !task.validationUrl) {
-      throw new Error(
-        'To set a custom configuration page a custom_configuration_page_url, a custom_configuration_page_preview_url and a validation_url must be specified.',
-      )
+    if (!task.customConfigurationPageUrl) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['task.custom_configuration_page_url'],
+          message: 'To set a custom configuration page a `custom_configuration_page_url` must be specified.',
+        },
+      ])
+    }
+
+    if (!task.customConfigurationPagePreviewUrl) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['task.custom_configuration_page_preview_url'],
+          message: 'To set a custom configuration page a `custom_configuration_page_preview_url` must be specified.',
+        },
+      ])
+    }
+
+    if (!task.validationUrl) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['task.validation_url'],
+          message: 'To set a custom configuration page a `validation_url` must be specified.',
+        },
+      ])
     }
   }
 
