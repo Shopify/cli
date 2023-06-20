@@ -4,6 +4,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -41,6 +42,7 @@ export default class Deploy extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Deploy)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({

@@ -1,6 +1,7 @@
 import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
+import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -99,6 +100,7 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({

@@ -2,6 +2,7 @@ import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
+import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -65,6 +66,7 @@ export default class AppGenerateExtension extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppGenerateExtension)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
     await metadata.addPublicMetadata(() => ({

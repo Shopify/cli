@@ -1,5 +1,6 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
+import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -32,6 +33,7 @@ export default class FetchSchema extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(FetchSchema)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
     await inFunctionContext(this.config, flags.path, async (app, ourFunction) => {
