@@ -14,11 +14,11 @@ describe('pushConfig', () => {
       app: testApp({
         configurationPath: 'shopify.app.development.toml',
         configuration: {
-          clientId: 'my-key',
+          client_id: 'my-key',
           name: 'my-app',
           scopes: 'read_products',
-          applicationUrl: 'https://my-apps-url.com',
-          redirectUrlAllowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+          application_url: 'https://my-apps-url.com',
+          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
         },
       }),
     }
@@ -49,11 +49,11 @@ describe('pushConfig', () => {
       app: testApp({
         configurationPath: 'shopify.app.development.toml',
         configuration: {
-          clientId: 'my-key',
+          client_id: 'my-key',
           name: 'my-app',
           scopes: 'read_products',
-          applicationUrl: 'https://my-apps-url.com',
-          redirectUrlAllowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+          application_url: 'https://my-apps-url.com',
+          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
         },
       }),
     }
@@ -76,8 +76,8 @@ describe('pushConfig', () => {
         configuration: {
           name: 'my-app',
           scopes: 'read_products',
-          applicationUrl: 'https://my-apps-url.com',
-          redirectUrlAllowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+          application_url: 'https://my-apps-url.com',
+          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
         },
       }),
     }

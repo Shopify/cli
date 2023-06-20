@@ -18,14 +18,14 @@ export async function pushConfig(options: Options) {
   const {configuration} = options.app
   const configFileName = basename(options.app.configurationPath)
 
-  if (!configuration.clientId) {
+  if (!configuration.client_id) {
     abort(`${configFileName} does not contain a client_id.`)
   }
   const variables = {
-    apiKey: configuration.clientId,
+    apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: configuration.applicationUrl,
-    redirectUrlAllowlist: configuration.redirectUrlAllowlist,
+    applicationUrl: configuration.application_url,
+    redirectUrlAllowlist: configuration.redirect_url_allowlist,
   }
   const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
