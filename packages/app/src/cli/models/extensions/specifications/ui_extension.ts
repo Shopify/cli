@@ -17,7 +17,7 @@ const UIExtensionSchema = BaseSchema.extend({
       fields: zod.any().optional(),
     })
     .optional(),
-  extensionPoints: NewExtensionPointsSchema,
+  extension_points: NewExtensionPointsSchema,
 })
 
 const spec = createExtensionSpecification({
@@ -30,24 +30,24 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
     const needsCart =
-      config.extensionPoints?.find((extensionPoint) => {
+      config.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
   validate: async (config, directory) => {
-    return validateUIExtensionPointConfig(directory, config.extensionPoints)
+    return validateUIExtensionPointConfig(directory, config.extension_points)
   },
   previewMessage(host, uuid, config, storeFqdn) {
-    const links = config.extensionPoints.map(
+    const links = config.extension_points.map(
       ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
     )
     return outputContent`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
     return {
-      api_version: config.apiVersion,
-      extension_points: config.extensionPoints,
+      api_version: config.api_version,
+      extension_points: config.extension_points,
       capabilities: config.capabilities,
       name: config.name,
       settings: config.settings,
@@ -55,18 +55,18 @@ const spec = createExtensionSpecification({
     }
   },
   getBundleExtensionStdinContent: (config) => {
-    return config.extensionPoints.map(({module}) => `import '${module}';`).join('\n')
+    return config.extension_points.map(({module}) => `import '${module}';`).join('\n')
   },
   shouldFetchCartUrl: (config) => {
     return (
-      config.extensionPoints.find((extensionPoint) => {
+      config.extension_points.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     )
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
-      config.extensionPoints.find((extensionPoint) => {
+      config.extension_points.find((extensionPoint) => {
         return extensionPoint.target === requestedTarget
       }) !== undefined
     )

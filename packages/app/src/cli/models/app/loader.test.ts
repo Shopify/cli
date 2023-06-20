@@ -492,7 +492,7 @@ scopes = "read_products"
     const blockConfiguration = `
     name = "my-function"
     type = "wrong_type"
-    apiVersion = "2022-07"
+    api_version = "2022-07"
     `
     await writeBlockConfig({
       blockConfiguration,
@@ -510,7 +510,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -540,7 +540,7 @@ scopes = "read_products"
     let blockConfiguration = `
       name = "my-function-1"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -554,7 +554,7 @@ scopes = "read_products"
     blockConfiguration = `
       name = "my-function-2"
       type = "product_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -587,7 +587,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -611,7 +611,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"

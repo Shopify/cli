@@ -138,7 +138,7 @@ describe('generateSchemaService', () => {
       const app = testApp()
       const extension = await testFunctionExtension()
       const {
-        configuration: {apiVersion: version},
+        configuration: {api_version: version},
         type,
       } = extension
 
@@ -164,7 +164,7 @@ describe('generateSchemaService', () => {
       const app = testApp()
       const extension = await testFunctionExtension()
       const {
-        configuration: {apiVersion: version},
+        configuration: {api_version: version},
         type,
       } = extension
 
@@ -189,7 +189,7 @@ describe('generateSchemaService', () => {
       const app = testApp()
       const extension = await testFunctionExtension()
       const {
-        configuration: {apiVersion: version},
+        configuration: {api_version: version},
         type,
       } = extension
       getAppIdentifiers.mockReturnValue({app: undefined})

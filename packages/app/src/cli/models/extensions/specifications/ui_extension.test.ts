@@ -18,8 +18,8 @@ describe('ui_extension', async () => {
     const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
     const configuration = {
-      extensionPoints,
-      apiVersion: '2023-01' as const,
+      extension_points: extensionPoints,
+      api_version: '2023-01' as const,
       name: 'UI Extension',
       type: 'ui_extension',
       metafields: [],
@@ -189,10 +189,10 @@ Please check the configuration in ${tomlPath}`),
         expect(loadLocales.loadLocalesConfig).toBeCalledWith(tmpDir, uiExtension.configuration.type)
         expect(deployConfig).toStrictEqual({
           localization,
-          extension_points: uiExtension.configuration.extensionPoints,
+          extension_points: uiExtension.configuration.extension_points,
           capabilities: uiExtension.configuration.capabilities,
           name: uiExtension.configuration.name,
-          api_version: uiExtension.configuration.apiVersion,
+          api_version: uiExtension.configuration.api_version,
           settings: uiExtension.configuration.settings,
         })
       })

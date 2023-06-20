@@ -15,7 +15,6 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {camelize} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
@@ -60,9 +59,7 @@ async function loadConfigurationFile(
     }
   }
   // Convert snake_case keys to camelCase before returning
-  return {
-    ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
-  }
+  return configuration
 }
 
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -193,13 +190,13 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
 
-    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extensionDirectories)
+    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extension_directories)
 
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
-    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.webDirectories)
+    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.web_directories)
     const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
     const appClass = new App(
