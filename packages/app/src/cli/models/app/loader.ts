@@ -41,10 +41,10 @@ async function loadConfigurationFile(
       filepath,
     )
   }
-  const configurationContent = await readFile(filepath)
-  let configuration: object
+
   try {
-    configuration = decode(configurationContent)
+    const configurationContent = await readFile(filepath)
+    return decode(configurationContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     // TOML errors have line, pos and col properties
@@ -58,8 +58,6 @@ async function loadConfigurationFile(
       throw err
     }
   }
-  // Convert snake_case keys to camelCase before returning
-  return configuration
 }
 
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
