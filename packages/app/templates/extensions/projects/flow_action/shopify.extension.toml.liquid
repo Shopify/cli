@@ -2,19 +2,15 @@ name = "{{ name }}"
 description = "Your description"
 type = "flow_action"
 
-[extension]
-type = "flow_action"
-handle = "{{ handle }}"
+[[extensions]]
 runtime_url = "https://url.com/api/execute"
 validation_url = "https://url.com/api/validate"
-custom_configuration_page_url = "https://url.com/editor"
-custom_configuration_page_preview_url = "https://url.com/api/preview"
+config_page_url = "https://url.com/editor"
+config_page_preview_url = "https://url.com/api/preview"
 
 [settings]
 
   [[settings.fields]]
-  key = "customer_id"
-  name = "Customer ID"
   required = true
   type = "customer_reference"
 
