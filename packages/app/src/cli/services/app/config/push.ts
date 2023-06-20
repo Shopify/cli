@@ -5,7 +5,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
-import {relativePath} from '@shopify/cli-kit/node/path'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export interface Options {
   app: AppInterface
@@ -16,12 +16,17 @@ export async function pushConfig(options: Options) {
   const mutation = PushConfig
 
   const {configuration} = options.app
-  const configFileName = relativePath(options.app.directory, options.app.configurationPath)
+  const configFileName = basename(options.app.configurationPath)
 
   if (!configuration.clientId) {
     abort(`${configFileName} does not contain a client_id.`)
   }
-  const variables = {apiKey: configuration.clientId, ...configuration}
+  const variables = {
+    apiKey: configuration.clientId,
+    title: configuration.name,
+    applicationUrl: configuration.applicationUrl,
+    redirectUrlAllowlist: configuration.redirectUrlAllowlist,
+  }
   const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
   if (result.appUpdate.userErrors.length > 0) {
@@ -35,6 +40,6 @@ export async function pushConfig(options: Options) {
   })
 }
 
-const abort = (errorMessage: OutputMessage) => {
+export const abort = (errorMessage: OutputMessage) => {
   throw new AbortError(errorMessage)
 }
