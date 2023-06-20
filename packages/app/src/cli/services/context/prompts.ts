@@ -46,12 +46,12 @@ interface SourceSummary {
 export async function deployConfirmationPrompt(
   {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
   deploymentMode: DeploymentMode,
-  apiKey?: string,
-  token?: string,
+  apiKey: string,
+  token: string,
 ): Promise<boolean> {
   let infoTable: InfoTableSection[] = await buildUnifiedDeploymentInfoPrompt(
-    apiKey!,
-    token!,
+    apiKey,
+    token,
     identifiers,
     toCreate,
     dashboardOnly,

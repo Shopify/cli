@@ -42,6 +42,8 @@ export async function ensureFunctionsIds(
         dashboardOnly: [],
       },
       options.deploymentMode,
+      options.appId,
+      options.token,
     )
     if (!confirmed) return err('user-cancelled')
   }
