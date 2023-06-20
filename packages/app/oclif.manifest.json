@@ -525,10 +525,10 @@
           "hidden": true,
           "multiple": false
         },
-        "api-key": {
-          "name": "api-key",
+        "config": {
+          "name": "config",
           "type": "option",
-          "description": "The API key of your app.",
+          "description": "Name for the config file.",
           "hidden": false,
           "multiple": false
         }

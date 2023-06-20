@@ -7,6 +7,8 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
 export const AppConfigurationSchema = zod.object({
+  name: zod.string().optional(),
+  clientId: zod.string().optional(),
   scopes: zod.string().default(''),
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),

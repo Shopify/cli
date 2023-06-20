@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const PushConfig = gql`
-  mutation appUpdate($apiKey: String!, $applicationUrl: Url, $redirectUrlWhitelist: [Url]) {
-    appUpdate(input: {apiKey: $apiKey, applicationUrl: $applicationUrl, redirectUrlWhitelist: $redirectUrlWhitelist}) {
+  mutation appUpdate($apiKey: String!, $applicationUrl: Url, $redirectUrlAllowlist: [Url]) {
+    appUpdate(input: {apiKey: $apiKey, applicationUrl: $applicationUrl, redirectUrlWhitelist: $redirectUrlAllowlist}) {
       userErrors {
         message
         field
@@ -14,7 +14,7 @@ export const PushConfig = gql`
 export interface PushConfigVariables {
   apiKey: string
   applicationUrl: string
-  redirectUrlWhitelist: string[]
+  redirectUrlAllowlist: string[]
 }
 
 export interface PushConfigSchema {
