@@ -6,7 +6,7 @@ import {fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
-import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -95,23 +95,21 @@ redirectUrl = [ "https://example.com/callback1" ]
     })
   })
 
-  test('uses the name flag as the default value for the config name', async () => {
+  test('does not ask for a name when it is provided as a flag', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-        configName: 'default value',
+        configName: 'Default value',
       }
       vi.mocked(load).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
-      vi.mocked(selectConfigName).mockResolvedValue('staging')
-
       // When
       await link(options)
-
       // Then
-      expect(selectConfigName).toHaveBeenCalledWith(tmp, 'default value')
+      expect(selectConfigName).not.toHaveBeenCalled()
+      expect(fileExistsSync(joinPath(tmp, 'shopify.app.default-value.toml'))).toBeTruthy()
     })
   })
 

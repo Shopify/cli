@@ -12,6 +12,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -23,8 +24,8 @@ export interface LinkOptions {
 export default async function link(options: LinkOptions): Promise<void> {
   const localApp = await loadLocalApp(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey)
-  const defaultConfigName = options.configName || remoteApp.title
-  const configName = await selectConfigName(options.directory, defaultConfigName)
+  const configName =
+    (options.configName && slugify(options.configName)) || (await selectConfigName(options.directory, remoteApp.title))
   const configFileName = `shopify.app.${configName}.toml`
   const configFilePath = joinPath(options.directory, configFileName)
   const fileAlreadyExists = await fileExists(configFilePath)

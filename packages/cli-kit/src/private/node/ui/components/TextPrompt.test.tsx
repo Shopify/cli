@@ -217,7 +217,7 @@ describe('TextPrompt', () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, '180')
-    // color changes back to valid color
+
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  How tall are you in cm?
       [36m>[39m  [36m180[7m [27m[39m
