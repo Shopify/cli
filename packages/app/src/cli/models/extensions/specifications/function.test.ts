@@ -32,8 +32,8 @@ describe('functionConfiguration', () => {
           },
           enable_create: true,
         },
-        configurationUi: false,
-        apiVersion: '2022-07',
+        configuration_ui: false,
+        api_version: '2022-07',
         input: {
           variables: {
             namespace: 'namespace',
@@ -61,7 +61,7 @@ describe('functionConfiguration', () => {
         description: extension.configuration.description,
         app_key: appKey,
         api_type: 'order_discounts',
-        api_version: extension.configuration.apiVersion,
+        api_version: extension.configuration.api_version,
         ui: {
           app_bridge: {
             details_path: extension.configuration.ui!.paths!.details,
@@ -96,7 +96,7 @@ describe('functionConfiguration', () => {
         description: extension.configuration.description,
         app_key: appKey,
         api_type: 'order_discounts',
-        api_version: extension.configuration.apiVersion,
+        api_version: extension.configuration.api_version,
         module_id: moduleId,
         enable_creation_ui: true,
         input_query: undefined,

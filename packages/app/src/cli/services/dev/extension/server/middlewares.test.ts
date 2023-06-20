@@ -516,7 +516,7 @@ describe('getExtensionPointMiddleware()', () => {
               name: 'testName',
               type: 'ui_extension',
               metafields: [],
-              extensionPoints: [
+              extension_points: [
                 {
                   target: 'Checkout::Dynamic::Render',
                 },
@@ -564,7 +564,7 @@ describe('getExtensionPointMiddleware()', () => {
               name: 'testName',
               type: 'ui_extension',
               metafields: [],
-              extensionPoints: [
+              extension_points: [
                 {
                   target: extensionPointTarget,
                 },
@@ -613,7 +613,7 @@ describe('getExtensionPointMiddleware()', () => {
               name: 'testName',
               type: 'ui_extension',
               metafields: [],
-              extensionPoints: [
+              extension_points: [
                 {
                   target: extensionPointTarget,
                 },
