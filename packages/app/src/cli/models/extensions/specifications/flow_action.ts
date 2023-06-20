@@ -43,6 +43,59 @@ const validateCommerceObject = (configField: ConfigField) => {
       ])
     }
   }
+
+  return true
+}
+
+const uiTypesMap = new Map<string, string>([
+  // not sure about this mapping
+  ['boolean', 'checkbox'],
+  // no email in https://shopify.dev/docs/apps/custom-data/metafields/types
+  ['email', 'email'],
+  ['multi_line_text_field', 'text-multi-lines'],
+  // this one made most sense to me since the other number has decimals
+  ['number_integer', 'number'],
+  ['single_line_text_field', 'text-single-line'],
+  ['url', 'url'],
+])
+
+const serializeConfigField = (field: ConfigField) => {
+  const uiType = uiTypesMap.get(field.type)
+
+  return {
+    id: field.key,
+    name: field.key,
+    label: field.name,
+    description: field.description,
+    required: field.required,
+    ui_type: uiType,
+  }
+}
+
+const serializeCommerceObjectField = (field: ConfigField) => {
+  const commerceObject = field.type.replace('_reference', '')
+
+  return {
+    ...field,
+    id: `${commerceObject}_id`,
+    name: `${commerceObject}_id`,
+    label: `${commerceObject.charAt(0).toUpperCase() + commerceObject.slice(1)} ID`,
+    ui_type: 'commerce-object-id',
+  } as ConfigField
+}
+
+const serializeFields = (fields?: ConfigField[]) => {
+  if (!fields) return []
+
+  const serializedFields = fields.map((field) => {
+    if (SUPPORTED_COMMERCE_OBJECTS.includes(field.type)) {
+      return serializeCommerceObjectField(field)
+    }
+
+    return serializeConfigField(field)
+  })
+
+  return serializedFields
 }
 
 const FlowActionExtensionSchema = BaseSchema.extend({
@@ -108,11 +161,13 @@ const flowActionSpecification = createExtensionSpecification({
     const {extensions} = config
     const extension = extensions[0]
 
+    console.log({fields: serializeFields(config.settings.fields)})
+
     return {
       title: config.name,
       description: config.description,
       url: extension?.runtime_url,
-      fields: config.settings.fields,
+      fields: serializeFields(config.settings.fields),
       validation_url: extension?.validation_url,
       custom_configuration_page_url: extension?.config_page_url,
       custom_configuration_page_preview_url: extension?.config_page_preview_url,
