@@ -4,7 +4,13 @@ import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
-import {yarnLockfile, pnpmLockfile, PackageJson, pnpmWorkspaceFile} from '@shopify/cli-kit/node/node-package-manager'
+import {
+  installNodeModules,
+  yarnLockfile,
+  pnpmLockfile,
+  PackageJson,
+  pnpmWorkspaceFile,
+} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 
@@ -202,6 +208,34 @@ scopes = "read_products"
     // Then
     expect(app.usesWorkspaces).toBe(true)
   })
+
+  test('does not double-count webs defined in workspaces', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    // When
+    let app = await load({directory: tmpDir, specifications})
+    const web = app.webs[0]
+    // Force npm to symlink the workspace directory
+    await writeFile(
+      joinPath(web!.directory, 'package.json'),
+      JSON.stringify({name: 'web', dependencies: {'empty-npm-package': '1.0.0'}, devDependencies: {}}),
+    )
+    await installNodeModules({
+      directory: app.directory,
+      packageManager: 'npm',
+    })
+    app = await load({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.usesWorkspaces).toBe(true)
+    expect(app.webs.length).toBe(1)
+  }, 30000)
 
   test("throws an error if the extension configuration file doesn't exist", async () => {
     // Given
@@ -492,7 +526,7 @@ scopes = "read_products"
     const blockConfiguration = `
     name = "my-function"
     type = "wrong_type"
-    apiVersion = "2022-07"
+    api_version = "2022-07"
     `
     await writeBlockConfig({
       blockConfiguration,
@@ -510,7 +544,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -540,7 +574,7 @@ scopes = "read_products"
     let blockConfiguration = `
       name = "my-function-1"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -554,7 +588,7 @@ scopes = "read_products"
     blockConfiguration = `
       name = "my-function-2"
       type = "product_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -587,7 +621,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"
@@ -611,7 +645,7 @@ scopes = "read_products"
     const blockConfiguration = `
       name = "my-function"
       type = "order_discounts"
-      apiVersion = "2022-07"
+      api_version = "2022-07"
 
       [build]
       command = "make build"

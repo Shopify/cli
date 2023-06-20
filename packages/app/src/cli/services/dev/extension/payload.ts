@@ -44,7 +44,7 @@ export async function getUIExtensionPayload(
       status: options.currentDevelopmentPayload?.status || 'success',
       ...(options.currentDevelopmentPayload || {status: 'success'}),
     },
-    extensionPoints: getExtensionPoints(extension.configuration.extensionPoints, url),
+    extensionPoints: getExtensionPoints(extension.configuration.extension_points, url),
     localization: localization ?? null,
     categories: extension.configuration.categories ?? null,
     metafields: extension.configuration.metafields.length === 0 ? null : extension.configuration.metafields,
@@ -60,13 +60,13 @@ export async function getUIExtensionPayload(
     version: renderer?.version,
 
     title: extension.configuration.name,
-    apiVersion: extension.configuration.apiVersion,
+    apiVersion: extension.configuration.api_version,
     approvalScopes: options.grantedScopes,
   }
   return defaultConfig
 }
 
-function getExtensionPoints(extensionPoints: ExtensionInstance['configuration']['extensionPoints'], url: string) {
+function getExtensionPoints(extensionPoints: ExtensionInstance['configuration']['extension_points'], url: string) {
   if (isNewExtensionPointsSchema(extensionPoints)) {
     return extensionPoints.map((extensionPoint) => {
       const {target, resource} = extensionPoint

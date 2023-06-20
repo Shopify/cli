@@ -116,7 +116,7 @@ async function dev(options: DevOptions) {
   const frontendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Frontend)
   const backendConfig = localApp.webs.find(({configuration}) => configuration.type === WebType.Backend)
   const webhooksPath =
-    backendConfig?.configuration?.webhooksPath || frontendConfig?.configuration?.webhooksPath || '/api/webhooks'
+    backendConfig?.configuration?.webhooks_path || frontendConfig?.configuration?.webhooks_path || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
 
   let shouldUpdateURLs = false
@@ -141,11 +141,11 @@ async function dev(options: DevOptions) {
 
   let previewUrl
   if (frontendConfig || backendConfig) {
-    previewUrl = buildAppURLForWeb(storeFqdn, exposedUrl)
+    previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
     if (options.update) {
       const newURLs = generatePartnersURLs(
         exposedUrl,
-        backendConfig?.configuration.authCallbackPath ?? frontendConfig?.configuration.authCallbackPath,
+        backendConfig?.configuration.auth_callback_path ?? frontendConfig?.configuration.auth_callback_path,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs,

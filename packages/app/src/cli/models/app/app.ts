@@ -8,8 +8,8 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
 export const AppConfigurationSchema = zod.object({
   scopes: zod.string().default(''),
-  extensionDirectories: zod.array(zod.string()).optional(),
-  webDirectories: zod.array(zod.string()).optional(),
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
 })
 
 export enum WebType {
@@ -23,10 +23,10 @@ const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWi
 
 export const WebConfigurationSchema = zod.object({
   type: zod.enum([WebType.Frontend, WebType.Backend]).default(WebType.Frontend),
-  authCallbackPath: zod
+  auth_callback_path: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  webhooksPath: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
+  webhooks_path: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
   port: zod.number().max(65536).min(0).optional(),
   commands: zod.object({
     build: zod.string().optional(),
