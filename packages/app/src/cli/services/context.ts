@@ -193,6 +193,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     orgId,
   })
 
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
   enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
   const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)

@@ -28,13 +28,13 @@ import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
+import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
