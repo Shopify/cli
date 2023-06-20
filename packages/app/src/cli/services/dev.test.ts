@@ -64,6 +64,7 @@ describe('devDraftableExtensionTarget()', () => {
         stderr,
         signal: abortController.signal,
         specifications,
+        app,
       })
     })
   })
