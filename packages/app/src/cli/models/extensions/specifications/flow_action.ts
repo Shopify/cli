@@ -5,16 +5,18 @@ import {glob, readFile} from '@shopify/cli-kit/node/fs'
 
 import {zod} from '@shopify/cli-kit/node/schema'
 
+const startsWithHttps = (url: string) => url.startsWith('https://')
+
 const FlowActionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_action'),
   task: zod.object({
     title: zod.string(),
     description: zod.string(),
-    url: zod.string(),
-    validationUrl: zod.string().optional(),
-    customConfigurationPageUrl: zod.string().optional(),
-    customConfigurationPagePreviewUrl: zod.string().optional(),
+    url: zod.string().url().refine(startsWithHttps),
+    validationUrl: zod.string().url().refine(startsWithHttps).optional(),
+    customConfigurationPageUrl: zod.string().url().refine(startsWithHttps).optional(),
+    customConfigurationPagePreviewUrl: zod.string().url().refine(startsWithHttps).optional(),
     schema: zod.string().optional(),
     return_type_ref: zod.string().optional(),
     fields: zod
@@ -30,6 +32,18 @@ const FlowActionExtensionSchema = BaseSchema.extend({
       )
       .optional(),
   }),
+}).refine((config) => {
+  const {task} = config
+
+  if (task.customConfigurationPageUrl || task.customConfigurationPagePreviewUrl) {
+    if (!task.customConfigurationPageUrl || !task.customConfigurationPagePreviewUrl || !task.validationUrl) {
+      throw new Error(
+        'To set a custom configuration page a custom_configuration_page_url, a custom_configuration_page_preview_url and a validation_url must be specified.',
+      )
+    }
+  }
+
+  return true
 })
 
 /**
