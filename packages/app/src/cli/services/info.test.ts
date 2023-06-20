@@ -50,7 +50,7 @@ describe('info', () => {
     // Then
     expect(unstyled(result)).toMatch(/App\s*My App/)
     expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
-    expect(unstyled(result)).toMatch(/API key\s*123/)
+    expect(unstyled(result)).toMatch(/Client ID\s*123/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 
@@ -64,7 +64,7 @@ describe('info', () => {
     // Then
     expect(unstyled(result)).toMatch(/App\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
-    expect(unstyled(result)).toMatch(/API key\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/Client ID\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
   })
 
