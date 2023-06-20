@@ -172,10 +172,10 @@ module ShopifyCLI
         def adapt_location(location)
           return location if location.nil? || !ShopifyCLI::Environment.unified_deployment?
 
-          parts = location.split('/')
-          index = parts.index('extensions')
+          parts = location.split("/")
+          index = parts.index("extensions")
 
-          return parts[0..index].join('/')
+          parts[0..index].join("/")
         end
 
         def enable_extension_message
