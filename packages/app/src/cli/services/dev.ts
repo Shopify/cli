@@ -49,6 +49,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
+import { buildFunctionExtension } from './build/extension.js'
+import { updateExtensionDraft } from './dev/update-extension.js'
 
 const MANIFEST_VERSION = '3'
 
@@ -481,9 +483,34 @@ export function devDraftableExtensionTarget({
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      if (unifiedDeployment) {
+        const functions = extensions.filter((ext) => ext.isFunctionExtension)
+        await Promise.all(
+          functions.map((ext) =>
+            buildFunctionExtension(ext, {
+              app,
+              stdout,
+              stderr,
+              useTasks: false,
+              signal
+            })
+          )
+        )
+        // Functions are uploaded sequentially to avoid reaching the API limit
+        for (const extension of functions) {
+          const registrationId = remoteExtensions[extension.localIdentifier]
+          if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+          await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+        }
+      }
+
       await Promise.all(
         extensions
           .map((extension) => {
+            if (extension.isFunctionExtension && !unifiedDeployment) {
+              return null
+            }
+
             const registrationId = remoteExtensions[extension.localIdentifier]
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
@@ -509,10 +536,9 @@ export function devDraftableExtensionTarget({
               )
             }
 
-            // TODO: initial build and push of the function
-            // TODO: only if unified deployments
             // watch for Function changes that require a build and push
             if (extension.isFunctionExtension) {
+              //watch for changes
               actions.push(
                 setupFunctionWatcher({
                   extension,
@@ -530,7 +556,8 @@ export function devDraftableExtensionTarget({
 
             return actions
           })
-          .flat(),
+          .flat()
+          .filter(Boolean),
       )
     },
   }
