@@ -25,7 +25,7 @@ async function build(options: BuildOptions) {
     processes: [
       ...options.app.webs.map((web: Web) => {
         return {
-          prefix: web.configuration.type,
+          prefix: ['web', ...web.configuration.roles].join('-'),
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await buildWeb('build', {web, stdout, stderr, signal, env})
           },

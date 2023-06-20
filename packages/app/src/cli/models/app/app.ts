@@ -15,14 +15,14 @@ export const AppConfigurationSchema = zod.object({
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
+  Background = 'background',
 }
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
 
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
-export const WebConfigurationSchema = zod.object({
-  type: zod.enum([WebType.Frontend, WebType.Backend]).default(WebType.Frontend),
+const baseWebConfigurationSchema = zod.object({
   auth_callback_path: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
@@ -32,15 +32,23 @@ export const WebConfigurationSchema = zod.object({
     build: zod.string().optional(),
     dev: zod.string(),
   }),
+  name: zod.string().optional(),
 })
+const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
+export const WebConfigurationSchema = zod.union([
+  baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
+  baseWebConfigurationSchema.extend({type: webTypes}),
+])
+export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
+export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {
   directory: string
-  configuration: WebConfiguration
+  configuration: ProcessedWebConfiguration
   framework?: string
 }
 
