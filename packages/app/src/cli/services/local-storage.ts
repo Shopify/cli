@@ -4,6 +4,7 @@ import {normalizePath} from '@shopify/cli-kit/node/path'
 
 export interface CachedAppInfo {
   directory: string
+  configFile?: string
   appId?: string
   title?: string
   orgId?: string

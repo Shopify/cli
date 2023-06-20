@@ -1,5 +1,7 @@
 import {appFlags} from '../../../flags.js'
+import use from '../../../services/app/config/use.js'
 import Command from '../../../utilities/app-command.js'
+import {Args} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigUse extends Command {
@@ -12,7 +14,12 @@ export default class ConfigUse extends Command {
     ...appFlags,
   }
 
+  static args = {
+    config: Args.string(),
+  }
+
   public async run(): Promise<void> {
-    const {flags} = await this.parse(ConfigUse)
+    const {flags, args} = await this.parse(ConfigUse)
+    await use(flags.path, args.config)
   }
 }

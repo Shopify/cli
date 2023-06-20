@@ -617,7 +617,11 @@
           "multiple": false
         }
       },
-      "args": {}
+      "args": {
+        "config": {
+          "name": "config"
+        }
+      }
     },
     "app:env:pull": {
       "id": "app:env:pull",
