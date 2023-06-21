@@ -239,6 +239,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal,
       specifications,
+      unifiedDeployment: true
     })
 
     expect(chokidar.watch).toHaveBeenCalledWith(mockExtension.configurationPath)
@@ -263,6 +264,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal: abortController.signal,
       specifications,
+      unifiedDeployment: true
     })
 
     chokidarOnSpy.mock.calls[0][1]()
@@ -274,6 +276,7 @@ describe('setupConfigWatcher()', async () => {
       specifications,
       stderr,
       token: 'mock-token',
+      unifiedDeployment: true
     })
     expect(outputInfo).toHaveBeenCalledWith(`Config file at path ${mockExtension.configurationPath} changed`, stdout)
   })
@@ -300,6 +303,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal: abortController.signal,
       specifications,
+      unifiedDeployment: true
     })
 
     abortController.abort()
@@ -330,6 +334,7 @@ describe('setupConfigWatcher()', async () => {
       stderr,
       signal: abortController.signal,
       specifications,
+      unifiedDeployment: true
     })
 
     abortController.abort()
@@ -376,6 +381,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       stderr,
       stdout,
       signal: abortController.signal,
+      unifiedDeployment: true
     })
 
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
@@ -410,6 +416,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       stderr,
       stdout,
       signal: abortController.signal,
+      unifiedDeployment: true
     })
 
     const bundleExtensionFn = bundle.bundleExtension as any
@@ -421,6 +428,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       apiKey,
       registrationId,
       stderr,
+      unifiedDeployment: true
     })
     expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has changed`, stdout)
   })
@@ -436,6 +444,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       stderr,
       stdout,
       signal: abortController.signal,
+      unifiedDeployment: true
     })
 
     const buildFailure = {
