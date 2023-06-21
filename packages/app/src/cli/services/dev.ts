@@ -173,7 +173,15 @@ async function dev(options: DevOptions) {
       if (isFrontend && !usingLocalhost) {
         proxyTargets.push(await devProxyTarget(fullWebOptions))
       } else {
-        additionalProcesses.push(await devNonProxyTarget(fullWebOptions, frontendPort))
+        let port: number
+        if (isFrontend) {
+          port = frontendPort
+        } else if (isWebType(web, WebType.Backend)) {
+          port = backendPort
+        } else {
+          port = await getAvailableTCPPort()
+        }
+        additionalProcesses.push(await devNonProxyTarget(fullWebOptions, port))
       }
     }),
   )
