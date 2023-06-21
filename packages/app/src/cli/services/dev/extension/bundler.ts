@@ -216,7 +216,7 @@ export async function setupConfigWatcher({
   })
 }
 
-interface SetupFunctionWatcherOptions {
+export interface SetupFunctionWatcherOptions {
   extension: ExtensionInstance
   app: AppInterface
   stdout: Writable
