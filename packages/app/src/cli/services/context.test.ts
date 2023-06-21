@@ -29,12 +29,13 @@ import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
 import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
@@ -65,6 +66,10 @@ beforeEach(() => {
     }
   })
   vi.mocked(resolveDeploymentMode).mockResolvedValue('legacy')
+})
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
 })
 
 const APP1: OrganizationApp = {
@@ -386,6 +391,7 @@ describe('ensureDevContext', () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: true}},
     })
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     const got = await ensureDevContext(INPUT, 'token')
@@ -402,6 +408,35 @@ describe('ensureDevContext', () => {
     expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
       input: {apiKey: 'key2', enabled: true},
     })
+    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview turned on"')
+  })
+
+  test('display an error to enable dev preview if the beta is enabled in partners but an error is returned', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+    vi.mocked(selectOrCreateApp).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error enabling'))
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    const got = await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
+      useCloudflareTunnels: false,
+      updateURLs: undefined,
+      deploymentMode: 'unified',
+    })
+    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
+      input: {apiKey: 'key2', enabled: true},
+    })
+    expect(mockOutput.warn()).toMatchInlineSnapshot(
+      '"Unable to enable developer preview. Please, access partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ) to turn it on."',
+    )
   })
 })
 
@@ -575,7 +610,7 @@ describe('ensureDeployContext', () => {
     )
   })
 
-  test('disables developer previewif the beta is enabled in partners', async () => {
+  test('disables developer preview if the beta is enabled in partners', async () => {
     // Given
     const app = testApp()
     const identifiers = {
@@ -589,6 +624,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: false}},
     })
+    const mockOutput = mockAndCaptureOutput()
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -605,6 +641,41 @@ describe('ensureDeployContext', () => {
     expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
       input: {apiKey: 'key2', enabled: false},
     })
+    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview turned off"')
+  })
+
+  test('display an error to disable dev preview if the beta is enabled in partners but an error is returned', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error disabling'))
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    const got = await ensureDeployContext(options(app))
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(got.partnersApp.id).toEqual(APP2.id)
+    expect(got.partnersApp.title).toEqual(APP2.title)
+    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.identifiers).toEqual(identifiers)
+    expect(got.deploymentMode).toEqual('legacy')
+
+    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
+    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
+      input: {apiKey: 'key2', enabled: false},
+    })
+    expect(mockOutput.warn()).toMatchInlineSnapshot(
+      '"Unable to disable developer preview. Please, access partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ) to turn it off."',
+    )
   })
 })
 

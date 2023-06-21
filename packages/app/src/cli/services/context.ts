@@ -39,7 +39,7 @@ import {
   formatPackageManagerCommand,
   outputNewline,
   outputCompleted,
-  outputWarn,
+  outputWarnError,
 } from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -193,8 +193,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     orgId,
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-floating-promises
-  enableDeveloperPreview(selectedApp, token)
+  await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
   const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
   await logMetadataForLoadedDevContext(result)
@@ -612,30 +611,39 @@ async function developerPreviewUpdate(app: OrganizationApp, token: string, enabl
     {
       title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
       task: async () => {
-        const query = DevelopmentStorePreviewUpdateQuery
-        const variables: DevelopmentStorePreviewUpdateInput = {
-          input: {
-            apiKey: app.apiKey,
-            enabled,
-          },
+        let result: DevelopmentStorePreviewUpdateSchema | undefined
+        let error: string | undefined
+        try {
+          const query = DevelopmentStorePreviewUpdateQuery
+          const variables: DevelopmentStorePreviewUpdateInput = {
+            input: {
+              apiKey: app.apiKey,
+              enabled,
+            },
+          }
+          result = await partnersRequest(query, token, variables)
+          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+        } catch (err: any) {
+          error = err.message
         }
-        const result: DevelopmentStorePreviewUpdateSchema = await partnersRequest(query, token, variables)
 
-        if (
-          result.developmentStorePreviewUpdate.userErrors?.length > 0 ||
-          result.developmentStorePreviewUpdate.app.developmentStorePreviewEnabled !== enabled
-        ) {
-          outputWarn(
-            `Unable to ${enabled ? 'enable' : 'disable'} developer preview. Please, access partners dashboard to ${
-              enabled ? 'enable' : 'disable'
-            } it.`,
+        if ((result && result.developmentStorePreviewUpdate.userErrors?.length > 0) || error) {
+          const previewURL = outputToken.link(
+            'partners dashboard',
+            await devPreviewURL({orgId: app.organizationId, appId: app.id}),
           )
+          outputWarnError(
+            outputContent`Unable to ${
+              enabled ? 'enable' : 'disable'
+            } developer preview. Please, access ${previewURL} to ${enabled ? 'turn it on.' : 'turn it off.'}`,
+          )
+        } else {
+          outputCompleted(`Developer preview ${enabled ? 'turned on' : 'turned off'}`)
         }
       },
     },
   ]
   await renderTasks(tasks)
-  outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
   outputNewline()
 }
 
@@ -644,4 +652,9 @@ async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, par
     partner_id: tryParseInt(partnerId),
     api_key: env.apiKey,
   }))
+}
+
+async function devPreviewURL(options: {orgId: string; appId: string}) {
+  const fqdn = await partnersFqdn()
+  return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
 }
