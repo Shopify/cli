@@ -1,7 +1,7 @@
 import {pullEnv} from './pull.js'
 import {selectApp} from '../select-app.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {testApp} from '../../../models/app/app.test-data.js'
+import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
@@ -112,16 +112,4 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     },
     nodeDependencies,
   })
-}
-
-function testOrganizationApp() {
-  return {
-    id: '123',
-    title: 'Test app',
-    appType: 'custom',
-    apiSecretKeys: [{secret: 'api-secret'}],
-    organizationId: '1',
-    apiKey: 'api-key',
-    grantedScopes: [],
-  }
 }

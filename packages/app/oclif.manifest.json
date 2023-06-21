@@ -510,6 +510,20 @@
           "description": "The environment to apply to the current command.",
           "hidden": true,
           "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
+          "hidden": false,
+          "multiple": false
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "description": "Name for the config file.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}

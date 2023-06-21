@@ -10,6 +10,10 @@ export const AppConfigurationSchema = zod.object({
   scopes: zod.string().default(''),
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
+  client_id: zod.string().optional(),
+  name: zod.string().optional(),
+  app_url: zod.string().optional(),
+  redirect_url_allowlist: zod.array(zod.string()).optional(),
 })
 
 export enum WebType {

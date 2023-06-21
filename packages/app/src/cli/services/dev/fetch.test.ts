@@ -6,12 +6,13 @@ import {
   fetchAppExtensionRegistrations,
   NoOrgError,
 } from './fetch.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationStore} from '../../models/organization.js'
 import {AllOrganizationsQuery} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
+import {testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -25,22 +26,13 @@ const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
 }
-const APP1: OrganizationApp = {
-  id: '1',
-  title: 'app1',
-  apiKey: 'key1',
-  apiSecretKeys: [{secret: 'secret1'}],
-  organizationId: '1',
-  grantedScopes: [],
-}
-const APP2: OrganizationApp = {
+const APP1 = testOrganizationApp({apiKey: 'key1'})
+const APP2 = testOrganizationApp({
   id: '2',
   title: 'app2',
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
-  organizationId: '1',
-  grantedScopes: [],
-}
+})
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
