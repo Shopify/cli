@@ -1,5 +1,6 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 
+// todo: need to do supported commerce objects types PER extension type
 const SUPPORTED_COMMERCE_OBJECTS = [
   'customer_reference',
   'order_reference',
