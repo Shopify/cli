@@ -32,7 +32,7 @@ interface DashboardExtension {
 
 async function getActiveDashboardExtensions({token, apiKey}: {token: string; apiKey: string}) {
   const initialRemoteExtensions = await fetchAppExtensionRegistrations({token, apiKey})
-
+  console.log(JSON.stringify(initialRemoteExtensions, null, 2))
   const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
   return dashboardManagedExtensionRegistrations
     .filter((extension) => {
@@ -46,7 +46,7 @@ async function getActiveDashboardExtensions({token, apiKey}: {token: string; api
 export async function importFlowExtensions(options: MigrateOptions) {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, _] = await fetchAppAndIdentifiers({reset: false, ...options}, token)
-
+  console.log(JSON.stringify(partnersApp, null, 2))
   const activeDashboardExtensions = await getActiveDashboardExtensions({token, apiKey: partnersApp.apiKey})
 
   const generatedExtensions = [] as GeneratedExtension[]
@@ -59,6 +59,8 @@ export async function importFlowExtensions(options: MigrateOptions) {
       promptAnswer === 'All'
         ? activeDashboardExtensions
         : [activeDashboardExtensions.find((ext) => ext?.title === promptAnswer)]
+
+    console.log(extensionsToMigrate)
 
     for (const extension of extensionsToMigrate) {
       if (extension === undefined) continue

@@ -11,17 +11,22 @@ export const AllAppExtensionRegistrationsQuery = gql`
         draftVersion {
           config
         }
+        activeVersion {
+          id
+          uuid
+          versionTag
+        }
       }
       dashboardManagedExtensionRegistrations {
         id
         uuid
         title
         type
-        activeVersion {
-          id
-          uuid
-          config
-        }
+        # activeVersion {
+        #   id
+        #   uuid
+        #   config
+        # }
       }
       functions {
         id
