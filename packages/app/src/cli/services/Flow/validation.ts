@@ -40,16 +40,26 @@ const uiTypesMap = new Map<string, string>([
 const serializeConfigField = (field: ConfigField, type: 'flow_action' | 'flow_trigger') => {
   const uiType = uiTypesMap.get(field.type)
 
+  if (typeof field.key !== 'string') {
+    throw new zod.ZodError([
+      {
+        code: zod.ZodIssueCode.custom,
+        path: ['settings.fields.key'],
+        message: 'Key must be speicified for non-commerce object fields',
+      },
+    ])
+  }
+
   const serializedField: SerializedField = {
-    id: field.key || '',
-    name: field.key || '',
+    id: field.key,
+    name: field.key,
     description: field.description,
     uiType: uiType || '',
   }
 
   if (type === 'flow_action') {
     serializedField.label = field.name
-    serializedField.required = field.required
+    serializedField.required = Boolean(field.required)
   }
 
   return serializedField

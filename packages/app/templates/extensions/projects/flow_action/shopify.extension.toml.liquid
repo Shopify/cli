@@ -11,11 +11,13 @@ config_page_preview_url = "https://url.com/api/preview"
 [settings]
 
   [[settings.fields]]
-  required = true
   type = "customer_reference"
+  description = ""
+  required = true
 
   [[settings.fields]]
-  key = "your-field-key"
-  name = "field name"
-  required = true
   type = "single_line_text_field"
+  key = "unique-field-key"
+  name = "Displayed name"
+  description = ""
+  required = true

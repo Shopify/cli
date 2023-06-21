@@ -1,9 +1,9 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
+import {serializeFields, validateCommerceObject} from '../../../services/Flow/validation.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {serializeFields, validateCommerceObject} from '../../../services/Flow/validation.js'
 
 const FlowActionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
@@ -29,7 +29,7 @@ const FlowActionExtensionSchema = BaseSchema.extend({
             key: zod.string().optional(),
             name: zod.string().optional(),
             description: zod.string().optional(),
-            required: zod.boolean(),
+            required: zod.boolean().optional(),
             type: zod.string(),
           })
           .refine((field) => validateCommerceObject(field, 'flow_action')),
