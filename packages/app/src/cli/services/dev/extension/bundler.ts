@@ -4,15 +4,14 @@ import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import {buildFunctionExtension} from '../../../services/build/extension.js';
+import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
+import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
-import { FunctionConfigType } from '../../../models/extensions/specifications/function.js'
 
 export interface WatchEvent {
   path: string
@@ -136,7 +135,7 @@ export async function setupDraftableExtensionBundler({
   stderr,
   stdout,
   signal,
-  unifiedDeployment
+  unifiedDeployment,
 }: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
@@ -189,13 +188,15 @@ export async function setupConfigWatcher({
   stderr,
   signal,
   specifications,
-  unifiedDeployment
+  unifiedDeployment,
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
   const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
     outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
-    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications, unifiedDeployment}).catch((_: unknown) => {})
+    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications, unifiedDeployment}).catch(
+      (_: unknown) => {},
+    )
   })
 
   signal.addEventListener('abort', () => {
@@ -236,24 +237,27 @@ export async function setupFunctionWatcher({
   token,
   apiKey,
   registrationId,
-  unifiedDeployment
+  unifiedDeployment,
 }: SetupFunctionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
-  outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout);
-  const watchPaths = getFunctionWatchPaths(extension as ExtensionInstance<FunctionConfigType>);
+  outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout)
+  const watchPaths = getFunctionWatchPaths(extension as ExtensionInstance<FunctionConfigType>)
   if (!watchPaths) {
-    outputWarn(`Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`, stdout)
+    outputWarn(
+      `Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`,
+      stdout,
+    )
     return
   }
 
   outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${watchPaths}`, stdout)
-  let buildController : AbortController | null;
+  let buildController: AbortController | null
 
-  const functionWatcher = chokidar.watch(watchPaths).on('change', path => {
+  const functionWatcher = chokidar.watch(watchPaths).on('change', (path) => {
     outputDebug(`Function extension file at path ${path} changed`, stdout)
     if (buildController) {
-      //terminate any existing builds
+      // terminate any existing builds
       buildController.abort()
     }
     buildController = new AbortController()
@@ -263,20 +267,19 @@ export async function setupFunctionWatcher({
       stdout,
       stderr,
       useTasks: false,
-      signal: buildSignal
-    }).catch((_: unknown) => {
-      // don't deploy on build error
-      return
-    }).finally(() => {
-      buildController = null
-    }).then(() => {
-
-      updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
-        .catch((updateError: unknown) => {
-          outputWarn(`Error while deploying updated extension: ${JSON.stringify(updateError, null, 2)}`, stdout);
-        })
-
+      signal: buildSignal,
     })
+      .then(() => {
+        if (!buildSignal.aborted) {
+          return updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+        }
+      })
+      .catch((updateError: unknown) => {
+        outputWarn(`Error while deploying updated extension: ${JSON.stringify(updateError, null, 2)}`, stdout)
+      })
+      .finally(() => {
+        buildController = null
+      })
   })
 
   signal.addEventListener('abort', () => {
@@ -297,16 +300,16 @@ export async function setupFunctionWatcher({
 }
 
 function getFunctionWatchPaths(extension: ExtensionInstance<FunctionConfigType>) {
-  if (!extension.isJavaScript && extension.watchPaths.length == 0) {
+  if (!extension.isJavaScript && extension.watchPaths.length === 0) {
     return null
   }
 
-  const watchPaths: string[] = (extension.watchPaths as string[]) ?? []
-  if (extension.isJavaScript && watchPaths.length == 0) {
+  const watchPaths: string[] = extension.watchPaths ?? []
+  if (extension.isJavaScript && watchPaths.length === 0) {
     watchPaths.push(joinPath('src', '**', '*.js'))
     watchPaths.push(joinPath('src', '**', '*.ts'))
   }
   watchPaths.push(joinPath('**', 'input*.graphql'))
 
-  return watchPaths.map(path => joinPath(extension.directory, path))
+  return watchPaths.map((path) => joinPath(extension.directory, path))
 }

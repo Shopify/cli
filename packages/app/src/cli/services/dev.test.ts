@@ -38,7 +38,7 @@ describe('devDraftableExtensionTarget()', () => {
       apiKey: 'mock-api-key',
       remoteExtensions,
       specifications,
-      unifiedDeployment: true
+      unifiedDeployment: true,
     })
 
     await process.action(stdout, stderr, abortController.signal)
@@ -54,7 +54,7 @@ describe('devDraftableExtensionTarget()', () => {
         signal: abortController.signal,
         app,
         url: 'mock-url',
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
 
       expect(setupConfigWatcher).toHaveBeenCalledWith({
@@ -66,7 +66,7 @@ describe('devDraftableExtensionTarget()', () => {
         stderr,
         signal: abortController.signal,
         specifications,
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
     })
   })

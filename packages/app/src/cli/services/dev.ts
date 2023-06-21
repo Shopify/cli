@@ -15,6 +15,8 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
+import {buildFunctionExtension} from './build/extension.js'
+import {updateExtensionDraft} from './dev/update-extension.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -49,8 +51,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
-import { buildFunctionExtension } from './build/extension.js'
-import { updateExtensionDraft } from './dev/update-extension.js'
 
 const MANIFEST_VERSION = '3'
 
@@ -231,7 +231,7 @@ async function dev(options: DevOptions) {
         extensions: draftableExtensions,
         remoteExtensions,
         specifications,
-        unifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false
+        unifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false,
       }),
     )
   }
@@ -438,7 +438,7 @@ interface DevDraftableExtensionsOptions {
   remoteExtensions: {
     [key: string]: string
   }
-  specifications: ExtensionSpecification[],
+  specifications: ExtensionSpecification[]
   unifiedDeployment: boolean
 }
 
@@ -450,7 +450,7 @@ export function devDraftableExtensionTarget({
   token,
   remoteExtensions,
   specifications,
-  unifiedDeployment
+  unifiedDeployment,
 }: DevDraftableExtensionsOptions) {
   return {
     prefix: 'extensions',
@@ -464,14 +464,15 @@ export function devDraftableExtensionTarget({
               stdout,
               stderr,
               useTasks: false,
-              signal
-            })
-          )
+              signal,
+            }),
+          ),
         )
         // Functions are uploaded sequentially to avoid reaching the API limit
         for (const extension of functions) {
           const registrationId = remoteExtensions[extension.localIdentifier]
           if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+          // eslint-disable-next-line no-await-in-loop
           await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
         }
       }
@@ -487,7 +488,17 @@ export function devDraftableExtensionTarget({
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
             const actions = [
-              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications, unifiedDeployment}),
+              setupConfigWatcher({
+                extension,
+                token,
+                apiKey,
+                registrationId,
+                stdout,
+                stderr,
+                signal,
+                specifications,
+                unifiedDeployment,
+              }),
             ]
 
             // Only extensions with esbuild feature should be whatched using esbuild
@@ -503,14 +514,14 @@ export function devDraftableExtensionTarget({
                   stderr,
                   stdout,
                   signal,
-                  unifiedDeployment
+                  unifiedDeployment,
                 }),
               )
             }
 
             // watch for Function changes that require a build and push
             if (extension.isFunctionExtension) {
-              //watch for changes
+              // watch for changes
               actions.push(
                 setupFunctionWatcher({
                   extension,
@@ -521,8 +532,8 @@ export function devDraftableExtensionTarget({
                   token,
                   apiKey,
                   registrationId,
-                  unifiedDeployment
-                })
+                  unifiedDeployment,
+                }),
               )
             }
 

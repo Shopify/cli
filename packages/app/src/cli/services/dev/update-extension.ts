@@ -27,7 +27,7 @@ export async function updateExtensionDraft({
   apiKey,
   registrationId,
   stderr,
-  unifiedDeployment
+  unifiedDeployment,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
@@ -40,16 +40,16 @@ export async function updateExtensionDraft({
     identifiers: {
       app: apiKey,
       extensions: {
-        [extension.localIdentifier]: extension.devUUID
+        [extension.localIdentifier]: extension.devUUID,
       },
       extensionIds: {
-        [extension.localIdentifier]: registrationId
-      }
+        [extension.localIdentifier]: registrationId,
+      },
     },
     apiKey,
     token,
-    unifiedDeployment
-  });
+    unifiedDeployment,
+  })
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
@@ -88,7 +88,7 @@ export async function updateExtensionConfig({
   registrationId,
   stderr,
   specifications,
-  unifiedDeployment
+  unifiedDeployment,
 }: UpdateExtensionConfigOptions) {
   const abort = (errorMessage: OutputMessage) => {
     throw new AbortError(errorMessage)

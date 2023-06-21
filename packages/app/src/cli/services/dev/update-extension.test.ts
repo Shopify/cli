@@ -49,7 +49,7 @@ describe('updateExtensionDraft()', () => {
         apiKey,
         registrationId,
         stderr,
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
@@ -95,7 +95,7 @@ describe('updateExtensionDraft()', () => {
         apiKey,
         registrationId,
         stderr,
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
@@ -136,7 +136,7 @@ describe('updateExtensionDraft()', () => {
         apiKey,
         registrationId,
         stderr,
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')
@@ -185,7 +185,7 @@ describe('updateExtensionConfig()', () => {
         registrationId,
         stderr,
         specifications,
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
