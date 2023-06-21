@@ -20,6 +20,6 @@ export default class ConfigUse extends Command {
 
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(ConfigUse)
-    await use(flags.path, args.config)
+    await use({directory: flags.path, config: args.config})
   }
 }

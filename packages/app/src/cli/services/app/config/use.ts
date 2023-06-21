@@ -6,7 +6,12 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
-export default async function use(directory: string, config?: string) {
+export interface UseOptions {
+  directory: string
+  config?: string
+}
+
+export default async function use({directory, config}: UseOptions): Promise<void> {
   const configFileName = getAppConfigurationFileName(config)
   const configFilePath = joinPath(directory, configFileName)
 
