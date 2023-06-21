@@ -22,7 +22,7 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions): Promise<void> {
-  const localApp = await loadLocalApp(options)
+  const localApp = await loadAppConfigFromLegacyToml(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey)
   const configName =
     (options.configName && slugify(options.configName)) || (await selectConfigName(options.directory, remoteApp.title))
@@ -41,7 +41,7 @@ export default async function link(options: LinkOptions): Promise<void> {
   })
 }
 
-async function loadLocalApp(options: LinkOptions): Promise<AppInterface> {
+async function loadAppConfigFromLegacyToml(options: LinkOptions): Promise<AppInterface> {
   try {
     const specifications = await loadExtensionsSpecifications(options.commandConfig)
     const app = await load({specifications, directory: options.directory, mode: 'report'})
