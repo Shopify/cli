@@ -8,13 +8,11 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 
 /**
  * Select an app from env, list or create a new one:
- * If a cachedAppId is provided, we check if it is valid and return it. If it's not valid, ignore it.
  * If there is no valid app yet, prompt the user to select one from the list or create a new one.
  * If no apps exists, we automatically prompt the user to create a new one.
  * @param app - Current local app information
  * @param apps - List of remote available apps
  * @param orgId - Current Organization
- * @param cachedAppId - Cached app apikey
  * @returns The selected (or created) app
  */
 export async function selectOrCreateApp(
@@ -25,7 +23,7 @@ export async function selectOrCreateApp(
 ): Promise<OrganizationApp> {
   let createNewApp = apps.nodes.length === 0
   if (!createNewApp) {
-    outputInfo(`\nBefore you preview your work, it needs to be associated with an app.\n`)
+    outputInfo(`\nBefore proceeding, your project needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {

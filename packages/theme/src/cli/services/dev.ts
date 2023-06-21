@@ -18,6 +18,7 @@ export interface DevOptions {
   directory: string
   store: string
   password?: string
+  open: boolean
   theme: string
   host?: string
   port?: string
@@ -36,6 +37,10 @@ export async function dev(options: DevOptions) {
 
   let adminToken: string | undefined = options.adminSession.token
   let storefrontToken: string | undefined = options.storefrontToken
+
+  if (options.open && useEmbeddedThemeCLI()) {
+    command.push('--open')
+  }
 
   if (!options.password && useEmbeddedThemeCLI()) {
     adminToken = undefined
