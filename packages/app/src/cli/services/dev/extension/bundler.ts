@@ -299,7 +299,7 @@ export async function setupFunctionWatcher({
   })
 }
 
-function getFunctionWatchPaths(extension: ExtensionInstance<FunctionConfigType>) {
+export function getFunctionWatchPaths(extension: ExtensionInstance<FunctionConfigType>) {
   if (!extension.isJavaScript && extension.watchPaths.length === 0) {
     return null
   }
