@@ -130,7 +130,7 @@ async function buildUnifiedDeploymentInfoPrompt(
   const infoTable: InfoTableSection[] = []
 
   const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => module.specification.options.managementExperience !== 'dashboard')
+    .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
     .map((remoteRegistration) => remoteRegistration.registrationUuid)
 
   let toCreateFinal: string[] = []
