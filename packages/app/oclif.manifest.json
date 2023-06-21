@@ -511,10 +511,10 @@
           "hidden": true,
           "multiple": false
         },
-        "api-key": {
-          "name": "api-key",
+        "client-id": {
+          "name": "client-id",
           "type": "option",
-          "description": "The API key of your app.",
+          "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
         },

@@ -12,10 +12,10 @@ export default class ConfigLink extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    'api-key': Flags.string({
+    'client-id': Flags.string({
       hidden: false,
-      description: 'The API key of your app.',
-      env: 'SHOPIFY_FLAG_APP_API_KEY',
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
     config: Flags.string({
       hidden: false,
@@ -30,7 +30,7 @@ export default class ConfigLink extends Command {
     const options: LinkOptions = {
       commandConfig: this.config,
       directory: flags.path,
-      apiKey: flags['api-key'],
+      apiKey: flags['client-id'],
       configName: flags.config,
     }
     await link(options)

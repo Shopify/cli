@@ -142,7 +142,7 @@ redirect_url_allowlist = [ "https://example.com/callback1" ]
       const options: LinkOptions = {
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-        apiKey: 'api-key',
+        apiKey: '1234-5678',
       }
       vi.mocked(load).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
@@ -153,7 +153,7 @@ redirect_url_allowlist = [ "https://example.com/callback1" ]
       const result = link(options)
 
       // Then
-      await expect(result).rejects.toThrow(/Invalid API key/)
+      await expect(result).rejects.toThrow(/Invalid Client ID/)
     })
   })
 
