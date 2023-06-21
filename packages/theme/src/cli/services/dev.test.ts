@@ -8,19 +8,25 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 vi.mock('@shopify/cli-kit/node/ruby')
 
 describe('dev', () => {
+  const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
+  const options = {
+    adminSession,
+    storefrontToken: 'my-storefront-token',
+    directory: 'my-directory',
+    store: 'my-store',
+    theme: '123',
+    force: false,
+    open: false,
+    flagsToPass: [],
+    password: 'my-token',
+  }
+
   test('runs theme serve on CLI2 without passing a token when no password is used', async () => {
+    // Given
+    const devOptions = {...options, password: undefined}
+
     // When
-    const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
-    const options = {
-      adminSession,
-      storefrontToken: 'my-storefront-token',
-      directory: 'my-directory',
-      store: 'my-store',
-      theme: '123',
-      force: false,
-      flagsToPass: [],
-    }
-    await dev(options)
+    await dev(devOptions)
 
     // Then
     const expectedParams = ['theme', 'serve', 'my-directory']
@@ -32,19 +38,43 @@ describe('dev', () => {
   })
 
   test('runs theme serve on CLI2 passing a token when a password is used', async () => {
+    // Given
+    const devOptions = {...options, password: 'my-token'}
+
     // When
-    const adminSession = {storeFqdn: 'my-store.myshopify.com', token: 'my-token'}
-    const options = {
-      adminSession,
-      storefrontToken: 'my-storefront-token',
-      directory: 'my-directory',
+    await dev(devOptions)
+
+    // Then
+    const expectedParams = ['theme', 'serve', 'my-directory']
+    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
       store: 'my-store',
-      theme: '123',
-      force: false,
-      flagsToPass: [],
-      password: 'my-token',
-    }
-    await dev(options)
+      adminToken: 'my-token',
+      storefrontToken: 'my-storefront-token',
+    })
+  })
+
+  test("runs theme serve on CLI2 passing '--open' flag when it's true", async () => {
+    // Given
+    const devOptions = {...options, open: true}
+
+    // When
+    await dev(devOptions)
+
+    // Then
+    const expectedParams = ['theme', 'serve', 'my-directory', '--open']
+    expect(execCLI2).toHaveBeenCalledWith(expectedParams, {
+      store: 'my-store',
+      adminToken: 'my-token',
+      storefrontToken: 'my-storefront-token',
+    })
+  })
+
+  test("runs theme serve on CLI2 passing '--open' flag when it's false", async () => {
+    // Given
+    const devOptions = {...options, open: false}
+
+    // When
+    await dev(devOptions)
 
     // Then
     const expectedParams = ['theme', 'serve', 'my-directory']

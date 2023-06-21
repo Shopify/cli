@@ -1,8 +1,8 @@
 import updateURL, {UpdateURLOptions} from './update-url.js'
 import {selectApp} from './select-app.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
-import {OrganizationApp} from '../../models/organization.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
+import {testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, vi, beforeEach, expect, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -11,14 +11,7 @@ vi.mock('../dev/urls.js')
 vi.mock('../../prompts/update-url.js')
 vi.mock('@shopify/cli-kit/node/session')
 
-const APP1: OrganizationApp = {
-  id: '1',
-  title: 'app1',
-  apiKey: 'api-key',
-  apiSecretKeys: [{secret: 'secret1'}],
-  organizationId: '1',
-  grantedScopes: [],
-}
+const APP1 = testOrganizationApp()
 
 beforeEach(async () => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')

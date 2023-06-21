@@ -19,10 +19,10 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
-import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testThemeExtensions} from '../models/app/app.test-data.js'
+import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
@@ -48,28 +48,16 @@ beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 })
 
-const APP1: OrganizationApp = {
-  id: '1',
-  title: 'app1',
+const APP1 = testOrganizationApp({
   apiKey: 'key1',
-  organizationId: '1',
   apiSecretKeys: [{secret: 'secret1'}],
-  grantedScopes: [],
-  betas: {
-    unifiedAppDeployment: false,
-  },
-}
-const APP2: OrganizationApp = {
+})
+const APP2 = testOrganizationApp({
   id: '2',
   title: 'app2',
   apiKey: 'key2',
-  organizationId: '1',
   apiSecretKeys: [{secret: 'secret2'}],
-  grantedScopes: [],
-  betas: {
-    unifiedAppDeployment: false,
-  },
-}
+})
 
 const ORG1: Organization = {
   id: '1',
@@ -415,14 +403,14 @@ describe('ensureDeployContext', () => {
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
   })
 
-  test("throws an app not found error if the app with the API key doesn't exist", async () => {
+  test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
     // Given
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
-    await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with API key key1/)
+    await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with Client ID key1/)
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {
