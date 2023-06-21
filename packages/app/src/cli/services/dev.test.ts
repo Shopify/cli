@@ -7,7 +7,6 @@ import {loadLocalExtensionsSpecifications} from '../models/extensions/load-speci
 import {describe, expect, test, vi} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'node:stream'
-import exp from 'node:constants'
 
 vi.mock('./dev/extension/bundler.js')
 vi.mock('./build/extension.js')
@@ -118,7 +117,7 @@ describe('devDraftableExtensionTarget()', () => {
         apiKey: 'mock-api-key',
         registrationId: remoteExtensions[ext.localIdentifier],
         stderr,
-        unifiedDeployment: true
+        unifiedDeployment: true,
       })
 
       expect(setupConfigWatcher).toHaveBeenCalledWith({
@@ -172,9 +171,9 @@ describe('devDraftableExtensionTarget()', () => {
 
     await process.action(stdout, stderr, abortController.signal)
 
-    expect(buildFunctionExtension).not.toHaveBeenCalled();
-    expect(updateExtensionDraft).not.toHaveBeenCalled();
-    expect(setupConfigWatcher).not.toHaveBeenCalled();
-    expect(setupFunctionWatcher).not.toHaveBeenCalled();
+    expect(buildFunctionExtension).not.toHaveBeenCalled()
+    expect(updateExtensionDraft).not.toHaveBeenCalled()
+    expect(setupConfigWatcher).not.toHaveBeenCalled()
+    expect(setupFunctionWatcher).not.toHaveBeenCalled()
   })
 })

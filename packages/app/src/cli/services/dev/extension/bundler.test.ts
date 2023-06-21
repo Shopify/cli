@@ -9,13 +9,14 @@ import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension} from '../../../models/app/app.test-data.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
-import { joinPath } from '@shopify/cli-kit/node/path.js'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/output')
@@ -57,6 +58,17 @@ async function testBundlerAndFileWatcher() {
   } as unknown as FileWatcherOptions
   await setupBundlerAndFileWatcher(fileWatcherOptions)
   return fileWatcherOptions
+}
+
+function functionConfiguration(): FunctionConfigType {
+  return {
+    name: 'foo',
+    type: 'function',
+    api_version: '2023-07',
+    configuration_ui: true,
+    metafields: [],
+    build: {},
+  }
 }
 
 describe('setupBundlerAndFileWatcher()', () => {
@@ -466,13 +478,12 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
 
 describe('getFunctionWatchPaths', () => {
   test('returns default paths for javascript', async () => {
-    const config = {
-      build: {},
-    }
+    const config = functionConfiguration()
+    config.build = {}
     const extension = await testFunctionExtension({
       config,
       entryPath: 'src/index.js',
-      dir: 'foo'
+      dir: 'foo',
     })
 
     const got = getFunctionWatchPaths(extension)
@@ -485,14 +496,13 @@ describe('getFunctionWatchPaths', () => {
   })
 
   test('returns configured paths and input query', async () => {
-    const config = {
-      build: {
-        watch: ['src/**/*.rs', 'src/**/*.foo']
-      },
+    const config = functionConfiguration()
+    config.build = {
+      watch: ['src/**/*.rs', 'src/**/*.foo'],
     }
     const extension = await testFunctionExtension({
       config,
-      dir: 'foo'
+      dir: 'foo',
     })
 
     const got = getFunctionWatchPaths(extension)
@@ -505,9 +515,8 @@ describe('getFunctionWatchPaths', () => {
   })
 
   test('returns null if not javascript and not configured', async () => {
-    const config = {
-      build: {},
-    }
+    const config = functionConfiguration()
+    config.build = {}
     const extension = await testFunctionExtension({
       config,
     })
