@@ -21,12 +21,16 @@ export async function pushConfig(options: Options) {
   if (!configuration.client_id) {
     abort(`${configFileName} does not contain a client_id.`)
   }
-  const variables = {
+  const initialVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
     applicationUrl: configuration.application_url,
     redirectUrlAllowlist: configuration.redirect_url_allowlist,
+    requestedAccessScopes: configuration.requested_access_scopes,
   }
+
+  const variables = removeFalsyEntries(initialVariables)
+
   const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
   if (result.appUpdate.userErrors.length > 0) {
@@ -42,4 +46,14 @@ export async function pushConfig(options: Options) {
 
 export const abort = (errorMessage: OutputMessage) => {
   throw new AbortError(errorMessage)
+}
+
+// this is placeholder for a more robust validation/clearing layer
+export const removeFalsyEntries = (obj: {[key: string]: string | string[] | undefined}) => {
+  return Object.keys(obj).reduce((acc: {[key: string]: string | string[] | undefined}, key) => {
+    if (obj[key]) {
+      acc[key] = obj[key]
+    }
+    return acc
+  }, {})
 }

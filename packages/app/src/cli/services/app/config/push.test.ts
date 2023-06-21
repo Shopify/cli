@@ -19,6 +19,7 @@ describe('pushConfig', () => {
           scopes: 'read_products',
           application_url: 'https://my-apps-url.com',
           redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+          requested_access_scopes: [],
         },
       }),
     }
@@ -36,6 +37,7 @@ describe('pushConfig', () => {
       title: 'my-app',
       applicationUrl: 'https://my-apps-url.com',
       redirectUrlAllowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+      requestedAccessScopes: [],
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
