@@ -2,6 +2,7 @@ import use, {UseOptions} from './use.js'
 import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
 import {setAppInfo} from '../../local-storage.js'
+import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -9,6 +10,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 const LOCAL_APP = testApp()
 
+vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -109,6 +111,49 @@ describe('use', () => {
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Using configuration file shopify.app.staging.toml',
       })
+    })
+  })
+
+  test('prompts user to choose a config file when argument is omitted', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      createConfigFile(tmp, 'shopify.app.local.toml')
+      const options: UseOptions = {
+        directory: tmp,
+      }
+      vi.mocked(selectConfigFile).mockResolvedValue('shopify.app.local.toml')
+
+      const app = testAppWithConfig({config: {client_id: 'other-id'}})
+      vi.mocked(load).mockResolvedValue(app)
+
+      // When
+      await use(options)
+
+      // Then
+      expect(setAppInfo).toHaveBeenCalledWith({
+        directory: tmp,
+        configFile: 'shopify.app.local.toml',
+        appId: 'other-id',
+      })
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Using configuration file shopify.app.local.toml',
+      })
+    })
+  })
+
+  test('throws error when argument is omitted and no config file exists in the directory', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: UseOptions = {
+        directory: tmp,
+      }
+      vi.mocked(selectConfigFile).mockResolvedValue(undefined)
+
+      // When
+      const result = use(options)
+
+      // Then
+      await expect(result).rejects.toThrow(/Could not find any shopify\.app\.toml file in the directory./)
     })
   })
 })

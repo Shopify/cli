@@ -1,9 +1,9 @@
 import {getAppConfigurationFileName, load as loadApp} from '../../../models/app/loader.js'
 import {setAppInfo} from '../../local-storage.js'
+import {selectConfigFile} from '../../../prompts/config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
-import {OutputMessage} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export interface UseOptions {
@@ -12,18 +12,23 @@ export interface UseOptions {
 }
 
 export default async function use({directory, config}: UseOptions): Promise<void> {
-  const configFileName = getAppConfigurationFileName(config)
+  const configFileName = await getConfigFileName(directory, config)
+
+  if (!configFileName) {
+    throw new AbortError('Could not find any shopify.app.toml file in the directory.')
+  }
+
   const configFilePath = joinPath(directory, configFileName)
 
   const configFileExists = await fileExists(configFilePath)
   if (!configFileExists) {
-    abort(`Could not find configuration file ${configFileName}`)
+    throw new AbortError(`Could not find configuration file ${configFileName}`)
   }
 
   const app = await loadApp({specifications: [], configName: configFileName, directory, mode: 'strict'})
 
   if (!app.configuration.client_id) {
-    abort(`Configuration file ${configFileName} needs a client_id.`)
+    throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
   }
 
   setAppInfo({
@@ -33,10 +38,12 @@ export default async function use({directory, config}: UseOptions): Promise<void
   })
 
   renderSuccess({
-    headline: `Using configuration file ${basename(configFilePath)}`,
+    headline: `Using configuration file ${configFileName}`,
   })
 }
 
-export const abort = (errorMessage: OutputMessage) => {
-  throw new AbortError(errorMessage)
+async function getConfigFileName(directory: string, config?: string): Promise<string | undefined> {
+  if (config) return getAppConfigurationFileName(config)
+
+  return selectConfigFile(directory)
 }

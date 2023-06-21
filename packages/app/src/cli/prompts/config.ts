@@ -1,8 +1,14 @@
 /* eslint-disable no-await-in-loop */
-import {RenderTextPromptOptions, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  RenderTextPromptOptions,
+  renderConfirmationPrompt,
+  renderSelectPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {promises} from 'fs'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -23,6 +29,21 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   }
 
   return configName
+}
+
+export async function selectConfigFile(directory: string): Promise<string | undefined> {
+  const files = (await promises.readdir(directory)).filter(
+    (file) => file.startsWith('shopify.app.') && file.endsWith('.toml'),
+  )
+
+  if (files.length < 2) return files[0]
+
+  return renderSelectPrompt({
+    message: 'Configuration file',
+    choices: files.map((file) => {
+      return {label: file, value: file}
+    }),
+  })
 }
 
 function buildTextPromptOptions(defaultValue: string): RenderTextPromptOptions {

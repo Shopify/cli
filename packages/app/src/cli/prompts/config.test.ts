@@ -1,7 +1,7 @@
-import {selectConfigName, validate} from './config.js'
+import {selectConfigFile, selectConfigName, validate} from './config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -87,6 +87,55 @@ describe('selectConfigName', () => {
         previewValue: expect.any(Function),
         validate: expect.any(Function),
       })
+    })
+  })
+})
+
+describe('selectConfigFile', () => {
+  test('returns the chosen file name when many files exist', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      writeFileSync(joinPath(tmp, 'shopify.app.local.toml'), '')
+      writeFileSync(joinPath(tmp, 'shopify.app.staging.toml'), '')
+      vi.mocked(renderSelectPrompt).mockResolvedValueOnce('shopify.app.staging.toml')
+
+      // When
+      const result = await selectConfigFile(tmp)
+
+      // Then
+      expect(result).toEqual('shopify.app.staging.toml')
+      expect(renderSelectPrompt).toHaveBeenCalledWith({
+        message: 'Configuration file',
+        choices: [
+          {label: 'shopify.app.local.toml', value: 'shopify.app.local.toml'},
+          {label: 'shopify.app.staging.toml', value: 'shopify.app.staging.toml'},
+        ],
+      })
+    })
+  })
+
+  test('returns the file name when only one file exists without prompting', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      writeFileSync(joinPath(tmp, 'shopify.app.local.toml'), '')
+
+      // When
+      const result = await selectConfigFile(tmp)
+
+      // Then
+      expect(result).toEqual('shopify.app.local.toml')
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+  })
+
+  test('returns undefined when there is no config file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // When
+      const result = await selectConfigFile(tmp)
+
+      // Then
+      expect(result).toBeUndefined()
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
   })
 })
