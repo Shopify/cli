@@ -1,4 +1,4 @@
-import {load} from './loader.js'
+import {getAppConfigurationFileName, load} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -856,5 +856,25 @@ scopes = "read_products"
         /authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs./,
       )
     })
+  })
+})
+
+describe('getAppConfigurationFileName', () => {
+  test('returns legacy file name when passing undefined or empty string', async () => {
+    // When/Then
+    expect(getAppConfigurationFileName()).toEqual('shopify.app.toml')
+    expect(getAppConfigurationFileName('')).toEqual('shopify.app.toml')
+  })
+
+  test('returns the same value when passing full file name', async () => {
+    // When/Then
+    expect(getAppConfigurationFileName('shopify.app.staging.toml')).toEqual('shopify.app.staging.toml')
+    expect(getAppConfigurationFileName('shopify.app.local.toml')).toEqual('shopify.app.local.toml')
+  })
+
+  test('builds file name when passing config name', async () => {
+    // When/Then
+    expect(getAppConfigurationFileName('staging')).toEqual('shopify.app.staging.toml')
+    expect(getAppConfigurationFileName('local')).toEqual('shopify.app.local.toml')
   })
 })
