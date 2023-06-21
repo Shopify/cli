@@ -566,6 +566,13 @@
           "description": "The environment to apply to the current command.",
           "hidden": true,
           "multiple": false
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "description": "Name for the config file.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}

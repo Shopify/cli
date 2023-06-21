@@ -48,7 +48,7 @@ describe('link', () => {
 extension_directories = [ ]
 client_id = "api-key"
 name = "app1"
-app_url = "https://example.com"
+application_url = "https://example.com"
 redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
@@ -85,7 +85,7 @@ redirect_url_allowlist = [ "https://example.com/callback1" ]
 extension_directories = [ ]
 client_id = "api-key"
 name = "app1"
-app_url = "https://example.com"
+application_url = "https://example.com"
 redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
@@ -175,7 +175,7 @@ redirect_url_allowlist = [ "https://example.com/callback1" ]
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-app_url = "https://example.com"
+application_url = "https://example.com"
 redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
