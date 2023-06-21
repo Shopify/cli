@@ -4,6 +4,7 @@ import {load as loadApp} from '../../models/app/loader.js'
 import build from '../../services/build.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -21,14 +22,21 @@ export default class Build extends Command {
       default: false,
     }),
     'api-key': Flags.string({
-      hidden: false,
+      hidden: true,
       description: "Application's API key that will be exposed at build time.",
       env: 'SHOPIFY_FLAG_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: "Application's Client ID that will be exposed at build time.",
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
+    const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -36,6 +44,6 @@ export default class Build extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: flags['api-key']})
+    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
   }
 }

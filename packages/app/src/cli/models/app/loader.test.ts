@@ -40,22 +40,26 @@ scopes = "read_products"
     const appConfigurationPath = joinPath(tmpDir, configurationFileNames.app)
     const packageJsonPath = joinPath(tmpDir, 'package.json')
     const webDirectory = joinPath(tmpDir, blocks.web.directoryName)
-    const webConfiguration = `
-    type = "backend"
-
-    [commands]
-    build = "build"
-    dev = "dev"
-    `
     await writeFile(appConfigurationPath, appConfiguration)
     await writeFile(
       packageJsonPath,
       JSON.stringify(packageJson ?? {name: 'my_app', dependencies: {}, devDependencies: {}}),
     )
     await mkdir(webDirectory)
-    await writeFile(joinPath(webDirectory, blocks.web.configurationName), webConfiguration)
+    await writeWebConfiguration({role: 'backend', webDirectory})
 
     return {webDirectory, appConfigurationPath}
+  }
+
+  const writeWebConfiguration = async ({role, webDirectory}: {role: string; webDirectory: string}) => {
+    const webConfiguration = `
+    type = "${role}"
+
+    [commands]
+    build = "build"
+    dev = "dev"
+    `
+    await writeFile(joinPath(webDirectory, blocks.web.configurationName), webConfiguration)
   }
 
   const blockPath = (name: string) => {
@@ -269,7 +273,31 @@ scopes = "read_products"
 
     // Then
     expect(app.webs.length).toBe(1)
-    expect(app.webs[0]!.configuration.type).toBe('backend')
+    const web = app.webs[0]!
+    expect(web.configuration.roles).toEqual(['backend'])
+  })
+
+  test('throws an error if there are multiple backends', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(appConfiguration)
+    const anotherWebDirectory = joinPath(webDirectory, '..', 'another_web_dir')
+    await mkdir(anotherWebDirectory)
+    await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'backend'})
+
+    // Then
+    await expect(load({directory: tmpDir, specifications})).rejects.toThrow()
+  })
+
+  test('throws an error if there are multiple frontends', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(appConfiguration)
+    await writeWebConfiguration({webDirectory, role: 'frontend'})
+    const anotherWebDirectory = joinPath(webDirectory, '..', 'another_web_dir')
+    await mkdir(anotherWebDirectory)
+    await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'frontend'})
+
+    // Then
+    await expect(load({directory: tmpDir, specifications})).rejects.toThrow()
   })
 
   test('loads the app with custom located web blocks', async () => {
