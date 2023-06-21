@@ -415,14 +415,14 @@ describe('ensureDeployContext', () => {
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
   })
 
-  test("throws an app not found error if the app with the API key doesn't exist", async () => {
+  test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
     // Given
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
-    await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with API key key1/)
+    await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with Client ID key1/)
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {

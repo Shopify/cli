@@ -31,8 +31,8 @@ import {getOrganization} from '@shopify/cli-kit/node/environment'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
-    message: outputContent`Invalid API key: ${apiKey}`,
-    tryMessage: outputContent`You can find the API key in the app settings in the Partners Dashboard.`,
+    message: outputContent`Invalid Client ID: ${apiKey}`,
+    tryMessage: outputContent`You can find the Client ID in the app settings in the Partners Dashboard.`,
   }
 }
 
@@ -196,7 +196,7 @@ const resetHelpMessage = 'You can pass `--reset` to your command to reset your c
 const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
   if (!appId) return
   const app = await fetchAppFromApiKey(appId, token)
-  if (!app) throw new BugError(`Couldn't find the app with API key "${appId}". ${resetHelpMessage}`)
+  if (!app) throw new BugError(`Couldn't find the app with Client ID "${appId}". ${resetHelpMessage}`)
   return app
 }
 
@@ -353,7 +353,7 @@ export async function fetchAppAndIdentifiers(
     partnersApp = await fetchAppFromApiKey(apiKey, token)
     if (!partnersApp) {
       throw new AbortError(
-        outputContent`Couldn't find the app with API key ${apiKey}`,
+        outputContent`Couldn't find the app with Client ID ${apiKey}`,
         outputContent`• If you didn't intend to select this app, run ${
           outputContent`${outputToken.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
         }`,

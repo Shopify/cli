@@ -4,6 +4,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -15,9 +16,14 @@ export default class Deploy extends Command {
     ...globalFlags,
     ...appFlags,
     'api-key': Flags.string({
-      hidden: false,
+      hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
     reset: Flags.boolean({
       hidden: false,
@@ -35,7 +41,9 @@ export default class Deploy extends Command {
   }
 
   async run(): Promise<void> {
-    const {args, flags} = await this.parse(Deploy)
+    const {flags} = await this.parse(Deploy)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
+    const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({
       cmd_app_reset_used: flags.reset,
@@ -43,6 +51,6 @@ export default class Deploy extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await deploy({app, apiKey: flags['api-key'], reset: flags.reset, force: flags.force})
+    await deploy({app, apiKey, reset: flags.reset, force: flags.force})
   }
 }

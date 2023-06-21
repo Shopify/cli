@@ -96,7 +96,7 @@ class AppInfo {
     const lines = [
       ['App', appName],
       ['Dev store', storeDescription],
-      ['API key', apiKey],
+      ['Client ID', apiKey],
       ['Update URLs', updateURLs],
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
