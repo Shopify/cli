@@ -14,10 +14,7 @@ export async function resolveDeploymentMode(app: OrganizationApp, options: Deplo
   let deploymentMode: DeploymentMode = app.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
 
   if (deploymentMode === 'legacy') {
-    displayDeployLegacyBanner(options.app.packageManager)
-    if (await upgradeDeploymentToUnified(app, options, token)) {
-      deploymentMode = 'unified'
-    }
+    deploymentMode = (await upgradeDeploymentToUnified(app, options, token)) ? 'unified' : 'legacy'
   }
 
   if (deploymentMode === 'unified') {
@@ -76,6 +73,8 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
 
 async function upgradeDeploymentToUnified(app: OrganizationApp, options: DeployContextOptions, token: string) {
   if (!app.betas?.unifiedAppDeploymentOptIn || options.force) return false
+
+  displayDeployLegacyBanner(options.app.packageManager)
 
   const infoMessage: InfoMessage = {
     title: {
