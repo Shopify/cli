@@ -444,7 +444,7 @@ async function uploadFunctionExtension(
     title: extension.configuration.name,
     description: extension.configuration.description ?? '',
     apiType: extension.configuration.type,
-    apiVersion: extension.configuration.apiVersion,
+    apiVersion: extension.configuration.api_version,
     inputQuery,
     inputQueryVariables: extension.configuration.input?.variables
       ? {
