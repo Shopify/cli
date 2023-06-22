@@ -82,16 +82,9 @@ export async function deploy(options: DeployOptions) {
           title: unifiedDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
           task: async () => {
             const extensions = await Promise.all(
-              options.app.allExtensions.flatMap(async (ext) => {
-                const bundleConfig = await ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment})
-                return (
-                  bundleConfig && {
-                    uuid: bundleConfig.uuid,
-                    context: bundleConfig.context,
-                    config: JSON.stringify(bundleConfig.config),
-                  }
-                )
-              }),
+              options.app.allExtensions.flatMap((ext) =>
+                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
+              ),
             )
 
             if (bundle || unifiedDeployment) {

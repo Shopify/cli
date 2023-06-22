@@ -36,25 +36,10 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const bundleConfig = await extension.bundleConfig({
-    identifiers: {
-      app: apiKey,
-      extensions: {
-        [extension.localIdentifier]: extension.devUUID,
-      },
-      extensionIds: {
-        [extension.localIdentifier]: registrationId,
-      },
-    },
-    apiKey,
-    token,
-    unifiedDeployment,
-  })
-
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...bundleConfig?.config,
+      ...(await extension.deployConfig(apiKey, token, unifiedDeployment)),
       serialized_script: encodedFile,
     }),
     context: undefined,
