@@ -525,9 +525,10 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+    const opt = options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, 'unified')
 
     // When
-    await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, 'unified'), {
+    await ensureExtensionsIds(opt, {
       extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
       dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
     })
@@ -545,7 +546,8 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         toCreate: [],
       },
       'unified',
-      PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+      opt.appId,
+      opt.token,
     )
   })
 
@@ -561,15 +563,13 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+    const opt = options([EXTENSION_A, EXTENSION_A_2], [], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA)
 
     // When
-    await ensureExtensionsIds(
-      options([EXTENSION_A, EXTENSION_A_2], [], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
-      {
-        extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
-        dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
-      },
-    )
+    await ensureExtensionsIds(opt, {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
+    })
 
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
@@ -584,7 +584,8 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         toCreate: [],
       },
       'legacy',
-      PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA,
+      opt.appId,
+      opt.token,
     )
   })
 
