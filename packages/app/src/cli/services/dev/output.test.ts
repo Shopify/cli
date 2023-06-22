@@ -19,8 +19,7 @@ describe('output', () => {
 
       expect(outputMock.output()).toMatchInlineSnapshot(`
         "test function extension
-        These extensions need to be deployed to be manually tested.
-        One testing option is to use a separate app dedicated to staging.
+        Your app must be installed to test these extensions. Use the Preview URL to open your App home.
 
         theme extension name (Theme)
         Follow the dev doc instructions ( https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes ) by deploying your work as a draft
