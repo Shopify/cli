@@ -1,5 +1,5 @@
 import {getAppConfigurationFileName, load as loadApp} from '../../../models/app/loader.js'
-import {setCurrentConfigFile} from '../../local-storage.js'
+import {clearCurrentConfigFile, setCurrentConfigFile} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -9,9 +9,19 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 export interface UseOptions {
   directory: string
   config?: string
+  reset?: boolean
 }
 
-export default async function use({directory, config}: UseOptions): Promise<void> {
+export default async function use({directory, config, reset = false}: UseOptions): Promise<void> {
+  if (reset) {
+    clearCurrentConfigFile(directory)
+    renderSuccess({
+      headline: 'Cleared current configuration.',
+      body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
+    })
+    return
+  }
+
   const configFileName = await getConfigFileName(directory, config)
 
   if (!configFileName) {

@@ -615,6 +615,13 @@
           "description": "The environment to apply to the current command.",
           "hidden": true,
           "multiple": false
+        },
+        "reset": {
+          "name": "reset",
+          "type": "boolean",
+          "description": "Reset current configuration.",
+          "hidden": false,
+          "allowNo": false
         }
       },
       "args": {

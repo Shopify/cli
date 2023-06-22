@@ -1,7 +1,7 @@
 import use, {UseOptions} from './use.js'
 import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
-import {setCurrentConfigFile} from '../../local-storage.js'
+import {clearCurrentConfigFile, setCurrentConfigFile} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -86,7 +86,31 @@ describe('use', () => {
     })
   })
 
-  test('saves appInfo with client_id and config name to localstorage', async () => {
+  test('clears currentConfiguration when reset is true', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: UseOptions = {
+        directory: tmp,
+        config: 'invalid',
+        reset: true,
+      }
+
+      // When
+      await use(options)
+
+      // Then
+      expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
+      expect(setCurrentConfigFile).not.toHaveBeenCalled()
+      expect(load).not.toHaveBeenCalled()
+
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Cleared current configuration.',
+        body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
+      })
+    })
+  })
+
+  test('saves currentConfiguration with client_id and config name to localstorage', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       createConfigFile(tmp, 'shopify.app.staging.toml')
