@@ -510,7 +510,7 @@ describe('deploy', () => {
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
+          {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
           'to see rollout progress.',
         ],
       ],
