@@ -1,6 +1,6 @@
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {normalizePath} from '@shopify/cli-kit/node/path'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 
 export interface CachedAppInfo {
   directory: string
@@ -51,14 +51,24 @@ export function setAppInfo(
   options: CachedAppInfo,
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): void {
-  const normalized = normalizePath(options.directory)
-  outputDebug(
-    outputContent`Storing app information for directory ${outputToken.path(normalized)}:${outputToken.json(options)}`,
-  )
-  const savedApp = config.get(normalized)
+  const normalizedDirectory = normalizePath(options.directory)
+
+  let normalizedKey
+  let keyMessage
+  if (options.configFile) {
+    normalizedKey = normalizePath(joinPath(options.directory, options.configFile))
+    keyMessage = `file ${outputToken.path(normalizedKey)}`
+  } else {
+    normalizedKey = normalizedDirectory
+    keyMessage = `directory ${outputToken.path(normalizedDirectory)}`
+  }
+
+  outputDebug(outputContent`Storing app information for ${keyMessage}:${outputToken.json(options)}`)
+  const savedApp = config.get(normalizedKey)
   if (savedApp) {
-    config.set(normalized, {
-      directory: normalized,
+    config.set(normalizedKey, {
+      directory: normalizedDirectory,
+      configFile: options.configFile ?? savedApp.configFile,
       appId: options.appId ?? savedApp.appId,
       title: options.title ?? savedApp.title,
       storeFqdn: options.storeFqdn ?? savedApp.storeFqdn,
@@ -67,6 +77,6 @@ export function setAppInfo(
       tunnelPlugin: options.tunnelPlugin ?? savedApp.tunnelPlugin,
     })
   } else {
-    config.set(normalized, options)
+    config.set(normalizedKey, options)
   }
 }

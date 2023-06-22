@@ -2,10 +2,15 @@ import {AppLocalStorageSchema, clearAppInfo, getAppInfo, setAppInfo} from './loc
 import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
+
+const APP1_WITH_CONFIG_FILE = {...APP1, configFile: 'shopify.app.staging.toml'}
+const APP1_WITH_CONFIG_FILE_UPDATED = {...APP1Updated, configFile: 'shopify.app.staging.toml'}
+const APP2_WITH_CONFIG_FILE = {...APP2, configFile: 'shopify.app.prod.toml'}
 
 describe('getAppInfo', async () => {
   test('returns cached info if existss', async () => {
@@ -37,46 +42,99 @@ describe('getAppInfo', async () => {
 })
 
 describe('setAppInfo', async () => {
-  test('updates cached info if exists', async () => {
-    await inTemporaryDirectory(async (cwd) => {
-      // Given
-      const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
-      storage.set(APP1.directory, APP1)
+  describe('with legacy app config', async () => {
+    test('updates cached info if exists', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+        storage.set(APP1.directory, APP1)
 
-      // When
-      setAppInfo(APP1Updated, storage)
-      const got = storage.get(APP1.directory)
+        // When
+        setAppInfo(APP1Updated, storage)
+        const got = storage.get(APP1.directory)
 
-      // Then
-      expect(got).toEqual(APP1Updated)
+        // Then
+        expect(got).toEqual(APP1Updated)
+      })
+    })
+
+    test('creates new info if it does not exists', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+
+        // When
+        setAppInfo({appId: 'app2', directory: '/app2', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, storage)
+        const got = storage.get(APP2.directory)
+
+        // Then
+        expect(got).toEqual(APP2)
+      })
+    })
+
+    test('creates new info normalizing the path', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+
+        // When
+        setAppInfo(
+          {appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId},
+          storage,
+        )
+        const got = storage.get('/app2/something')
+
+        // Then
+        expect(got.appId).toEqual(APP2.appId)
+      })
     })
   })
 
-  test('creates new info if it does not exists', async () => {
-    await inTemporaryDirectory(async (cwd) => {
-      // Given
-      const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+  describe('with specific app config file', async () => {
+    test('updates cached info if exists', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+        const filePath = joinPath(APP1_WITH_CONFIG_FILE.directory, APP1_WITH_CONFIG_FILE.configFile)
+        storage.set(filePath, APP1_WITH_CONFIG_FILE)
 
-      // When
-      setAppInfo({appId: 'app2', directory: '/app2', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, storage)
-      const got = storage.get(APP2.directory)
+        // When
+        setAppInfo(APP1_WITH_CONFIG_FILE_UPDATED, storage)
+        const got = storage.get(filePath)
 
-      // Then
-      expect(got).toEqual(APP2)
+        // Then
+        expect(got).toEqual(APP1_WITH_CONFIG_FILE_UPDATED)
+      })
     })
-  })
 
-  test('creates new info normalizing the path', async () => {
-    await inTemporaryDirectory(async (cwd) => {
-      // Given
-      const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+    test('creates new info if it does not exists', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+        const filePath = joinPath(APP2_WITH_CONFIG_FILE.directory, APP2_WITH_CONFIG_FILE.configFile)
 
-      // When
-      setAppInfo({appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, storage)
-      const got = storage.get('/app2/something')
+        // When
+        setAppInfo(APP2_WITH_CONFIG_FILE, storage)
+        const got = storage.get(filePath)
 
-      // Then
-      expect(got.appId).toEqual(APP2.appId)
+        // Then
+        expect(got).toEqual(APP2_WITH_CONFIG_FILE)
+      })
+    })
+
+    test('creates new info normalizing the path', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+        const app = {...APP2_WITH_CONFIG_FILE, directory: '\\app2\\something'}
+
+        // When
+        setAppInfo(app, storage)
+        const got = storage.get(joinPath('/app2/something', app.configFile))
+
+        // Then
+        expect(got.appId).toEqual(APP2.appId)
+      })
     })
   })
 })

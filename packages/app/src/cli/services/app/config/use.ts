@@ -25,6 +25,19 @@ export default async function use({directory, config}: UseOptions): Promise<void
     throw new AbortError(`Could not find configuration file ${configFileName}`)
   }
 
+  await saveCurrentConfig({configFileName, directory})
+
+  renderSuccess({
+    headline: `Using configuration file ${configFileName}`,
+  })
+}
+
+interface SaveCurrentConfigOptions {
+  configFileName: string
+  directory: string
+}
+
+async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
   const app = await loadApp({specifications: [], configName: configFileName, directory, mode: 'strict'})
 
   if (!app.configuration.client_id) {
@@ -35,10 +48,6 @@ export default async function use({directory, config}: UseOptions): Promise<void
     directory,
     configFile: configFileName,
     appId: app.configuration.client_id,
-  })
-
-  renderSuccess({
-    headline: `Using configuration file ${configFileName}`,
   })
 }
 
