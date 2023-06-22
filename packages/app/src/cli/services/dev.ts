@@ -111,15 +111,19 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
-    generateFrontendURL({
-      ...options,
-      app: localApp,
-      tunnelClient,
-    }),
-    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-    getURLs(apiKey, token),
-  ])
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, frontendServerPort, currentURLs] = await Promise.all(
+    [
+      generateFrontendURL({
+        ...options,
+        app: localApp,
+        tunnelClient,
+      }),
+      getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
+      frontendConfig?.configuration.port || getAvailableTCPPort(),
+      getURLs(apiKey, token),
+    ],
+  )
+  if (frontendConfig && !frontendConfig.configuration.port) frontendConfig.configuration.port = frontendServerPort
 
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   const proxyTargets: ReverseHTTPProxyTarget[] = []
@@ -162,7 +166,7 @@ async function dev(options: DevOptions) {
     scopes: localApp.configuration.scopes,
     apiSecret,
     backendPort,
-    frontendPort,
+    frontendServerPort,
   }
 
   await Promise.all(
@@ -299,7 +303,7 @@ function isWebType(web: Web, type: WebType): boolean {
 interface DevWebOptions {
   web: Web
   backendPort: number
-  frontendPort: number
+  frontendServerPort: number
   apiKey: string
   apiSecret?: string
   hostname?: string
@@ -354,7 +358,7 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
       SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
     }),
     BACKEND_PORT: `${options.backendPort}`,
-    FRONTEND_PORT: `${options.frontendPort}`,
+    FRONTEND_PORT: `${options.frontendServerPort}`,
     APP_URL: options.hostname,
     APP_ENV: 'development',
   }
