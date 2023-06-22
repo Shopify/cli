@@ -73,6 +73,35 @@ describe('deployConfirmationPrompt', () => {
     expect(response).toBe(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
   })
+
+  test('when unified deployment mode and current dashboard extension registration and non dashboard active version include same extension we should not show it in the dashboard section', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
+    // Add dashboard extension to the current non dashboard registrations
+    let sourceSummary = buildSourceSummary()
+    sourceSummary = {
+      ...sourceSummary,
+      identifiers: {
+        ...sourceSummary.identifiers,
+        ...{dashboard_title2: 'dashboard_uuid2'},
+      },
+    }
+
+    // When
+    const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+
+    // Then
+    // Remove dashboard section
+    const expectedContent = unifiedRenderConfirmationPromptContent('Yes, release this new version')
+    expectedContent.infoTable.splice(2, 1)
+    // Add dashboard extension to the create section
+    expectedContent.infoTable[0]?.items?.splice(1, 1)
+    expectedContent.infoTable[0]?.items?.push('dashboard_title2')
+    expectedContent.infoTable[0]?.items?.push('id1')
+    expect(response).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
+  })
 })
 
 function buildSourceSummary() {

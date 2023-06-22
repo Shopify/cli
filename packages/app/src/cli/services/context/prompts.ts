@@ -135,12 +135,15 @@ async function buildUnifiedDeploymentInfoPrompt(
 
   let toCreateFinal: string[] = []
   const toUpdate: string[] = []
+  let dashboardOnlyFinal = dashboardOnly
   for (const [identifier, uuid] of Object.entries(localRegistration)) {
     if (nonDashboardRemoteRegistrations.includes(uuid)) {
       toUpdate.push(identifier)
     } else {
       toCreateFinal.push(identifier)
     }
+
+    dashboardOnlyFinal = dashboardOnlyFinal.filter((dashboardOnly) => dashboardOnly.uuid !== uuid)
   }
 
   toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
@@ -152,8 +155,11 @@ async function buildUnifiedDeploymentInfoPrompt(
     infoTable.push({header: 'Update', items: toUpdate})
   }
 
-  if (dashboardOnly.length > 0) {
-    infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
+  if (dashboardOnlyFinal.length > 0) {
+    infoTable.push({
+      header: 'Included from\nPartner dashboard',
+      items: dashboardOnlyFinal.map((source) => source.title),
+    })
   }
 
   const localRegistrationAndDashboard = [
