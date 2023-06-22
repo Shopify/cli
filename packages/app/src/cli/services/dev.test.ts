@@ -75,7 +75,7 @@ describe('devDraftableExtensionTarget()', () => {
     })
   })
 
-  test('builds and deploys and watches functions if unified deployment is enabled', async () => {
+  test('builds and deploys and watches functions', async () => {
     const abortController = new AbortController()
     const stdout = new Writable()
     const stderr = new Writable()
@@ -144,36 +144,5 @@ describe('devDraftableExtensionTarget()', () => {
         unifiedDeployment: true,
       })
     })
-  })
-
-  test('does not build or deploy or watch functions if unified deployment is disabled', async () => {
-    const abortController = new AbortController()
-    const stdout = new Writable()
-    const stderr = new Writable()
-    const function1 = await testFunctionExtension()
-
-    const app = testApp()
-    const extensions = [function1]
-    const remoteExtensions = {} as any
-    remoteExtensions[function1.localIdentifier] = 'mock-registration-id-1'
-    const specifications = await loadLocalExtensionsSpecifications()
-
-    const process = devDraftableExtensionTarget({
-      extensions,
-      app,
-      url: 'mock-url',
-      token: 'mock-token',
-      apiKey: 'mock-api-key',
-      remoteExtensions,
-      specifications,
-      unifiedDeployment: false,
-    })
-
-    await process.action(stdout, stderr, abortController.signal)
-
-    expect(buildFunctionExtension).not.toHaveBeenCalled()
-    expect(updateExtensionDraft).not.toHaveBeenCalled()
-    expect(setupConfigWatcher).not.toHaveBeenCalled()
-    expect(setupFunctionWatcher).not.toHaveBeenCalled()
   })
 })

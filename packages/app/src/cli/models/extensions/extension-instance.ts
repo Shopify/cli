@@ -94,10 +94,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
-  get isDraftable() {
-    return !this.isPreviewable && !this.isThemeExtension
-  }
-
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -132,6 +128,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const config = this.configuration as unknown as FunctionConfigType
       this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
+  }
+
+  isDraftable(unifiedDeployment: boolean) {
+    return !this.isPreviewable && !this.isThemeExtension && (unifiedDeployment || !this.isFunctionExtension)
   }
 
   deployConfig(apiKey: string, moduleId?: string): Promise<{[key: string]: unknown} | undefined> {

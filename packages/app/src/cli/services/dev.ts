@@ -188,8 +188,9 @@ async function dev(options: DevOptions) {
     }),
   )
 
+  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
-  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -455,31 +456,26 @@ export function devDraftableExtensionTarget({
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      if (unifiedDeployment) {
-        const functions = extensions.filter((ext) => ext.isFunctionExtension)
-        await Promise.all(
-          functions.map(async (extension) => {
-            await buildFunctionExtension(extension, {
-              app,
-              stdout,
-              stderr,
-              useTasks: false,
-              signal,
-            })
-            const registrationId = remoteExtensions[extension.localIdentifier]
-            if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-            await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
-          }),
-        )
-      }
+      // Functions should only be included if unified deployments are enabled
+      const functions = extensions.filter((ext) => ext.isFunctionExtension)
+      await Promise.all(
+        functions.map(async (extension) => {
+          await buildFunctionExtension(extension, {
+            app,
+            stdout,
+            stderr,
+            useTasks: false,
+            signal,
+          })
+          const registrationId = remoteExtensions[extension.localIdentifier]
+          if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+          await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+        }),
+      )
 
       await Promise.all(
         extensions
           .map((extension) => {
-            if (extension.isFunctionExtension && !unifiedDeployment) {
-              return null
-            }
-
             const registrationId = remoteExtensions[extension.localIdentifier]
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
@@ -535,8 +531,7 @@ export function devDraftableExtensionTarget({
 
             return actions
           })
-          .flat()
-          .filter(Boolean),
+          .flat(),
       )
     },
   }
