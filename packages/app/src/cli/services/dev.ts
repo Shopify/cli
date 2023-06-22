@@ -232,7 +232,7 @@ async function dev(options: DevOptions) {
         extensions: draftableExtensions,
         remoteExtensions,
         specifications,
-        unifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false,
+        unifiedDeployment,
       }),
     )
   }
