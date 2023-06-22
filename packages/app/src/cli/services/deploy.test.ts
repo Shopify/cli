@@ -322,7 +322,7 @@ describe('deploy', () => {
       description: functionExtension.configuration.description,
       app_key: 'app-id',
       api_type: functionExtension.configuration.type,
-      api_version: functionExtension.configuration.apiVersion,
+      api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
@@ -510,7 +510,7 @@ describe('deploy', () => {
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
+          {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
           'to see rollout progress.',
         ],
       ],

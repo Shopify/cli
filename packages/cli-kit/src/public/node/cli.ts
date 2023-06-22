@@ -1,4 +1,4 @@
-import {isTruthy} from '../../private/node/context/utilities.js'
+import {isTruthy} from './context/utilities.js'
 import {printEventsJson} from '../../private/node/demo-recorder.js'
 import {Flags} from '@oclif/core'
 

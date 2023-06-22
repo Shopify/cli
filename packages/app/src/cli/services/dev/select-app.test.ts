@@ -15,12 +15,12 @@ vi.mock('@shopify/cli-kit/node/session')
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
   configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
+  configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
   webs: [
     {
       directory: '',
       configuration: {
-        type: WebType.Backend,
+        roles: [WebType.Backend],
         commands: {dev: ''},
       },
     },

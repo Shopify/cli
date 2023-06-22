@@ -80,7 +80,7 @@ describe('release', () => {
         },
         '\nmessage',
       ],
-      headline: 'Version released to users',
+      headline: 'Version released to users.',
       nextSteps: [
         [
           'Run',

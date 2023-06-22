@@ -1162,6 +1162,61 @@
           "name": "file"
         }
       }
+    },
+    "app:versions:list": {
+      "id": "app:versions:list",
+      "description": "List deployed versions of your app.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "environment": {
+          "name": "environment",
+          "type": "option",
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "hidden": true,
+          "multiple": false
+        },
+        "api-key": {
+          "name": "api-key",
+          "type": "option",
+          "description": "Application's API key to fetch versions for.",
+          "hidden": false,
+          "multiple": false
+        }
+      },
+      "args": {
+        "file": {
+          "name": "file"
+        }
+      }
     }
   }
 }

@@ -35,7 +35,7 @@ describe('getUIExtensionPayload', () => {
             network_access: true,
             api_access: true,
           },
-          extensionPoints: ['CUSTOM_EXTENSION_POINT'],
+          extension_points: ['CUSTOM_EXTENSION_POINT'],
         },
         devUUID: 'devUUID',
       })
@@ -148,7 +148,7 @@ describe('getUIExtensionPayload', () => {
             network_access: false,
             api_access: false,
           },
-          extensionPoints: [
+          extension_points: [
             {
               target: 'Admin::Checkout::Editor::Settings',
               module: './src/AdminCheckoutEditorSettings.js',
@@ -223,14 +223,14 @@ describe('getUIExtensionPayload', () => {
         configuration: {
           name: 'UI Extension',
           type: 'ui_extension',
-          apiVersion,
+          api_version: apiVersion,
           metafields: [],
           capabilities: {
             block_progress: false,
             network_access: false,
             api_access: false,
           },
-          extensionPoints: [
+          extension_points: [
             {
               target: 'Admin::Checkout::Editor::Settings',
               module: './src/AdminCheckoutEditorSettings.js',

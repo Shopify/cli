@@ -12,7 +12,7 @@ const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 const dependency = '@shopify/web-pixels-extension'
 
 const WebPixelSchema = BaseSchema.extend({
-  runtimeContext: zod.string(),
+  runtime_context: zod.string(),
   version: zod.string().optional(),
   configuration: zod.any(),
   settings: zod.any(),
@@ -28,7 +28,7 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => ['bundling', 'esbuild'],
   deployConfig: async (config, _) => {
     return {
-      runtime_context: config.runtimeContext,
+      runtime_context: config.runtime_context,
       runtime_configuration_definition: config.settings,
     }
   },

@@ -67,7 +67,7 @@ export async function release(options: ReleaseOptions) {
     })
   } else {
     renderSuccess({
-      headline: 'Version released to users',
+      headline: 'Version released to users.',
       body: linkAndMessage,
       nextSteps: [
         [

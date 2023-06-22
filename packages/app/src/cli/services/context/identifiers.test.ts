@@ -38,7 +38,7 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
+    configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
     allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
@@ -118,8 +118,8 @@ beforeAll(async () => {
         command: 'make build',
         path: 'dist/index.wasm',
       },
-      configurationUi: false,
-      apiVersion: '2022-07',
+      configuration_ui: false,
+      api_version: '2022-07',
       metafields: [],
     },
   })

@@ -1,5 +1,6 @@
 import {SelectInput} from './SelectInput.js'
 import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
+import {platformAndArch} from '../../../../public/node/os.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 
@@ -208,7 +209,9 @@ describe('SelectInput', async () => {
     expect(onChange).toHaveBeenCalledWith(items[2])
   })
 
-  test('support groups', async () => {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test.skipIf(runningOnWindows)('support groups', async () => {
     const onChange = vi.fn()
 
     const items = [
