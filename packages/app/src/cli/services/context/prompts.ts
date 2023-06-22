@@ -156,8 +156,12 @@ async function buildUnifiedDeploymentInfoPrompt(
     infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
   }
 
+  const localRegistrationAndDashboard = [
+    ...Object.values(localRegistration),
+    ...dashboardOnly.map((source) => source.uuid),
+  ]
   const onlyRemote = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !Object.values(localRegistration).includes(module.registrationUuid))
+    .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
     .map((module) => module.registrationTitle)
   if (onlyRemote.length > 0) {
     const missingLocallySection: InfoTableSection = {

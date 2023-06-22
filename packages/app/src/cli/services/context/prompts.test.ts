@@ -48,6 +48,31 @@ describe('deployConfirmationPrompt', () => {
       unifiedRenderConfirmationPromptContent('Yes, release this new version'),
     )
   })
+
+  test('when unified deployment mode and current extension registration and active version include same dashboard extension we should show it only in the dashboard section', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
+    const sourceSummary = buildSourceSummary()
+    sourceSummary.dashboardOnly.push({
+      id: 'dashboard_id1',
+      uuid: 'dashboard_uuid1',
+      title: 'dashboard_title1',
+      type: 'dashboard_type1',
+    })
+
+    // When
+    const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+
+    // Then
+    // Add 'dashboard_title1' to the dashboar section
+    const expectedContent = unifiedRenderConfirmationPromptContent('Yes, release this new version')
+    expectedContent.infoTable[2]?.items?.push('dashboard_title1')
+    // Remove 'dashboard_title1' from the deleted section
+    expectedContent.infoTable[3]?.items?.splice(1, 1)
+    expect(response).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
+  })
 })
 
 function buildSourceSummary() {
@@ -75,10 +100,10 @@ function buildSourceSummary() {
     ],
     dashboardOnly: [
       {
-        id: 'dashboard_id1',
-        uuid: 'dashboard_uuid1',
-        title: 'dashboard_title1',
-        type: 'dashboard_type1',
+        id: 'dashboard_id2',
+        uuid: 'dashboard_uuid2',
+        title: 'dashboard_title2',
+        type: 'dashboard_type2',
       },
     ],
   }
@@ -99,7 +124,7 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
       },
       {
         header: `Included from\nPartner dashboard`,
-        items: ['dashboard_title1'],
+        items: ['dashboard_title2'],
       },
       {
         header: 'Missing locally',
@@ -144,7 +169,7 @@ function activeVersionContent() {
           {
             registrationId: 'dashboard_id1',
             registrationUuid: 'dashboard_uuid1',
-            registrationTitle: 'dashboard_title3',
+            registrationTitle: 'dashboard_title1',
             type: 'admin-link',
             specification: {
               identifier: 'spec2',
@@ -175,13 +200,13 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
       },
       {
         header: `Included from\nPartner dashboard`,
-        items: ['dashboard_title1'],
+        items: ['dashboard_title2'],
       },
       {
         header: 'Removed',
         helperText: 'Will be removed for users when this version is released.',
         color: 'red',
-        items: ['title3', 'dashboard_title3'],
+        items: ['title3', 'dashboard_title1'],
       },
     ],
     message: 'question',
