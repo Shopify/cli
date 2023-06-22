@@ -1,4 +1,12 @@
-import {AppLocalStorageSchema, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {
+  AppLocalStorageSchema,
+  CurrentConfigLocalStorageSchema,
+  clearAppInfo,
+  clearCurrentConfigFile,
+  getAppInfo,
+  setAppInfo,
+  setCurrentConfigFile,
+} from './local-storage.js'
 import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -135,6 +143,37 @@ describe('setAppInfo', async () => {
         // Then
         expect(got.appId).toEqual(APP2.appId)
       })
+    })
+  })
+})
+
+describe('setCurrentConfigFile', async () => {
+  test('adds key to current config local storage and calls setAppInfo', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const appStorage = new LocalStorage<AppLocalStorageSchema>({cwd})
+      const currentConfigStorage = new LocalStorage<CurrentConfigLocalStorageSchema>({cwd})
+      const appKey = joinPath(APP1_WITH_CONFIG_FILE.directory, APP1_WITH_CONFIG_FILE.configFile)
+
+      // When/Then
+      setCurrentConfigFile(APP1_WITH_CONFIG_FILE, appStorage, currentConfigStorage)
+      expect(currentConfigStorage.get(APP1_WITH_CONFIG_FILE.directory)).toEqual(APP1_WITH_CONFIG_FILE.configFile)
+      expect(appStorage.get(appKey)).toEqual(APP1_WITH_CONFIG_FILE)
+    })
+  })
+})
+
+describe('clearCurrentConfigFile', async () => {
+  test('removes key from current config local storage', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const appStorage = new LocalStorage<AppLocalStorageSchema>({cwd})
+      const currentConfigStorage = new LocalStorage<CurrentConfigLocalStorageSchema>({cwd})
+      currentConfigStorage.set(APP1_WITH_CONFIG_FILE.directory, 'shopify.app.staging.toml')
+
+      // When/Then
+      clearCurrentConfigFile(APP1_WITH_CONFIG_FILE.directory, currentConfigStorage)
+      expect(currentConfigStorage.get(APP1_WITH_CONFIG_FILE.directory)).toEqual(undefined)
     })
   })
 })

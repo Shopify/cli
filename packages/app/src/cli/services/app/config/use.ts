@@ -1,5 +1,5 @@
 import {getAppConfigurationFileName, load as loadApp} from '../../../models/app/loader.js'
-import {setAppInfo} from '../../local-storage.js'
+import {setCurrentConfigFile} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -44,7 +44,7 @@ async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigO
     throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
   }
 
-  setAppInfo({
+  setCurrentConfigFile({
     directory,
     configFile: configFileName,
     appId: app.configuration.client_id,

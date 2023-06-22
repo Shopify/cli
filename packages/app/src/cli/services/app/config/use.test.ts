@@ -1,7 +1,7 @@
 import use, {UseOptions} from './use.js'
 import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
-import {setAppInfo} from '../../local-storage.js'
+import {setCurrentConfigFile} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -103,7 +103,7 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(setAppInfo).toHaveBeenCalledWith({
+      expect(setCurrentConfigFile).toHaveBeenCalledWith({
         directory: tmp,
         configFile: 'shopify.app.staging.toml',
         appId: 'something',
@@ -130,7 +130,7 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(setAppInfo).toHaveBeenCalledWith({
+      expect(setCurrentConfigFile).toHaveBeenCalledWith({
         directory: tmp,
         configFile: 'shopify.app.local.toml',
         appId: 'other-id',

@@ -18,13 +18,27 @@ export interface AppLocalStorageSchema {
   [key: string]: CachedAppInfo
 }
 
-let _instance: LocalStorage<AppLocalStorageSchema> | undefined
+export interface CurrentConfigLocalStorageSchema {
+  [key: string]: string
+}
+
+let _appLocalStorageInstance: LocalStorage<AppLocalStorageSchema> | undefined
+let _currentConfigLocalStorageInstance: LocalStorage<CurrentConfigLocalStorageSchema> | undefined
 
 function appLocalStorage() {
-  if (!_instance) {
-    _instance = new LocalStorage<AppLocalStorageSchema>({projectName: 'shopify-cli-app'})
+  if (!_appLocalStorageInstance) {
+    _appLocalStorageInstance = new LocalStorage<AppLocalStorageSchema>({projectName: 'shopify-cli-app'})
   }
-  return _instance
+  return _appLocalStorageInstance
+}
+
+function currentConfigLocalStorage() {
+  if (!_currentConfigLocalStorageInstance) {
+    _currentConfigLocalStorageInstance = new LocalStorage<CurrentConfigLocalStorageSchema>({
+      projectName: 'shopify-cli-app',
+    })
+  }
+  return _currentConfigLocalStorageInstance
 }
 
 export function getAppInfo(
@@ -79,4 +93,22 @@ export function setAppInfo(
   } else {
     config.set(normalizedKey, options)
   }
+}
+
+export function setCurrentConfigFile(
+  options: CachedAppInfo,
+  appStorage: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
+  currentConfigStorage: LocalStorage<CurrentConfigLocalStorageSchema> = currentConfigLocalStorage(),
+): void {
+  const normalized = normalizePath(options.directory)
+  setAppInfo(options, appStorage)
+  currentConfigStorage.set(normalized, options.configFile)
+}
+
+export function clearCurrentConfigFile(
+  directory: string,
+  currentConfigStorage: LocalStorage<CurrentConfigLocalStorageSchema> = currentConfigLocalStorage(),
+): void {
+  const normalized = normalizePath(directory)
+  currentConfigStorage.delete(normalized)
 }
