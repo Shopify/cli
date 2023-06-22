@@ -383,7 +383,7 @@ describe('ensureDevContext', () => {
     expect(fetchOrgAndApps).toBeCalled()
   })
 
-  test('enables developer preview if the beta is enabled in partners', async () => {
+  test('dev enables automatically the developer preview if the unified deployments beta is enabled', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
@@ -610,7 +610,7 @@ describe('ensureDeployContext', () => {
     )
   })
 
-  test('disables developer preview if the beta is enabled in partners', async () => {
+  test('deploy disables automatically the developer preview if the unified deployments beta is enabled', async () => {
     // Given
     const app = testApp()
     const identifiers = {
