@@ -1,5 +1,6 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
+import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -11,10 +12,16 @@ export default class FetchSchema extends Command {
     ...globalFlags,
     ...functionFlags,
     'api-key': Flags.string({
+      hidden: true,
       name: 'API key',
       description: 'The API key to fetch the schema with.',
       required: false,
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID to fetch the schema with.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
     stdout: Flags.boolean({
       description: 'Output the schema to stdout instead of writing to a file.',
@@ -25,12 +32,15 @@ export default class FetchSchema extends Command {
   }
 
   public async run(): Promise<void> {
-    const {flags, args} = await this.parse(FetchSchema)
+    const {flags} = await this.parse(FetchSchema)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
+    const apiKey = flags['client-id'] || flags['api-key']
+
     await inFunctionContext(this.config, flags.path, async (app, ourFunction) => {
       await generateSchemaService({
         app,
         extension: ourFunction,
-        apiKey: flags['api-key'],
+        apiKey,
         stdout: flags.stdout,
         path: flags.path,
       })

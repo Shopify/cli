@@ -203,4 +203,27 @@ describe('TextPrompt', () => {
     expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })
+
+  test('shows a preview footer when provided', async () => {
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={() => {}}
+        message="How tall are you in cm?"
+        previewPrefix={() => 'You are '}
+        previewValue={(value) => String(Number(value) / 100)}
+        previewSuffix={() => 'm tall.'}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, '180')
+
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+      "?  How tall are you in cm?
+      >  180 
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+         You are 1.8m tall.
+      "
+    `)
+  })
 })

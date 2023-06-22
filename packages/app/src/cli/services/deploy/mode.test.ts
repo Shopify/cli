@@ -16,6 +16,8 @@ const organizationApp = (app: AppInterface): OrganizationApp => {
     title: app.name,
     apiKey: 'key1',
     organizationId: '1',
+    applicationUrl: app.configuration.application_url!,
+    redirectUrlWhitelist: app.configuration.redirect_url_allowlist!,
     apiSecretKeys: [],
     grantedScopes: [],
     betas: {
