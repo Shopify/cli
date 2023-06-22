@@ -180,7 +180,7 @@ module ShopifyCLI
 
         def enable_extension_message
           if ShopifyCLI::Environment.unified_deployment?
-            "Verify your Development store preview is on"
+            "Verify that the development store preview is turned on for this app"
           else
             "Enable your theme app extension"
           end

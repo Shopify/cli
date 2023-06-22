@@ -377,7 +377,7 @@ describe('ensureDevContext', () => {
     expect(fetchOrgAndApps).toBeCalled()
   })
 
-  test('dev enables automatically the developer preview if the unified deployments beta is enabled', async () => {
+  test('dev enables automatically the development store preview if the unified deployments beta is enabled', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
@@ -402,7 +402,7 @@ describe('ensureDevContext', () => {
     expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
       input: {apiKey: 'key2', enabled: true},
     })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview enabled"')
+    expect(mockOutput.completed()).toMatchInlineSnapshot('"Development store preview enabled"')
   })
 
   test('display an error to enable dev preview if the beta is enabled in partners but an error is returned', async () => {
@@ -429,7 +429,7 @@ describe('ensureDevContext', () => {
       input: {apiKey: 'key2', enabled: true},
     })
     expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to enable developer store preview for this app. You can change this setting in the partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
+      '"Unable to enable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
     )
   })
 })
@@ -604,7 +604,7 @@ describe('ensureDeployContext', () => {
     )
   })
 
-  test('deploy disables automatically the developer preview if the unified deployments beta is enabled', async () => {
+  test('deploy disables automatically the development store preview if the unified deployments beta is enabled', async () => {
     // Given
     const app = testApp()
     const identifiers = {
@@ -635,7 +635,7 @@ describe('ensureDeployContext', () => {
     expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
       input: {apiKey: 'key2', enabled: false},
     })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview disabled"')
+    expect(mockOutput.completed()).toMatchInlineSnapshot('"Development store preview disabled"')
   })
 
   test('display an error to disable dev preview if the beta is enabled in partners but an error is returned', async () => {
@@ -668,7 +668,7 @@ describe('ensureDeployContext', () => {
       input: {apiKey: 'key2', enabled: false},
     })
     expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to disable developer store preview for this app. You can change this setting in the partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
+      '"Unable to disable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
     )
   })
 })

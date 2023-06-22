@@ -3,4 +3,4 @@
 '@shopify/app': patch
 ---
 
-Support enabling/disabling developer preview from CLI
+Support enabling/disabling development store preview from CLI

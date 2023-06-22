@@ -631,16 +631,16 @@ async function developerPreviewUpdate(app: OrganizationApp, token: string, enabl
 
         if ((result && result.developmentStorePreviewUpdate.userErrors?.length > 0) || error) {
           const previewURL = outputToken.link(
-            'partners dashboard',
+            'Partner Dashboard',
             await devPreviewURL({orgId: app.organizationId, appId: app.id}),
           )
           outputWarnError(
             outputContent`Unable to ${
               enabled ? 'enable' : 'disable'
-            } developer store preview for this app. You can change this setting in the ${previewURL}.'}`,
+            } development store preview for this app. You can change this setting in the ${previewURL}.'}`,
           )
         } else {
-          outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
+          outputCompleted(`Development store preview ${enabled ? 'enabled' : 'disabled'}`)
         }
       },
     },
