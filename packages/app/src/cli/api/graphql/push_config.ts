@@ -3,6 +3,7 @@ import {gql} from 'graphql-request'
 export const PushConfig = gql`
   mutation appUpdate(
     $apiKey: String!
+    $title: String
     $applicationUrl: Url
     $redirectUrlAllowlist: [Url]
     $requestedAccessScopes: [String!]
@@ -10,6 +11,7 @@ export const PushConfig = gql`
     appUpdate(
       input: {
         apiKey: $apiKey
+        title: $title
         applicationUrl: $applicationUrl
         redirectUrlWhitelist: $redirectUrlAllowlist
         requestedAccessScopes: $requestedAccessScopes
@@ -26,6 +28,7 @@ export const PushConfig = gql`
 export interface PushConfigVariables {
   apiKey: string
   applicationUrl: string
+  title: string
   redirectUrlAllowlist: string[]
   requestedAccessScopes: string[]
 }
