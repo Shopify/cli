@@ -47,7 +47,7 @@ interface SaveCurrentConfigOptions {
   directory: string
 }
 
-async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
+export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
   const app = await loadApp({specifications: [], configName: configFileName, directory, mode: 'strict'})
 
   if (!app.configuration.client_id) {
