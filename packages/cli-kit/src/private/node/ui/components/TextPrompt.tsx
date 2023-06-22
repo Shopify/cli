@@ -18,6 +18,9 @@ export interface TextPromptProps {
   allowEmpty?: boolean
   emptyDisplayedValue?: string
   abortSignal?: AbortSignal
+  previewPrefix?: (value: string) => string | undefined
+  previewValue?: (value: string) => string | undefined
+  previewSuffix?: (value: string) => string | undefined
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -29,6 +32,9 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   allowEmpty = false,
   emptyDisplayedValue = '(empty)',
   abortSignal,
+  previewPrefix,
+  previewValue,
+  previewSuffix,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -124,6 +130,13 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           ) : null}
         </Box>
       )}
+      {previewValue && !submitted ? (
+        <Box marginLeft={3}>
+          <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
+          <Text color={color}>{previewValue(answerOrDefault)}</Text>
+          <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
+        </Box>
+      ) : null}
     </Box>
   )
 }

@@ -8,6 +8,7 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
+import {OrganizationApp} from '../organization.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -15,7 +16,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
-    app.configuration ?? {scopes: '', extensionDirectories: []},
+    app.configuration ?? {scopes: '', extension_directories: []},
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [],
@@ -31,6 +32,20 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
   return newApp
+}
+
+export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {
+  const defaultApp = {
+    id: '1',
+    title: 'app1',
+    apiKey: 'api-key',
+    apiSecretKeys: [{secret: 'api-secret'}],
+    organizationId: '1',
+    grantedScopes: [],
+    applicationUrl: 'https://example.com',
+    redirectUrlWhitelist: ['https://example.com/callback1'],
+  }
+  return {...defaultApp, ...app}
 }
 
 export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): Promise<ExtensionInstance> {
@@ -94,8 +109,8 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     build: {
       command: 'echo "hello world"',
     },
-    apiVersion: '2022-07',
-    configurationUi: true,
+    api_version: '2022-07',
+    configuration_ui: true,
     metafields: [],
   }
 }

@@ -4,7 +4,7 @@ import {selectApp} from './app/select-app.js'
 import {getAppInfo} from './local-storage.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testUIExtension} from '../models/app/app.test-data.js'
+import {testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {describe, expect, vi, test} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -50,7 +50,7 @@ describe('info', () => {
     // Then
     expect(unstyled(result)).toMatch(/App\s*My App/)
     expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
-    expect(unstyled(result)).toMatch(/API key\s*123/)
+    expect(unstyled(result)).toMatch(/Client ID\s*123/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 
@@ -64,7 +64,7 @@ describe('info', () => {
     // Then
     expect(unstyled(result)).toMatch(/App\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
-    expect(unstyled(result)).toMatch(/API key\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/Client ID\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
   })
 
@@ -90,15 +90,12 @@ describe('info', () => {
       website: '',
       apps: {nodes: []},
     }
-    const organizationApp = {
+    const organizationApp = testOrganizationApp({
       id: '123',
       title: 'Test app',
       appType: 'custom',
-      apiSecretKeys: [{secret: 'api-secret'}],
-      organizationId: '1',
-      apiKey: 'api-key',
-      grantedScopes: [],
-    }
+    })
+
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
@@ -135,15 +132,11 @@ describe('info', () => {
       website: '',
       apps: {nodes: []},
     }
-    const organizationApp = {
+    const organizationApp = testOrganizationApp({
       id: '123',
       title: 'Test app',
       appType: 'custom',
-      apiSecretKeys: [{secret: 'api-secret'}],
-      organizationId: '1',
-      apiKey: 'api-key',
-      grantedScopes: [],
-    }
+    })
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
@@ -204,15 +197,11 @@ describe('info', () => {
       website: '',
       apps: {nodes: []},
     }
-    const organizationApp = {
+    const organizationApp = testOrganizationApp({
       id: '123',
       title: 'Test app',
       appType: 'custom',
-      apiSecretKeys: [{secret: 'api-secret'}],
-      organizationId: '1',
-      apiKey: 'api-key',
-      grantedScopes: [],
-    }
+    })
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])
     vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
     vi.mocked(fetchOrgAndApps).mockResolvedValue({
@@ -247,7 +236,7 @@ function mockApp(currentVersion = '2.2.2', app?: Partial<AppInterface>): AppInte
     configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
       scopes: 'my-scope',
-      extensionDirectories: ['extensions/*'],
+      extension_directories: ['extensions/*'],
     },
     nodeDependencies,
     ...(app ? app : {}),

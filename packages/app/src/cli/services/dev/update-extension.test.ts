@@ -22,7 +22,7 @@ describe('updateExtensionDraft()', () => {
   test('updates draft successfully and outputs debug message', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
-        runtimeContext: 'strict',
+        runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
       } as any
@@ -69,8 +69,8 @@ describe('updateExtensionDraft()', () => {
   test('updates draft successfully when extension doesnt support esbuild', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
-        productionApiBaseUrl: 'url1',
-        benchmarkApiBaseUrl: 'url2',
+        production_api_base_url: 'url1',
+        benchmark_api_base_url: 'url2',
         type: 'tax_calculation',
       } as any
 
@@ -147,7 +147,7 @@ describe('updateExtensionConfig()', () => {
 
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
-        runtimeContext: 'strict',
+        runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
       } as any
@@ -168,7 +168,7 @@ describe('updateExtensionConfig()', () => {
 
       vi.mocked(findSpecificationForConfig).mockResolvedValue({} as any)
       vi.mocked(parseConfigurationFile).mockResolvedValue({
-        runtimeContext: 'strict',
+        runtime_context: 'strict',
         settings: {type: 'object', another: 'setting'},
         type: 'web_pixel_extension',
       } as any)

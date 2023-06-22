@@ -2,6 +2,7 @@ import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import Command from '../../../utilities/app-command.js'
 import generate from '../../../services/generate.js'
+import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -44,9 +45,14 @@ export default class AppGenerateExtension extends Command {
       default: false,
     }),
     'api-key': Flags.string({
-      hidden: false,
+      hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
   }
 
@@ -60,6 +66,8 @@ export default class AppGenerateExtension extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppGenerateExtension)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
+    const apiKey = flags['client-id'] || flags['api-key']
 
     await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
@@ -70,7 +78,7 @@ export default class AppGenerateExtension extends Command {
     await generate({
       directory: flags.path,
       reset: flags.reset,
-      apiKey: flags['api-key'],
+      apiKey,
       type: flags.type,
       name: flags.name,
       cloneUrl: flags['clone-url'],

@@ -27,15 +27,15 @@ interface GenerateSchemaOptions {
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
   const token = await ensureAuthenticatedPartners()
-  const {apiVersion: version, type} = extension.configuration
+  const {api_version: version, type} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
   const stdout = options.stdout
 
   if (!apiKey) {
     if (!isTerminalInteractive()) {
       throw new AbortError(
-        outputContent`No API key was provided.`,
-        outputContent`Provide an API key with the --api-key flag.`,
+        outputContent`No Client ID was provided.`,
+        outputContent`Provide a Client ID with the --client-id flag.`,
       )
     }
 

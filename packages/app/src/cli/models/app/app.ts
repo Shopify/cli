@@ -7,40 +7,53 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
 export const AppConfigurationSchema = zod.object({
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
+  name: zod.string().optional(),
+  client_id: zod.string().optional(),
   scopes: zod.string().default(''),
-  extensionDirectories: zod.array(zod.string()).optional(),
-  webDirectories: zod.array(zod.string()).optional(),
+  application_url: zod.string().optional(),
+  redirect_url_allowlist: zod.array(zod.string()).optional(),
+  requested_access_scopes: zod.array(zod.string()).optional(),
 })
 
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
+  Background = 'background',
 }
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
 
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
-export const WebConfigurationSchema = zod.object({
-  type: zod.enum([WebType.Frontend, WebType.Backend]).default(WebType.Frontend),
-  authCallbackPath: zod
+const baseWebConfigurationSchema = zod.object({
+  auth_callback_path: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  webhooksPath: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
+  webhooks_path: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
   port: zod.number().max(65536).min(0).optional(),
   commands: zod.object({
     build: zod.string().optional(),
     dev: zod.string(),
   }),
+  name: zod.string().optional(),
 })
+const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
+export const WebConfigurationSchema = zod.union([
+  baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
+  baseWebConfigurationSchema.extend({type: webTypes}),
+])
+export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
+export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {
   directory: string
-  configuration: WebConfiguration
+  configuration: ProcessedWebConfiguration
   framework?: string
 }
 

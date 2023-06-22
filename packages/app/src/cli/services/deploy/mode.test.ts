@@ -10,16 +10,19 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
-const organizationApp = (app: AppInterface, unified = false): OrganizationApp => {
+const organizationApp = (app: AppInterface): OrganizationApp => {
   return {
     id: '1',
     title: app.name,
     apiKey: 'key1',
     organizationId: '1',
+    applicationUrl: app.configuration.application_url!,
+    redirectUrlWhitelist: app.configuration.redirect_url_allowlist!,
     apiSecretKeys: [],
     grantedScopes: [],
     betas: {
-      unifiedAppDeployment: unified,
+      unifiedAppDeployment: false,
+      unifiedAppDeploymentOptIn: true,
     },
   }
 }
@@ -45,7 +48,7 @@ describe('resolveDeploymentMode', () => {
     const app = testApp()
     const orgApp = organizationApp(app)
     const options = deploymentContext(app)
-    vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(false)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(false)
     const outputMock = mockAndCaptureOutput()
 
     // When
@@ -56,22 +59,58 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Simplified deployment available now!                                        │
       │                                                                              │
-      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │  When you upgrade this app to use simplified deployment, \`yarn deploy\`       │
+      │  will:                                                                       │
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
-      │  This app will be upgraded automatically in September 2023.                  │
-      │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployments 2.0 [1]                                         │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
+    expect(upgradePrompt).toHaveBeenCalled()
+  })
+
+  test("return legacy mode and don't display upcoming changes and prompt to upgrade when legacy deployment and not unified opt in", async () => {
+    // Given
+    const app = testApp()
+    const orgApp = organizationApp(app)
+    orgApp.betas!.unifiedAppDeploymentOptIn = false
+    const options = deploymentContext(app)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
+
+    // Then
+    expect(result).equals('legacy')
+    expect(outputMock.info()).toMatchInlineSnapshot('""')
+    expect(upgradePrompt).not.toHaveBeenCalled()
+  })
+
+  test("return legacy mode and don't display upcoming changes and prompt to upgrade when legacy deployment and unified opt in but force deployments", async () => {
+    // Given
+    const app = testApp()
+    const orgApp = organizationApp(app)
+    const options = deploymentContext(app)
+    options.force = true
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
+    const outputMock = mockAndCaptureOutput()
+
+    // When
+    const result = await resolveDeploymentMode(orgApp, options, TOKEN)
+
+    // Then
+    expect(result).equals('legacy')
+    expect(outputMock.info()).toMatchInlineSnapshot('""')
+    expect(upgradePrompt).not.toHaveBeenCalled()
   })
 
   test('return unified mode and display legacy and unified banner when legacy deployment and accept upgrading', async () => {
@@ -79,7 +118,7 @@ describe('resolveDeploymentMode', () => {
     const app = testApp()
     const orgApp = organizationApp(app)
     const options = deploymentContext(app)
-    vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValueOnce({setBetaFlag: {userErrors: undefined}})
     const outputMock = mockAndCaptureOutput()
 
@@ -91,37 +130,37 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Simplified deployment available now!                                        │
       │                                                                              │
-      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │  When you upgrade this app to use simplified deployment, \`yarn deploy\`       │
+      │  will:                                                                       │
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
-      │  This app will be upgraded automatically in September 2023.                  │
-      │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployments 2.0 [1]                                         │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`yarn deploy\` now releases changes to users.                                │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │
       │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployements 2.0 [1]                                        │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
+    expect(upgradePrompt).toHaveBeenCalled()
   })
 
   test('throw an error and display legacy banner when legacy deployment, accept upgrading but receive an error', async () => {
@@ -129,40 +168,40 @@ describe('resolveDeploymentMode', () => {
     const app = testApp()
     const orgApp = organizationApp(app)
     const options = deploymentContext(app)
-    vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValueOnce({setBetaFlag: {userErrors: [{field: 'file', message: 'error'}]}})
     const outputMock = mockAndCaptureOutput()
 
     // When / Then
-    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot(
-      '"Error upgrading the app App to Deployments 2.0: error"',
-    )
+    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot('"Error upgrading the app App to use simplified deployment: error"')
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Simplified deployment available now!                                        │
       │                                                                              │
-      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │  When you upgrade this app to use simplified deployment, \`yarn deploy\`       │
+      │  will:                                                                       │
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
-      │  This app will be upgraded automatically in September 2023.                  │
-      │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployments 2.0 [1]                                         │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
+    expect(upgradePrompt).toHaveBeenCalled()
   })
 
   test('return unified mode and display unified banner when unified deployment', async () => {
     // Given
     const app = testApp()
-    const orgApp = organizationApp(app, true)
+    const orgApp = organizationApp(app)
+    orgApp.betas!.unifiedAppDeployment = true
     const options = deploymentContext(app)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
     const outputMock = mockAndCaptureOutput()
 
     // When
@@ -173,25 +212,28 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`yarn deploy\` now releases changes to users.                                │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │
       │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployements 2.0 [1]                                        │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
+    expect(upgradePrompt).not.toHaveBeenCalled()
   })
 
   test('return unified without release mode and not display unified banner when unified deployment and use no-release', async () => {
     // Given
     const app = testApp()
-    const orgApp = organizationApp(app, true)
+    const orgApp = organizationApp(app)
+    orgApp.betas!.unifiedAppDeployment = true
     const options = deploymentContext(app, true)
+    const upgradePrompt = vi.spyOn(ui, 'renderConfirmationPrompt')
     const outputMock = mockAndCaptureOutput()
 
     // When

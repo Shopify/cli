@@ -6,7 +6,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const dependency = '@shopify/checkout-ui-extensions'
 
 const CheckoutSchema = BaseSchema.extend({
-  extensionPoints: zod.array(zod.string()).optional(),
+  extension_points: zod.array(zod.string()).optional(),
   settings: zod
     .object({
       fields: zod.any().optional(),
@@ -23,7 +23,7 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild'],
   deployConfig: async (config, directory) => {
     return {
-      extension_points: config.extensionPoints,
+      extension_points: config.extension_points,
       capabilities: config.capabilities,
       metafields: config.metafields,
       name: config.name,

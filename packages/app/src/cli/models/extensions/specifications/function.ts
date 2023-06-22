@@ -16,7 +16,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
       .optional(),
     path: zod.string().optional(),
   }),
-  configurationUi: zod.boolean().optional().default(true),
+  configuration_ui: zod.boolean().optional().default(true),
   ui: zod
     .object({
       enable_create: zod.boolean().optional(),
@@ -28,7 +28,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
         .optional(),
     })
     .optional(),
-  apiVersion: zod.string(),
+  api_version: zod.string(),
   input: zod
     .object({
       variables: zod
@@ -96,7 +96,7 @@ const spec = createExtensionSpecification({
       description: config.description,
       app_key: apiKey,
       api_type: config.type,
-      api_version: config.apiVersion,
+      api_version: config.api_version,
       input_query: inputQuery,
       input_query_variables: config.input?.variables
         ? {

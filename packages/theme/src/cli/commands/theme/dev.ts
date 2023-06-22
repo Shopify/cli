@@ -76,6 +76,11 @@ export default class Dev extends ThemeCommand {
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
+    open: Flags.boolean({
+      description: 'Automatically launch the theme preview in your default web browser.',
+      env: 'SHOPIFY_FLAG_OPEN',
+      default: false,
+    }),
   }
 
   static cli2Flags = [
@@ -129,6 +134,7 @@ export default class Dev extends ThemeCommand {
       host: flags.host,
       port: flags.port,
       force: flags.force,
+      open: flags.open,
       flagsToPass,
     })
   }

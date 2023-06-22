@@ -4,7 +4,7 @@ import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppInterface} from '../../models/app/app.js'
-import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeploymentMode} from '../deploy/mode.js'
@@ -38,20 +38,14 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
+    configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
     allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
 
-const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
-  id: 'app-id',
-  organizationId: 'org-id',
-  title: 'app-title',
-  grantedScopes: [],
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
   betas: {unifiedAppDeployment: true},
-  apiKey: 'api-key',
-  apiSecretKeys: [],
-}
+})
 
 const options = (
   uiExtensions: ExtensionInstance[],
@@ -118,8 +112,8 @@ beforeAll(async () => {
         command: 'make build',
         path: 'dist/index.wasm',
       },
-      configurationUi: false,
-      apiVersion: '2022-07',
+      configuration_ui: false,
+      api_version: '2022-07',
       metafields: [],
     },
   })

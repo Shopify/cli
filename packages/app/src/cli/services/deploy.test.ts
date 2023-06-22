@@ -4,7 +4,13 @@ import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from '
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {DeploymentMode} from './deploy/mode.js'
-import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../models/app/app.test-data.js'
+import {
+  testApp,
+  testFunctionExtension,
+  testThemeExtensions,
+  testUIExtension,
+  testOrganizationApp,
+} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -24,6 +30,17 @@ vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
+
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
+  id: 'app-id',
+  organizationId: 'org-id',
+  betas: {unifiedAppDeployment: true},
+})
+
+const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
+  id: 'app-id',
+  organizationId: 'org-id',
+})
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -45,16 +62,7 @@ describe('deploy', () => {
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
-    await testDeployBundle({
-      app,
-      partnersApp: {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: false},
-      },
-    })
+    await testDeployBundle({app, partnersApp: PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -78,6 +86,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -108,6 +118,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -137,6 +149,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -164,6 +178,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -191,6 +207,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -214,16 +232,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: []})
 
     // When
-    await testDeployBundle({
-      app,
-      partnersApp: {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: false},
-      },
-    })
+    await testDeployBundle({app, partnersApp: PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA})
 
     // Then
     expect(uploadExtensionsBundle).not.toHaveBeenCalled()
@@ -322,22 +331,13 @@ describe('deploy', () => {
       description: functionExtension.configuration.description,
       app_key: 'app-id',
       api_type: functionExtension.configuration.type,
-      api_version: functionExtension.configuration.apiVersion,
+      api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle({
-      app,
-      partnersApp: {
-        id: 'app-id',
-        organizationId: 'org-id',
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-    })
+    await testDeployBundle({app, partnersApp: PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -372,7 +372,7 @@ describe('deploy', () => {
       description: functionExtension.configuration.description,
       app_key: 'app-id',
       api_type: functionExtension.configuration.type,
-      api_version: functionExtension.configuration.apiVersion,
+      api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
@@ -484,6 +484,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -510,7 +512,7 @@ describe('deploy', () => {
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'versions list')},
+          {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
           'to see rollout progress.',
         ],
       ],
@@ -529,6 +531,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id2',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -569,6 +573,8 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
+        applicationUrl: 'https://my-app.com',
+        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: {unifiedAppDeployment: true},
@@ -647,12 +653,12 @@ async function testDeployBundle({
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app,
     identifiers,
-    partnersApp: partnersApp ?? {
-      id: 'app-id',
-      organizationId: 'org-id',
-      title: 'app-title',
-      grantedScopes: [],
-    },
+    partnersApp:
+      partnersApp ??
+      testOrganizationApp({
+        id: 'app-id',
+        organizationId: 'org-id',
+      }),
     token: 'api-token',
     deploymentMode,
   })
