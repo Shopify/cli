@@ -76,8 +76,7 @@ function outputFunctionsMessage(extensions: ExtensionInstance[]) {
   if (extensions.length === 0) return
   const names = extensions.map((ext) => ext.configuration.name)
   const heading = outputToken.heading(names.join(', '))
-  const message = `These extensions need to be deployed to be manually tested.
-One testing option is to use a separate app dedicated to staging.`
+  const message = `Your app must be installed to test these extensions. Use the Preview URL to open your App home.`
   outputInfo(outputContent`${heading}\n${message}\n`)
 }
 
