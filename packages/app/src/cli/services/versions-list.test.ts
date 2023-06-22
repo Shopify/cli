@@ -76,6 +76,8 @@ describe('versions-list', () => {
       organizationId: 'org-id',
       apiSecretKeys: [],
       grantedScopes: [],
+      applicationUrl: 'https://example.com',
+      redirectUrlWhitelist: ['https://example.com/callback1'],
     })
     vi.mocked(partnersRequest).mockResolvedValueOnce(emptyResult)
 
