@@ -4,7 +4,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 
 export async function outputUpdateURLsResult(
@@ -36,7 +36,6 @@ export async function outputUpdateURLsResult(
 }
 
 export function outputExtensionsMessages(app: AppInterface) {
-  outputFunctionsMessage(app.allExtensions.filter((ext) => ext.isFunctionExtension))
   outputThemeExtensionsMessage(app.allExtensions.filter((ext) => ext.isThemeExtension))
 }
 
@@ -70,14 +69,6 @@ export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, prev
     }
   }
   return renderConcurrent(options)
-}
-
-function outputFunctionsMessage(extensions: ExtensionInstance[]) {
-  if (extensions.length === 0) return
-  const names = extensions.map((ext) => ext.configuration.name)
-  const heading = outputToken.heading(names.join(', '))
-  const message = `Your app must be installed to test these extensions. Use the Preview URL to open your App home.`
-  outputInfo(outputContent`${heading}\n${message}\n`)
 }
 
 function outputThemeExtensionsMessage(extensions: ExtensionInstance[]) {

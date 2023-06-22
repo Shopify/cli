@@ -18,10 +18,7 @@ describe('output', () => {
       outputExtensionsMessages(appMock)
 
       expect(outputMock.output()).toMatchInlineSnapshot(`
-        "test function extension
-        Your app must be installed to test these extensions. Use the Preview URL to open your App home.
-
-        theme extension name (Theme)
+        "theme extension name (Theme)
         Follow the dev doc instructions ( https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes ) by deploying your work as a draft
         "
       `)
