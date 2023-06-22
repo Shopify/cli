@@ -458,23 +458,19 @@ export function devDraftableExtensionTarget({
       if (unifiedDeployment) {
         const functions = extensions.filter((ext) => ext.isFunctionExtension)
         await Promise.all(
-          functions.map((ext) =>
-            buildFunctionExtension(ext, {
+          functions.map(async (extension) => {
+            await buildFunctionExtension(extension, {
               app,
               stdout,
               stderr,
               useTasks: false,
               signal,
-            }),
-          ),
+            })
+            const registrationId = remoteExtensions[extension.localIdentifier]
+            if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+            await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+          }),
         )
-        // Functions are uploaded sequentially to avoid reaching the API limit
-        for (const extension of functions) {
-          const registrationId = remoteExtensions[extension.localIdentifier]
-          if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-          // eslint-disable-next-line no-await-in-loop
-          await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
-        }
       }
 
       await Promise.all(
