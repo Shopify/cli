@@ -456,7 +456,7 @@ export function devDraftableExtensionTarget({
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-      // Functions should only be included if unified deployments are enabled
+      // Functions will only be passed to this target if unified deployments are enabled
       const functions = extensions.filter((ext) => ext.isFunctionExtension)
       await Promise.all(
         functions.map(async (extension) => {
