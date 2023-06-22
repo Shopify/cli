@@ -292,6 +292,7 @@ describe('setupConfigWatcher()', async () => {
       extension: mockExtension,
       registrationId: 'mock-registration-id',
       specifications,
+      stdout,
       stderr,
       token: 'mock-token',
       unifiedDeployment: true,
@@ -445,6 +446,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       token,
       apiKey,
       registrationId,
+      stdout,
       stderr,
       unifiedDeployment: true,
     })
@@ -575,6 +577,7 @@ describe('setupFunctionWatcher', () => {
       token: watchOptions.token,
       apiKey: watchOptions.apiKey,
       registrationId: watchOptions.registrationId,
+      stdout: watchOptions.stdout,
       stderr: watchOptions.stderr,
       unifiedDeployment: watchOptions.unifiedDeployment,
     })

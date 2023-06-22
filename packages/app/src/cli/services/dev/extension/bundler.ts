@@ -161,7 +161,7 @@ export async function setupDraftableExtensionBundler({
       )
       if (error) return
 
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
     },
   })
 }
@@ -193,9 +193,16 @@ export async function setupConfigWatcher({
 
   const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
     outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
-    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications, unifiedDeployment}).catch(
-      (_: unknown) => {},
-    )
+    updateExtensionConfig({
+      extension,
+      token,
+      apiKey,
+      registrationId,
+      stdout,
+      stderr,
+      specifications,
+      unifiedDeployment,
+    }).catch((_: unknown) => {})
   })
 
   signal.addEventListener('abort', () => {
@@ -244,7 +251,7 @@ export async function setupFunctionWatcher({
   const watchPaths = extension.watchPaths
   if (!watchPaths) {
     outputWarn(
-      `Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`,
+      `Function extension ${extension.localIdentifier} is missing the 'build.watch' setting, automatic builds are disabled.`,
       stdout,
     )
     return
@@ -270,7 +277,7 @@ export async function setupFunctionWatcher({
     })
       .then(() => {
         if (!buildSignal.aborted) {
-          return updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+          return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
         }
       })
       .catch((updateError: unknown) => {

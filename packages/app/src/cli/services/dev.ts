@@ -469,7 +469,7 @@ export function devDraftableExtensionTarget({
           })
           const registrationId = remoteExtensions[extension.localIdentifier]
           if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-          await updateExtensionDraft({extension, token, apiKey, registrationId, stderr, unifiedDeployment})
+          await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
         }),
       )
 

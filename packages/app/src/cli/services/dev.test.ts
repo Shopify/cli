@@ -116,6 +116,7 @@ describe('devDraftableExtensionTarget()', () => {
         token: 'mock-token',
         apiKey: 'mock-api-key',
         registrationId: remoteExtensions[ext.localIdentifier],
+        stdout,
         stderr,
         unifiedDeployment: true,
       })
