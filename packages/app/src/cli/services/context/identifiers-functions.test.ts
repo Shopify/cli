@@ -310,9 +310,10 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+    const opts = options([FUNCTION_A, FUNCTION_A_2])
 
     // When
-    await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    await ensureFunctionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
@@ -327,6 +328,8 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
         dashboardOnly: [],
       },
       'legacy',
+      opts.appId,
+      opts.token,
     )
   })
 
