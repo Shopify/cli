@@ -16,6 +16,8 @@ const organizationApp = (app: AppInterface): OrganizationApp => {
     title: app.name,
     apiKey: 'key1',
     organizationId: '1',
+    applicationUrl: app.configuration.application_url!,
+    redirectUrlWhitelist: app.configuration.redirect_url_allowlist!,
     apiSecretKeys: [],
     grantedScopes: [],
     betas: {
@@ -57,20 +59,19 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Simplified deployment available now!                                        │
       │                                                                              │
-      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │  When you upgrade this app to use simplified deployment, \`yarn deploy\`       │
+      │  will:                                                                       │
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
-      │  This app will be upgraded automatically in September 2023.                  │
-      │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployments 2.0 [1]                                         │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
     expect(upgradePrompt).toHaveBeenCalled()
@@ -129,35 +130,34 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Simplified deployment available now!                                        │
       │                                                                              │
-      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │  When you upgrade this app to use simplified deployment, \`yarn deploy\`       │
+      │  will:                                                                       │
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
-      │  This app will be upgraded automatically in September 2023.                  │
-      │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployments 2.0 [1]                                         │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`yarn deploy\` now releases changes to users.                                │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │
       │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployements 2.0 [1]                                        │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
     expect(upgradePrompt).toHaveBeenCalled()
@@ -173,26 +173,23 @@ describe('resolveDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When / Then
-    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot(
-      '"Error upgrading the app App to Deployments 2.0: error"',
-    )
+    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot('"Error upgrading the app App to use simplified deployment: error"')
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Deployments 2.0 available now.                                              │
+      │  Simplified deployment available now!                                        │
       │                                                                              │
-      │  When you upgrade this app to Deployments 2.0, \`yarn deploy\` will:           │
+      │  When you upgrade this app to use simplified deployment, \`yarn deploy\`       │
+      │  will:                                                                       │
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
-      │  This app will be upgraded automatically in September 2023.                  │
-      │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployments 2.0 [1]                                         │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
     expect(upgradePrompt).toHaveBeenCalled()
@@ -215,16 +212,16 @@ describe('resolveDeploymentMode', () => {
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  \`deploy\` now releases changes to users.                                     │
+      │  \`yarn deploy\` now releases changes to users.                                │
       │                                                                              │
       │  All your extensions will be released to users, unless you add the           │
       │  \`--no-release\` flag.                                                        │
       │                                                                              │
       │  Reference                                                                   │
-      │    • Introducing Deployements 2.0 [1]                                        │
+      │    • Simplified extension deployment [1]                                     │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
-      [1] https://shopify.dev/docs/apps/deployment/streamlined-extension-deployment
+      [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
       "
     `)
     expect(upgradePrompt).not.toHaveBeenCalled()

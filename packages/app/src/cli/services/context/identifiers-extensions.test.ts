@@ -4,7 +4,7 @@ import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {AppInterface} from '../../models/app/app.js'
-import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -71,24 +71,11 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
   })
 }
 
-const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
-  id: 'app-id',
-  organizationId: 'org-id',
-  title: 'app-title',
-  grantedScopes: [],
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
   betas: {unifiedAppDeployment: true},
-  apiKey: 'api-key',
-  apiSecretKeys: [],
-}
+})
 
-const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
-  id: 'app-id',
-  organizationId: 'org-id',
-  title: 'app-title',
-  grantedScopes: [],
-  apiKey: 'api-key',
-  apiSecretKeys: [],
-}
+const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp()
 
 const options = (
   uiExtensions: ExtensionInstance[],

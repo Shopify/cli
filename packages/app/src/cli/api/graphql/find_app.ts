@@ -16,6 +16,8 @@ export const FindAppQuery = gql`
         unifiedAppDeployment
         unifiedAppDeploymentOptIn
       }
+      applicationUrl
+      redirectUrlWhitelist
     }
   }
 `
@@ -35,5 +37,7 @@ export interface FindAppQuerySchema {
       unifiedAppDeployment?: boolean
       unifiedAppDeploymentOptIn?: boolean
     }
+    applicationUrl: string
+    redirectUrlWhitelist: string[]
   }
 }

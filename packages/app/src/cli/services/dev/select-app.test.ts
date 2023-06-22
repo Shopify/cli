@@ -1,8 +1,8 @@
 import {createApp, selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
-import {Organization, OrganizationApp} from '../../models/organization.js'
+import {Organization} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {testApp} from '../../models/app/app.test-data.js'
+import {testApp, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -38,22 +38,13 @@ const ORG2: Organization = {
   businessName: 'org2',
   betas: {},
 }
-const APP1: OrganizationApp = {
-  id: '1',
-  title: 'app1',
-  apiKey: 'key1',
-  apiSecretKeys: [{secret: 'secret1'}],
-  organizationId: '1',
-  grantedScopes: [],
-}
-const APP2: OrganizationApp = {
+const APP1 = testOrganizationApp({apiKey: 'key1'})
+const APP2 = testOrganizationApp({
   id: '2',
   title: 'app2',
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
-  organizationId: '1',
-  grantedScopes: [],
-}
+})
 const APP_LIST = {
   nodes: [
     {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey},
