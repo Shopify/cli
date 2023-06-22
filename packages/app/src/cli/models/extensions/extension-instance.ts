@@ -200,7 +200,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get watchPaths() {
     const config = this.configuration as unknown as FunctionConfigType
-    return config.build.watch ? [config.build.watch].flat() : []
+    const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
+
+    if (!this.isJavaScript && configuredPaths.length === 0) {
+      return null
+    }
+
+    const watchPaths: string[] = configuredPaths ?? []
+    if (this.isJavaScript && configuredPaths.length === 0) {
+      watchPaths.push(joinPath('src', '**', '*.js'))
+      watchPaths.push(joinPath('src', '**', '*.ts'))
+    }
+    watchPaths.push(joinPath('**', 'input*.graphql'))
+
+    return watchPaths.map((path) => joinPath(this.directory, path))
   }
 
   get inputQueryPath() {

@@ -1,7 +1,6 @@
 import {
   FileWatcherOptions,
   SetupFunctionWatcherOptions,
-  getFunctionWatchPaths,
   setupBundlerAndFileWatcher,
   setupConfigWatcher,
   setupDraftableExtensionBundler,
@@ -478,57 +477,6 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
 
     expect(updateExtensionDraft).not.toHaveBeenCalled()
     expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has an error`, stderr)
-  })
-})
-
-describe('getFunctionWatchPaths', () => {
-  test('returns default paths for javascript', async () => {
-    const config = functionConfiguration()
-    config.build = {}
-    const extension = await testFunctionExtension({
-      config,
-      entryPath: 'src/index.js',
-      dir: 'foo',
-    })
-
-    const got = getFunctionWatchPaths(extension)
-
-    expect(got).toEqual([
-      joinPath('foo', 'src', '**', '*.js'),
-      joinPath('foo', 'src', '**', '*.ts'),
-      joinPath('foo', '**', 'input*.graphql'),
-    ])
-  })
-
-  test('returns configured paths and input query', async () => {
-    const config = functionConfiguration()
-    config.build = {
-      watch: ['src/**/*.rs', 'src/**/*.foo'],
-    }
-    const extension = await testFunctionExtension({
-      config,
-      dir: 'foo',
-    })
-
-    const got = getFunctionWatchPaths(extension)
-
-    expect(got).toEqual([
-      joinPath('foo', 'src/**/*.rs'),
-      joinPath('foo', 'src/**/*.foo'),
-      joinPath('foo', '**', 'input*.graphql'),
-    ])
-  })
-
-  test('returns null if not javascript and not configured', async () => {
-    const config = functionConfiguration()
-    config.build = {}
-    const extension = await testFunctionExtension({
-      config,
-    })
-
-    const got = getFunctionWatchPaths(extension)
-
-    expect(got).toBeNull()
   })
 })
 

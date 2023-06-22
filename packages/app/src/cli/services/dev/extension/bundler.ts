@@ -7,7 +7,6 @@ import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.j
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
-import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
@@ -242,7 +241,7 @@ export async function setupFunctionWatcher({
   const {default: chokidar} = await import('chokidar')
 
   outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout)
-  const watchPaths = getFunctionWatchPaths(extension as ExtensionInstance<FunctionConfigType>)
+  const watchPaths = extension.watchPaths
   if (!watchPaths) {
     outputWarn(
       `Function extension ${extension.localIdentifier} does not have a watch path configured, draft version deployment is disabled.`,
@@ -297,19 +296,4 @@ export async function setupFunctionWatcher({
         )
       })
   })
-}
-
-export function getFunctionWatchPaths(extension: ExtensionInstance<FunctionConfigType>) {
-  if (!extension.isJavaScript && extension.watchPaths.length === 0) {
-    return null
-  }
-
-  const watchPaths: string[] = extension.watchPaths ?? []
-  if (extension.isJavaScript && watchPaths.length === 0) {
-    watchPaths.push(joinPath('src', '**', '*.js'))
-    watchPaths.push(joinPath('src', '**', '*.ts'))
-  }
-  watchPaths.push(joinPath('**', 'input*.graphql'))
-
-  return watchPaths.map((path) => joinPath(extension.directory, path))
 }
