@@ -635,10 +635,10 @@ async function developerPreviewUpdate(app: OrganizationApp, token: string, enabl
           outputWarnError(
             outputContent`Unable to ${
               enabled ? 'enable' : 'disable'
-            } developer preview. Please, access ${previewURL} to ${enabled ? 'turn it on.' : 'turn it off.'}`,
+            } developer store preview for this app. You can change this setting in the ${previewURL}.'}`,
           )
         } else {
-          outputCompleted(`Developer preview ${enabled ? 'turned on' : 'turned off'}`)
+          outputCompleted(`Developer preview ${enabled ? 'enabled' : 'disabled'}`)
         }
       },
     },

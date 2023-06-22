@@ -408,7 +408,7 @@ describe('ensureDevContext', () => {
     expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
       input: {apiKey: 'key2', enabled: true},
     })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview turned on"')
+    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview enabled"')
   })
 
   test('display an error to enable dev preview if the beta is enabled in partners but an error is returned', async () => {
@@ -435,7 +435,7 @@ describe('ensureDevContext', () => {
       input: {apiKey: 'key2', enabled: true},
     })
     expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to enable developer preview. Please, access partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ) to turn it on."',
+      '"Unable to enable developer store preview for this app. You can change this setting in the partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
     )
   })
 })
@@ -641,7 +641,7 @@ describe('ensureDeployContext', () => {
     expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
       input: {apiKey: 'key2', enabled: false},
     })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview turned off"')
+    expect(mockOutput.completed()).toMatchInlineSnapshot('"Developer preview disabled"')
   })
 
   test('display an error to disable dev preview if the beta is enabled in partners but an error is returned', async () => {
@@ -674,7 +674,7 @@ describe('ensureDeployContext', () => {
       input: {apiKey: 'key2', enabled: false},
     })
     expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to disable developer preview. Please, access partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ) to turn it off."',
+      '"Unable to disable developer store preview for this app. You can change this setting in the partners dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
     )
   })
 })
