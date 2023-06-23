@@ -381,6 +381,25 @@ describe('Tasks', () => {
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('context is shared')
   })
 
+  test('has an initial context', async () => {
+    // Given
+    const firstTask: Task<{foo: string}> = {
+      title: 'task 1',
+      task: async (ctx) => {
+        if (ctx.foo === 'initial') {
+          throw new Error('initial context set')
+        }
+      },
+    }
+
+    // When
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} initialContext={{foo: 'initial'}}/>)
+
+    // Then
+    await expect(renderInstance.waitUntilExit()).rejects.toThrow('initial context set')
+  })
+
+
   test('has an onComplete function that is called with the context', async () => {
     // Given
     const taskFunction = vi.fn(async (ctx) => {

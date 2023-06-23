@@ -24,6 +24,7 @@ export interface TasksProps<TContext> {
   silent?: boolean
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
+  initialContext?: TContext
 }
 
 enum TasksState {
@@ -64,12 +65,13 @@ function Tasks<TContext>({
   silent = isUnitTest(),
   onComplete = noop,
   abortSignal,
+  initialContext = {} as TContext,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
-  const ctx = useRef<TContext>({} as TContext)
+  const ctx = useRef<TContext>(initialContext)
   const {isRawModeSupported} = useStdin()
 
   const runTasks = async () => {

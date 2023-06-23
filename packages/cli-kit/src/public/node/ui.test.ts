@@ -1,4 +1,4 @@
-import {renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderTasks, renderWarning} from './ui.js'
+import {Task, renderConcurrent, renderFatalError, renderInfo, renderSuccess, renderTasks, renderWarning} from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -354,6 +354,38 @@ describe('renderTasks', async () => {
       "╭─ warning ────────────────────────────────────────────────────────────────────╮
       │                                                                              │
       │  example error                                                               │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('renders a initial message correctly when the task throws an error ', async () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    const throwingTask: Task<{initial: string}> = {
+      title: 'throwing task',
+      task: async (ctx) => {
+        throw new Error(ctx.initial)
+      },
+    }
+
+    try {
+      await renderTasks([throwingTask], {}, {initial: 'initial error message'})
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error: any) {
+      renderWarning({
+        headline: error.message,
+      })
+    }
+
+    // Then
+    expect(mockOutput.warn()).toMatchInlineSnapshot(`
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  initial error message                                                       │
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
