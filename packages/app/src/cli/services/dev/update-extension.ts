@@ -9,7 +9,7 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {outputDebug, OutputMessage} from '@shopify/cli-kit/node/output'
+import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -17,7 +17,9 @@ interface UpdateExtensionDraftOptions {
   token: string
   apiKey: string
   registrationId: string
+  stdout: Writable
   stderr: Writable
+  unifiedDeployment: boolean
 }
 
 export async function updateExtensionDraft({
@@ -25,7 +27,9 @@ export async function updateExtensionDraft({
   token,
   apiKey,
   registrationId,
+  stdout,
   stderr,
+  unifiedDeployment,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
@@ -37,7 +41,7 @@ export async function updateExtensionDraft({
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...(await extension.deployConfig(apiKey)),
+      ...(await extension.deployConfig({apiKey, token, unifiedDeployment})),
       serialized_script: encodedFile,
     }),
     context: undefined,
@@ -50,7 +54,7 @@ export async function updateExtensionDraft({
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)
   } else {
-    outputDebug(`Drafts updated successfully for extension: ${extension.localIdentifier}`)
+    outputInfo(`Draft updated successfully for extension: ${extension.localIdentifier}`, stdout)
   }
 }
 
@@ -59,8 +63,10 @@ interface UpdateExtensionConfigOptions {
   token: string
   apiKey: string
   registrationId: string
+  stdout: Writable
   stderr: Writable
   specifications: ExtensionSpecification[]
+  unifiedDeployment: boolean
 }
 
 export async function updateExtensionConfig({
@@ -68,8 +74,10 @@ export async function updateExtensionConfig({
   token,
   apiKey,
   registrationId,
+  stdout,
   stderr,
   specifications,
+  unifiedDeployment,
 }: UpdateExtensionConfigOptions) {
   const abort = (errorMessage: OutputMessage) => {
     throw new AbortError(errorMessage)
@@ -84,5 +92,5 @@ export async function updateExtensionConfig({
   const configuration = await parseConfigurationFile(specification.schema, extension.configurationPath, abort)
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = configuration
-  return updateExtensionDraft({extension, token, apiKey, registrationId, stderr})
+  return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
 }

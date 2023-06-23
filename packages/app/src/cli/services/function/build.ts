@@ -25,13 +25,22 @@ export async function buildJSFunction(fun: ExtensionInstance, options: JSFunctio
 }
 
 async function buildJSFunctionWithoutTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
-  options.stdout.write(`Building GraphQL types...\n`)
-  await buildGraphqlTypes(fun, options)
-  options.stdout.write(`Bundling JS function...\n`)
-  await bundleExtension(fun, options)
-  options.stdout.write(`Running javy...\n`)
-  await runJavy(fun, options)
-  options.stdout.write(`Done!\n`)
+  if (!options.signal?.aborted) {
+    options.stdout.write(`Building function ${fun.localIdentifier}...`)
+    options.stdout.write(`Building GraphQL types...\n`)
+    await buildGraphqlTypes(fun, options)
+  }
+  if (!options.signal?.aborted) {
+    options.stdout.write(`Bundling JS function...\n`)
+    await bundleExtension(fun, options)
+  }
+  if (!options.signal?.aborted) {
+    options.stdout.write(`Running javy...\n`)
+    await runJavy(fun, options)
+  }
+  if (!options.signal?.aborted) {
+    options.stdout.write(`Done!\n`)
+  }
 }
 
 export async function buildJSFunctionWithTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {

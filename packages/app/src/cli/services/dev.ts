@@ -14,7 +14,9 @@ import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {setupConfigWatcher, setupDraftableExtensionBundler} from './dev/extension/bundler.js'
+import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
+import {buildFunctionExtension} from './build/extension.js'
+import {updateExtensionDraft} from './dev/update-extension.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -186,8 +188,9 @@ async function dev(options: DevOptions) {
     }),
   )
 
+  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
-  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable)
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
 
   if (previewableExtensions.length > 0) {
     previewUrl = `${proxyUrl}/extensions/dev-console`
@@ -212,6 +215,7 @@ async function dev(options: DevOptions) {
   if (draftableExtensions.length > 0) {
     const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
       app: localApp,
+      partnersApp: remoteApp,
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
@@ -228,6 +232,7 @@ async function dev(options: DevOptions) {
         extensions: draftableExtensions,
         remoteExtensions,
         specifications,
+        unifiedDeployment,
       }),
     )
   }
@@ -435,6 +440,7 @@ interface DevDraftableExtensionsOptions {
     [key: string]: string
   }
   specifications: ExtensionSpecification[]
+  unifiedDeployment: boolean
 }
 
 export function devDraftableExtensionTarget({
@@ -445,10 +451,28 @@ export function devDraftableExtensionTarget({
   token,
   remoteExtensions,
   specifications,
+  unifiedDeployment,
 }: DevDraftableExtensionsOptions) {
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+      // Functions will only be passed to this target if unified deployments are enabled
+      const functions = extensions.filter((ext) => ext.isFunctionExtension)
+      await Promise.all(
+        functions.map(async (extension) => {
+          await buildFunctionExtension(extension, {
+            app,
+            stdout,
+            stderr,
+            useTasks: false,
+            signal,
+          })
+          const registrationId = remoteExtensions[extension.localIdentifier]
+          if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+          await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
+        }),
+      )
+
       await Promise.all(
         extensions
           .map((extension) => {
@@ -456,7 +480,17 @@ export function devDraftableExtensionTarget({
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
             const actions = [
-              setupConfigWatcher({extension, token, apiKey, registrationId, stdout, stderr, signal, specifications}),
+              setupConfigWatcher({
+                extension,
+                token,
+                apiKey,
+                registrationId,
+                stdout,
+                stderr,
+                signal,
+                specifications,
+                unifiedDeployment,
+              }),
             ]
 
             // Only extensions with esbuild feature should be whatched using esbuild
@@ -472,9 +506,29 @@ export function devDraftableExtensionTarget({
                   stderr,
                   stdout,
                   signal,
+                  unifiedDeployment,
                 }),
               )
             }
+
+            // watch for Function changes that require a build and push
+            if (extension.isFunctionExtension) {
+              // watch for changes
+              actions.push(
+                setupFunctionWatcher({
+                  extension,
+                  app,
+                  stdout,
+                  stderr,
+                  signal,
+                  token,
+                  apiKey,
+                  registrationId,
+                  unifiedDeployment,
+                }),
+              )
+            }
+
             return actions
           })
           .flat(),
