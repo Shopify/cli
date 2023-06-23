@@ -1,4 +1,9 @@
-import {testFunctionExtension, testThemeExtensions, testUIExtension} from '../app/app.test-data.js'
+import {
+  testFunctionExtension,
+  testThemeExtensions,
+  testUIExtension,
+  testWebPixelExtension,
+} from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -81,7 +86,7 @@ describe('watchPaths', async () => {
 })
 
 describe('isDraftable', () => {
-  test('returns false for previewable extensions', async () => {
+  test('returns false for ui extensions', async () => {
     const extensionInstance = await testUIExtension()
 
     const got1 = extensionInstance.isDraftable(true)
@@ -113,6 +118,14 @@ describe('isDraftable', () => {
     const extensionInstance = await testFunctionExtension()
 
     const got = extensionInstance.isDraftable(true)
+
+    expect(got).toBe(true)
+  })
+
+  test('returns true for web pixel extensions', async () => {
+    const extensionInstance = await testWebPixelExtension()
+
+    const got = extensionInstance.isDraftable(false)
 
     expect(got).toBe(true)
   })
