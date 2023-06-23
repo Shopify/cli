@@ -16,6 +16,8 @@ interface MigrateOptions {
   apiKey?: string
 
   config: Config
+
+  reset: boolean
 }
 
 interface DashboardExtension {
@@ -45,7 +47,7 @@ async function getActiveDashboardExtensions({token, apiKey}: {token: string; api
 
 export async function importFlowExtensions(options: MigrateOptions) {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, _] = await fetchAppAndIdentifiers({reset: false, ...options}, token)
+  const [partnersApp, _] = await fetchAppAndIdentifiers(options, token)
   console.log(JSON.stringify(partnersApp, null, 2))
   const activeDashboardExtensions = await getActiveDashboardExtensions({token, apiKey: partnersApp.apiKey})
 

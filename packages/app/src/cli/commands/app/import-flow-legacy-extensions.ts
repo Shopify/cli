@@ -17,6 +17,12 @@ export default class AppImportFlowExtension extends Command {
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
     }),
+    reset: Flags.boolean({
+      hidden: false,
+      description: 'Reset all your settings.',
+      env: 'SHOPIFY_FLAG_RESET',
+      default: false,
+    }),
   }
 
   async run(): Promise<void> {
@@ -25,6 +31,6 @@ export default class AppImportFlowExtension extends Command {
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
 
-    await importFlowExtensions({app, apiKey: flags['api-key'], config: this.config})
+    await importFlowExtensions({app, apiKey: flags['api-key'], config: this.config, reset: flags.reset})
   }
 }
