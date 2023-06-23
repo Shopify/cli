@@ -1,4 +1,4 @@
-import {ensureDevContext} from './context.js'
+import {disableDeveloperPreview, ensureDevContext} from './context.js'
 import {
   generateFrontendURL,
   generatePartnersURLs,
@@ -31,26 +31,27 @@ import {HostThemeManager} from '../utilities/host-theme-manager.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
-import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
+import treeKill from '@shopify/cli-kit/node/tree-kill'
 import {
   AdminSession,
   ensureAuthenticatedAdmin,
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
+const GRACEFUL_EXIT_TIMEOUT = 2000
 
 export interface DevOptions {
   directory: string
@@ -93,6 +94,7 @@ async function dev(options: DevOptions) {
   if (!options.tunnelUrl && !options.noTunnel && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
     tunnelClient?.stopTunnel()
+    // eslint-disable-next-line require-atomic-updates
     tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
   }
 
@@ -274,12 +276,20 @@ async function dev(options: DevOptions) {
 
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
-  await reportAnalyticsEvent({config: options.commandConfig})
-
+  const abortController = new AbortController()
+  abortController.signal.addEventListener('abort', async () => {
+    setInterval(() => {
+      treeKill('SIGINT')
+    }, GRACEFUL_EXIT_TIMEOUT)
+    outputInfo('\n\nInitiating graceful shutdown ...')
+    await disableDeveloperPreview({app: {...remoteApp, apiSecretKeys: []}, token, hiddenOutput: true})
+    tunnelClient?.stopTunnel()
+  })
   if (proxyTargets.length === 0) {
     await renderDev(
       {
         processes: additionalProcesses,
+        abortController,
       },
       previewUrl,
     )
@@ -289,6 +299,7 @@ async function dev(options: DevOptions) {
       portNumber: proxyPort,
       proxyTargets,
       additionalProcesses,
+      abortController,
     })
   }
 }
