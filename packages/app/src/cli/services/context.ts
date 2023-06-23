@@ -43,7 +43,6 @@ import {
   OutputMessage,
   Logger,
   outputDebug,
-  outputWarn,
 } from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'

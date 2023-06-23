@@ -114,7 +114,7 @@ ${outputToken.json(JSON.stringify(rules))}
 
   const renderConcurrentOptions: RenderConcurrentOptions = {
     processes: [...processes, ...additionalProcesses],
-    abortSignal: abortController.signal,
+    abortController,
   }
 
   await Promise.all([renderDev(renderConcurrentOptions, previewUrl), server.listen(portNumber)])

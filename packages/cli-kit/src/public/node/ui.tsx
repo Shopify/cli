@@ -39,7 +39,7 @@ import {Key as InkKey, RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
-export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
   renderOptions?: RenderOptions
 }
 
@@ -60,17 +60,17 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  *
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
-  const abortSignal = props.abortSignal ?? new AbortController().signal
+  const abortController = props.abortController ?? new AbortController()
 
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, {
+    return render(<ConcurrentOutput {...props} abortController={abortController} />, {
       ...renderOptions,
       exitOnCtrlC: typeof props.onInput === 'undefined',
     })
   } else {
     return Promise.all(
       props.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
+        await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
       }),
     )
   }
@@ -480,7 +480,8 @@ export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions}: RenderTasksOptions = {},
   initialContext: TContext = {} as TContext,
-) {  recordUIEvent({
+) {
+  recordUIEvent({
     type: 'taskbar',
     properties: {
       // Rather than timing exactly, pretend each step takes 2 seconds. This
@@ -493,7 +494,7 @@ export async function renderTasks<TContext>(
 
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} initialContext={initialContext}/>, {
+    render(<Tasks tasks={tasks} onComplete={resolve} initialContext={initialContext} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })

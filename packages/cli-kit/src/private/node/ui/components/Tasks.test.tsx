@@ -393,12 +393,11 @@ describe('Tasks', () => {
     }
 
     // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} initialContext={{foo: 'initial'}}/>)
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} initialContext={{foo: 'initial'}} />)
 
     // Then
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('initial context set')
   })
-
 
   test('has an onComplete function that is called with the context', async () => {
     // Given
