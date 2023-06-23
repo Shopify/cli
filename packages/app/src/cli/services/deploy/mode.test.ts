@@ -173,7 +173,9 @@ describe('resolveDeploymentMode', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When / Then
-    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot('"Error upgrading the app App to use simplified deployment: error"')
+    await expect(resolveDeploymentMode(orgApp, options, TOKEN)).rejects.toThrowErrorMatchingInlineSnapshot(
+      '"Error upgrading the app App to use simplified deployment: error"',
+    )
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "╭─ info ───────────────────────────────────────────────────────────────────────╮
       │                                                                              │
