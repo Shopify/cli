@@ -5,10 +5,10 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
-import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileExists, glob} from '@shopify/cli-kit/node/fs'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {promises} from 'fs'
+import {Err, Ok, Result} from '@shopify/cli-kit/node/result'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -31,19 +31,20 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   return configName
 }
 
-export async function selectConfigFile(directory: string): Promise<string | undefined> {
-  const files = (await promises.readdir(directory)).filter(
-    (file) => file.startsWith('shopify.app.') && file.endsWith('.toml'),
-  )
+export async function selectConfigFile(directory: string): Promise<Result<string, undefined>> {
+  const files = (await glob(joinPath(directory, 'shopify.app*.toml'))).map((path) => basename(path))
 
-  if (files.length < 2) return files[0]
+  if (files.length === 0) return new Err<string, undefined>(undefined)
+  if (files.length === 1) return new Ok<string, undefined>(files[0]!)
 
-  return renderSelectPrompt({
+  const chosen = await renderSelectPrompt({
     message: 'Configuration file',
     choices: files.map((file) => {
       return {label: file, value: file}
     }),
   })
+
+  return new Ok<string, undefined>(chosen)
 }
 
 function buildTextPromptOptions(defaultValue: string): RenderTextPromptOptions {

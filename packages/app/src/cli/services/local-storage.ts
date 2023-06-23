@@ -35,7 +35,7 @@ function appLocalStorage() {
 function currentConfigLocalStorage() {
   if (!_currentConfigLocalStorageInstance) {
     _currentConfigLocalStorageInstance = new LocalStorage<CurrentConfigLocalStorageSchema>({
-      projectName: 'shopify-cli-app',
+      projectName: 'shopify-cli-current-config',
     })
   }
   return _currentConfigLocalStorageInstance

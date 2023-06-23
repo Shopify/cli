@@ -3,6 +3,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {Err, Ok} from '@shopify/cli-kit/node/result'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -103,7 +104,7 @@ describe('selectConfigFile', () => {
       const result = await selectConfigFile(tmp)
 
       // Then
-      expect(result).toEqual('shopify.app.staging.toml')
+      expect(result).toEqual(new Ok<string, undefined>('shopify.app.staging.toml'))
       expect(renderSelectPrompt).toHaveBeenCalledWith({
         message: 'Configuration file',
         choices: [
@@ -123,18 +124,18 @@ describe('selectConfigFile', () => {
       const result = await selectConfigFile(tmp)
 
       // Then
-      expect(result).toEqual('shopify.app.local.toml')
+      expect(result).toEqual(new Ok<string, undefined>('shopify.app.local.toml'))
       expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
   })
 
-  test('returns undefined when there is no config file', async () => {
+  test('returns an error when there is no config file', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // When
       const result = await selectConfigFile(tmp)
 
       // Then
-      expect(result).toBeUndefined()
+      expect(result).toEqual(new Err<string, undefined>(undefined))
       expect(renderSelectPrompt).not.toHaveBeenCalled()
     })
   })

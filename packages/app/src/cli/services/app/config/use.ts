@@ -61,8 +61,9 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   })
 }
 
-async function getConfigFileName(directory: string, config?: string): Promise<string | undefined> {
+async function getConfigFileName(directory: string, config?: string): Promise<string | null> {
   if (config) return getAppConfigurationFileName(config)
 
-  return selectConfigFile(directory)
+  const result = await selectConfigFile(directory)
+  return result.isErr() ? null : result.value
 }
