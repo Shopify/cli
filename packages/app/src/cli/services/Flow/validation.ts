@@ -39,6 +39,8 @@ interface SerializedField {
   uiType: string
 }
 
+type FlowExtensionTypes = 'flow_action' | 'flow_trigger'
+
 // Mapping of metafield types to Flow's Partner's Dashboard UI types
 // Only the `email` type was added since it doesn't exist as a metafield type
 // https://shopify.dev/docs/apps/custom-data/metafields/types
@@ -51,7 +53,7 @@ const uiTypesMap = new Map<string, string>([
   ['url', 'url'],
 ])
 
-export const serializeConfigField = (field: ConfigField, type: 'flow_action' | 'flow_trigger') => {
+export const serializeConfigField = (field: ConfigField, type: FlowExtensionTypes) => {
   const uiType = uiTypesMap.get(field.type)
 
   if (typeof field.key !== 'string') {
@@ -88,9 +90,7 @@ export const serializeConfigField = (field: ConfigField, type: 'flow_action' | '
   return serializedField
 }
 
-export const serializeCommerceObjectField = (field: ConfigField, type: 'flow_action' | 'flow_trigger') => {
-  const commerceObject = field.type.replace('_reference', '')
-
+export const serializeCommerceObjectField = (field: ConfigField, type: FlowExtensionTypes) => {
   if (type === 'flow_trigger' && !TRIGGER_SUPPORTED_COMMERCE_OBJECTS.includes(field.type)) {
     throw new zod.ZodError([
       {
@@ -111,6 +111,8 @@ export const serializeCommerceObjectField = (field: ConfigField, type: 'flow_act
     ])
   }
 
+  const commerceObject = field.type.replace('_reference', '')
+
   const serializedField: SerializedField = {
     name: `${commerceObject}_id`,
     uiType: type === 'flow_action' ? 'commerce-object-id' : commerceObject,
@@ -118,13 +120,13 @@ export const serializeCommerceObjectField = (field: ConfigField, type: 'flow_act
 
   if (type === 'flow_action') {
     serializedField.label = `${commerceObject.charAt(0).toUpperCase() + commerceObject.slice(1)} ID`
-    serializedField.required = field.required
+    serializedField.required = Boolean(field.required)
   }
 
   return serializedField
 }
 
-export const serializeFields = (type: 'flow_action' | 'flow_trigger', fields?: ConfigField[]) => {
+export const serializeFields = (type: FlowExtensionTypes, fields?: ConfigField[]) => {
   if (!fields) return []
 
   const serializedFields = fields.map((field) => {
@@ -138,7 +140,7 @@ export const serializeFields = (type: 'flow_action' | 'flow_trigger', fields?: C
   return serializedFields
 }
 
-export const validateNonCommerceObject = (configField: ConfigField, type: 'flow_action' | 'flow_trigger') => {
+export const validateNonCommerceObjectShape = (configField: ConfigField, type: FlowExtensionTypes) => {
   if (!Object.keys(SUPPORTED_COMMERCE_OBJECTS).includes(configField.type)) {
     if (!configField.key) {
       throw new zod.ZodError([

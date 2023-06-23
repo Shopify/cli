@@ -1,7 +1,7 @@
 import {
   serializeConfigField,
   serializeCommerceObjectField,
-  validateNonCommerceObject,
+  validateNonCommerceObjectShape,
   ConfigField,
   validateCustomConfigurationPageConfig,
 } from '../validation.js'
@@ -150,7 +150,7 @@ describe('serializeCommerceObjectField', () => {
   })
 })
 
-describe('validateNonCommerceObject', () => {
+describe('validateNonCommerceObjectShape', () => {
   const commerceObjectField: ConfigField = {
     type: 'product_reference',
     key: 'my-field',
@@ -168,13 +168,13 @@ describe('validateNonCommerceObject', () => {
   }
 
   test('should return true when non-commerce object field has valid shape', () => {
-    const result = validateNonCommerceObject(nonCommerceObjectField, 'flow_action')
+    const result = validateNonCommerceObjectShape(nonCommerceObjectField, 'flow_action')
 
     expect(result).toBe(true)
   })
 
   test('should return true when field is a commerce object', () => {
-    const result = validateNonCommerceObject(commerceObjectField, 'flow_action')
+    const result = validateNonCommerceObjectShape(commerceObjectField, 'flow_action')
 
     expect(result).toBe(true)
   })
@@ -188,7 +188,7 @@ describe('validateNonCommerceObject', () => {
       required: true,
     }
 
-    expect(() => validateNonCommerceObject(invalidField, 'flow_action')).toThrowError(
+    expect(() => validateNonCommerceObjectShape(invalidField, 'flow_action')).toThrowError(
       new zod.ZodError([
         {
           code: zod.ZodIssueCode.custom,
@@ -208,7 +208,7 @@ describe('validateNonCommerceObject', () => {
       required: true,
     }
 
-    expect(() => validateNonCommerceObject(invalidField, 'flow_action')).toThrowError(
+    expect(() => validateNonCommerceObjectShape(invalidField, 'flow_action')).toThrowError(
       new zod.ZodError([
         {
           code: zod.ZodIssueCode.custom,

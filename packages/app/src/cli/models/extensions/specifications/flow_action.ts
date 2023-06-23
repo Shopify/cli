@@ -2,7 +2,7 @@ import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
   serializeFields,
-  validateNonCommerceObject,
+  validateNonCommerceObjectShape,
   startsWithHttps,
   validateCustomConfigurationPageConfig,
 } from '../../../services/Flow/validation.js'
@@ -26,21 +26,23 @@ const FlowActionExtensionSchema = BaseSchema.extend({
       }),
     )
     .min(1),
-  settings: zod.object({
-    fields: zod
-      .array(
-        zod
-          .object({
-            key: zod.string().optional(),
-            name: zod.string().optional(),
-            description: zod.string().optional(),
-            required: zod.boolean().optional(),
-            type: zod.string(),
-          })
-          .refine((field) => validateNonCommerceObject(field, 'flow_action')),
-      )
-      .optional(),
-  }),
+  settings: zod
+    .object({
+      fields: zod
+        .array(
+          zod
+            .object({
+              key: zod.string().optional(),
+              name: zod.string().optional(),
+              description: zod.string().optional(),
+              required: zod.boolean().optional(),
+              type: zod.string(),
+            })
+            .refine((field) => validateNonCommerceObjectShape(field, 'flow_action')),
+        )
+        .optional(),
+    })
+    .optional(),
 }).refine((config) => {
   const {extensions} = config
   const extension = extensions[0]
@@ -93,16 +95,26 @@ const flowActionSpecification = createExtensionSpecification({
     const {extensions} = config
     const extension = extensions[0]
 
+    if (!extension) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions'],
+          message: 'A flow action must have at least one extension',
+        },
+      ])
+    }
+
     return {
       title: config.name,
       description: config.description,
-      url: extension?.runtime_url,
-      fields: serializeFields('flow_action', config.settings.fields),
-      validation_url: extension?.validation_url,
-      custom_configuration_page_url: extension?.config_page_url,
-      custom_configuration_page_preview_url: extension?.config_page_preview_url,
-      schema: extension?.schema,
-      return_type_ref: extension?.return_type_ref,
+      url: extension.runtime_url,
+      fields: serializeFields('flow_action', config.settings?.fields),
+      validation_url: extension.validation_url,
+      custom_configuration_page_url: extension.config_page_url,
+      custom_configuration_page_preview_url: extension.config_page_preview_url,
+      schema: extension.schema,
+      return_type_ref: extension.return_type_ref,
     }
   },
 })

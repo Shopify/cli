@@ -1,6 +1,6 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {serializeFields, validateNonCommerceObject} from '../../../services/Flow/validation.js'
+import {serializeFields, validateNonCommerceObjectShape} from '../../../services/Flow/validation.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowTriggerExtensionSchema = BaseSchema.extend({
@@ -15,19 +15,21 @@ const FlowTriggerExtensionSchema = BaseSchema.extend({
       }),
     )
     .optional(),
-  settings: zod.object({
-    fields: zod
-      .array(
-        zod
-          .object({
-            key: zod.string().optional(),
-            description: zod.string().optional(),
-            type: zod.string(),
-          })
-          .refine((field) => validateNonCommerceObject(field, 'flow_trigger')),
-      )
-      .optional(),
-  }),
+  settings: zod
+    .object({
+      fields: zod
+        .array(
+          zod
+            .object({
+              key: zod.string().optional(),
+              description: zod.string().optional(),
+              type: zod.string(),
+            })
+            .refine((field) => validateNonCommerceObjectShape(field, 'flow_trigger')),
+        )
+        .optional(),
+    })
+    .optional(),
 })
 
 /**
@@ -42,7 +44,7 @@ const flowTriggerSpecification = createExtensionSpecification({
     return {
       title: config.name,
       description: config.description,
-      fields: serializeFields('flow_trigger', config.settings.fields),
+      fields: serializeFields('flow_trigger', config.settings?.fields),
     }
   },
 })
