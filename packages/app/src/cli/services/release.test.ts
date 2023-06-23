@@ -1,5 +1,5 @@
 import {ensureReleaseContext} from './context.js'
-import {release} from './release.js'
+import {release, validateOptions} from './release.js'
 import {testApp} from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
@@ -203,3 +203,47 @@ async function testRelease(
     version,
   })
 }
+
+describe('validateOptions', () => {
+  test('when version value meets all requirements should not throw any error', async () => {
+    // Given
+    const version = 'AZaz09.-_/'
+
+    // When
+    expect(() => validateOptions({version})).not.toThrow()
+  })
+
+  test('when version value violates period requirements', async () => {
+    // Given
+    const versionOnePeriod = '.'
+    const versionTwoPeriods = '..'
+
+    // When
+    expect(() => validateOptions({version: versionOnePeriod})).toThrowErrorMatchingInlineSnapshot(
+      "\"Version should be different from '.' and '..'\"",
+    )
+    expect(() => validateOptions({version: versionTwoPeriods})).toThrowErrorMatchingInlineSnapshot(
+      "\"Version should be different from '.' and '..'\"",
+    )
+  })
+
+  test('when version value violates unsupported characters requirements', async () => {
+    // Given
+    const versionWithUnsupportedCharacters = 'AZa%&\n'
+
+    // When
+    expect(() => validateOptions({version: versionWithUnsupportedCharacters})).toThrowErrorMatchingInlineSnapshot(
+      '"Version includes invalid characters"',
+    )
+  })
+
+  test('when version value violates max length requirement', async () => {
+    // Given
+    const versionLong = 'A'.repeat(101)
+
+    // When
+    expect(() => validateOptions({version: versionLong})).toThrowErrorMatchingInlineSnapshot(
+      '"Version must be less than 100 characters"',
+    )
+  })
+})

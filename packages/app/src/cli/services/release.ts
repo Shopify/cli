@@ -5,6 +5,7 @@ import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
@@ -24,6 +25,7 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
+  validateOptions(options)
   const {token, apiKey, app} = await ensureReleaseContext(options)
 
   await confirmReleasePrompt(app.name)
@@ -77,5 +79,31 @@ export async function release(options: ReleaseOptions) {
         ],
       ],
     })
+  }
+}
+
+export function validateOptions({version}: Partial<ReleaseOptions>) {
+  if (version) {
+    if (version.length > 100) {
+      throw new AbortError({
+        bold: 'Version must be less than 100 characters',
+      })
+    }
+
+    if (version == '.' || version == '..') {
+      throw new AbortError({
+        bold: "Version should be different from '.' and '..'",
+      })
+    }
+
+    const validChars = /^[a-zA-Z0-9.\-/_]+$/
+    if (!version.match(validChars)) {
+      throw new AbortError(
+        {
+          bold: 'Version includes invalid characters',
+        },
+        ["Supported characters are 'a-z' 'A-Z' '0-9' '.' '-' '_' and '/'"],
+      )
+    }
   }
 }
