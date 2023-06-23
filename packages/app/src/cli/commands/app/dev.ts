@@ -18,6 +18,11 @@ export default class Dev extends Command {
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
     }),
+    config: Flags.string({
+      hidden: false,
+      description: 'Name for the config file.',
+      env: 'SHOPIFY_FLAG_APP_CONFIG',
+    }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID of your app.',
@@ -114,6 +119,7 @@ export default class Dev extends Command {
     await dev({
       directory: flags.path,
       apiKey,
+      config: flags.config,
       storeFqdn: flags.store,
       reset: flags.reset,
       update: !flags['no-update'],

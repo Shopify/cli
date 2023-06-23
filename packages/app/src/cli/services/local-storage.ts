@@ -43,9 +43,10 @@ function currentConfigLocalStorage() {
 
 export function getAppInfo(
   directory: string,
+  configFileName?: string,
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): CachedAppInfo | undefined {
-  const normalized = normalizePath(directory)
+  const normalized = configFileName ? normalizePath(joinPath(directory, configFileName)) : normalizePath(directory)
   outputDebug(outputContent`Reading cached app information for directory ${outputToken.path(normalized)}...`)
   return config.get(normalized)
 }

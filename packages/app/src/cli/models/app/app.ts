@@ -14,6 +14,8 @@ export const AppConfigurationSchema = zod.object({
   scopes: zod.string().default(''),
   application_url: zod.string().optional(),
   redirect_url_allowlist: zod.array(zod.string()).optional(),
+  dev_store: zod.string().optional(),
+  update_urls: zod.boolean().optional(),
 })
 
 export enum WebType {

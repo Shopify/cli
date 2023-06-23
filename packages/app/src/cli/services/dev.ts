@@ -1,4 +1,4 @@
-import {ensureDevContext} from './context.js'
+import {ensureDevContext, ensureDevContextWithConfig} from './context.js'
 import {
   generateFrontendURL,
   generatePartnersURLs,
@@ -56,6 +56,7 @@ export interface DevOptions {
   directory: string
   id?: number
   apiKey?: string
+  config?: string
   storeFqdn?: string
   reset: boolean
   update: boolean
@@ -87,7 +88,7 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
-  } = await ensureDevContext(options, token)
+  } = options.config ? await ensureDevContextWithConfig(options, token) : await ensureDevContext(options, token)
 
   if (!options.tunnelUrl && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
@@ -97,7 +98,7 @@ async function dev(options: DevOptions) {
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
-  let localApp = await load({directory: options.directory, specifications})
+  let localApp = await load({directory: options.directory, specifications, configName: options.config})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
@@ -141,8 +142,9 @@ async function dev(options: DevOptions) {
         appDirectory: localApp.directory,
         cachedUpdateURLs,
         newApp: remoteApp.newApp,
+        localApp: options.config ? localApp : undefined,
       })
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, options.config ? localApp : undefined)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
     }
   }

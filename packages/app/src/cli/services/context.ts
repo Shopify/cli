@@ -18,7 +18,7 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {loadAppName} from '../models/app/loader.js'
+import {load, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -28,6 +28,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -40,6 +41,7 @@ export interface DevContextOptions {
   directory: string
   apiKey?: string
   storeFqdn?: string
+  config?: string
   reset: boolean
 }
 
@@ -125,7 +127,7 @@ export async function ensureGenerateContext(options: {
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
   const cachedInfo = getAppDevCachedInfo({
-    reset: options.reset,
+    reset: options.reset, //false
     directory: options.directory,
   })
 
@@ -183,10 +185,44 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
     const packageManager = await getPackageManager(options.directory)
-    showReusedValues(organization.businessName, cachedInfo, packageManager)
+    showReusedValues({org: organization.businessName, cachedAppInfo: cachedInfo, packageManager})
   }
 
   const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
+  await logMetadataForLoadedDevContext(result)
+  return result
+}
+
+export async function ensureDevContextWithConfig(options: DevContextOptions, token: string): Promise<DevContextOutput> {
+  const localApp = await load({directory: options.directory, specifications: [], configName: options.config})
+
+  if (!localApp.configuration.client_id) {
+    throw new AbortError(`Configuration file ${options.config} needs a client_id.`)
+  }
+
+  const remoteApp = await appFromId(localApp.configuration.client_id, token)
+
+  if (!remoteApp) {
+    throw new AbortError(`Could not find app for client_id: ${localApp.configuration.client_id}`)
+  }
+
+  const orgId = getOrganization() || remoteApp.organizationId
+  const organization = await fetchOrgFromId(orgId, token)
+  const useCloudflareTunnels = organization.betas?.cliTunnelAlternative !== true
+
+  let store = localApp.configuration.dev_store
+    ? await storeFromFqdn(localApp.configuration.dev_store, orgId, token)
+    : null
+
+  if (!store) {
+    const allStores = await fetchAllDevStores(orgId, token)
+    store = await selectStore(allStores, organization, token)
+  }
+
+  const packageManager = await getPackageManager(options.directory)
+  showReusedValues({org: organization.businessName, localApp, packageManager})
+
+  const result = buildOutputWithLocalApp(remoteApp, store, useCloudflareTunnels, localApp)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -229,6 +265,24 @@ function buildOutput(
     remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
+    useCloudflareTunnels,
+  }
+}
+
+function buildOutputWithLocalApp(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  useCloudflareTunnels: boolean,
+  localApp?: AppInterface,
+): DevContextOutput {
+  return {
+    remoteApp: {
+      ...app,
+      apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
+    },
+    remoteAppUpdated: false,
+    storeFqdn: store.shopDomain,
+    updateURLs: localApp?.configuration.update_urls,
     useCloudflareTunnels,
   }
 }
@@ -458,24 +512,39 @@ async function selectOrg(token: string): Promise<string> {
   return org.id
 }
 
+interface ReusedValuesOptions {
+  org: string
+  cachedAppInfo?: CachedAppInfo
+  packageManager: PackageManager
+  localApp?: AppInterface
+}
+
 /**
  * Message shown to the user in case we are reusing a previous configuration
  * @param org - Organization name
  * @param app - App name
  * @param store - Store domain
  */
-function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager): void {
+function showReusedValues({org, cachedAppInfo, packageManager, localApp}: ReusedValuesOptions): void {
   let updateURLs = 'Not yet configured'
-  if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedAppInfo?.updateURLs !== undefined) updateURLs = cachedAppInfo?.updateURLs ? 'Always' : 'Never'
 
-  const items = [
-    `Org:          ${org}`,
-    `App:          ${cachedAppInfo.title}`,
-    `Dev store:    ${cachedAppInfo.storeFqdn}`,
-    `Update URLs:  ${updateURLs}`,
-  ]
+  const items = localApp
+    ? [
+        `Org:                  ${org}`,
+        `App:                  ${localApp.configuration.name}`,
+        `Configuration file:   ${basename(localApp.configurationPath)}`,
+        `Dev store:            ${localApp.configuration.dev_store}`,
+        `Update URLs:          ${updateURLs}`,
+      ]
+    : [
+        `Org:          ${org}`,
+        `App:          ${cachedAppInfo?.title}`,
+        `Dev store:    ${cachedAppInfo?.storeFqdn}`,
+        `Update URLs:  ${updateURLs}`,
+      ]
 
-  if (cachedAppInfo.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
+  if (cachedAppInfo?.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
 
   renderInfo({
     headline: 'Using your previous dev settings:',

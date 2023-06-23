@@ -14,6 +14,8 @@ import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {writeFileSync} from 'fs'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -145,13 +147,28 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
   }
 }
 
-export async function updateURLs(urls: PartnersURLs, apiKey: string, token: string): Promise<void> {
+export async function updateURLs(
+  urls: PartnersURLs,
+  apiKey: string,
+  token: string,
+  localApp?: AppInterface,
+): Promise<void> {
   const variables: UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = UpdateURLsQuery
   const result: UpdateURLsQuerySchema = await partnersRequest(query, token, variables)
   if (result.appUpdate.userErrors.length > 0) {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
+  }
+
+  if (localApp) {
+    let configuration = localApp?.configuration || {}
+    configuration = {
+      ...configuration,
+      application_url: urls.applicationUrl,
+      redirect_url_allowlist: urls.redirectUrlWhitelist,
+    }
+    writeFileSync(localApp?.configurationPath, encodeToml(configuration))
   }
 }
 
@@ -167,6 +184,7 @@ export interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
+  localApp?: AppInterface
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
@@ -192,6 +210,12 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     }
     /* eslint-enable no-fallthrough */
     setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+
+    if (options.localApp) {
+      let configuration = options.localApp?.configuration || {}
+      configuration = {...configuration, update_urls: newUpdateURLs}
+      writeFileSync(options.localApp?.configurationPath, encodeToml(configuration))
+    }
   }
   return shouldUpdate
 }
