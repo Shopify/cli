@@ -154,3 +154,45 @@ export const validateCommerceObject = (configField: ConfigField, type: 'flow_act
 
   return true
 }
+
+export const startsWithHttps = (url: string) => url.startsWith('https://')
+
+export const validateCustomConfigurationPageConfig = (
+  configPageUrl?: string,
+  configPagePreviewUrl?: string,
+  validationUrl?: string,
+) => {
+  if (configPageUrl || configPagePreviewUrl) {
+    if (!configPageUrl) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['task.custom_configuration_page_url'],
+          message: 'To set a custom configuration page a `custom_configuration_page_url` must be specified.',
+        },
+      ])
+    }
+
+    if (!configPagePreviewUrl) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['task.custom_configuration_page_preview_url'],
+          message: 'To set a custom configuration page a `custom_configuration_page_preview_url` must be specified.',
+        },
+      ])
+    }
+
+    if (!validationUrl) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['task.validation_url'],
+          message: 'To set a custom configuration page a `validation_url` must be specified.',
+        },
+      ])
+    }
+  }
+
+  return true
+}

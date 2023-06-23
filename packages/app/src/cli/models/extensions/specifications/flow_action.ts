@@ -1,6 +1,11 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {serializeFields, validateCommerceObject} from '../../../services/Flow/validation.js'
+import {
+  serializeFields,
+  validateCommerceObject,
+  startsWithHttps,
+  validateCustomConfigurationPageConfig,
+} from '../../../services/Flow/validation.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -12,10 +17,10 @@ const FlowActionExtensionSchema = BaseSchema.extend({
   extensions: zod
     .array(
       zod.object({
-        runtime_url: zod.string(),
-        validation_url: zod.string().optional(),
-        config_page_url: zod.string().optional(),
-        config_page_preview_url: zod.string().optional(),
+        runtime_url: zod.string().url().refine(startsWithHttps),
+        validation_url: zod.string().url().refine(startsWithHttps).optional(),
+        config_page_url: zod.string().url().refine(startsWithHttps).optional(),
+        config_page_preview_url: zod.string().url().refine(startsWithHttps).optional(),
         schema: zod.string().optional(),
         return_type_ref: zod.string().optional(),
       }),
@@ -26,7 +31,6 @@ const FlowActionExtensionSchema = BaseSchema.extend({
       .array(
         zod
           .object({
-            // todo: needs to be only alphanumeric chars
             key: zod.string().optional(),
             name: zod.string().optional(),
             description: zod.string().optional(),
@@ -37,7 +41,27 @@ const FlowActionExtensionSchema = BaseSchema.extend({
       )
       .optional(),
   }),
+}).refine((config) => {
+  const {extensions} = config
+  const extension = extensions[0]
+
+  if (!extension) {
+    throw new zod.ZodError([
+      {
+        code: zod.ZodIssueCode.custom,
+        path: ['extensions'],
+        message: 'A flow action must have at least one extension',
+      },
+    ])
+  }
+
+  validateCustomConfigurationPageConfig(
+    extension.config_page_url,
+    extension.config_page_preview_url,
+    extension.validation_url,
+  )
 })
+
 /**
  * Loads the schema from the partner defined file.
  */

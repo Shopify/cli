@@ -20,7 +20,6 @@ const FlowTriggerExtensionSchema = BaseSchema.extend({
       .array(
         zod
           .object({
-            // todo: needs to be only alphanumeric chars
             key: zod.string().optional(),
             description: zod.string().optional(),
             type: zod.string(),
