@@ -22,11 +22,14 @@ export const AllAppExtensionRegistrationsQuery = gql`
         uuid
         title
         type
-        # activeVersion {
-        #   id
-        #   uuid
-        #   config
-        # }
+        activeVersion {
+          id
+          uuid
+          config
+        }
+        draftVersion {
+          config
+        }
       }
       functions {
         id
