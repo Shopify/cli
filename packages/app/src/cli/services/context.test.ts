@@ -17,6 +17,8 @@ import {
   ensureGenerateContext,
   DeployContextOptions,
   ensureReleaseContext,
+  enableDeveloperPreview,
+  disableDeveloperPreview,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
@@ -59,12 +61,14 @@ beforeEach(() => {
   // this is needed because using importActual to mock the ui module
   // creates a circular dependency between ui and context/local
   // so we need to mock the whole module and just replace the functions we use
-  vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
-    for (const task of tasks) {
-      // eslint-disable-next-line no-await-in-loop
-      await task.task({}, task)
-    }
-  })
+  vi.mocked(renderTasks).mockImplementation(
+    async <TContext>(tasks: Task<TContext>[], _mock: TContext, context: TContext) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(context, task)
+      }
+    },
+  )
   vi.mocked(resolveDeploymentMode).mockResolvedValue('legacy')
 })
 
@@ -782,5 +786,65 @@ describe('ensureThemeExtensionDevContext', () => {
     expect('UUID').toEqual(got.uuid)
     expect('theme app extension').toEqual(got.title)
     expect('THEME_APP_EXTENSION').toEqual(got.type)
+  })
+})
+
+describe('enableDeveloperPreview', () => {
+  test('displays sucess output messages using debug log', async () => {
+    // Given
+    vi.mocked(partnersRequest).mockResolvedValueOnce({
+      developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: true}},
+    })
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    await enableDeveloperPreview({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, token: 'token', hiddenOutput: true})
+
+    // Then
+    expect(mockOutput.debug()).toMatchInlineSnapshot('"Development store preview enabled"')
+  })
+
+  test('displays error output messages using debug log', async () => {
+    // Given
+    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error enabling'))
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    await enableDeveloperPreview({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, token: 'token', hiddenOutput: true})
+
+    // Then
+    expect(mockOutput.debug()).toMatchInlineSnapshot(
+      '"Unable to enable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
+    )
+  })
+})
+
+describe('disableDeveloperPreview', () => {
+  test('displays sucess output messages using debug log', async () => {
+    // Given
+    vi.mocked(partnersRequest).mockResolvedValueOnce({
+      developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: false}},
+    })
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    await disableDeveloperPreview({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, token: 'token', hiddenOutput: true})
+
+    // Then
+    expect(mockOutput.debug()).toMatchInlineSnapshot('"Development store preview disabled"')
+  })
+
+  test('displays error output messages using debug log', async () => {
+    // Given
+    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error enabling'))
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    await disableDeveloperPreview({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, token: 'token', hiddenOutput: true})
+
+    // Then
+    expect(mockOutput.debug()).toMatchInlineSnapshot(
+      '"Unable to disable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
+    )
   })
 })

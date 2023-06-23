@@ -29,7 +29,7 @@ import {
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {Task, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {
@@ -40,6 +40,10 @@ import {
   outputNewline,
   outputCompleted,
   outputWarnError,
+  OutputMessage,
+  Logger,
+  outputDebug,
+  outputWarn,
 } from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -193,7 +197,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     orgId,
   })
 
-  await enableDeveloperPreview(selectedApp, token)
+  await enableDeveloperPreview({app: selectedApp, token})
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
   const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
   await logMetadataForLoadedDevContext(result)
@@ -342,7 +346,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
 
-  await disableDeveloperPreview(partnersApp, token)
+  await disableDeveloperPreview({app: partnersApp, token})
 
   const result = {
     app: options.app,
@@ -598,55 +602,78 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   }))
 }
 
-export async function enableDeveloperPreview(app: OrganizationApp, token: string) {
-  return developerPreviewUpdate(app, token, true)
+interface DeveloperPreviewTasksContext {
+  app: OrganizationApp
+  token: string
+  enabled: boolean
+  logger: {
+    sucess: (content: OutputMessage, logger?: Logger) => void
+    error: (content: OutputMessage, logger?: Logger) => void
+  }
 }
 
-export async function disableDeveloperPreview(app: OrganizationApp, token: string) {
-  return developerPreviewUpdate(app, token, false)
+export interface DeveloperPreviewInput {
+  app: OrganizationApp
+  token: string
+  hiddenOutput?: boolean
 }
 
-async function developerPreviewUpdate(app: OrganizationApp, token: string, enabled: boolean) {
+export async function enableDeveloperPreview(input: DeveloperPreviewInput) {
+  return developerPreviewUpdate(input, true)
+}
+
+export async function disableDeveloperPreview(input: DeveloperPreviewInput) {
+  return developerPreviewUpdate(input, false)
+}
+
+async function developerPreviewUpdate({app, token, hiddenOutput = false}: DeveloperPreviewInput, enabled: boolean) {
   if (!app.betas?.unifiedAppDeployment) return
 
-  const tasks = [
-    {
-      title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
-      task: async () => {
-        let result: DevelopmentStorePreviewUpdateSchema | undefined
-        let error: string | undefined
-        try {
-          const query = DevelopmentStorePreviewUpdateQuery
-          const variables: DevelopmentStorePreviewUpdateInput = {
-            input: {
-              apiKey: app.apiKey,
-              enabled,
-            },
-          }
-          result = await partnersRequest(query, token, variables)
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          error = err.message
-        }
-
-        if ((result && result.developmentStorePreviewUpdate.userErrors?.length > 0) || error) {
-          const previewURL = outputToken.link(
-            'Partner Dashboard',
-            await devPreviewURL({orgId: app.organizationId, appId: app.id}),
-          )
-          outputWarnError(
-            outputContent`Unable to ${
-              enabled ? 'enable' : 'disable'
-            } development store preview for this app. You can change this setting in the ${previewURL}.'}`,
-          )
-        } else {
-          outputCompleted(`Development store preview ${enabled ? 'enabled' : 'disabled'}`)
-        }
+  if (hiddenOutput) {
+    await executeDeveloperPreviewUpdate({app, token, enabled, logger: {sucess: outputDebug, error: outputDebug}})
+  } else {
+    const tasks: Task<DeveloperPreviewTasksContext>[] = [
+      {
+        title: `${enabled ? 'Enabling' : 'Disabling'} development store preview...`,
+        task: executeDeveloperPreviewUpdate,
       },
-    },
-  ]
-  await renderTasks(tasks)
-  outputNewline()
+    ]
+
+    await renderTasks(tasks, {}, {app, token, enabled, logger: {sucess: outputCompleted, error: outputWarnError}})
+    outputNewline()
+  }
+}
+
+async function executeDeveloperPreviewUpdate({app, token, enabled, logger}: DeveloperPreviewTasksContext) {
+  let result: DevelopmentStorePreviewUpdateSchema | undefined
+  let error: string | undefined
+  try {
+    const query = DevelopmentStorePreviewUpdateQuery
+    const variables: DevelopmentStorePreviewUpdateInput = {
+      input: {
+        apiKey: app.apiKey,
+        enabled,
+      },
+    }
+    result = await partnersRequest(query, token, variables)
+    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+  } catch (err: any) {
+    error = err.message
+  }
+
+  if ((result && result.developmentStorePreviewUpdate.userErrors?.length > 0) || error) {
+    const previewURL = outputToken.link(
+      'Partner Dashboard',
+      await devPreviewURL({orgId: app.organizationId, appId: app.id}),
+    )
+    logger.error(
+      outputContent`Unable to ${
+        enabled ? 'enable' : 'disable'
+      } development store preview for this app. You can change this setting in the ${previewURL}.'}`,
+    )
+  } else {
+    logger.sucess(`Development store preview ${enabled ? 'enabled' : 'disabled'}`)
+  }
 }
 
 async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
