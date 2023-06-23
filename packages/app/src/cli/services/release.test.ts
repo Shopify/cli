@@ -220,10 +220,10 @@ describe('validateOptions', () => {
 
     // When
     expect(() => validateOptions({version: versionOnePeriod})).toThrowErrorMatchingInlineSnapshot(
-      "\"Version should be different from '.' and '..'\"",
+      "\"Version should be different from '.' , '..'\"",
     )
     expect(() => validateOptions({version: versionTwoPeriods})).toThrowErrorMatchingInlineSnapshot(
-      "\"Version should be different from '.' and '..'\"",
+      "\"Version should be different from '.' , '..'\"",
     )
   })
 

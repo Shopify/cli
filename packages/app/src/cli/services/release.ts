@@ -84,15 +84,17 @@ export async function release(options: ReleaseOptions) {
 
 export function validateOptions({version}: Partial<ReleaseOptions>) {
   if (version) {
-    if (version.length > 100) {
+    const versionMaxLength = 100
+    if (version.length > versionMaxLength) {
       throw new AbortError({
-        bold: 'Version must be less than 100 characters',
+        bold: `Version must be less than ${versionMaxLength} characters`,
       })
     }
 
-    if (version == '.' || version == '..') {
+    const invalidCompleteWords = ['.', '..']
+    if (invalidCompleteWords.find((invalidCompleteWord) => version === invalidCompleteWord)) {
       throw new AbortError({
-        bold: "Version should be different from '.' and '..'",
+        bold: `Version should be different from '${invalidCompleteWords.join("' , '")}'`,
       })
     }
 
