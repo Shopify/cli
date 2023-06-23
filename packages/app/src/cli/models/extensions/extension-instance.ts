@@ -134,11 +134,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return !this.isPreviewable && !this.isThemeExtension && (unifiedDeployment || !this.isFunctionExtension)
   }
 
-  async deployConfig(
-    apiKey: string,
-    token: string,
-    unifiedDeployment: boolean,
-  ): Promise<{[key: string]: unknown} | undefined> {
+  async deployConfig({
+    apiKey,
+    token,
+    unifiedDeployment,
+  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
     if (this.isFunctionExtension) {
       if (!unifiedDeployment) return undefined
       const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
@@ -146,6 +146,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     return (
+      // module id param is not necessary for non-Function extensions
       this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined) ??
       Promise.resolve(undefined)
     )
@@ -267,10 +268,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    const configValue = await this.deployConfig(apiKey, token, unifiedDeployment)
+    const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
     if (!configValue) return undefined
     return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
   }
+}
+
+export interface ExtensionDeployConfigOptions {
+  apiKey: string
+  token: string
+  unifiedDeployment: boolean
 }
 
 export interface ExtensionBundleConfigOptions {

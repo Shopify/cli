@@ -41,7 +41,7 @@ export async function updateExtensionDraft({
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...(await extension.deployConfig(apiKey, token, unifiedDeployment)),
+      ...(await extension.deployConfig({apiKey, token, unifiedDeployment})),
       serialized_script: encodedFile,
     }),
     context: undefined,

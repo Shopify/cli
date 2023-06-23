@@ -12,13 +12,15 @@ vi.mock('../../../services/deploy/upload.js')
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
   let moduleId: string
-  let appKey: string
+  let apiKey: string
   let token: string
+  let unifiedDeployment: boolean
 
   beforeEach(async () => {
     moduleId = 'module_id'
-    appKey = 'app-key'
+    apiKey = 'app-key'
     token = 'app-token'
+    unifiedDeployment = true
 
     vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
       url: 'http://foo.bar',
@@ -64,13 +66,13 @@ describe('functionConfiguration', () => {
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const got = await extension.deployConfig(appKey, token, true)
+      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
       // Then
       expect(got).toEqual({
         title: extension.configuration.name,
         description: extension.configuration.description,
-        app_key: appKey,
+        app_key: apiKey,
         api_type: 'order_discounts',
         api_version: extension.configuration.api_version,
         ui: {
@@ -99,13 +101,13 @@ describe('functionConfiguration', () => {
       extension.configuration.ui = undefined
 
       // When
-      const got = await extension.deployConfig(appKey, token, true)
+      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
       // Then
       expect(got).toEqual({
         title: extension.configuration.name,
         description: extension.configuration.description,
-        app_key: appKey,
+        app_key: apiKey,
         api_type: 'order_discounts',
         api_version: extension.configuration.api_version,
         module_id: moduleId,
@@ -130,7 +132,7 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
 
       // When
-      const got = await extension.deployConfig(appKey, token, true)
+      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
       // Then
       expect(got!.targets).toEqual([
@@ -145,6 +147,6 @@ describe('functionConfiguration', () => {
     extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
 
     // When & Then
-    await expect(() => extension.deployConfig(appKey, token, true)).rejects.toThrowError(AbortError)
+    await expect(() => extension.deployConfig({apiKey, token, unifiedDeployment})).rejects.toThrowError(AbortError)
   })
 })
