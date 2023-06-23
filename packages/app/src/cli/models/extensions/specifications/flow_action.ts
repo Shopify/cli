@@ -2,7 +2,7 @@ import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
   serializeFields,
-  validateCommerceObject,
+  validateNonCommerceObject,
   startsWithHttps,
   validateCustomConfigurationPageConfig,
 } from '../../../services/Flow/validation.js'
@@ -37,7 +37,7 @@ const FlowActionExtensionSchema = BaseSchema.extend({
             required: zod.boolean().optional(),
             type: zod.string(),
           })
-          .refine((field) => validateCommerceObject(field, 'flow_action')),
+          .refine((field) => validateNonCommerceObject(field, 'flow_action')),
       )
       .optional(),
   }),
@@ -55,7 +55,7 @@ const FlowActionExtensionSchema = BaseSchema.extend({
     ])
   }
 
-  validateCustomConfigurationPageConfig(
+  return validateCustomConfigurationPageConfig(
     extension.config_page_url,
     extension.config_page_preview_url,
     extension.validation_url,
@@ -89,7 +89,7 @@ const flowActionSpecification = createExtensionSpecification({
   schema: FlowActionExtensionSchema,
   singleEntryPath: false,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config, extensionPath) => {
+  deployConfig: async (config) => {
     const {extensions} = config
     const extension = extensions[0]
 

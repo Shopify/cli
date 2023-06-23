@@ -1,6 +1,6 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {serializeFields, validateCommerceObject} from '../../../services/Flow/validation.js'
+import {serializeFields, validateNonCommerceObject} from '../../../services/Flow/validation.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowTriggerExtensionSchema = BaseSchema.extend({
@@ -24,7 +24,7 @@ const FlowTriggerExtensionSchema = BaseSchema.extend({
             description: zod.string().optional(),
             type: zod.string(),
           })
-          .refine((field) => validateCommerceObject(field, 'flow_trigger')),
+          .refine((field) => validateNonCommerceObject(field, 'flow_trigger')),
       )
       .optional(),
   }),
@@ -38,7 +38,7 @@ const flowTriggerSpecification = createExtensionSpecification({
   schema: FlowTriggerExtensionSchema,
   singleEntryPath: false,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config, _) => {
+  deployConfig: async (config) => {
     return {
       title: config.name,
       description: config.description,
