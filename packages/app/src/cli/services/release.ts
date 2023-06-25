@@ -87,7 +87,7 @@ export function validateOptions({version}: Partial<ReleaseOptions>) {
     const versionMaxLength = 100
     if (version.length > versionMaxLength) {
       throw new AbortError({
-        bold: `Version must be less than ${versionMaxLength} characters`,
+        bold: `Version name must be less than ${versionMaxLength} characters`,
       })
     }
 
