@@ -1,10 +1,6 @@
-import {
-  serializeConfigField,
-  serializeCommerceObjectField,
-  validateNonCommerceObjectShape,
-  ConfigField,
-  validateCustomConfigurationPageConfig,
-} from '../validation.js'
+import {ConfigField} from '../types.js'
+import {serializeConfigField, serializeCommerceObjectField} from '../serializeFields.js'
+import {validateNonCommerceObjectShape, validateCustomConfigurationPageConfig} from '../validation.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 

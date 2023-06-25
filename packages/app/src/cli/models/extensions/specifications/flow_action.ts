@@ -1,11 +1,11 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
-  serializeFields,
   validateNonCommerceObjectShape,
   startsWithHttps,
   validateCustomConfigurationPageConfig,
 } from '../../../services/Flow/validation.js'
+import {serializeFields} from '../../../services/Flow/serializeFields.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
