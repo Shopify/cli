@@ -35,7 +35,7 @@ async function versionDetailsByVersion(apiKey: string, version: string, token: s
   } catch (err) {
     renderError({
       headline: "Version couldn't be released",
-      body: `Version ${version} could not be found.`,
+      body: ['Version', {userInput: version}, 'could not be found.'],
     })
     throw new AbortSilentError()
   }
