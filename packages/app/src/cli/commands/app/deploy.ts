@@ -2,6 +2,7 @@ import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
+import {validateVersion} from '../../validations/version-name.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
@@ -65,6 +66,8 @@ export default class Deploy extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Deploy)
+    validateVersion(flags.version)
+
     if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
