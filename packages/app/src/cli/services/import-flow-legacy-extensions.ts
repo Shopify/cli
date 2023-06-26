@@ -2,25 +2,18 @@ import {fetchAppAndIdentifiers} from './context.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {AppInterface} from '../models/app/app.js'
-import {importExtensionsPrompt} from '../prompts/import-flow-legacy-extensions.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {writeFile} from '@shopify/cli-kit/node/fs'
 
-interface MigrateOptions {
-  /** The app to be built and uploaded */
+interface ImportFlowOptions {
   app: AppInterface
 
-  /** API key of the app in Partners admin */
-  apiKey?: string
-
   config: Config
-
-  reset: boolean
 }
 
 interface DashboardExtension {
@@ -38,7 +31,7 @@ interface DashboardExtension {
   }
 }
 
-interface FlowActionConfig {
+interface FlowConfig {
   title: string
   description: string
   url: string
@@ -55,16 +48,30 @@ interface FlowActionConfig {
   validation_url?: string
 }
 
-function buildActionTomlObject(extension: DashboardExtension) {
-  const versionConfig = extension.activeVersion.config ?? extension.draftVersion?.config
+/**
+ * Given a flow extension config file, convert it to toml
+ * Works for both trigger and action because trigger config is a subset of action config
+ */
+function buildTomlObject(extension: DashboardExtension) {
+  const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
-  const config: FlowActionConfig = JSON.parse(versionConfig)
+  const config: FlowConfig = JSON.parse(versionConfig)
+
+  // Remote config uses uiType, local config uses ui_type
   const fields = config.fields?.map((field) => {
-    return {...field, ui_type: field.uiType}
+    return {
+      name: field.name,
+      label: field.label,
+      description: field.description,
+      required: field.required,
+      ui_type: field.uiType,
+      id: field.id,
+    }
   })
+
   return {
     name: extension.title,
-    type: 'flow_action',
+    type: extension.type,
     task: {
       title: config.title,
       description: config.description,
@@ -81,43 +88,51 @@ async function getActiveDashboardExtensions({token, apiKey}: {token: string; api
   const initialRemoteExtensions = await fetchAppExtensionRegistrations({token, apiKey})
   const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
   return dashboardManagedExtensionRegistrations
-    .filter((extension) => {
-      if ((extension.activeVersion && extension.activeVersion.config) || extension.draftVersion?.config) {
-        return extension
-      }
+    .map((ext) => {
+      if (ext.type.includes('flow_action')) ext.type = 'flow_action'
+      else if (ext.type.includes('flow_trigger')) ext.type = 'flow_trigger'
+      return ext
+    })
+    .filter((ext) => {
+      const isFLow = ext.type === 'flow_action' || ext.type === 'flow_trigger'
+      const hasActiveVersion = ext.activeVersion && ext.activeVersion.config
+      const hasDraftVersion = ext.draftVersion && ext.draftVersion.config
+      return isFLow && (hasActiveVersion || hasDraftVersion)
     })
     .map((ext) => ext as DashboardExtension)
 }
 
-export async function importFlowExtensions(options: MigrateOptions) {
+export async function importFlowExtensions(options: ImportFlowOptions) {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, _] = await fetchAppAndIdentifiers(options, token)
+  const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, token)
   const activeDashboardExtensions = await getActiveDashboardExtensions({token, apiKey: partnersApp.apiKey})
+  const flowExtensions = activeDashboardExtensions.filter(
+    (ext) => ext.type === 'flow_action' || ext.type === 'flow_trigger',
+  )
 
-  const generatedExtensions: {title: string; directory: string}[] = []
-
-  if (activeDashboardExtensions.length > 0) {
-    const promptOptions = await buildPromptOptions(activeDashboardExtensions)
-    const promptAnswer = await importExtensionsPrompt(promptOptions)
+  if (flowExtensions.length > 0) {
+    const choices = flowExtensions.map((ext) => {
+      return {label: ext.title, value: ext.uuid}
+    })
+    choices.push({label: 'All', value: 'All'})
+    const promptAnswer = await renderSelectPrompt({message: 'Extensions to migrate', choices})
 
     const extensionsToMigrate =
-      promptAnswer === 'All'
-        ? activeDashboardExtensions
-        : [activeDashboardExtensions.find((ext) => ext?.title === promptAnswer)]
+      promptAnswer === 'All' ? flowExtensions : [flowExtensions.find((ext) => ext?.uuid === promptAnswer)!]
 
     const extensionUuids: IdentifiersExtensions = {}
-    for (const extension of extensionsToMigrate) {
-      if (extension === undefined) continue
-      // eslint-disable-next-line no-await-in-loop
-      const directory = await ensureExtensionDirectoryExists({app: options.app, name: extension.title})
-      const tomlObject = buildActionTomlObject(extension)
+    const migrationPromises = extensionsToMigrate.map(async (ext) => {
+      const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
+      const tomlObject = buildTomlObject(ext)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const tomlString = encodeToml(tomlObject as any)
-      writeFileSync(joinPath(directory, 'shopify.extension.toml'), tomlString)
-      generatedExtensions.push({title: extension.title, directory})
-      extensionUuids[extension.title] = extension.uuid
-    }
-    renderSuccessMessages(generatedExtensions)
+      await writeFile(joinPath(directory, 'shopify.extension.toml'), tomlString)
+      extensionUuids[ext.title] = ext.uuid
+      return {extension: ext, directory}
+    })
+
+    const generatedExtensions = await Promise.all(migrationPromises)
+    renderSuccessMessages({generatedExtensions})
     await updateAppIdentifiers({
       app: options.app,
       identifiers: {extensions: extensionUuids, app: partnersApp.apiKey},
@@ -130,30 +145,25 @@ export async function importFlowExtensions(options: MigrateOptions) {
   }
 }
 
-async function buildPromptOptions(extensions: (DashboardExtension | undefined)[]): Promise<string[]> {
-  const names = extensions.map((ext) => ext?.title).filter((name) => name !== undefined) as string[]
-  names.push('All')
-
-  return names
-}
-
-function renderSuccessMessages(generatedExtensions: {title: string; directory: string}[]) {
-  generatedExtensions.forEach((extension) => {
-    const formattedSuccessfulMessage = formatSuccessfulRunMessage(extension)
+function renderSuccessMessages(generatedExtensions: {extension: DashboardExtension; directory: string}[]) {
+  generatedExtensions.forEach((gen) => {
+    const formattedSuccessfulMessage = formatSuccessfulRunMessage({
+      title: gen.extension.title,
+      directory: gen.directory,
+    })
     renderSuccess(formattedSuccessfulMessage)
   })
 }
 
-function formatSuccessfulRunMessage(extension: {title: string; directory: string}): RenderAlertOptions {
+function formatSuccessfulRunMessage({
+  extension: DashboardExtension;
+  directory: string;
+}[]): RenderAlertOptions {
   const options: RenderAlertOptions = {
     headline: ['Your extension was created in', {filePath: extension.directory}, {char: '.'}],
     nextSteps: [],
     reference: [],
   }
-
-  // if (extension.helpURL) {
-  //   options.reference!.push(['For more details, see the', {link: {label: 'docs', url: extension.helpURL}}])
-  // }
 
   return options
 }
