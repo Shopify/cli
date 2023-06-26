@@ -3,7 +3,7 @@ import {checkScript} from './check.js'
 import {fetchStoreThemes} from '../../utilities/theme-selector/fetch.js'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
-import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {upgradeTheme, fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
@@ -26,11 +26,11 @@ describe('run', () => {
 
   test('when the script runs successfully', async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(theme({id: 789, processing: true}))
+    vi.mocked(upgradeTheme).mockResolvedValue(theme({id: 789, processing: true}))
     vi.mocked(fetchTheme).mockResolvedValueOnce(theme({id: 789, processing: false}))
 
     // When
-    await run(session(), {script: '', 'source-theme': '123', 'target-theme': '456'})
+    await run(session(), {script: '', 'from-theme': '123', 'to-theme': '456'})
 
     // Then
     expect(ui.renderSuccess).toBeCalledWith({
@@ -70,7 +70,7 @@ describe('run', () => {
 
     await expect(async () => {
       // When
-      await run(session(), {script: '', 'source-theme': '123', 'target-theme': '456'})
+      await run(session(), {script: '', 'from-theme': '123', 'to-theme': '456'})
 
       // Then
     }).rejects.toThrowError(AbortError)
@@ -78,11 +78,11 @@ describe('run', () => {
 
   test('when the theme cannot be created', async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(undefined)
+    vi.mocked(upgradeTheme).mockResolvedValue(undefined)
 
     await expect(async () => {
       // When
-      await run(session(), {script: '', 'source-theme': '123', 'target-theme': '456'})
+      await run(session(), {script: '', 'from-theme': '123', 'to-theme': '456'})
 
       // Then
     }).rejects.toThrowError(/The update process could not be triggered/)
@@ -90,12 +90,12 @@ describe('run', () => {
 
   test('when polling fails', async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(theme({id: 789, processing: true}))
+    vi.mocked(upgradeTheme).mockResolvedValue(theme({id: 789, processing: true}))
     vi.mocked(fetchTheme).mockResolvedValue(undefined)
 
     await expect(async () => {
       // When
-      await run(session(), {script: '', 'source-theme': '123', 'target-theme': '456'})
+      await run(session(), {script: '', 'from-theme': '123', 'to-theme': '456'})
 
       // Then
     }).rejects.toThrowError(/The `update_extension.json` script could not be executed/)
@@ -103,11 +103,11 @@ describe('run', () => {
 
   test("when the theme doesn't exist", async () => {
     // Given
-    vi.mocked(createTheme).mockResolvedValue(undefined)
+    vi.mocked(upgradeTheme).mockResolvedValue(undefined)
 
     await expect(async () => {
       // When
-      await run(session(), {script: '', 'source-theme': '012', 'target-theme': '456'})
+      await run(session(), {script: '', 'from-theme': '012', 'to-theme': '456'})
 
       // Then
     }).rejects.toThrowError(/The my-shop.myshopify.com store doesn't have a theme with the "012" ID/)

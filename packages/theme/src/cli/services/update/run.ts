@@ -2,7 +2,7 @@ import {checkScript} from './check.js'
 import {fetchStoreThemes} from '../../utilities/theme-selector/fetch.js'
 import {Filter, filterThemes} from '../../utilities/theme-selector/filter.js'
 import {renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
-import {createTheme, fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
+import {fetchTheme, upgradeTheme} from '@shopify/cli-kit/node/themes/themes-api'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -20,8 +20,8 @@ interface Context {
 
 interface Options {
   script?: string
-  'source-theme': string
-  'target-theme': string
+  'from-theme': string
+  'to-theme': string
 }
 
 // 5 minutes
@@ -79,17 +79,17 @@ async function check(ctx: Context, options: Options) {
 }
 
 async function triggerUpdater(ctx: Context, session: AdminSession, options: Options) {
-  const {'source-theme': source, 'target-theme': target} = options
+  const {'from-theme': fromTheme, 'to-theme': toTheme} = options
   const store = session.storeFqdn
 
   const themes = await fetchStoreThemes(session)
 
-  const sourceThemeId = findThemeByIdentifier(store, themes, source).id
-  const targetThemeId = findThemeByIdentifier(store, themes, target).id
+  const fromThemeId = findThemeByIdentifier(store, themes, fromTheme).id
+  const toThemeId = findThemeByIdentifier(store, themes, toTheme).id
 
   // This is a false positive, as `renderTasks` performs tasks sequentially.
   // eslint-disable-next-line require-atomic-updates
-  ctx.theme = await triggerUpdaterAPI(session, ctx.scriptContent, sourceThemeId, targetThemeId)
+  ctx.theme = await triggerUpgradeAPI(session, ctx.scriptContent, fromThemeId, toThemeId)
 }
 
 async function waitForUpdater(ctx: Context, session: AdminSession) {
@@ -134,27 +134,31 @@ async function isUpdaterIsProgress(ctx: Context, session: AdminSession, startTim
 }
 
 /**
- * FIXME: Trigger the Updater API instead of creating a theme
- *
  * Trigger the Updater API
  *
  * @param session - current admin session.
  * @param _updateExtension - `update_extension.json` script content.
- * @param source - The theme ID or name of the theme at the previous version.
- * @param target - The theme ID or name of the theme at the target version.
+ * @param fromTheme - The theme ID or name of the theme at the previous version.
+ * @param toTheme - The theme ID or name of the theme at the target version.
  *
  * @returns the reference to the updated theme.
  */
-async function triggerUpdaterAPI(
+async function triggerUpgradeAPI(
   session: AdminSession,
   _updateExtension: string | undefined,
-  source: number,
-  target: number,
+  fromTheme: number,
+  toTheme: number,
 ): Promise<Theme> {
-  const name = `updated-theme-${source}-${target}`
+  const name = `updated-theme-${fromTheme}-${toTheme}`
   const role = 'unpublished'
   try {
-    const theme = await createTheme({name, role, processing: true}, session)
+    const theme = await upgradeTheme({
+      fromTheme,
+      toTheme,
+      script: _updateExtension,
+      params: {name, role, processing: true},
+      session,
+    })
 
     if (!theme) {
       throw new AbortError('Updated theme could not be created')

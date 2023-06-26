@@ -8,6 +8,7 @@ import {Flags} from '@oclif/core'
 
 export default class UpdateRun extends ThemeCommand {
   static description = `Run the theme update process.`
+  static hidden = true
 
   static flags = {
     ...globalFlags,
@@ -17,12 +18,12 @@ export default class UpdateRun extends ThemeCommand {
       description: `The path to the 'update_extension.json' script.`,
       env: 'SHOPIFY_FLAG_SCRIPT',
     }),
-    'source-theme': Flags.string({
+    'from-theme': Flags.string({
       description: 'The theme ID or name of the theme at the previous version.',
       env: 'SHOPIFY_FLAG_SOURCE_THEME',
       required: true,
     }),
-    'target-theme': Flags.string({
+    'to-theme': Flags.string({
       description: 'The theme ID or name of the theme at the target version.',
       env: 'SHOPIFY_FLAG_TARGET_THEME',
       required: true,
