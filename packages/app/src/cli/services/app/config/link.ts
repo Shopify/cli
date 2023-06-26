@@ -71,10 +71,12 @@ async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined)
 function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
   const configuration = localApp.configuration || {}
 
-  configuration.client_id = remoteApp.apiKey
-  configuration.name = remoteApp.title
-  configuration.application_url = remoteApp.applicationUrl
-  configuration.redirect_url_allowlist = remoteApp.redirectUrlWhitelist
+  if (isCurrentAppSchema(configuration)) {
+    configuration.client_id = remoteApp.apiKey
+    configuration.name = remoteApp.title
+    configuration.application_url = remoteApp.applicationUrl
+    configuration.redirect_url_allowlist = remoteApp.redirectUrlWhitelist
+  }
 
   return configuration
 }
