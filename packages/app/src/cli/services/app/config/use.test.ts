@@ -1,7 +1,7 @@
 import use, {UseOptions} from './use.js'
 import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setCurrentConfigFile} from '../../local-storage.js'
+import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -101,7 +101,7 @@ describe('use', () => {
 
       // Then
       expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
-      expect(setCurrentConfigFile).not.toHaveBeenCalled()
+      expect(setAppInfo).not.toHaveBeenCalled()
       expect(load).not.toHaveBeenCalled()
 
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -128,10 +128,9 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(setCurrentConfigFile).toHaveBeenCalledWith({
+      expect(setAppInfo).toHaveBeenCalledWith({
         directory: tmp,
         configFile: 'shopify.app.staging.toml',
-        appId: 'something',
       })
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Using configuration file shopify.app.staging.toml',
@@ -155,10 +154,9 @@ describe('use', () => {
       await use(options)
 
       // Then
-      expect(setCurrentConfigFile).toHaveBeenCalledWith({
+      expect(setAppInfo).toHaveBeenCalledWith({
         directory: tmp,
         configFile: 'shopify.app.local.toml',
-        appId: 'other-id',
       })
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Using configuration file shopify.app.local.toml',
