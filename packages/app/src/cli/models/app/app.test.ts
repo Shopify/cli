@@ -6,35 +6,33 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 const DEFAULT_APP = testApp()
 
+const CORRECT_CURRENT_APP_SCHEMA = {
+  name: 'app 1',
+  api_contact_email: 'ryan@shopify.com',
+  client_id: '12345',
+  webhook_api_version: '02-2023',
+  application_url: 'http://example.com',
+}
+
+const CORRECT_LEGACY_APP_SCHEMA = {
+  extension_directories: [],
+  web_directories: [],
+  scopes: 'write_products',
+}
+
 describe('app schema validation', () => {
   describe('generic validation', () => {
     test('passes generic schema validation with correct values when schema is legacy', () => {
-      const config = {
-        extension_directories: [],
-        web_directories: [],
-        scopes: 'write_products',
-      }
-      expect(isValidAppSchema(config, {strict: true})).toBe(true)
+      expect(isValidAppSchema(CORRECT_LEGACY_APP_SCHEMA, {strict: true})).toBe(true)
     })
 
     test('passes generic schema validation with correct values when schema is current', () => {
-      const config = {
-        extension_directories: [],
-        web_directories: [],
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://google.com',
-        redirect_url_allowlist: ['https://foo.com'],
-        requested_access_scopes: [],
-      }
-      expect(isValidAppSchema(config, {strict: true})).toBe(true)
+      expect(isValidAppSchema(CORRECT_CURRENT_APP_SCHEMA, {strict: true})).toBe(true)
     })
 
     test('passes schema validation if invalid key is present and strict mode is off', () => {
       const config = {
-        client_id: 'foobar',
-        application_url: 'https://google.com',
-        scopes: 'write_products,read_products',
+        ...CORRECT_LEGACY_APP_SCHEMA,
         invalid_key: 'i will succeed, i will be stripped out!',
       }
       expect(isValidAppSchema(config)).toBe(true)
@@ -42,9 +40,7 @@ describe('app schema validation', () => {
 
     test('fails schema validation if invalid key is present and strict mode is on', () => {
       const config = {
-        client_id: 'foobar',
-        application_url: 'https://google.com',
-        scopes: 'write_products,read_products',
+        ...CORRECT_LEGACY_APP_SCHEMA,
         invalid_key: 'i will fail, i am not in the schema!',
       }
       expect(isValidAppSchema(config, {strict: true})).toBe(false)
@@ -52,8 +48,7 @@ describe('app schema validation', () => {
 
     test('fails schema validation if invalid value for valid key is present', () => {
       const config = {
-        client_id: 'foobar',
-        application_url: 'https://google.com',
+        ...CORRECT_LEGACY_APP_SCHEMA,
         // woops!
         scopes: 12,
       }
@@ -64,68 +59,66 @@ describe('app schema validation', () => {
   describe('legacy schema validator', () => {
     test('checks whether legacy app schema is valid with strict mode off', () => {
       const config = {
-        extension_directories: [],
-        web_directories: [],
-        scopes: 'write_products',
+        ...CORRECT_LEGACY_APP_SCHEMA,
         some_other_key: 'i am not valid, but strict is off',
       }
       expect(isLegacyAppSchema(config)).toBe(true)
     })
     test('checks whether legacy app schema is valid with strict mode on -- fail', () => {
       const config = {
-        extension_directories: [],
-        web_directories: [],
-        scopes: 'write_products',
+        ...CORRECT_LEGACY_APP_SCHEMA,
         some_other_key: 'i am not valid, but strict is on, so i fail',
       }
       expect(isLegacyAppSchema(config, {strict: true})).toBe(false)
     })
     test('checks whether legacy app schema is valid with strict mode on -- pass', () => {
-      const config = {
-        extension_directories: [],
-        web_directories: [],
-        scopes: 'write_products',
-      }
-      expect(isLegacyAppSchema(config, {strict: true})).toBe(true)
+      expect(isLegacyAppSchema(CORRECT_LEGACY_APP_SCHEMA, {strict: true})).toBe(true)
     })
   })
 
   describe('current schema validator', () => {
-    test('checks whether legacy app schema is valid with strict mode off', () => {
+    test('checks whether current app schema is valid with strict mode off', () => {
       const config = {
-        extension_directories: [],
-        web_directories: [],
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://google.com',
-        redirect_url_allowlist: ['https://foo.com'],
-        requested_access_scopes: [],
+        ...CORRECT_CURRENT_APP_SCHEMA,
         some_other_key: 'i am not valid, but strict is off',
       }
+
       expect(isCurrentAppSchema(config)).toBe(true)
     })
-    test('checks whether legacy app schema is valid with strict mode on -- fail', () => {
+    test('checks whether current app schema is valid with strict mode on -- fail', () => {
       const config = {
-        extension_directories: [],
-        web_directories: [],
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://google.com',
-        redirect_url_allowlist: ['https://foo.com'],
-        requested_access_scopes: [],
+        ...CORRECT_CURRENT_APP_SCHEMA,
         some_other_key: 'i am not valid, but strict is on, so i fail',
       }
       expect(isCurrentAppSchema(config, {strict: true})).toBe(false)
     })
-    test('checks whether legacy app schema is valid with strict mode on -- pass', () => {
+    test('checks whether current app schema is valid with strict mode on -- pass', () => {
       const config = {
-        extension_directories: [],
-        web_directories: [],
-        name: 'my app',
-        client_id: '12345',
-        application_url: 'https://google.com',
-        redirect_url_allowlist: ['https://foo.com'],
-        requested_access_scopes: [],
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        embedded: true,
+        auth: {
+          redirect_urls: ['https://google.com'],
+        },
+        privacy_compliance_webhooks: {
+          customer_deletion_url: 'https://google.com/',
+          customer_data_request_url: 'https://google.com/',
+          shop_deletion_url: 'https://google.com/',
+        },
+        proxy: {
+          url: 'https://google.com/',
+          subpath: 'https://google.com/',
+          prefix: 'https://google.com/',
+        },
+        pos: {
+          embedded: false,
+        },
+        app_preferences: {
+          url: 'https://google.com/',
+        },
+        cli: {
+          automatically_update_urls_on_dev: true,
+          dev_store_url: 'https://google.com/',
+        },
       }
       expect(isCurrentAppSchema(config, {strict: true})).toBe(true)
     })

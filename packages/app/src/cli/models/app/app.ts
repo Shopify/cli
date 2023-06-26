@@ -15,14 +15,52 @@ export const LegacyAppSchema = zod.object({
 })
 
 export const AppSchema = zod.object({
+  name: zod.string(),
+  api_contact_email: zod.string(),
+  client_id: zod.string(),
+  scopes: zod.string().optional(),
+  webhook_api_version: zod.string(),
+  application_url: zod.string(),
+  embedded: zod.boolean().optional(),
+  auth: zod
+    .object({
+      redirect_urls: zod.array(zod.string()),
+    })
+    .optional(),
+  privacy_compliance_webhooks: zod
+    .object({
+      customer_deletion_url: zod.string(),
+      customer_data_request_url: zod.string(),
+      shop_deletion_url: zod.string(),
+    })
+    .optional(),
+  proxy: zod
+    .object({
+      url: zod.string(),
+      subpath: zod.string(),
+      prefix: zod.string(),
+    })
+    .optional(),
+  pos: zod
+    .object({
+      embedded: zod.boolean(),
+    })
+    .optional(),
+  app_preferences: zod
+    .object({
+      url: zod.string(),
+    })
+    .optional(),
+  cli: zod
+    .object({
+      automatically_update_urls_on_dev: zod.boolean().optional(),
+      dev_store_url: zod.string().optional(),
+    })
+    .optional(),
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
-  name: zod.string().optional(),
-  client_id: zod.string().optional(),
-  application_url: zod.string().optional(),
   redirect_url_allowlist: zod.array(zod.string()).optional(),
   requested_access_scopes: zod.array(zod.string()).optional(),
-  scopes: zod.string().optional(),
 })
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
