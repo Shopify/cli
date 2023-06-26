@@ -1,10 +1,136 @@
-import {getUIExtensionRendererVersion} from './app.js'
+import {getUIExtensionRendererVersion, isCurrentAppSchema, isLegacyAppSchema, isValidAppSchema} from './app.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const DEFAULT_APP = testApp()
+
+describe('app schema validation', () => {
+  describe('generic validation', () => {
+    test('passes generic schema validation with correct values when schema is legacy', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        scopes: 'write_products',
+      }
+      expect(isValidAppSchema(config, {strict: true})).toBe(true)
+    })
+
+    test('passes generic schema validation with correct values when schema is current', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://google.com',
+        redirect_url_allowlist: ['https://foo.com'],
+        requested_access_scopes: [],
+      }
+      expect(isValidAppSchema(config, {strict: true})).toBe(true)
+    })
+
+    test('passes schema validation if invalid key is present and strict mode is off', () => {
+      const config = {
+        client_id: 'foobar',
+        application_url: 'https://google.com',
+        scopes: 'write_products,read_products',
+        invalid_key: 'i will succeed, i will be stripped out!',
+      }
+      expect(isValidAppSchema(config)).toBe(true)
+    })
+
+    test('fails schema validation if invalid key is present and strict mode is on', () => {
+      const config = {
+        client_id: 'foobar',
+        application_url: 'https://google.com',
+        scopes: 'write_products,read_products',
+        invalid_key: 'i will fail, i am not in the schema!',
+      }
+      expect(isValidAppSchema(config, {strict: true})).toBe(false)
+    })
+
+    test('fails schema validation if invalid value for valid key is present', () => {
+      const config = {
+        client_id: 'foobar',
+        application_url: 'https://google.com',
+        // woops!
+        scopes: 12,
+      }
+      expect(isValidAppSchema(config)).toBe(false)
+    })
+  })
+
+  describe('legacy schema validator', () => {
+    test('checks whether legacy app schema is valid with strict mode off', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        scopes: 'write_products',
+        some_other_key: 'i am not valid, but strict is off',
+      }
+      expect(isLegacyAppSchema(config)).toBe(true)
+    })
+    test('checks whether legacy app schema is valid with strict mode on -- fail', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        scopes: 'write_products',
+        some_other_key: 'i am not valid, but strict is on, so i fail',
+      }
+      expect(isLegacyAppSchema(config, {strict: true})).toBe(false)
+    })
+    test('checks whether legacy app schema is valid with strict mode on -- pass', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        scopes: 'write_products',
+      }
+      expect(isLegacyAppSchema(config, {strict: true})).toBe(true)
+    })
+  })
+
+  describe('current schema validator', () => {
+    test('checks whether legacy app schema is valid with strict mode off', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://google.com',
+        redirect_url_allowlist: ['https://foo.com'],
+        requested_access_scopes: [],
+        some_other_key: 'i am not valid, but strict is off',
+      }
+      expect(isCurrentAppSchema(config)).toBe(true)
+    })
+    test('checks whether legacy app schema is valid with strict mode on -- fail', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://google.com',
+        redirect_url_allowlist: ['https://foo.com'],
+        requested_access_scopes: [],
+        some_other_key: 'i am not valid, but strict is on, so i fail',
+      }
+      expect(isCurrentAppSchema(config, {strict: true})).toBe(false)
+    })
+    test('checks whether legacy app schema is valid with strict mode on -- pass', () => {
+      const config = {
+        extension_directories: [],
+        web_directories: [],
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://google.com',
+        redirect_url_allowlist: ['https://foo.com'],
+        requested_access_scopes: [],
+      }
+      expect(isCurrentAppSchema(config, {strict: true})).toBe(true)
+    })
+  })
+})
 
 describe('getUIExtensionRendererVersion', () => {
   test('returns the version of the dependency package for product_subscription', async () => {
