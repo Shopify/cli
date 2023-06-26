@@ -1,7 +1,7 @@
 import {ensureReleaseContext} from './context.js'
 import {release} from './release.js'
+import {versionDiffByVersion} from './release/version-diff.js'
 import {testApp} from '../models/app/app.test-data.js'
-import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {confirmReleasePrompt} from '../prompts/release.js'
@@ -16,6 +16,8 @@ vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../prompts/release.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../api/graphql/app_release.js')
+vi.mock('./release/version-diff.js')
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -54,11 +56,6 @@ describe('release', () => {
       return {
         appRelease: {
           appRelease: {
-            deployment: {
-              location: 'https://example.com',
-              versionTag: '1.0.0',
-              message: 'message',
-            },
             userErrors: [],
           },
         },
@@ -71,7 +68,7 @@ describe('release', () => {
     // Then
     expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'api-token', {
       apiKey: 'app-id',
-      versionTag: 'app-version',
+      deploymentId: 1,
     })
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
@@ -96,7 +93,7 @@ describe('release', () => {
     })
   })
 
-  test('shows a custom error message without link and message if no deployment is returned', async () => {
+  test('shows a custom error message with link and message if errors are returned', async () => {
     // Given
     const app = testApp()
     vi.mocked(confirmReleasePrompt).mockResolvedValue()
@@ -127,44 +124,6 @@ describe('release', () => {
 
     // Then
     expect(renderError).toHaveBeenCalledWith({
-      body: ['some kind of error 1, some kind of error 2'],
-      headline: "Version couldn't be released",
-    })
-  })
-
-  test('shows a custom error message with link and message if a deployment is returned', async () => {
-    // given
-    const app = testApp()
-    vi.mocked(confirmReleasePrompt).mockResolvedValue()
-    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
-      }
-
-      return {
-        appRelease: {
-          appRelease: {
-            deployment: {
-              location: 'https://example.com',
-              versionTag: '1.0.0',
-              message: 'message',
-            },
-            userErrors: [
-              {
-                message: 'needs to be submitted for review and approved by Shopify before it can be released',
-              },
-            ],
-          },
-        },
-      }
-    })
-
-    // When
-    await testRelease(app, 'app-version')
-
-    // Then
-    expect(renderError).toHaveBeenCalledWith({
       body: [
         {
           link: {
@@ -173,7 +132,7 @@ describe('release', () => {
           },
         },
         '\nmessage',
-        '\n\nneeds to be submitted for review and approved by Shopify before it can be released',
+        '\n\nsome kind of error 1, some kind of error 2',
       ],
       headline: "Version couldn't be released",
     })
@@ -194,7 +153,11 @@ async function testRelease(
     token: 'api-token',
     apiKey: partnersApp?.id ?? 'app-id',
   })
-  vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
+
+  vi.mocked(versionDiffByVersion).mockResolvedValue({
+    versionsDiff: {added: [], removed: [], updated: []},
+    versionDetails: {id: 1, uuid: 'uuid', location: 'https://example.com', versionTag: '1.0.0', message: 'message'},
+  })
 
   await release({
     app,

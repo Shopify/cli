@@ -196,10 +196,10 @@ async function outputCompletionMessage({
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
   deploymentMode: DeploymentMode
-  uploadExtensionsBundleResult?: UploadExtensionsBundleOutput
+  uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 }) {
   if (deploymentMode !== 'legacy') {
-    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult!, app)
+    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult, app)
   }
 
   let headline: string
