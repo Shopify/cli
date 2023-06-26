@@ -28,6 +28,8 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
+import {writeFileSync} from '@shopify/cli-kit/node/fs'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -133,7 +135,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const localApp = await load({
     directory: options.directory,
     specifications: [],
-    configName: options.config || cachedInfo?.configFileName,
+    configName: options.config || cachedInfo?.configFile,
   })
 
   let remoteApp
@@ -145,8 +147,8 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
-      storeFqdn: localApp.configuration.dev_store,
-      updateURLs: localApp.configuration.update_urls,
+      storeFqdn: localApp.configuration.cli?.dev_store_fqdn,
+      updateURLs: localApp.configuration.cli?.automatically_update_urls_on_dev,
     }
   }
 
@@ -194,13 +196,23 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     selectedStore = await selectStore(allStores, organization, token)
   }
 
-  setAppInfo({
-    appId: selectedApp.apiKey,
-    title: selectedApp.title,
-    directory: options.directory,
-    storeFqdn: selectedStore?.shopDomain,
-    orgId,
-  })
+  if (localApp.usesConfigInCode()) {
+    let configuration = {
+      ...localApp.configuration,
+      cli: {
+        dev_store_fqdn: selectedStore?.shopDomain,
+      },
+    }
+    writeFileSync(localApp.configurationPath, encodeToml(configuration))
+  } else {
+    setAppInfo({
+      appId: selectedApp.apiKey,
+      title: selectedApp.title,
+      directory: options.directory,
+      storeFqdn: selectedStore?.shopDomain,
+      orgId,
+    })
+  }
 
   if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
     const packageManager = await getPackageManager(options.directory)
