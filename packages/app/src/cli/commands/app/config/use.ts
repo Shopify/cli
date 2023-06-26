@@ -21,7 +21,11 @@ export default class ConfigUse extends Command {
   }
 
   static args = {
-    config: Args.string(),
+    // we want to this argument to be optional so that the user
+    // can also select one from the list of available app tomls.
+    config: Args.string({
+      description: 'Name of the config file.',
+    }),
   }
 
   public async run(): Promise<void> {

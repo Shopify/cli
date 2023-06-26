@@ -24,7 +24,6 @@ export default async function use({directory, config, reset = false}: UseOptions
   }
 
   const configFileName = (await getConfigFileName(directory, config)).valueOrAbort()
-  const _configFilePath = (await getConfigFilePath(directory, configFileName)).valueOrAbort()
 
   await saveCurrentConfig({configFileName, directory})
 
@@ -53,17 +52,13 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
 }
 
 async function getConfigFileName(directory: string, config?: string): Promise<Result<string, string>> {
-  if (config) return ok(getAppConfigurationFileName(config))
-  return selectConfigFile(directory)
-}
-
-async function getConfigFilePath(directory: string, configFileName: string): Promise<Result<string, string>> {
-  const configFilePath = joinPath(directory, configFileName)
-
-  const configFileExists = await fileExists(configFilePath)
-  if (configFileExists) {
-    return ok(configFilePath)
-  } else {
-    return err(`Could not find configuration file ${configFileName}`)
+  if (config) {
+    const configFile = getAppConfigurationFileName(config)
+    if (await fileExists(joinPath(directory, configFile))) {
+      return ok(configFile)
+    } else {
+      return err(`Could not find configuration file ${configFile}`)
+    }
   }
+  return selectConfigFile(directory)
 }

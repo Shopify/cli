@@ -626,7 +626,8 @@
       },
       "args": {
         "config": {
-          "name": "config"
+          "name": "config",
+          "description": "Name of the config file."
         }
       }
     },
