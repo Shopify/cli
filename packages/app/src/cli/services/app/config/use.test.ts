@@ -7,7 +7,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {Err, Ok} from '@shopify/cli-kit/node/result'
+import {err, ok} from '@shopify/cli-kit/node/result'
 
 const LOCAL_APP = testApp()
 
@@ -146,7 +146,7 @@ describe('use', () => {
       const options: UseOptions = {
         directory: tmp,
       }
-      vi.mocked(selectConfigFile).mockResolvedValue(new Ok<string, undefined>('shopify.app.local.toml'))
+      vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
       const app = testAppWithConfig({config: {client_id: 'other-id'}})
       vi.mocked(load).mockResolvedValue(app)
@@ -172,7 +172,7 @@ describe('use', () => {
       const options: UseOptions = {
         directory: tmp,
       }
-      vi.mocked(selectConfigFile).mockResolvedValue(new Err<string, undefined>(undefined))
+      vi.mocked(selectConfigFile).mockResolvedValue(err('Could not find any shopify.app.toml file in the directory.'))
 
       // When
       const result = use(options)

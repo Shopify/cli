@@ -8,7 +8,7 @@ import {
 import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {Err, Ok, Result} from '@shopify/cli-kit/node/result'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -31,11 +31,11 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   return configName
 }
 
-export async function selectConfigFile(directory: string): Promise<Result<string, undefined>> {
+export async function selectConfigFile(directory: string): Promise<Result<string, string>> {
   const files = (await glob(joinPath(directory, 'shopify.app*.toml'))).map((path) => basename(path))
 
-  if (files.length === 0) return new Err<string, undefined>(undefined)
-  if (files.length === 1) return new Ok<string, undefined>(files[0]!)
+  if (files.length === 0) return err('Could not find any shopify.app.toml file in the directory.')
+  if (files.length === 1) return ok(files[0]!)
 
   const chosen = await renderSelectPrompt({
     message: 'Configuration file',
@@ -44,7 +44,7 @@ export async function selectConfigFile(directory: string): Promise<Result<string
     }),
   })
 
-  return new Ok<string, undefined>(chosen)
+  return ok(chosen)
 }
 
 function buildTextPromptOptions(defaultValue: string): RenderTextPromptOptions {

@@ -5,6 +5,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {Result, err, ok} from '@shopify/cli-kit/node/result'
 
 export interface UseOptions {
   directory: string
@@ -22,18 +23,8 @@ export default async function use({directory, config, reset = false}: UseOptions
     return
   }
 
-  const configFileName = await getConfigFileName(directory, config)
-
-  if (!configFileName) {
-    throw new AbortError('Could not find any shopify.app.toml file in the directory.')
-  }
-
-  const configFilePath = joinPath(directory, configFileName)
-
-  const configFileExists = await fileExists(configFilePath)
-  if (!configFileExists) {
-    throw new AbortError(`Could not find configuration file ${configFileName}`)
-  }
+  const configFileName = (await getConfigFileName(directory, config)).valueOrAbort()
+  const _configFilePath = (await getConfigFilePath(directory, configFileName)).valueOrAbort()
 
   await saveCurrentConfig({configFileName, directory})
 
@@ -61,9 +52,18 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   })
 }
 
-async function getConfigFileName(directory: string, config?: string): Promise<string | null> {
-  if (config) return getAppConfigurationFileName(config)
+async function getConfigFileName(directory: string, config?: string): Promise<Result<string, string>> {
+  if (config) return ok(getAppConfigurationFileName(config))
+  return selectConfigFile(directory)
+}
 
-  const result = await selectConfigFile(directory)
-  return result.isErr() ? null : result.value
+async function getConfigFilePath(directory: string, configFileName: string): Promise<Result<string, string>> {
+  const configFilePath = joinPath(directory, configFileName)
+
+  const configFileExists = await fileExists(configFilePath)
+  if (configFileExists) {
+    return ok(configFilePath)
+  } else {
+    return err(`Could not find configuration file ${configFileName}`)
+  }
 }
