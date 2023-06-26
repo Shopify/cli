@@ -1,21 +1,101 @@
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {isType} from '../../utilities/types.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
-export const AppConfigurationSchema = zod.object({
+export const LegacyAppSchema = zod.object({
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
+  scopes: zod.string().default(''),
+})
+
+export const AppSchema = zod.object({
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
   name: zod.string().optional(),
   client_id: zod.string().optional(),
-  scopes: zod.string().default(''),
   application_url: zod.string().optional(),
   redirect_url_allowlist: zod.array(zod.string()).optional(),
   requested_access_scopes: zod.array(zod.string()).optional(),
+  scopes: zod.string().optional(),
 })
+
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
+
+export interface SchemaValidationOptions {
+  strict?: boolean
+}
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isLegacyAppSchema(
+  item: unknown,
+  options?: SchemaValidationOptions,
+): item is zod.infer<typeof LegacyAppSchema> {
+  if (options?.strict) return isType(LegacyAppSchema.strict(), item)
+  return isType(LegacyAppSchema, item)
+}
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the current schema definition.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isCurrentAppSchema(
+  item: unknown,
+  options?: SchemaValidationOptions,
+): item is zod.infer<typeof AppSchema> {
+  if (options?.strict) return isType(AppSchema.strict(), item)
+  return isType(AppSchema, item)
+}
+
+/**
+ * Check whether a shopify.app.toml schema is valid.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isValidAppSchema(
+  item: unknown,
+  options?: SchemaValidationOptions,
+): item is zod.infer<typeof AppConfigurationSchema> {
+  return isLegacyAppSchema(item, {strict: options?.strict}) || isCurrentAppSchema(item, {strict: options?.strict})
+}
+
+/**
+ * Get scopes from a given app.toml config file.
+ * @param config - a configuration file
+ */
+export function getAppScopes(config: unknown) {
+  if (!config) return ''
+
+  if (!isValidAppSchema(config)) {
+    throw new AbortError('Invalid configuration')
+  }
+
+  if (isLegacyAppSchema(config)) {
+    return config.scopes
+  }
+
+  if (isCurrentAppSchema(config)) {
+    if (config.requested_access_scopes) {
+      return config.requested_access_scopes.toString()
+    } else if (config.scopes) {
+      return config.scopes
+    } else {
+      return ''
+    }
+  }
+
+  throw new AbortError('Invalid configuration')
+}
 
 export enum WebType {
   Frontend = 'frontend',

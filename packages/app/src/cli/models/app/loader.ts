@@ -1,4 +1,16 @@
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
+import {
+  AppConfigurationSchema,
+  Web,
+  WebConfigurationSchema,
+  App,
+  AppInterface,
+  WebType,
+  getAppScopes,
+  isLegacyAppSchema,
+  LegacyAppSchema,
+  AppSchema,
+  isCurrentAppSchema,
+} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -60,6 +72,36 @@ async function loadConfigurationFile(
   }
 }
 
+export async function loadAppConfiguration<TSchema extends zod.ZodType>(
+  filePath: string,
+  abortOrReport: AbortOrReport,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  decode: (input: any) => any = decodeToml,
+) {
+  const fallbackOutput = {} as zod.TypeOf<TSchema>
+
+  const configurationObject = await loadConfigurationFile(filePath, abortOrReport, decode)
+
+  if (!configurationObject) return fallbackOutput
+
+  let schema: typeof AppConfigurationSchema | typeof AppSchema | typeof LegacyAppSchema = AppConfigurationSchema
+
+  if (isCurrentAppSchema(configurationObject, {strict: true})) schema = AppSchema
+  if (isLegacyAppSchema(configurationObject, {strict: true})) schema = LegacyAppSchema
+
+  const parseResult = schema?.safeParse(configurationObject)
+
+  if (!parseResult.success) {
+    const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
+    return abortOrReport(
+      outputContent`Fix a schema error in ${outputToken.path(filePath)}:\n${formattedError}`,
+      fallbackOutput,
+      filePath,
+    )
+  }
+  return parseResult.data
+}
+
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -70,6 +112,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+
   if (!configurationObject) return fallbackOutput
 
   const parseResult = schema.safeParse(configurationObject)
@@ -188,7 +231,7 @@ class AppLoader {
   async loaded() {
     this.appDirectory = await this.findAppDirectory()
     const configurationPath = await this.getConfigurationPath()
-    const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
+    const configuration = await loadAppConfiguration(configurationPath, this.abortOrReport.bind(this), decodeToml)
     const dotenv = await this.loadDotEnv()
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extension_directories)
@@ -469,7 +512,7 @@ async function logMetadataForLoadedApp(
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
-        app.configuration.scopes
+        getAppScopes(app.configuration)
           .split(',')
           .map((scope) => scope.trim())
           .sort(),
