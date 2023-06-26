@@ -50,6 +50,13 @@
           "name": "api-key",
           "type": "option",
           "description": "Application's API key that will be exposed at build time.",
+          "hidden": true,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "Application's Client ID that will be exposed at build time.",
           "hidden": false,
           "multiple": false
         }
@@ -98,6 +105,13 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
+          "hidden": true,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
         },
@@ -161,6 +175,13 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
+          "hidden": true,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
         },
@@ -399,6 +420,13 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
+          "hidden": true,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
         },
@@ -530,6 +558,20 @@
           "description": "The environment to apply to the current command.",
           "hidden": true,
           "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
+          "hidden": false,
+          "multiple": false
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "description": "Name for the config file.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
@@ -571,6 +613,13 @@
           "char": "e",
           "description": "The environment to apply to the current command.",
           "hidden": true,
+          "multiple": false
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "description": "Name for the config file.",
+          "hidden": false,
           "multiple": false
         }
       },
@@ -819,7 +868,15 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key to fetch the schema with.",
+          "hidden": true,
           "required": false,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID to fetch the schema with.",
+          "hidden": false,
           "multiple": false
         },
         "stdout": {
@@ -957,6 +1014,13 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
+          "hidden": true,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
         }
@@ -1002,7 +1066,15 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key to fetch the schema with.",
+          "hidden": true,
           "required": false,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID to fetch the schema with.",
+          "hidden": false,
           "multiple": false
         },
         "stdout": {
@@ -1107,6 +1179,13 @@
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
+          "hidden": true,
+          "multiple": false
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
         }

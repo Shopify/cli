@@ -143,6 +143,7 @@ export class AppErrors {
 interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
+  configName?: string
   specifications: ExtensionSpecification[]
 }
 
@@ -158,15 +159,17 @@ export async function load(options: AppLoaderConstructorArgs): Promise<AppInterf
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
+  private configName?: string
   private appDirectory = ''
   private configurationPath = ''
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
 
-  constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications
+    this.configName = configName
   }
 
   findSpecificationForType(type: string) {
@@ -240,7 +243,8 @@ class AppLoader {
   async getConfigurationPath() {
     if (this.configurationPath) return this.configurationPath
 
-    const configurationPath = await findPathUp(configurationFileNames.app, {
+    const configurationFileName = getAppConfigurationFileName(this.configName)
+    const configurationPath = await findPathUp(configurationFileName, {
       cwd: this.directory,
       type: 'file',
     })
@@ -265,6 +269,7 @@ class AppLoader {
     const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
+    this.validateWebs(webs)
 
     const webTomlsInStandardLocation = await glob(joinPath(this.appDirectory, `web/**/${configurationFileNames.web}`))
     const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
@@ -272,10 +277,27 @@ class AppLoader {
     return {webs, usedCustomLayout}
   }
 
+  validateWebs(webs: Web[]): void {
+    ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
+      const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
+      if (websOfType.length > 1) {
+        this.abortOrReport(
+          outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
+          undefined,
+          joinPath(websOfType[1]!.directory, configurationFileNames.web),
+        )
+      }
+    })
+  }
+
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
+    const config = await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile)
+    const roles = new Set('roles' in config ? config.roles : [])
+    if ('type' in config) roles.add(config.type)
+    const {type, ...processedWebConfiguration} = {...config, roles: Array.from(roles), type: undefined}
     return {
       directory: dirname(WebConfigurationFile),
-      configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
+      configuration: processedWebConfiguration,
       framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
@@ -371,8 +393,8 @@ export async function loadAppName(appDirectory: string): Promise<string> {
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
-  const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
-  const frontendWebs = webs.filter((web) => web.configuration.type === WebType.Frontend)
+  const backendWebs = webs.filter((web) => isWebType(web, WebType.Backend))
+  const frontendWebs = webs.filter((web) => isWebType(web, WebType.Frontend))
   if (backendWebs.length > 1) {
     outputDebug('Unable to decide project type as multiple web backends')
     return
@@ -398,6 +420,10 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   return undefined
 }
 
+function isWebType(web: Web, type: WebType): boolean {
+  return web.configuration.roles.includes(type)
+}
+
 async function logMetadataForLoadedApp(
   app: App,
   loadingStrategy: {
@@ -414,12 +440,10 @@ async function logMetadataForLoadedApp(
 
     const extensionTotalCount = app.allExtensions.length
 
-    const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
-      webBackendCount === 1
-        ? app.webs.filter((web) => web.configuration.type === WebType.Backend)[0]?.framework
-        : undefined
-    const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
+      webBackendCount === 1 ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
+    const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
     for (const extension of app.allExtensions) {
@@ -465,4 +489,17 @@ async function logMetadataForLoadedApp(
       app_name: app.name,
     }
   })
+}
+
+function getAppConfigurationFileName(config?: string) {
+  if (config) {
+    const validFileRegex = /^shopify\.app(\.\w+)?\.toml$/g
+    if (validFileRegex.test(config)) {
+      return config
+    }
+
+    return `shopify.app.${config}.toml`
+  }
+
+  return configurationFileNames.app
 }

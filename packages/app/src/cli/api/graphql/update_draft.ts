@@ -5,17 +5,6 @@ export const ExtensionUpdateDraftMutation = gql`
     extensionUpdateDraft(
       input: {apiKey: $apiKey, registrationId: $registrationId, config: $config, context: $context}
     ) {
-      extensionVersion {
-        config
-        registrationId
-        context
-        lastUserInteractionAt
-        location
-        validationErrors {
-          field
-          message
-        }
-      }
       userErrors {
         field
         message
@@ -40,75 +29,11 @@ export interface ExtensionUpdateDraftPayload {
   // A unique identifier for the client performing the mutation.
   // """
   clientMutationId: string
-  extensionVersion: ExtensionVersion
   // userErrors: [UserError]
   userErrors: {
     field: string[]
     message: string
   }[]
-}
-
-// """
-// A particular version of an extension belonging to a Shopify Partner App.
-// """
-export interface ExtensionVersion {
-  // """
-  // The serialized JSON config for the extension version
-  // """
-  config: string
-
-  // """
-  // The context of an extension version, indicating where it will be rendered
-  // """
-  context: string
-
-  // """
-  // The unique identifier of the extension version
-  // """
-  // id: ID
-  id: string
-
-  // """
-  // The last time a user updated an extension version
-  // """
-  // lastUserInteractionAt: DateTime
-  lastUserInteractionAt: string
-
-  // """
-  // The URL to view the app extension version in the Partners Dashboard
-  // """
-  // location: Url
-  location: string
-
-  // """
-  // The unique identifier of the extension registration this version belongs to
-  // """
-  // registrationId: ID
-  registrationId: string
-
-  // """
-  // The uuid of the extension registration this version belongs to
-  // """
-  registrationUuid: string
-
-  // """
-  // The uuid of the extension version
-  // """
-  uuid: string
-
-  // """
-  // The validation errors for an extension version
-  // """
-  // validationErrors: [ValidationError]
-  validationErrors: {
-    field: string[]
-    message: string
-  }[]
-
-  // """
-  // The version tag of the extension version
-  // """
-  versionTag: string
 }
 
 export interface ExtensionUpdateSchema {

@@ -4,11 +4,12 @@ import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -120,6 +121,7 @@ interface SetupDraftableExtensionBundlerOptions {
   stderr: Writable
   stdout: Writable
   signal: AbortSignal
+  unifiedDeployment: boolean
 }
 
 export async function setupDraftableExtensionBundler({
@@ -132,6 +134,7 @@ export async function setupDraftableExtensionBundler({
   stderr,
   stdout,
   signal,
+  unifiedDeployment,
 }: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
@@ -158,7 +161,7 @@ export async function setupDraftableExtensionBundler({
       )
       if (error) return
 
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stderr})
+      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
     },
   })
 }
@@ -172,6 +175,7 @@ interface SetupConfigWatcherOptions {
   stderr: Writable
   signal: AbortSignal
   specifications: ExtensionSpecification[]
+  unifiedDeployment: boolean
 }
 
 export async function setupConfigWatcher({
@@ -183,12 +187,22 @@ export async function setupConfigWatcher({
   stderr,
   signal,
   specifications,
+  unifiedDeployment,
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
   const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
     outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
-    updateExtensionConfig({extension, token, apiKey, registrationId, stderr, specifications}).catch((_: unknown) => {})
+    updateExtensionConfig({
+      extension,
+      token,
+      apiKey,
+      registrationId,
+      stdout,
+      stderr,
+      specifications,
+      unifiedDeployment,
+    }).catch((_: unknown) => {})
   })
 
   signal.addEventListener('abort', () => {
@@ -202,6 +216,89 @@ export async function setupConfigWatcher({
       .catch((error: any) => {
         outputDebug(
           `Config file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
+          stderr,
+        )
+      })
+  })
+}
+
+export interface SetupFunctionWatcherOptions {
+  extension: ExtensionInstance
+  app: AppInterface
+  stdout: Writable
+  stderr: Writable
+  signal: AbortSignal
+  token: string
+  apiKey: string
+  registrationId: string
+  unifiedDeployment: boolean
+}
+
+export async function setupFunctionWatcher({
+  extension,
+  app,
+  stdout,
+  stderr,
+  signal,
+  token,
+  apiKey,
+  registrationId,
+  unifiedDeployment,
+}: SetupFunctionWatcherOptions) {
+  const {default: chokidar} = await import('chokidar')
+
+  outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout)
+  const watchPaths = extension.watchPaths
+  if (!watchPaths) {
+    outputWarn(
+      `Function extension ${extension.localIdentifier} is missing the 'build.watch' setting, automatic builds are disabled.`,
+      stdout,
+    )
+    return
+  }
+
+  outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${watchPaths}`, stdout)
+  let buildController: AbortController | null
+
+  const functionWatcher = chokidar.watch(watchPaths).on('change', (path) => {
+    outputDebug(`Function extension file at path ${path} changed`, stdout)
+    if (buildController) {
+      // terminate any existing builds
+      buildController.abort()
+    }
+    buildController = new AbortController()
+    const buildSignal = buildController.signal
+    buildFunctionExtension(extension, {
+      app,
+      stdout,
+      stderr,
+      useTasks: false,
+      signal: buildSignal,
+    })
+      .then(() => {
+        if (!buildSignal.aborted) {
+          return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
+        }
+      })
+      .catch((updateError: unknown) => {
+        outputWarn(`Error while deploying updated extension draft: ${JSON.stringify(updateError, null, 2)}`, stdout)
+      })
+      .finally(() => {
+        buildController = null
+      })
+  })
+
+  signal.addEventListener('abort', () => {
+    outputDebug(`Closing function file watching for extension with ID ${extension.devUUID}`, stdout)
+    functionWatcher
+      .close()
+      .then(() => {
+        outputDebug(`Function file watching closed for extension with ${extension.devUUID}`, stdout)
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .catch((error: any) => {
+        outputDebug(
+          `Function file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
           stderr,
         )
       })

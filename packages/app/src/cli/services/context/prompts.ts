@@ -44,7 +44,7 @@ interface SourceSummary {
 
 export async function deployConfirmationPrompt(
   {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
-  partnersApp?: OrganizationApp,
+  partnersApp?: Pick<OrganizationApp, 'betas'>,
 ): Promise<boolean> {
   const infoTable: InfoTableSection[] = []
 
