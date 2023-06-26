@@ -86,8 +86,10 @@ export async function loadAppConfiguration<TSchema extends zod.ZodType>(
 
   let schema: typeof AppConfigurationSchema | typeof AppSchema | typeof LegacyAppSchema = AppConfigurationSchema
 
+  // be optimisitic about supporting the legacy app shape,
+  // but be strict about validating current schema
+  if (isLegacyAppSchema(configurationObject)) schema = LegacyAppSchema
   if (isCurrentAppSchema(configurationObject, {strict: true})) schema = AppSchema
-  if (isLegacyAppSchema(configurationObject, {strict: true})) schema = LegacyAppSchema
 
   const parseResult = schema?.safeParse(configurationObject)
 
