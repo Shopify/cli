@@ -15,6 +15,8 @@ export const AppConfigurationSchema = zod.object({
   application_url: zod.string().optional(),
   redirect_url_allowlist: zod.array(zod.string()).optional(),
   requested_access_scopes: zod.array(zod.string()).optional(),
+  dev_store: zod.string().optional(),
+  update_urls: zod.boolean().optional(),
 })
 
 export enum WebType {
@@ -73,6 +75,7 @@ export interface AppInterface {
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
+  usesConfigInCode: () => boolean
 }
 
 export class App implements AppInterface {
@@ -131,6 +134,10 @@ export class App implements AppInterface {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
+  }
+
+  usesConfigInCode() {
+    return Boolean(this.configuration.client_id)
   }
 }
 

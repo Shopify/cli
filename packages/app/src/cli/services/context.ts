@@ -18,7 +18,7 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {loadAppName} from '../models/app/loader.js'
+import {load, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -39,6 +39,7 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 export interface DevContextOptions {
   directory: string
   apiKey?: string
+  config?: string
   storeFqdn?: string
   reset: boolean
 }
@@ -124,10 +125,30 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const cachedInfo = getAppDevCachedInfo({
+  let cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
   })
+
+  const localApp = await load({
+    directory: options.directory,
+    specifications: [],
+    configName: options.config || cachedInfo?.configFileName,
+  })
+
+  let remoteApp
+  if (localApp.usesConfigInCode()) {
+    remoteApp = (await appFromId(localApp.configuration.client_id, token))!
+    cachedInfo = {
+      ...cachedInfo,
+      directory: options.directory,
+      orgId: remoteApp.organizationId,
+      appId: remoteApp.apiKey,
+      title: remoteApp.title,
+      storeFqdn: localApp.configuration.dev_store,
+      updateURLs: localApp.configuration.update_urls,
+    }
+  }
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
@@ -154,7 +175,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   }
 
   const [_selectedApp, _selectedStore] = await Promise.all([
-    selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
+    selectedApp ? selectedApp : remoteApp || appFromId(cachedInfo?.appId, token),
     selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
   ])
 
