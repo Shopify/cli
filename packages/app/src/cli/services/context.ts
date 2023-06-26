@@ -18,7 +18,7 @@ import {AppInterface} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {loadAppName} from '../models/app/loader.js'
+import {load} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
@@ -28,6 +28,9 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
+
+const MAGIC_URL = 'https://shopify.dev/magic-url'
+const MAGIC_REDIRECT_URL = `${MAGIC_URL}/api/auth`
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -97,8 +100,8 @@ export async function ensureGenerateContext(options: {
   } else {
     const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
-    const localAppName = await loadAppName(options.directory)
-    const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
+    const localApp = await load({specifications: [], directory: options.directory, mode: 'report'})
+    const selectedApp = await selectOrCreateApp(localApp, apps, organization, options.token)
     setAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
@@ -162,8 +165,9 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     selectedApp = _selectedApp
   } else {
     const {apps} = await fetchOrgAndApps(orgId, token)
-    const localAppName = await loadAppName(options.directory)
-    selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
+    const localApp = await load({specifications: [], directory: options.directory, mode: 'report'})
+
+    selectedApp = await selectOrCreateApp(localApp, apps, organization, token)
   }
 
   if (_selectedStore) {
@@ -332,7 +336,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
+  const partnersApp = await selectOrCreateApp(app, apps, organization, token)
   return partnersApp
 }
 

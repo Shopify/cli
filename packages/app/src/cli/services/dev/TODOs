@@ -1,0 +1,6 @@
+- refactor and lift load legacy TOML w/ error validation? and import into commands
+- redirectURL can't be blank..
+- DD on making scopes optional
+- tophat all use cases again based on https://docs.google.com/document/d/1KbPk09bnlR6RPeUMG0aQESeaWJ2xlF0mQr7C6kqLMGM/edit#bookmark=id.4dedr24b74z2
+- test coverage for create
+- refactor merge to call methods for each type of merge

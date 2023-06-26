@@ -14,6 +14,8 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
+const MAGIC_URL = 'https://shopify.dev/magic-url'
+const MAGIC_REDIRECT_URL = `${MAGIC_URL}/api/auth`
 export interface LinkOptions {
   commandConfig: Config
   directory: string
@@ -65,13 +67,38 @@ async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined)
   return app
 }
 
-function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
+export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
   const configuration = localApp.configuration || {}
 
   configuration.client_id = remoteApp.apiKey
   configuration.name = remoteApp.title
-  configuration.application_url = remoteApp.applicationUrl
-  configuration.redirect_url_allowlist = remoteApp.redirectUrlWhitelist
+
+  if (localApp?.configuration?.application_url === MAGIC_URL) {
+    configuration.application_url = MAGIC_URL
+    configuration.redirect_url_allowlist = [MAGIC_REDIRECT_URL]
+  } else {
+    configuration.application_url = remoteApp.applicationUrl
+    configuration.redirect_url_allowlist = remoteApp.redirectUrlWhitelist
+  }
+
+  if (remoteApp.requestedAccessScopes) {
+    configuration.requested_access_scopes = remoteApp.requestedAccessScopes
+    // once scopes are optional
+    // delete configuration.scopes
+  } else if (localApp?.configuration?.scopes?.length >= 0) {
+    configuration.requested_access_scopes = stringToList(localApp?.configuration?.scopes)
+  } else {
+    // once scopes are optional
+    // delete configuration.scopes
+  }
 
   return configuration
+}
+
+function stringToList(str: string): string[] {
+  if (str === '') {
+    return []
+  } else {
+    return str.split(',')
+  }
 }
