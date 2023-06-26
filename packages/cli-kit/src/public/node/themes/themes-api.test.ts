@@ -1,4 +1,12 @@
-import {createTheme, deleteTheme, fetchThemes, ThemeParams, updateTheme, publishTheme} from './themes-api.js'
+import {
+  createTheme,
+  deleteTheme,
+  fetchThemes,
+  ThemeParams,
+  updateTheme,
+  publishTheme,
+  upgradeTheme,
+} from './themes-api.js'
 import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -64,6 +72,73 @@ describe('createTheme', () => {
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
     expect(theme!.processing).toBeFalsy()
+  })
+})
+
+describe('upgradeTheme', () => {
+  test('upgrades a theme with a script', async () => {
+    // Given
+    const fromTheme = 123
+    const toTheme = 456
+    const name = 'updated-theme'
+    const role = 'unpublished'
+    const params: ThemeParams = {name, role}
+    const id = 789
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {theme: {id, name, role}},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const theme = await upgradeTheme({fromTheme, toTheme, params, session})
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith(
+      'POST',
+      `/themes`,
+      session,
+      {fromTheme, toTheme, script: null, theme: {...params}},
+      {},
+    )
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(id)
+    expect(theme!.name).toEqual(name)
+    expect(theme!.role).toEqual(role)
+  })
+
+  test('upgrades a theme without a script', async () => {
+    // Given
+    const fromTheme = 123
+    const toTheme = 456
+    const name = 'updated-theme'
+    const role = 'unpublished'
+    const script = 'update_extension.json contents'
+    const params: ThemeParams = {name, role}
+    const id = 789
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {theme: {id, name, role}},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const theme = await upgradeTheme({fromTheme, toTheme, script, params, session})
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith(
+      'POST',
+      `/themes`,
+      session,
+      {fromTheme, toTheme, script, theme: {...params}},
+      {},
+    )
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(id)
+    expect(theme!.name).toEqual(name)
+    expect(theme!.role).toEqual(role)
   })
 })
 

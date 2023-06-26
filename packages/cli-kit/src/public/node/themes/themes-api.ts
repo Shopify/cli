@@ -24,6 +24,21 @@ export async function createTheme(params: ThemeParams, session: AdminSession): P
   return buildTheme({...response.json.theme, createdAtRuntime: true})
 }
 
+interface UpgradeThemeOptions {
+  fromTheme: number
+  toTheme: number
+  script?: string
+  params: ThemeParams
+  session: AdminSession
+}
+
+export async function upgradeTheme(upgradeOptions: UpgradeThemeOptions): Promise<Theme | undefined> {
+  const {fromTheme, toTheme, params, session} = upgradeOptions
+  const script = upgradeOptions.script || null
+  const response = await request('POST', `/themes`, session, {fromTheme, toTheme, script, theme: {...params}})
+  return buildTheme(response.json.theme)
+}
+
 export async function updateTheme(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('PUT', `/themes/${id}`, session, {theme: {id, ...params}})
   return buildTheme(response.json.theme)

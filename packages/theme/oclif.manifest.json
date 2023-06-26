@@ -1373,15 +1373,15 @@
           "description": "The path to the 'update_extension.json' script.",
           "multiple": false
         },
-        "source-theme": {
-          "name": "source-theme",
+        "from-theme": {
+          "name": "from-theme",
           "type": "option",
           "description": "The theme ID or name of the theme at the previous version.",
           "required": true,
           "multiple": false
         },
-        "target-theme": {
-          "name": "target-theme",
+        "to-theme": {
+          "name": "to-theme",
           "type": "option",
           "description": "The theme ID or name of the theme at the target version.",
           "required": true,
