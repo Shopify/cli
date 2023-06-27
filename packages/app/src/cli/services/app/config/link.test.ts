@@ -30,6 +30,26 @@ vi.mock('../../context.js', async () => {
 })
 
 describe('link', () => {
+  test('does not ask for a name when it is provided as a flag', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+        configName: 'Default value',
+      }
+      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+
+      // When
+      await link(options)
+
+      // Then
+      expect(selectConfigName).not.toHaveBeenCalled()
+      expect(fileExistsSync(joinPath(tmp, 'shopify.app.default-value.toml'))).toBeTruthy()
+    })
+  })
+
   test('creates a new config file when it does not exist', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -51,7 +71,7 @@ extension_directories = [ ]
 client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-redirect_url_allowlist = [ "https://example.com/callback1" ]
+webhook_api_version = "2023-04"
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
@@ -89,32 +109,12 @@ extension_directories = [ ]
 client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-redirect_url_allowlist = [ "https://example.com/callback1" ]
+webhook_api_version = "2023-04"
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'App "app1" connected to this codebase, file shopify.app.staging.toml updated',
       })
-    })
-  })
-
-  test('does not ask for a name when it is provided as a flag', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const options: LinkOptions = {
-        directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-        configName: 'Default value',
-      }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
-
-      // When
-      await link(options)
-
-      // Then
-      expect(selectConfigName).not.toHaveBeenCalled()
-      expect(fileExistsSync(joinPath(tmp, 'shopify.app.default-value.toml'))).toBeTruthy()
     })
   })
 
@@ -179,7 +179,7 @@ redirect_url_allowlist = [ "https://example.com/callback1" ]
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-redirect_url_allowlist = [ "https://example.com/callback1" ]
+webhook_api_version = "2023-04"
 `
       expect(content).toEqual(expectedContent)
     })
