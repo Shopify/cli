@@ -1,8 +1,12 @@
 import {GitDiff} from './GitDiff.js'
 import {render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
-import {describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
+
+afterEach(async () => {
+  await vi.unstubAllGlobals()
+})
 
 describe('GitDiff', async () => {
   test('renders correctly when no changes exist', async () => {
@@ -25,6 +29,29 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "  @@ -1,2 +1,2 @@
+      - hello
+        world
+      + hello"
+    `)
+  })
+
+  test('displays color correctly', async () => {
+    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
+
+    expect(lastFrame()).toMatchInlineSnapshot(`
+      "\u001b[36m  @@ -1,2 +1,2 @@\u001b[m
+      \u001b[31m- hello\u001b[m
+        world\u001b[m
+      \u001b[32m+ \u001b[m\u001b[32mhello\u001b[m"
+    `)
+  })
+
+  test('respects no-color mode', async () => {
+    vi.stubGlobal('process', {...process, env: {...process.env, FORCE_COLOR: '0'}})
+    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
+
+    expect(lastFrame()!).toMatchInlineSnapshot(`
       "  @@ -1,2 +1,2 @@
       - hello
         world

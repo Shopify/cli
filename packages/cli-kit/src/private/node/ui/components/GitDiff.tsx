@@ -40,7 +40,7 @@ const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedConte
     })
     .filter((line: string | undefined) => line !== undefined)
     .join('\n')
-    .trim()
+    .trimEnd()
   return <Text>{diffContents}</Text>
 }
 
