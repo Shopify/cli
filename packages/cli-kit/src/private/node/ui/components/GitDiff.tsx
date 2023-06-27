@@ -30,7 +30,8 @@ const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedConte
       if (unstyledLine === '\\ No newline at end of file') {
         return undefined
       } else if (unstyledLine.match(/^@@/)) {
-        return index === 0 ? line : line.replace('@@', '\n@@')
+        const addNewline = index !== 0
+        return line.replace('@@', `${addNewline ? '\n' : ''}  @@`)
       } else {
         return line.replace(/([+\- ])/, (match) => {
           return `${match} `

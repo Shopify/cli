@@ -15,7 +15,7 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff baselineContent="hello\n" updatedContent="world\n" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "@@ -1 +1 @@
+      "  @@ -1 +1 @@
       - hello
       + world"
     `)
@@ -25,7 +25,7 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "@@ -1,2 +1,2 @@
+      "  @@ -1,2 +1,2 @@
       - hello
         world
       + hello"
@@ -34,7 +34,7 @@ describe('GitDiff', async () => {
 
   test('ignores newline changes', async () => {
     const expectedDiff = `
-      "@@ -1,2 +1,2 @@
+      "  @@ -1,2 +1,2 @@
       - hello
         world
       + hello"
@@ -73,13 +73,13 @@ qux`
     const {lastFrame} = render(<GitDiff baselineContent={baselineContent} updatedContent={updatedContent} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "@@ -1,3 +1,3 @@
+      "  @@ -1,3 +1,3 @@
       - hello
         world
       + hello
         lorem
 
-      @@ -8,2 +8,2 @@ amet
+        @@ -8,2 +8,2 @@ amet
         foo
       - bar
       + qux"`)
