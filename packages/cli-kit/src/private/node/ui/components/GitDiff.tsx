@@ -25,10 +25,11 @@ const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedConte
   }
   const diffContents = rawDiffContents
     .split('\n')
-    .map((line: string, index: number) => {
-      if (line === '\\ No newline at end of file') {
-        return line
-      } else if (unstyled(line).match(/^@@/)) {
+    .map((line: string, index: number): string | undefined => {
+      const unstyledLine = unstyled(line)
+      if (unstyledLine === '\\ No newline at end of file') {
+        return undefined
+      } else if (unstyledLine.match(/^@@/)) {
         return index === 0 ? line : line.replace('@@', '\n@@')
       } else {
         return line.replace(/([+\- ])/, (match) => {
@@ -36,6 +37,7 @@ const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedConte
         })
       }
     })
+    .filter((line: string | undefined) => line !== undefined)
     .join('\n')
     .trim()
   return <Text>{diffContents}</Text>

@@ -32,16 +32,22 @@ describe('GitDiff', async () => {
     `)
   })
 
-  test('renders correctly when changes exist and are several lines long and have no trailing newline', async () => {
-    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello" />)
-
-    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+  test('ignores newline changes', async () => {
+    const expectedDiff = `
       "@@ -1,2 +1,2 @@
       - hello
         world
-      + hello
-      \\\\  No newline at end of file"
-    `)
+      + hello"
+    `
+    // Removing a newline
+
+    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello" />)
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
+
+    const lastFrame2 = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello" />).lastFrame
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
   })
 
   test('renders correctly when changes exist in multiple areas of a file', async () => {
@@ -76,7 +82,6 @@ qux`
       @@ -8,2 +8,2 @@ amet
         foo
       - bar
-      + qux
-      \\\\  No newline at end of file"`)
+      + qux"`)
   })
 })
