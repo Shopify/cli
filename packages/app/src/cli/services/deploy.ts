@@ -80,7 +80,19 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
+      let bundle = false
+      let hasConfigOnlyExtensions = false
+
+      app.allExtensions.forEach((ext) => {
+        if (ext.features.includes('bundling')) {
+          bundle = true
+        }
+
+        if (ext.isConfigOnly) {
+          hasConfigOnlyExtensions = true
+        }
+      })
+
       let bundlePath: string | undefined
 
       if (bundle) {
@@ -104,7 +116,7 @@ export async function deploy(options: DeployOptions) {
               ),
             )
 
-            if (bundle || unifiedDeployment) {
+            if (bundle || hasConfigOnlyExtensions || unifiedDeployment) {
               ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,

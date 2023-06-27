@@ -7,7 +7,7 @@ import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {TokenizedString} from '@shopify/cli-kit/node/output'
 
-export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
+export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild' | 'config_only'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

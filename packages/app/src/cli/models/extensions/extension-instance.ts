@@ -94,6 +94,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
+  get isConfigOnly() {
+    return this.features.includes('config_only')
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
