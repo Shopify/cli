@@ -12,7 +12,7 @@ export interface GitDiffProps {
 }
 
 /**
- * `FilePath` displays a path to a file.
+ * `GitDiff` displays a git diff between two strings.
  */
 const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedContent}): JSX.Element => {
   const rawDiffContents = gitDiff(baselineContent, updatedContent, {
