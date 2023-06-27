@@ -23,8 +23,6 @@ export async function pushConfig(options: Options) {
       apiKey: configuration.client_id,
       title: configuration.name,
       applicationUrl: configuration.application_url,
-      redirectUrlAllowlist: configuration.redirect_url_allowlist,
-      requestedAccessScopes: configuration.requested_access_scopes,
     }
 
     const variables = removeFalsyEntries(initialVariables)

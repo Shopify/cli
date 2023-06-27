@@ -14,12 +14,12 @@ describe('pushConfig', () => {
       app: testApp({
         configurationPath: 'shopify.app.development.toml',
         configuration: {
-          client_id: 'my-key',
-          name: 'my-app',
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
-          requested_access_scopes: [],
+          name: 'my app',
+          api_contact_email: 'ryan@app.com',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhook_api_version: '04-2023',
+          application_url: 'https://myapp.com',
         },
       }),
     }
@@ -33,15 +33,13 @@ describe('pushConfig', () => {
     await pushConfig(options)
 
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
-      apiKey: 'my-key',
-      title: 'my-app',
-      applicationUrl: 'https://my-apps-url.com',
-      redirectUrlAllowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
-      requestedAccessScopes: [],
+      apiKey: '12345',
+      applicationUrl: 'https://myapp.com',
+      title: 'my app',
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my-app',
+      headline: 'Updated app configuration for my app',
       body: ['shopify.app.development.toml configuration is now live on Shopify.'],
     })
   })
@@ -51,11 +49,12 @@ describe('pushConfig', () => {
       app: testApp({
         configurationPath: 'shopify.app.development.toml',
         configuration: {
-          client_id: 'my-key',
-          name: 'my-app',
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
+          name: 'my app',
+          api_contact_email: 'ryan@app.com',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhook_api_version: '04-2023',
+          application_url: 'https://myapp.com',
         },
       }),
     }
@@ -69,23 +68,5 @@ describe('pushConfig', () => {
     const result = pushConfig(options)
 
     await expect(result).rejects.toThrow(/failed to update app/)
-  })
-
-  test('returns error if there is no client id', async () => {
-    const options: Options = {
-      app: testApp({
-        configurationPath: 'shopify.app.development.toml',
-        configuration: {
-          name: 'my-app',
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify', 'https://my-apps-url.com/auth/callback'],
-        },
-      }),
-    }
-
-    const result = pushConfig(options)
-
-    await expect(result).rejects.toThrow(/shopify.app.development.toml does not contain a client_id./)
   })
 })
