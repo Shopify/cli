@@ -6,79 +6,72 @@ import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
-export const LegacyAppSchema = zod.object({
-  extension_directories: zod.array(zod.string()).optional(),
-  web_directories: zod.array(zod.string()).optional(),
-  scopes: zod.string().default(''),
-})
+export const LegacyAppSchema = zod
+  .object({
+    extension_directories: zod.array(zod.string()).optional(),
+    web_directories: zod.array(zod.string()).optional(),
+    scopes: zod.string().default(''),
+  })
+  .strict()
 
-export const AppSchema = zod.object({
-  name: zod.string(),
-  api_contact_email: zod.string(),
-  client_id: zod.string(),
-  scopes: zod.string().optional(),
-  webhook_api_version: zod.string(),
-  application_url: zod.string(),
-  embedded: zod.boolean().optional(),
-  auth: zod
-    .object({
-      redirect_urls: zod.array(zod.string()),
-    })
-    .optional(),
-  privacy_compliance_webhooks: zod
-    .object({
-      customer_deletion_url: zod.string(),
-      customer_data_request_url: zod.string(),
-      shop_deletion_url: zod.string(),
-    })
-    .optional(),
-  proxy: zod
-    .object({
-      url: zod.string(),
-      subpath: zod.string(),
-      prefix: zod.string(),
-    })
-    .optional(),
-  pos: zod
-    .object({
-      embedded: zod.boolean(),
-    })
-    .optional(),
-  app_preferences: zod
-    .object({
-      url: zod.string(),
-    })
-    .optional(),
-  cli: zod
-    .object({
-      automatically_update_urls_on_dev: zod.boolean().optional(),
-      dev_store_url: zod.string().optional(),
-    })
-    .optional(),
-  extension_directories: zod.array(zod.string()).optional(),
-  web_directories: zod.array(zod.string()).optional(),
-  redirect_url_allowlist: zod.array(zod.string()).optional(),
-  requested_access_scopes: zod.array(zod.string()).optional(),
-})
+export const AppSchema = zod
+  .object({
+    name: zod.string(),
+    api_contact_email: zod.string(),
+    client_id: zod.string(),
+    scopes: zod.string().optional(),
+    webhook_api_version: zod.string(),
+    application_url: zod.string(),
+    embedded: zod.boolean().optional(),
+    auth: zod
+      .object({
+        redirect_urls: zod.array(zod.string()),
+      })
+      .optional(),
+    privacy_compliance_webhooks: zod
+      .object({
+        customer_deletion_url: zod.string(),
+        customer_data_request_url: zod.string(),
+        shop_deletion_url: zod.string(),
+      })
+      .optional(),
+    proxy: zod
+      .object({
+        url: zod.string(),
+        subpath: zod.string(),
+        prefix: zod.string(),
+      })
+      .optional(),
+    pos: zod
+      .object({
+        embedded: zod.boolean(),
+      })
+      .optional(),
+    app_preferences: zod
+      .object({
+        url: zod.string(),
+      })
+      .optional(),
+    cli: zod
+      .object({
+        automatically_update_urls_on_dev: zod.boolean().optional(),
+        dev_store_url: zod.string().optional(),
+      })
+      .optional(),
+    extension_directories: zod.array(zod.string()).optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
-
-export interface SchemaValidationOptions {
-  strict?: boolean
-}
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
  * @param item - the item to validate
  * @param strict - whether to allow keys not defined in the schema
  */
-export function isLegacyAppSchema(
-  item: unknown,
-  options?: SchemaValidationOptions,
-): item is zod.infer<typeof LegacyAppSchema> {
-  if (options?.strict) return isType(LegacyAppSchema.strict(), item)
+export function isLegacyAppSchema(item: unknown): item is zod.infer<typeof LegacyAppSchema> {
   return isType(LegacyAppSchema, item)
 }
 
@@ -87,52 +80,20 @@ export function isLegacyAppSchema(
  * @param item - the item to validate
  * @param strict - whether to allow keys not defined in the schema
  */
-export function isCurrentAppSchema(
-  item: unknown,
-  options?: SchemaValidationOptions,
-): item is zod.infer<typeof AppSchema> {
-  if (options?.strict) return isType(AppSchema.strict(), item)
+export function isCurrentAppSchema(item: unknown): item is zod.infer<typeof AppSchema> {
   return isType(AppSchema, item)
-}
-
-/**
- * Check whether a shopify.app.toml schema is valid.
- * @param item - the item to validate
- * @param strict - whether to allow keys not defined in the schema
- */
-export function isValidAppSchema(
-  item: unknown,
-  options?: SchemaValidationOptions,
-): item is zod.infer<typeof AppConfigurationSchema> {
-  return isLegacyAppSchema(item, {strict: options?.strict}) || isCurrentAppSchema(item, {strict: options?.strict})
 }
 
 /**
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopes(config: unknown) {
-  if (!config) return ''
-
-  if (!isValidAppSchema(config)) {
-    throw new AbortError('Invalid configuration')
-  }
-
+export function getAppScopes(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) {
     return config.scopes
+  } else {
+    return config.scopes?.toString() ?? ''
   }
-
-  if (isCurrentAppSchema(config)) {
-    if (config.requested_access_scopes) {
-      return config.requested_access_scopes.toString()
-    } else if (config.scopes) {
-      return config.scopes
-    } else {
-      return ''
-    }
-  }
-
-  throw new AbortError('Invalid configuration')
 }
 
 export enum WebType {
