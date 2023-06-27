@@ -24,6 +24,7 @@ export default class ConfigPush extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(ConfigPush)
     const configName = flags.config || getAppInfo(flags.path)?.configFile
+    console.log('command running')
     const app = await loadApp({specifications: [], configName, directory: flags.path, mode: 'report'})
 
     await pushConfig({app})

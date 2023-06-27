@@ -24,41 +24,6 @@ export const AppSchema = zod
     webhook_api_version: zod.string(),
     application_url: zod.string(),
     embedded: zod.boolean().optional(),
-    auth: zod
-      .object({
-        redirect_urls: zod.array(zod.string()),
-      })
-      .optional(),
-    privacy_compliance_webhooks: zod
-      .object({
-        customer_deletion_url: zod.string(),
-        customer_data_request_url: zod.string(),
-        shop_deletion_url: zod.string(),
-      })
-      .optional(),
-    proxy: zod
-      .object({
-        url: zod.string(),
-        subpath: zod.string(),
-        prefix: zod.string(),
-      })
-      .optional(),
-    pos: zod
-      .object({
-        embedded: zod.boolean(),
-      })
-      .optional(),
-    app_preferences: zod
-      .object({
-        url: zod.string(),
-      })
-      .optional(),
-    cli: zod
-      .object({
-        automatically_update_urls_on_dev: zod.boolean().optional(),
-        dev_store_url: zod.string().optional(),
-      })
-      .optional(),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
