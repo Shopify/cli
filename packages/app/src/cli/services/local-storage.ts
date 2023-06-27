@@ -68,14 +68,6 @@ export function setAppInfo(
   }
 }
 
-export function setCurrentConfigFile(
-  options: CachedAppInfo,
-  config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
-): void {
-  const normalized = normalizePath(options.directory)
-  setAppInfo(options, config)
-}
-
 export function clearCurrentConfigFile(
   directory: string,
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
