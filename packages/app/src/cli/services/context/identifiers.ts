@@ -3,7 +3,7 @@ import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -17,7 +17,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   envIdentifiers: Partial<Identifiers>
   force: boolean
   deploymentMode: DeploymentMode
-  partnersApp?: OrganizationApp
+  partnersApp?: MinimalOrganizationApp & Pick<OrganizationApp, 'betas'>
 }
 
 export interface RemoteSource {

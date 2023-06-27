@@ -101,6 +101,30 @@ export async function testThemeExtensions(): Promise<ExtensionInstance> {
   return extension
 }
 
+export async function testWebPixelExtension(): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'web pixel name',
+    type: 'web_pixel' as const,
+    metafields: [],
+    runtime_context: 'strict',
+    settings: [],
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './my-extension',
+    specification,
+  })
+
+  extension.outputPath = './my-extension'
+
+  return extension
+}
+
 function defaultFunctionConfiguration(): FunctionConfigType {
   return {
     name: 'test function extension',

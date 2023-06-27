@@ -529,11 +529,9 @@ async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {
     if (error.errors?.[0]?.extensions?.type === 'unsupported_client_version') {
       const packageManager = await getPackageManager(cwd())
 
-      throw new AbortError(
-        {bold: '`deploy` is no longer supported in this CLI version.'},
-        ['Upgrade your CLI version to use the', {command: 'deploy'}, 'command.'],
-        [['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}]],
-      )
+      throw new AbortError(['Upgrade your CLI version to run the', {command: 'deploy'}, 'command.'], null, [
+        ['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}],
+      ])
     }
 
     throw error
