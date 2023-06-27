@@ -68,14 +68,20 @@ async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined)
   return app
 }
 
+interface NewAppConfig {
+  client_id?: string
+  name?: string
+  application_url?: string
+  webhook_api_version?: string
+}
+
 function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
-  const configuration = localApp.configuration || {}
+  const configuration: NewAppConfig = (localApp.configuration as unknown) || {}
 
-  if (isCurrentAppSchema(configuration)) {
-    configuration.client_id = remoteApp.apiKey
-    configuration.name = remoteApp.title
-    configuration.application_url = remoteApp.applicationUrl
-  }
+  configuration.client_id = remoteApp.apiKey
+  configuration.name = remoteApp.title
+  configuration.application_url = remoteApp.applicationUrl
+  configuration.webhook_api_version = '2023-04'
 
-  return configuration
+  return configuration as AppConfiguration
 }
