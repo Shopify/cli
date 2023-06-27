@@ -60,26 +60,30 @@ function buildTomlObject(extension: DashboardExtension) {
   // Remote config uses uiType, local config uses ui_type
   const fields = config.fields?.map((field) => {
     return {
-      name: field.name,
-      label: field.label,
+      key: field.name,
+      name: field.label,
       description: field.description,
       required: field.required,
-      ui_type: field.uiType,
-      id: field.id,
+      type: field.uiType,
     }
   })
 
   return {
     name: extension.title,
     type: extension.type,
-    task: {
-      title: config.title,
-      description: config.description,
-      url: config.url,
-      custom_configuration_page_url: config.custom_configuration_page_url,
-      custom_configuration_page_preview_url: config.custom_configuration_page_preview_url,
-      validation_url: config.validation_url,
-      ...(fields && fields.length > 0 && {fields}),
+    description: config.description,
+    extensions: [
+      {
+        title: config.title,
+        description: config.description,
+        runtime_url: config.url,
+        config_page_url: config.custom_configuration_page_url,
+        config_page_preview_url: config.custom_configuration_page_preview_url,
+        validation_url: config.validation_url,
+      },
+    ],
+    settings: {
+      fields,
     },
   }
 }
@@ -132,7 +136,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
     })
 
     const generatedExtensions = await Promise.all(migrationPromises)
-    renderSuccessMessages({generatedExtensions})
+    renderSuccessMessages(generatedExtensions)
     await updateAppIdentifiers({
       app: options.app,
       identifiers: {extensions: extensionUuids, app: partnersApp.apiKey},
@@ -155,10 +159,7 @@ function renderSuccessMessages(generatedExtensions: {extension: DashboardExtensi
   })
 }
 
-function formatSuccessfulRunMessage({
-  extension: DashboardExtension;
-  directory: string;
-}[]): RenderAlertOptions {
+function formatSuccessfulRunMessage(extension: {title: string; directory: string}): RenderAlertOptions {
   const options: RenderAlertOptions = {
     headline: ['Your extension was created in', {filePath: extension.directory}, {char: '.'}],
     nextSteps: [],
