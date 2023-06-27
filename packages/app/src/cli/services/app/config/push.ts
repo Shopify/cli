@@ -1,4 +1,5 @@
 import {PushConfig, PushConfigSchema} from '../../../api/graphql/push_config.js'
+import {FindAppQuery, FindAppQuerySchema} from '../../../api/graphql/find_app.js'
 import {AppInterface, isCurrentAppSchema} from '../../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -12,20 +13,34 @@ export interface Options {
 }
 
 export async function pushConfig(options: Options) {
-  const token = await ensureAuthenticatedPartners()
-  const mutation = PushConfig
-
   const {configuration} = options.app
-  const configFileName = basename(options.app.configurationPath)
 
   if (isCurrentAppSchema(configuration)) {
-    const initialVariables = {
+    const token = await ensureAuthenticatedPartners()
+    const mutation = PushConfig
+    const query = FindAppQuery
+
+    const configFileName = basename(options.app.configurationPath)
+
+    const queryVariables = {apiKey: configuration.client_id}
+
+    const queryResult: FindAppQuerySchema = await partnersRequest(query, token, queryVariables)
+    console.log({queryResult})
+
+    const {app} = queryResult
+
+    const defaultAppMutationVariables = {
+      title: app.title,
+      apiKey: app.apiKey,
+      applicationUrl: app.applicationUrl,
+    }
+
+    const variables = {
+      ...defaultAppMutationVariables,
       apiKey: configuration.client_id,
       title: configuration.name,
       applicationUrl: configuration.application_url,
     }
-
-    const variables = removeFalsyEntries(initialVariables)
 
     const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
@@ -43,14 +58,4 @@ export async function pushConfig(options: Options) {
 
 export const abort = (errorMessage: OutputMessage) => {
   throw new AbortError(errorMessage)
-}
-
-// this is placeholder for a more robust validation/clearing layer
-export const removeFalsyEntries = (obj: {[key: string]: string | string[] | undefined}) => {
-  return Object.keys(obj).reduce((acc: {[key: string]: string | string[] | undefined}, key) => {
-    if (obj[key]) {
-      acc[key] = obj[key]
-    }
-    return acc
-  }, {})
 }
