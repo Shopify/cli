@@ -7,6 +7,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
+import {rando} from '../../../models/app/rando.js'
 
 export interface Options {
   app: AppInterface
@@ -14,40 +15,40 @@ export interface Options {
 
 export async function pushConfig(options: Options) {
   const {configuration} = options.app
+  rando()
+  // if (isCurrentAppSchema(configuration)) {
+  //   const token = await ensureAuthenticatedPartners()
+  //   const mutation = PushConfig
+  //   const query = FindAppQuery
 
-  if (isCurrentAppSchema(configuration)) {
-    const token = await ensureAuthenticatedPartners()
-    const mutation = PushConfig
-    const query = FindAppQuery
+  //   const configFileName = basename(options.app.configurationPath)
 
-    const configFileName = basename(options.app.configurationPath)
+  //   const queryVariables = {apiKey: configuration.client_id}
 
-    const queryVariables = {apiKey: configuration.client_id}
+  //   const queryResult = await partnersRequest(query, token, queryVariables)
 
-    const queryResult = await partnersRequest(query, token, queryVariables)
+  //   console.log({queryResult})
 
-    console.log({queryResult})
+  //   const initialVariables = {
+  //     apiKey: configuration.client_id,
+  //     title: configuration.name,
+  //     applicationUrl: configuration.application_url,
+  //   }
 
-    const initialVariables = {
-      apiKey: configuration.client_id,
-      title: configuration.name,
-      applicationUrl: configuration.application_url,
-    }
+  //   const variables = removeFalsyEntries(initialVariables)
 
-    const variables = removeFalsyEntries(initialVariables)
+  //   const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
-    const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
+  //   if (result.appUpdate.userErrors.length > 0) {
+  //     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
+  //     abort(errors)
+  //   }
 
-    if (result.appUpdate.userErrors.length > 0) {
-      const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
-      abort(errors)
-    }
-
-    renderSuccess({
-      headline: `Updated app configuration for ${configuration.name}`,
-      body: [`${configFileName} configuration is now live on Shopify.`],
-    })
-  }
+  //   renderSuccess({
+  //     headline: `Updated app configuration for ${configuration.name}`,
+  //     body: [`${configFileName} configuration is now live on Shopify.`],
+  //   })
+  // }
 }
 
 export const abort = (errorMessage: OutputMessage) => {

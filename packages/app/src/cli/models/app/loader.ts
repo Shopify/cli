@@ -71,15 +71,9 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
 
-  console.log(configurationObject)
-
   if (!configurationObject) return fallbackOutput
 
   const parseResult = schema.safeParse(configurationObject)
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  console.log(parseResult.error)
 
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
