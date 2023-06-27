@@ -615,9 +615,21 @@
           "description": "The environment to apply to the current command.",
           "hidden": true,
           "multiple": false
+        },
+        "reset": {
+          "name": "reset",
+          "type": "boolean",
+          "description": "Reset current configuration.",
+          "hidden": false,
+          "allowNo": false
         }
       },
-      "args": {}
+      "args": {
+        "config": {
+          "name": "config",
+          "description": "Name of the config file."
+        }
+      }
     },
     "app:env:pull": {
       "id": "app:env:pull",
