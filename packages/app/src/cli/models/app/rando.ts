@@ -1,19 +1,18 @@
 import {zod as z} from '@shopify/cli-kit/node/schema'
-// import {AppConfigurationSchema} from './app.js'
+import {AppConfigurationSchema} from './app.js'
 
 export function rando() {
   const appSchema = z
     .object({
       name: z.string(),
-      api_contact_email: z.string(),
       client_id: z.string(),
-      scopes: z.string().optional(),
+      app_url: z.string(),
+      api_contact_email: z.string(),
       webhook_api_version: z.string(),
-      application_url: z.string(),
       embedded: z.boolean().optional(),
+      scopes: z.string().optional(),
     })
     .strict()
-
   const legacyAppSchema = z
     .object({
       scopes: z.string(),
@@ -21,13 +20,17 @@ export function rando() {
     .strict()
 
   const myUnion = z.union([appSchema, legacyAppSchema])
-  const result = myUnion.safeParse({
-    name: 'roo',
-    api_contact_email: 'foo',
-    client_id: 'foo',
-    scopes: '',
-    webhook_api_version: 'foo',
+
+  let result: any = AppConfigurationSchema.safeParse({
+    name: 'bruh',
+    scopes: 'val',
+    client_id: 'foobar',
+    application_url: 'foobar',
+    api_contact_email: 'foobar',
+    webhook_api_version: 'foobard',
   })
+
+  console.log('RESULT', result)
 
   if (!result.success) {
     console.log(result.error)
