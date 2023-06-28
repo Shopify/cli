@@ -1,6 +1,7 @@
 import {fetchAppAndIdentifiers} from './context.js'
-import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
+import {DashboardExtension, buildTomlObject} from './import-flow/extension-to-toml.js'
+import {getActiveDashboardExtensions} from './import-flow/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {Config} from '@oclif/core'
@@ -15,91 +16,6 @@ interface ImportFlowOptions {
   app: AppInterface
   config: Config
   apiKey?: string
-}
-
-interface DashboardExtension {
-  id: string
-  uuid: string
-  title: string
-  type: string
-  activeVersion: {
-    id: string
-    uuid: string
-    config: string
-  }
-  draftVersion?: {
-    config: string
-  }
-}
-
-interface FlowConfig {
-  title: string
-  description: string
-  url: string
-  fields?: {
-    id: string
-    name: string
-    label: string
-    description?: string
-    required: boolean
-    uiType: string
-  }[]
-  custom_configuration_page_url?: string
-  custom_configuration_page_preview_url?: string
-  validation_url?: string
-}
-
-/**
- * Given a flow extension config file, convert it to toml
- * Works for both trigger and action because trigger config is a subset of action config
- */
-function buildTomlObject(extension: DashboardExtension) {
-  const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
-  if (!versionConfig) throw new Error('No config found for extension')
-  const config: FlowConfig = JSON.parse(versionConfig)
-
-  // Remote config uses uiType, local config uses ui_type
-  const fields = config.fields?.map((field) => {
-    return {
-      key: field.name,
-      name: field.label,
-      description: field.description,
-      required: field.required,
-      type: field.uiType,
-    }
-  })
-
-  return {
-    name: extension.title,
-    type: extension.type.replace('_definition', ''),
-    description: config.description,
-    extensions: [
-      {
-        title: config.title,
-        description: config.description,
-        runtime_url: config.url,
-        config_page_url: config.custom_configuration_page_url,
-        config_page_preview_url: config.custom_configuration_page_preview_url,
-        validation_url: config.validation_url,
-      },
-    ],
-    settings: {
-      fields: fields ?? undefined,
-    },
-  }
-}
-
-async function getActiveDashboardExtensions({token, apiKey}: {token: string; apiKey: string}) {
-  const initialRemoteExtensions = await fetchAppExtensionRegistrations({token, apiKey})
-  const {dashboardManagedExtensionRegistrations} = initialRemoteExtensions.app
-  return dashboardManagedExtensionRegistrations
-    .filter((ext) => {
-      const isFLow = ext.type === 'flow_action_definition' || ext.type === 'flow_trigger_definition'
-      const hasActiveVersion = ext.activeVersion && ext.activeVersion.config
-      const hasDraftVersion = ext.draftVersion && ext.draftVersion.config
-      return isFLow && (hasActiveVersion || hasDraftVersion)
-    })
-    .map((ext) => ext as DashboardExtension)
 }
 
 export async function importFlowExtensions(options: ImportFlowOptions) {
