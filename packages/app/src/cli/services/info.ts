@@ -1,6 +1,6 @@
 import {outputEnv} from './app/env/show.js'
 import {CachedAppInfo, getAppInfo} from './local-storage.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -204,7 +204,9 @@ class AppInfo {
 
   accessScopesSection(): [string, string] {
     const title = 'Access Scopes in Root TOML File'
-    const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
+    const lines = getAppScopes(this.app.configuration)
+      .split(',')
+      .map((scope) => [scope])
     return [title, linesToColumns(lines)]
   }
 

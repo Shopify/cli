@@ -1,4 +1,4 @@
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType, getAppScopes} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -70,6 +70,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+
   if (!configurationObject) return fallbackOutput
 
   const parseResult = schema.safeParse(configurationObject)
@@ -469,7 +470,7 @@ async function logMetadataForLoadedApp(
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
-        app.configuration.scopes
+        getAppScopes(app.configuration)
           .split(',')
           .map((scope) => scope.trim())
           .sort(),
