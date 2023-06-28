@@ -30,6 +30,7 @@ import {outputContent, outputInfo, outputToken, formatPackageManagerCommand} fro
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -200,6 +201,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   }
 
   if (localApp.usesConfigInCode()) {
+    if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const configuration = {
       ...localApp.configuration,
       cli: {
@@ -218,11 +220,15 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     })
   }
 
-  if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-    const packageManager = await getPackageManager(options.directory)
-    showReusedValues(organization.businessName, cachedInfo, packageManager)
-  }
-
+  const sameSettings = selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn
+  const packageManager = await getPackageManager(options.directory)
+  showReusedValues(
+    organization.businessName,
+    packageManager,
+    sameSettings,
+    cachedInfo,
+    basename(localApp.configurationPath),
+  )
   const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
@@ -499,10 +505,21 @@ async function selectOrg(token: string): Promise<string> {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  * @param org - Organization name
- * @param app - App name
- * @param store - Store domain
+ * @param packageManager - Package manager
+ * @param sameDevSettings - Whether dev settings are the same as previous run
+ * @param cachedAppInfo - Cached app info
+ * @param configName - Config name
  */
-function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager): void {
+function showReusedValues(
+  org: string,
+  packageManager: PackageManager,
+  sameDevSettings: boolean,
+  cachedAppInfo?: CachedAppInfo,
+  configName?: string,
+) {
+  if (!cachedAppInfo) return
+  if (!configName && !sameDevSettings) return
+
   let updateURLs = 'Not yet configured'
   if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
 
@@ -515,8 +532,9 @@ function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageMana
 
   if (cachedAppInfo.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
 
+  const headline = configName ? `Using config file ${configName}:` : 'Using your previous dev settings:'
   renderInfo({
-    headline: 'Using your previous dev settings:',
+    headline,
     body: [
       {
         list: {
