@@ -28,7 +28,7 @@
  plugins remove                    @oclif/plugin-plugins        
  plugins uninstall                 @oclif/plugin-plugins        
  plugins unlink                    @oclif/plugin-plugins        
- plugins update                    @oclif/plugin-plugins         
+ plugins update                    @oclif/plugin-plugins        
  theme check                       @shopify/theme               
  theme delete                      @shopify/theme               
  theme dev                         @shopify/theme               
