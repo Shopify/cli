@@ -4,7 +4,7 @@ import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSo
 import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
+import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -34,16 +34,16 @@ export async function ensureExtensionsIds(
     localExtensions = localExtensions.concat(functionExtensions)
   }
 
-  const extensionsToMigrate = getExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
+  const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
-  const allExtensionsToMigrate = [...extensionsToMigrate, ...flowExtensionsToMigrate]
+  const allExtensionsToMigrate = [...uiExtensionsToMigrate, ...flowExtensionsToMigrate]
 
   if (allExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(allExtensionsToMigrate)
     if (!confirmedMigration) return err('user-cancelled')
 
-    if (extensionsToMigrate.length > 0) {
-      remoteExtensions = await migrateExtensionsToUIExtension(extensionsToMigrate, options.appId, remoteExtensions)
+    if (uiExtensionsToMigrate.length > 0) {
+      remoteExtensions = await migrateExtensionsToUIExtension(uiExtensionsToMigrate, options.appId, remoteExtensions)
     }
     if (flowExtensionsToMigrate.length > 0) {
       remoteExtensions = await migrateFlowExtensions(flowExtensionsToMigrate, options.appId, remoteExtensions)

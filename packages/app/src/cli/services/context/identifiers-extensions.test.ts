@@ -5,7 +5,7 @@ import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPro
 import {manualMatchIds} from './id-manual-matching.js'
 import {AppInterface} from '../../models/app/app.js'
 import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
-import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
+import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
@@ -172,7 +172,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mocked(getExtensionsToMigrate).mockReturnValue([])
+  vi.mocked(getUIExtensionsToMigrate).mockReturnValue([])
 })
 
 describe('ensureExtensionsIds: matchmaking returns more remote sources than local', () => {
@@ -613,7 +613,7 @@ describe('ensureExtensionsIds: Migrates extension', () => {
       {local: EXTENSION_A, remote: REGISTRATION_A},
       {local: EXTENSION_A_2, remote: REGISTRATION_A_2},
     ]
-    vi.mocked(getExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
+    vi.mocked(getUIExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
 
     // When
     await ensureExtensionsIds(options([EXTENSION_A, EXTENSION_A_2]), {
@@ -640,7 +640,7 @@ describe('ensureExtensionsIds: Migrates extension', () => {
       {local: EXTENSION_A, remote: REGISTRATION_A},
       {local: EXTENSION_A_2, remote: REGISTRATION_A_2},
     ]
-    vi.mocked(getExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
+    vi.mocked(getUIExtensionsToMigrate).mockReturnValueOnce(extensionsToMigrate)
     vi.mocked(extensionMigrationPrompt).mockResolvedValueOnce(true)
     const opts = options([EXTENSION_A, EXTENSION_A_2])
     const remoteExtensions = [REGISTRATION_A, REGISTRATION_A_2]
