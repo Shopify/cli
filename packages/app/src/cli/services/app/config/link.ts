@@ -1,3 +1,4 @@
+import {saveCurrentConfig} from './use.js'
 import {AppConfiguration, AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -33,6 +34,8 @@ export default async function link(options: LinkOptions): Promise<void> {
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
   writeFileSync(configFilePath, encodeToml(configuration))
+
+  await saveCurrentConfig({configFileName, directory: options.directory})
 
   renderSuccess({
     headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${

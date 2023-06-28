@@ -1,8 +1,14 @@
 /* eslint-disable no-await-in-loop */
-import {RenderTextPromptOptions, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {
+  RenderTextPromptOptions,
+  renderConfirmationPrompt,
+  renderSelectPrompt,
+  renderTextPrompt,
+} from '@shopify/cli-kit/node/ui'
+import {fileExists, glob} from '@shopify/cli-kit/node/fs'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -23,6 +29,22 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   }
 
   return configName
+}
+
+export async function selectConfigFile(directory: string): Promise<Result<string, string>> {
+  const files = (await glob(joinPath(directory, 'shopify.app*.toml'))).map((path) => basename(path))
+
+  if (files.length === 0) return err('Could not find any shopify.app.toml file in the directory.')
+  if (files.length === 1) return ok(files[0]!)
+
+  const chosen = await renderSelectPrompt({
+    message: 'Configuration file',
+    choices: files.map((file) => {
+      return {label: file, value: file}
+    }),
+  })
+
+  return ok(chosen)
 }
 
 function buildTextPromptOptions(defaultValue: string): RenderTextPromptOptions {

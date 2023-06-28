@@ -491,7 +491,7 @@ async function logMetadataForLoadedApp(
   })
 }
 
-function getAppConfigurationFileName(config?: string) {
+export function getAppConfigurationFileName(config?: string) {
   if (config) {
     const validFileRegex = /^shopify\.app(\.\w+)?\.toml$/g
     if (validFileRegex.test(config)) {

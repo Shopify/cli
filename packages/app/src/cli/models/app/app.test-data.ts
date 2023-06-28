@@ -1,4 +1,4 @@
-import {App, AppInterface} from './app.js'
+import {App, AppConfiguration, AppInterface} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -32,6 +32,15 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
   return newApp
+}
+
+interface TestAppWithConfigOptions {
+  app?: Partial<AppInterface>
+  config: Partial<AppConfiguration>
+}
+export function testAppWithConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+  const configuration = {scopes: '', extension_directories: [], ...config}
+  return testApp({...app, configuration})
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {

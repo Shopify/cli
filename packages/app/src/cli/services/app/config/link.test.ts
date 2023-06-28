@@ -1,4 +1,5 @@
 import link, {LinkOptions} from './link.js'
+import {saveCurrentConfig} from './use.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {load} from '../../../models/app/loader.js'
@@ -14,6 +15,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 const LOCAL_APP = testApp()
 const REMOTE_APP = testOrganizationApp()
 
+vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -52,6 +54,7 @@ application_url = "https://example.com"
 redirect_url_allowlist = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'App "app1" connected to this codebase, file shopify.app.staging.toml created',
       })
