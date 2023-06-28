@@ -82,7 +82,7 @@ const flowActionSpecification = createExtensionSpecification({
   schema: FlowActionExtensionSchema,
   singleEntryPath: false,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config) => {
+  deployConfig: async (config, extensionPath) => {
     const {extensions} = config
     const extension = extensions[0]!
 
@@ -94,7 +94,7 @@ const flowActionSpecification = createExtensionSpecification({
       validation_url: extension.validation_url,
       custom_configuration_page_url: extension.config_page_url,
       custom_configuration_page_preview_url: extension.config_page_preview_url,
-      schema: extension.schema,
+      schema: await loadSchemaPatchFromPath(extensionPath, extension.schema),
       return_type_ref: extension.return_type_ref,
     }
   },
