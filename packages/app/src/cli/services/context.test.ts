@@ -24,7 +24,7 @@ import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {loadAppName} from '../models/app/loader.js'
+import {load, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -46,6 +46,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mocked(load).mockResolvedValueOnce(testApp())
 })
 
 const APP1 = testOrganizationApp({
