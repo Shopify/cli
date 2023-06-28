@@ -8,7 +8,7 @@
       document.querySelectorAll(`[data-block-handle$='${handle}']`)
     );
     if (blocks.length) {
-      const queryString = "shopify-section-template";
+      const queryString = "shopify-section-";
       const is_section = blocks[0].closest(`[id^=${queryString}]`) !== null;
       if (is_section)
         return [
