@@ -493,7 +493,7 @@ async function logMetadataForLoadedApp(
 
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
-    const validFileRegex = /^shopify\.app(\.\w+)?\.toml$/g
+    const validFileRegex = /^shopify\.app(\.[-_\w]+)?\.toml$/g
     if (validFileRegex.test(config)) {
       return config
     }
