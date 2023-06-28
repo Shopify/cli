@@ -94,7 +94,7 @@ const flowActionSpecification = createExtensionSpecification({
       validation_url: extension.validation_url,
       custom_configuration_page_url: extension.config_page_url,
       custom_configuration_page_preview_url: extension.config_page_preview_url,
-      schema: await loadSchemaPatchFromPath(extensionPath, extension.schema),
+      schema_patch: await loadSchemaPatchFromPath(extensionPath, extension.schema),
       return_type_ref: extension.return_type_ref,
     }
   },
