@@ -157,8 +157,14 @@ type RenderAutocompletePromptStep = zod.infer<typeof renderAutoCompletePromptSte
 const renderConfirmationPromptStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('confirmationPrompt'),
   properties: zod.object({
-    message: zod.string(),
+    message: headlineTokenSchema,
     infoTable: infoTableSchema.optional(),
+    gitDiff: zod
+      .object({
+        baselineContent: zod.string(),
+        updatedContent: zod.string(),
+      })
+      .optional(),
     defaultValue: zod.boolean().optional(),
     confirmationMessage: zod.string(),
     cancellationMessage: zod.string(),
@@ -169,7 +175,7 @@ type RenderConfirmationPromptStep = zod.infer<typeof renderConfirmationPromptSte
 const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
   type: zod.literal('selectPrompt'),
   properties: zod.object({
-    message: zod.string(),
+    message: headlineTokenSchema,
     choices: zod.array(
       zod.object({
         label: zod.string(),
@@ -181,6 +187,12 @@ const renderSelectPromptStepSchema = abstractDemoStepSchema.extend({
     ),
     defaultValue: zod.string().optional(),
     infoTable: infoTableSchema.optional(),
+    gitDiff: zod
+      .object({
+        baselineContent: zod.string(),
+        updatedContent: zod.string(),
+      })
+      .optional(),
   }),
 })
 type RenderSelectPromptStep = zod.infer<typeof renderSelectPromptStepSchema>
