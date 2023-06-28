@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 4.2.1
+
+### Patch Changes
+
+- ae1e35d42: Add missing apiVersion prop to the UIExtension interface
+
 ## 4.2.0
 
 ### Minor Changes
