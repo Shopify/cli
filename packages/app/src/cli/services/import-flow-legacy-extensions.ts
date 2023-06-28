@@ -10,7 +10,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 interface ImportFlowOptions {
   app: AppInterface
@@ -41,7 +41,8 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
     const tomlObject = buildTomlObject(ext)
-    await writeFile(joinPath(directory, 'shopify.extension.toml'), tomlObject)
+    const path = joinPath(directory, 'shopify.extension.toml')
+    await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid
     return {extension: ext, directory: joinPath('extensions', basename(directory))}
   })
@@ -60,7 +61,7 @@ function renderSuccessMessages(generatedExtensions: {extension: ExtensionRegistr
     headline: ['Imported the following extensions from the dashboard:'],
     body: generatedExtensions
       .map((gen) => {
-        return outputContent`• "${outputToken.italic(gen.extension.title)}" at: ${gen.directory}`.value
+        return outputContent`• "${gen.extension.title}" at: ${gen.directory}`.value
       })
       .join('\n'),
   })

@@ -55,7 +55,5 @@ export function buildTomlObject(extension: ExtensionRegistration) {
     settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const tomlaa = encodeToml(jsonObject as any)
-  console.log(tomlaa)
-  return tomlaa
+  return encodeToml(jsonObject as any)
 }
