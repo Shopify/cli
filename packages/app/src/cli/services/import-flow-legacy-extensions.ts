@@ -1,9 +1,10 @@
 import {fetchAppAndIdentifiers} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
-import {DashboardExtension, buildTomlObject} from './import-flow/extension-to-toml.js'
+import {buildTomlObject} from './import-flow/extension-to-toml.js'
 import {getActiveDashboardExtensions} from './import-flow/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
+import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -57,7 +58,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
   })
 }
 
-function renderSuccessMessages(generatedExtensions: {extension: DashboardExtension; directory: string}[]) {
+function renderSuccessMessages(generatedExtensions: {extension: ExtensionRegistration; directory: string}[]) {
   renderSuccess({
     headline: ['Imported the following extensions from the dashboard:'],
     body: generatedExtensions

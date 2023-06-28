@@ -1,17 +1,4 @@
-export interface DashboardExtension {
-  id: string
-  uuid: string
-  title: string
-  type: string
-  activeVersion: {
-    id: string
-    uuid: string
-    config: string
-  }
-  draftVersion?: {
-    config: string
-  }
-}
+import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 
 interface FlowConfig {
   title: string
@@ -34,7 +21,7 @@ interface FlowConfig {
  * Given a flow extension config file, convert it to toml
  * Works for both trigger and action because trigger config is a subset of action config
  */
-export function buildTomlObject(extension: DashboardExtension) {
+export function buildTomlObject(extension: ExtensionRegistration) {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const config: FlowConfig = JSON.parse(versionConfig)
