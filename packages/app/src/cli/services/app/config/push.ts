@@ -1,6 +1,6 @@
 import {PushConfig, PushConfigSchema} from '../../../api/graphql/push_config.js'
-import {FindAppQuery, FindAppQuerySchema} from '../../../api/graphql/find_app.js'
-import {AppInterface, isCurrentAppSchema} from '../../../models/app/app.js'
+import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
+import {AppInterface, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -18,29 +18,18 @@ export async function pushConfig(options: Options) {
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
     const mutation = PushConfig
-    const query = FindAppQuery
+    const query = GetConfig
 
     const configFileName = basename(options.app.configurationPath)
 
     const queryVariables = {apiKey: configuration.client_id}
+    const queryResult: GetConfigQuerySchema = await partnersRequest(query, token, queryVariables)
 
-    const queryResult: FindAppQuerySchema = await partnersRequest(query, token, queryVariables)
-    console.log({queryResult})
+    if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
 
     const {app} = queryResult
 
-    const defaultAppMutationVariables = {
-      title: app.title,
-      apiKey: app.apiKey,
-      applicationUrl: app.applicationUrl,
-    }
-
-    const variables = {
-      ...defaultAppMutationVariables,
-      apiKey: configuration.client_id,
-      title: configuration.name,
-      applicationUrl: configuration.application_url,
-    }
+    const variables = getMutationVars(app, configuration)
 
     const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
 
@@ -54,6 +43,36 @@ export async function pushConfig(options: Options) {
       body: [`${configFileName} configuration is now live on Shopify.`],
     })
   }
+}
+
+const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
+  const variables = {
+    // these values are mandatory, so we only read from the config file
+    apiKey: configuration.client_id,
+    title: configuration.name,
+    applicationUrl: configuration.application_url,
+    contactEmail: configuration.api_contact_email,
+    webhookApiVersion: configuration.webhook_api_version,
+    // these values are optional, so we fall back to configured values
+    redirectUrlAllowlist: configuration.auth?.redirect_urls ?? app.redirectUrlWhitelist,
+    embedded: configuration.embedded ?? app.embedded,
+    gdprWebhooks: {
+      customerDeletionUrl: configuration.privacy_compliance_webhooks?.customer_deletion_url ?? '',
+      customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? '',
+      shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? '',
+    },
+    appProxy: configuration.proxy
+      ? {
+          proxySubPath: configuration.proxy.subpath,
+          proxySubPathPrefix: configuration.proxy.prefix,
+          proxyUrl: configuration.proxy.url,
+        }
+      : app.appProxy ?? undefined,
+    posEmbedded: configuration.pos?.embedded ?? app.posEmbedded,
+    preferencesUrl: configuration.app_preferences?.url ?? app.preferencesUrl,
+  }
+
+  return variables
 }
 
 export const abort = (errorMessage: OutputMessage) => {
