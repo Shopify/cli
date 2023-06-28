@@ -8,7 +8,6 @@ import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrati
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -42,9 +41,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
     const tomlObject = buildTomlObject(ext)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tomlString = encodeToml(tomlObject as any)
-    await writeFile(joinPath(directory, 'shopify.extension.toml'), tomlString)
+    await writeFile(joinPath(directory, 'shopify.extension.toml'), tomlObject)
     extensionUuids[ext.title] = ext.uuid
     return {extension: ext, directory: joinPath('extensions', basename(directory))}
   })

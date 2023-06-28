@@ -4,7 +4,7 @@ import {validateNonCommerceObjectShape} from '../../../services/flow/validation.
 import {serializeFields} from '../../../services/flow/serializeFields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const FlowTriggerExtensionSchema = BaseSchema.extend({
+export const FlowTriggerExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   description: zod.string().optional(),
   type: zod.literal('flow_trigger'),

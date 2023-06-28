@@ -1,4 +1,5 @@
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
 
 interface FlowConfig {
   title: string
@@ -37,7 +38,7 @@ export function buildTomlObject(extension: ExtensionRegistration) {
     }
   })
 
-  return {
+  const jsonObject = {
     name: extension.title,
     type: extension.type.replace('_definition', ''),
     description: config.description,
@@ -51,8 +52,10 @@ export function buildTomlObject(extension: ExtensionRegistration) {
         validation_url: config.validation_url,
       },
     ],
-    settings: {
-      fields: fields ?? undefined,
-    },
+    settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const tomlaa = encodeToml(jsonObject as any)
+  console.log(tomlaa)
+  return tomlaa
 }
