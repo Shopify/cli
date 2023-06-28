@@ -142,7 +142,8 @@
         "description": "Build Liquid themes."
       },
       "theme:update": {
-        "description": "Manage 'update_extension.json' scripts."
+        "description": "Manage 'update_extension.json' scripts.",
+        "hidden": true
       },
       "app": {
         "description": "Build Shopify apps."
