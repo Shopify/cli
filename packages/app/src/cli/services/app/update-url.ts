@@ -3,7 +3,6 @@ import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/ur
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {load} from '../../models/app/loader.js'
 
 export interface UpdateURLOptions {
   apiKey?: string

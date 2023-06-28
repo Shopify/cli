@@ -197,7 +197,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   }
 
   if (localApp.usesConfigInCode()) {
-    let configuration = {
+    const configuration = {
       ...localApp.configuration,
       cli: {
         dev_store_fqdn: selectedStore?.shopDomain,
