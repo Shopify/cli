@@ -42,7 +42,7 @@ export async function updateAppIdentifiers(
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
-  console.log(dotenvFile)
+
   if (!dotenvFile) {
     dotenvFile = {
       path: joinPath(app.directory, dotEnvFileNames.production),
@@ -53,14 +53,12 @@ export async function updateAppIdentifiers(
   if (!systemEnvironment[app.idEnvironmentVariableName]) {
     updatedVariables[app.idEnvironmentVariableName] = identifiers.app
   }
-  console.log(updatedVariables)
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
-  console.log(updatedVariables)
   const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) && command === 'deploy'
   dotenvFile.variables = updatedVariables
   if (write) {

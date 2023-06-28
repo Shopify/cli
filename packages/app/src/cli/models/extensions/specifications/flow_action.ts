@@ -5,7 +5,7 @@ import {glob, readFile} from '@shopify/cli-kit/node/fs'
 
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const FlowActionExtensionSchema = BaseSchema.extend({
+export const FlowActionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.literal('flow_action'),
   task: zod.object({
