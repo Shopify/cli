@@ -28,9 +28,9 @@ describe('validateVersion', () => {
 
   test('when version value violates max length requirement', async () => {
     // Given
-    const versionLong = 'A'.repeat(101)
+    const longVersion = 'A'.repeat(101)
 
     // When
-    expect(() => validateVersion(versionLong)).toThrowError(`Invalid version name: ${versionLong}`)
+    expect(() => validateVersion(longVersion)).toThrowError(`Invalid version name: ${longVersion}`)
   })
 })

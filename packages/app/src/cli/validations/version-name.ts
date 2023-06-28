@@ -7,7 +7,7 @@ export function validateVersion(version: string | undefined) {
 
   const versionMaxLength = 100
   if (version.length > versionMaxLength) {
-    throw new AbortError(errorMessage, `Version name must be less than ${versionMaxLength} characters.`)
+    throw new AbortError(errorMessage, `Version name must be ${versionMaxLength} characters or less.`)
   }
 
   const invalidCompleteWords = ['.', '..']
