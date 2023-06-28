@@ -6,6 +6,7 @@ import {validateVersion} from '../../validations/version-name.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
+import {validateMessage} from '../../validations/message.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -67,6 +68,7 @@ export default class Deploy extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Deploy)
     validateVersion(flags.version)
+    validateMessage(flags.message)
 
     if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
@@ -79,7 +81,7 @@ export default class Deploy extends Command {
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
     await deploy({
       app,
-      apiKey: flags['api-key'],
+      apiKey,
       reset: flags.reset,
       force: flags.force,
       noRelease: flags['no-release'],
