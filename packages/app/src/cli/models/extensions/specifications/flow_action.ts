@@ -1,35 +1,58 @@
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
+import {
+  validateNonCommerceObjectShape,
+  startsWithHttps,
+  validateCustomConfigurationPageConfig,
+} from '../../../services/flow/validation.js'
+import {serializeFields} from '../../../services/flow/serializeFields.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
-
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowActionExtensionSchema = BaseSchema.extend({
   name: zod.string(),
+  description: zod.string().optional(),
   type: zod.literal('flow_action'),
-  task: zod.object({
-    title: zod.string(),
-    description: zod.string(),
-    url: zod.string(),
-    validation_url: zod.string().optional(),
-    custom_configuration_page_url: zod.string().optional(),
-    custom_configuration_page_preview_url: zod.string().optional(),
-    schema: zod.string().optional(),
-    return_type_ref: zod.string().optional(),
-    fields: zod
-      .array(
-        zod.object({
-          id: zod.string(),
-          name: zod.string(),
-          label: zod.string(),
-          description: zod.string().optional(),
-          required: zod.boolean(),
-          ui_type: zod.string(),
-        }),
-      )
-      .optional(),
-  }),
+  extensions: zod
+    .array(
+      zod.object({
+        type: zod.literal('flow_action'),
+        runtime_url: zod.string().url().refine(startsWithHttps),
+        validation_url: zod.string().url().refine(startsWithHttps).optional(),
+        config_page_url: zod.string().url().refine(startsWithHttps).optional(),
+        config_page_preview_url: zod.string().url().refine(startsWithHttps).optional(),
+        schema: zod.string().optional(),
+        return_type_ref: zod.string().optional(),
+      }),
+    )
+    .min(1),
+  settings: zod
+    .object({
+      fields: zod
+        .array(
+          zod
+            .object({
+              key: zod.string().optional(),
+              name: zod.string().optional(),
+              description: zod.string().optional(),
+              required: zod.boolean().optional(),
+              type: zod.string(),
+            })
+            .refine((field) => validateNonCommerceObjectShape(field, 'flow_action')),
+        )
+        .optional(),
+    })
+    .optional(),
+}).refine((config) => {
+  const {extensions} = config
+  const extension = extensions[0]!
+
+  return validateCustomConfigurationPageConfig(
+    extension.config_page_url,
+    extension.config_page_preview_url,
+    extension.validation_url,
+  )
 })
 
 /**
@@ -59,17 +82,20 @@ const flowActionSpecification = createExtensionSpecification({
   schema: FlowActionExtensionSchema,
   singleEntryPath: false,
   appModuleFeatures: (_) => [],
-  deployConfig: async (config, extensionPath) => {
+  deployConfig: async (config) => {
+    const {extensions} = config
+    const extension = extensions[0]!
+
     return {
-      title: config.task.title,
-      description: config.task.description,
-      url: config.task.url,
-      fields: config.task.fields,
-      validation_url: config.task.validation_url,
-      custom_configuration_page_url: config.task.custom_configuration_page_url,
-      custom_configuration_page_preview_url: config.task.custom_configuration_page_preview_url,
-      return_type_ref: config.task.return_type_ref,
-      schema_patch: await loadSchemaPatchFromPath(extensionPath, config.task.schema),
+      title: config.name,
+      description: config.description,
+      url: extension.runtime_url,
+      fields: serializeFields('flow_action', config.settings?.fields),
+      validation_url: extension.validation_url,
+      custom_configuration_page_url: extension.config_page_url,
+      custom_configuration_page_preview_url: extension.config_page_preview_url,
+      schema: extension.schema,
+      return_type_ref: extension.return_type_ref,
     }
   },
 })

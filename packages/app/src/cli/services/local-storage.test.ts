@@ -1,4 +1,4 @@
-import {AppLocalStorageSchema, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {AppLocalStorageSchema, clearAppInfo, clearCurrentConfigFile, getAppInfo, setAppInfo} from './local-storage.js'
 import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -6,6 +6,7 @@ import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}
 const APP1Updated = {appId: 'updated-app1', storeFqdn: 'store1-updated', orgId: 'org1-updated', directory: '/app1'}
+const APP1_WITH_CONFIG_FILE = {...APP1, configFile: 'shopify.app.staging.toml'}
 
 describe('getAppInfo', async () => {
   test('returns cached info if existss', async () => {
@@ -95,6 +96,23 @@ describe('clearAppInfo', async () => {
 
       // Then
       expect(got).toEqual(undefined)
+    })
+  })
+})
+
+describe('clearCurrentConfigFile', async () => {
+  test('removes key from current config local storage', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
+      setAppInfo({directory: APP1_WITH_CONFIG_FILE.directory, configFile: 'shopify.app.staging.toml'})
+
+      // When
+      clearCurrentConfigFile(APP1_WITH_CONFIG_FILE.directory, storage)
+      const got = getAppInfo(APP1_WITH_CONFIG_FILE.directory, storage)
+
+      // Then
+      expect(got?.configFile).toBeUndefined()
     })
   })
 })

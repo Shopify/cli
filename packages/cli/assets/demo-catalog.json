@@ -503,6 +503,24 @@
       }
     },
     {
+      "type": "confirmationPrompt",
+      "title": "Confirm file changes",
+      "description": "Confirmation prompt for changing a file, including a git diff of the changes",
+      "properties": {
+        "message": [
+          "Commit the following changes to",
+          {"filePath": ".env"},
+          {"char": "?"}
+        ],
+        "gitDiff": {
+          "baselineContent": "PUBLIC_STOREFRONT_ID=\"12345678\"\nPUBLIC_STOREFRONT_TOKEN=\"abcdefgh\"\n",
+          "updatedContent": "PUBLIC_STOREFRONT_ID=\"87654321\"\nPUBLIC_STOREFRONT_TOKEN=\"abcdefgh\"\nPRIVATE_API_KEY=\"apik_5101520\"\n"
+        },
+        "confirmationMessage": "Yes, accept these changes",
+        "cancellationMessage": "Cancel"
+      }
+    },
+    {
       "type": "sleep",
       "title": "Sleep 1 second",
       "description": "Sleep to simulate waiting at the terminal with no visual activity",

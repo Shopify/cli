@@ -1,6 +1,7 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
+import {GitDiff, GitDiffProps} from './GitDiff.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {uniqBy} from '../../../../public/common/array.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -23,6 +24,7 @@ export interface SelectPromptProps<T> {
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
+  gitDiff?: GitDiffProps
   defaultValue?: T
   submitWithShortcuts?: boolean
   abortSignal?: AbortSignal
@@ -35,6 +37,7 @@ function SelectPrompt<T>({
   choices,
   infoTable,
   infoMessage,
+  gitDiff,
   onSubmit,
   defaultValue,
   submitWithShortcuts = false,
@@ -113,6 +116,7 @@ function SelectPrompt<T>({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
+
       {(infoTable || infoMessage) && !submitted ? (
         <Box marginLeft={7} marginTop={1} flexDirection="column" gap={1}>
           {infoMessage ? (
@@ -126,6 +130,13 @@ function SelectPrompt<T>({
           {infoTable ? <InfoTable table={infoTable} /> : null}
         </Box>
       ) : null}
+
+      {gitDiff && !submitted ? (
+        <Box marginLeft={7} marginTop={1}>
+          <GitDiff {...gitDiff} />
+        </Box>
+      ) : null}
+
       {submitted ? (
         <Box>
           <Box marginRight={2}>
