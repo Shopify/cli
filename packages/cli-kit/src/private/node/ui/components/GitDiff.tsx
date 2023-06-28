@@ -13,6 +13,11 @@ export interface GitDiffProps {
 
 /**
  * `GitDiff` displays a git diff between two strings.
+ * @example
+ *   @@ -1,2 +1,2 @@
+ * - deleted line
+ *   unchanged line
+ * + added line
  */
 const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedContent}): JSX.Element => {
   const rawDiffContents = gitDiff(baselineContent, updatedContent, {
