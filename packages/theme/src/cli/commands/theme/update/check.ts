@@ -5,6 +5,7 @@ import {Flags} from '@oclif/core'
 
 export default class UpdateCheck extends ThemeCommand {
   static description = `Validate an 'update_extension.json' script.`
+  static hidden = true
 
   static flags = {
     ...globalFlags,
