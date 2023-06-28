@@ -5,7 +5,6 @@ import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPro
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
-import {getFlowExtensionsToMigrate} from '../dev/migrate-flow-extensions.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
@@ -44,14 +43,6 @@ export async function ensureExtensionsIds(
     } else {
       return err('user-cancelled')
     }
-  }
-
-  if (dashboardOnlyExtensions.length > 0) {
-    const flowExtensionsToMigrate = getFlowExtensionsToMigrate(
-      localExtensions,
-      dashboardOnlyExtensions,
-      validIdentifiers,
-    )
   }
 
   const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
