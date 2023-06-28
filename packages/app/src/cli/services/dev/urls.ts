@@ -1,5 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppConfiguration, AppInterface} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setAppInfo} from '../local-storage.js'
@@ -183,6 +183,7 @@ export interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
+  localApp?: AppInterface
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
@@ -207,7 +208,17 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         shouldUpdate = false
     }
     /* eslint-enable no-fallthrough */
-    setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+
+    if (options.localApp?.usesConfigInCode() && newUpdateURLs !== undefined) {
+      const local_configuration = options.localApp.configuration
+      local_configuration.cli = {
+        automatically_update_urls_on_dev: newUpdateURLs,
+      }
+
+      writeFileSync(options.localApp.configurationPath, encodeToml(local_configuration))
+    } else {
+      setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+    }
   }
   return shouldUpdate
 }
