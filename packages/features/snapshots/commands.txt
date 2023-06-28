@@ -1,7 +1,7 @@
  app build                         @shopify/app
  app deploy                        @shopify/app
  app dev                           @shopify/app
- app env pull                      @shopify/appq
+ app env pull                      @shopify/app
  app env show                      @shopify/app
  app function build                @shopify/app
  app function run                  @shopify/app
@@ -42,8 +42,6 @@
  theme pull                        @shopify/theme
  theme push                        @shopify/theme
  theme share                       @shopify/theme
- theme update check                @shopify/theme
- theme update init                 @shopify/theme
  upgrade                           @shopify/cli
  version                           @shopify/cli
  webhook trigger                   @shopify/app
