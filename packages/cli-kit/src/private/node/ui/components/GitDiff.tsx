@@ -14,7 +14,7 @@ export interface GitDiffProps {
 /**
  * `GitDiff` displays a git diff between two strings.
  * @example
- *   @@ -1,2 +1,2 @@
+ *   \@\@ -1,2 +1,2 \@\@
  * - deleted line
  *   unchanged line
  * + added line
