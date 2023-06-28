@@ -90,6 +90,7 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
+    config,
   } = await ensureDevContext(options, token)
 
   if (!options.tunnelUrl && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
@@ -100,7 +101,8 @@ async function dev(options: DevOptions) {
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
-  let localApp = await load({directory: options.directory, specifications, configName: options.config})
+
+  let localApp = await load({directory: options.directory, specifications, configName: config})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)

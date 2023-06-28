@@ -52,6 +52,7 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   useCloudflareTunnels: boolean
+  config?: string
 }
 
 /**
@@ -132,10 +133,11 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     directory: options.directory,
   })
 
+  const configName = options.config || cachedInfo?.configFile
   const localApp = await load({
     directory: options.directory,
     specifications: [],
-    configName: options.config || cachedInfo?.configFile,
+    configName,
   })
 
   let remoteApp
@@ -144,6 +146,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     cachedInfo = {
       ...cachedInfo,
       directory: options.directory,
+      configFile: configName,
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
@@ -263,6 +266,7 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
+    config: cachedInfo?.configFile,
   }
 }
 
