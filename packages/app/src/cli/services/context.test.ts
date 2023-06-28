@@ -30,6 +30,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
@@ -37,7 +39,6 @@ vi.mock('./dev/create-extension')
 vi.mock('./dev/select-app')
 vi.mock('./dev/select-store')
 vi.mock('../prompts/dev')
-vi.mock('../models/app/app')
 vi.mock('../models/app/identifiers')
 vi.mock('./context/identifiers')
 vi.mock('../models/app/loader.js')
@@ -46,7 +47,6 @@ vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mocked(load).mockResolvedValueOnce(testApp())
 })
 
 const APP1 = testOrganizationApp({
@@ -74,6 +74,7 @@ const ORG2: Organization = {
 }
 
 const CACHED1: CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
+const CACHED1_WITH_CONFIG: CachedAppInfo = {...CACHED1, configFile: 'shopify.app.toml'}
 const STORE1: OrganizationStore = {
   shopId: '1',
   link: 'link1',
@@ -186,7 +187,151 @@ describe('ensureGenerateContext', () => {
   })
 })
 
-describe('ensureDevContext', () => {
+describe('ensureDevContext', async () => {
+  beforeEach(() => {
+    vi.mocked(load).mockResolvedValueOnce(testApp())
+  })
+
+  test('returns selected data using config file set in cache', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(load).mockReset()
+    vi.mocked(load).mockResolvedValue(
+      testApp({
+        configurationPath: CACHED1_WITH_CONFIG.configFile,
+        configuration: {
+          client_id: APP2.apiKey,
+          name: APP2.title,
+          scopes: 'read_products',
+          application_url: 'https://my-apps-url.com',
+          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify'],
+          cli: {
+            automatically_update_urls_on_dev: true,
+            dev_store_fqdn: STORE1.shopDomain,
+          },
+        },
+      }),
+    )
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    const got = await ensureDevContext(
+      {
+        directory: 'app_directory',
+        reset: false,
+      },
+      'token',
+    )
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP2, apiSecret: 'secret2'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: false,
+      useCloudflareTunnels: true,
+      updateURLs: true,
+      config: CACHED1_WITH_CONFIG.configFile,
+    })
+    expect(setAppInfo).not.toHaveBeenCalled()
+
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      api_key: APP2.apiKey,
+      partner_id: 1,
+    })
+  })
+
+  test('loads the correct file when config flag is passed in', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(load).mockReset()
+    vi.mocked(load).mockResolvedValue(
+      testApp({
+        configurationPath: 'shopify.app.dev.toml',
+        configuration: {
+          client_id: APP2.apiKey,
+          name: APP2.title,
+          scopes: 'read_products',
+          application_url: 'https://my-apps-url.com',
+          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify'],
+          cli: {
+            automatically_update_urls_on_dev: true,
+            dev_store_fqdn: STORE1.shopDomain,
+          },
+        },
+      }),
+    )
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    await ensureDevContext(
+      {
+        directory: 'app_directory',
+        reset: false,
+        config: 'dev',
+      },
+      'token',
+    )
+
+    // Then
+    expect(load).toHaveBeenCalledWith({
+      directory: 'app_directory',
+      specifications: [],
+      configName: 'dev',
+    })
+  })
+
+  test('prompts to select store & update urls when not set in config file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.dev.toml')
+      writeFileSync(filePath, '')
+      vi.mocked(load).mockReset()
+      vi.mocked(load).mockResolvedValue(
+        testApp({
+          configurationPath: filePath,
+          configuration: {
+            client_id: APP2.apiKey,
+            name: APP2.title,
+            scopes: 'read_products',
+            application_url: 'https://my-apps-url.com',
+            redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify'],
+            cli: {
+              automatically_update_urls_on_dev: true,
+            },
+          },
+        }),
+      )
+      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+
+      // When
+      await ensureDevContext(
+        {
+          directory: 'app_directory',
+          reset: false,
+          config: 'dev',
+        },
+        'token',
+      )
+
+      // Then
+      expect(selectStore).toHaveBeenCalled()
+      const content = await readFile(joinPath(tmp, 'shopify.app.dev.toml'))
+      const expectedContent = `client_id = "key2"
+name = "app2"
+scopes = "read_products"
+application_url = "https://my-apps-url.com"
+redirect_url_allowlist = [ "https://my-apps-url.com/auth/shopify" ]
+
+[cli]
+automatically_update_urls_on_dev = true
+dev_store_fqdn = "domain1"
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
   test('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)

@@ -203,6 +203,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     const configuration = {
       ...localApp.configuration,
       cli: {
+        ...localApp.configuration.cli,
         dev_store_fqdn: selectedStore?.shopDomain,
       },
     }
