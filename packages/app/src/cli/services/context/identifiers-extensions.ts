@@ -5,6 +5,7 @@ import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPro
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
+import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
@@ -34,14 +35,18 @@ export async function ensureExtensionsIds(
   }
 
   const extensionsToMigrate = getExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
+  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
+  const allExtensionsToMigrate = [...extensionsToMigrate, ...flowExtensionsToMigrate]
 
-  if (extensionsToMigrate.length > 0) {
-    const confirmedMigration = await extensionMigrationPrompt(extensionsToMigrate)
+  if (allExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(allExtensionsToMigrate)
+    if (!confirmedMigration) return err('user-cancelled')
 
-    if (confirmedMigration) {
+    if (extensionsToMigrate.length > 0) {
       remoteExtensions = await migrateExtensionsToUIExtension(extensionsToMigrate, options.appId, remoteExtensions)
-    } else {
-      return err('user-cancelled')
+    }
+    if (flowExtensionsToMigrate.length > 0) {
+      remoteExtensions = await migrateFlowExtensions(flowExtensionsToMigrate, options.appId, remoteExtensions)
     }
   }
 
