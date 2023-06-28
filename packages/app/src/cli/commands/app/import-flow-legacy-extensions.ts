@@ -3,7 +3,8 @@ import {loadExtensionsSpecifications} from '../../models/extensions/load-specifi
 import {load as loadApp} from '../../models/app/loader.js'
 import {AppInterface} from '../../models/app/app.js'
 import {importFlowExtensions} from '../../services/import-flow-legacy-extensions.js'
-import {Command, Flags} from '@oclif/core'
+import Command from '../../utilities/app-command.js'
+import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class AppImportFlowExtension extends Command {
