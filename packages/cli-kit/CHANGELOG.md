@@ -1,5 +1,20 @@
 # @shopify/cli-kit
 
+## 3.47.0
+
+### Minor Changes
+
+- 99df79caf: Add GitDiff component for showing diffs in confirmation prompts
+
+### Patch Changes
+
+- ad3894aea: Fix an issue in `shopify theme dev` and `shopify app dev` that was affecting image loading on local servers
+- 9bb98c029: Remove image proxying through local server to enable proper functioning of Liquid filters
+- ca2461e94: Fix theme dev re-authentication
+- 4ded88051: Show extensions as disabled during generation when they have reached their limit
+- 99fc03fbc: Fix an issue in `shopify theme dev` that was affecting asset loading on local servers, in some shops
+- e217b34eb: Add React deduplication plugin for ESBuild & extensions
+
 ## 3.47.0-pre.0
 
 ### Patch Changes
