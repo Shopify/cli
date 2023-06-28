@@ -72,6 +72,7 @@ client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 webhook_api_version = "2023-04"
+api_contact_email = "example@example.com"
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
@@ -110,6 +111,7 @@ client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 webhook_api_version = "2023-04"
+api_contact_email = "example@example.com"
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -180,6 +182,7 @@ webhook_api_version = "2023-04"
 name = "app1"
 application_url = "https://example.com"
 webhook_api_version = "2023-04"
+api_contact_email = "example@example.com"
 `
       expect(content).toEqual(expectedContent)
     })

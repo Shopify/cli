@@ -57,9 +57,9 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? app.redirectUrlWhitelist,
     embedded: configuration.embedded ?? app.embedded,
     gdprWebhooks: {
-      customerDeletionUrl: configuration.privacy_compliance_webhooks?.customer_deletion_url ?? '',
-      customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? '',
-      shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? '',
+      customerDeletionUrl: configuration.privacy_compliance_webhooks?.customer_deletion_url ?? undefined,
+      customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? undefined,
+      shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? undefined,
     },
     appProxy: configuration.proxy
       ? {

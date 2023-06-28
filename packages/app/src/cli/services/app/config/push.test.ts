@@ -25,6 +25,9 @@ describe('pushConfig', () => {
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+      },
       appUpdate: {
         userErrors: [],
       },
@@ -34,8 +37,6 @@ describe('pushConfig', () => {
 
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
       apiKey: '12345',
-      applicationUrl: 'https://myapp.com',
-      title: 'my app',
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -67,6 +68,6 @@ describe('pushConfig', () => {
 
     const result = pushConfig(options)
 
-    await expect(result).rejects.toThrow(/failed to update app/)
+    await expect(result).rejects.toThrow("Couldn't find app. Make sure you have a valid client ID.")
   })
 })

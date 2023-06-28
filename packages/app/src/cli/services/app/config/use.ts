@@ -41,15 +41,13 @@ interface SaveCurrentConfigOptions {
 export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
   const app = await loadApp({specifications: [], configName: configFileName, directory, mode: 'strict'})
 
-  if (isCurrentAppSchema(app.configuration)) {
-    if (!app.configuration.client_id) {
-      throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
-    }
-
+  if (isCurrentAppSchema(app.configuration) && app.configuration.client_id) {
     setAppInfo({
       directory,
       configFile: configFileName,
     })
+  } else {
+    throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
   }
 }
 

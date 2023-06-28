@@ -1,5 +1,5 @@
 import {saveCurrentConfig} from './use.js'
-import {AppConfiguration, AppInterface} from '../../../models/app/app.js'
+import {AppConfiguration, AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
@@ -76,12 +76,23 @@ interface NewAppConfig {
 }
 
 function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
-  const configuration: NewAppConfig = (localApp.configuration as unknown) || {}
+  if (localApp?.configuration) {
+    const configuration = localApp.configuration as CurrentAppConfiguration
 
-  configuration.client_id = remoteApp.apiKey
-  configuration.name = remoteApp.title
-  configuration.application_url = remoteApp.applicationUrl
-  configuration.webhook_api_version = '2023-04'
+    configuration.client_id = remoteApp.apiKey
+    configuration.name = remoteApp.title
+    configuration.application_url = remoteApp.applicationUrl
+    configuration.webhook_api_version = '2023-04'
+    configuration.api_contact_email = 'example@example.com'
 
-  return configuration as AppConfiguration
+    return configuration
+  } else {
+    return {
+      client_id: remoteApp.apiKey,
+      name: remoteApp.title,
+      application_url: remoteApp.applicationUrl,
+      webhook_api_version: '2023-04',
+      api_contact_email: 'example@example.com',
+    }
+  }
 }
