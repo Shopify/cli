@@ -68,7 +68,7 @@ const loadSchemaPatchFromPath = async (extensionPath: string, patchPath: string 
   if (path.length > 1) {
     throw new Error('Multiple files found for schema patch path')
   } else if (path.length === 0) {
-    return ''
+    throw new Error('No file found for schema patch path')
   }
 
   return readFile(path[0] as string)
