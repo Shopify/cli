@@ -1,5 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppInterface} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setAppInfo} from '../local-storage.js'
@@ -162,12 +162,10 @@ export async function updateURLs(
   }
 
   if (localApp?.usesConfigInCode()) {
-    const configuration = {
-      ...localApp.configuration,
-      application_url: urls.applicationUrl,
-      redirect_url_allowlist: urls.redirectUrlWhitelist,
-    }
-    writeFileSync(localApp?.configurationPath, encodeToml(configuration))
+    const localConfiguration = localApp.configuration
+    localConfiguration.application_url = urls.applicationUrl
+    localConfiguration.redirect_url_allowlist = urls.redirectUrlWhitelist
+    writeFileSync(localApp.configurationPath, encodeToml(localConfiguration))
   }
 }
 
@@ -210,12 +208,13 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     /* eslint-enable no-fallthrough */
 
     if (options.localApp?.usesConfigInCode() && newUpdateURLs !== undefined) {
-      const local_configuration = options.localApp.configuration
-      local_configuration.cli = {
+      const localConfiguration = options.localApp.configuration
+      localConfiguration.cli = {
+        ...localConfiguration.cli,
         automatically_update_urls_on_dev: newUpdateURLs,
       }
 
-      writeFileSync(options.localApp.configurationPath, encodeToml(local_configuration))
+      writeFileSync(options.localApp.configurationPath, encodeToml(localConfiguration))
     } else {
       setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
     }
