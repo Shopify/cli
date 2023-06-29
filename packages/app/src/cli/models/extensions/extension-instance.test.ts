@@ -36,7 +36,7 @@ describe('watchPaths', async () => {
 
     const got = extensionInstance.watchPaths
 
-    expect(got).toEqual([joinPath('foo', 'src', 'single-path.foo'), joinPath('foo', '**', 'input*.graphql')])
+    expect(got).toEqual([joinPath('foo', 'src', 'single-path.foo'), joinPath('foo', '**', '!(.)*.graphql')])
   })
 
   test('returns default paths for javascript', async () => {
@@ -53,7 +53,7 @@ describe('watchPaths', async () => {
     expect(got).toEqual([
       joinPath('foo', 'src', '**', '*.js'),
       joinPath('foo', 'src', '**', '*.ts'),
-      joinPath('foo', '**', 'input*.graphql'),
+      joinPath('foo', '**', '!(.)*.graphql'),
     ])
   })
 
@@ -72,7 +72,7 @@ describe('watchPaths', async () => {
     expect(got).toEqual([
       joinPath('foo', 'src/**/*.rs'),
       joinPath('foo', 'src/**/*.foo'),
-      joinPath('foo', '**', 'input*.graphql'),
+      joinPath('foo', '**', '!(.)*.graphql'),
     ])
   })
 
