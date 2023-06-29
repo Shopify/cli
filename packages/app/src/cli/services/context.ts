@@ -205,6 +205,16 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       const allStores = await fetchAllDevStores(orgId, token)
       selectedStore = await selectStore(allStores, organization, token)
     }
+
+    const sameSettings = selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn
+    const packageManager = await getPackageManager(options.directory)
+    showReusedValues(
+      organization.businessName,
+      packageManager,
+      sameSettings,
+      cachedInfo,
+      basename(localApp.configurationPath),
+    )
   }
 
   if (isCurrentAppSchema(localApp.configuration)) {
@@ -226,16 +236,6 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
   }
-
-  const sameSettings = selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn
-  const packageManager = await getPackageManager(options.directory)
-  showReusedValues(
-    organization.businessName,
-    packageManager,
-    sameSettings,
-    cachedInfo,
-    basename(localApp.configurationPath),
-  )
 
   await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
