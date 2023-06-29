@@ -2,7 +2,7 @@ import {resolveDeploymentMode} from './mode.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeployContextOptions} from '../context.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -11,13 +11,20 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 vi.mock('@shopify/cli-kit/node/api/partners')
 
 const organizationApp = (app: AppInterface): OrganizationApp => {
+  const applicationUrl = isCurrentAppSchema(app.configuration)
+    ? app.configuration.application_url
+    : 'https://example.com'
+  const redirectUrlWhitelist = isCurrentAppSchema(app.configuration)
+    ? app.configuration.auth?.redirect_urls || []
+    : ['https://example.com']
+
   return {
     id: '1',
     title: app.name,
     apiKey: 'key1',
     organizationId: '1',
-    applicationUrl: app.configuration.application_url!,
-    redirectUrlWhitelist: app.configuration.redirect_url_allowlist!,
+    applicationUrl,
+    redirectUrlWhitelist,
     apiSecretKeys: [],
     grantedScopes: [],
     betas: {
