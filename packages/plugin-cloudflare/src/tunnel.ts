@@ -12,7 +12,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {BugError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -139,7 +139,7 @@ class TunnelClientInstance implements TunnelClient {
 }
 
 function processCrashed() {
-  return new AbortError(`Tunnel process crashed after stablishing a connection.`, whatToTry())
+  return new BugError(`Tunnel process crashed after stablishing a connection.`, whatToTry())
 }
 
 function whatToTry() {
