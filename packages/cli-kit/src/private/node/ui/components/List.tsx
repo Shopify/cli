@@ -8,6 +8,7 @@ interface ListProps {
   ordered?: boolean
   margin?: boolean
   color?: TextProps['color']
+  bullet?: string
 }
 
 const DOT = '•'
@@ -16,7 +17,7 @@ const DOT = '•'
  * `List` displays an unordered or ordered list with text aligned with the bullet point
  * and wrapped to the container width.
  */
-const List: FunctionComponent<ListProps> = ({title, items, margin = true, ordered = false, color}): JSX.Element => {
+const List: FunctionComponent<ListProps> = ({title, items, margin = true, ordered = false, color, bullet = DOT}): JSX.Element => {
   return (
     <Box flexDirection="column">
       {title ? (
@@ -26,7 +27,7 @@ const List: FunctionComponent<ListProps> = ({title, items, margin = true, ordere
       ) : null}
       {items.map((item, index) => (
         <Box key={index} marginLeft={margin ? 2 : 0}>
-          <Text color={color}>{`${ordered ? `${index + 1}.` : DOT}`}</Text>
+          <Text color={color}>{`${ordered ? `${index + 1}.` : bullet}`}</Text>
 
           <Box flexGrow={1} marginLeft={1}>
             <Text color={color}>
