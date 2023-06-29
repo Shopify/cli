@@ -12,8 +12,9 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 const uiTypesMap = new Map<string, string>([
   ['boolean', 'checkbox'],
   ['email', 'email'],
-  ['multi_line_text_field', 'text-multi-lines'],
-  ['number_integer', 'number'],
+  ['multi_line_text_field', 'text-multi-line'],
+  ['number_integer', 'int'],
+  ['number_decimal', 'number'],
   ['single_line_text_field', 'text-single-line'],
   ['url', 'url'],
 ])
