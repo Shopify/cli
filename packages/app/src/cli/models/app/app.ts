@@ -19,11 +19,11 @@ const LegacyAppSchema = zod
 const AppSchema = zod
   .object({
     name: zod.string(),
-    api_contact_email: zod.string(),
     client_id: zod.string(),
     scopes: zod.string().optional(),
-    webhook_api_version: zod.string(),
-    application_url: zod.string(),
+    api_contact_email: zod.string().optional(),
+    webhook_api_version: zod.string().optional(),
+    application_url: zod.string().optional(),
     embedded: zod.boolean().optional(),
     auth: zod
       .object({

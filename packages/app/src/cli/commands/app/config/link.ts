@@ -19,7 +19,7 @@ export default class ConfigLink extends Command {
     }),
     config: Flags.string({
       hidden: false,
-      description: 'Name for the config file.',
+      description: 'Name of the config file.',
       env: 'SHOPIFY_FLAG_APP_CONFIG',
     }),
   }

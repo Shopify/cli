@@ -12,7 +12,7 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 
 const organizationApp = (app: AppInterface): OrganizationApp => {
   const applicationUrl = isCurrentAppSchema(app.configuration)
-    ? app.configuration.application_url
+    ? app.configuration.application_url!
     : 'https://example.com'
   const redirectUrlWhitelist = isCurrentAppSchema(app.configuration)
     ? app.configuration.auth?.redirect_urls || []

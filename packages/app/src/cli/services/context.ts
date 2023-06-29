@@ -15,11 +15,11 @@ import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {loadAppName} from '../models/app/loader.js'
+import {load, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -39,9 +39,11 @@ import {
   formatPackageManagerCommand,
   outputNewline,
   outputCompleted,
-  outputWarnError,
+  outputWarn,
 } from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
+import {writeFileSync} from '@shopify/cli-kit/node/fs'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
@@ -54,6 +56,7 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 export interface DevContextOptions {
   directory: string
   apiKey?: string
+  config?: string
   storeFqdn?: string
   reset: boolean
 }
@@ -64,6 +67,7 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   useCloudflareTunnels: boolean
+  config?: string
   deploymentMode: DeploymentMode
 }
 
@@ -140,10 +144,32 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const cachedInfo = getAppDevCachedInfo({
+  let cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
   })
+
+  const configName = options.config || cachedInfo?.configFile
+  const localApp = await load({
+    directory: options.directory,
+    specifications: [],
+    configName,
+  })
+
+  let remoteApp
+  if (isCurrentAppSchema(localApp.configuration)) {
+    remoteApp = (await appFromId(localApp.configuration.client_id, token))!
+    cachedInfo = {
+      ...cachedInfo,
+      directory: options.directory,
+      configFile: configName,
+      orgId: remoteApp.organizationId,
+      appId: remoteApp.apiKey,
+      title: remoteApp.title,
+      storeFqdn: localApp.configuration.cli?.dev_store_url,
+      updateURLs: localApp.configuration.cli?.automatically_update_urls_on_dev,
+    }
+  }
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
@@ -160,7 +186,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   if (!selectedApp || !selectedStore) {
     const [_selectedApp, _selectedStore] = await Promise.all([
-      selectedApp ? selectedApp : appFromId(cachedInfo?.appId, token),
+      selectedApp ? selectedApp : remoteApp || appFromId(cachedInfo?.appId, token),
       selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
     ])
 
@@ -178,20 +204,35 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       const allStores = await fetchAllDevStores(orgId, token)
       selectedStore = await selectStore(allStores, organization, token)
     }
-
-    if (selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn) {
-      const packageManager = await getPackageManager(options.directory)
-      showReusedValues(organization.businessName, cachedInfo, packageManager)
-    }
   }
 
-  setAppInfo({
-    appId: selectedApp.apiKey,
-    title: selectedApp.title,
+  await showCachedContextSummary({
     directory: options.directory,
-    storeFqdn: selectedStore?.shopDomain,
-    orgId,
+    selectedApp,
+    selectedStore,
+    cachedInfo,
+    organization,
   })
+
+  if (isCurrentAppSchema(localApp.configuration)) {
+    if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
+    const configuration: AppConfiguration = {
+      ...localApp.configuration,
+      cli: {
+        ...localApp.configuration.cli,
+        dev_store_url: selectedStore?.shopDomain,
+      },
+    }
+    writeFileSync(localApp.configurationPath, encodeToml(configuration))
+  } else {
+    setAppInfo({
+      appId: selectedApp.apiKey,
+      title: selectedApp.title,
+      directory: options.directory,
+      storeFqdn: selectedStore?.shopDomain,
+      orgId,
+    })
+  }
 
   await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
@@ -240,6 +281,7 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
+    config: cachedInfo?.configFile,
     deploymentMode,
   }
 }
@@ -519,27 +561,47 @@ async function selectOrg(token: string): Promise<string> {
   return org.id
 }
 
+interface ReusedValuesOptions {
+  directory: string
+  organization: Organization
+  selectedApp: OrganizationApp
+  selectedStore: OrganizationStore
+  cachedInfo?: CachedAppInfo
+}
+
 /**
  * Message shown to the user in case we are reusing a previous configuration
- * @param org - Organization name
- * @param app - App name
- * @param store - Store domain
  */
-function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager): void {
+async function showCachedContextSummary({
+  directory,
+  organization,
+  selectedApp,
+  selectedStore,
+  cachedInfo,
+}: ReusedValuesOptions) {
+  if (!cachedInfo) return
+
+  const usingDifferentSettings =
+    selectedApp.apiKey !== cachedInfo?.appId || selectedStore.shopDomain !== cachedInfo.storeFqdn
+  if (!cachedInfo?.configFile && usingDifferentSettings) return
+
   let updateURLs = 'Not yet configured'
-  if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Always' : 'Never'
 
   const items = [
-    `Org:          ${org}`,
-    `App:          ${cachedAppInfo.title}`,
-    `Dev store:    ${cachedAppInfo.storeFqdn}`,
+    `Org:          ${organization.businessName}`,
+    `App:          ${cachedInfo.title}`,
+    `Dev store:    ${cachedInfo.storeFqdn}`,
     `Update URLs:  ${updateURLs}`,
   ]
 
-  if (cachedAppInfo.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
+  if (cachedInfo.tunnelPlugin) {
+    items.push(`Tunnel:       ${cachedInfo.tunnelPlugin}`)
+  }
 
+  const packageManager = await getPackageManager(directory)
   renderInfo({
-    headline: 'Using your previous dev settings:',
+    headline: 'Using these settings:',
     body: [
       {
         list: {
@@ -554,7 +616,7 @@ function showReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageMana
 
 function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager) {
   renderInfo({
-    headline: 'Using your previous dev settings:',
+    headline: 'Using these settings:',
     body: [
       {
         list: {
@@ -634,7 +696,7 @@ async function developerPreviewUpdate(app: OrganizationApp, token: string, enabl
             'Partner Dashboard',
             await devPreviewURL({orgId: app.organizationId, appId: app.id}),
           )
-          outputWarnError(
+          outputWarn(
             outputContent`Unable to ${
               enabled ? 'enable' : 'disable'
             } development store preview for this app. You can change this setting in the ${previewURL}.'}`,
