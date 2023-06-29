@@ -11,7 +11,7 @@ export interface CustomSection {
 }
 
 export interface AlertProps {
-  type: Exclude<BannerType, 'error' | 'external_error'>
+  type: Exclude<BannerType, 'external_error'>
   headline?: TokenItem<Exclude<InlineToken, LinkToken | BoldToken>>
   body?: TokenItem
   nextSteps?: TokenItem<InlineToken>[]

@@ -1,4 +1,4 @@
-import {getRandomName, linesToColumns, pluralize, tryParseInt} from './string.js'
+import {formatDate, getRandomName, linesToColumns, pluralize, tryParseInt} from './string.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getRandomName', () => {
@@ -82,5 +82,18 @@ describe('pluralize', () => {
 
     // Then
     expect(str).toBe('This list has no items')
+  })
+})
+
+describe('formatDate', () => {
+  test('formats a date', () => {
+    // Given
+    const date = new Date('2020-01-01T00:00:00.000Z')
+
+    // When
+    const str = formatDate(date)
+
+    // Then
+    expect(str).toBe('2020-01-01 00:00:00')
   })
 })
