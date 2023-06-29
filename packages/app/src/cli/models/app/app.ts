@@ -97,8 +97,12 @@ export function getAppScopes(config: AppConfiguration) {
   }
 }
 
-export function usesLegacyScopesBehavior(app: AppInterface) {
-  return isCurrentAppSchema(app.configuration) && app.configuration.legacy_scopes_behavior
+export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
+  const config = 'configurationPath' in app ? app.configuration : app
+
+  if (isLegacyAppSchema(config)) return true
+
+  return Boolean(config.legacy_scopes_behavior)
 }
 
 export enum WebType {
