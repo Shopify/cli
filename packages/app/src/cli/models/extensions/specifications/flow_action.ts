@@ -5,7 +5,7 @@ import {
   startsWithHttps,
   validateCustomConfigurationPageConfig,
 } from '../../../services/flow/validation.js'
-import {serializeFields} from '../../../services/flow/serializeFields.js'
+import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'

@@ -1,6 +1,6 @@
 import {importFlowExtensions} from './import-flow-legacy-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
-import {getActiveDashboardExtensions} from './import-flow/fetch.js'
+import {getActiveDashboardExtensions} from './flow/fetch.js'
 import {testApp} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'

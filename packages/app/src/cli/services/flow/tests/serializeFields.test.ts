@@ -1,5 +1,5 @@
 import {ConfigField} from '../types.js'
-import {serializeConfigField, serializeCommerceObjectField} from '../serializeFields.js'
+import {serializeConfigField, serializeCommerceObjectField} from '../serialize-fields.js'
 import {describe, expect, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

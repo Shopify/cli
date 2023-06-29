@@ -1,4 +1,4 @@
-import {configFromSerializedFields} from './serializePartnersFields.js'
+import {configFromSerializedFields} from './serialize-partners-fields.js'
 import {FlowPartnersExtensionTypes} from './types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
@@ -29,7 +29,6 @@ export function buildTomlObject(extension: ExtensionRegistration) {
   if (!versionConfig) throw new Error('No config found for extension')
   const config: FlowConfig = JSON.parse(versionConfig)
 
-  console.log('config', JSON.stringify(config, null, 2))
   // Remote config uses uiType, local config uses type
   const fields = configFromSerializedFields(extension.type as FlowPartnersExtensionTypes, config.fields ?? [])
 
