@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.47.1
+
+### Patch Changes
+
+- f1f038951: Fix deploy for tax calculation extensions
+  - @shopify/cli-kit@3.47.1
+  - @shopify/plugin-ngrok@3.47.1
+  - @shopify/plugin-cloudflare@3.47.1
+
 ## 3.47.0
 
 ### Minor Changes
