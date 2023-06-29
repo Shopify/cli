@@ -97,6 +97,10 @@ export function getAppScopes(config: AppConfiguration) {
   }
 }
 
+export function usesLegacyScopesBehavior(app: AppInterface) {
+  return isCurrentAppSchema(app.configuration) && app.configuration.legacy_scopes_behavior
+}
+
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
