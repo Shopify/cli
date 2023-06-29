@@ -81,7 +81,7 @@ export function isLegacyAppSchema(item: unknown): item is zod.infer<typeof Legac
  * @param item - the item to validate
  * @param strict - whether to allow keys not defined in the schema
  */
-export function isCurrentAppSchema(item: {[key: string]: unknown}): item is zod.infer<typeof AppSchema> {
+export function isCurrentAppSchema(item: unknown): item is zod.infer<typeof AppSchema> {
   return isType(AppSchema, item)
 }
 
