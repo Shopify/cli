@@ -162,11 +162,13 @@ export async function updateURLs(
   }
 
   if (localApp && isCurrentAppSchema(localApp.configuration)) {
-    const localConfiguration: AppConfiguration = localApp.configuration
-    localConfiguration.application_url = urls.applicationUrl
-    localConfiguration.auth = {
-      ...localConfiguration.auth,
-      redirect_urls: urls.redirectUrlWhitelist,
+    const localConfiguration: AppConfiguration = {
+      ...localApp.configuration,
+      application_url: urls.applicationUrl,
+      auth: {
+        ...localApp.configuration.auth,
+        redirect_urls: urls.redirectUrlWhitelist,
+      },
     }
     writeFileSync(localApp.configurationPath, encodeToml(localConfiguration))
   }
