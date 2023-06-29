@@ -206,10 +206,12 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-             Add:     • new-ext
-
-             Remove:  • integrated-demand-ext
-                      • order-discount
+         ┃  \u001b[1mAdd\u001b[22m
+         ┃  • new-ext
+         ┃
+         ┃  \u001b[1mRemove\u001b[22m
+         ┃  • integrated-demand-ext
+         ┃  • order-discount
 
       [36m>[39m  [36mfirst[39m
          second
