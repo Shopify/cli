@@ -19,7 +19,8 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
   const updatedValues = {
     SHOPIFY_API_KEY: selectedApp.apiKey,
     SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
-    SCOPES: app.configuration.scopes,
+    SCOPES:
+      app.configuration.scopes === 'string' ? app.configuration.scopes : app.configuration.scopes?.toString() ?? '',
   }
 
   if (await fileExists(envFile)) {

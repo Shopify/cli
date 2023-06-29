@@ -77,10 +77,7 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
     const {scopes} = localApp.configuration
 
     if (scopes && scopes.length) {
-      configuration.scopes =
-        typeof localApp.configuration.scopes === 'string'
-          ? localApp.configuration.scopes.split(',').map((val) => val)
-          : localApp.configuration.scopes
+      configuration.scopes = localApp.configuration.scopes
     } else {
       configuration.legacy_scopes_behavior = true
     }
@@ -93,7 +90,7 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
       application_url: remoteApp.applicationUrl,
       webhook_api_version: '2023-04',
       api_contact_email: 'example@example.com',
-      scopes: [],
+      scopes: '',
     }
   }
 }

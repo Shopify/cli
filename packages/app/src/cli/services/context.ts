@@ -15,7 +15,7 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../models/app/app.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema, appIsLaunchable} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -436,7 +436,8 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
 export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token)
+  const isLaunchable = appIsLaunchable(app)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable)
   return partnersApp
 }
 

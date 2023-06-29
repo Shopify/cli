@@ -503,7 +503,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   return undefined
 }
 
-function isWebType(web: Web, type: WebType): boolean {
+export function isWebType(web: Web, type: WebType): boolean {
   return web.configuration.roles.includes(type)
 }
 

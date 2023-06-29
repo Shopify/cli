@@ -39,7 +39,12 @@ interface TestAppWithConfigOptions {
   config: Partial<AppConfiguration>
 }
 export function testAppWithConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
-  const configuration = {scopes: '', extension_directories: [], ...config}
+  const configuration = {
+    scopes: '',
+    extension_directories: [],
+    ...config,
+  }
+
   return testApp({...app, configuration})
 }
 
