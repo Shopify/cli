@@ -174,7 +174,7 @@
         "config": {
           "name": "config",
           "type": "option",
-          "description": "Name for the config file.",
+          "description": "Name of the config file.",
           "hidden": false,
           "multiple": false
         },
@@ -528,7 +528,7 @@
         "config": {
           "name": "config",
           "type": "option",
-          "description": "Name for the config file.",
+          "description": "Name of the config file.",
           "hidden": false,
           "multiple": false
         }
@@ -577,7 +577,7 @@
         "config": {
           "name": "config",
           "type": "option",
-          "description": "Name for the config file.",
+          "description": "Name of the config file.",
           "hidden": false,
           "multiple": false
         }
