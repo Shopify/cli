@@ -1,5 +1,5 @@
 {
-  "version": "3.47.0-pre.0",
+  "version": "3.47.0",
   "commands": {
     "theme:check": {
       "id": "theme:check",
@@ -1269,6 +1269,7 @@
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
       "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -1302,6 +1303,7 @@
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
       "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {

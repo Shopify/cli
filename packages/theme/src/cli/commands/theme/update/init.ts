@@ -5,6 +5,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class UpdateInit extends ThemeCommand {
   static description = `Initialize an 'update_extension.json' script.`
+  static hidden = true
 
   static flags = {
     ...globalFlags,

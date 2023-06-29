@@ -1,6 +1,7 @@
 import {getAppConfigurationFileName, load as loadApp} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
+import {isCurrentAppSchema} from '../../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -40,14 +41,14 @@ interface SaveCurrentConfigOptions {
 export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
   const app = await loadApp({specifications: [], configName: configFileName, directory, mode: 'strict'})
 
-  if (!app.configuration.client_id) {
+  if (isCurrentAppSchema(app.configuration) && app.configuration.client_id) {
+    setAppInfo({
+      directory,
+      configFile: configFileName,
+    })
+  } else {
     throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
   }
-
-  setAppInfo({
-    directory,
-    configFile: configFileName,
-  })
 }
 
 async function getConfigFileName(directory: string, config?: string): Promise<Result<string, string>> {

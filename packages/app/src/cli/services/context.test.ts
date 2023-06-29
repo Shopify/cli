@@ -193,92 +193,100 @@ describe('ensureDevContext', async () => {
   })
 
   test('returns selected data using config file set in cache', async () => {
-    // Given
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
-    vi.mocked(load).mockReset()
-    vi.mocked(load).mockResolvedValue(
-      testApp({
-        configurationPath: CACHED1_WITH_CONFIG.configFile,
-        configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify'],
-          cli: {
-            automatically_update_urls_on_dev: true,
-            dev_store_fqdn: STORE1.shopDomain,
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+      vi.mocked(load).mockReset()
+      vi.mocked(load).mockResolvedValue(
+        testApp({
+          configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
+          configuration: {
+            client_id: APP2.apiKey,
+            name: APP2.title,
+            scopes: 'read_products',
+            application_url: 'https://my-apps-url.com',
+            auth: {
+              redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+            },
+            cli: {
+              automatically_update_urls_on_dev: true,
+              dev_store_url: STORE1.shopDomain,
+            },
           },
+        }),
+      )
+      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      const got = await ensureDevContext(
+        {
+          directory: 'app_directory',
+          reset: false,
         },
-      }),
-    )
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+        'token',
+      )
 
-    // When
-    const got = await ensureDevContext(
-      {
-        directory: 'app_directory',
-        reset: false,
-      },
-      'token',
-    )
+      // Then
+      expect(got).toEqual({
+        remoteApp: {...APP2, apiSecret: 'secret2'},
+        storeFqdn: STORE1.shopDomain,
+        remoteAppUpdated: false,
+        useCloudflareTunnels: true,
+        updateURLs: true,
+        config: CACHED1_WITH_CONFIG.configFile,
+      })
+      expect(setAppInfo).not.toHaveBeenCalled()
 
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP2, apiSecret: 'secret2'},
-      storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: false,
-      useCloudflareTunnels: true,
-      updateURLs: true,
-      config: CACHED1_WITH_CONFIG.configFile,
-    })
-    expect(setAppInfo).not.toHaveBeenCalled()
-
-    expect(metadata.getAllPublicMetadata()).toMatchObject({
-      api_key: APP2.apiKey,
-      partner_id: 1,
+      expect(metadata.getAllPublicMetadata()).toMatchObject({
+        api_key: APP2.apiKey,
+        partner_id: 1,
+      })
     })
   })
 
   test('loads the correct file when config flag is passed in', async () => {
-    // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
-    vi.mocked(load).mockReset()
-    vi.mocked(load).mockResolvedValue(
-      testApp({
-        configurationPath: 'shopify.app.dev.toml',
-        configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify'],
-          cli: {
-            automatically_update_urls_on_dev: true,
-            dev_store_fqdn: STORE1.shopDomain,
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getAppInfo).mockReturnValue(undefined)
+      vi.mocked(load).mockReset()
+      vi.mocked(load).mockResolvedValue(
+        testApp({
+          configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
+          configuration: {
+            client_id: APP2.apiKey,
+            name: APP2.title,
+            scopes: 'read_products',
+            application_url: 'https://my-apps-url.com',
+            auth: {
+              redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+            },
+            cli: {
+              automatically_update_urls_on_dev: true,
+              dev_store_url: STORE1.shopDomain,
+            },
           },
+        }),
+      )
+      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      await ensureDevContext(
+        {
+          directory: 'app_directory',
+          reset: false,
+          config: 'dev',
         },
-      }),
-    )
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+        'token',
+      )
 
-    // When
-    await ensureDevContext(
-      {
+      // Then
+      expect(load).toHaveBeenCalledWith({
         directory: 'app_directory',
-        reset: false,
-        config: 'dev',
-      },
-      'token',
-    )
-
-    // Then
-    expect(load).toHaveBeenCalledWith({
-      directory: 'app_directory',
-      specifications: [],
-      configName: 'dev',
+        specifications: [],
+        configName: 'dev',
+      })
     })
   })
 
@@ -296,7 +304,9 @@ describe('ensureDevContext', async () => {
             name: APP2.title,
             scopes: 'read_products',
             application_url: 'https://my-apps-url.com',
-            redirect_url_allowlist: ['https://my-apps-url.com/auth/shopify'],
+            auth: {
+              redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+            },
             cli: {
               automatically_update_urls_on_dev: true,
             },
@@ -322,11 +332,13 @@ describe('ensureDevContext', async () => {
 name = "app2"
 scopes = "read_products"
 application_url = "https://my-apps-url.com"
-redirect_url_allowlist = [ "https://my-apps-url.com/auth/shopify" ]
+
+[auth]
+redirect_urls = [ "https://my-apps-url.com/auth/shopify" ]
 
 [cli]
 automatically_update_urls_on_dev = true
-dev_store_fqdn = "domain1"
+dev_store_url = "domain1"
 `
       expect(content).toEqual(expectedContent)
     })

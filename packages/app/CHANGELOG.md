@@ -1,5 +1,39 @@
 # @shopify/app
 
+## 3.47.0
+
+### Minor Changes
+
+- 598276299: - Unify web processes, having more of the same environment variables in all cases
+  - Allow for multiple `roles` to be passed instead of a single `type`
+  - Allow for `background` webs with neither frontend nor backend properties
+- 597c1185a: Use platform-hosted endpoint for web app URL
+
+### Patch Changes
+
+- 3a7ad2396: Fix installing function dependencies when using npm with workspaces
+- 48a644c31: Display dev command footer when using no-update or/and no-tunnel
+- bc37e1e91: Function extensions are now supported by 'shopify app dev'. They are built and updated in extension drafts on dev startup, and on file change.
+- dad44212c: Skip .DS_Dtore files when the theme app extension bundle content is created
+- d88380d70: Allow theme app extensions to exclude files from deploying via `.shopifyignore` file
+- 2d91f1988: Add api key to template specifications query
+- 4ded88051: Show extensions as disabled during generation when they have reached their limit
+- 31ec34bc5: Fix app loader error message when not specification is found
+- 330119712: Fix APP_UNINSTALLED webhook triggered on app reset so it also works for frontend-only apps
+- 6990de4ef: Skip node_modules when scanning for webs and extensions
+- fb42522da: Rename api-key flag to client-id
+- e217b34eb: Add React deduplication plugin for ESBuild & extensions
+- Updated dependencies [ad3894aea]
+- Updated dependencies [99df79caf]
+- Updated dependencies [9bb98c029]
+- Updated dependencies [ca2461e94]
+- Updated dependencies [4ded88051]
+- Updated dependencies [99fc03fbc]
+- Updated dependencies [e217b34eb]
+  - @shopify/cli-kit@3.47.0
+  - @shopify/plugin-cloudflare@3.47.0
+  - @shopify/plugin-ngrok@3.47.0
+
 ## 3.47.0-pre.0
 
 ### Patch Changes

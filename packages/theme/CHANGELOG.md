@@ -1,5 +1,31 @@
 # @shopify/theme
 
+## 3.47.0
+
+### Minor Changes
+
+- 0224abe16: Introduce `shopify theme update init` and `shopify theme update check` commands
+- 0d6cdd4c6: Introduce the `--open` flag to open a browser window only when users specifically request it
+- 8420d71cc: Fix `shopify theme dev` command to show valid URLs when `--theme` flag is used with a theme name
+
+### Patch Changes
+
+- ad3894aea: Fix an issue in `shopify theme dev` and `shopify app dev` that was affecting image loading on local servers
+- 22d30f4ad: Fix session refresh for theme dev without password
+- 9bb98c029: Remove image proxying through local server to enable proper functioning of Liquid filters
+- ca2461e94: Fix theme dev re-authentication
+- 99fc03fbc: Fix an issue in `shopify theme dev` that was affecting asset loading on local servers, in some shops
+- 2d3c6dd41: Fix a hot-reload for theme app extensions when blocks are rendered on section groups (in the `app dev` command)
+- 76694a35f: Fix clean login on theme dev
+- Updated dependencies [ad3894aea]
+- Updated dependencies [99df79caf]
+- Updated dependencies [9bb98c029]
+- Updated dependencies [ca2461e94]
+- Updated dependencies [4ded88051]
+- Updated dependencies [99fc03fbc]
+- Updated dependencies [e217b34eb]
+  - @shopify/cli-kit@3.47.0
+
 ## 3.47.0-pre.0
 
 ### Minor Changes

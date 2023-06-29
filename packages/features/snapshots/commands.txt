@@ -41,8 +41,6 @@
  theme pull                @shopify/theme               
  theme push                @shopify/theme               
  theme share               @shopify/theme               
- theme update check        @shopify/theme               
- theme update init         @shopify/theme               
  upgrade                   @shopify/cli                 
  version                   @shopify/cli                 
  webhook trigger           @shopify/app                 

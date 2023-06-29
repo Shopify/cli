@@ -1,27 +1,101 @@
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {isType} from '../../utilities/types.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-export const AppConfigurationSchema = zod.object({
-  extension_directories: zod.array(zod.string()).optional(),
-  web_directories: zod.array(zod.string()).optional(),
-  name: zod.string().optional(),
-  client_id: zod.string().optional(),
-  scopes: zod.string().default(''),
-  application_url: zod.string().optional(),
-  redirect_url_allowlist: zod.array(zod.string()).optional(),
-  requested_access_scopes: zod.array(zod.string()).optional(),
-  cli: zod
-    .object({
-      dev_store_fqdn: zod.string().optional(),
-      automatically_update_urls_on_dev: zod.boolean().optional(),
-    })
-    .optional(),
-})
+const LegacyAppSchema = zod
+  .object({
+    name: zod.string().optional(),
+    scopes: zod.string(),
+    extension_directories: zod.array(zod.string()).optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .strict()
+
+const AppSchema = zod
+  .object({
+    name: zod.string(),
+    client_id: zod.string(),
+    scopes: zod.string().optional(),
+    api_contact_email: zod.string().optional(),
+    webhook_api_version: zod.string().optional(),
+    application_url: zod.string().optional(),
+    embedded: zod.boolean().optional(),
+    auth: zod
+      .object({
+        redirect_urls: zod.array(zod.string()),
+      })
+      .optional(),
+    privacy_compliance_webhooks: zod
+      .object({
+        customer_deletion_url: zod.string(),
+        customer_data_request_url: zod.string(),
+        shop_deletion_url: zod.string(),
+      })
+      .optional(),
+    proxy: zod
+      .object({
+        url: zod.string(),
+        subpath: zod.string(),
+        prefix: zod.string(),
+      })
+      .optional(),
+    pos: zod
+      .object({
+        embedded: zod.boolean(),
+      })
+      .optional(),
+    app_preferences: zod
+      .object({
+        url: zod.string(),
+      })
+      .optional(),
+    cli: zod
+      .object({
+        automatically_update_urls_on_dev: zod.boolean().optional(),
+        dev_store_url: zod.string().optional(),
+      })
+      .optional(),
+    extension_directories: zod.array(zod.string()).optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .strict()
+
+export const AppConfigurationSchema = zod.union([AppSchema, LegacyAppSchema])
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isLegacyAppSchema(item: unknown): item is zod.infer<typeof LegacyAppSchema> {
+  return isType(LegacyAppSchema, item)
+}
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the current schema definition.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isCurrentAppSchema(item: {[key: string]: unknown}): item is zod.infer<typeof AppSchema> {
+  return isType(AppSchema, item)
+}
+
+/**
+ * Get scopes from a given app.toml config file.
+ * @param config - a configuration file
+ */
+export function getAppScopes(config: AppConfiguration) {
+  if (isLegacyAppSchema(config)) {
+    return config.scopes
+  } else {
+    return config.scopes?.toString() ?? ''
+  }
+}
 
 export enum WebType {
   Frontend = 'frontend',
@@ -53,6 +127,8 @@ export const WebConfigurationSchema = zod.union([
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema>
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema>
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
@@ -79,7 +155,6 @@ export interface AppInterface {
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
-  usesConfigInCode: () => boolean
 }
 
 export class App implements AppInterface {
@@ -138,10 +213,6 @@ export class App implements AppInterface {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
-  }
-
-  usesConfigInCode() {
-    return Boolean(this.configuration.client_id)
   }
 }
 

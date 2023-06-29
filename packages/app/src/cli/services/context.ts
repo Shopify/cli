@@ -14,7 +14,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -142,7 +142,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   })
 
   let remoteApp
-  if (localApp.usesConfigInCode()) {
+  if (isCurrentAppSchema(localApp.configuration)) {
     remoteApp = (await appFromId(localApp.configuration.client_id, token))!
     cachedInfo = {
       ...cachedInfo,
@@ -151,7 +151,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
-      storeFqdn: localApp.configuration.cli?.dev_store_fqdn,
+      storeFqdn: localApp.configuration.cli?.dev_store_url,
       updateURLs: localApp.configuration.cli?.automatically_update_urls_on_dev,
     }
   }
@@ -200,13 +200,13 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     selectedStore = await selectStore(allStores, organization, token)
   }
 
-  if (localApp.usesConfigInCode()) {
+  if (isCurrentAppSchema(localApp.configuration)) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const configuration = {
+    const configuration: AppConfiguration = {
       ...localApp.configuration,
       cli: {
         ...localApp.configuration.cli,
-        dev_store_fqdn: selectedStore?.shopDomain,
+        dev_store_url: selectedStore?.shopDomain,
       },
     }
     writeFileSync(localApp.configurationPath, encodeToml(configuration))
