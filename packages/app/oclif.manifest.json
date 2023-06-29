@@ -292,7 +292,7 @@
     },
     "app:import-flow-legacy-extensions": {
       "id": "app:import-flow-legacy-extensions",
-      "description": "Deploy your Shopify app.",
+      "description": "Import dashboard-managed flow extensions into your app.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
