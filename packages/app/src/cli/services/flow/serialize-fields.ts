@@ -29,7 +29,7 @@ export const serializeConfigField = (field: ConfigField, type: FlowExtensionType
 
   if (type === 'flow_action') {
     serializedField.label = field.name
-    serializedField.required = Boolean(field.required)
+    serializedField.required = field.required
   }
 
   return serializedField
@@ -54,7 +54,7 @@ export const serializeCommerceObjectField = (field: ConfigField, type: FlowExten
 
   if (type === 'flow_action') {
     serializedField.label = `${capitalize(commerceObject)} ID`
-    serializedField.required = Boolean(field.required)
+    serializedField.required = field.required
   }
 
   return serializedField

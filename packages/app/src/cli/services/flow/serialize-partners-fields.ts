@@ -19,7 +19,7 @@ export const serializeConfigField = (field: SerializedField, type: FlowPartnersE
 
   if (type === 'flow_action_definition') {
     serializedField.name = field.label
-    serializedField.required = Boolean(field.required)
+    serializedField.required = field.required
   }
 
   return serializedField
@@ -37,7 +37,7 @@ export const serializeCommerceObjectField = (field: SerializedField, type: FlowP
 
   if (type === 'flow_action_definition') {
     serializedField.name = field.label
-    serializedField.required = Boolean(field.required)
+    serializedField.required = field.required
   }
 
   return serializedField
