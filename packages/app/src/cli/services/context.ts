@@ -206,14 +206,6 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     }
   }
 
-  await showCachedContextSummary({
-    directory: options.directory,
-    selectedApp,
-    selectedStore,
-    cachedInfo,
-    organization,
-  })
-
   if (isCurrentAppSchema(localAppConfiguration)) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const configuration: AppConfiguration = {
@@ -233,6 +225,14 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
   }
+
+  await showCachedContextSummary({
+    directory: options.directory,
+    selectedApp,
+    selectedStore,
+    cachedInfo,
+    organization,
+  })
 
   await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
