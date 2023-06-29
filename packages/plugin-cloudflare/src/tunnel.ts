@@ -62,7 +62,11 @@ class TunnelClientInstance implements TunnelClient {
 
     if (retries >= MAX_RETRIES) {
       resolved = true
-      this.currentStatus = {status: 'error', message: 'Could not start tunnel, max retries reached'}
+      this.currentStatus = {
+        status: 'error',
+        message: 'Could not start Cloudflare tunnel, max retries reached.',
+        tryMessage: whatToTry(),
+      }
       return
     }
 
@@ -135,17 +139,22 @@ class TunnelClientInstance implements TunnelClient {
 }
 
 function processCrashed() {
-  return new AbortError(`Tunnel process crashed after stablishing a connection.`, [
+  return new AbortError(`Tunnel process crashed after stablishing a connection.`, whatToTry())
+}
+
+function whatToTry() {
+  return [
     'What to try:',
     {
       list: {
         items: [
-          ['Try to run the command again'],
+          ['Run the command again'],
           ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+          ['Add the flag', {command: '--tunnel ngrok'}, 'to use Ngrok as the tunnel provider'],
         ],
       },
     },
-  ])
+  ]
 }
 
 function findUrl(data: Buffer): string | undefined {

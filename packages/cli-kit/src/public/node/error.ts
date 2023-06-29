@@ -112,7 +112,7 @@ export class AbortSilentError extends FatalError {
  * A bug error is an error that represents a bug and therefore should be reported.
  */
 export class BugError extends FatalError {
-  constructor(message: OutputMessage, tryMessage: TokenItem | null = null) {
+  constructor(message: TokenItem | OutputMessage, tryMessage: TokenItem | OutputMessage | null = null) {
     super(message, FatalErrorType.Bug, tryMessage)
   }
 }
