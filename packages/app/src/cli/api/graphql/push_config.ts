@@ -4,7 +4,6 @@ export const PushConfig = gql`
   mutation appUpdate(
     $title: String!
     $apiKey: String!
-    $title: String
     $applicationUrl: Url
     $redirectUrlAllowlist: [Url]
     $requestedAccessScopes: [String!]
@@ -20,7 +19,6 @@ export const PushConfig = gql`
       input: {
         title: $title
         apiKey: $apiKey
-        title: $title
         contactEmail: $contactEmail
         applicationUrl: $applicationUrl
         redirectUrlWhitelist: $redirectUrlAllowlist
