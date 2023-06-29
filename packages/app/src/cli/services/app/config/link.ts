@@ -2,11 +2,9 @@ import {saveCurrentConfig} from './use.js'
 import {AppConfiguration, AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {load} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
-import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -16,7 +14,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface LinkOptions {
-  commandConfig: Config
   directory: string
   apiKey?: string
   configName?: string
@@ -46,8 +43,7 @@ export default async function link(options: LinkOptions): Promise<void> {
 
 async function loadAppConfigFromLegacyToml(options: LinkOptions): Promise<AppInterface> {
   try {
-    const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
-    const app = await load({specifications, directory: options.directory, mode: 'report'})
+    const app = await load({specifications: [], directory: options.directory, mode: 'report'})
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -78,6 +74,17 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
     configuration.webhook_api_version = '2023-04'
     configuration.api_contact_email = 'example@example.com'
 
+    const {scopes} = localApp.configuration
+
+    if (scopes && scopes.length) {
+      configuration.scopes =
+        typeof localApp.configuration.scopes === 'string'
+          ? localApp.configuration.scopes.split(',').map((val) => val)
+          : localApp.configuration.scopes
+    } else {
+      configuration.legacy_scopes_behavior = true
+    }
+
     return configuration
   } else {
     return {
@@ -86,6 +93,7 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
       application_url: remoteApp.applicationUrl,
       webhook_api_version: '2023-04',
       api_contact_email: 'example@example.com',
+      scopes: [],
     }
   }
 }
