@@ -44,7 +44,6 @@ import {
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {basename} from '@shopify/cli-kit/node/path'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
@@ -205,17 +204,15 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       const allStores = await fetchAllDevStores(orgId, token)
       selectedStore = await selectStore(allStores, organization, token)
     }
-
-    const sameSettings = selectedApp.apiKey === cachedInfo?.appId && selectedStore.shopDomain === cachedInfo.storeFqdn
-    const packageManager = await getPackageManager(options.directory)
-    showReusedValues(
-      organization.businessName,
-      packageManager,
-      sameSettings,
-      cachedInfo,
-      basename(localApp.configurationPath),
-    )
   }
+
+  await showCachedContextSummary({
+    directory: options.directory,
+    selectedApp,
+    selectedStore,
+    cachedInfo,
+    organization,
+  })
 
   if (isCurrentAppSchema(localApp.configuration)) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
@@ -564,36 +561,45 @@ async function selectOrg(token: string): Promise<string> {
   return org.id
 }
 
+interface ReusedValuesOptions {
+  directory: string
+  organization: Organization
+  selectedApp: OrganizationApp
+  selectedStore: OrganizationStore
+  cachedInfo?: CachedAppInfo
+}
+
 /**
  * Message shown to the user in case we are reusing a previous configuration
- * @param org - Organization name
- * @param packageManager - Package manager
- * @param sameDevSettings - Whether dev settings are the same as previous run
- * @param cachedAppInfo - Cached app info
- * @param configName - Config name
  */
-function showReusedValues(
-  org: string,
-  packageManager: PackageManager,
-  sameDevSettings: boolean,
-  cachedAppInfo?: CachedAppInfo,
-  configName?: string,
-) {
-  if (!cachedAppInfo) return
-  if (!configName && !sameDevSettings) return
+async function showCachedContextSummary({
+  directory,
+  organization,
+  selectedApp,
+  selectedStore,
+  cachedInfo,
+}: ReusedValuesOptions) {
+  if (!cachedInfo) return
+
+  const usingDifferentSettings =
+    selectedApp.apiKey !== cachedInfo?.appId || selectedStore.shopDomain !== cachedInfo.storeFqdn
+  if (!cachedInfo?.configFile && usingDifferentSettings) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Always' : 'Never'
 
   const items = [
-    `Org:          ${org}`,
-    `App:          ${cachedAppInfo.title}`,
-    `Dev store:    ${cachedAppInfo.storeFqdn}`,
+    `Org:          ${organization.businessName}`,
+    `App:          ${cachedInfo.title}`,
+    `Dev store:    ${cachedInfo.storeFqdn}`,
     `Update URLs:  ${updateURLs}`,
   ]
 
-  if (cachedAppInfo.tunnelPlugin) items.push(`Tunnel:       ${cachedAppInfo.tunnelPlugin}`)
+  if (cachedInfo.tunnelPlugin) {
+    items.push(`Tunnel:       ${cachedInfo.tunnelPlugin}`)
+  }
 
+  const packageManager = await getPackageManager(directory)
   renderInfo({
     headline: 'Using these settings:',
     body: [
