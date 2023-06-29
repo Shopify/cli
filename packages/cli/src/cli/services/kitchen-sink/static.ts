@@ -1,5 +1,12 @@
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {renderFatalError, renderInfo, renderSuccess, renderTable, renderWarning} from '@shopify/cli-kit/node/ui'
+import {
+  renderError,
+  renderFatalError,
+  renderInfo,
+  renderSuccess,
+  renderTable,
+  renderWarning,
+} from '@shopify/cli-kit/node/ui'
 
 export async function staticService() {
   // Banners
@@ -156,6 +163,11 @@ export async function staticService() {
   ]
 
   renderFatalError(new AbortError('No Organization found', undefined, nextSteps))
+
+  renderError({
+    headline: "Version couldn't be released.",
+    body: 'This version needs to be submitted for review and approved by Shopify before it can be released.',
+  })
 
   renderTable({
     rows: [

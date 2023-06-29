@@ -4,6 +4,7 @@ import {
   renderAutocompletePrompt,
   renderConcurrent,
   renderConfirmationPrompt,
+  renderError,
   renderFatalError,
   renderInfo,
   renderSelectPrompt,
@@ -222,6 +223,20 @@ export const examples: {[key in string]: Example} = {
       })!
     },
   },
+  renderError: {
+    type: 'static',
+    basic: async () => {
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+
+      return renderError({
+        headline: "Version couldn't be released.",
+        body: 'This version needs to be submitted for review and approved by Shopify before it can be released.',
+        renderOptions: {
+          stdout: stdout as any,
+        },
+      })!
+    },
+  },
   renderFatalError: {
     type: 'static',
     basic: async () => {
@@ -362,9 +377,18 @@ export const examples: {[key in string]: Example} = {
         ],
       ]
 
+      const infoMessage = {
+        title: {
+          color: 'red',
+          text: 'Info message title',
+        },
+        body: 'Info message body',
+      }
+
       const options = {
         message: `Delete the following themes from the store?`,
         infoTable: {'': themes},
+        infoMessage,
         confirmationMessage: 'Yes, confirm changes',
         cancellationMessage: 'Cancel',
         renderOptions: {
@@ -443,8 +467,17 @@ export const examples: {[key in string]: Example} = {
         {label: 'fiftieth', value: 'fiftieth'},
       ]
 
+      const infoMessage = {
+        title: {
+          color: 'red',
+          text: 'Info message title',
+        },
+        body: 'Info message body',
+      }
+
       renderAutocompletePrompt({
         message: 'Select a template',
+        infoMessage,
         choices: database,
         search(term: string) {
           return Promise.resolve({data: database.filter((item) => item.label.includes(term))})

@@ -1,15 +1,23 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
-import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
 import {GitDiff, GitDiffProps} from './GitDiff.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {uniqBy} from '../../../../public/common/array.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
-import {Box, measureElement, Text, useApp, useStdout} from 'ink'
+import {Box, measureElement, Text, useApp, useStdout, TextProps} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
+
+export interface InfoMessage {
+  title: {
+    color?: TextProps['color']
+    text: TokenItem<Exclude<InlineToken, UserInputToken | LinkToken>>
+  }
+  body: TokenItem
+}
 
 export interface SelectPromptProps<T> {
   message: TokenItem<Exclude<InlineToken, LinkToken>>
@@ -20,6 +28,7 @@ export interface SelectPromptProps<T> {
   defaultValue?: T
   submitWithShortcuts?: boolean
   abortSignal?: AbortSignal
+  infoMessage?: InfoMessage
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -27,6 +36,7 @@ function SelectPrompt<T>({
   message,
   choices,
   infoTable,
+  infoMessage,
   gitDiff,
   onSubmit,
   defaultValue,
@@ -107,9 +117,17 @@ function SelectPrompt<T>({
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
 
-      {infoTable && !submitted ? (
-        <Box marginLeft={7} marginTop={1}>
-          <InfoTable table={infoTable} />
+      {(infoTable || infoMessage) && !submitted ? (
+        <Box marginLeft={7} marginTop={1} flexDirection="column" gap={1}>
+          {infoMessage ? (
+            <Box flexDirection="column" gap={1}>
+              <Text color={infoMessage.title.color}>
+                <TokenizedText item={infoMessage.title.text} />
+              </Text>
+              <TokenizedText item={infoMessage.body} />
+            </Box>
+          ) : null}
+          {infoTable ? <InfoTable table={infoTable} /> : null}
         </Box>
       ) : null}
 

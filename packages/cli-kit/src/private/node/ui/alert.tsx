@@ -1,6 +1,6 @@
 import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
-import {consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
+import {consoleError, consoleLog, consoleWarn, Logger, LogLevel} from '../../../public/node/output.js'
 import {recordUIEvent} from '../demo-recorder.js'
 import React from 'react'
 import {RenderOptions} from 'ink'
@@ -9,12 +9,14 @@ const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
   info: 'info',
   warning: 'warn',
   success: 'info',
+  error: 'error',
 }
 
 const typeToLogger: {[key in AlertProps['type']]: Logger} = {
   info: consoleLog,
   warning: consoleWarn,
   success: consoleLog,
+  error: consoleError,
 }
 
 export interface AlertOptions extends AlertProps {

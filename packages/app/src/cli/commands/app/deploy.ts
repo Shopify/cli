@@ -2,9 +2,11 @@ import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
+import {validateVersion} from '../../validations/version-name.js'
 import Command from '../../utilities/app-command.js'
 import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
+import {validateMessage} from '../../validations/message.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -38,10 +40,36 @@ export default class Deploy extends Command {
       char: 'f',
       default: false,
     }),
+    'no-release': Flags.boolean({
+      hidden: false,
+      description: "Creates a version but doesn't release it - it's not made available to merchants.",
+      env: 'SHOPIFY_FLAG_NO_RELEASE',
+      default: false,
+    }),
+    message: Flags.string({
+      hidden: false,
+      description:
+        "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
+      env: 'SHOPIFY_FLAG_MESSAGE',
+    }),
+    version: Flags.string({
+      hidden: false,
+      description:
+        'Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.',
+      env: 'SHOPIFY_FLAG_VERSION',
+    }),
+    'source-control-url': Flags.string({
+      hidden: false,
+      description: 'URL associated with the new app version.',
+      env: 'SHOPIFY_FLAG_SOURCE_CONTROL_URL',
+    }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Deploy)
+    validateVersion(flags.version)
+    validateMessage(flags.message)
+
     if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
@@ -51,6 +79,15 @@ export default class Deploy extends Command {
 
     const specifications = await loadExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
-    await deploy({app, apiKey, reset: flags.reset, force: flags.force})
+    await deploy({
+      app,
+      apiKey,
+      reset: flags.reset,
+      force: flags.force,
+      noRelease: flags['no-release'],
+      message: flags.message,
+      version: flags.version,
+      commitReference: flags['source-control-url'],
+    })
   }
 }

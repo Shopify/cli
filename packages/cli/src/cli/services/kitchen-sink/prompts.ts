@@ -4,6 +4,7 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
+import figures from '@shopify/cli-kit/node/figures'
 
 export async function prompts() {
   // renderSelectPrompt
@@ -138,9 +139,18 @@ export async function prompts() {
 
   await renderConfirmationPrompt(options)
 
+  const infoMessage = {
+    title: {
+      color: 'red',
+      text: `${figures.warning} This can't be undone.`,
+    },
+    body: 'The action you are executing should be confirmed to proceed.',
+  }
+
   const dangerousPromptOptions = {
     message: `Delete the following themes from the store?`,
     infoTable: {'': themes},
+    infoMessage,
     confirmationMessage: 'Yes, delete them',
     cancellationMessage: 'Cancel',
     defaultValue: false,

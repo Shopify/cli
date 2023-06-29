@@ -28,7 +28,7 @@ import {
   ListToken,
   TokenItem,
 } from '../../private/node/ui/components/TokenizedText.js'
-import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
+import {SelectPrompt, SelectPromptProps, InfoMessage} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
@@ -185,6 +185,23 @@ export function renderWarning(options: RenderAlertOptions) {
   return alert({...options, type: 'warning'})
 }
 
+/**
+ * Renders an error banner to the console.
+ * @example
+ * ╭─ error ──────────────────────────────────────────────────╮
+ * │                                                          │
+ * │  Version couldn't be released.                           │
+ * │                                                          │
+ * │  This version needs to be submitted for review and       │
+ * │  approved by Shopify before it can be released.          │
+ * │                                                          │
+ * ╰──────────────────────────────────────────────────────────╯
+ *
+ */
+export function renderError(options: RenderAlertOptions) {
+  return alert({...options, type: 'error'})
+}
+
 interface RenderFatalErrorOptions {
   renderOptions?: RenderOptions
 }
@@ -295,7 +312,7 @@ export async function renderSelectPrompt<T>({
 }
 
 export interface RenderConfirmationPromptOptions
-  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'gitDiff' | 'abortSignal'> {
+  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'infoMessage' | 'gitDiff' | 'abortSignal'> {
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
@@ -306,6 +323,10 @@ export interface RenderConfirmationPromptOptions
  * Renders a confirmation prompt to the console.
  * @example
  * ?  Delete the following themes from the store?
+ *
+ *        Info message title
+ *
+ *        Info message body
  *
  *        • first theme (#1)
  *        • second theme (#2)
@@ -325,6 +346,7 @@ export async function renderConfirmationPrompt({
   renderOptions,
   defaultValue = true,
   abortSignal,
+  infoMessage,
 }: RenderConfirmationPromptOptions): Promise<boolean> {
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'confirmationPrompt', properties: arguments[0]})
@@ -352,6 +374,7 @@ export async function renderConfirmationPrompt({
     defaultValue,
     isConfirmationPrompt: true,
     abortSignal,
+    infoMessage,
   })
 }
 
@@ -364,6 +387,10 @@ export interface RenderAutocompleteOptions<T>
  * Renders an autocomplete prompt to the console.
  * @example
  * ?  Select a template:   Type to search...
+ *
+ *        Info message title
+ *
+ *        Info message body
  *
  * >  first
  *    second
@@ -568,4 +595,4 @@ This usually happens when running a command non-interactively, for example in a 
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, InfoMessage}
