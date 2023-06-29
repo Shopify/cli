@@ -43,7 +43,6 @@ export interface PushConfigVariables {
   title: string
   apiKey: string
   applicationUrl: string
-  title: string
   redirectUrlAllowlist: string[]
   requestedAccessScopes: string[]
   webhookApiVersion: string
