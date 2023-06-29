@@ -246,8 +246,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
     if (this.type === 'tax_calculation') {
-      await touchFile(this.outputPath)
-      await writeFile(this.outputPath, '(()=>{})();')
+      const outputJsFilePath = joinPath(this.outputPath, 'dist/main.js')
+      await touchFile(outputJsFilePath)
+      await writeFile(outputJsFilePath, '(()=>{})();')
     }
   }
 
