@@ -1,75 +1,162 @@
-import {serializeFields} from './serialize-fields.js'
-import {configFromSerializedFields} from './serialize-partners-fields.js'
-import {SerializedField} from './types.js'
+import {ConfigField} from './types.js'
+import {serializeConfigField, serializeCommerceObjectField} from './serialize-fields.js'
 import {describe, expect, test} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
-describe('serialize-fields', () => {
-  test('serializing and deserialize fields for flow_action should be the same', () => {
-    // Given
-    const fields: SerializedField[] = [
-      {
-        name: 'customer_id',
-        label: 'Customer ID',
-        description: '',
-        required: true,
-        uiType: 'commerce-object-id',
-      },
-      {
-        name: 'product_id',
-        label: 'Product ID',
-        description: '',
-        required: true,
-        uiType: 'commerce-object-id',
-      },
-      {
-        name: 'email field',
-        label: 'email label',
-        description: 'email help',
-        required: false,
-        uiType: 'email',
-      },
-      {
-        name: 'number name',
-        label: 'number label',
-        description: 'number help',
-        required: true,
-        uiType: 'number',
-      },
-    ]
+describe('serializeConfigField', () => {
+  test('should serialize a field for a flow action', () => {
+    // given
+    const field: ConfigField = {
+      type: 'single_line_text_field',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
 
-    // When
-    const configFields = configFromSerializedFields('flow_action_definition', fields)
-    const reSerializedFields = serializeFields('flow_action', configFields)
+    // when
+    const serializedField = serializeConfigField(field, 'flow_action')
 
-    // Then
-    expect(reSerializedFields).toEqual(fields)
+    // then
+    expect(serializedField).toEqual({
+      name: 'my-field',
+      description: 'This is my field',
+      uiType: 'text-single-line',
+      label: 'My Field',
+      required: true,
+    })
   })
 
-  test('serializing and deserialize fields for flow_trigger should be the same', () => {
-    // Given
-    const fields: SerializedField[] = [
-      {
-        description: '',
-        name: 'customer_id',
-        uiType: 'customer',
-      },
-      {
-        description: 'number description',
-        name: 'number property',
-        uiType: 'number',
-      },
-      {
-        description: 'email description',
-        name: 'email name',
-        uiType: 'email',
-      },
-    ]
+  test('should serialize a field for a flow trigger', () => {
+    // given
+    const field: ConfigField = {
+      type: 'single_line_text_field',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
 
-    // When
-    const configFields = configFromSerializedFields('flow_trigger_definition', fields)
-    const reSerializedFields = serializeFields('flow_trigger', configFields)
+    // when
+    const serializedField = serializeConfigField(field, 'flow_trigger')
 
-    // Then
-    expect(reSerializedFields).toEqual(fields)
+    // then
+    expect(serializedField).toEqual({
+      name: 'my-field',
+      description: 'This is my field',
+      uiType: 'text-single-line',
+    })
+  })
+
+  test('should throw an error if key is not a string', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'string',
+      key: undefined,
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => serializeConfigField(invalidField, 'flow_action')).toThrowError(
+      new AbortError(
+        'key property must be specified for non-commerce object fields in {"type":"string","name":"My Field","description":"This is my field","required":true}',
+      ),
+    )
+  })
+
+  test('should throw an error if field type is not supported', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'invalid-type',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => serializeConfigField(invalidField, 'flow_action')).toThrowError(
+      new AbortError('Field type invalid-type is not supported'),
+    )
+  })
+})
+
+describe('serializeCommerceObjectField', () => {
+  test('should serialize a commerce object field for a flow action', () => {
+    // given
+    const commerceObjectField: ConfigField = {
+      type: 'product_reference',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // when
+    const serializedField = serializeCommerceObjectField(commerceObjectField, 'flow_action')
+
+    // then
+    expect(serializedField).toEqual({
+      name: 'product_id',
+      uiType: 'commerce-object-id',
+      label: 'Product ID',
+      description: 'This is my field',
+      required: true,
+    })
+  })
+
+  test('should serialize a commerce object field for a flow trigger', () => {
+    // given
+    const commerceObjectField: ConfigField = {
+      type: 'product_reference',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // when
+    const serializedField = serializeCommerceObjectField(commerceObjectField, 'flow_trigger')
+
+    // then
+    expect(serializedField).toEqual({
+      name: 'product_id',
+      uiType: 'product',
+      description: 'This is my field',
+    })
+  })
+
+  test('should throw an error if commerce object is not supported for flow trigger', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'invalid_reference',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => serializeCommerceObjectField(invalidField, 'flow_trigger')).toThrowError(
+      new AbortError('Commerce object invalid_reference is not supported for Flow Triggers'),
+    )
+  })
+
+  test('should throw an error if commerce object is not supported for flow action', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'invalid_reference',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => serializeCommerceObjectField(invalidField, 'flow_action')).toThrowError(
+      new AbortError('Commerce object invalid_reference is not supported for Flow Actions'),
+    )
   })
 })

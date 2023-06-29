@@ -1,5 +1,5 @@
-import {ConfigField} from '../types.js'
-import {validateNonCommerceObjectShape, validateCustomConfigurationPageConfig} from '../validation.js'
+import {validateNonCommerceObjectShape, validateCustomConfigurationPageConfig} from './validation.js'
+import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
