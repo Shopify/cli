@@ -14,8 +14,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
-vi.mock('./import-flow/fetch.js')
-// vi.mock('./import-flow/extension-to-toml.js')
+vi.mock('./flow/fetch.js')
 
 const organizationApp: OrganizationApp = {
   id: 'id',

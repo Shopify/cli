@@ -29,7 +29,6 @@ export function buildTomlObject(extension: ExtensionRegistration) {
   if (!versionConfig) throw new Error('No config found for extension')
   const config: FlowConfig = JSON.parse(versionConfig)
 
-  // Remote config uses uiType, local config uses type
   const fields = configFromSerializedFields(extension.type as FlowPartnersExtensionTypes, config.fields ?? [])
 
   const localExtensionRepresentation = {

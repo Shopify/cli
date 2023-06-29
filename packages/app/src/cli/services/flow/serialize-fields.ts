@@ -49,6 +49,7 @@ export const serializeCommerceObjectField = (field: ConfigField, type: FlowExten
   const serializedField: SerializedField = {
     name: `${commerceObject}_id`,
     uiType: type === 'flow_action' ? 'commerce-object-id' : commerceObject,
+    description: field.description,
   }
 
   if (type === 'flow_action') {
