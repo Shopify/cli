@@ -80,10 +80,9 @@ describe('upgradeTheme', () => {
     // Given
     const fromTheme = 123
     const toTheme = 456
+    const id = 789
     const name = 'updated-theme'
     const role = 'unpublished'
-    const params: ThemeParams = {name, role}
-    const id = 789
 
     vi.mocked(restRequest).mockResolvedValue({
       json: {theme: {id, name, role}},
@@ -92,16 +91,10 @@ describe('upgradeTheme', () => {
     })
 
     // When
-    const theme = await upgradeTheme({fromTheme, toTheme, params, session})
+    const theme = await upgradeTheme({fromTheme, toTheme, session})
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'POST',
-      `/themes`,
-      session,
-      {fromTheme, toTheme, script: null, theme: {...params}},
-      {},
-    )
+    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {fromTheme, toTheme, script: null}, {})
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -112,11 +105,10 @@ describe('upgradeTheme', () => {
     // Given
     const fromTheme = 123
     const toTheme = 456
+    const script = 'update_extension.json contents'
+    const id = 789
     const name = 'updated-theme'
     const role = 'unpublished'
-    const script = 'update_extension.json contents'
-    const params: ThemeParams = {name, role}
-    const id = 789
 
     vi.mocked(restRequest).mockResolvedValue({
       json: {theme: {id, name, role}},
@@ -125,16 +117,10 @@ describe('upgradeTheme', () => {
     })
 
     // When
-    const theme = await upgradeTheme({fromTheme, toTheme, script, params, session})
+    const theme = await upgradeTheme({fromTheme, toTheme, script, session})
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith(
-      'POST',
-      `/themes`,
-      session,
-      {fromTheme, toTheme, script, theme: {...params}},
-      {},
-    )
+    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {fromTheme, toTheme, script}, {})
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
