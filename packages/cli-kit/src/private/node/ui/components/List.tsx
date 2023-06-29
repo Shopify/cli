@@ -17,7 +17,14 @@ const DOT = '•'
  * `List` displays an unordered or ordered list with text aligned with the bullet point
  * and wrapped to the container width.
  */
-const List: FunctionComponent<ListProps> = ({title, items, margin = true, ordered = false, color, bullet = DOT}): JSX.Element => {
+const List: FunctionComponent<ListProps> = ({
+  title,
+  items,
+  margin = true,
+  ordered = false,
+  color,
+  bullet = DOT,
+}): JSX.Element => {
   return (
     <Box flexDirection="column">
       {title ? (

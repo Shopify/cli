@@ -25,7 +25,13 @@ export interface InfoTableProps {
 const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   const sections = Array.isArray(table)
     ? table
-    : Object.keys(table).map((header) => ({header, items: table[header]!, color: undefined, helperText: undefined, bullet: undefined}))
+    : Object.keys(table).map((header) => ({
+        header,
+        items: table[header]!,
+        color: undefined,
+        helperText: undefined,
+        bullet: undefined,
+      }))
 
   const headerColumnWidth = Math.max(
     ...sections.map((section) => {
@@ -43,7 +49,9 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
         <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1} flexDirection="column">
           {section.header.length > 0 && (
             <Box width={headerColumnWidth + 1}>
-              <Text color={section.color} bold>{capitalize(section.header)}</Text>
+              <Text color={section.color} bold>
+                {capitalize(section.header)}
+              </Text>
             </Box>
           )}
           <Box flexGrow={1} flexDirection="column" gap={1}>
