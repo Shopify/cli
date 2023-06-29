@@ -134,6 +134,30 @@ export async function testWebPixelExtension(): Promise<ExtensionInstance> {
   return extension
 }
 
+export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'tax',
+    type: 'tax_calculation' as const,
+    metafields: [],
+    runtime_context: 'strict',
+    settings: [],
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
+
+  extension.outputPath = directory
+
+  return extension
+}
+
 function defaultFunctionConfiguration(): FunctionConfigType {
   return {
     name: 'test function extension',
