@@ -88,7 +88,7 @@ export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = 
   return extension
 }
 
-export async function testThemeExtensions(): Promise<ExtensionInstance> {
+export async function testThemeExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
@@ -101,16 +101,14 @@ export async function testThemeExtensions(): Promise<ExtensionInstance> {
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
-    directory: './my-extension',
+    directory,
     specification,
   })
-
-  extension.outputPath = './my-extension'
 
   return extension
 }
 
-export async function testWebPixelExtension(): Promise<ExtensionInstance> {
+export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'web pixel name',
     type: 'web_pixel' as const,
@@ -125,11 +123,9 @@ export async function testWebPixelExtension(): Promise<ExtensionInstance> {
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
-    directory: './my-extension',
+    directory,
     specification,
   })
-
-  extension.outputPath = './my-extension'
 
   return extension
 }
@@ -152,8 +148,6 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     directory,
     specification,
   })
-
-  extension.outputPath = directory
 
   return extension
 }
