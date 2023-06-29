@@ -1,10 +1,87 @@
-import {getUIExtensionRendererVersion} from './app.js'
+import {getUIExtensionRendererVersion, isCurrentAppSchema, isLegacyAppSchema} from './app.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const DEFAULT_APP = testApp()
+
+const CORRECT_CURRENT_APP_SCHEMA = {
+  name: 'app 1',
+  api_contact_email: 'ryan@shopify.com',
+  client_id: '12345',
+  webhook_api_version: '02-2023',
+  application_url: 'http://example.com',
+  embedded: true,
+  auth: {
+    redirect_urls: ['https://google.com'],
+  },
+  privacy_compliance_webhooks: {
+    customer_deletion_url: 'https://google.com/',
+    customer_data_request_url: 'https://google.com/',
+    shop_deletion_url: 'https://google.com/',
+  },
+  proxy: {
+    url: 'https://google.com/',
+    subpath: 'https://google.com/',
+    prefix: 'https://google.com/',
+  },
+  pos: {
+    embedded: false,
+  },
+  app_preferences: {
+    url: 'https://google.com/',
+  },
+  cli: {
+    automatically_update_urls_on_dev: true,
+    dev_store_url: 'https://google.com/',
+  },
+}
+
+const CORRECT_LEGACY_APP_SCHEMA = {
+  extension_directories: [],
+  web_directories: [],
+  scopes: 'write_products',
+}
+
+describe('app schema validation', () => {
+  describe('legacy schema validator', () => {
+    test('checks whether legacy app schema is valid -- pass', () => {
+      expect(isLegacyAppSchema(CORRECT_LEGACY_APP_SCHEMA)).toBe(true)
+    })
+    test('checks whether legacy app schema is valid -- fail', () => {
+      const config = {
+        ...CORRECT_LEGACY_APP_SCHEMA,
+        some_other_key: 'i am not valid, i will fail',
+      }
+      expect(isLegacyAppSchema(config)).toBe(false)
+    })
+  })
+
+  describe('current schema validator', () => {
+    test('checks whether current app schema is valid -- pass', () => {
+      expect(isCurrentAppSchema(CORRECT_CURRENT_APP_SCHEMA)).toBe(true)
+    })
+    test('checks whether current app schema is valid -- fail', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        bad_key: 'i will fail',
+      }
+      expect(isCurrentAppSchema(config)).toBe(false)
+    })
+    test('checks whether current app schema is valid -- fail', () => {
+      const config = {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+      }
+
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      delete config.name
+
+      expect(isCurrentAppSchema(config)).toBe(false)
+    })
+  })
+})
 
 describe('getUIExtensionRendererVersion', () => {
   test('returns the version of the dependency package for product_subscription', async () => {
