@@ -69,6 +69,8 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
       : app.appProxy ?? undefined,
     posEmbedded: configuration.pos?.embedded ?? app.posEmbedded,
     preferencesUrl: configuration.app_preferences?.url ?? app.preferencesUrl,
+    requested_access_scopes:
+      configuration.scopes && !configuration.legacy_scopes_behavior ? configuration.scopes ?? [] : undefined,
   }
 
   return variables
