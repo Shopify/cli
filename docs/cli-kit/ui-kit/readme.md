@@ -112,7 +112,7 @@ Here's a list of all the currently available tokens:
 - List `{ list: { title?: TokenItem<InlineToken>; items: TokenItem<InlineToken>[], ordered?: boolean } }`
 - Bold `{ bold: string }`
 
-You can always check the `TokenizedText.tsx` file for an up-to-date list.
+You can always check the [TokenizedText.tsx](https://github.com/Shopify/cli/blob/main/packages/cli-kit/src/private/node/ui/components/TokenizedText.tsx) file for an up-to-date list.
 
 ## API
 
