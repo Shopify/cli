@@ -156,7 +156,6 @@ async function triggerUpgradeAPI(
       fromTheme,
       toTheme,
       script: _updateExtension,
-      params: {name, role, processing: true},
       session,
     })
 
