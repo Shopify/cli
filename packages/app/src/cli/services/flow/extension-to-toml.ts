@@ -33,7 +33,7 @@ export function buildTomlObject(extension: ExtensionRegistration) {
   // Remote config uses uiType, local config uses type
   const fields = configFromSerializedFields(extension.type as FlowPartnersExtensionTypes, config.fields ?? [])
 
-  const jsonObject = {
+  const localExtensionRepresentation = {
     name: extension.title,
     type: extension.type.replace('_definition', ''),
     description: config.description,
@@ -50,5 +50,5 @@ export function buildTomlObject(extension: ExtensionRegistration) {
     settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return encodeToml(jsonObject as any)
+  return encodeToml(localExtensionRepresentation as any)
 }
