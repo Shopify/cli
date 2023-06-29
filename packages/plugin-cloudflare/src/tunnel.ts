@@ -126,7 +126,7 @@ class TunnelClientInstance implements TunnelClient {
         }
         // If already resolved, means that the CLI already received the tunnel URL.
         // Can't retry because the CLI is running with an invalid URL
-        if (resolved) throw processCrashed()
+        if (resolved) throw processCrashed(error.message)
 
         outputDebug('Cloudflared tunnel crashed, restarting...')
 
@@ -138,8 +138,8 @@ class TunnelClientInstance implements TunnelClient {
   }
 }
 
-function processCrashed() {
-  return new BugError(`Tunnel process crashed after stablishing a connection.`, whatToTry())
+function processCrashed(message: string) {
+  return new BugError(`Tunnel process crashed after stablishing a connection: ${message}`, whatToTry())
 }
 
 function whatToTry() {
