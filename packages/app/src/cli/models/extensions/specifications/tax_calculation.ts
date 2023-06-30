@@ -13,7 +13,7 @@ const spec = createExtensionSpecification({
   surface: 'admin',
   schema: TaxCalculationsSchema,
   singleEntryPath: false,
-  appModuleFeatures: (_) => [],
+  appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.production_api_base_url,
