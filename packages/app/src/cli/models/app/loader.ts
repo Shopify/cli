@@ -412,7 +412,7 @@ class AppConfigurationLoader {
   async loaded() {
     const appDirectory = await this.getAppDirectory()
     const configurationPath = await this.getConfigurationPath()
-    const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
+    const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
     return {appDirectory, configuration, configurationPath}
   }
 
@@ -421,15 +421,6 @@ class AppConfigurationLoader {
       throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
     }
     return dirname(await this.getConfigurationPath())
-  }
-
-  parseConfigurationFile<TSchema extends zod.ZodType>(
-    schema: TSchema,
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ) {
-    return parseConfigurationFile(schema, filepath, this.abort, decode)
   }
 
   async getConfigurationPath() {
