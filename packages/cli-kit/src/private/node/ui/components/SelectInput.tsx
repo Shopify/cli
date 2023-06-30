@@ -28,7 +28,7 @@ export interface SelectInputProps<T> {
   hasMorePages?: boolean
   morePagesMessage?: string
   infoMessage?: string
-  availableLines: number
+  availableLines?: number
   submitWithShortcuts?: boolean
   onSubmit?: (item: Item<T>) => void
 }
@@ -132,12 +132,20 @@ function SelectInputInner<T>(
     hasMorePages = false,
     morePagesMessage,
     infoMessage,
-    availableLines,
+    availableLines = 25,
     submitWithShortcuts = false,
     onSubmit,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
+  let noItems = false
+
+  if (rawItems.length === 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-param-reassign
+    rawItems = [{label: emptyMessage, value: null as any, disabled: true}]
+    noItems = true
+  }
+
   const sortBy = require('lodash/sortBy')
   const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
   const items = sortBy(rawItems, 'group') as Item<T>[]
@@ -251,7 +259,7 @@ function SelectInputInner<T>(
     )
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
-    const maxKeyLength = initialItems
+    const maxKeyLength = itemsWithKeys
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
     const minHeight = hasAnyGroup ? 5 : 2
@@ -277,9 +285,9 @@ function SelectInputInner<T>(
           ))}
         </Box>
 
-        {items.length === 0 ? (
+        {noItems ? (
           <Box marginTop={1} marginLeft={3} height={2}>
-            <Text dimColor>{emptyMessage}</Text>
+            <Text dimColor>Try again with a different keyword.</Text>
           </Box>
         ) : (
           <Box marginTop={1} marginLeft={3} flexDirection="column">
