@@ -24,11 +24,8 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-
-  const includeFunctions = options.partnersApp?.betas?.unifiedAppDeployment ?? false
   let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
-
-  if (includeFunctions) {
+  if (options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release') {
     const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
     functionExtensions.forEach((ext) => (ext.usingExtensionsFramework = true))
     localExtensions = localExtensions.concat(functionExtensions)
@@ -73,15 +70,31 @@ export async function ensureExtensionsIds(
   }
 
   if (!options.force) {
+    const question = (() => {
+      switch (options.deploymentMode) {
+        case 'legacy':
+          return 'Make the following changes to your extensions in Shopify Partners?'
+        case 'unified':
+          return `Release a new version of ${options.partnersApp?.title}?`
+        case 'unified-skip-release':
+          return `Create a new version of ${options.partnersApp?.title}?`
+      }
+    })()
+
     const confirmed = await deployConfirmationPrompt(
       {
-        question: 'Make the following changes to your extensions in Shopify Partners?',
+        question,
         identifiers: validMatches,
         toCreate: extensionsToCreate,
         onlyRemote: onlyRemoteExtensions,
-        dashboardOnly: options.partnersApp?.betas?.unifiedAppDeployment ? dashboardOnlyExtensions : [],
+        dashboardOnly:
+          options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release'
+            ? dashboardOnlyExtensions
+            : [],
       },
-      options.partnersApp,
+      options.deploymentMode,
+      options.appId,
+      options.token,
     )
     if (!confirmed) return err('user-cancelled')
   }

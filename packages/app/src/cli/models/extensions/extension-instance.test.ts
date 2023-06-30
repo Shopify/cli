@@ -1,5 +1,7 @@
 import {
+  testApp,
   testFunctionExtension,
+  testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
   testWebPixelExtension,
@@ -7,6 +9,8 @@ import {
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {Writable} from 'stream'
 
 function functionConfiguration(): FunctionConfigType {
   return {
@@ -128,5 +132,29 @@ describe('isDraftable', () => {
     const got = extensionInstance.isDraftable(false)
 
     expect(got).toBe(true)
+  })
+})
+
+describe('build', async () => {
+  test('creates a valid JS file for tax calculation extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testTaxCalculationExtension(tmpDir)
+      const options = {
+        stdout: new Writable(),
+        stderr: new Writable(),
+        app: testApp(),
+      }
+
+      const outputFilePath = joinPath(tmpDir, 'dist/main.js')
+      extensionInstance.outputPath = outputFilePath
+
+      // When
+      await extensionInstance.build(options)
+
+      // Then
+      const outputFileContent = await readFile(outputFilePath)
+      expect(outputFileContent).toEqual('(()=>{})();')
+    })
   })
 })

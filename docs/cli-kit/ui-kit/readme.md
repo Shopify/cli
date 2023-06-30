@@ -2,9 +2,16 @@
 
 - [What's the CLI UI Kit?](#whats-the-cli-ui-kit)
 - [Principles](#principles)
+- [The Token System](#the-token-system)
+  - [Token Basics](#token-basics)
+  - [Inline and Block Tokens](#inline-and-block-tokens)
+  - [TokenItem Type](#tokenitem-type)
+  - [Token Subsets](#token-subsets)
+  - [Render Methods and Tokens](#render-methods-and-tokens)
+  - [Available Tokens](#available-tokens)
 - [API](#api)
   - [Static output](#static-output)
-    - [`renderInfo` / `renderWarning` / `renderSuccess`](#renderinfo--renderwarning--rendersuccess)
+    - [`renderInfo` / `renderWarning` / `renderSuccess` / `renderError`](#renderinfo--renderwarning--rendersuccess--rendererror)
     - [Errors](#errors)
     - [`renderText`](#rendertext)
   - [Prompts](#prompts)
@@ -36,6 +43,77 @@ restructure and upgrade the underlying React components without causing API brea
 
 All public functions have been documented via comments above the function themselves. If you want to see some examples of their output you can check them out.
 
+## The Token System
+
+UI kit implements a flexible token system that allows you to style the strings you want to render without having to deal with JSX and templates yourself. The following sections guide you through the principles and usage of this system.
+
+### Token Basics
+
+Tokens are either strings or simple JavaScript objects in the form of `{ tokenKey: value }`.
+
+For instance, for commands, you might use `{ command: string }`. For links, you might use `{ link: { label?: string; url: string } }`.
+
+The benefit of this system is that it allows you to think of what you want to display in more semantic terms and it allow us to change how to display these tokens without breaking the public API.
+
+### Inline and Block Tokens
+
+There are two types of tokens: **inline** and **block** tokens.
+
+- **Inline Tokens**: When rendered, inline tokens are concatenated by spaces.
+- **Block Tokens**: When rendered, block tokens are concatenated with new lines.
+
+### TokenItem Type
+
+Whenever a parameter accepts the type `TokenItem`, (which happens most of the time in UI kit functions), you can pass either a single token or an array of tokens.
+
+If you pass an array, these tokens will be concatenated and rendered following the inline/block tokens system.
+
+For example the `body` param of `renderInfo` accepts a `TokenItem`. If you want to highlight a command the user has to run you can pass something like:
+
+```
+body: ['Run', {command: 'npm run shopify upgrade'}, {char: '.'}]
+```
+
+This will produce the following string:
+
+```
+Run `npm run shopify upgrade`.
+```
+
+As you can see `char` is used to concatenate a `.` without adding a space. Commands are displayed surrounded by backticks.
+
+### Token Subsets
+
+Some parameters take a subset of tokens. For example, if a parameter takes a `TokenItem<InlineToken>` type then you cannot pass a list token and the compiler will not allow you to do that.
+
+Example:
+
+```javascript
+renderSuccess({nextSteps: TokenItem<InlineToken>[]}) {
+}
+```
+
+In the above function, `nextSteps` can only accept an array of inline tokens. Attempting to pass a block token will result in a compiler error. This is done so that users of the API cannot render blocks inside elements that could break the layout if they accepted items split by new lines.
+
+### Render Methods and Tokens
+
+Most of the `renderX` methods exposed by UI kit in the cli-kit package accept parameters that are tokens. This allows for a high degree of flexibility when defining what content to render.
+
+### Available Tokens
+
+Here's a list of all the currently available tokens:
+
+- Command `{ command: string }`
+- Link `{ link: { label?: string; url: string } }`
+- Char (used to remove the space before the value) `{ char: string }`
+- User Input `{ userInput: string }`
+- Subdued `{ subdued: string }`
+- File Path `{ filePath: string }`
+- List `{ list: { title?: TokenItem<InlineToken>; items: TokenItem<InlineToken>[], ordered?: boolean } }`
+- Bold `{ bold: string }`
+
+You can always check the [TokenizedText.tsx](https://github.com/Shopify/cli/blob/main/packages/cli-kit/src/private/node/ui/components/TokenizedText.tsx) file for an up-to-date list.
+
 ## API
 
 The public interface can be roughly divided in three categories that answer different needs:
@@ -54,7 +132,7 @@ Prompts and async tasks, on the other hand, return promises that must be awaited
 
 Static output is usually displayed in the form of banners with appropriate titles and border colors.
 
-#### `renderInfo` / `renderWarning` / `renderSuccess`
+#### `renderInfo` / `renderWarning` / `renderSuccess` / `renderError`
 
 All these functions take the same params. What changes are the color and the title of the box in the output. None of the params is required so you can choose to compose your banners however you prefer. Most banners will need a `headline`, which will be highlighted in **bold**, and a body containing some details. Check out the `simple` and `complete` examples above those functions to see how they can be used.
 

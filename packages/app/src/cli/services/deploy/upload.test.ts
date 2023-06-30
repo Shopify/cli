@@ -722,9 +722,9 @@ describe('uploadExtensionsBundle', () => {
           },
         })
         .mockResolvedValueOnce({
-          deploymentCreate: {
+          appDeploy: {
             deployment: {
-              deployedVersions: [],
+              appModuleVersions: [],
             },
             id: '2',
           },
@@ -737,16 +737,17 @@ describe('uploadExtensionsBundle', () => {
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        extensions: [{uuid: '123', config: '{}', context: ''}],
+        appModules: [{uuid: '123', config: '{}', context: ''}],
         token: 'api-token',
         extensionIds: {},
+        deploymentMode: 'legacy',
       })
 
       // Then
       expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
-        extensions: [
+        appModules: [
           {
             config: '{}',
             context: '',
@@ -754,6 +755,60 @@ describe('uploadExtensionsBundle', () => {
           },
         ],
         uuid: 'random-uuid',
+        skipPublish: true,
+      })
+    })
+  })
+
+  test('calls a mutation on partners with a message and a version', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          appDeploy: {
+            deployment: {
+              appModuleVersions: [],
+            },
+            id: '2',
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      // When
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+      await uploadExtensionsBundle({
+        apiKey: 'app-id',
+        bundlePath: joinPath(tmpDir, 'test.zip'),
+        appModules: [{uuid: '123', config: '{}', context: ''}],
+        token: 'api-token',
+        extensionIds: {},
+        deploymentMode: 'unified',
+        message: 'test',
+        version: '1.0.0',
+      })
+
+      // Then
+      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+        apiKey: 'app-id',
+        bundleUrl: 'signed-upload-url',
+        appModules: [
+          {
+            config: '{}',
+            context: '',
+            uuid: '123',
+          },
+        ],
+        uuid: 'random-uuid',
+        skipPublish: false,
+        message: 'test',
+        versionTag: '1.0.0',
       })
     })
   })
@@ -761,9 +816,9 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners when there are no extensions', async () => {
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
-      deploymentCreate: {
+      appDeploy: {
         deployment: {
-          deployedVersions: [],
+          appModuleVersions: [],
         },
         id: '2',
       },
@@ -775,20 +830,22 @@ describe('uploadExtensionsBundle', () => {
     await uploadExtensionsBundle({
       apiKey: 'app-id',
       bundlePath: undefined,
-      extensions: [],
+      appModules: [],
       token: 'api-token',
       extensionIds: {},
+      deploymentMode: 'legacy',
     })
 
     // Then
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
       apiKey: 'app-id',
       uuid: 'random-uuid',
+      skipPublish: true,
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
   })
 
-  test('throws an error based on what is returned from partners', async () => {
+  test("throws a specific error based on what is returned from partners when response doesn't include a deployment", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
@@ -799,7 +856,7 @@ describe('uploadExtensionsBundle', () => {
           },
         })
         .mockResolvedValueOnce({
-          deploymentCreate: {
+          appDeploy: {
             userErrors: [
               {
                 message: 'Missing expected key(s).',
@@ -870,7 +927,7 @@ describe('uploadExtensionsBundle', () => {
         await uploadExtensionsBundle({
           apiKey: 'app-id',
           bundlePath: joinPath(tmpDir, 'test.zip'),
-          extensions: [
+          appModules: [
             {uuid: '123', config: '{}', context: ''},
             {uuid: '456', config: '{}', context: ''},
           ],
@@ -879,11 +936,12 @@ describe('uploadExtensionsBundle', () => {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
           },
+          deploymentMode: 'unified',
         })
 
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: any) {
-        expect(error.message).toEqual('There has been an error creating your deployment.')
+        expect(error.message).toEqual("Version couldn't be created.")
         expect(error.customSections).toEqual([
           {
             title: 'amortizable-marketplace-ext',
@@ -925,6 +983,70 @@ describe('uploadExtensionsBundle', () => {
           },
         ])
       }
+    })
+  })
+
+  test('return a deploy error message based on what is returned from partners when response includes a deployment', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
+      vi.mocked(partnersRequest)
+        .mockResolvedValueOnce({
+          deploymentGenerateSignedUploadUrl: {
+            signedUploadUrl: 'signed-upload-url',
+          },
+        })
+        .mockResolvedValueOnce({
+          appDeploy: {
+            deployment: {
+              uuid: 'deployment-uuid',
+              id: 1,
+              versionTag: 'versionTag',
+              appModuleVersions: [
+                {
+                  uuid: 'app-module-uuid',
+                  registrationId: 'registration-uuid',
+                  validationErrors: [],
+                },
+              ],
+            },
+            userErrors: [
+              {
+                field: [],
+                message: 'No release error message.',
+                category: '',
+                details: [],
+              },
+            ],
+          },
+        })
+      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
+      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      vi.mocked(randomUUID).mockReturnValue('random-uuid')
+      await writeFile(joinPath(tmpDir, 'test.zip'), '')
+
+      // When
+      const result = await uploadExtensionsBundle({
+        apiKey: 'app-id',
+        bundlePath: joinPath(tmpDir, 'test.zip'),
+        appModules: [
+          {uuid: '123', config: '{}', context: ''},
+          {uuid: '456', config: '{}', context: ''},
+        ],
+        token: 'api-token',
+        extensionIds: {
+          'amortizable-marketplace-ext': '123',
+          'amortizable-marketplace-ext-2': '456',
+        },
+        deploymentMode: 'unified',
+      })
+
+      // Then
+      expect(result).toEqual({
+        validationErrors: [],
+        versionTag: 'versionTag',
+        deployError: 'No release error message.',
+      })
     })
   })
 })
@@ -1035,6 +1157,82 @@ describe('deploymentErrorsToCustomSections', () => {
       {
         title: 'admin-link',
         body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+      },
+    ])
+  })
+
+  test('returns an array of custom sections when given a single generic error message', () => {
+    // Given
+    const errors = [
+      {
+        field: [],
+        message: 'First error message.',
+        category: '',
+        details: [],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {
+      'amortizable-marketplace-ext': '123',
+      'amortizable-marketplace-ext-2': '456',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        body: 'First error message.',
+      },
+      {
+        title: 'Next Steps',
+        body: {
+          list: {
+            items: ['View details about this version in the Partner Dashboard.'],
+          },
+        },
+      },
+    ])
+  })
+
+  test('returns an array of custom sections when given multiple generic error messages', () => {
+    // Given
+    const errors = [
+      {
+        field: [],
+        message: 'First error message.',
+        category: '',
+        details: [],
+      },
+      {
+        field: [],
+        message: 'Second error message.',
+        category: '',
+        details: [],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {
+      'amortizable-marketplace-ext': '123',
+      'amortizable-marketplace-ext-2': '456',
+    })
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        body: {
+          list: {
+            items: ['First error message.', 'Second error message.'],
+          },
+        },
+      },
+      {
+        title: 'Next Steps',
+        body: {
+          list: {
+            items: ['View details about this version in the Partner Dashboard.'],
+          },
+        },
       },
     ])
   })

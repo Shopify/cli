@@ -1,4 +1,4 @@
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType, getAppScopes} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -70,6 +70,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+
   if (!configurationObject) return fallbackOutput
 
   const parseResult = schema.safeParse(configurationObject)
@@ -102,7 +103,7 @@ export async function findSpecificationForConfig(
   const {type} = TypeSchema.parse(obj)
   const specification = findSpecificationForType(specifications, type)
 
-  if (!specification) {
+  if (specifications.length > 0 && !specification) {
     const isShopifolk = await isShopify()
     const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
     abortOrReport(
@@ -469,7 +470,7 @@ async function logMetadataForLoadedApp(
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
-        app.configuration.scopes
+        getAppScopes(app.configuration)
           .split(',')
           .map((scope) => scope.trim())
           .sort(),
@@ -493,7 +494,7 @@ async function logMetadataForLoadedApp(
 
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
-    const validFileRegex = /^shopify\.app(\.\w+)?\.toml$/g
+    const validFileRegex = /^shopify\.app(\.[-_\w]+)?\.toml$/g
     if (validFileRegex.test(config)) {
       return config
     }

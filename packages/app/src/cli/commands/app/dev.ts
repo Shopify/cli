@@ -13,6 +13,11 @@ export default class Dev extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    config: Flags.string({
+      hidden: false,
+      description: 'Name of the config file.',
+      env: 'SHOPIFY_FLAG_APP_CONFIG',
+    }),
     'api-key': Flags.string({
       hidden: true,
       description: 'The API key of your app.',
@@ -73,7 +78,7 @@ export default class Dev extends Command {
       exclusive: ['tunnel-url', 'tunnel'],
     }),
     tunnel: Flags.string({
-      hidden: true,
+      hidden: false,
       description: 'Select the tunnel provider',
       env: 'SHOPIFY_FLAG_TUNNEL',
       default: 'cloudflare',
@@ -113,6 +118,7 @@ export default class Dev extends Command {
 
     await dev({
       directory: flags.path,
+      config: flags.config,
       apiKey,
       storeFqdn: flags.store,
       reset: flags.reset,

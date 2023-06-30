@@ -1,5 +1,6 @@
 import ScalarDict from './ScalarDict.js'
 import {Row} from './Row.js'
+import {unstyled} from '../../../../../public/node/output.js'
 import React from 'react'
 import {Box} from 'ink'
 import {ForegroundColor} from 'chalk'
@@ -24,7 +25,7 @@ function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: Tabl
         return 0
       }
 
-      return String(value).length
+      return unstyled(String(value)).length
     })
 
     return {

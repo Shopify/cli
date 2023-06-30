@@ -40,31 +40,31 @@ validation_url = "https://validation.test.dev"
 
 [[settings.fields]]
 key = "customer_id"
-name = "Customer ID"
+type = "customer_reference"
 description = ""
+name = "Customer ID"
 required = true
-type = "commerce-object-id"
 
 [[settings.fields]]
 key = "product_id"
-name = "Product ID"
+type = "product_reference"
 description = ""
+name = "Product ID"
 required = true
-type = "commerce-object-id"
 
 [[settings.fields]]
 key = "email field"
-name = "email label"
 description = "email help"
-required = false
 type = "email"
+name = "email label"
+required = false
 
 [[settings.fields]]
 key = "number name"
-name = "number label"
 description = "number help"
+type = "number_integer"
+name = "number label"
 required = true
-type = "number"
 `)
   })
 
@@ -76,10 +76,12 @@ type = "number"
       title: 'trigger ext!"*^ÑÇ¨:"!',
       type: 'flow_trigger_definition',
       activeVersion: {
-        config: '{"title":"trigger title","description":"active description","feature_version":2,"fields":[]}',
+        config:
+          '{"title":"trigger title","description":"trigger description","feature_version":2,"fields":[{"description":"","name":"customer_id","id":"2ed1d556-be40-488b-b4a1-3456a79d2963","uiType":"customer"},{"description":"number description","name":"number property","id":"1b76c360-f0c3-4a05-a845-d910e3546a43","uiType":"number"},{"description":"email description","name":"email name","id":"75c1a5f3-f9d1-46f8-8383-b22798fe8f89","uiType":"email"}]}',
       },
       draftVersion: {
-        config: '{"title":"trigger title","description":"draft description","feature_version":2,"fields":[]}',
+        config:
+          '{"title":"trigger title","description":"trigger description","feature_version":2,"fields":[{"description":"","name":"customer_id","id":"2ed1d556-be40-488b-b4a1-3456a79d2963","uiType":"customer"},{"description":"number description","name":"number property","id":"1b76c360-f0c3-4a05-a845-d910e3546a43","uiType":"number"},{"description":"email description","name":"email name","id":"75c1a5f3-f9d1-46f8-8383-b22798fe8f89","uiType":"email"}]}',
       },
     }
 
@@ -92,11 +94,26 @@ type = "number"
     expect(parsed.type).toEqual('flow_trigger')
     expect(got).toEqual(`name = 'trigger ext!"*^ÑÇ¨:"!'
 type = "flow_trigger"
-description = "active description"
+description = "trigger description"
 
 [[extensions]]
 type = "flow_trigger"
-description = "active description"
+description = "trigger description"
+
+[[settings.fields]]
+key = "customer_id"
+type = "customer_reference"
+description = ""
+
+[[settings.fields]]
+key = "number property"
+description = "number description"
+type = "number_integer"
+
+[[settings.fields]]
+key = "email name"
+description = "email description"
+type = "email"
 `)
   })
 })

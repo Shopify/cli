@@ -48,7 +48,12 @@ module.exports = {
         const callee = node.callee
         const functionName = callee.name
 
-        if (functionName === 'renderSuccess' || functionName === 'renderInfo' || functionName === 'renderWarning') {
+        if (
+          functionName === 'renderSuccess' ||
+          functionName === 'renderInfo' ||
+          functionName === 'renderWarning' ||
+          functionName === 'renderError'
+        ) {
           const firstArgument = node.arguments[0]
 
           if (firstArgument.type === 'ObjectExpression') {

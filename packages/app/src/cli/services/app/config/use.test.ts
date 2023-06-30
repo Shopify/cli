@@ -17,6 +17,30 @@ vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('use', () => {
+  test('clears currentConfiguration when reset is true', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: UseOptions = {
+        directory: tmp,
+        config: 'invalid',
+        reset: true,
+      }
+
+      // When
+      await use(options)
+
+      // Then
+      expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
+      expect(setAppInfo).not.toHaveBeenCalled()
+      expect(load).not.toHaveBeenCalled()
+
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Cleared current configuration.',
+        body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
+      })
+    })
+  })
+
   test('throws an error when config file does not exist', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -87,30 +111,6 @@ describe('use', () => {
     })
   })
 
-  test('clears currentConfiguration when reset is true', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const options: UseOptions = {
-        directory: tmp,
-        config: 'invalid',
-        reset: true,
-      }
-
-      // When
-      await use(options)
-
-      // Then
-      expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
-      expect(setAppInfo).not.toHaveBeenCalled()
-      expect(load).not.toHaveBeenCalled()
-
-      expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'Cleared current configuration.',
-        body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
-      })
-    })
-  })
-
   test('saves currentConfiguration with client_id and config name to localstorage', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -121,7 +121,15 @@ describe('use', () => {
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
 
-      const app = testAppWithConfig({config: {client_id: 'something'}})
+      const app = testAppWithConfig({
+        config: {
+          name: 'something',
+          client_id: 'something',
+          api_contact_email: 'bob@bob.com',
+          webhook_api_version: '2023-04',
+          application_url: 'https://example.com',
+        },
+      })
       vi.mocked(load).mockResolvedValue(app)
 
       // When
@@ -147,7 +155,15 @@ describe('use', () => {
       }
       vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
-      const app = testAppWithConfig({config: {client_id: 'other-id'}})
+      const app = testAppWithConfig({
+        config: {
+          name: 'something',
+          client_id: 'something',
+          api_contact_email: 'bob@bob.com',
+          webhook_api_version: '2023-04',
+          application_url: 'https://example.com',
+        },
+      })
       vi.mocked(load).mockResolvedValue(app)
 
       // When

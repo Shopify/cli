@@ -877,4 +877,10 @@ describe('getAppConfigurationFileName', () => {
     expect(getAppConfigurationFileName('staging')).toEqual('shopify.app.staging.toml')
     expect(getAppConfigurationFileName('local')).toEqual('shopify.app.local.toml')
   })
+
+  test('supports names with dashes and underscores', async () => {
+    // When / Then
+    expect(getAppConfigurationFileName('cool-whip')).toEqual('shopify.app.cool-whip.toml')
+    expect(getAppConfigurationFileName('lucky_dog')).toEqual('shopify.app.lucky_dog.toml')
+  })
 })

@@ -25,7 +25,7 @@ export interface Identifiers {
 }
 
 export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
-type UpdateAppIdentifiersCommand = 'dev' | 'deploy'
+type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
   identifiers: UuidOnlyIdentifiers
@@ -59,7 +59,10 @@ export async function updateAppIdentifiers(
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
-  const write = JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) && command === 'deploy'
+
+  const write =
+    JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) &&
+    (command === 'deploy' || command === 'release')
   dotenvFile.variables = updatedVariables
   if (write) {
     await writeDotEnv(dotenvFile)

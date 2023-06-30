@@ -57,6 +57,7 @@ const MANIFEST_VERSION = '3'
 export interface DevOptions {
   directory: string
   id?: number
+  config?: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -78,7 +79,7 @@ async function dev(options: DevOptions) {
   const tunnelPort = await getAvailableTCPPort()
 
   let tunnelClient: TunnelClient | undefined
-  if (!options.tunnelUrl) {
+  if (!options.tunnelUrl && !options.noTunnel) {
     tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
   }
 
@@ -89,9 +90,11 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
+    config,
+    deploymentMode,
   } = await ensureDevContext(options, token)
 
-  if (!options.tunnelUrl && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
+  if (!options.tunnelUrl && !options.noTunnel && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
     // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
     tunnelClient?.stopTunnel()
     tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
@@ -99,7 +102,8 @@ async function dev(options: DevOptions) {
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
-  let localApp = await load({directory: options.directory, specifications})
+
+  let localApp = await load({directory: options.directory, specifications, configName: config})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
@@ -147,8 +151,9 @@ async function dev(options: DevOptions) {
         appDirectory: localApp.directory,
         cachedUpdateURLs,
         newApp: remoteApp.newApp,
+        localApp,
       })
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token)
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
     }
   }
@@ -224,6 +229,7 @@ async function dev(options: DevOptions) {
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
+      deploymentMode,
       token,
       envIdentifiers: prodEnvIdentifiers,
     })
@@ -258,7 +264,7 @@ async function dev(options: DevOptions) {
       ensureAuthenticatedStorefront(),
       themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
     ])
-    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token)
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, deploymentMode === 'unified')
     additionalProcesses.push(devExt)
   }
 
@@ -330,6 +336,7 @@ function devThemeExtensionTarget(
   adminSession: AdminSession,
   storefrontToken: string,
   token: string,
+  unifiedDeployment = false,
 ): OutputProcess {
   return {
     prefix: 'extensions',
@@ -342,6 +349,7 @@ function devThemeExtensionTarget(
         stdout,
         stderr,
         signal,
+        unifiedDeployment,
       })
     },
   }

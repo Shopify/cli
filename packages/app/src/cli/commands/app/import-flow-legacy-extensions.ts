@@ -8,7 +8,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class AppImportFlowExtension extends Command {
-  static description = 'Deploy your Shopify app.'
+  static description = 'Import dashboard-managed flow extensions into your app.'
 
   static flags = {
     ...globalFlags,
