@@ -103,6 +103,10 @@ describe('hookStart', () => {
 
     // Then
     expect(exec).toBeCalledTimes(5)
-    expect(result).toEqual({status: 'error', message: 'Could not start tunnel, max retries reached'})
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Could not start Cloudflare tunnel, max retries reached.',
+      tryMessage: expect.anything(),
+    })
   })
 })
