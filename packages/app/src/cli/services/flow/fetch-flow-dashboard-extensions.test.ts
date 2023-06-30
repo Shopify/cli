@@ -1,4 +1,4 @@
-import {getActiveDashboardExtensions} from './fetch.js'
+import {getActiveDashboardExtensions} from './fetch-flow-dashboard-extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {describe, expect, vi} from 'vitest'
 

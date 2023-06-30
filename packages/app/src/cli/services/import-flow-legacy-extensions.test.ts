@@ -1,6 +1,6 @@
 import {importFlowExtensions} from './import-flow-legacy-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
-import {getActiveDashboardExtensions} from './flow/fetch.js'
+import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
 import {testApp} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -14,7 +14,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
-vi.mock('./flow/fetch.js')
+vi.mock('./flow/fetch-flow-dashboard-extensions.js')
 
 const organizationApp: OrganizationApp = {
   id: 'id',

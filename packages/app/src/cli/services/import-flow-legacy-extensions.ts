@@ -1,7 +1,7 @@
 import {fetchAppAndIdentifiers} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
-import {getActiveDashboardExtensions} from './flow/fetch.js'
+import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
