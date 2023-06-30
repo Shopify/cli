@@ -26,7 +26,7 @@ import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
 import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -402,6 +402,8 @@ dev_store_url = "domain1"
           },
         },
       })
+
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.dev.toml')
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
@@ -433,7 +435,7 @@ dev_store_url = "domain1"
             command: 'npm run dev -- --reset',
           },
         ],
-        headline: 'Using these settings:',
+        headline: 'Using shopify.app.dev.toml:',
       })
     })
   })
