@@ -149,8 +149,6 @@ async function triggerUpgradeAPI(
   fromTheme: number,
   toTheme: number,
 ): Promise<Theme> {
-  const name = `updated-theme-${fromTheme}-${toTheme}`
-  const role = 'unpublished'
   try {
     const theme = await upgradeTheme({
       fromTheme,
