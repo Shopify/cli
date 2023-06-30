@@ -120,7 +120,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.useExtensionsFramework = false
     this.outputPath = this.directory
 
-    if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
+    if (this.features.includes('esbuild')) {
       this.outputPath = joinPath(this.directory, 'dist/main.js')
     }
 
