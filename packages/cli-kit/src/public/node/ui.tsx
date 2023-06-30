@@ -526,6 +526,8 @@ export function renderText({text, logLevel = 'info', logger = consoleLog}: Rende
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
 export const keypress = async () => {
+  throwInNonTTY({message: 'Press any key'})
+
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     const handler = (buffer: Buffer) => {
@@ -552,7 +554,7 @@ interface ThrowInNonTTYOptions {
   stdin?: NodeJS.ReadStream
 }
 
-function throwInNonTTY({message, stdin}: ThrowInNonTTYOptions) {
+function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions) {
   if (stdin || terminalSupportsRawMode()) return
 
   const promptText = tokenItemToString(message)
