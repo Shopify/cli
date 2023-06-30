@@ -215,6 +215,10 @@ async function outputCompletionMessage({
     return result
   }
 
+  const outputDeployedAndLiveMessage = (extension: ExtensionInstance) => {
+    return `${extension.localIdentifier} is live`
+  }
+
   const outputNextStep = async (extension: ExtensionInstance) => {
     const extensionId =
       registrations.app.extensionRegistrations.find((registration) => {
@@ -231,18 +235,23 @@ async function outputCompletionMessage({
     ]
   }
 
+  const nonFunctionExtensions = app.allExtensions.filter((ext) => !ext.isFunctionExtension)
+  const functionExtensions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
+
   const customSections: AlertCustomSection[] = [
     {
       title: 'Summary',
       body: {
         list: {
-          items: app.allExtensions.map(outputDeployedButNotLiveMessage),
+          items: [
+            ...nonFunctionExtensions.map(outputDeployedButNotLiveMessage),
+            ...functionExtensions.map(outputDeployedAndLiveMessage),
+          ],
         },
       },
     },
   ]
 
-  const nonFunctionExtensions = app.allExtensions.filter((ext) => !ext.isFunctionExtension)
   if (nonFunctionExtensions.length > 0) {
     customSections.push({
       title: 'Next steps',
