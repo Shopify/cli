@@ -554,8 +554,8 @@ interface ThrowInNonTTYOptions {
   stdin?: NodeJS.ReadStream
 }
 
-function throwInNonTTY({message}: ThrowInNonTTYOptions) {
-  if (terminalSupportsRawMode()) return
+function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions) {
+  if (stdin || terminalSupportsRawMode()) return
 
   const promptText = tokenItemToString(message)
   const errorMessage = `Failed to prompt:
