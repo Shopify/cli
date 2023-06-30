@@ -103,7 +103,7 @@ export async function findSpecificationForConfig(
   const {type} = TypeSchema.parse(obj)
   const specification = findSpecificationForType(specifications, type)
 
-  if (!specification) {
+  if (specifications.length > 0 && !specification) {
     const isShopifolk = await isShopify()
     const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
     abortOrReport(
@@ -494,7 +494,7 @@ async function logMetadataForLoadedApp(
 
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
-    const validFileRegex = /^shopify\.app(\.\w+)?\.toml$/g
+    const validFileRegex = /^shopify\.app(\.[-_\w]+)?\.toml$/g
     if (validFileRegex.test(config)) {
       return config
     }
