@@ -112,7 +112,7 @@ export async function findSpecificationForConfig(
   const {type} = TypeSchema.parse(obj)
   const specification = findSpecificationForType(specifications, type)
 
-  if (specifications.length > 0 && !specification) {
+  if (!specification) {
     const isShopifolk = await isShopify()
     const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
     abortOrReport(
