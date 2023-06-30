@@ -57,10 +57,9 @@ function AutocompletePrompt<T>({
   const canSearch = initialChoices.length >= PAGE_SIZE
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [promptAreaHeight, setPromptAreaHeight] = useState(1)
+  const [promptAreaHeight, setPromptAreaHeight] = useState(0)
   const currentAvailableLines = stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
-  const isFullscreen = wrapperHeight >= stdout.rows - 1
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -94,9 +93,6 @@ function AutocompletePrompt<T>({
     function onResize() {
       const newAvailableLines = stdout.rows - promptAreaHeight - 5
       if (newAvailableLines !== availableLines) {
-        if (isFullscreen) {
-          stdout.write(ansiEscapes.clearTerminal)
-        }
         setAvailableLines(newAvailableLines)
       }
     }
@@ -107,7 +103,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines, isFullscreen])
+  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines])
 
   const {isAborted} = useAbortSignal(abortSignal)
 

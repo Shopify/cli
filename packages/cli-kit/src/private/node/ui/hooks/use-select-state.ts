@@ -75,12 +75,6 @@ interface State<T> {
    * Value of the selected option.
    */
   value: T | undefined
-
-  /**
-   * Number of lines lost to groups.
-   * This is used to calculate the number of visible options.
-   */
-  maxLinesLostToGroups: number
 }
 
 type Action<T> = SelectNextOptionAction<T> | SelectPreviousOptionAction<T> | SelectOptionAction<T> | ResetAction<T>
@@ -136,7 +130,7 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
       }
 
       const nextVisibleToIndex = next.index
-      const nextVisibleFromIndex = Math.min(next.index - 1, nextVisibleToIndex - state.visibleOptionCount + 1)
+      const nextVisibleFromIndex = nextVisibleToIndex - state.visibleOptionCount + 1
 
       return {
         ...state,
@@ -177,8 +171,8 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         }
       }
 
-      const nextVisibleFromIndex = Math.max(0, previous.index)
-      const nextVisibleToIndex = nextVisibleFromIndex + (state.visibleOptionCount - 1)
+      const nextVisibleFromIndex = previous.index
+      const nextVisibleToIndex = nextVisibleFromIndex + state.visibleOptionCount - 1
 
       return {
         ...state,
@@ -229,11 +223,6 @@ export interface UseSelectStateProps<T> {
    * Initially selected option's value.
    */
   defaultValue?: T
-
-  /**
-   * Maximum number of lines lost to groups at the current height.
-   */
-  maxLinesLostToGroups: number
 }
 
 export type SelectState<T> = Pick<State<T>, 'visibleOptionCount' | 'visibleFromIndex' | 'visibleToIndex' | 'value'> & {
@@ -258,13 +247,9 @@ export type SelectState<T> = Pick<State<T>, 'visibleOptionCount' | 'visibleFromI
   selectOption: (option: Option<T>) => void
 }
 
-type CreateDefaultStateProps<T> = Pick<
-  UseSelectStateProps<T>,
-  'maxLinesLostToGroups' | 'visibleOptionCount' | 'defaultValue' | 'options'
->
+type CreateDefaultStateProps<T> = Pick<UseSelectStateProps<T>, 'visibleOptionCount' | 'defaultValue' | 'options'>
 
 const createDefaultState = <T>({
-  maxLinesLostToGroups,
   visibleOptionCount: customVisibleOptionCount,
   defaultValue,
   options,
@@ -284,7 +269,6 @@ const createDefaultState = <T>({
 
   return {
     optionMap,
-    maxLinesLostToGroups,
     visibleOptionCount,
     visibleFromIndex: 0,
     visibleToIndex: visibleOptionCount,
@@ -293,24 +277,15 @@ const createDefaultState = <T>({
   }
 }
 
-export const useSelectState = <T>({
-  visibleOptionCount,
-  options,
-  defaultValue,
-  maxLinesLostToGroups,
-}: UseSelectStateProps<T>) => {
-  const [state, dispatch] = useReducer(
-    reducer,
-    {visibleOptionCount, defaultValue, options, maxLinesLostToGroups},
-    createDefaultState,
-  )
+export const useSelectState = <T>({visibleOptionCount, options, defaultValue}: UseSelectStateProps<T>) => {
+  const [state, dispatch] = useReducer(reducer, {visibleOptionCount, defaultValue, options}, createDefaultState)
   const [lastOptions, setLastOptions] = useState(options)
   const [lastVisibleOptionCount, setLastVisibleOptionCount] = useState(visibleOptionCount)
 
   if (options !== lastOptions && !isDeepStrictEqual(options, lastOptions)) {
     dispatch({
       type: 'reset',
-      state: createDefaultState({visibleOptionCount, defaultValue, options, maxLinesLostToGroups}),
+      state: createDefaultState({visibleOptionCount, defaultValue, options}),
     })
 
     setLastOptions(options)
@@ -319,7 +294,7 @@ export const useSelectState = <T>({
   if (visibleOptionCount !== lastVisibleOptionCount) {
     dispatch({
       type: 'reset',
-      state: createDefaultState({visibleOptionCount, defaultValue, options, maxLinesLostToGroups}),
+      state: createDefaultState({visibleOptionCount, defaultValue, options}),
     })
 
     setLastVisibleOptionCount(visibleOptionCount)
@@ -346,7 +321,7 @@ export const useSelectState = <T>({
 
   const visibleOptions = useMemo(() => {
     return options.slice(state.visibleFromIndex)
-  }, [options, state.visibleFromIndex, state.visibleToIndex])
+  }, [options, state.visibleFromIndex])
 
   return {
     visibleFromIndex: state.visibleFromIndex,

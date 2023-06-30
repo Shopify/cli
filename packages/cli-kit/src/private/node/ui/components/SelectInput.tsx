@@ -156,14 +156,12 @@ function SelectInputInner<T>(
   }
 
   const maxLinesLostToGroups = maximumLinesLostToGroups(items)
-
   const limit = Math.max(2, availableLines - maxLinesLostToGroups)
   const hasLimit = items.length > limit
 
   const inputStack = useRef<string | null>(null)
 
   const state = useSelectState({
-    maxLinesLostToGroups,
     visibleOptionCount: limit,
     options: itemsWithKeys,
     defaultValue,
@@ -296,7 +294,7 @@ function SelectInputInner<T>(
                 {morePagesMessage ? `  ${morePagesMessage}` : null}
               </Text>
             ) : null}
-            {hasLimit ? <Text dimColor>{`${items.length} options available.`}</Text> : null}
+            {hasLimit ? <Text dimColor>{`${items.length} options available, ${limit} visible.`}</Text> : null}
           </Box>
         )}
       </Box>
