@@ -94,10 +94,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
-  get isDraftable() {
-    return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
-  }
-
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -134,9 +130,24 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  deployConfig(apiKey: string, moduleId?: string): Promise<{[key: string]: unknown} | undefined> {
+  isDraftable(unifiedDeployment: boolean) {
+    return !this.isPreviewable && !this.isThemeExtension && (unifiedDeployment || !this.isFunctionExtension)
+  }
+
+  async deployConfig({
+    apiKey,
+    token,
+    unifiedDeployment,
+  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+    if (this.isFunctionExtension) {
+      if (!unifiedDeployment) return undefined
+      const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
+      return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
+    }
+
     return (
-      this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId) ??
+      // module id param is not necessary for non-Function extensions
+      this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined) ??
       Promise.resolve(undefined)
     )
   }
@@ -198,6 +209,24 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build.command
   }
 
+  get watchPaths() {
+    const config = this.configuration as unknown as FunctionConfigType
+    const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
+
+    if (!this.isJavaScript && configuredPaths.length === 0) {
+      return null
+    }
+
+    const watchPaths: string[] = configuredPaths ?? []
+    if (this.isJavaScript && configuredPaths.length === 0) {
+      watchPaths.push(joinPath('src', '**', '*.js'))
+      watchPaths.push(joinPath('src', '**', '*.ts'))
+    }
+    watchPaths.push(joinPath('**', 'input*.graphql'))
+
+    return watchPaths.map((path) => joinPath(this.directory, path))
+  }
+
   get inputQueryPath() {
     return joinPath(this.directory, 'input.graphql')
   }
@@ -217,8 +246,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
     if (this.type === 'tax_calculation') {
-      await touchFile(this.outputPath)
-      await writeFile(this.outputPath, '(()=>{})();')
+      const outputJsFilePath = joinPath(this.outputPath, 'dist/main.js')
+      await touchFile(outputJsFilePath)
+      await writeFile(outputJsFilePath, '(()=>{})();')
     }
   }
 
@@ -239,20 +269,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    let configValue = await this.deployConfig(apiKey, undefined)
-
-    if (this.isFunctionExtension) {
-      if (unifiedDeployment) {
-        const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, identifiers.app, token)
-        configValue = await this.deployConfig(apiKey, moduleId)
-      } else {
-        return undefined
-      }
-    }
-
+    const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
     if (!configValue) return undefined
     return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
   }
+}
+
+export interface ExtensionDeployConfigOptions {
+  apiKey: string
+  token: string
+  unifiedDeployment: boolean
 }
 
 export interface ExtensionBundleConfigOptions {

@@ -3,9 +3,9 @@ import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const TaxCalculationsSchema = BaseSchema.extend({
-  productionApiBaseUrl: zod.string(),
-  benchmarkApiBaseUrl: zod.string().optional(),
-  calculateTaxesApiEndpoint: zod.string(),
+  production_api_base_url: zod.string(),
+  benchmark_api_base_url: zod.string().optional(),
+  calculate_taxes_api_endpoint: zod.string(),
 })
 
 const spec = createExtensionSpecification({
@@ -16,9 +16,9 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => [],
   deployConfig: async (config, _) => {
     return {
-      production_api_base_url: config.productionApiBaseUrl,
-      benchmark_api_base_url: config.benchmarkApiBaseUrl,
-      calculate_taxes_api_endpoint: config.calculateTaxesApiEndpoint,
+      production_api_base_url: config.production_api_base_url,
+      benchmark_api_base_url: config.benchmark_api_base_url,
+      calculate_taxes_api_endpoint: config.calculate_taxes_api_endpoint,
       metafields: config.metafields,
     }
   },

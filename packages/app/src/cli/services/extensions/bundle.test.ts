@@ -104,6 +104,68 @@ describe('bundleExtension()', () => {
     `)
     const plugins = options.plugins?.map(({name}) => name)
     expect(plugins).toContain('graphql-loader')
+    expect(plugins).toContain('shopify:deduplicate-react')
+  })
+
+  test('can switch off React deduplication', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const stdout: any = {
+      write: vi.fn(),
+    }
+    const stderr: any = {
+      write: vi.fn(),
+    }
+    const app = testApp({
+      directory: '/project',
+      dotenv: {
+        path: '/project/.env',
+        variables: {
+          FOO: 'BAR',
+        },
+      },
+      allExtensions: [extension],
+    })
+    const esbuildWatch = vi.fn()
+    const esbuildDispose = vi.fn()
+    const esbuildRebuild = vi.fn(esbuildResultFixture)
+
+    vi.mocked(esContext).mockResolvedValue({
+      rebuild: esbuildRebuild,
+      watch: esbuildWatch,
+      dispose: esbuildDispose,
+      cancel: vi.fn(),
+      serve: vi.fn(),
+    })
+
+    // When
+    await bundleExtension(
+      {
+        env: app.dotenv?.variables ?? {},
+        outputPath: extension.outputPath,
+        minify: true,
+        environment: 'production',
+        stdin: {
+          contents: 'console.log("mock stdin content")',
+          resolveDir: 'mock/resolve/dir',
+          loader: 'tsx',
+        },
+        stdout,
+        stderr,
+      },
+      {
+        ...process.env,
+        SHOPIFY_CLI_SKIP_ESBUILD_REACT_DEDUPLICATION: 'true',
+      },
+    )
+
+    // Then
+    const call = vi.mocked(esContext).mock.calls[0]!
+    expect(call).not.toBeUndefined()
+    const options = call[0]
+
+    const plugins = options.plugins?.map(({name}) => name)
+    expect(plugins).not.toContain('shopify:deduplicate-react')
   })
 
   test('stops the ESBuild when the abort signal receives an event', async () => {

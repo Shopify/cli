@@ -1,4 +1,4 @@
-import {App, AppInterface} from './app.js'
+import {App, AppConfiguration, AppInterface} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -8,6 +8,7 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
+import {OrganizationApp} from '../organization.js'
 
 export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App(
@@ -15,7 +16,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
-    app.configuration ?? {scopes: '', extensionDirectories: []},
+    app.configuration ?? {scopes: '', extension_directories: []},
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [],
@@ -31,6 +32,29 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
   return newApp
+}
+
+interface TestAppWithConfigOptions {
+  app?: Partial<AppInterface>
+  config: Partial<AppConfiguration>
+}
+export function testAppWithConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+  const configuration = {scopes: '', extension_directories: [], ...config}
+  return testApp({...app, configuration})
+}
+
+export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {
+  const defaultApp = {
+    id: '1',
+    title: 'app1',
+    apiKey: 'api-key',
+    apiSecretKeys: [{secret: 'api-secret'}],
+    organizationId: '1',
+    grantedScopes: [],
+    applicationUrl: 'https://example.com',
+    redirectUrlWhitelist: ['https://example.com/callback1'],
+  }
+  return {...defaultApp, ...app}
 }
 
 export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): Promise<ExtensionInstance> {
@@ -64,7 +88,7 @@ export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = 
   return extension
 }
 
-export async function testThemeExtensions(): Promise<ExtensionInstance> {
+export async function testThemeExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,
@@ -77,11 +101,53 @@ export async function testThemeExtensions(): Promise<ExtensionInstance> {
   const extension = new ExtensionInstance({
     configuration,
     configurationPath: '',
-    directory: './my-extension',
+    directory,
     specification,
   })
 
-  extension.outputPath = './my-extension'
+  return extension
+}
+
+export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'web pixel name',
+    type: 'web_pixel' as const,
+    metafields: [],
+    runtime_context: 'strict',
+    settings: [],
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
+
+  return extension
+}
+
+export async function testTaxCalculationExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'tax',
+    type: 'tax_calculation' as const,
+    metafields: [],
+    runtime_context: 'strict',
+    settings: [],
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
 
   return extension
 }
@@ -94,8 +160,8 @@ function defaultFunctionConfiguration(): FunctionConfigType {
     build: {
       command: 'echo "hello world"',
     },
-    apiVersion: '2022-07',
-    configurationUi: true,
+    api_version: '2022-07',
+    configuration_ui: true,
     metafields: [],
   }
 }

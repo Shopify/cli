@@ -23,7 +23,10 @@ export type OrganizationApp = MinimalOrganizationApp & {
   grantedScopes: string[]
   betas?: {
     unifiedAppDeployment?: boolean
+    unifiedAppDeploymentOptIn?: boolean
   }
+  applicationUrl: string
+  redirectUrlWhitelist: string[]
 }
 
 export interface OrganizationStore {

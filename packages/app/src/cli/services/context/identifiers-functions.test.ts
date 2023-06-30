@@ -6,6 +6,7 @@ import {RemoteSource} from './identifiers.js'
 import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {AppInterface} from '../../models/app/app.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
+import {DeploymentMode} from '../deploy/mode.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
@@ -41,12 +42,16 @@ const LOCAL_APP = (functionExtensions: ExtensionInstance[]): AppInterface => {
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
+    configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
     allExtensions: functionExtensions,
   })
 }
 
-const options = (functionExtensions: ExtensionInstance[], identifiers: any = {}) => {
+const options = (
+  functionExtensions: ExtensionInstance[],
+  identifiers: any = {},
+  deploymentMode: DeploymentMode = 'legacy',
+) => {
   return {
     app: LOCAL_APP(functionExtensions),
     token: 'token',
@@ -54,6 +59,7 @@ const options = (functionExtensions: ExtensionInstance[], identifiers: any = {})
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
+    deploymentMode,
   }
 }
 
@@ -80,8 +86,8 @@ beforeAll(async () => {
         command: 'make build',
         path: 'dist/index.wasm',
       },
-      configurationUi: false,
-      apiVersion: '2022-07',
+      configuration_ui: false,
+      api_version: '2022-07',
       metafields: [],
     },
   })
@@ -96,8 +102,8 @@ beforeAll(async () => {
         command: 'make build',
         path: 'dist/index.wasm',
       },
-      configurationUi: false,
-      apiVersion: '2022-07',
+      configuration_ui: false,
+      api_version: '2022-07',
       metafields: [],
     },
   })
@@ -112,8 +118,8 @@ beforeAll(async () => {
         command: 'make build',
         path: 'dist/index.wasm',
       },
-      configurationUi: false,
-      apiVersion: '2022-07',
+      configuration_ui: false,
+      api_version: '2022-07',
       metafields: [],
     },
   })
@@ -304,21 +310,27 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+    const opts = options([FUNCTION_A, FUNCTION_A_2])
 
     // When
-    await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    await ensureFunctionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
-    expect(deployConfirmationPrompt).toBeCalledWith({
-      question: 'Make the following changes to your functions in Shopify Partners?',
-      identifiers: {
-        FUNCTION_A: 'ID_A',
-        FUNCTION_A_2: 'ID_A_2',
+    expect(deployConfirmationPrompt).toBeCalledWith(
+      {
+        question: 'Make the following changes to your functions in Shopify Partners?',
+        identifiers: {
+          FUNCTION_A: 'ID_A',
+          FUNCTION_A_2: 'ID_A_2',
+        },
+        onlyRemote: [],
+        toCreate: [],
+        dashboardOnly: [],
       },
-      onlyRemote: [],
-      toCreate: [],
-      dashboardOnly: [],
-    })
+      'legacy',
+      opts.appId,
+      opts.token,
+    )
   })
 
   test('skips confirmation prompt if --force is passed', async () => {

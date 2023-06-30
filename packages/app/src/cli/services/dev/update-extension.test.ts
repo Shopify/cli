@@ -5,7 +5,7 @@ import {findSpecificationForConfig, parseConfigurationFile} from '../../models/a
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -16,13 +16,14 @@ vi.mock('../../models/app/loader.js')
 const token = 'mock-token'
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
+const stdout = {write: vi.fn()} as any
 const stderr = {write: vi.fn()} as any
 
 describe('updateExtensionDraft()', () => {
   test('updates draft successfully and outputs debug message', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
-        runtimeContext: 'strict',
+        runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
       } as any
@@ -48,7 +49,9 @@ describe('updateExtensionDraft()', () => {
         token,
         apiKey,
         registrationId,
+        stdout,
         stderr,
+        unifiedDeployment: true,
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
@@ -60,8 +63,9 @@ describe('updateExtensionDraft()', () => {
       })
 
       // Check if outputDebug is called with success message
-      expect(outputDebug).toHaveBeenCalledWith(
-        `Drafts updated successfully for extension: ${mockExtension.localIdentifier}`,
+      expect(outputInfo).toHaveBeenCalledWith(
+        `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
+        stdout,
       )
     })
   })
@@ -69,8 +73,8 @@ describe('updateExtensionDraft()', () => {
   test('updates draft successfully when extension doesnt support esbuild', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
-        productionApiBaseUrl: 'url1',
-        benchmarkApiBaseUrl: 'url2',
+        production_api_base_url: 'url1',
+        benchmark_api_base_url: 'url2',
         type: 'tax_calculation',
       } as any
 
@@ -93,7 +97,9 @@ describe('updateExtensionDraft()', () => {
         token,
         apiKey,
         registrationId,
+        stdout,
         stderr,
+        unifiedDeployment: true,
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
@@ -104,8 +110,9 @@ describe('updateExtensionDraft()', () => {
       })
 
       // Check if outputDebug is called with success message
-      expect(outputDebug).toHaveBeenCalledWith(
-        `Drafts updated successfully for extension: ${mockExtension.localIdentifier}`,
+      expect(outputInfo).toHaveBeenCalledWith(
+        `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
+        stdout,
       )
     })
   })
@@ -133,7 +140,9 @@ describe('updateExtensionDraft()', () => {
         token,
         apiKey,
         registrationId,
+        stdout,
         stderr,
+        unifiedDeployment: true,
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error while updating drafts: Error1, Error2')
@@ -147,7 +156,7 @@ describe('updateExtensionConfig()', () => {
 
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
-        runtimeContext: 'strict',
+        runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
       } as any
@@ -168,7 +177,7 @@ describe('updateExtensionConfig()', () => {
 
       vi.mocked(findSpecificationForConfig).mockResolvedValue({} as any)
       vi.mocked(parseConfigurationFile).mockResolvedValue({
-        runtimeContext: 'strict',
+        runtime_context: 'strict',
         settings: {type: 'object', another: 'setting'},
         type: 'web_pixel_extension',
       } as any)
@@ -180,8 +189,10 @@ describe('updateExtensionConfig()', () => {
         token,
         apiKey,
         registrationId,
+        stdout,
         stderr,
         specifications,
+        unifiedDeployment: true,
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
@@ -193,8 +204,9 @@ describe('updateExtensionConfig()', () => {
       })
 
       // Check if outputDebug is called with success message
-      expect(outputDebug).toHaveBeenCalledWith(
-        `Drafts updated successfully for extension: ${mockExtension.localIdentifier}`,
+      expect(outputInfo).toHaveBeenCalledWith(
+        `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
+        stdout,
       )
     })
   })

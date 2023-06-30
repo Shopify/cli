@@ -1,7 +1,8 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {DeploymentMode} from '../deploy/mode.js'
+import {fetchActiveAppVersion} from '../dev/fetch.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -44,8 +45,51 @@ interface SourceSummary {
 
 export async function deployConfirmationPrompt(
   {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
-  partnersApp?: OrganizationApp,
+  deploymentMode: DeploymentMode,
+  apiKey: string,
+  token: string,
 ): Promise<boolean> {
+  let infoTable: InfoTableSection[] = await buildUnifiedDeploymentInfoPrompt(
+    apiKey,
+    token,
+    identifiers,
+    toCreate,
+    dashboardOnly,
+    deploymentMode,
+  )
+  if (infoTable.length === 0) {
+    infoTable = buildLegacyDeploymentInfoPrompt({identifiers, toCreate, onlyRemote, dashboardOnly})
+  }
+
+  if (infoTable.length === 0) {
+    return true
+  }
+
+  const confirmationMessage = (() => {
+    switch (deploymentMode) {
+      case 'legacy':
+        return 'Yes, deploy to push changes'
+      case 'unified':
+        return 'Yes, release this new version'
+      case 'unified-skip-release':
+        return 'Yes, create this new version'
+    }
+  })()
+
+  return renderConfirmationPrompt({
+    message: question,
+    infoTable,
+    confirmationMessage,
+    cancellationMessage: 'No, cancel',
+  })
+}
+
+function buildLegacyDeploymentInfoPrompt({
+  identifiers,
+  toCreate,
+  onlyRemote,
+  dashboardOnly,
+}: Omit<SourceSummary, 'question'>) {
   const infoTable: InfoTableSection[] = []
 
   if (toCreate.length > 0) {
@@ -63,32 +107,80 @@ export async function deployConfirmationPrompt(
   }
 
   if (onlyRemote.length > 0) {
-    let missingLocallySection: InfoTableSection = {
-      header: 'Missing locally',
-      items: onlyRemote.map((source) => source.title),
+    infoTable.push({header: 'Missing locally', items: onlyRemote.map((source) => source.title)})
+  }
+
+  return infoTable
+}
+
+async function buildUnifiedDeploymentInfoPrompt(
+  apiKey: string,
+  token: string,
+  localRegistration: IdentifiersExtensions,
+  toCreate: LocalSource[],
+  dashboardOnly: RemoteSource[],
+  deploymentMode: DeploymentMode,
+) {
+  if (deploymentMode === 'legacy') return []
+
+  const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
+
+  if (!activeAppVersion.app.activeAppVersion) return []
+
+  const infoTable: InfoTableSection[] = []
+
+  const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
+    .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
+    .map((remoteRegistration) => remoteRegistration.registrationUuid)
+
+  let toCreateFinal: string[] = []
+  const toUpdate: string[] = []
+  let dashboardOnlyFinal = dashboardOnly
+  for (const [identifier, uuid] of Object.entries(localRegistration)) {
+    if (nonDashboardRemoteRegistrations.includes(uuid)) {
+      toUpdate.push(identifier)
+    } else {
+      toCreateFinal.push(identifier)
     }
 
-    if (partnersApp?.betas?.unifiedAppDeployment) {
-      missingLocallySection = {
-        ...missingLocallySection,
-        color: 'red',
-        helperText: 'Extensions missing locally will be removed for users when you publish this deployment',
-      }
+    dashboardOnlyFinal = dashboardOnlyFinal.filter((dashboardOnly) => dashboardOnly.uuid !== uuid)
+  }
+
+  toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
+  if (toCreateFinal.length > 0) {
+    infoTable.push({header: 'Add', items: toCreateFinal})
+  }
+
+  if (toUpdate.length > 0) {
+    infoTable.push({header: 'Update', items: toUpdate})
+  }
+
+  if (dashboardOnlyFinal.length > 0) {
+    infoTable.push({
+      header: 'Included from\nPartner dashboard',
+      items: dashboardOnlyFinal.map((source) => source.title),
+    })
+  }
+
+  const localRegistrationAndDashboard = [
+    ...Object.values(localRegistration),
+    ...dashboardOnly.map((source) => source.uuid),
+  ]
+  const onlyRemote = activeAppVersion.app.activeAppVersion.appModuleVersions
+    .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
+    .map((module) => module.registrationTitle)
+  if (onlyRemote.length > 0) {
+    const missingLocallySection: InfoTableSection = {
+      header: 'Removed',
+      color: 'red',
+      helperText: 'Will be removed for users when this version is released.',
+      items: onlyRemote,
     }
 
     infoTable.push(missingLocallySection)
   }
 
-  if (Object.keys(infoTable).length === 0) {
-    return new Promise((resolve) => resolve(true))
-  }
-
-  return renderConfirmationPrompt({
-    message: question,
-    infoTable,
-    confirmationMessage: 'Yes, deploy to push changes',
-    cancellationMessage: 'No, cancel',
-  })
+  return infoTable
 }
 
 export async function extensionMigrationPrompt(toMigrate: LocalRemoteSource[]): Promise<boolean> {

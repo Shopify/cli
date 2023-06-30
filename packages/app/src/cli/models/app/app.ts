@@ -1,46 +1,141 @@
 import {AppErrors} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {isType} from '../../utilities/types.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-export const AppConfigurationSchema = zod.object({
-  scopes: zod.string().default(''),
-  extensionDirectories: zod.array(zod.string()).optional(),
-  webDirectories: zod.array(zod.string()).optional(),
-})
+const LegacyAppSchema = zod
+  .object({
+    name: zod.string().optional(),
+    scopes: zod.string(),
+    extension_directories: zod.array(zod.string()).optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .strict()
+
+const AppSchema = zod
+  .object({
+    name: zod.string(),
+    client_id: zod.string(),
+    scopes: zod.string().optional(),
+    api_contact_email: zod.string().optional(),
+    webhook_api_version: zod.string().optional(),
+    application_url: zod.string().optional(),
+    embedded: zod.boolean().optional(),
+    auth: zod
+      .object({
+        redirect_urls: zod.array(zod.string()),
+      })
+      .optional(),
+    privacy_compliance_webhooks: zod
+      .object({
+        customer_deletion_url: zod.string(),
+        customer_data_request_url: zod.string(),
+        shop_deletion_url: zod.string(),
+      })
+      .optional(),
+    proxy: zod
+      .object({
+        url: zod.string(),
+        subpath: zod.string(),
+        prefix: zod.string(),
+      })
+      .optional(),
+    pos: zod
+      .object({
+        embedded: zod.boolean(),
+      })
+      .optional(),
+    app_preferences: zod
+      .object({
+        url: zod.string(),
+      })
+      .optional(),
+    cli: zod
+      .object({
+        automatically_update_urls_on_dev: zod.boolean().optional(),
+        dev_store_url: zod.string().optional(),
+      })
+      .optional(),
+    extension_directories: zod.array(zod.string()).optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .strict()
+
+export const AppConfigurationSchema = zod.union([AppSchema, LegacyAppSchema])
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isLegacyAppSchema(item: unknown): item is zod.infer<typeof LegacyAppSchema> {
+  return isType(LegacyAppSchema, item)
+}
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the current schema definition.
+ * @param item - the item to validate
+ * @param strict - whether to allow keys not defined in the schema
+ */
+export function isCurrentAppSchema(item: unknown): item is zod.infer<typeof AppSchema> {
+  return isType(AppSchema, item)
+}
+
+/**
+ * Get scopes from a given app.toml config file.
+ * @param config - a configuration file
+ */
+export function getAppScopes(config: AppConfiguration) {
+  if (isLegacyAppSchema(config)) {
+    return config.scopes
+  } else {
+    return config.scopes?.toString() ?? ''
+  }
+}
 
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
+  Background = 'background',
 }
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
 
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
-export const WebConfigurationSchema = zod.object({
-  type: zod.enum([WebType.Frontend, WebType.Backend]).default(WebType.Frontend),
-  authCallbackPath: zod
+const baseWebConfigurationSchema = zod.object({
+  auth_callback_path: zod
     .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
     .optional(),
-  webhooksPath: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
+  webhooks_path: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
   port: zod.number().max(65536).min(0).optional(),
   commands: zod.object({
     build: zod.string().optional(),
     dev: zod.string(),
   }),
+  name: zod.string().optional(),
 })
+const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
+export const WebConfigurationSchema = zod.union([
+  baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
+  baseWebConfigurationSchema.extend({type: webTypes}),
+])
+export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema>
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema>
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
+export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {
   directory: string
-  configuration: WebConfiguration
+  configuration: ProcessedWebConfiguration
   framework?: string
 }
 

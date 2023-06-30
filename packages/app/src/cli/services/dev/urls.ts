@@ -1,5 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setAppInfo} from '../local-storage.js'
@@ -14,6 +14,8 @@ import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {writeFileSync} from '@shopify/cli-kit/node/fs'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -103,7 +105,7 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
     const pollTunnelStatus = async () => {
       const result = tunnelClient.getTunnelStatus()
       outputDebug(`Polling tunnel status for ${tunnelClient.provider} (attempt ${retries}): ${result.status}`)
-      if (result.status === 'error') return reject(new BugError(result.message))
+      if (result.status === 'error') return reject(new BugError(result.message, result.tryMessage))
       if (result.status === 'connected') {
         resolve(result.url)
       } else {
@@ -145,13 +147,30 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
   }
 }
 
-export async function updateURLs(urls: PartnersURLs, apiKey: string, token: string): Promise<void> {
+export async function updateURLs(
+  urls: PartnersURLs,
+  apiKey: string,
+  token: string,
+  localApp?: AppInterface,
+): Promise<void> {
   const variables: UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = UpdateURLsQuery
   const result: UpdateURLsQuerySchema = await partnersRequest(query, token, variables)
   if (result.appUpdate.userErrors.length > 0) {
     const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
+  }
+
+  if (localApp && isCurrentAppSchema(localApp.configuration)) {
+    const localConfiguration: AppConfiguration = {
+      ...localApp.configuration,
+      application_url: urls.applicationUrl,
+      auth: {
+        ...localApp.configuration.auth,
+        redirect_urls: urls.redirectUrlWhitelist,
+      },
+    }
+    writeFileSync(localApp.configurationPath, encodeToml(localConfiguration))
   }
 }
 
@@ -167,6 +186,7 @@ export interface ShouldOrPromptUpdateURLsOptions {
   appDirectory: string
   cachedUpdateURLs?: boolean
   newApp?: boolean
+  localApp?: AppInterface
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
@@ -191,7 +211,18 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         shouldUpdate = false
     }
     /* eslint-enable no-fallthrough */
-    setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+
+    if (options.localApp && isCurrentAppSchema(options.localApp.configuration) && newUpdateURLs !== undefined) {
+      const localConfiguration: AppConfiguration = options.localApp.configuration
+      localConfiguration.cli = {
+        ...localConfiguration.cli,
+        automatically_update_urls_on_dev: newUpdateURLs,
+      }
+
+      writeFileSync(options.localApp.configurationPath, encodeToml(localConfiguration))
+    } else {
+      setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+    }
   }
   return shouldUpdate
 }

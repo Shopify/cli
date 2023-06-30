@@ -1,18 +1,15 @@
-name = "{{name}}"
+name = "{{ name }}"
+description = "Your description"
 type = "flow_trigger"
 
-[task]
-title = "custom-title"
-description = "custom-description"
+[[extensions]]
+type = "flow_trigger"
 
-[[task.fields]]
-name = "customer_id"
-description = ""
-id = "a-unique-uuid"
-uiType = "customer"
+[settings]
 
-[[task.fields]]
-name = "test"
-description = "test property"
-id = "a-unique-uuid"
-uiType = "text-single-line"
+  [[settings.fields]]
+  type = "customer_reference"
+
+  [[settings.fields]]
+  type = "single_line_text_field"
+  key = "your-field-key"

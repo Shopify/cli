@@ -23,8 +23,8 @@ describe('buildFunctionExtension', () => {
       command: 'make build',
       path: 'dist/index.wasm',
     },
-    configurationUi: true,
-    apiVersion: '2022-07',
+    configuration_ui: true,
+    api_version: '2022-07',
     metafields: [],
   }
 

@@ -3,7 +3,7 @@ import {isUnitTest, isVerbose} from './context/local.js'
 import {PackageManager} from './node-package-manager.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
-import {isTruthy} from '../../private/node/context/utilities.js'
+import {isTruthy} from './context/utilities.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -303,6 +303,20 @@ export function outputDebug(content: OutputMessage, logger: Logger = consoleLog)
 export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn): void {
   if (isUnitTest()) collectLog('warn', content)
   const message = colors.yellow(stringifyMessage(content))
+  outputWhereAppropriate('warn', logger, message)
+}
+
+/**
+ * Outputs a warning message to the user with some error styling.
+ * Warning messages receive a special formatting to make them stand out in the console.
+ * Note: Warning messages are sent through the standard output.
+ *
+ * @param content - The content to be output to the user.
+ * @param logger - The logging function to use to output to the user.
+ */
+export function outputWarnError(content: OutputMessage, logger: Logger = consoleLog): void {
+  if (isUnitTest()) collectLog('warn', content)
+  const message = `${colors.red('x')} ${stringifyMessage(content)}`
   outputWhereAppropriate('warn', logger, message)
 }
 

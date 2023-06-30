@@ -1,4 +1,4 @@
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType} from './app.js'
+import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType, getAppScopes} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -15,7 +15,6 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {camelize} from '@shopify/cli-kit/common/string'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
@@ -42,10 +41,10 @@ async function loadConfigurationFile(
       filepath,
     )
   }
-  const configurationContent = await readFile(filepath)
-  let configuration: object
+
   try {
-    configuration = decode(configurationContent)
+    const configurationContent = await readFile(filepath)
+    return decode(configurationContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     // TOML errors have line, pos and col properties
@@ -59,10 +58,6 @@ async function loadConfigurationFile(
       throw err
     }
   }
-  // Convert snake_case keys to camelCase before returning
-  return {
-    ...Object.fromEntries(Object.entries(configuration).map((kv) => [camelize(kv[0]), kv[1]])),
-  }
 }
 
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -75,6 +70,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
+
   if (!configurationObject) return fallbackOutput
 
   const parseResult = schema.safeParse(configurationObject)
@@ -107,7 +103,7 @@ export async function findSpecificationForConfig(
   const {type} = TypeSchema.parse(obj)
   const specification = findSpecificationForType(specifications, type)
 
-  if (!specification) {
+  if (specifications.length > 0 && !specification) {
     const isShopifolk = await isShopify()
     const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
     abortOrReport(
@@ -148,6 +144,7 @@ export class AppErrors {
 interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
+  configName?: string
   specifications: ExtensionSpecification[]
 }
 
@@ -163,15 +160,17 @@ export async function load(options: AppLoaderConstructorArgs): Promise<AppInterf
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
+  private configName?: string
   private appDirectory = ''
   private configurationPath = ''
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
 
-  constructor({directory, mode, specifications}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications
+    this.configName = configName
   }
 
   findSpecificationForType(type: string) {
@@ -193,13 +192,13 @@ class AppLoader {
     const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
     const dotenv = await this.loadDotEnv()
 
-    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extensionDirectories)
+    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extension_directories)
 
     const packageJSONPath = joinPath(this.appDirectory, 'package.json')
     const name = await loadAppName(this.appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
     const packageManager = await getPackageManager(this.appDirectory)
-    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.webDirectories)
+    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.web_directories)
     const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
 
     const appClass = new App(
@@ -245,7 +244,8 @@ class AppLoader {
   async getConfigurationPath() {
     if (this.configurationPath) return this.configurationPath
 
-    const configurationPath = await findPathUp(configurationFileNames.app, {
+    const configurationFileName = getAppConfigurationFileName(this.configName)
+    const configurationPath = await findPathUp(configurationFileName, {
       cwd: this.directory,
       type: 'file',
     })
@@ -266,9 +266,11 @@ class AppLoader {
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
       return joinPath(this.appDirectory, webGlob, configurationFileNames.web)
     })
+    webConfigGlobs.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
     const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
+    this.validateWebs(webs)
 
     const webTomlsInStandardLocation = await glob(joinPath(this.appDirectory, `web/**/${configurationFileNames.web}`))
     const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
@@ -276,10 +278,27 @@ class AppLoader {
     return {webs, usedCustomLayout}
   }
 
+  validateWebs(webs: Web[]): void {
+    ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
+      const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
+      if (websOfType.length > 1) {
+        this.abortOrReport(
+          outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
+          undefined,
+          joinPath(websOfType[1]!.directory, configurationFileNames.web),
+        )
+      }
+    })
+  }
+
   async loadWeb(WebConfigurationFile: string): Promise<Web> {
+    const config = await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile)
+    const roles = new Set('roles' in config ? config.roles : [])
+    if ('type' in config) roles.add(config.type)
+    const {type, ...processedWebConfiguration} = {...config, roles: Array.from(roles), type: undefined}
     return {
       directory: dirname(WebConfigurationFile),
-      configuration: await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile),
+      configuration: processedWebConfiguration,
       framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
@@ -290,6 +309,7 @@ class AppLoader {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
     })
+    extensionConfigPaths.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
@@ -374,8 +394,8 @@ export async function loadAppName(appDirectory: string): Promise<string> {
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
-  const backendWebs = webs.filter((web) => web.configuration.type === WebType.Backend)
-  const frontendWebs = webs.filter((web) => web.configuration.type === WebType.Frontend)
+  const backendWebs = webs.filter((web) => isWebType(web, WebType.Backend))
+  const frontendWebs = webs.filter((web) => isWebType(web, WebType.Frontend))
   if (backendWebs.length > 1) {
     outputDebug('Unable to decide project type as multiple web backends')
     return
@@ -401,6 +421,10 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   return undefined
 }
 
+function isWebType(web: Web, type: WebType): boolean {
+  return web.configuration.roles.includes(type)
+}
+
 async function logMetadataForLoadedApp(
   app: App,
   loadingStrategy: {
@@ -417,12 +441,10 @@ async function logMetadataForLoadedApp(
 
     const extensionTotalCount = app.allExtensions.length
 
-    const webBackendCount = app.webs.filter((web) => web.configuration.type === WebType.Backend).length
+    const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
-      webBackendCount === 1
-        ? app.webs.filter((web) => web.configuration.type === WebType.Backend)[0]?.framework
-        : undefined
-    const webFrontendCount = app.webs.filter((web) => web.configuration.type === WebType.Frontend).length
+      webBackendCount === 1 ? app.webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
+    const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
     for (const extension of app.allExtensions) {
@@ -448,7 +470,7 @@ async function logMetadataForLoadedApp(
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
       app_scopes: JSON.stringify(
-        app.configuration.scopes
+        getAppScopes(app.configuration)
           .split(',')
           .map((scope) => scope.trim())
           .sort(),
@@ -468,4 +490,17 @@ async function logMetadataForLoadedApp(
       app_name: app.name,
     }
   })
+}
+
+export function getAppConfigurationFileName(config?: string) {
+  if (config) {
+    const validFileRegex = /^shopify\.app(\.[-_\w]+)?\.toml$/g
+    if (validFileRegex.test(config)) {
+      return config
+    }
+
+    return `shopify.app.${config}.toml`
+  }
+
+  return configurationFileNames.app
 }

@@ -53,15 +53,16 @@ export async function captureOutput(command: string, args: string[], options?: E
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
   const commandProcess = buildExec(command, args, options)
   if (options?.stderr && options.stderr !== 'inherit') {
-    commandProcess.stderr?.pipe(options.stderr)
+    commandProcess.stderr?.pipe(options.stderr, {end: false})
   }
   if (options?.stdout && options.stdout !== 'inherit') {
-    commandProcess.stdout?.pipe(options.stdout)
+    commandProcess.stdout?.pipe(options.stdout, {end: false})
   }
   let aborted = false
   options?.signal?.addEventListener('abort', () => {
     const pid = commandProcess.pid
     if (pid) {
+      outputDebug(`Abort signal received, killing process ${pid}`)
       aborted = true
       treeKill(pid, (err) => {
         if (err) throw new AbortError(`Failed to kill process ${pid}: ${err}`)

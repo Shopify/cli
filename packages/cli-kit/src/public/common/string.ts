@@ -334,3 +334,16 @@ export function underscore(input: string): string {
 export function constantize(input: string): string {
   return constantCase(input)
 }
+
+/**
+ * Given a date, return a formatted string like "2021-01-01 12:00:00".
+ *
+ * @param date - Date to format.
+ * @returns The transformed string.
+ */
+export function formatDate(date: Date): string {
+  const components = date.toISOString().split('T')
+  const dateString = components[0] ?? date.toDateString()
+  const timeString = components[1]?.split('.')[0] ?? date.toTimeString()
+  return `${dateString} ${timeString}`
+}

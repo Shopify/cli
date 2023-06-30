@@ -2,11 +2,17 @@
 require "base64"
 require "json"
 require "shopify_cli/theme/extension/dev_server"
+require "shopify_cli/theme/ignore_filter"
+require "shopify_cli/theme/extension/ignore_helper"
 
 module Extension
   module Models
     module SpecificationHandlers
       class ThemeAppExtension < Default
+        include ShopifyCLI::Theme::Extension::IgnoreHelper
+
+        attr_reader :ignore_filter
+
         SUPPORTED_BUCKETS = %w(assets blocks snippets locales)
         BUNDLE_SIZE_LIMIT = 10 * 1024 * 1024 # 10MB
         LIQUID_SIZE_LIMIT = 100 * 1024 # 100kb
@@ -25,6 +31,7 @@ module Extension
         end
 
         def config(context)
+          @ignore_filter ||= ShopifyCLI::Theme::IgnoreFilter.from_path(context.root)
           current_size = 0
           current_liquid_size = 0
           Dir.chdir(context.root) do
@@ -96,6 +103,9 @@ module Extension
           dirname = File.dirname(filename)
           # Skip files in the root of the directory tree
           return false if dirname == "."
+
+          # Skip files that are ignored by the ignore filter
+          return false if ignore_path?(filename)
 
           unless SUPPORTED_BUCKETS.include?(dirname)
             raise Extension::Errors::InvalidFilenameError, "Invalid directory: #{dirname}"

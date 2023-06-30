@@ -2,6 +2,7 @@
 
 require_relative "syncer/extension_serve_job"
 require_relative "syncer/operation"
+require_relative "ignore_helper"
 
 require "shopify_cli/thread_pool"
 
@@ -9,16 +10,25 @@ module ShopifyCLI
   module Theme
     module Extension
       class Syncer
-        attr_accessor :pending_operations, :latest_sync
+        include ShopifyCLI::Theme::Extension::IgnoreHelper
 
-        def initialize(ctx, extension:, project:, specification_handler:)
+        attr_accessor :pending_operations, :latest_sync, :ignore_filter
+
+        def initialize(ctx, extension:, project:, specification_handler:, ignore_filter: nil)
           @ctx = ctx
           @extension = extension
           @project = project
           @specification_handler = specification_handler
+          @ignore_filter = ignore_filter
 
           @pool = ThreadPool.new(pool_size: 1)
-          @pending_operations = extension.extension_files.map { |file| Operation.new(file, :update) }
+          @pending_operations = []
+
+          extension.extension_files.each do |file|
+            operation = Operation.new(file, :update)
+            @pending_operations << operation if enqueueable?(operation)
+          end
+
           @pending_operations_mutex = Mutex.new
           @latest_sync = Time.now - ExtensionServeJob::PUSH_INTERVAL
         end
@@ -60,9 +70,16 @@ module ShopifyCLI
 
         private
 
+        def enqueueable?(operation)
+          # Already enqueued or ignored
+          return false if @pending_operations.include?(operation) || ignore_operation?(operation)
+
+          true
+        end
+
         def enqueue_operations(operations)
           @pending_operations_mutex.synchronize do
-            operations.each { |f| @pending_operations << f unless @pending_operations.include?(f) }
+            operations.each { |f| @pending_operations << f if enqueueable?(f) }
           end
         end
 

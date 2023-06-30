@@ -1,14 +1,15 @@
 /* eslint-disable require-atomic-updates */
 import {
-  UploadExtensionValidationError,
   uploadFunctionExtensions,
   uploadThemeExtensions,
   uploadExtensionsBundle,
+  UploadExtensionsBundleOutput,
 } from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {DeploymentMode} from './deploy/mode.js'
 import {AppInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -18,7 +19,7 @@ import {FunctionConfigType} from '../models/extensions/specifications/function.j
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
@@ -35,6 +36,18 @@ interface DeployOptions {
 
   /** If true, proceed with deploy without asking for confirmation */
   force: boolean
+
+  /** If true, deploy app without releasing it to the users */
+  noRelease: boolean
+
+  /** App version message */
+  message?: string
+
+  /** App version identifier */
+  version?: string
+
+  /** The git reference url of the deployment */
+  commitReference?: string
 }
 
 interface TasksContext {
@@ -43,23 +56,50 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token} = await ensureDeployContext(options)
-  const apiKey = identifiers.app
+  renderInfo({
+    headline: [
+      'Stay tuned for changes to',
+      {command: formatPackageManagerCommand(options.app.packageManager, 'deploy')},
+      {char: '.'},
+    ],
+    body: "Soon, you'll be able to release all your extensions at the same time, directly from Shopify CLI.",
+    reference: [
+      {
+        link: {
+          url: 'https://shopify.dev/docs/apps/deployment/simplified-deployment',
+          label: 'Simplified extension deployment',
+        },
+      },
+    ],
+  })
 
-  if (!options.app.hasExtensions() && !partnersApp.betas?.unifiedAppDeployment) {
+  // eslint-disable-next-line prefer-const
+  let {app, identifiers, partnersApp, token, deploymentMode} = await ensureDeployContext(options)
+  const apiKey = identifiers.app
+  const unifiedDeployment = deploymentMode !== 'legacy'
+
+  if (!options.app.hasExtensions() && !unifiedDeployment) {
     renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
     return
   }
 
   outputNewline()
-  outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
+  switch (deploymentMode) {
+    case 'legacy':
+      outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
+      break
+    case 'unified':
+      outputInfo(`Releasing a new app version as part of ${partnersApp.title}`)
+      break
+    case 'unified-skip-release':
+      outputInfo(`Creating a new app version as part of ${partnersApp.title}`)
+      break
+  }
+
   outputNewline()
 
   let registrations: AllAppExtensionRegistrationsQuerySchema
-  let validationErrors: UploadExtensionValidationError[] = []
-  let deploymentId: number
-  const unifiedDeployment = partnersApp.betas?.unifiedAppDeployment ?? false
+  let uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
@@ -71,6 +111,18 @@ export async function deploy(options: DeployOptions) {
         await mkdir(dirname(bundlePath))
       }
       await bundleAndBuildExtensions({app, bundlePath, identifiers})
+
+      const uploadTaskTitle = (() => {
+        switch (deploymentMode) {
+          case 'legacy':
+            return 'Pushing your code to Shopify'
+          case 'unified':
+            return 'Releasing an app version'
+          case 'unified-skip-release':
+            return 'Creating an app version'
+        }
+      })()
+
       const tasks: Task<TasksContext>[] = [
         {
           title: 'Running validation',
@@ -79,22 +131,26 @@ export async function deploy(options: DeployOptions) {
           },
         },
         {
-          title: unifiedDeployment ? 'Creating deployment' : 'Pushing your code to Shopify',
+          title: uploadTaskTitle,
           task: async () => {
-            const extensions = await Promise.all(
+            const appModules = await Promise.all(
               options.app.allExtensions.flatMap((ext) =>
                 ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
               ),
             )
 
             if (bundle || unifiedDeployment) {
-              ;({validationErrors, deploymentId} = await uploadExtensionsBundle({
+              uploadExtensionsBundleResult = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
-                extensions: getArrayRejectingUndefined(extensions),
+                appModules: getArrayRejectingUndefined(appModules),
+                deploymentMode,
                 token,
                 extensionIds: identifiers.extensionIds,
-              }))
+                message: options.message,
+                version: options.version,
+                commitReference: options.commitReference,
+              })
             }
 
             if (!useThemebundling()) {
@@ -126,9 +182,8 @@ export async function deploy(options: DeployOptions) {
         partnersOrganizationId: partnersApp.organizationId,
         identifiers,
         registrations,
-        validationErrors,
-        deploymentId,
-        unifiedDeployment,
+        deploymentMode,
+        uploadExtensionsBundleResult,
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,34 +204,24 @@ async function outputCompletionMessage({
   partnersOrganizationId,
   identifiers,
   registrations,
-  validationErrors,
-  deploymentId,
-  unifiedDeployment,
+  deploymentMode,
+  uploadExtensionsBundleResult,
 }: {
   app: AppInterface
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   partnersOrganizationId: string
   identifiers: Identifiers
   registrations: AllAppExtensionRegistrationsQuerySchema
-  validationErrors: UploadExtensionValidationError[]
-  deploymentId: number
-  unifiedDeployment: boolean
+  deploymentMode: DeploymentMode
+  uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 }) {
-  if (unifiedDeployment) {
-    return renderSuccess({
-      headline: 'Deployment created.',
-      body: {
-        link: {
-          url: `https://partners.shopify.com/${partnersOrganizationId}/apps/${partnersApp.id}/deployments/${deploymentId}`,
-          label: `Deployment ${deploymentId}`,
-        },
-      },
-      nextSteps: ['Publish your deployment to make your changes go live for merchants'],
-    })
+  if (deploymentMode !== 'legacy') {
+    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult, app)
   }
 
   let headline: string
 
+  const validationErrors = uploadExtensionsBundleResult?.validationErrors ?? []
   if (validationErrors.length > 0) {
     headline = 'Deployed to Shopify, but fixes are needed.'
   } else {
@@ -240,5 +285,52 @@ async function outputCompletionMessage({
   renderSuccess({
     headline,
     customSections,
+  })
+}
+
+async function outputUnifiedCompletionMessage(
+  deploymentMode: DeploymentMode,
+  uploadExtensionsBundleResult: UploadExtensionsBundleOutput,
+  app: AppInterface,
+) {
+  const linkAndMessage = [
+    {link: {label: uploadExtensionsBundleResult.versionTag, url: uploadExtensionsBundleResult.location}},
+    uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
+  ]
+  if (deploymentMode === 'unified') {
+    return uploadExtensionsBundleResult.deployError
+      ? renderInfo({
+          headline: 'New version created, but not released.',
+          body: [...linkAndMessage, `\n\n${uploadExtensionsBundleResult.deployError}`],
+        })
+      : renderSuccess({
+          headline: 'New version released to users.',
+          body: linkAndMessage,
+          nextSteps: [
+            [
+              'Run',
+              {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
+              'to see rollout progress.',
+            ],
+          ],
+        })
+  }
+
+  return renderSuccess({
+    headline: 'New version created.',
+    body: linkAndMessage,
+    nextSteps: [
+      [
+        'Run',
+        {
+          command: formatPackageManagerCommand(
+            app.packageManager,
+            'shopify app release',
+            `--version=${uploadExtensionsBundleResult.versionTag}`,
+          ),
+        },
+        'to release this version to users.',
+      ],
+    ],
   })
 }

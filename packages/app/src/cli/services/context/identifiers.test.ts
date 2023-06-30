@@ -4,9 +4,10 @@ import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppInterface} from '../../models/app/app.js'
-import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
+import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {DeploymentMode} from '../deploy/mode.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -37,26 +38,21 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
     name: 'my-app',
     directory: '/app',
     configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products', extensionDirectories: ['extensions/*']},
+    configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
     allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
 
-const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
-  id: 'app-id',
-  organizationId: 'org-id',
-  title: 'app-title',
-  grantedScopes: [],
+const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
   betas: {unifiedAppDeployment: true},
-  apiKey: 'api-key',
-  apiSecretKeys: [],
-}
+})
 
 const options = (
   uiExtensions: ExtensionInstance[],
   functionExtensions: ExtensionInstance[],
   identifiers: any = {},
   partnersApp?: OrganizationApp,
+  deploymentMode: DeploymentMode = 'legacy',
 ) => {
   return {
     app: LOCAL_APP(uiExtensions, functionExtensions),
@@ -66,6 +62,7 @@ const options = (
     envIdentifiers: {extensions: identifiers},
     force: false,
     partnersApp,
+    deploymentMode,
   }
 }
 
@@ -115,8 +112,8 @@ beforeAll(async () => {
         command: 'make build',
         path: 'dist/index.wasm',
       },
-      configurationUi: false,
-      apiVersion: '2022-07',
+      configuration_ui: false,
+      api_version: '2022-07',
       metafields: [],
     },
   })
@@ -201,7 +198,13 @@ describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
 
     // When
     const got = await ensureDeploymentIdsPresence(
-      options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA),
+      options(
+        [EXTENSION_A, EXTENSION_A_2],
+        [FUNCTION_C],
+        {},
+        PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+        'unified',
+      ),
     )
 
     // Then
@@ -211,5 +214,48 @@ describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
       extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_UUID_A'},
       extensionIds: {EXTENSION_A: 'ID_A', FUNCTION_A: 'FUNCTION_ID_A'},
     })
+  })
+})
+
+describe('app has no local extensions', () => {
+  test('ensureDeploymentIdsPresence() returns early when deploymentMode is legacy', async () => {
+    // When
+    const got = await ensureDeploymentIdsPresence(options([], []))
+
+    // Then
+    expect(fetchAppExtensionRegistrations).not.toHaveBeenCalled()
+    expect(ensureFunctionsIds).not.toHaveBeenCalled()
+    expect(ensureExtensionsIds).not.toHaveBeenCalled()
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+  })
+
+  test('ensureDeploymentIdsPresence() fully executes when deploymentMode is unified', async () => {
+    // Given
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+
+    // When
+    const got = await ensureDeploymentIdsPresence(
+      options([], [], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, 'unified'),
+    )
+
+    // Then
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+    expect(ensureExtensionsIds).toHaveBeenCalledOnce()
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+  })
+
+  test('ensureDeploymentIdsPresence() fully executes when deploymentMode is unified-skip-release', async () => {
+    // Given
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+
+    // When
+    const got = await ensureDeploymentIdsPresence(
+      options([], [], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, 'unified-skip-release'),
+    )
+
+    // Then
+    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
+    expect(ensureExtensionsIds).toHaveBeenCalledOnce()
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
   })
 })

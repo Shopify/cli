@@ -1,5 +1,5 @@
 {
-  "version": "3.47.0-pre.0",
+  "version": "3.47.0",
   "commands": {
     "theme:check": {
       "id": "theme:check",
@@ -395,6 +395,12 @@
           "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
           "multiple": false
+        },
+        "open": {
+          "name": "open",
+          "type": "boolean",
+          "description": "Automatically launch the theme preview in your default web browser.",
+          "allowNo": false
         }
       },
       "args": {},
@@ -1182,6 +1188,12 @@
           "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
           "multiple": false
+        },
+        "open": {
+          "name": "open",
+          "type": "boolean",
+          "description": "Automatically launch the theme preview in your default web browser.",
+          "allowNo": false
         }
       },
       "args": {}
@@ -1257,6 +1269,7 @@
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
       "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -1290,6 +1303,7 @@
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
       "pluginType": "core",
+      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {

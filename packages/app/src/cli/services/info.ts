@@ -1,6 +1,6 @@
 import {outputEnv} from './app/env/show.js'
 import {CachedAppInfo, getAppInfo} from './local-storage.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -96,7 +96,7 @@ class AppInfo {
     const lines = [
       ['App', appName],
       ['Dev store', storeDescription],
-      ['API key', apiKey],
+      ['Client ID', apiKey],
       ['Update URLs', updateURLs],
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
@@ -149,14 +149,21 @@ class AppInfo {
     const toplevel = ['📂 web', '']
     const sublevels: [string, string][] = []
     this.app.webs.forEach((web) => {
-      if (web.configuration && web.configuration.type) {
-        sublevels.push([`  📂 ${web.configuration.type}`, relativePath(this.app.directory, web.directory)])
-      } else if (this.app.errors) {
-        const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
-        if (error) {
-          sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
-          errors.push(error)
+      if (web.configuration) {
+        if (web.configuration.name) {
+          const {name, roles} = web.configuration
+          sublevels.push([`    📂 ${name} (${roles.join(',')})`, relativePath(this.app.directory, web.directory)])
+        } else {
+          web.configuration.roles.forEach((role) => {
+            sublevels.push([`    📂 ${role}`, relativePath(this.app.directory, web.directory)])
+          })
         }
+      } else {
+        sublevels.push([`  📂 ${UNKNOWN_TEXT}`, relativePath(this.app.directory, web.directory)])
+      }
+      if (this.app.errors) {
+        const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
+        if (error) errors.push(error)
       }
     })
     let errorContent = `\n${errors.map(this.formattedError).join('\n')}`
@@ -197,7 +204,9 @@ class AppInfo {
 
   accessScopesSection(): [string, string] {
     const title = 'Access Scopes in Root TOML File'
-    const lines = this.app.configuration.scopes.split(',').map((scope) => [scope])
+    const lines = getAppScopes(this.app.configuration)
+      .split(',')
+      .map((scope) => [scope])
     return [title, linesToColumns(lines)]
   }
 

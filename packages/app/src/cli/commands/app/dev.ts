@@ -1,6 +1,7 @@
 import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
+import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -12,10 +13,20 @@ export default class Dev extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    'api-key': Flags.string({
+    config: Flags.string({
       hidden: false,
+      description: 'Name of the config file.',
+      env: 'SHOPIFY_FLAG_APP_CONFIG',
+    }),
+    'api-key': Flags.string({
+      hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+    }),
+    'client-id': Flags.string({
+      hidden: false,
+      description: 'The Client ID of your app.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
     store: Flags.string({
       hidden: false,
@@ -94,6 +105,8 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+    if (flags['api-key']) showApiKeyDeprecationWarning()
+    const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -105,7 +118,8 @@ export default class Dev extends Command {
 
     await dev({
       directory: flags.path,
-      apiKey: flags['api-key'],
+      config: flags.config,
+      apiKey,
       storeFqdn: flags.store,
       reset: flags.reset,
       update: !flags['no-update'],

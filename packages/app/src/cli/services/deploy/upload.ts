@@ -1,4 +1,5 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
+import {DeploymentMode} from './mode.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {
   UploadUrlGenerateMutation,
@@ -9,12 +10,7 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateSchema,
 } from '../../api/graphql/update_draft.js'
-import {
-  CreateDeployment,
-  CreateDeploymentSchema,
-  CreateDeploymentVariables,
-  ExtensionSettings,
-} from '../../api/graphql/create_deployment.js'
+import {AppDeploy, AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 import {
   GenerateSignedUploadUrl,
   GenerateSignedUploadUrlSchema,
@@ -89,11 +85,23 @@ interface UploadExtensionsBundleOptions {
   /** The token to send authenticated requests to the partners' API  */
   token: string
 
-  /** Extensions extra data */
-  extensions: ExtensionSettings[]
+  /** App Modules extra data */
+  appModules: AppModuleSettings[]
 
   /** The extensions' numeric identifiers (expressed as a string). */
   extensionIds: IdentifiersExtensions
+
+  /** The mode of the deployment */
+  deploymentMode: DeploymentMode
+
+  /** App version message */
+  message?: string
+
+  /** App version identifier */
+  version?: string
+
+  /** The git reference url of the deployment */
+  commitReference?: string
 }
 
 export interface UploadExtensionValidationError {
@@ -102,6 +110,14 @@ export interface UploadExtensionValidationError {
     message: string
     field: string[]
   }[]
+}
+
+export interface UploadExtensionsBundleOutput {
+  validationErrors: UploadExtensionValidationError[]
+  versionTag: string
+  message?: string
+  location: string
+  deployError?: string
 }
 
 type ErrorSectionBody = TokenItem
@@ -115,9 +131,10 @@ interface ErrorCustomSection extends AlertCustomSection {
  */
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
-): Promise<{validationErrors: UploadExtensionValidationError[]; deploymentId: number}> {
+): Promise<UploadExtensionsBundleOutput> {
   const deploymentUUID = randomUUID()
   let signedURL
+  let deployError
 
   if (options.bundlePath) {
     signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
@@ -132,49 +149,65 @@ export async function uploadExtensionsBundle(
     })
   }
 
-  const variables: CreateDeploymentVariables = {
+  const variables: AppDeployVariables = {
     apiKey: options.apiKey,
     uuid: deploymentUUID,
+    skipPublish: !(options.deploymentMode === 'unified'),
+    message: options.message,
+    versionTag: options.version,
+    commitReference: options.commitReference,
   }
 
   if (signedURL) {
     variables.bundleUrl = signedURL
   }
 
-  if (options.extensions.length > 0) {
-    variables.extensions = options.extensions
+  if (options.appModules.length > 0) {
+    variables.appModules = options.appModules
   }
 
-  const mutation = CreateDeployment
-  const result: CreateDeploymentSchema = await handlePartnersErrors(() =>
-    partnersRequest(mutation, options.token, variables),
-  )
+  const mutation = AppDeploy
+  const result: AppDeploySchema = await handlePartnersErrors(() => partnersRequest(mutation, options.token, variables))
 
-  if (result.deploymentCreate?.userErrors?.length > 0) {
+  if (result.appDeploy?.userErrors?.length > 0) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
-      result.deploymentCreate.userErrors,
+      result.appDeploy.userErrors,
       options.extensionIds,
     )
 
-    throw new AbortError('There has been an error creating your deployment.', null, [], customSections)
+    if (result.appDeploy.deployment) {
+      deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
+    } else {
+      throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
+    }
   }
 
-  const validationErrors = result.deploymentCreate.deployment.deployedVersions
-    .filter((ver) => ver.extensionVersion.validationErrors.length > 0)
+  const validationErrors = result.appDeploy.deployment.appModuleVersions
+    .filter((ver) => ver.validationErrors.length > 0)
     .map((ver) => {
-      return {uuid: ver.extensionVersion.registrationUuid, errors: ver.extensionVersion.validationErrors}
+      return {uuid: ver.registrationUuid, errors: ver.validationErrors}
     })
 
-  return {validationErrors, deploymentId: result.deploymentCreate.deployment.id}
+  return {
+    validationErrors,
+    versionTag: result.appDeploy.deployment.versionTag,
+    location: result.appDeploy.deployment.location,
+    message: result.appDeploy.deployment.message,
+    deployError,
+  }
 }
 
 const VALIDATION_ERRORS_TITLE = '\nValidation errors'
 const GENERIC_ERRORS_TITLE = '\n'
 
 export function deploymentErrorsToCustomSections(
-  errors: CreateDeploymentSchema['deploymentCreate']['userErrors'],
+  errors: AppDeploySchema['appDeploy']['userErrors'],
   extensionIds: IdentifiersExtensions,
 ): ErrorCustomSection[] {
+  const isExtensionError = (error: (typeof errors)[0]) => {
+    return error.details?.some((detail) => detail.extension_id) ?? false
+  }
+
   const isCliError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
     const errorExtensionId =
       error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString() ?? ''
@@ -182,13 +215,48 @@ export function deploymentErrorsToCustomSections(
     return Object.values(extensionIds).includes(errorExtensionId)
   }
 
-  const [cliErrors, partnersErrors] = partition(errors, (error) => isCliError(error, extensionIds))
+  const [extensionErrors, nonExtensionErrors] = partition(errors, (error) => isExtensionError(error))
 
-  const customSections = [...cliErrorsSections(cliErrors), ...partnersErrorsSections(partnersErrors)]
+  const [cliErrors, partnersErrors] = partition(extensionErrors, (error) => isCliError(error, extensionIds))
+
+  const customSections = [
+    ...generalErrorsSection(nonExtensionErrors),
+    ...cliErrorsSections(cliErrors),
+    ...partnersErrorsSections(partnersErrors),
+  ]
   return customSections
 }
 
-function cliErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
+function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']) {
+  if (errors.length > 0) {
+    const errorsBody =
+      errors.length === 1
+        ? errors[0]?.message
+        : {
+            list: {
+              items: errors.map((error) => error.message),
+            },
+          }
+
+    return [
+      {
+        body: errorsBody,
+      },
+      {
+        title: 'Next Steps',
+        body: {
+          list: {
+            items: ['View details about this version in the Partner Dashboard.'],
+          },
+        },
+      },
+    ] as ErrorCustomSection[]
+  } else {
+    return []
+  }
+}
+
+function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
   return errors.reduce((sections, error) => {
     const field = error.field.join('.')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
@@ -249,7 +317,7 @@ function cliErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['u
   }, [] as ErrorCustomSection[])
 }
 
-function partnersErrorsSections(errors: CreateDeploymentSchema['deploymentCreate']['userErrors']) {
+function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
   return errors
     .reduce((sections, error) => {
       const extensionIdentifier = error.details.find(
@@ -376,7 +444,7 @@ async function uploadFunctionExtension(
     title: extension.configuration.name,
     description: extension.configuration.description ?? '',
     apiType: extension.configuration.type,
-    apiVersion: extension.configuration.apiVersion,
+    apiVersion: extension.configuration.api_version,
     inputQuery,
     inputQueryVariables: extension.configuration.input?.variables
       ? {
@@ -461,11 +529,9 @@ async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {
     if (error.errors?.[0]?.extensions?.type === 'unsupported_client_version') {
       const packageManager = await getPackageManager(cwd())
 
-      throw new AbortError(
-        {bold: '`deploy` is no longer supported in this CLI version.'},
-        ['Upgrade your CLI version to use the', {command: 'deploy'}, 'command.'],
-        [['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}]],
-      )
+      throw new AbortError(['Upgrade your CLI version to run the', {command: 'deploy'}, 'command.'], null, [
+        ['Run', {command: formatPackageManagerCommand(packageManager, 'shopify upgrade')}],
+      ])
     }
 
     throw error

@@ -7,9 +7,9 @@ import {AbortError, AbortSilentError} from './error.js'
 import {getEnvironmentVariables} from './environment.js'
 import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {firstPartyDev, useEmbeddedThemeCLI} from './context/local.js'
+import {outputContent, outputToken} from './output.js'
+import {isTruthy} from './context/utilities.js'
 import {pathConstants} from '../../private/node/constants.js'
-import {outputContent, outputToken} from '../../public/node/output.js'
-import {isTruthy} from '../../private/node/context/utilities.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import envPaths from 'env-paths'
@@ -40,6 +40,8 @@ interface ExecCLI2Options {
   stdout?: Writable
   // Stream to pipe the command's stdout to.
   stderr?: Writable
+  // Deployment mode
+  unifiedDeployment?: boolean
 }
 /**
  * Execute CLI 2.0 commands.
@@ -69,6 +71,7 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     ...(await getSpinEnvironmentVariables()),
     SHOPIFY_CLI_1P_DEV: firstPartyDev() ? '1' : '0',
     SHOPIFY_CLI_VERSION: CLI_KIT_VERSION,
+    SHOPIFY_CLI_UNIFIED_DEPLOYMENT: options.unifiedDeployment ? '1' : '0',
   }
 
   try {

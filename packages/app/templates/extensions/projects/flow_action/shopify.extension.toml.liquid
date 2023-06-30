@@ -1,26 +1,20 @@
-name = "{{name}}"
+name = "{{ name }}"
+description = "Your description"
 type = "flow_action"
 
-[task]
-title = "extension-title"
-description = "extension-description"
-url = "https://runtime-endpoint.com"
-validation_url = "https://validation-url"
-custom_configuration_page_url = "https://custom-configuration-page-url"
-custom_configuration_page_preview_url = "https://custom-configuration-page-preview-url"
+[[extensions]]
+type = "flow_action"
+runtime_url = "https://url.com/api/execute"
 
-[[task.fields]]
-name = "customer_id"
-label = "Customer ID"
-description = ""
-required = true
-id = "a-unique-uuid"
-uiType = "commerce-object-id"
+[settings]
 
-[[task.fields]]
-name = "your-field-name"
-label = "your-field-label"
-description = ""
-required = true
-id = "a-unique-uuid"
-uiType = "text-single-line"
+  [[settings.fields]]
+  type = "customer_reference"
+  required = true
+
+  [[settings.fields]]
+  type = "single_line_text_field"
+  key = "your-field-key"
+  name = "Display name"
+  description = "A description of my field"
+  required = true

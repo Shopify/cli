@@ -7,6 +7,7 @@ require "shopify_cli/theme/dev_server"
 require "shopify_cli/theme/extension/host_theme"
 require "shopify_cli/theme/syncer"
 require "shopify_cli/theme/notifier"
+require "shopify_cli/theme/ignore_filter"
 
 require_relative "dev_server/local_assets"
 require_relative "dev_server/proxy_param_builder"
@@ -63,7 +64,8 @@ module ShopifyCLI
             ctx,
             extension: extension,
             project: project,
-            specification_handler: specification_handler
+            specification_handler: specification_handler,
+            ignore_filter: ignore_filter
           )
         end
 
@@ -114,7 +116,7 @@ module ShopifyCLI
         end
 
         def watcher
-          @watcher ||= Watcher.new(ctx, syncer: syncer, extension: extension, poll: poll)
+          @watcher ||= Watcher.new(ctx, syncer: syncer, extension: extension, poll: poll, ignore_filter: ignore_filter)
         end
 
         def param_builder
@@ -122,6 +124,10 @@ module ShopifyCLI
             .new
             .with_extension(extension)
             .with_syncer(syncer)
+        end
+
+        def ignore_filter
+          @ignore_filter ||= ShopifyCLI::Theme::IgnoreFilter.from_path(root)
         end
 
         def setup_server
@@ -136,7 +142,8 @@ module ShopifyCLI
         # Hooks
 
         def broadcast_hooks
-          file_handler = Hooks::FileChangeHook.new(ctx, extension: extension, syncer: syncer, notifier: notifier)
+          file_handler = Hooks::FileChangeHook.new(ctx, extension: extension, syncer: syncer, notifier: notifier,
+            ignore_filter: ignore_filter)
           [file_handler]
         end
 
@@ -151,12 +158,31 @@ module ShopifyCLI
         end
 
         def preview_message
+          location = adapt_location(extension.location)
           if Shopifolk.acting_as_shopify_organization?
-            parsed_uri = URI.parse(extension.location)
+            parsed_uri = URI.parse(extension.preview_message)
             shopify_org_url = "#{parsed_uri.scheme}://#{parsed_uri.host}/9082/impersonate"
-            ctx.message("serve.preview_message_1p", shopify_org_url, extension.location, theme.editor_url, address)
+            ctx.message("serve.preview_message_1p", shopify_org_url, enable_extension_message, location,
+              theme.editor_url, address)
           else
-            ctx.message("serve.preview_message", extension.location, theme.editor_url, address)
+            ctx.message("serve.preview_message", enable_extension_message, location, theme.editor_url, address)
+          end
+        end
+
+        def adapt_location(location)
+          return location if location.nil? || !ShopifyCLI::Environment.unified_deployment?
+
+          parts = location.split("/")
+          index = parts.index("extensions")
+
+          parts[0..index].join("/")
+        end
+
+        def enable_extension_message
+          if ShopifyCLI::Environment.unified_deployment?
+            "Verify that the development store preview is turned on for this app"
+          else
+            "Enable your theme app extension"
           end
         end
       end
