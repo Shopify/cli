@@ -94,7 +94,7 @@ describe('upgradeTheme', () => {
     const theme = await upgradeTheme({fromTheme, toTheme, session})
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {fromTheme, toTheme, script: null}, {})
+    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {from_theme: fromTheme, to_theme: toTheme}, {})
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
@@ -120,7 +120,13 @@ describe('upgradeTheme', () => {
     const theme = await upgradeTheme({fromTheme, toTheme, script, session})
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {fromTheme, toTheme, script}, {})
+    expect(restRequest).toHaveBeenCalledWith(
+      'POST',
+      `/themes`,
+      session,
+      {from_theme: fromTheme, to_theme: toTheme, script},
+      {},
+    )
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)

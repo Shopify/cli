@@ -32,10 +32,9 @@ interface UpgradeThemeOptions {
 }
 
 export async function upgradeTheme(upgradeOptions: UpgradeThemeOptions): Promise<Theme | undefined> {
-  const {fromTheme, toTheme, session} = upgradeOptions
-  const script = upgradeOptions.script || null
-  const data = script ? {from_theme: fromTheme, to_theme: toTheme, script: script} : {from_theme: fromTheme, to_theme: toTheme}
-  const response = await request('POST', `/themes`, session, data)
+  const {fromTheme, toTheme, session, script} = upgradeOptions
+  const params = {from_theme: fromTheme, to_theme: toTheme, ...(script && {script})}
+  const response = await request('POST', `/themes`, session, params)
   return buildTheme(response.json.theme)
 }
 
