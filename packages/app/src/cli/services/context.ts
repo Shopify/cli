@@ -19,7 +19,7 @@ import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../models/app/
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {load, loadAppName} from '../models/app/loader.js'
+import {loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -151,15 +151,14 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   })
 
   const configName = options.config || cachedInfo?.configFile
-  const localApp = await load({
+  const {configuration: localAppConfiguration, configurationPath} = await loadAppConfiguration({
     directory: options.directory,
-    specifications: [],
     configName,
   })
 
   let remoteApp
-  if (isCurrentAppSchema(localApp.configuration)) {
-    remoteApp = (await appFromId(localApp.configuration.client_id, token))!
+  if (isCurrentAppSchema(localAppConfiguration)) {
+    remoteApp = (await appFromId(localAppConfiguration.client_id, token))!
     cachedInfo = {
       ...cachedInfo,
       directory: options.directory,
@@ -167,8 +166,8 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
-      storeFqdn: localApp.configuration.cli?.dev_store_url,
-      updateURLs: localApp.configuration.cli?.automatically_update_urls_on_dev,
+      storeFqdn: localAppConfiguration.cli?.dev_store_url,
+      updateURLs: localAppConfiguration.cli?.automatically_update_urls_on_dev,
     }
   }
 
@@ -215,16 +214,16 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     organization,
   })
 
-  if (isCurrentAppSchema(localApp.configuration)) {
+  if (isCurrentAppSchema(localAppConfiguration)) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const configuration: AppConfiguration = {
-      ...localApp.configuration,
+      ...localAppConfiguration,
       cli: {
-        ...localApp.configuration.cli,
+        ...localAppConfiguration.cli,
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    writeFileSync(localApp.configurationPath, encodeToml(configuration))
+    writeFileSync(configurationPath, encodeToml(configuration))
   } else {
     setAppInfo({
       appId: selectedApp.apiKey,

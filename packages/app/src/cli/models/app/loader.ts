@@ -385,9 +385,9 @@ export interface AppConfigurationInterface {
 
 /**
  * Parse the app configuration file from the given directory.
- * If the app configuration does not match known schemas, it will throw an error.
+ * If the app configuration does not match any known schemas, it will throw an error.
  */
-export async function loadConfiguration(
+export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
 ): Promise<AppConfigurationInterface> {
   const loader = new AppConfigurationLoader(options)

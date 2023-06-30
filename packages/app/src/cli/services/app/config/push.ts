@@ -1,6 +1,6 @@
 import {PushConfig, PushConfigSchema} from '../../../api/graphql/push_config.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
-import {AppInterface, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {AppConfiguration, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -9,18 +9,17 @@ import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
 
 export interface Options {
-  app: AppInterface
+  configuration: AppConfiguration
+  configurationPath: string
 }
 
-export async function pushConfig(options: Options) {
-  const {configuration} = options.app
-
+export async function pushConfig({configuration, configurationPath}: Options) {
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
     const mutation = PushConfig
     const query = GetConfig
 
-    const configFileName = basename(options.app.configurationPath)
+    const configFileName = basename(configurationPath)
 
     const queryVariables = {apiKey: configuration.client_id}
     const queryResult: GetConfigQuerySchema = await partnersRequest(query, token, queryVariables)
