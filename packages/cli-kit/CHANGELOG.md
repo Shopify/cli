@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.47.2
+
+### Patch Changes
+
+- 584b29f1e: Improve error message on non-tty when prompting for a key press
+- 9261fd693: Improve Cloudflare errors
+
 ## 3.47.1
 
 ## 3.47.0
