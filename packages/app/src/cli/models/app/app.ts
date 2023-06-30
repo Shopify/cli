@@ -107,8 +107,8 @@ export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
 }
 
 export function appIsLaunchable(app: AppInterface) {
-  const frontendConfig = app.webs.find((web) => isWebType(web, WebType.Frontend))
-  const backendConfig = app.webs.find((web) => isWebType(web, WebType.Backend))
+  const frontendConfig = app?.webs?.find((web) => isWebType(web, WebType.Frontend))
+  const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
 
   return Boolean(frontendConfig || backendConfig)
 }

@@ -1,7 +1,7 @@
 import {gql} from 'graphql-request'
 
 export const CreateAppQuery = gql`
-  mutation AppCreate($org: Int!, $title: String!, $appUrl: Url!, $redir: [Url]!, $type: AppType, $scopes: [String]) {
+  mutation AppCreate($org: Int!, $title: String!, $appUrl: Url!, $redir: [Url]!, $type: AppType) {
     appCreate(
       input: {
         organizationID: $org
@@ -9,7 +9,6 @@ export const CreateAppQuery = gql`
         applicationUrl: $appUrl
         redirectUrlWhitelist: $redir
         appType: $type
-        requested_access_scopes: $scopes
       }
     ) {
       app {
