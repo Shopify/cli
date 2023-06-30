@@ -11,7 +11,7 @@ import {
 } from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
-import {createExtension, ExtensionRegistration} from './dev/create-extension.js'
+import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -26,6 +26,7 @@ import {
   DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
+import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'

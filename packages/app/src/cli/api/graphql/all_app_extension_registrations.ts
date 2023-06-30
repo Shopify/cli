@@ -11,12 +11,21 @@ export const AllAppExtensionRegistrationsQuery = gql`
         draftVersion {
           config
         }
+        activeVersion {
+          config
+        }
       }
       dashboardManagedExtensionRegistrations {
         id
         uuid
         title
         type
+        activeVersion {
+          config
+        }
+        draftVersion {
+          config
+        }
       }
       functions {
         id
@@ -32,19 +41,16 @@ export interface AllAppExtensionRegistrationsQueryVariables {
   apiKey: string
 }
 
-interface ExtensionRegistration {
+export interface ExtensionRegistration {
   id: string
   uuid: string
   title: string
   type: string
   draftVersion?: {
     config: string
-    registrationId: string
-    lastUserInteractionAt: string
-    validationErrors: {
-      field: string[]
-      message: string
-    }[]
+  }
+  activeVersion?: {
+    config: string
   }
 }
 

@@ -15,3 +15,4 @@ export interface SerializedField {
 }
 
 export type FlowExtensionTypes = 'flow_action' | 'flow_trigger'
+export type FlowPartnersExtensionTypes = 'flow_action_definition' | 'flow_trigger_definition'

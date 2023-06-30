@@ -1,5 +1,5 @@
-import {ConfigField} from '../types.js'
-import {serializeConfigField, serializeCommerceObjectField} from '../serializeFields.js'
+import {ConfigField} from './types.js'
+import {serializeConfigField, serializeCommerceObjectField} from './serialize-fields.js'
 import {describe, expect, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -102,6 +102,7 @@ describe('serializeCommerceObjectField', () => {
       name: 'product_id',
       uiType: 'commerce-object-id',
       label: 'Product ID',
+      description: 'This is my field',
       required: true,
     })
   })
@@ -123,6 +124,7 @@ describe('serializeCommerceObjectField', () => {
     expect(serializedField).toEqual({
       name: 'product_id',
       uiType: 'product',
+      description: 'This is my field',
     })
   })
 

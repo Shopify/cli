@@ -42,6 +42,7 @@ export async function updateAppIdentifiers(
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
+
   if (!dotenvFile) {
     dotenvFile = {
       path: joinPath(app.directory, dotEnvFileNames.production),

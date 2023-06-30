@@ -3,24 +3,15 @@ import {
   SUPPORTED_COMMERCE_OBJECTS,
   ACTION_SUPPORTED_COMMERCE_OBJECTS,
   TRIGGER_SUPPORTED_COMMERCE_OBJECTS,
+  uiTypesMap,
 } from './constants.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {capitalize} from '@shopify/cli-kit/common/string'
 
-// Mapping of metafield types to Flow's Partner's Dashboard UI types
-// Only the `email` type was added since it doesn't exist as a metafield type
-// https://shopify.dev/docs/apps/custom-data/metafields/types
-const uiTypesMap = new Map<string, string>([
-  ['boolean', 'checkbox'],
-  ['email', 'email'],
-  ['multi_line_text_field', 'text-multi-line'],
-  ['number_integer', 'int'],
-  ['number_decimal', 'number'],
-  ['single_line_text_field', 'text-single-line'],
-  ['url', 'url'],
-])
+const typesToUiTypes = new Map<string, string>(uiTypesMap)
 
 export const serializeConfigField = (field: ConfigField, type: FlowExtensionTypes) => {
-  const uiType = uiTypesMap.get(field.type)
+  const uiType = typesToUiTypes.get(field.type)
 
   if (typeof field.key !== 'string') {
     throw new AbortError(`key property must be specified for non-commerce object fields in ${JSON.stringify(field)}`)
@@ -38,7 +29,7 @@ export const serializeConfigField = (field: ConfigField, type: FlowExtensionType
 
   if (type === 'flow_action') {
     serializedField.label = field.name
-    serializedField.required = Boolean(field.required)
+    serializedField.required = field.required
   }
 
   return serializedField
@@ -58,11 +49,12 @@ export const serializeCommerceObjectField = (field: ConfigField, type: FlowExten
   const serializedField: SerializedField = {
     name: `${commerceObject}_id`,
     uiType: type === 'flow_action' ? 'commerce-object-id' : commerceObject,
+    description: field.description,
   }
 
   if (type === 'flow_action') {
-    serializedField.label = `${commerceObject.charAt(0).toUpperCase() + commerceObject.slice(1)} ID`
-    serializedField.required = Boolean(field.required)
+    serializedField.label = `${capitalize(commerceObject)} ID`
+    serializedField.required = field.required
   }
 
   return serializedField
