@@ -12,7 +12,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {BugError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -62,7 +62,11 @@ class TunnelClientInstance implements TunnelClient {
 
     if (retries >= MAX_RETRIES) {
       resolved = true
-      this.currentStatus = {status: 'error', message: 'Could not start tunnel, max retries reached'}
+      this.currentStatus = {
+        status: 'error',
+        message: 'Could not start Cloudflare tunnel, max retries reached.',
+        tryMessage: whatToTry(),
+      }
       return
     }
 
@@ -122,9 +126,9 @@ class TunnelClientInstance implements TunnelClient {
         }
         // If already resolved, means that the CLI already received the tunnel URL.
         // Can't retry because the CLI is running with an invalid URL
-        if (resolved) throw processCrashed()
+        if (resolved) throw processCrashed(error.message)
 
-        outputDebug('Cloudflared tunnel crashed, restarting...')
+        outputDebug(`Cloudflared tunnel crashed: ${error.message}, restarting...`)
 
         // wait 1 second before restarting the tunnel, to avoid rate limiting
         if (!isUnitTest()) await sleep(1)
@@ -134,18 +138,23 @@ class TunnelClientInstance implements TunnelClient {
   }
 }
 
-function processCrashed() {
-  return new AbortError(`Tunnel process crashed after stablishing a connection.`, [
+function processCrashed(message: string) {
+  return new BugError(`Tunnel process crashed after stablishing a connection: ${message}`, whatToTry())
+}
+
+function whatToTry() {
+  return [
     'What to try:',
     {
       list: {
         items: [
-          ['Try to run the command again'],
+          ['Run the command again'],
           ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
+          ['Add the flag', {command: '--tunnel ngrok'}, 'to use Ngrok as the tunnel provider'],
         ],
       },
     },
-  ])
+  ]
 }
 
 function findUrl(data: Buffer): string | undefined {

@@ -1,6 +1,8 @@
 import {ExtendableError} from '../error.js'
+import {OutputMessage} from '../output.js'
 import {FanoutHookFunction, PluginReturnsForHook} from '../plugins.js'
 import {err, Result} from '../result.js'
+import {TokenItem} from '../ui.js'
 
 export type TunnelErrorType = 'invalid-provider' | 'tunnel-already-running' | 'wrong-credentials' | 'unknown'
 export interface TunnelClient {
@@ -13,7 +15,7 @@ export type TunnelStatusType =
   | {status: 'not-started'}
   | {status: 'starting'}
   | {status: 'connected'; url: string}
-  | {status: 'error'; message: string; tryMessage?: string}
+  | {status: 'error'; message: TokenItem | OutputMessage; tryMessage?: TokenItem | OutputMessage | null}
 
 export class TunnelError extends ExtendableError {
   type: TunnelErrorType
