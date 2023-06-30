@@ -128,7 +128,7 @@ class TunnelClientInstance implements TunnelClient {
         // Can't retry because the CLI is running with an invalid URL
         if (resolved) throw processCrashed(error.message)
 
-        outputDebug('Cloudflared tunnel crashed, restarting...')
+        outputDebug(`Cloudflared tunnel crashed: ${error.message}, restarting...`)
 
         // wait 1 second before restarting the tunnel, to avoid rate limiting
         if (!isUnitTest()) await sleep(1)
