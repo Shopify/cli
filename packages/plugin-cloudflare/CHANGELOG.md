@@ -1,5 +1,14 @@
 # @shopify/plugin-cloudflare
 
+## 3.47.2
+
+### Patch Changes
+
+- 9261fd693: Improve Cloudflare errors
+- Updated dependencies [584b29f1e]
+- Updated dependencies [9261fd693]
+  - @shopify/cli-kit@3.47.2
+
 ## 3.47.1
 
 ### Patch Changes
