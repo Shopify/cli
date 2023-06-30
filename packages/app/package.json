@@ -59,6 +59,7 @@
     "ws": "8.13.0"
   },
   "devDependencies": {
+    "zod-to-json-schema": "3.21.3",
     "@types/diff": "^5.0.3",
     "@types/http-proxy": "^1.17.11",
     "@types/lodash-es": "^4.17.7",

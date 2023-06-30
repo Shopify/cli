@@ -21,6 +21,8 @@ import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
+// eslint-disable-next-line no-restricted-imports
+import {extname} from 'path'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -44,7 +46,7 @@ async function loadConfigurationFile(
 
   try {
     const configurationContent = await readFile(filepath)
-    return decode(configurationContent)
+    return extname(filepath) === '.json' ? JSON.parse(configurationContent) : decode(configurationContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
     // TOML errors have line, pos and col properties
@@ -243,12 +245,12 @@ class AppLoader {
 
   async getConfigurationPath() {
     if (this.configurationPath) return this.configurationPath
-
     const configurationFileName = getAppConfigurationFileName(this.configName)
     const configurationPath = await findPathUp(configurationFileName, {
       cwd: this.directory,
       type: 'file',
     })
+
     if (!configurationPath) {
       throw new AbortError(
         outputContent`Couldn't find the configuration file for ${outputToken.path(
@@ -421,7 +423,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   return undefined
 }
 
-function isWebType(web: Web, type: WebType): boolean {
+export function isWebType(web: Web, type: WebType): boolean {
   return web.configuration.roles.includes(type)
 }
 
@@ -494,6 +496,10 @@ async function logMetadataForLoadedApp(
 
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
+    if (extname(config) === '.json') {
+      return config
+    }
+
     const validFileRegex = /^shopify\.app(\.[-_\w]+)?\.toml$/g
     if (validFileRegex.test(config)) {
       return config

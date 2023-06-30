@@ -1,6 +1,11 @@
 import {PushConfig, PushConfigSchema} from '../../../api/graphql/push_config.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
-import {AppInterface, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {
+  AppInterface,
+  CurrentAppConfiguration,
+  isCurrentAppSchema,
+  usesLegacyScopesBehavior,
+} from '../../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -70,6 +75,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
       : app.appProxy ?? undefined,
     posEmbedded: configuration.pos?.embedded ?? app.posEmbedded,
     preferencesUrl: configuration.app_preferences?.url ?? app.preferencesUrl,
+    requested_access_scopes: usesLegacyScopesBehavior(configuration) ? undefined : configuration.scopes ?? [],
   }
 
   return variables
