@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -418,8 +418,8 @@ importers:
         specifier: 7.5.1
         version: 7.5.1
       simple-git:
-        specifier: 3.19.0
-        version: 3.19.0
+        specifier: 3.19.1
+        version: 3.19.1
       source-map-support:
         specifier: 0.5.21
         version: 0.5.21
@@ -894,8 +894,8 @@ importers:
         specifier: ^1.1.0
         version: 1.1.0
       simple-git:
-        specifier: 3.19.0
-        version: 3.19.0
+        specifier: 3.19.1
+        version: 3.19.1
       tempy:
         specifier: 3.0.0
         version: 3.0.0
@@ -11828,8 +11828,8 @@ packages:
       - supports-color
     dev: true
 
-  /simple-git@3.19.0:
-    resolution: {integrity: sha512-hyH2p9Ptxjf/xPuL7HfXbpYt9gKhC1yWDh3KYIAYJJePAKV7AEjLN4xhp7lozOdNiaJ9jlVvAbBymVlcS2jRiA==}
+  /simple-git@3.19.1:
+    resolution: {integrity: sha512-Ck+rcjVaE1HotraRAS8u/+xgTvToTuoMkT9/l9lvuP5jftwnYUp6DwuJzsKErHgfyRk8IB8pqGHWEbM3tLgV1w==}
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
@@ -13777,7 +13777,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.45.0
     peerDependencies:
       eslint: ^8.41.0
     dependencies:
