@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -494,8 +494,8 @@ importers:
         specifier: ^17.0.1
         version: 17.0.1
       typedoc:
-        specifier: ^0.24.7
-        version: 0.24.7(typescript@4.9.5)
+        specifier: ^0.24.8
+        version: 0.24.8(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
         version: 4.9.5
@@ -12783,12 +12783,12 @@ packages:
     resolution: {integrity: sha512-/aCDEGatGvZ2BIk+HmLf4ifCJFwvKFNb9/JeZPMulfgFracn9QFcAf5GO8B/mweUjSoblS5In0cWhqpfs/5PQA==}
     dev: true
 
-  /typedoc@0.24.7(typescript@4.9.5):
-    resolution: {integrity: sha512-zzfKDFIZADA+XRIp2rMzLe9xZ6pt12yQOhCr7cD7/PBTjhPmMyMvGrkZ2lPNJitg3Hj1SeiYFNzCsSDrlpxpKw==}
+  /typedoc@0.24.8(typescript@4.9.5):
+    resolution: {integrity: sha512-ahJ6Cpcvxwaxfu4KtjA8qZNqS43wYt6JL27wYiIgl1vd38WW/KWX11YuAeZhuz9v+ttrutSsgK+XO1CjL1kA3w==}
     engines: {node: '>= 14.14'}
     hasBin: true
     peerDependencies:
-      typescript: 4.6.x || 4.7.x || 4.8.x || 4.9.x || 5.0.x
+      typescript: 4.6.x || 4.7.x || 4.8.x || 4.9.x || 5.0.x || 5.1.x
     dependencies:
       lunr: 2.3.9
       marked: 4.3.0
@@ -13777,7 +13777,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.45.0
     peerDependencies:
       eslint: ^8.41.0
     dependencies:
