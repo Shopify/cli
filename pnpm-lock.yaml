@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -255,8 +255,8 @@ importers:
         specifier: 3.47.0
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
-        specifier: 3.21.1
-        version: 3.21.1(zod@3.21.4)
+        specifier: 3.21.3
+        version: 3.21.3(zod@3.21.4)
     devDependencies:
       '@shopify/app':
         specifier: 3.47.0
@@ -13761,8 +13761,8 @@ packages:
       readable-stream: 3.6.2
     dev: false
 
-  /zod-to-json-schema@3.21.1(zod@3.21.4):
-    resolution: {integrity: sha512-y5g0MPxDq+YG/T+cHGPYH4PcBpyCqwK6wxeJ76MR563y0gk/14HKfebq8xHiItY7lkc9GDFygCnkvNDTvAhYAg==}
+  /zod-to-json-schema@3.21.3(zod@3.21.4):
+    resolution: {integrity: sha512-09W/9oyxeF1/wWnzCb6MursW+lOzgKi91QwE7eTBbC+t/qgfuLsUVDai3lHemSQnQu/UONAcT/fv3ZnDvbTeKg==}
     peerDependencies:
       zod: ^3.21.4
     dependencies:
@@ -13777,7 +13777,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.45.0
     peerDependencies:
       eslint: ^8.41.0
     dependencies:
