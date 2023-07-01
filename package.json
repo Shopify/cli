@@ -59,7 +59,7 @@
     "nx": "16.3.2",
     "oclif": "3.9.0",
     "octokit-plugin-create-pull-request": "^3.12.2",
-    "pathe": "1.1.0",
+    "pathe": "1.1.1",
     "pin-github-action": "^1.8.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.8.7",
