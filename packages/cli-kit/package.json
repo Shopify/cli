@@ -139,7 +139,7 @@
     "node-abort-controller": "3.1.1",
     "node-fetch": "3.3.1",
     "open": "8.4.2",
-    "pathe": "1.1.0",
+    "pathe": "1.1.1",
     "react": "18.2.0",
     "semver": "7.5.3",
     "simple-git": "3.19.1",
@@ -163,7 +163,7 @@
     "@types/fs-extra": "9.0.13",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.195",
-    "@types/node": "14.18.36",
+    "@types/node": "14.18.53",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.0",
     "@vitest/coverage-istanbul": "^0.32.2",
@@ -172,7 +172,7 @@
     "typedoc": "^0.24.8",
     "typescript": "4.9.5",
     "vite": "^4.3.9",
-    "vitest": "^0.31.0"
+    "vitest": "^0.32.2"
   },
   "engines": {
     "node": ">=14.17.0"
