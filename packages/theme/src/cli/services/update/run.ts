@@ -127,8 +127,8 @@ async function isUpdaterIsProgress(ctx: Context, session: AdminSession, startTim
     )
   }
 
-  // Sleep for 1 second before polling again
-  await sleep(1)
+  // Sleep for 3 seconds before polling again
+  await sleep(3)
 
   return theme.processing
 }
