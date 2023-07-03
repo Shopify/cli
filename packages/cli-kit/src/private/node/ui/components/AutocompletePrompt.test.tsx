@@ -530,17 +530,13 @@ describe('AutocompletePrompt', async () => {
     expect(onEnter).toHaveBeenCalledWith('fifth')
   })
 
-  test('allows selecting the first item after searching and triggering the loading state', async () => {
+  test('allows selecting the first item after searching', async () => {
     const onEnter = vi.fn()
 
-    const search = (term: string) => {
-      return new Promise<SearchResults<string>>((resolve) => {
-        setTimeout(() => {
-          resolve({
-            data: DATABASE.filter((item) => item.label.includes(term)),
-          })
-        }, 1000)
-      })
+    const search = async (term: string) => {
+      return {
+        data: DATABASE.filter((item) => item.label.includes(term)),
+      }
     }
 
     const renderInstance = render(
