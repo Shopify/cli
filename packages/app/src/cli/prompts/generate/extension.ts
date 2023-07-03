@@ -2,7 +2,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface GenerateExtensionPromptOptions {
@@ -60,7 +60,7 @@ const generateExtensionPrompts = async (
     }
 
     // eslint-disable-next-line require-atomic-updates
-    templateType = await renderSelectPrompt({
+    templateType = await renderAutocompletePrompt({
       message: 'Type of extension?',
       choices: buildChoices(extensionTemplates, options.unavailableExtensions),
     })
