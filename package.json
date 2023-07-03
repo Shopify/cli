@@ -32,7 +32,7 @@
     "@apollo/client": "^3.7.15",
     "@babel/core": "^7.22.5",
     "@bugsnag/source-maps": "^2.3.1",
-    "@changesets/cli": "2.26.1",
+    "@changesets/cli": "2.26.2",
     "@nrwl/tao": "16.3.2",
     "@octokit/core": "^4.2.1",
     "@octokit/rest": "^19.0.11",
