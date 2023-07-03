@@ -243,8 +243,8 @@ importers:
         specifier: 2.2.15
         version: 2.2.15
       '@oclif/plugin-help':
-        specifier: 5.2.9
-        version: 5.2.9
+        specifier: 5.2.11
+        version: 5.2.11
       '@oclif/plugin-plugins':
         specifier: 2.4.7
         version: 2.4.7
@@ -3632,8 +3632,8 @@ packages:
       lodash: 4.17.21
     dev: false
 
-  /@oclif/plugin-help@5.2.9:
-    resolution: {integrity: sha512-0J3oowPURZJ4Dn1p1WpQ46E4+CoV20KTn1cvsNiDl6Hmbw+qoljKQnArJJzNFeZQxWo4R7/S42PrzKJTVYh68Q==}
+  /@oclif/plugin-help@5.2.11:
+    resolution: {integrity: sha512-B2cGOyRskorr8NiGrmIBYxEK0c4laJo+W16VeEblLVDW8w6BvnSwC6K4Vd6rkKmPHRsgqoYrA5BCfPTwvUdSCg==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
@@ -10383,7 +10383,7 @@ packages:
     hasBin: true
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-help': 5.2.9
+      '@oclif/plugin-help': 5.2.11
       '@oclif/plugin-not-found': 2.3.23
       '@oclif/plugin-warn-if-update-available': 2.0.37
       aws-sdk: 2.1383.0
