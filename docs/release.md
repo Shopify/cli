@@ -24,36 +24,18 @@ The steps are:
     * Click "Publish release"
 7. Only if releasing a patch to the latest stable version: Once the deployment completes, [find the PR](https://github.com/Shopify/homebrew-shopify/pulls?q=is%3Apr+is%3Aopen+Shopify+CLI) in the homebrew-shopify repository and merge the changes in the formula.
 
-### Creating a new pre-release version
-
-This should be done once a week.
-
-1. Find the [Version Packages - main (pre) PR](https://github.com/Shopify/cli/pulls?q=is%3Apr+is%3Aopen+%22Version+Packages+-+main+%28pre%29%22) and merge it.
-2. Wait until the commit for **Version Packages - main (pre)** becomes <font color="green">green</font> in [CLI Production Shipit](https://shipit.shopify.io/shopify/cli/production) and push the _Deploy_ button.
-3. Push again on the _Create deploy_ button to start the deployment. This will publish the CLI packages to the [NPM registry](https://www.npmjs.com/package/@shopify/cli). If there are failures (as it can be flaky), rerun the deployment and the missing packages should be published.
-
 
 ### Creating a new minor version
-
-First, exit prerelease mode:
-
-1. Pull the latest `main`, check out a branch, and run `pnpm changeset pre exit`.
-2. Open a PR to `main`, get approval.
-3. Announce in `#shopify-cli` and `#cli-foundations-team` that merges should be paused for release.
-4. Merge!
-
-Next, cut the release:
 
 1. Locate the [opened PR](https://github.com/Shopify/cli/pulls?q=is%3Apr+is%3Aopen+in%3Atitle+%22Version+Packages+-+main%22) named **Version Packages - main**. This PR is automatically created with the first merge in `main` after a previous release is published. _Changesets_ will automatically detect changes with each merge to main and update automatically the PR and consequently the `package.json`s and the dependencies between them
 2. Verify that the correct version is updated in every _package.json_, <ins>paying special attention that there is no **major** bump</ins>. Approve and merge the **Version Packages - main** PR when all checks have passed.
 
-Now return to prerelease mode:
+Now create a PR with the changest:
 
-1. Pull the latest `main`, check out a branch, and run `pnpm changeset pre enter pre`. Commit.
-2. Move the contents from `release_notes_draft.md` to a new file, `RELEASE_NOTES/3.x.md`, replacing `3.x` with the actual minor version number. Be sure to leave the comments where they are! Commit.
-3. Open a PR to `main`, get approval.
-4. Merge!
-5. Announce in `#shopify-cli` and `#cli-foundations-team` that the release has been cut, and merges are permitted.
+1. Create a new `RELEASE_NOTES/3.x.md` file, replacing `3.x` with the actual minor version number. Look at the changesets in the Version Packages PR and distill a list of changes that are relevant to our partners. Take a look at previous release files to see the recommended format. Commit.
+2. Open a PR to `main`, get approval.
+3. Merge!
+4. Announce in `#shopify-cli` and `#cli-foundations-team` that the release has been cut, and merges are permitted.
 
 You've designated a commit as releasable. Now time to publish via Shipit:
 
