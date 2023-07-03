@@ -30,7 +30,7 @@ The steps are:
 1. Locate the [opened PR](https://github.com/Shopify/cli/pulls?q=is%3Apr+is%3Aopen+in%3Atitle+%22Version+Packages+-+main%22) named **Version Packages - main**. This PR is automatically created with the first merge in `main` after a previous release is published. _Changesets_ will automatically detect changes with each merge to main and update automatically the PR and consequently the `package.json`s and the dependencies between them
 2. Verify that the correct version is updated in every _package.json_, <ins>paying special attention that there is no **major** bump</ins>. Approve and merge the **Version Packages - main** PR when all checks have passed.
 
-Now create a PR with the changest:
+Now create a PR with the release notes:
 
 1. Create a new `RELEASE_NOTES/3.x.md` file, replacing `3.x` with the actual minor version number. Look at the changesets in the Version Packages PR and distill a list of changes that are relevant to our partners. Take a look at previous release files to see the recommended format. Commit.
 2. Open a PR to `main`, get approval.
