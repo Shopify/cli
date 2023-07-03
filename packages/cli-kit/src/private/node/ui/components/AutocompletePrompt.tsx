@@ -57,7 +57,7 @@ function AutocompletePrompt<T>({
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
   const {stdout} = useStdout()
-  const canSearch = initialChoices.length >= PAGE_SIZE
+  const canSearch = initialChoices.length >= 5
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)

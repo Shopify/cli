@@ -430,8 +430,13 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
 
   const newProps = {
     search(term: string) {
+      const lowerTerm = term.toLowerCase()
       return Promise.resolve({
-        data: props.choices.filter((item) => item.label.toLowerCase().includes(term.toLowerCase())),
+        data: props.choices.filter((item) => {
+          return (
+            item.label.toLowerCase().includes(lowerTerm) || (item.group && item.group.toLowerCase().includes(lowerTerm))
+          )
+        }),
       })
     },
     ...props,
