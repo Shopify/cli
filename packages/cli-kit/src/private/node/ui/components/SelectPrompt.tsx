@@ -3,7 +3,6 @@ import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
 import {GitDiff, GitDiffProps} from './GitDiff.js'
 import {messageWithPunctuation} from '../utilities.js'
-import {uniqBy} from '../../../../public/common/array.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
@@ -51,12 +50,9 @@ function SelectPrompt<T>({
   const [submitted, setSubmitted] = useState(false)
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [selectInputHeight, setSelectInputHeight] = useState(0)
-  const [limit, setLimit] = useState(choices.length)
-  const numberOfGroups = uniqBy(
-    choices.filter((choice) => choice.group),
-    'group',
-  ).length
+  const [promptAreaHeight, setPromptAreaHeight] = useState(0)
+  const currentAvailableLines = stdout.rows - promptAreaHeight - 5
+  const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
@@ -65,24 +61,19 @@ function SelectPrompt<T>({
     }
   }, [])
 
-  const inputRef = useCallback((node) => {
+  const promptAreaRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setSelectInputHeight(height)
+      setPromptAreaHeight(height)
     }
   }, [])
 
   useLayoutEffect(() => {
     function onResize() {
-      const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
-      // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
-
-      if (newLimit < limit) {
-        stdout.write(ansiEscapes.clearTerminal)
+      const newAvailableLines = stdout.rows - promptAreaHeight - 5
+      if (newAvailableLines !== availableLines) {
+        setAvailableLines(newAvailableLines)
       }
-
-      setLimit(Math.min(newLimit, choices.length))
     }
 
     onResize()
@@ -91,7 +82,7 @@ function SelectPrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, choices.length, numberOfGroups, stdout, limit])
+  }, [wrapperHeight, promptAreaHeight, choices.length, stdout, availableLines])
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
@@ -110,32 +101,28 @@ function SelectPrompt<T>({
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
-      <Box>
-        <Box marginRight={2}>
-          <Text>?</Text>
+      <Box ref={promptAreaRef} flexDirection="column">
+        <Box>
+          <Box marginRight={2}>
+            <Text>?</Text>
+          </Box>
+          <TokenizedText item={messageWithPunctuation(message)} />
         </Box>
-        <TokenizedText item={messageWithPunctuation(message)} />
+        {(infoTable || infoMessage || gitDiff) && !submitted ? (
+          <Box marginLeft={7} marginTop={1} flexDirection="column" gap={1}>
+            {infoMessage ? (
+              <Box flexDirection="column" gap={1}>
+                <Text color={infoMessage.title.color}>
+                  <TokenizedText item={infoMessage.title.text} />
+                </Text>
+                <TokenizedText item={infoMessage.body} />
+              </Box>
+            ) : null}
+            {infoTable ? <InfoTable table={infoTable} /> : null}
+            {gitDiff ? <GitDiff {...gitDiff} /> : null}
+          </Box>
+        ) : null}
       </Box>
-
-      {(infoTable || infoMessage) && !submitted ? (
-        <Box marginLeft={7} marginTop={1} flexDirection="column" gap={1}>
-          {infoMessage ? (
-            <Box flexDirection="column" gap={1}>
-              <Text color={infoMessage.title.color}>
-                <TokenizedText item={infoMessage.title.text} />
-              </Text>
-              <TokenizedText item={infoMessage.body} />
-            </Box>
-          ) : null}
-          {infoTable ? <InfoTable table={infoTable} /> : null}
-        </Box>
-      ) : null}
-
-      {gitDiff && !submitted ? (
-        <Box marginLeft={7} marginTop={1}>
-          <GitDiff {...gitDiff} />
-        </Box>
-      ) : null}
 
       {submitted ? (
         <Box>
@@ -152,11 +139,10 @@ function SelectPrompt<T>({
             items={choices}
             infoMessage={
               submitWithShortcuts
-                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm`
+                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm.`
                 : undefined
             }
-            limit={limit}
-            ref={inputRef}
+            availableLines={availableLines}
             submitWithShortcuts={submitWithShortcuts}
             onSubmit={submitAnswer}
           />

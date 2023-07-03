@@ -129,8 +129,8 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         }
       }
 
-      const nextVisibleToIndex = Math.min(state.optionMap.size, state.visibleToIndex + 1)
-      const nextVisibleFromIndex = nextVisibleToIndex - state.visibleOptionCount
+      const nextVisibleToIndex = next.index
+      const nextVisibleFromIndex = nextVisibleToIndex - state.visibleOptionCount + 1
 
       return {
         ...state,
@@ -171,8 +171,8 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         }
       }
 
-      const nextVisibleFromIndex = Math.max(0, state.visibleFromIndex - 1)
-      const nextVisibleToIndex = nextVisibleFromIndex + state.visibleOptionCount
+      const nextVisibleFromIndex = previous.index
+      const nextVisibleToIndex = nextVisibleFromIndex + state.visibleOptionCount - 1
 
       return {
         ...state,
@@ -212,7 +212,7 @@ export interface UseSelectStateProps<T> {
    * Number of items to display.
    *
    */
-  visibleOptionCount?: number
+  visibleOptionCount: number
 
   /**
    * Options.
@@ -225,7 +225,7 @@ export interface UseSelectStateProps<T> {
   defaultValue?: T
 }
 
-export type SelectState<T> = Pick<State<T>, 'visibleFromIndex' | 'visibleToIndex' | 'value'> & {
+export type SelectState<T> = Pick<State<T>, 'visibleOptionCount' | 'visibleFromIndex' | 'visibleToIndex' | 'value'> & {
   /**
    * Visible options.
    */
@@ -320,8 +320,8 @@ export const useSelectState = <T>({visibleOptionCount, options, defaultValue}: U
   }, [])
 
   const visibleOptions = useMemo(() => {
-    return options.slice(state.visibleFromIndex, state.visibleToIndex)
-  }, [options, state.visibleFromIndex, state.visibleToIndex])
+    return options.slice(state.visibleFromIndex)
+  }, [options, state.visibleFromIndex])
 
   return {
     visibleFromIndex: state.visibleFromIndex,

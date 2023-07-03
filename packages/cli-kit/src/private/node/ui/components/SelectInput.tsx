@@ -16,6 +16,7 @@ declare module 'react' {
 }
 export interface SelectInputProps<T> {
   items: Item<T>[]
+  initialItems?: Item<T>[]
   onChange?: (item: Item<T> | undefined) => void
   enableShortcuts?: boolean
   focus?: boolean
@@ -27,7 +28,7 @@ export interface SelectInputProps<T> {
   hasMorePages?: boolean
   morePagesMessage?: string
   infoMessage?: string
-  limit?: number
+  availableLines?: number
   submitWithShortcuts?: boolean
   onSubmit?: (item: Item<T>) => void
 }
@@ -64,6 +65,7 @@ interface ItemProps<T> {
   highlightedTerm?: string
   enableShortcuts: boolean
   hasAnyGroup: boolean
+  maxKeyLength: number
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -75,6 +77,7 @@ function Item<T>({
   enableShortcuts,
   items,
   hasAnyGroup,
+  maxKeyLength,
 }: ItemProps<T>): JSX.Element {
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
@@ -91,25 +94,35 @@ function Item<T>({
   }
 
   return (
-    <Box key={item.key} flexDirection="column" marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}>
+    <Box
+      key={item.key}
+      flexDirection="column"
+      marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}
+      minHeight={title ? 2 : 1}
+    >
       {title ? (
         <Box marginLeft={3}>
           <Text bold>{title}</Text>
         </Box>
       ) : null}
 
-      <Box key={item.key}>
+      <Box key={item.key} marginLeft={hasAnyGroup ? 3 : 0}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        <Box marginLeft={enableShortcuts ? maxKeyLength - item.key.length : 0}>
+          <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
+        </Box>
       </Box>
     </Box>
   )
 }
 
+const MAX_AVAILABLE_LINES = 25
+
 // eslint-disable-next-line react/function-component-definition
 function SelectInputInner<T>(
   {
-    items: initialItems,
+    items: rawItems,
+    initialItems = rawItems,
     onChange,
     enableShortcuts = true,
     focus = true,
@@ -121,20 +134,41 @@ function SelectInputInner<T>(
     hasMorePages = false,
     morePagesMessage,
     infoMessage,
-    limit,
+    availableLines = MAX_AVAILABLE_LINES,
     submitWithShortcuts = false,
     onSubmit,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
+  let noItems = false
+
+  if (rawItems.length === 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-param-reassign
+    rawItems = [{label: emptyMessage, value: null as any, disabled: true}]
+    noItems = true
+  }
+
   const sortBy = require('lodash/sortBy')
-  const hasAnyGroup = initialItems.some((item) => typeof item.group !== 'undefined')
-  const items = sortBy(initialItems, 'group') as Item<T>[]
+  const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
+  const items = sortBy(rawItems, 'group') as Item<T>[]
   const itemsWithKeys = items.map((item, index) => ({
     ...item,
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
-  const hasLimit = typeof limit !== 'undefined' && items.length > limit
+
+  function maximumLinesLostToGroups(items: Item<T>[]): number {
+    // Calculate a safe estimate of the limit needed based on the space available
+    const numberOfGroups = new Set(items.map((item) => item.group).filter((group) => group)).size
+    // Add 1 to numberOfGroups because we also have a default Other group
+    const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups + 1))
+    // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
+    return numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
+  }
+
+  const maxLinesLostToGroups = maximumLinesLostToGroups(items)
+  const limit = Math.max(2, availableLines - maxLinesLostToGroups)
+  const hasLimit = items.length > limit
+
   const inputStack = useRef<string | null>(null)
 
   const state = useSelectState({
@@ -159,8 +193,8 @@ function SelectInputInner<T>(
 
   const handleShortcuts = useCallback(
     (input: string) => {
-      if (state.visibleOptions.map((item) => item.key).includes(input)) {
-        const itemWithKey = state.visibleOptions.find((item) => item.key === input)
+      if (state.visibleOptions.map((item: Item<T>) => item.key).includes(input)) {
+        const itemWithKey = state.visibleOptions.find((item: Item<T>) => item.key === input)
         const item = items.find((item) => item.value === itemWithKey?.value)
 
         if (itemWithKey && !itemWithKey.disabled) {
@@ -225,42 +259,54 @@ function SelectInputInner<T>(
         <Text color="red">{errorMessage}</Text>
       </Box>
     )
-  } else if (items.length === 0) {
-    return (
-      <Box marginLeft={3}>
-        <Text dimColor>{emptyMessage}</Text>
-      </Box>
-    )
   } else {
+    const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
+    const maxKeyLength = itemsWithKeys
+      .map((item) => item.key?.length ?? 0)
+      .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
+    const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
-        {state.visibleOptions.map((item, index) => (
-          <Item
-            key={item.key}
-            item={item}
-            previousItem={state.visibleOptions[index - 1]}
-            highlightedTerm={highlightedTerm}
-            isSelected={item.value === state.value}
-            items={state.visibleOptions}
-            enableShortcuts={enableShortcuts}
-            hasAnyGroup={hasAnyGroup}
-          />
-        ))}
-
-        <Box marginTop={1} marginLeft={3} flexDirection="column">
-          {hasMorePages ? (
-            <Text>
-              <Text bold>1-{items.length} of many</Text>
-              {morePagesMessage ? `  ${morePagesMessage}` : null}
-            </Text>
-          ) : null}
-          {hasLimit ? <Text dimColor>{`Showing ${limit} of ${items.length} items.`}</Text> : null}
-          <Text dimColor>
-            {infoMessage
-              ? infoMessage
-              : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm`}
-          </Text>
+        <Box
+          flexDirection="column"
+          height={Math.max(minHeight, Math.min(availableLines, optionsHeight))}
+          overflowY="hidden"
+        >
+          {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
+            <Item
+              key={item.key}
+              item={item}
+              previousItem={state.visibleOptions[index - 1]}
+              highlightedTerm={highlightedTerm}
+              isSelected={item.value === state.value}
+              items={state.visibleOptions}
+              enableShortcuts={enableShortcuts}
+              hasAnyGroup={hasAnyGroup}
+              maxKeyLength={maxKeyLength}
+            />
+          ))}
         </Box>
+
+        {noItems ? (
+          <Box marginTop={1} marginLeft={3} height={2}>
+            <Text dimColor>Try again with a different keyword.</Text>
+          </Box>
+        ) : (
+          <Box marginTop={1} marginLeft={3} flexDirection="column">
+            <Text dimColor>
+              {infoMessage
+                ? infoMessage
+                : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
+            </Text>
+            {hasMorePages ? (
+              <Text>
+                <Text bold>1-{items.length} of many</Text>
+                {morePagesMessage ? `  ${morePagesMessage}` : null}
+              </Text>
+            ) : null}
+            {hasLimit ? <Text dimColor>{`${items.length} options available, ${limit} visible.`}</Text> : null}
+          </Box>
+        )}
       </Box>
     )
   }

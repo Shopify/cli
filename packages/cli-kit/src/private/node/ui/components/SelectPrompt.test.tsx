@@ -91,22 +91,22 @@ describe('SelectPrompt', async () => {
       "?  Associate your project with the org Castile Ventures?
 
          [1mAutomations[22m
-      [36m>[39m  [36m(f) first[39m
-         (s) second
+         [36m>[39m   [36m(f) first[39m
+             (s) second
 
          [1mMerchant Admin[22m
-         (3) third
-         (4) fourth
+             (3) third
+             (4) fourth
 
          [1mOther[22m
-         (a) fifth
-         (6) sixth
-         (7) seventh
-         (8) eighth
-         (9) ninth
-         (10) tenth
+             (a) fifth
+             (6) sixth
+             (7) seventh
+             (8) eighth
+             (9) ninth
+            (10) tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -146,7 +146,7 @@ describe('SelectPrompt', async () => {
          (3) third
          (4) fourth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -188,7 +188,7 @@ describe('SelectPrompt', async () => {
          (3) third
          (4) fourth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -222,7 +222,8 @@ describe('SelectPrompt', async () => {
 
       >  (1) a
 
-         Press ↑↓ arrows to select, enter to confirm
+
+         Press ↑↓ arrows to select, enter to confirm.
       "
     `)
   })
@@ -244,7 +245,7 @@ describe('SelectPrompt', async () => {
          (1) a
       >  (2) b
 
-         Press ↑↓ arrows to select, enter to confirm
+         Press ↑↓ arrows to select, enter to confirm.
       "
     `)
 
@@ -274,7 +275,7 @@ describe('SelectPrompt', async () => {
       >  (1) a
          (2) b
 
-         Press ↑↓ arrows to select, enter to confirm
+         Press ↑↓ arrows to select, enter to confirm.
       "
     `)
 
@@ -301,14 +302,14 @@ describe('SelectPrompt', async () => {
     )
 
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-    "?  Test question?
+      "?  Test question?
 
-    >  (a) a
-       (b) b
+      >  (a) a
+         (b) b
 
-       Press ↑↓ arrows to select, enter or a shortcut to confirm
-    "
-  `)
+         Press ↑↓ arrows to select, enter or a shortcut to confirm.
+      "
+    `)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'b')
@@ -353,11 +354,13 @@ describe('SelectPrompt', async () => {
       "?  Associate your project with the org Castile Ventures?
 
          [1mAutomations[22m
-      [36m>[39m  [36m(f) first[39m
-         (s) second
+         [36m>[39m   [36m(f) first[39m
+             (s) second
 
-         [2mShowing 2 of 10 items.[22m
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [1mMerchant Admin[22m
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m10 options available, 2 visible.[22m
       "
     `)
   })
@@ -383,7 +386,7 @@ describe('SelectPrompt', async () => {
          (1) yes
       [36m>[39m  [36m(2) no[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -411,7 +414,7 @@ describe('SelectPrompt', async () => {
          (1) yes
       [36m>[39m  [36m(2) no[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -423,7 +426,7 @@ describe('SelectPrompt', async () => {
       [36m>[39m  [36m(1) yes[39m
          (2) no
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -448,14 +451,14 @@ describe('SelectPrompt', async () => {
     const promise = renderInstance.waitUntilExit()
 
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-    "?  Test question?
+      "?  Test question?
 
-    >  (1) a
-       (2) b
+      >  (1) a
+         (2) b
 
-       Press ↑↓ arrows to select, enter to confirm
-    "
-  `)
+         Press ↑↓ arrows to select, enter to confirm.
+      "
+    `)
 
     abortController.abort()
 

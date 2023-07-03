@@ -39,7 +39,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36m(2) Second[39m
          (3) Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenLastCalledWith(items[1])
   })
@@ -72,7 +72,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36m(2) Second[39m
          (3) Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[1])
   })
@@ -105,7 +105,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36m(2) Second[39m
          (3) Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[1])
   })
@@ -134,11 +134,11 @@ describe('SelectInput', async () => {
     await sendInputAndWaitForChange(renderInstance, '1', '0')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (1) First
-         (2) Second
+      "    (1) First
+          (2) Second
       [36m>[39m  [36m(10) Tenth[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[2])
   })
@@ -171,7 +171,7 @@ describe('SelectInput', async () => {
          (2) Second
          (3) Tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -204,7 +204,7 @@ describe('SelectInput', async () => {
          (2) Second
       [36m>[39m  [36m(t) Third[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[2])
   })
@@ -231,22 +231,22 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-      [36m>[39m  [36m(f) first[39m
-         (s) second
+         [36m>[39m   [36m(f) first[39m
+             (s) second
 
          [1mMerchant Admin[22m
-         (3) third
-         (4) fourth
+             (3) third
+             (4) fourth
 
          [1mOther[22m
-         (a) fifth
-         (6) sixth
-         (7) seventh
-         (8) eighth
-         (9) ninth
-         (10) tenth
+             (a) fifth
+             (6) sixth
+             (7) seventh
+             (8) eighth
+             (9) ninth
+            (10) tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -254,22 +254,22 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-         (f) first
-         (s) second
+             (f) first
+             (s) second
 
          [1mMerchant Admin[22m
-         (3) third
-         (4) fourth
+             (3) third
+             (4) fourth
 
          [1mOther[22m
-      [36m>[39m  [36m(a) fifth[39m
-         (6) sixth
-         (7) seventh
-         (8) eighth
-         (9) ninth
-         (10) tenth
+         [36m>[39m   [36m(a) fifth[39m
+             (6) sixth
+             (7) seventh
+             (8) eighth
+             (9) ninth
+            (10) tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenCalledWith(items[4])
 
@@ -278,22 +278,22 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-         (f) first
-         (s) second
+             (f) first
+             (s) second
 
          [1mMerchant Admin[22m
-         (3) third
-         (4) fourth
+             (3) third
+             (4) fourth
 
          [1mOther[22m
-         (a) fifth
-         (6) sixth
-      [36m>[39m  [36m(7) seventh[39m
-         (8) eighth
-         (9) ninth
-         (10) tenth
+             (a) fifth
+             (6) sixth
+         [36m>[39m   [36m(7) seventh[39m
+             (8) eighth
+             (9) ninth
+            (10) tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).toHaveBeenLastCalledWith(items[6])
   })
@@ -326,7 +326,7 @@ describe('SelectInput', async () => {
          Second
          Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
   })
@@ -356,7 +356,7 @@ describe('SelectInput', async () => {
       [36m>[39m  [36m(2) Second[39m
          (3) Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
   })
 
@@ -392,8 +392,8 @@ describe('SelectInput', async () => {
          (2) Second
          (3) Third
 
-         [1m1-3 of many[22m  Keep scrolling to see more items
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [1m1-3 of many[22m  Keep scrolling to see more items"
     `)
   })
 
@@ -411,22 +411,22 @@ describe('SelectInput', async () => {
       {label: 'tenth', value: 'tenth'},
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} limit={5} />)
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} availableLines={10} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-      [36m>[39m  [36m(a) fifth[39m
-         (2) sixth
+         [36m>[39m   [36m(a) fifth[39m
+             (2) sixth
 
          [1mMerchant Admin[22m
-         (3) eighth
-         (4) ninth
+             (3) eighth
+             (4) ninth
 
          [1mOther[22m
-         (f) first
+             (f) first
 
-         [2mShowing 5 of 10 items.[22m
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m10 options available, 5 visible.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -438,18 +438,18 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-         (2) sixth
+             (2) sixth
 
          [1mMerchant Admin[22m
-         (3) eighth
-         (4) ninth
+             (3) eighth
+             (4) ninth
 
          [1mOther[22m
-         (f) first
-      [36m>[39m  [36m(s) second[39m
+             (f) first
+         [36m>[39m   [36m(s) second[39m
 
-         [2mShowing 5 of 10 items.[22m
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m10 options available, 5 visible.[22m"
     `)
   })
 
@@ -593,7 +593,7 @@ describe('SelectInput', async () => {
          [2m(s) Second[22m
       [36m>[39m  [36m(t) Third[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
     await sendInputAndWait(renderInstance, 100, ENTER)
@@ -631,7 +631,7 @@ describe('SelectInput', async () => {
          [2m(s) Second[22m
          (t) Third
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -671,7 +671,7 @@ describe('SelectInput', async () => {
          [2m(s) Second[22m
       [36m>[39m  [36m(t) Third[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
     await sendInputAndWait(renderInstance, 100, ENTER)
