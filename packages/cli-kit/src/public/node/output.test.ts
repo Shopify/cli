@@ -1,6 +1,14 @@
 import {LogLevel, outputWhereAppropriate, outputToken, shouldDisplayColors} from './output.js'
+
 import {describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
+
+vi.mock('./context/local.js', async () => {
+  return {
+    isVerbose: () => false,
+    isUnitTest: () => false,
+  }
+})
 
 describe('Output helpers', () => {
   test('can format dependency manager commands with flags', () => {
@@ -52,6 +60,7 @@ describe('outputWhereAppropriate', () => {
     const mockLogger = vi.fn()
     const message = 'Test message'
     const logLevel: LogLevel = 'info'
+
     outputWhereAppropriate(logLevel, mockLogger, message)
     expect(mockLogger).toHaveBeenCalledWith(message, logLevel)
   })
@@ -62,6 +71,7 @@ describe('outputWhereAppropriate', () => {
     const mockLogger = new Writable({
       write: vi.fn(),
     })
+    vi.spyOn(mockLogger, 'write')
     outputWhereAppropriate(logLevel, mockLogger, message)
     expect(mockLogger.write).toHaveBeenCalledWith(message)
   })
