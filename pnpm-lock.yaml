@@ -467,8 +467,8 @@ importers:
         specifier: 9.0.13
         version: 9.0.13
       '@types/git-diff':
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: ^2.0.3
+        version: 2.0.3
       '@types/gradient-string':
         specifier: ^1.1.2
         version: 1.1.2
@@ -4677,8 +4677,8 @@ packages:
       '@types/node': 14.18.36
     dev: true
 
-  /@types/git-diff@2.0.0:
-    resolution: {integrity: sha512-ODftncJ3AlcBcl9rfLWy1ncs8LJvLXrPP6iZKg58oq20hdJrP0SEXIRwuZTnONI5zsH94QNen3AcMoZsM5R6nw==}
+  /@types/git-diff@2.0.3:
+    resolution: {integrity: sha512-PWQ+uy67HhZG9iJYkH7ReC9ymVbkp7FHXjskA1HrQGQifSPYkFdHBYCpJgI6lWENHFnvssk7uGJ5q/tqUOnEKw==}
     dev: true
 
   /@types/glob@8.1.0:
