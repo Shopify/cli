@@ -166,7 +166,7 @@
     "@types/node": "14.18.36",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.0",
-    "@vitest/coverage-istanbul": "^0.31.4",
+    "@vitest/coverage-istanbul": "^0.32.2",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.24.8",
