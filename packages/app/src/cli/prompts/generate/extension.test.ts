@@ -6,7 +6,7 @@ import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import themeExtension from '../../models/templates/theme-specifications/theme.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -42,14 +42,14 @@ describe('extension prompt', async () => {
     const extensionTemplate = findExtensionTemplate('ui_extension', allUITemplates)
 
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce(answers.extensionType)
     vi.mocked(renderTextPrompt).mockResolvedValue(answers.name)
 
     // When
     const got = await generateExtensionPrompts(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith(extensionTypeQuestion)
     expect(renderTextPrompt).toHaveBeenCalledWith(extensionNameQuestion)
     expect(got).toEqual({
       extensionTemplate,
@@ -70,13 +70,13 @@ describe('extension prompt', async () => {
     const extensionTemplate = findExtensionTemplate('ui_extension', allUITemplates)
 
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionType)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce(answers.extensionType)
 
     // When
     const got = await generateExtensionPrompts(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith(extensionTypeQuestion)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith(extensionTypeQuestion)
     expect(got).toEqual({
       extensionTemplate,
       extensionContent: [{name: 'my-special-extension', flavor: undefined, index: 0}],
@@ -197,13 +197,13 @@ describe('extension prompt', async () => {
       message: 'Type of extension?',
       choices: buildChoices(allFunctionTemplates),
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('product_discounts')
+    vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce('product_discounts')
 
     // When
     const got = await generateExtensionPrompts(options)
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith(functionTypes)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith(functionTypes)
     expect(got).toEqual({
       extensionTemplate,
       extensionContent: [{name: 'my-product-discount', index: 0, flavor: 'rust'}],
