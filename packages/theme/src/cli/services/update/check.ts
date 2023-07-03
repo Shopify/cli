@@ -8,21 +8,27 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 type ValidationResult = zod.SafeParseError<unknown>
 
 export const check = async (scriptPath: string) => {
+  await checkScript(scriptPath)
+
+  renderSuccess({
+    body: [`The '${scriptPath}' script is valid.`],
+  })
+}
+
+export async function checkScript(scriptPath: string) {
   const path = joinPath(scriptPath)
 
   const result = await validateSchema(path)
 
-  if (!result.success) {
-    const issues = result.error.issues
-    const items = issues.map(asErrorMessage).filter(Boolean) as string[]
-
-    throw new AbortError(`The '${path}' script is invalid:`, {
-      list: {items},
-    })
+  if (result.success) {
+    return
   }
 
-  renderSuccess({
-    body: [`The '${path}' script is valid.`],
+  const issues = result.error.issues
+  const items = issues.map(asErrorMessage).filter(Boolean) as string[]
+
+  throw new AbortError(`The '${path}' script is invalid:`, {
+    list: {items},
   })
 }
 

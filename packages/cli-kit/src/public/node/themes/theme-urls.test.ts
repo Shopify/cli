@@ -1,4 +1,4 @@
-import {storeAdminUrl, themeEditorUrl, themePreviewUrl} from './theme-urls.js'
+import {codeEditorUrl, storeAdminUrl, themeEditorUrl, themePreviewUrl} from './theme-urls.js'
 import {Theme} from './models/theme.js'
 import {test, describe, expect} from 'vitest'
 
@@ -23,6 +23,14 @@ describe('themeEditorUrl', () => {
     const url = themeEditorUrl(theme(123, 'unpublished'), session)
 
     expect(url).toEqual('https://my-shop.myshopify.com/admin/themes/123/editor')
+  })
+})
+
+describe('codeEditorUrl', () => {
+  test('returns the editor url for a theme', async () => {
+    const url = codeEditorUrl(theme(123, 'unpublished'), session)
+
+    expect(url).toEqual('https://my-shop.myshopify.com/admin/themes/123')
   })
 })
 

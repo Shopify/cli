@@ -1,4 +1,12 @@
-import {createTheme, deleteTheme, fetchThemes, ThemeParams, updateTheme, publishTheme} from './themes-api.js'
+import {
+  createTheme,
+  deleteTheme,
+  fetchThemes,
+  ThemeParams,
+  updateTheme,
+  publishTheme,
+  upgradeTheme,
+} from './themes-api.js'
 import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -13,8 +21,8 @@ describe('fetchThemes', () => {
     vi.mocked(restRequest).mockResolvedValue({
       json: {
         themes: [
-          {id: 123, name: 'store theme 1'},
-          {id: 456, name: 'store theme 2'},
+          {id: 123, name: 'store theme 1', processing: false},
+          {id: 456, name: 'store theme 2', processing: true},
         ],
       },
       status: 200,
@@ -25,7 +33,7 @@ describe('fetchThemes', () => {
     const themes = await fetchThemes(session)
 
     // Then
-    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined, {fields: 'id,name,role'})
+    expect(restRequest).toHaveBeenCalledWith('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
     expect(themes).toHaveLength(2)
 
     expect(themes[0]!.id).toEqual(123)
@@ -33,6 +41,9 @@ describe('fetchThemes', () => {
 
     expect(themes[0]!.name).toEqual('store theme 1')
     expect(themes[1]!.name).toEqual('store theme 2')
+
+    expect(themes[0]!.processing).toBeFalsy()
+    expect(themes[1]!.processing).toBeTruthy()
   })
 })
 
@@ -42,10 +53,11 @@ describe('createTheme', () => {
     const id = 123
     const name = 'new theme'
     const role = 'unpublished'
+    const processing = false
     const params: ThemeParams = {name, role}
 
     vi.mocked(restRequest).mockResolvedValue({
-      json: {theme: {id, name, role}},
+      json: {theme: {id, name, role, processing}},
       status: 200,
       headers: {},
     })
@@ -55,6 +67,66 @@ describe('createTheme', () => {
 
     // Then
     expect(restRequest).toHaveBeenCalledWith('POST', '/themes', session, {theme: params}, {})
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(id)
+    expect(theme!.name).toEqual(name)
+    expect(theme!.role).toEqual(role)
+    expect(theme!.processing).toBeFalsy()
+  })
+})
+
+describe('upgradeTheme', () => {
+  test('upgrades a theme with a script', async () => {
+    // Given
+    const fromTheme = 123
+    const toTheme = 456
+    const id = 789
+    const name = 'updated-theme'
+    const role = 'unpublished'
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {theme: {id, name, role}},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const theme = await upgradeTheme({fromTheme, toTheme, session})
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith('POST', `/themes`, session, {from_theme: fromTheme, to_theme: toTheme}, {})
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(id)
+    expect(theme!.name).toEqual(name)
+    expect(theme!.role).toEqual(role)
+  })
+
+  test('upgrades a theme without a script', async () => {
+    // Given
+    const fromTheme = 123
+    const toTheme = 456
+    const script = 'update_extension.json contents'
+    const id = 789
+    const name = 'updated-theme'
+    const role = 'unpublished'
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {theme: {id, name, role}},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const theme = await upgradeTheme({fromTheme, toTheme, script, session})
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith(
+      'POST',
+      `/themes`,
+      session,
+      {from_theme: fromTheme, to_theme: toTheme, script},
+      {},
+    )
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
