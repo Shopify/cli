@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.47.3
+
+### Patch Changes
+
+- 270d2e003: Update function deploy summary message
+  - @shopify/cli-kit@3.47.3
+  - @shopify/plugin-ngrok@3.47.3
+  - @shopify/plugin-cloudflare@3.47.3
+
 ## 3.47.2
 
 ### Patch Changes
