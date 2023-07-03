@@ -116,6 +116,8 @@ function Item<T>({
   )
 }
 
+const MAX_AVAILABLE_LINES = 25
+
 // eslint-disable-next-line react/function-component-definition
 function SelectInputInner<T>(
   {
@@ -132,7 +134,7 @@ function SelectInputInner<T>(
     hasMorePages = false,
     morePagesMessage,
     infoMessage,
-    availableLines = 25,
+    availableLines = MAX_AVAILABLE_LINES,
     submitWithShortcuts = false,
     onSubmit,
   }: SelectInputProps<T>,

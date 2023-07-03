@@ -38,6 +38,7 @@ enum PromptState {
 }
 
 const PAGE_SIZE = 25
+const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 
 // eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
@@ -57,7 +58,7 @@ function AutocompletePrompt<T>({
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
   const {stdout} = useStdout()
-  const canSearch = initialChoices.length >= 5
+  const canSearch = initialChoices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)

@@ -157,7 +157,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
          [1mAutomations[22m
          [36m>[39m  [36mfirst[39m
@@ -796,7 +796,7 @@ describe('AutocompletePrompt', async () => {
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
          [1mAutomations[22m
          [36m>[39m  [36mfirst[39m
