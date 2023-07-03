@@ -240,8 +240,8 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@oclif/plugin-commands':
-        specifier: 2.2.15
-        version: 2.2.15
+        specifier: 2.2.17
+        version: 2.2.17
       '@oclif/plugin-help':
         specifier: 5.2.9
         version: 5.2.9
@@ -3722,8 +3722,8 @@ packages:
       wordwrap: 1.0.0
       wrap-ansi: 7.0.0
 
-  /@oclif/plugin-commands@2.2.15:
-    resolution: {integrity: sha512-QaTIZhG5SW7sr42p4crJyE7jindr1hdHdazWTjiiPjsFEP3zUxVsNmwEMWPsBBVsjzw/gtztgpAexkZWJD8rXA==}
+  /@oclif/plugin-commands@2.2.17:
+    resolution: {integrity: sha512-shjVZCopCIbTN8I/i/DR7NwqFRMFau++n3+x2ON7JSNRo+zr/lXQUejxv50D64etQ4dP5wyIyvs+t9iN7j//gg==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
