@@ -433,8 +433,9 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
       const lowerTerm = term.toLowerCase()
       return Promise.resolve({
         data: props.choices.filter((item) => {
-          return item.label.toLowerCase().includes(lowerTerm) ||
-            (item.group && item.group.toLowerCase().includes(lowerTerm))
+          return (
+            item.label.toLowerCase().includes(lowerTerm) || (item.group && item.group.toLowerCase().includes(lowerTerm))
+          )
         }),
       })
     },
