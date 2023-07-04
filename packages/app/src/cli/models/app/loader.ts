@@ -13,6 +13,7 @@ import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {TypeSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
+import {getAppInfo} from '../../services/local-storage.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -411,36 +412,57 @@ class AppConfigurationLoader {
 
   async loaded() {
     const appDirectory = await this.getAppDirectory()
-    const configurationPath = await this.getConfigurationPath()
+    this.configName = this.configName ?? getAppInfo(appDirectory)?.configFile
+    const configurationPath = await this.getConfigurationPath(appDirectory)
     const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
     return {appDirectory, configuration, configurationPath}
   }
 
+  // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
+  // traverse up the filesystem to find the root app directory.
   async getAppDirectory() {
     if (!(await fileExists(this.directory))) {
       throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
     }
-    return dirname(await this.getConfigurationPath())
-  }
 
-  async getConfigurationPath() {
-    if (this.configurationPath) return this.configurationPath
+    // In order to find the chosen config for the app, we need to find the directory of the app.
+    // But we can't know the chosen config because the cache key is the directory itself. So we
+    // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
+    const appDirectory = await findPathUp(
+      async (directory) => {
+        const found = await glob(joinPath(directory, 'shopify.app*.toml'))
+        if (found.length > 0) {
+          return directory
+        }
+      },
+      {
+        cwd: this.directory,
+        type: 'directory',
+      },
+    )
 
-    const configurationFileName = getAppConfigurationFileName(this.configName)
-    const configurationPath = await findPathUp(configurationFileName, {
-      cwd: this.directory,
-      type: 'file',
-    })
-    if (!configurationPath) {
+    if (appDirectory) {
+      return appDirectory
+    } else {
       throw new AbortError(
         outputContent`Couldn't find the configuration file for ${outputToken.path(
           this.directory,
         )}, are you in an app directory?`,
       )
     }
+  }
 
-    this.configurationPath = configurationPath
-    return configurationPath
+  async getConfigurationPath(appDirectory: string) {
+    const configurationFileName = getAppConfigurationFileName(this.configName)
+    const configurationPath = joinPath(appDirectory, configurationFileName)
+
+    if (await fileExists(configurationPath)) {
+      return configurationPath
+    } else {
+      throw new AbortError(
+        outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(this.directory)}.`,
+      )
+    }
   }
 
   abort<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
@@ -554,7 +576,7 @@ async function logMetadataForLoadedApp(
 
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
-    const validFileRegex = /^shopify\.app(\.[-_\w]+)?\.toml$/g
+    const validFileRegex = /^shopify\.app(\.[-\w]+)?\.toml$/g
     if (validFileRegex.test(config)) {
       return config
     }
