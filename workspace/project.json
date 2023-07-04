@@ -14,14 +14,6 @@
         "cwd": "workspace"
       }
     },
-    "benchmark": {
-      "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
-      "options": {
-        "commands": ["node src/benchmark.js"],
-        "cwd": "workspace"
-      }
-    },
     "type-diff": {
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
