@@ -14196,7 +14196,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.45.0
     peerDependencies:
       eslint: ^8.41.0
     dependencies:
