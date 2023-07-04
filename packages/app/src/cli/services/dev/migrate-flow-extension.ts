@@ -1,8 +1,8 @@
-import {ExtensionMigrateToUiExtensionQuery} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {
+  ExtensionMigrateFlowExtensionQuery,
   ExtensionMigrateFlowExtensionSchema,
   ExtensionMigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
@@ -51,9 +51,10 @@ export async function migrateFlowExtensions(
 
   return remoteExtensions.map((extension) => {
     if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
+      const newType = extension.type === 'flow_action_definition' ? 'FLOW_ACTION' : 'FLOW_TRIGGER'
       return {
         ...extension,
-        type: extension.type.replace('_definition', ''),
+        type: newType,
       }
     }
     return extension
@@ -72,7 +73,7 @@ export async function migrateFlowExtension(
   }
 
   const result: ExtensionMigrateFlowExtensionSchema = await partnersRequest(
-    ExtensionMigrateToUiExtensionQuery,
+    ExtensionMigrateFlowExtensionQuery,
     token,
     variables,
   )

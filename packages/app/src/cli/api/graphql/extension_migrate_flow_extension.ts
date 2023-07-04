@@ -3,7 +3,7 @@ import {gql} from 'graphql-request'
 export const ExtensionMigrateFlowExtensionQuery = gql`
   mutation MigrateFlowExtension($apiKey: String!, $registrationId: ID!) {
     migrateFlowExtension(input: {apiKey: $apiKey, registrationId: $registrationId}) {
-      migratedToUiExtension
+      migratedFlowExtension
       userErrors {
         field
         message

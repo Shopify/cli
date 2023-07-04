@@ -31,6 +31,8 @@ export function buildTomlObject(extension: ExtensionRegistration) {
 
   const fields = configFromSerializedFields(extension.type as FlowPartnersExtensionTypes, config.fields ?? [])
 
+  const defaultURL = extension.type === 'flow_action_definition' ? 'https://url.com/api/execute' : undefined
+
   const localExtensionRepresentation = {
     name: extension.title,
     type: extension.type.replace('_definition', ''),
@@ -39,7 +41,7 @@ export function buildTomlObject(extension: ExtensionRegistration) {
       {
         type: extension.type.replace('_definition', ''),
         description: config.description,
-        runtime_url: config.url,
+        runtime_url: config.url ?? defaultURL,
         config_page_url: config.custom_configuration_page_url,
         config_page_preview_url: config.custom_configuration_page_preview_url,
         validation_url: config.validation_url,

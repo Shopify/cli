@@ -23,6 +23,7 @@ export async function ensureExtensionsIds(
   }: AppWithExtensions,
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
+  const allExtensions = [...remoteExtensions, ...dashboardOnlyExtensions]
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
   if (options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release') {
@@ -32,7 +33,7 @@ export async function ensureExtensionsIds(
   }
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
-  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
+  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
   const allExtensionsToMigrate = [...uiExtensionsToMigrate, ...flowExtensionsToMigrate]
 
   if (allExtensionsToMigrate.length > 0) {
@@ -43,7 +44,12 @@ export async function ensureExtensionsIds(
       remoteExtensions = await migrateExtensionsToUIExtension(uiExtensionsToMigrate, options.appId, remoteExtensions)
     }
     if (flowExtensionsToMigrate.length > 0) {
-      remoteExtensions = await migrateFlowExtensions(flowExtensionsToMigrate, options.appId, remoteExtensions)
+      const newRemoteExtensions = await migrateFlowExtensions(
+        flowExtensionsToMigrate,
+        options.appId,
+        dashboardOnlyExtensions,
+      )
+      remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     }
   }
 

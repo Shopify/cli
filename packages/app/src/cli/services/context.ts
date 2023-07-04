@@ -447,6 +447,7 @@ export async function fetchAppAndIdentifiers(
     apiKey?: string
   },
   token: string,
+  reuseFromDev = true,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
@@ -464,7 +465,9 @@ export async function fetchAppAndIdentifiers(
         }`,
       )
     }
-  } else {
+  } else if (options.apiKey) {
+    partnersApp = await fetchAppFromApiKey(options.apiKey, token)
+  } else if (reuseFromDev) {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
 

@@ -184,9 +184,12 @@ async function buildUnifiedDeploymentInfoPrompt(
 }
 
 export async function extensionMigrationPrompt(toMigrate: LocalRemoteSource[]): Promise<boolean> {
-  const migrationNames = toMigrate.map(({local}) => local.configuration.name).join(',')
+  const migrationNames = toMigrate.map(({local}) => `"${local.configuration.name}"`).join(', ')
   const allMigrationTypes = toMigrate.map(({remote}) => remote.type.toLocaleLowerCase())
-  const uniqueMigrationTypes = allMigrationTypes.filter((type, i) => allMigrationTypes.indexOf(type) === i).join(',')
+  const uniqueMigrationTypes = allMigrationTypes
+    .filter((type, i) => allMigrationTypes.indexOf(type) === i)
+    .map((name) => `"${name}"`)
+    .join(', ')
 
   renderInfo({
     headline: "Extension migrations can't be undone.",
