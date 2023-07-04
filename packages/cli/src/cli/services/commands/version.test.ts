@@ -1,10 +1,6 @@
 import {versionService} from './version.js'
 import {afterEach, describe, expect, vi, test} from 'vitest'
-import {
-  checkForNewVersion,
-  PackageManager,
-  packageManagerUsedForCreating,
-} from '@shopify/cli-kit/node/node-package-manager'
+import {checkForNewVersion, packageManagerUsedForCreating} from '@shopify/cli-kit/node/node-package-manager'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -15,24 +11,53 @@ afterEach(() => {
 })
 
 describe('check CLI version', () => {
-  test.each(['yarn', 'npm', 'pnpm'])(
-    'displays latest version and %s upgrade message when a newer exists',
-    async (packageManager: string) => {
-      // Given
-      const outputMock = mockAndCaptureOutput()
-      vi.mocked(checkForNewVersion).mockResolvedValue('3.0.10')
-      vi.mocked(packageManagerUsedForCreating).mockReturnValue(packageManager as PackageManager)
+  test('displays latest version and yarn upgrade message when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForNewVersion).mockResolvedValue('3.0.10')
+    vi.mocked(packageManagerUsedForCreating).mockReturnValue('yarn')
 
-      // When
-      await versionService()
+    // When
+    await versionService()
 
-      // Then
-      expect(outputMock.info()).toMatchInlineSnapshot(`
+    // Then
+    expect(outputMock.info()).toMatchInlineSnapshot(`
         "Current Shopify CLI version: 2.2.2
-        💡 Version 3.0.10 available! Run ${packageManager === 'npm' ? 'npm run' : packageManager} shopify upgrade"
+        💡 Version 3.0.10 available! Run yarn shopify upgrade"
       `)
-    },
-  )
+  })
+
+  test('displays latest version and pnpm upgrade message when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForNewVersion).mockResolvedValue('3.0.10')
+    vi.mocked(packageManagerUsedForCreating).mockReturnValue('pnpm')
+
+    // When
+    await versionService()
+
+    // Then
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+        "Current Shopify CLI version: 2.2.2
+        💡 Version 3.0.10 available! Run pnpm shopify upgrade"
+      `)
+  })
+
+  test('displays latest version and npm upgrade message when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForNewVersion).mockResolvedValue('3.0.10')
+    vi.mocked(packageManagerUsedForCreating).mockReturnValue('npm')
+
+    // When
+    await versionService()
+
+    // Then
+    expect(outputMock.info()).toMatchInlineSnapshot(`
+        "Current Shopify CLI version: 2.2.2
+        💡 Version 3.0.10 available! Run npm run shopify upgrade"
+      `)
+  })
 
   test('displays only current version when no newer version exists', async () => {
     // Given
