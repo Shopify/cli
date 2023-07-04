@@ -14,7 +14,7 @@ export async function matchConfirmationPrompt(local: LocalSource, remote: Remote
   return renderConfirmationPrompt({
     message: `Match ${local.configuration.name} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
     confirmationMessage: `Yes, that's right`,
-    cancellationMessage: `No, cancel`,
+    cancellationMessage: `No, create as a new extension`,
   })
 }
 

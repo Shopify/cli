@@ -47,14 +47,18 @@ export async function ensureExtensionsIds(
   let validMatches = matchExtensions.identifiers
   const validMatchesById: {[key: string]: string} = {}
 
+  const extensionsToCreate = matchExtensions.toCreate ?? []
+
   for (const pending of matchExtensions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
     const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
-    if (!confirmed) return err('user-cancelled')
-    validMatches[pending.local.localIdentifier] = pending.remote.uuid
+    if (confirmed) {
+      validMatches[pending.local.localIdentifier] = pending.remote.uuid
+    } else {
+      extensionsToCreate.push(pending.local)
+    }
   }
 
-  const extensionsToCreate = matchExtensions.toCreate ?? []
   let onlyRemoteExtensions = matchExtensions.toManualMatch.remote ?? []
 
   if (matchExtensions.toManualMatch.local.length > 0) {
