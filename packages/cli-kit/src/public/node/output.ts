@@ -23,7 +23,7 @@ import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
 
-export type Logger = Writable | ((message: string) => void)
+export type Logger = Writable | ((message: string, logLevel?: LogLevel) => void)
 
 export class TokenizedString {
   value: string
@@ -404,7 +404,7 @@ export function outputWhereAppropriate(
     if (logger instanceof Writable) {
       logger.write(message)
     } else {
-      logger(message)
+      logger(message, logLevel)
     }
     if (!options?.skipUIEvent) recordUIEvent({type: 'output', properties: {content: message}})
   }

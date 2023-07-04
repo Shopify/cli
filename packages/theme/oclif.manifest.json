@@ -1329,6 +1329,67 @@
         }
       },
       "args": {}
+    },
+    "theme:update:run": {
+      "id": "theme:update:run",
+      "description": "Run the theme update process.",
+      "strict": true,
+      "pluginName": "@shopify/theme",
+      "pluginAlias": "@shopify/theme",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your theme directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "store": {
+          "name": "store",
+          "type": "option",
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+          "multiple": false
+        },
+        "script": {
+          "name": "script",
+          "type": "option",
+          "description": "The path to the 'update_extension.json' script.",
+          "multiple": false
+        },
+        "from-theme": {
+          "name": "from-theme",
+          "type": "option",
+          "description": "The theme ID or name of the theme at the previous version.",
+          "required": true,
+          "multiple": false
+        },
+        "to-theme": {
+          "name": "to-theme",
+          "type": "option",
+          "description": "The theme ID or name of the theme at the target version.",
+          "required": true,
+          "multiple": false
+        }
+      },
+      "args": {}
     }
   }
 }

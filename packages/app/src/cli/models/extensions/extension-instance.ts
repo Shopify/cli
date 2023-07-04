@@ -222,7 +222,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       watchPaths.push(joinPath('src', '**', '*.js'))
       watchPaths.push(joinPath('src', '**', '*.ts'))
     }
-    watchPaths.push(joinPath('**', 'input*.graphql'))
+    watchPaths.push(joinPath('**', '!(.)*.graphql'))
 
     return watchPaths.map((path) => joinPath(this.directory, path))
   }

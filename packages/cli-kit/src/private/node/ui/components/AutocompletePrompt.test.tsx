@@ -157,25 +157,25 @@ describe('AutocompletePrompt', async () => {
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
          [1mAutomations[22m
-      [36m>[39m  [36mfirst[39m
-         second
+         [36m>[39m  [36mfirst[39m
+            second
 
          [1mMerchant Admin[22m
-         third
-         fourth
+            third
+            fourth
 
          [1mOther[22m
-         fifth
-         sixth
-         seventh
-         eighth
-         ninth
-         tenth
+            fifth
+            sixth
+            seventh
+            eighth
+            ninth
+            tenth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -216,7 +216,7 @@ describe('AutocompletePrompt', async () => {
          third
          fourth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -259,7 +259,7 @@ describe('AutocompletePrompt', async () => {
          third
          fourth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -291,6 +291,33 @@ describe('AutocompletePrompt', async () => {
       "?  Associate your project with the org Castile Ventures?   [36ma[7m [27m[39m
 
          [2mNo results found.[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         [2mTry again with a different keyword.[22m
+
       "
     `)
 
@@ -380,7 +407,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -416,7 +443,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-fifth
          th[1mi[22mrty-sixth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -451,7 +478,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -488,7 +515,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-fifth
          th[1mi[22mrty-sixth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -507,7 +534,6 @@ describe('AutocompletePrompt', async () => {
     const onEnter = vi.fn()
 
     const search = async (term: string) => {
-      await new Promise((resolve) => setTimeout(resolve, 300))
       return {
         data: DATABASE.filter((item) => item.label.includes(term)),
       }
@@ -530,7 +556,31 @@ describe('AutocompletePrompt', async () => {
 
       [36m>[39m  [36m[1mfiftieth[22m[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -618,7 +668,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-fifth
          th[1mi[22mrty-sixth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
 
@@ -653,7 +703,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
     `)
   })
@@ -705,8 +755,8 @@ describe('AutocompletePrompt', async () => {
          twenty-fourth
          twenty-fifth
 
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [1m1-25 of many[22m  Find what you're looking for by typing its name.
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
       "
     `)
   })
@@ -746,15 +796,17 @@ describe('AutocompletePrompt', async () => {
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
+      "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
          [1mAutomations[22m
-      [36m>[39m  [36mfirst[39m
-         second
+         [36m>[39m  [36mfirst[39m
+            second
 
+         [1mMerchant Admin[22m
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [1m1-10 of many[22m  Find what you're looking for by typing its name.
-         [2mShowing 2 of 10 items.[22m
-         [2mPress ↑↓ arrows to select, enter to confirm[22m
+         [2m10 options available, 2 visible.[22m
       "
     `)
   })

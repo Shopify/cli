@@ -12,7 +12,7 @@ import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
 import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {
@@ -39,7 +39,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
 describe('initialize a extension', async () => {
   const allUITemplates = [checkoutPostPurchaseExtension]
   const allFunctionTemplates = testRemoteExtensionTemplates
-  const specifications = await loadLocalExtensionsSpecifications()
+  const specifications = await loadFSExtensionsSpecifications()
 
   test('successfully generates the extension when no other extensions exist', async () => {
     await withTemporaryApp(async (tmpDir) => {

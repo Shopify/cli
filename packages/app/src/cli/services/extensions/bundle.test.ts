@@ -1,6 +1,6 @@
 import {bundleExtension, bundleThemeExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
@@ -262,7 +262,7 @@ describe('bundleExtension()', () => {
     test('should skip all ignored file patterns', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
-        const allSpecs = await loadLocalExtensionsSpecifications()
+        const allSpecs = await loadFSExtensionsSpecifications()
         const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
         const themeExtension = new ExtensionInstance({
           configuration: {

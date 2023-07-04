@@ -15,6 +15,11 @@ export function themeEditorUrl(theme: Theme, session: AdminSession) {
   return `https://${store}/admin/themes/${theme.id}/editor`
 }
 
+export function codeEditorUrl(theme: Theme, session: AdminSession) {
+  const store = session.storeFqdn
+  return `https://${store}/admin/themes/${theme.id}`
+}
+
 export function storeAdminUrl(session: AdminSession) {
   const store = session.storeFqdn
   return `https://${store}/admin`

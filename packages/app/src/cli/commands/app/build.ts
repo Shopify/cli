@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import build from '../../services/build.js'
 import Command from '../../utilities/app-command.js'
-import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -42,7 +42,7 @@ export default class Build extends Command {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const specifications = await loadExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
   }

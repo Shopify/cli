@@ -1,5 +1,5 @@
 import {ExtensionSpecification} from './specification.js'
-import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
+import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
@@ -10,16 +10,16 @@ import {fileURLToPath} from 'url'
 /**
  * Load all specifications from the local file system AND plugins
  */
-export async function loadExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
-  const local = await loadLocalExtensionsSpecifications()
-  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
+export async function loadLocalExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
+  const local = await loadFSExtensionsSpecifications()
+  const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return [...local, ...plugins]
 }
 
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
+export async function loadFSExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
   return memoizedLoadSpecs('specifications')
 }
 

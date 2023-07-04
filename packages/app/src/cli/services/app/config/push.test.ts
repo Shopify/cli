@@ -10,18 +10,20 @@ vi.mock('@shopify/cli-kit/node/session')
 
 describe('pushConfig', () => {
   test('successfully calls the update mutation when push is run and a file is present', async () => {
+    const app = testApp({
+      configurationPath: 'shopify.app.development.toml',
+      configuration: {
+        name: 'my app',
+        api_contact_email: 'ryan@app.com',
+        client_id: '12345',
+        scopes: 'write_products',
+        webhook_api_version: '04-2023',
+        application_url: 'https://myapp.com',
+      },
+    })
     const options: Options = {
-      app: testApp({
-        configurationPath: 'shopify.app.development.toml',
-        configuration: {
-          name: 'my app',
-          api_contact_email: 'ryan@app.com',
-          client_id: '12345',
-          scopes: 'write_products',
-          webhook_api_version: '04-2023',
-          application_url: 'https://myapp.com',
-        },
-      }),
+      configuration: app.configuration,
+      configurationPath: app.configurationPath,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -46,18 +48,20 @@ describe('pushConfig', () => {
   })
 
   test('returns error when update mutation fails', async () => {
+    const app = testApp({
+      configurationPath: 'shopify.app.development.toml',
+      configuration: {
+        name: 'my app',
+        api_contact_email: 'ryan@app.com',
+        client_id: '12345',
+        scopes: 'write_products',
+        webhook_api_version: '04-2023',
+        application_url: 'https://myapp.com',
+      },
+    })
     const options: Options = {
-      app: testApp({
-        configurationPath: 'shopify.app.development.toml',
-        configuration: {
-          name: 'my app',
-          api_contact_email: 'ryan@app.com',
-          client_id: '12345',
-          scopes: 'write_products',
-          webhook_api_version: '04-2023',
-          application_url: 'https://myapp.com',
-        },
-      }),
+      configuration: app.configuration,
+      configurationPath: app.configurationPath,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({

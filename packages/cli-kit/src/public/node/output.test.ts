@@ -1,5 +1,14 @@
-import {outputToken, shouldDisplayColors} from './output.js'
-import {describe, expect, test} from 'vitest'
+import {LogLevel, outputWhereAppropriate, outputToken, shouldDisplayColors} from './output.js'
+
+import {describe, expect, test, vi} from 'vitest'
+import {Writable} from 'stream'
+
+vi.mock('./context/local.js', async () => {
+  return {
+    isVerbose: () => false,
+    isUnitTest: () => false,
+  }
+})
 
 describe('Output helpers', () => {
   test('can format dependency manager commands with flags', () => {
@@ -43,5 +52,27 @@ describe('Color disabling', () => {
 
   test('enables colors when FORCE_COLOR is truthy even in a non-TTY environment', () => {
     expect(shouldDisplayColors(processLike({env: {FORCE_COLOR: '1'}, stdoutIsTTY: false}))).toEqual(true)
+  })
+})
+
+describe('outputWhereAppropriate', () => {
+  test('passes the logLevel to the logger function', () => {
+    const mockLogger = vi.fn()
+    const message = 'Test message'
+    const logLevel: LogLevel = 'info'
+
+    outputWhereAppropriate(logLevel, mockLogger, message)
+    expect(mockLogger).toHaveBeenCalledWith(message, logLevel)
+  })
+
+  test('writes the message to the logger if it is a Writable', () => {
+    const message = 'Test message'
+    const logLevel: LogLevel = 'info'
+    const mockLogger = new Writable({
+      write: vi.fn(),
+    })
+    vi.spyOn(mockLogger, 'write')
+    outputWhereAppropriate(logLevel, mockLogger, message)
+    expect(mockLogger.write).toHaveBeenCalledWith(message)
   })
 })

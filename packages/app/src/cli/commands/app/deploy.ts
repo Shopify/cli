@@ -4,7 +4,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import Command from '../../utilities/app-command.js'
-import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import {Flags} from '@oclif/core'
@@ -77,7 +77,7 @@ export default class Deploy extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const specifications = await loadExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
     await deploy({
       app,

@@ -11,7 +11,6 @@ import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} fro
 import {Box, measureElement, Text, useApp, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
-import {uniqBy} from '@shopify/cli-kit/common/array'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -39,6 +38,7 @@ enum PromptState {
 }
 
 const PAGE_SIZE = 25
+const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 
 // eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
@@ -58,15 +58,12 @@ function AutocompletePrompt<T>({
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
   const {stdout} = useStdout()
-  const canSearch = initialChoices.length >= PAGE_SIZE
+  const canSearch = initialChoices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [selectInputHeight, setSelectInputHeight] = useState(0)
-  const [limit, setLimit] = useState(searchResults.length)
-  const numberOfGroups = uniqBy(
-    searchResults.filter((choice) => choice.group),
-    'group',
-  ).length
+  const [promptAreaHeight, setPromptAreaHeight] = useState(0)
+  const currentAvailableLines = stdout.rows - promptAreaHeight - 5
+  const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -77,31 +74,31 @@ function AutocompletePrompt<T>({
     [search],
   )
 
-  const wrapperRef = useCallback((node) => {
-    if (node !== null) {
-      const {height} = measureElement(node)
-      setWrapperHeight(height)
-    }
-  }, [])
+  const wrapperRef = useCallback(
+    (node) => {
+      if (node !== null) {
+        const {height} = measureElement(node)
+        if (wrapperHeight !== height) {
+          setWrapperHeight(height)
+        }
+      }
+    },
+    [wrapperHeight],
+  )
 
-  const inputRef = useCallback((node) => {
+  const promptAreaRef = useCallback((node) => {
     if (node !== null) {
       const {height} = measureElement(node)
-      setSelectInputHeight(height)
+      setPromptAreaHeight(height)
     }
   }, [])
 
   useLayoutEffect(() => {
     function onResize() {
-      const availableSpace = stdout.rows - (wrapperHeight - selectInputHeight)
-      // rough estimate of the limit needed based on the space available
-      const newLimit = Math.max(2, availableSpace - numberOfGroups * 2 - 4)
-
-      if (newLimit < limit) {
-        stdout.write(ansiEscapes.clearTerminal)
+      const newAvailableLines = stdout.rows - promptAreaHeight - 5
+      if (newAvailableLines !== availableLines) {
+        setAvailableLines(newAvailableLines)
       }
-
-      setLimit(Math.min(newLimit, searchResults.length))
     }
 
     onResize()
@@ -110,7 +107,7 @@ function AutocompletePrompt<T>({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, selectInputHeight, searchResults.length, stdout, limit, numberOfGroups])
+  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines])
 
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -167,12 +164,12 @@ function AutocompletePrompt<T>({
           clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
-    [initialHasMorePages, paginatedInitialChoices, paginatedSearch],
+    [initialHasMorePages, paginatedInitialChoices, paginatedSearch, searchResults],
   )
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
-      <Box>
+      <Box ref={promptAreaRef}>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
@@ -224,6 +221,7 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
+            initialItems={paginatedInitialChoices}
             enableShortcuts={false}
             emptyMessage="No results found."
             highlightedTerm={searchTerm}
@@ -235,8 +233,7 @@ function AutocompletePrompt<T>({
             }
             hasMorePages={hasMorePages}
             morePagesMessage="Find what you're looking for by typing its name."
-            ref={inputRef}
-            limit={limit}
+            availableLines={availableLines}
             onSubmit={submitAnswer}
           />
         </Box>

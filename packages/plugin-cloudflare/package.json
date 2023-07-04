@@ -37,14 +37,14 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "2.8.5",
+    "@oclif/core": "2.8.11",
     "@shopify/cli-kit": "3.47.0",
     "node-fetch": "3.3.1",
-    "semver": "7.5.1"
+    "semver": "7.5.3"
   },
   "devDependencies": {
     "vite": "^4.3.9",
-    "vitest": "^0.31.0"
+    "vitest": "^0.32.2"
   },
   "engines": {
     "node": ">=14.17.0"
