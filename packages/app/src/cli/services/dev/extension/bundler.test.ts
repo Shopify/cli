@@ -9,7 +9,7 @@ import {
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -232,7 +232,7 @@ describe('setupConfigWatcher()', async () => {
   const registrationId = 'mock-registration-id'
   const stdout = new Writable()
   const stderr = new Writable()
-  const specifications = await loadLocalExtensionsSpecifications()
+  const specifications = await loadFSExtensionsSpecifications()
 
   test('starts watching the configuration file', async () => {
     const chokidarCloseSpy = vi.fn()

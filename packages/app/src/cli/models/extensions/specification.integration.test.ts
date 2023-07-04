@@ -1,11 +1,11 @@
-import {loadLocalExtensionsSpecifications} from './load-specifications.js'
+import {loadFSExtensionsSpecifications} from './load-specifications.js'
 import {testFunctionExtension} from '../app/app.test-data.js'
 import {describe, test, expect} from 'vitest'
 
 describe('allUISpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadLocalExtensionsSpecifications()
+    const got = await loadFSExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
@@ -15,7 +15,7 @@ describe('allUISpecifications', () => {
 describe('allLocalSpecs', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadLocalExtensionsSpecifications()
+    const got = await loadFSExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)

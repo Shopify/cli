@@ -5,7 +5,7 @@ import themeExtension from '../templates/theme-specifications/theme.js'
 import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
@@ -73,7 +73,7 @@ export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = 
   const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
+  const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
@@ -95,7 +95,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
     metafields: [],
   }
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
+  const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
   const extension = new ExtensionInstance({
@@ -117,7 +117,7 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
     settings: [],
   }
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
+  const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
 
   const extension = new ExtensionInstance({
@@ -139,7 +139,7 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     settings: [],
   }
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
+  const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
 
   const extension = new ExtensionInstance({
@@ -179,7 +179,7 @@ export async function testFunctionExtension(
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
-  const allSpecs = await loadLocalExtensionsSpecifications()
+  const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
 
   const extension = new ExtensionInstance({

@@ -11,7 +11,7 @@ import {fileURLToPath} from 'url'
  * Load all specifications from the local file system AND plugins
  */
 export async function loadExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
-  const local = await loadLocalExtensionsSpecifications()
+  const local = await loadFSExtensionsSpecifications()
   const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return [...local, ...plugins]
 }
@@ -19,7 +19,7 @@ export async function loadExtensionsSpecifications(config: Config): Promise<Exte
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
+export async function loadFSExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
   return memoizedLoadSpecs('specifications')
 }
 
