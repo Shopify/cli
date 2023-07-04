@@ -19,6 +19,8 @@ type DeploymentLine = {
   status: string
 }
 
+const TABLE_FORMATTING_CHARS = 12
+
 async function fetchDeployments(
   token: string,
   apiKey: string,
@@ -41,8 +43,7 @@ async function fetchDeployments(
     }
   })
 
-  // 10 extra characters for the table formatting
-  const maxLineLength = (process.stdout.columns ?? 75) - 10
+  const maxLineLength = (process.stdout.columns ?? 75) - TABLE_FORMATTING_CHARS
   let maxMessageLength = maxLineLength
 
   // Calculate the max allowed length for the message column
