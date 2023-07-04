@@ -10,7 +10,7 @@ import {fileURLToPath} from 'url'
 /**
  * Load all specifications from the local file system AND plugins
  */
-export async function loadExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
+export async function loadLocalExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
   const local = await loadFSExtensionsSpecifications()
   const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return [...local, ...plugins]

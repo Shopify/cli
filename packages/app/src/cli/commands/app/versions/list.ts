@@ -1,7 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import Command from '../../../utilities/app-command.js'
 import versionList from '../../../services/versions-list.js'
-import {loadExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -27,7 +27,7 @@ export default class VersionsList extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(VersionsList)
-    const specifications = await loadExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path})
 
     await versionList({app, apiKey: flags['api-key']})

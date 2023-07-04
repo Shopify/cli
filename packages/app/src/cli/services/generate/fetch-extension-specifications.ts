@@ -1,4 +1,4 @@
-import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {
   ExtensionSpecificationsQuery,
   ExtensionSpecificationsQuerySchema,
@@ -53,7 +53,7 @@ export async function fetchSpecifications({
       return newSpec
     })
 
-  const local = await loadExtensionsSpecifications(config)
+  const local = await loadLocalExtensionsSpecifications(config)
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
   return [...updatedSpecs]
 }

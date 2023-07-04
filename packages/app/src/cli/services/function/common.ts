@@ -1,6 +1,6 @@
 import {App, AppInterface} from '../../models/app/app.js'
 import {load as loadApp} from '../../models/app/loader.js'
-import {loadExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
@@ -22,7 +22,7 @@ export async function inFunctionContext(
   path: string,
   callback: (app: App, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<void>,
 ) {
-  const specifications = await loadExtensionsSpecifications(config)
+  const specifications = await loadLocalExtensionsSpecifications(config)
   const app: AppInterface = await loadApp({specifications, directory: path})
 
   const allFunctions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
