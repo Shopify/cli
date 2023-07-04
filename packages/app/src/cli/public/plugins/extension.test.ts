@@ -1,4 +1,4 @@
-import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
+import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
 import {Config} from '@oclif/core'
 import {describe, test, vi, expect} from 'vitest'
 
@@ -9,7 +9,7 @@ describe('getListOfExtensionSpecs', () => {
     vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], errors: []} as any)
 
     // When
-    const got = await loadUIExtensionSpecificiationsFromPlugins(config)
+    const got = await loadUIExtensionSpecificationsFromPlugins(config)
 
     // Then
     expect(got).toEqual([])
@@ -27,7 +27,7 @@ describe('getListOfExtensionSpecs', () => {
     } as any)
 
     // When
-    const got = await loadUIExtensionSpecificiationsFromPlugins(config)
+    const got = await loadUIExtensionSpecificationsFromPlugins(config)
 
     // Then
     expect(got).toEqual([{firstSpec: 1}, {secondSpec: 2}, {thirdSpec: 3}, {fourthSpec: 4}])

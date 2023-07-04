@@ -3,7 +3,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {load as loadApp} from '../../../models/app/loader.js'
 import {pullEnv} from '../../../services/app/env/pull.js'
 import Command from '../../../utilities/app-command.js'
-import {loadExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -26,7 +26,7 @@ export default class EnvPull extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvPull)
     const envFile = joinPath(flags.path, flags['env-file'])
-    const specifications = await loadExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, mode: 'report'})
     outputInfo(await pullEnv(app, {envFile}))
   }

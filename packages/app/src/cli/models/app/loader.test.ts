@@ -1,7 +1,7 @@
 import {getAppConfigurationFileName, load} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
 import {
@@ -23,7 +23,7 @@ scopes = "read_products"
 `
 
   beforeAll(async () => {
-    specifications = await loadLocalExtensionsSpecifications()
+    specifications = await loadFSExtensionsSpecifications()
   })
 
   beforeEach(async () => {

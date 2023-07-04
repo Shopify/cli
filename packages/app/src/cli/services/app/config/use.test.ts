@@ -1,6 +1,6 @@
 import use, {UseOptions} from './use.js'
 import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
-import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -32,7 +32,7 @@ describe('use', () => {
       // Then
       expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
       expect(setAppInfo).not.toHaveBeenCalled()
-      expect(load).not.toHaveBeenCalled()
+      expect(loadAppConfiguration).not.toHaveBeenCalled()
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Cleared current configuration.',
@@ -69,7 +69,11 @@ describe('use', () => {
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.no-id.toml')
 
       const appWithoutClientID = testApp()
-      vi.mocked(load).mockResolvedValue(appWithoutClientID)
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: appWithoutClientID.configurationPath,
+        configuration: appWithoutClientID.configuration,
+      })
 
       // When
       const result = use(options)
@@ -101,7 +105,7 @@ describe('use', () => {
     "message": "Expected array, received string"
   }
 ]'`)
-      vi.mocked(load).mockRejectedValue(error)
+      vi.mocked(loadAppConfiguration).mockRejectedValue(error)
 
       // When
       const result = use(options)
@@ -130,7 +134,11 @@ describe('use', () => {
           application_url: 'https://example.com',
         },
       })
-      vi.mocked(load).mockResolvedValue(app)
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: app.configurationPath,
+        configuration: app.configuration,
+      })
 
       // When
       await use(options)
@@ -164,7 +172,11 @@ describe('use', () => {
           application_url: 'https://example.com',
         },
       })
-      vi.mocked(load).mockResolvedValue(app)
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: app.configurationPath,
+        configuration: app.configuration,
+      })
 
       // When
       await use(options)

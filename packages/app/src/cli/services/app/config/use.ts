@@ -1,4 +1,4 @@
-import {getAppConfigurationFileName, load as loadApp} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {isCurrentAppSchema} from '../../../models/app/app.js'
@@ -39,9 +39,9 @@ interface SaveCurrentConfigOptions {
 }
 
 export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
-  const app = await loadApp({specifications: [], configName: configFileName, directory, mode: 'strict'})
+  const {configuration} = await loadAppConfiguration({configName: configFileName, directory})
 
-  if (isCurrentAppSchema(app.configuration) && app.configuration.client_id) {
+  if (isCurrentAppSchema(configuration) && configuration.client_id) {
     setAppInfo({
       directory,
       configFile: configFileName,

@@ -1,4 +1,13 @@
-import {AppConfigurationSchema, Web, WebConfigurationSchema, App, AppInterface, WebType, getAppScopes} from './app.js'
+import {
+  AppConfigurationSchema,
+  Web,
+  WebConfigurationSchema,
+  App,
+  AppInterface,
+  WebType,
+  getAppScopes,
+  AppConfiguration,
+} from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -103,7 +112,7 @@ export async function findSpecificationForConfig(
   const {type} = TypeSchema.parse(obj)
   const specification = findSpecificationForType(specifications, type)
 
-  if (specifications.length > 0 && !specification) {
+  if (!specification) {
     const isShopifolk = await isShopify()
     const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
     abortOrReport(
@@ -161,8 +170,6 @@ class AppLoader {
   private directory: string
   private mode: AppLoaderMode
   private configName?: string
-  private appDirectory = ''
-  private configurationPath = ''
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
 
@@ -187,24 +194,32 @@ class AppLoader {
   }
 
   async loaded() {
-    this.appDirectory = await this.findAppDirectory()
-    const configurationPath = await this.getConfigurationPath()
-    const configuration = await this.parseConfigurationFile(AppConfigurationSchema, configurationPath)
-    const dotenv = await this.loadDotEnv()
+    const configurationLoader = new AppConfigurationLoader({
+      directory: this.directory,
+      configName: this.configName,
+    })
+    const {appDirectory, configurationPath, configuration} = await configurationLoader.loaded()
+    const dotenv = await this.loadDotEnv(appDirectory)
 
-    const {allExtensions, usedCustomLayout} = await this.loadExtensions(configuration.extension_directories)
+    const {allExtensions, usedCustomLayout} = await this.loadExtensions(
+      appDirectory,
+      configuration.extension_directories,
+    )
 
-    const packageJSONPath = joinPath(this.appDirectory, 'package.json')
-    const name = await loadAppName(this.appDirectory)
+    const packageJSONPath = joinPath(appDirectory, 'package.json')
+    const name = await loadAppName(appDirectory)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const packageManager = await getPackageManager(this.appDirectory)
-    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(configuration.web_directories)
-    const usesWorkspaces = await appUsesWorkspaces(this.appDirectory)
+    const packageManager = await getPackageManager(appDirectory)
+    const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
+      appDirectory,
+      configuration.web_directories,
+    )
+    const usesWorkspaces = await appUsesWorkspaces(appDirectory)
 
     const appClass = new App(
       name,
       'SHOPIFY_API_KEY',
-      this.appDirectory,
+      appDirectory,
       packageManager,
       configuration,
       configurationPath,
@@ -225,54 +240,27 @@ class AppLoader {
     return appClass
   }
 
-  async loadDotEnv(): Promise<DotEnvFile | undefined> {
+  async loadDotEnv(appDirectory: string): Promise<DotEnvFile | undefined> {
     let dotEnvFile: DotEnvFile | undefined
-    const dotEnvPath = joinPath(this.appDirectory, dotEnvFileNames.production)
+    const dotEnvPath = joinPath(appDirectory, dotEnvFileNames.production)
     if (await fileExists(dotEnvPath)) {
       dotEnvFile = await readAndParseDotEnv(dotEnvPath)
     }
     return dotEnvFile
   }
 
-  async findAppDirectory() {
-    if (!(await fileExists(this.directory))) {
-      throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
-    }
-    return dirname(await this.getConfigurationPath())
-  }
-
-  async getConfigurationPath() {
-    if (this.configurationPath) return this.configurationPath
-
-    const configurationFileName = getAppConfigurationFileName(this.configName)
-    const configurationPath = await findPathUp(configurationFileName, {
-      cwd: this.directory,
-      type: 'file',
-    })
-    if (!configurationPath) {
-      throw new AbortError(
-        outputContent`Couldn't find the configuration file for ${outputToken.path(
-          this.directory,
-        )}, are you in an app directory?`,
-      )
-    }
-
-    this.configurationPath = configurationPath
-    return configurationPath
-  }
-
-  async loadWebs(webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
+  async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const defaultWebDirectory = '**'
     const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
-      return joinPath(this.appDirectory, webGlob, configurationFileNames.web)
+      return joinPath(appDirectory, webGlob, configurationFileNames.web)
     })
-    webConfigGlobs.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
+    webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
     const webTomlPaths = await glob(webConfigGlobs)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
     this.validateWebs(webs)
 
-    const webTomlsInStandardLocation = await glob(joinPath(this.appDirectory, `web/**/${configurationFileNames.web}`))
+    const webTomlsInStandardLocation = await glob(joinPath(appDirectory, `web/**/${configurationFileNames.web}`))
     const usedCustomLayout = webDirectories !== undefined || webTomlsInStandardLocation.length !== webTomlPaths.length
 
     return {webs, usedCustomLayout}
@@ -304,12 +292,13 @@ class AppLoader {
   }
 
   async loadExtensions(
+    appDirectory: string,
     extensionDirectories?: string[],
   ): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
+      return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
-    extensionConfigPaths.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
+    extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
 
     const extensions = configPaths.map(async (configurationPath) => {
@@ -385,6 +374,77 @@ class AppLoader {
       this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
+  }
+}
+
+export interface AppConfigurationInterface {
+  appDirectory: string
+  configuration: AppConfiguration
+  configurationPath: string
+}
+
+/**
+ * Parse the app configuration file from the given directory.
+ * If the app configuration does not match any known schemas, it will throw an error.
+ */
+export async function loadAppConfiguration(
+  options: AppConfigurationLoaderConstructorArgs,
+): Promise<AppConfigurationInterface> {
+  const loader = new AppConfigurationLoader(options)
+  return loader.loaded()
+}
+
+interface AppConfigurationLoaderConstructorArgs {
+  directory: string
+  configName?: string
+}
+
+class AppConfigurationLoader {
+  private directory: string
+  private configName?: string
+  private configurationPath = ''
+
+  constructor({directory, configName}: AppConfigurationLoaderConstructorArgs) {
+    this.directory = directory
+    this.configName = configName
+  }
+
+  async loaded() {
+    const appDirectory = await this.getAppDirectory()
+    const configurationPath = await this.getConfigurationPath()
+    const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
+    return {appDirectory, configuration, configurationPath}
+  }
+
+  async getAppDirectory() {
+    if (!(await fileExists(this.directory))) {
+      throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(this.directory)}`)
+    }
+    return dirname(await this.getConfigurationPath())
+  }
+
+  async getConfigurationPath() {
+    if (this.configurationPath) return this.configurationPath
+
+    const configurationFileName = getAppConfigurationFileName(this.configName)
+    const configurationPath = await findPathUp(configurationFileName, {
+      cwd: this.directory,
+      type: 'file',
+    })
+    if (!configurationPath) {
+      throw new AbortError(
+        outputContent`Couldn't find the configuration file for ${outputToken.path(
+          this.directory,
+        )}, are you in an app directory?`,
+      )
+    }
+
+    this.configurationPath = configurationPath
+    return configurationPath
+  }
+
+  abort<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
+    throw new AbortError(errorMessage)
   }
 }
 

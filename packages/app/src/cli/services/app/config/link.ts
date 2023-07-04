@@ -2,7 +2,7 @@ import {saveCurrentConfig} from './use.js'
 import {AppConfiguration, AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {load} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
@@ -46,7 +46,7 @@ export default async function link(options: LinkOptions): Promise<void> {
 
 async function loadAppConfigFromLegacyToml(options: LinkOptions): Promise<AppInterface> {
   try {
-    const specifications = await loadExtensionsSpecifications(options.commandConfig)
+    const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
     const app = await load({specifications, directory: options.directory, mode: 'report'})
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
