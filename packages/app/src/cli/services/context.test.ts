@@ -26,7 +26,7 @@ import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
 import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -384,6 +384,62 @@ dev_store_url = "domain1"
     })
   })
 
+  test('shows the correct banner content when running for the first time with config file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getAppInfo).mockReturnValue(undefined)
+      vi.mocked(loadAppConfiguration).mockReset()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
+        configuration: {
+          client_id: APP2.apiKey,
+          name: APP2.title,
+          scopes: 'read_products',
+          application_url: 'https://my-apps-url.com',
+          auth: {
+            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+          },
+        },
+      })
+
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.dev.toml')
+      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      await ensureDevContext(
+        {
+          directory: 'app_directory',
+          reset: false,
+          config: 'dev',
+        },
+        'token',
+      )
+
+      // Then
+      expect(renderInfo).toHaveBeenCalledWith({
+        body: [
+          {
+            list: {
+              items: [
+                `Org:          ${ORG1.businessName}`,
+                `App:          ${APP2.title}`,
+                `Dev store:    ${STORE1.shopDomain}`,
+                'Update URLs:  Not yet configured',
+              ],
+            },
+          },
+          '\nTo reset your default dev config, run',
+          {
+            command: 'npm run dev -- --reset',
+          },
+        ],
+        headline: 'Using shopify.app.dev.toml:',
+      })
+    })
+  })
+
   test('returns selected data and updates internal state, without cached state', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
@@ -435,7 +491,6 @@ dev_store_url = "domain1"
 
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    const outputMock = mockAndCaptureOutput()
     vi.mocked(getAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})

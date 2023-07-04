@@ -19,7 +19,7 @@ import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../models/app/
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {
   DevelopmentStorePreviewUpdateInput,
@@ -46,6 +46,7 @@ import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -162,7 +163,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     cachedInfo = {
       ...cachedInfo,
       directory: options.directory,
-      configFile: configName,
+      configFile: basename(configurationPath),
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
@@ -206,14 +207,6 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     }
   }
 
-  await showCachedContextSummary({
-    directory: options.directory,
-    selectedApp,
-    selectedStore,
-    cachedInfo,
-    organization,
-  })
-
   if (isCurrentAppSchema(localAppConfiguration)) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const configuration: AppConfiguration = {
@@ -233,6 +226,14 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       orgId,
     })
   }
+
+  await showCachedContextSummary({
+    directory: options.directory,
+    selectedApp,
+    selectedStore,
+    cachedInfo,
+    organization,
+  })
 
   await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
@@ -600,8 +601,11 @@ async function showCachedContextSummary({
   }
 
   const packageManager = await getPackageManager(directory)
+  const headline = cachedInfo.configFile
+    ? `Using ${getAppConfigurationFileName(cachedInfo.configFile)}:`
+    : 'Using these settings:'
   renderInfo({
-    headline: 'Using these settings:',
+    headline,
     body: [
       {
         list: {
