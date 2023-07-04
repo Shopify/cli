@@ -1,5 +1,5 @@
 import {ExtensionSpecification} from './specification.js'
-import {loadUIExtensionSpecificiationsFromPlugins} from '../../private/plugins/extension.js'
+import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
@@ -12,7 +12,7 @@ import {fileURLToPath} from 'url'
  */
 export async function loadExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
   const local = await loadLocalExtensionsSpecifications()
-  const plugins = await loadUIExtensionSpecificiationsFromPlugins(config)
+  const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return [...local, ...plugins]
 }
 
