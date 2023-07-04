@@ -136,7 +136,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable(unifiedDeployment: boolean) {
-    return !this.isPreviewable && !this.isThemeExtension && (unifiedDeployment || !this.isFunctionExtension)
+    if (unifiedDeployment) {
+      return !this.isThemeExtension
+    } else {
+      return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
+    }
   }
 
   async deployConfig({
