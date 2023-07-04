@@ -261,52 +261,73 @@ function SelectInputInner<T>(
     )
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
+    const minHeight = hasAnyGroup ? 5 : 2
+    const sectionHeight = Math.max(minHeight, Math.min(availableLines, optionsHeight))
     const maxKeyLength = itemsWithKeys
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
-    const minHeight = hasAnyGroup ? 5 : 2
-    return (
-      <Box flexDirection="column" ref={ref}>
-        <Box
-          flexDirection="column"
-          height={Math.max(minHeight, Math.min(availableLines, optionsHeight))}
-          overflowY="hidden"
-        >
-          {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
-            <Item
-              key={item.key}
-              item={item}
-              previousItem={state.visibleOptions[index - 1]}
-              highlightedTerm={highlightedTerm}
-              isSelected={item.value === state.value}
-              items={state.visibleOptions}
-              enableShortcuts={enableShortcuts}
-              hasAnyGroup={hasAnyGroup}
-              maxKeyLength={maxKeyLength}
-            />
-          ))}
-        </Box>
 
-        {noItems ? (
-          <Box marginTop={1} marginLeft={3} height={2}>
-            <Text dimColor>Try again with a different keyword.</Text>
+    const scrollbarHeight = Math.floor(limit / initialItems.length * sectionHeight)
+    const scrollbarTopBuffer = Math.floor(state.visibleFromIndex / initialItems.length * sectionHeight)
+    const scrollbarBottomBuffer = sectionHeight - scrollbarHeight - scrollbarTopBuffer
+
+    return (
+      <Box flexDirection="row">
+        <Box flexDirection="column" ref={ref}>
+          <Box
+            flexDirection="column"
+            height={sectionHeight}
+            overflowY="hidden"
+          >
+            {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
+              <Item
+                key={item.key}
+                item={item}
+                previousItem={state.visibleOptions[index - 1]}
+                highlightedTerm={highlightedTerm}
+                isSelected={item.value === state.value}
+                items={state.visibleOptions}
+                enableShortcuts={enableShortcuts}
+                hasAnyGroup={hasAnyGroup}
+                maxKeyLength={maxKeyLength}
+              />
+            ))}
           </Box>
-        ) : (
-          <Box marginTop={1} marginLeft={3} flexDirection="column">
-            <Text dimColor>
-              {infoMessage
-                ? infoMessage
-                : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
-            </Text>
-            {hasMorePages ? (
-              <Text>
-                <Text bold>1-{items.length} of many</Text>
-                {morePagesMessage ? `  ${morePagesMessage}` : null}
+
+          {noItems ? (
+            <Box marginTop={1} marginLeft={3} height={2}>
+              <Text dimColor>Try again with a different keyword.</Text>
+            </Box>
+          ) : (
+            <Box marginTop={1} marginLeft={3} flexDirection="column">
+              <Text dimColor>
+                {infoMessage
+                  ? infoMessage
+                  : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
               </Text>
-            ) : null}
-            {hasLimit ? <Text dimColor>{`${items.length} options available, ${limit} visible.`}</Text> : null}
+              {hasMorePages ? (
+                <Text>
+                  <Text bold>1-{items.length} of many</Text>
+                  {morePagesMessage ? `  ${morePagesMessage}` : null}
+                </Text>
+              ) : null}
+              {hasLimit ? <Text dimColor>{`${items.length} options available, ${limit} visible.`}</Text> : null}
+            </Box>
+          )}
+        </Box>
+        {hasLimit ? (
+          <Box width={1} flexDirection="column">
+            {
+              new Array(scrollbarTopBuffer).fill(null).map((_) => <Box><Text backgroundColor="gray"> </Text></Box>)
+            }
+            {
+              new Array(scrollbarHeight).fill(null).map((_) => <Box><Text backgroundColor="cyan"> </Text></Box>)
+            }
+            {
+              new Array(scrollbarBottomBuffer).fill(null).map((_) => <Box><Text backgroundColor="gray"> </Text></Box>)
+            }
           </Box>
-        )}
+        ) : null}
       </Box>
     )
   }
