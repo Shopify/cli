@@ -41,8 +41,8 @@ async function fetchDeployments(
     }
   })
 
-  // 10 extra characters for the table formatting
-  const maxLineLength = (process.stdout.columns ?? 75) - 10
+  // 12 extra characters for the table formatting
+  const maxLineLength = (process.stdout.columns ?? 75) - 12
   let maxMessageLength = maxLineLength
 
   // Calculate the max allowed length for the message column
