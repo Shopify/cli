@@ -15,7 +15,6 @@ export const ExtensionMigrateFlowExtensionQuery = gql`
 export interface ExtensionMigrateFlowExtensionVariables {
   apiKey: string
   registrationId: string
-  specificationIdentifier: string
 }
 
 export interface ExtensionMigrateFlowExtensionSchema {

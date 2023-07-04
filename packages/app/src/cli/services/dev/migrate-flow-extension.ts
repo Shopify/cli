@@ -69,7 +69,6 @@ export async function migrateFlowExtension(
   const variables: ExtensionMigrateFlowExtensionVariables = {
     apiKey,
     registrationId,
-    specificationIdentifier: 'flow_action_definition',
   }
 
   const result: ExtensionMigrateFlowExtensionSchema = await partnersRequest(
