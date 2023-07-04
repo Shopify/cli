@@ -317,15 +317,9 @@ function SelectInputInner<T>(
         </Box>
         {hasLimit ? (
           <Box width={1} flexDirection="column">
-            {
-              new Array(scrollbarTopBuffer).fill(null).map((_) => <Box><Text backgroundColor="gray"> </Text></Box>)
-            }
-            {
-              new Array(scrollbarHeight).fill(null).map((_) => <Box><Text backgroundColor="cyan"> </Text></Box>)
-            }
-            {
-              new Array(scrollbarBottomBuffer).fill(null).map((_) => <Box><Text backgroundColor="gray"> </Text></Box>)
-            }
+            <Text backgroundColor="gray">{' '.repeat(scrollbarTopBuffer)}</Text>
+            <Text backgroundColor="cyan">{' '.repeat(scrollbarHeight)}</Text>
+            <Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text>
           </Box>
         ) : null}
       </Box>
