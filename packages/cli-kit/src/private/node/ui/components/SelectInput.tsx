@@ -267,14 +267,16 @@ function SelectInputInner<T>(
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
-    const scrollboxHeight = Math.min(sectionHeight - 1, Math.ceil(Math.min(1, limit / items.length) * sectionHeight))
-    let scrollbarTopBuffer = Math.min(sectionHeight - scrollboxHeight, Math.round(state.visibleFromIndex / initialItems.length * sectionHeight - scrollboxHeight / 2))
-    let scrollbarBottomBuffer = sectionHeight - scrollboxHeight - scrollbarTopBuffer - 1
+    // Leave 2 rows for top/bottom arrows when there is vertical room for them.
+    const scrollbarFullHeight = sectionHeight >= 4 ? sectionHeight - 2 : sectionHeight
+    const scrollboxHeight = Math.min(scrollbarFullHeight - 1, Math.ceil(Math.min(1, limit / items.length) * scrollbarFullHeight))
+    let scrollbarTopBuffer = Math.max(0, Math.min(scrollbarFullHeight - scrollboxHeight, Math.round(state.visibleFromIndex / initialItems.length * scrollbarFullHeight - scrollboxHeight / 2)))
+    let scrollbarBottomBuffer = scrollbarFullHeight - scrollboxHeight - scrollbarTopBuffer
 
     // Ensure it scrolls all the way to the bottom when we hit the bottom
     if (state.visibleToIndex >= items.length - 1) {
-      scrollbarTopBuffer = sectionHeight - scrollboxHeight
-      scrollbarBottomBuffer = -1
+      scrollbarTopBuffer = scrollbarFullHeight - scrollboxHeight
+      scrollbarBottomBuffer = 0
     }
 
     return (
@@ -323,21 +325,15 @@ function SelectInputInner<T>(
         </Box>
         {hasLimit ? (
           <Box width={1} height={sectionHeight} flexDirection="column">
-            {scrollbarTopBuffer > 1 ? (
-              <>
-                <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarTopBuffer - 1)}</Text></Box>
-                <Box width={1}><Text color="cyan" backgroundColor="gray">△</Text></Box>
-              </>
-            ) : scrollbarTopBuffer === 1 ?
-              <Box width={1}><Text color="cyan" backgroundColor="gray">△</Text></Box>
-            : null}
+            {
+              // Only display up/down pointers if we have at least height=4
+              // so we have 2 rows for the bar to move + 2 rows for the pointers
+              sectionHeight >= 4 ? <Box width={1}><Text color="cyan">△</Text></Box> : null
+            }
+            <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarTopBuffer)}</Text></Box>
             <Box width={1}><Text backgroundColor="cyan">{' '.repeat(scrollboxHeight)}</Text></Box>
-            {scrollbarBottomBuffer > 0 ? <>
-              <Box width={1}><Text color="cyan" backgroundColor="gray">▽</Text></Box>
-              <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text></Box>
-            </> : scrollbarBottomBuffer === 0 ?
-              <Box width={1}><Text color="cyan" backgroundColor="gray">▽</Text></Box>
-            : null}
+            <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text></Box>
+            {sectionHeight >= 4 ? <Box width={1}><Text color="cyan">▽</Text></Box> : null}
           </Box>
         ) : null}
       </Box>
