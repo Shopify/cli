@@ -1,5 +1,11 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
+import {
+  NewExtensionPointSchemaType,
+  NewExtensionPointsSchema,
+  BaseSchema,
+  CapabilitiesSchema,
+  MetafieldSchema,
+} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -8,10 +14,11 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
-const UIExtensionSchema = BaseSchema.extend({
+const UIExtensionLegacySchema = BaseSchema.extend({
   settings: zod
     .object({
       fields: zod.any().optional(),
@@ -20,13 +27,63 @@ const UIExtensionSchema = BaseSchema.extend({
   extension_points: NewExtensionPointsSchema,
 })
 
+type UIExtensionLegacySchemaType = zod.infer<typeof UIExtensionLegacySchema>
+
+const UIExtensionSchema = BaseSchema.extend({
+  type: zod.literal('ui_extension'),
+  handle: zod.string().optional(),
+  capabilities: CapabilitiesSchema.optional(),
+  targeting: zod.array(
+    zod.object({
+      target: zod.string(),
+      module: zod.string(),
+      metafields: zod.array(MetafieldSchema).optional().default([]),
+    }),
+  ),
+})
+
+const UIExtensionUnifiedSchema = BaseSchema.extend({
+  name: zod.string(),
+  description: zod.string().optional(),
+  type: zod.literal('ui_extension'),
+  extensions: zod.array(UIExtensionSchema).min(1).max(1),
+  settings: zod
+    .object({
+      fields: zod
+        .array(
+          zod.object({
+            key: zod.string().optional(),
+            name: zod.string().optional(),
+            description: zod.string().optional(),
+            required: zod.boolean().optional(),
+            type: zod.string(),
+          }),
+        )
+        .optional(),
+    })
+    .optional(),
+}).transform((config) => {
+  const newConfig = {
+    ...config,
+    name: config.name,
+    type: config.type,
+    extension_points: getArrayRejectingUndefined(config.extensions[0]?.targeting ?? []),
+    metafields: config.settings?.fields?.map((field) => {
+      return {key: field.type, namespace: field.type}
+    }),
+  }
+  return newConfig as UIExtensionLegacySchemaType
+})
+
+const UnionSchema = zod.union([UIExtensionUnifiedSchema, UIExtensionLegacySchema])
+
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
   surface: 'all',
   dependency,
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
-  schema: UIExtensionSchema,
+  schema: UnionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
     const needsCart =
