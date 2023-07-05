@@ -66,13 +66,14 @@ describe('link', () => {
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `scopes = ""
-extension_directories = [ ]
-client_id = "api-key"
+      const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
+legacy_scopes_behavior = true
+scopes = ""
+extension_directories = [ ]
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
@@ -105,13 +106,14 @@ api_contact_email = "example@example.com"
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `scopes = ""
-extension_directories = [ ]
-client_id = "api-key"
+      const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
+legacy_scopes_behavior = true
+scopes = ""
+extension_directories = [ ]
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -183,6 +185,38 @@ name = "app1"
 application_url = "https://example.com"
 webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
+legacy_scopes_behavior = true
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
+  test('uses scopes on platform if defined', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...REMOTE_APP,
+        requestedAccessScopes: ['read_products', 'write_orders'],
+      })
+      vi.mocked(selectConfigName).mockResolvedValue('staging')
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const expectedContent = `client_id = "api-key"
+name = "app1"
+application_url = "https://example.com"
+webhook_api_version = "2023-04"
+api_contact_email = "example@example.com"
+scopes = "read_products,write_orders"
+extension_directories = [ ]
 `
       expect(content).toEqual(expectedContent)
     })

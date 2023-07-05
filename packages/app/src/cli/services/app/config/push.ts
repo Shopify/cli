@@ -1,4 +1,4 @@
-import {PushConfig, PushConfigSchema} from '../../../api/graphql/push_config.js'
+import {PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
 import {
   AppConfiguration,
@@ -50,13 +50,13 @@ export async function pushConfig({configuration, configurationPath}: Options) {
 }
 
 const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
-  const variables = {
+  const variables: PushConfigVariables = {
     // these values are mandatory, so we only read from the config file
     apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: configuration.application_url,
-    contactEmail: configuration.api_contact_email,
-    webhookApiVersion: configuration.webhook_api_version,
+    applicationUrl: configuration.application_url!,
+    contactEmail: configuration.api_contact_email!,
+    webhookApiVersion: configuration.webhook_api_version!,
     // these values are optional, so we fall back to configured values
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? app.redirectUrlWhitelist,
     embedded: configuration.embedded ?? app.embedded,
@@ -65,16 +65,20 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
       customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? undefined,
       shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? undefined,
     },
-    appProxy: configuration.proxy
-      ? {
-          proxySubPath: configuration.proxy.subpath,
-          proxySubPathPrefix: configuration.proxy.prefix,
-          proxyUrl: configuration.proxy.url,
-        }
-      : app.appProxy ?? undefined,
     posEmbedded: configuration.pos?.embedded ?? app.posEmbedded,
     preferencesUrl: configuration.app_preferences?.url ?? app.preferencesUrl,
-    requested_access_scopes: usesLegacyScopesBehavior(configuration) ? undefined : configuration.scopes ?? [],
+  }
+
+  if (!usesLegacyScopesBehavior(configuration)) {
+    variables.requestedAccessScopes = configuration.scopes?.split(',') ?? []
+  }
+
+  if (configuration.proxy) {
+    variables.appProxy = {
+      proxySubPath: configuration.proxy.subpath,
+      proxySubPathPrefix: configuration.proxy.prefix,
+      proxyUrl: configuration.proxy.url,
+    }
   }
 
   return variables

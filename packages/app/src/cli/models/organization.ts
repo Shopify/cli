@@ -27,6 +27,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   }
   applicationUrl: string
   redirectUrlWhitelist: string[]
+  requestedAccessScopes?: string[]
 }
 
 export interface OrganizationStore {
