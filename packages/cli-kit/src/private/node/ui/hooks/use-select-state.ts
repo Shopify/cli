@@ -271,7 +271,7 @@ const createDefaultState = <T>({
     optionMap,
     visibleOptionCount,
     visibleFromIndex: 0,
-    visibleToIndex: visibleOptionCount,
+    visibleToIndex: visibleOptionCount - 1,
     value: option?.value,
     previousValue: option?.value,
   }
