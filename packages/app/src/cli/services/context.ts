@@ -175,6 +175,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       selectedApp = _selectedApp
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
+      // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
     }
