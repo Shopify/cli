@@ -167,13 +167,14 @@ export async function load(options: AppLoaderConstructorArgs): Promise<AppInterf
   return loader.loaded()
 }
 
+export function getDotEnvFileName(configurationPath: string) {
+  const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
+  return configurationShorthand ? `${dotEnvFileNames.production}.${configurationShorthand}` : dotEnvFileNames.production
+}
+
 export async function loadDotEnv(appDirectory: string, configurationPath: string): Promise<DotEnvFile | undefined> {
   let dotEnvFile: DotEnvFile | undefined
-  const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
-  const dotEnvFileName = configurationShorthand
-    ? `${dotEnvFileNames.production}.${configurationShorthand}`
-    : dotEnvFileNames.production
-  const dotEnvPath = joinPath(appDirectory, dotEnvFileName)
+  const dotEnvPath = joinPath(appDirectory, getDotEnvFileName(configurationPath))
   if (await fileExists(dotEnvPath)) {
     dotEnvFile = await readAndParseDotEnv(dotEnvPath)
   }
