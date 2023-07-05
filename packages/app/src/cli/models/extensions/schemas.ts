@@ -38,6 +38,7 @@ export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
 export const BaseSchema = zod.object({
   name: zod.string(),
+  handle: zod.string().optional(),
   type: zod.string(),
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),

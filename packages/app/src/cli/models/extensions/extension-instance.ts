@@ -66,6 +66,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.configuration.name
   }
 
+  get handle() {
+    return this.configuration.handle
+  }
+
   get dependency() {
     return this.specification.dependency
   }
@@ -115,8 +119,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.localIdentifier = basename(options.directory)
-    this.idEnvironmentVariableName = `SHOPIFY_${constantize(basename(this.directory))}_ID`
+    this.localIdentifier = this.configuration.handle ? this.configuration.handle : basename(options.directory)
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.useExtensionsFramework = false
     this.outputPath = this.directory
 
