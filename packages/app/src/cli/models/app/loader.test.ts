@@ -1,4 +1,4 @@
-import {getAppConfigurationFileName, load} from './loader.js'
+import {getAppConfigurationFileName, getAppConfigurationShorthand, load, loadDotEnv} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -882,5 +882,65 @@ describe('getAppConfigurationFileName', () => {
     // When / Then
     expect(getAppConfigurationFileName('cool-whip')).toEqual('shopify.app.cool-whip.toml')
     expect(getAppConfigurationFileName('lucky_dog')).toEqual('shopify.app.lucky_dog.toml')
+  })
+})
+
+describe('getAppConfigurationShorthand', () => {
+  test('returns undefined when the default name is used', async () => {
+    // When/Then
+    expect(getAppConfigurationShorthand('shopify.app.toml')).toBeUndefined()
+    expect(getAppConfigurationShorthand('/very/long/path/shopify.app.toml')).toBeUndefined()
+  })
+
+  test('returns shorthand when it is present', async () => {
+    // When/Then
+    expect(getAppConfigurationShorthand('shopify.app.foobar.toml')).toEqual('foobar')
+    expect(getAppConfigurationShorthand('/very/long/path/shopify.app.foobar.toml')).toEqual('foobar')
+  })
+
+  test('supports names with dashes and underscores', async () => {
+    // When / Then
+    expect(getAppConfigurationShorthand('shopify.app.cool-whip.toml')).toEqual('cool-whip')
+    expect(getAppConfigurationShorthand('shopify.app.lucky_dog.toml')).toEqual('lucky_dog')
+  })
+})
+
+describe('loadDotEnv', () => {
+  test('it returns undefined if the env is missing', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // When
+      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.toml'))
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+  })
+
+  test('it loads from the default env file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      await writeFile(joinPath(tmp, '.env'), 'FOO="bar"')
+
+      // When
+      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.toml'))
+
+      // Then
+      expect(got).toBeDefined()
+      expect(got!.variables.FOO).toEqual('bar')
+    })
+  })
+
+  test('it loads from the config specific env file', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      await writeFile(joinPath(tmp, '.env.staging'), 'FOO="bar"')
+
+      // When
+      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.staging.toml'))
+
+      // Then
+      expect(got).toBeDefined()
+      expect(got!.variables.FOO).toEqual('bar')
+    })
   })
 })

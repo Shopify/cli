@@ -167,6 +167,19 @@ export async function load(options: AppLoaderConstructorArgs): Promise<AppInterf
   return loader.loaded()
 }
 
+export async function loadDotEnv(appDirectory: string, configurationPath: string): Promise<DotEnvFile | undefined> {
+  let dotEnvFile: DotEnvFile | undefined
+  const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
+  const dotEnvFileName = configurationShorthand
+    ? `${dotEnvFileNames.production}.${configurationShorthand}`
+    : dotEnvFileNames.production
+  const dotEnvPath = joinPath(appDirectory, dotEnvFileName)
+  if (await fileExists(dotEnvPath)) {
+    dotEnvFile = await readAndParseDotEnv(dotEnvPath)
+  }
+  return dotEnvFile
+}
+
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
@@ -200,7 +213,7 @@ class AppLoader {
       configName: this.configName,
     })
     const {appDirectory, configurationPath, configuration} = await configurationLoader.loaded()
-    const dotenv = await this.loadDotEnv(appDirectory)
+    const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
       appDirectory,
@@ -239,15 +252,6 @@ class AppLoader {
     })
 
     return appClass
-  }
-
-  async loadDotEnv(appDirectory: string): Promise<DotEnvFile | undefined> {
-    let dotEnvFile: DotEnvFile | undefined
-    const dotEnvPath = joinPath(appDirectory, dotEnvFileNames.production)
-    if (await fileExists(dotEnvPath)) {
-      dotEnvFile = await readAndParseDotEnv(dotEnvPath)
-    }
-    return dotEnvFile
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
@@ -574,10 +578,11 @@ async function logMetadataForLoadedApp(
   })
 }
 
+export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
+
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
-    const validFileRegex = /^shopify\.app(\.[-\w]+)?\.toml$/g
-    if (validFileRegex.test(config)) {
+    if (appConfigurationFileNameRegex.test(config)) {
       return config
     }
 
@@ -585,4 +590,13 @@ export function getAppConfigurationFileName(config?: string) {
   }
 
   return configurationFileNames.app
+}
+
+export function getAppConfigurationShorthand(path: string) {
+  const match = basename(path).match(appConfigurationFileNameRegex)
+  if (match) {
+    const result = match[1]?.slice(1)
+    if (result === '.') return undefined
+    return result
+  }
 }
