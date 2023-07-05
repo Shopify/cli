@@ -26,7 +26,7 @@ import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {getAppConfigurationFileName, isWebType, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
 import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -56,6 +56,7 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mocked(isWebType).mockReturnValue(true)
 
   // this is needed because using importActual to mock the ui module
   // creates a circular dependency between ui and context/local
@@ -725,6 +726,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
+      true,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -775,6 +777,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
+      true,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -817,6 +820,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
+      true,
     )
   })
 
