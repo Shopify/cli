@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface} from './app.js'
+import {App, AppConfiguration, AppInterface, WebType} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -19,7 +19,15 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.configuration ?? {scopes: '', extension_directories: []},
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
-    app.webs ?? [],
+    app.webs ?? [
+      {
+        directory: '',
+        configuration: {
+          roles: [WebType.Backend],
+          commands: {dev: ''},
+        },
+      },
+    ],
     app.allExtensions ?? [],
     app.usesWorkspaces ?? false,
     app.dotenv,

@@ -38,9 +38,9 @@ export async function selectOrCreateApp(
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
-const MAGIC_URL = 'https://shopify.dev'
-const MAGIC_REDIRECT_URL = 'https://shopify.dev/auth'
-const getAppVars = (org: Organization, name: string, isLaunchable?: boolean) => {
+const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
+const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
+const getAppVars = (org: Organization, name: string, isLaunchable = true) => {
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),

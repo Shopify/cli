@@ -38,7 +38,7 @@ export interface CreateAppQueryVariables {
   appUrl: string
   redir: string[]
   type: string
-  scopes?: string[]
+  requestedAccessScopes?: string[]
 }
 
 export interface CreateAppQuerySchema {
