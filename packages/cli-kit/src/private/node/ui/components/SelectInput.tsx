@@ -267,13 +267,13 @@ function SelectInputInner<T>(
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
-    const scrollbarHeight = Math.min(sectionHeight - 1, Math.ceil(Math.min(1, limit / items.length) * sectionHeight))
-    let scrollbarTopBuffer = Math.min(sectionHeight - scrollbarHeight, Math.round(state.visibleFromIndex / initialItems.length * sectionHeight - scrollbarHeight / 2))
-    let scrollbarBottomBuffer = sectionHeight - scrollbarHeight - scrollbarTopBuffer - 1
+    const scrollboxHeight = Math.min(sectionHeight - 1, Math.ceil(Math.min(1, limit / items.length) * sectionHeight))
+    let scrollbarTopBuffer = Math.min(sectionHeight - scrollboxHeight, Math.round(state.visibleFromIndex / initialItems.length * sectionHeight - scrollboxHeight / 2))
+    let scrollbarBottomBuffer = sectionHeight - scrollboxHeight - scrollbarTopBuffer - 1
 
     // Ensure it scrolls all the way to the bottom when we hit the bottom
     if (state.visibleToIndex >= items.length - 1) {
-      scrollbarTopBuffer = sectionHeight - scrollbarHeight
+      scrollbarTopBuffer = sectionHeight - scrollboxHeight
       scrollbarBottomBuffer = -1
     }
 
@@ -331,7 +331,7 @@ function SelectInputInner<T>(
             ) : scrollbarTopBuffer === 1 ?
               <Box width={1}><Text color="cyan" backgroundColor="gray">△</Text></Box>
             : null}
-            <Box width={1}><Text backgroundColor="cyan">{' '.repeat(scrollbarHeight)}</Text></Box>
+            <Box width={1}><Text backgroundColor="cyan">{' '.repeat(scrollboxHeight)}</Text></Box>
             {scrollbarBottomBuffer > 0 ? <>
               <Box width={1}><Text color="cyan" backgroundColor="gray">▽</Text></Box>
               <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text></Box>
