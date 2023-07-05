@@ -65,16 +65,12 @@ const UIExtensionUnifiedSchema = BaseSchema.extend({
   extensions: zod.array(UIExtensionSchema).min(1).max(1),
   settings: UnifiedSettingsSchema,
 }).transform((config) => {
-  const newConfig = {
+  const newConfig: UIExtensionLegacySchemaType = {
     ...config,
-    name: config.name,
-    type: config.type,
+    capabilities: config.extensions[0]?.capabilities,
     extension_points: getArrayRejectingUndefined(config.extensions[0]?.targeting ?? []),
-    metafields: config.settings?.fields?.map((field) => {
-      return {key: field.type, namespace: field.type}
-    }),
   }
-  return newConfig as UIExtensionLegacySchemaType
+  return newConfig
 })
 
 const UnionSchema = zod.union([UIExtensionUnifiedSchema, UIExtensionLegacySchema])
