@@ -42,26 +42,28 @@ const UIExtensionSchema = BaseSchema.extend({
   ),
 })
 
+const UnifiedSettingsSchema = zod
+  .object({
+    fields: zod
+      .array(
+        zod.object({
+          key: zod.string().optional(),
+          name: zod.string().optional(),
+          description: zod.string().optional(),
+          required: zod.boolean().optional(),
+          type: zod.string(),
+        }),
+      )
+      .optional(),
+  })
+  .optional()
+
 const UIExtensionUnifiedSchema = BaseSchema.extend({
   name: zod.string(),
   description: zod.string().optional(),
   type: zod.literal('ui_extension'),
   extensions: zod.array(UIExtensionSchema).min(1).max(1),
-  settings: zod
-    .object({
-      fields: zod
-        .array(
-          zod.object({
-            key: zod.string().optional(),
-            name: zod.string().optional(),
-            description: zod.string().optional(),
-            required: zod.boolean().optional(),
-            type: zod.string(),
-          }),
-        )
-        .optional(),
-    })
-    .optional(),
+  settings: UnifiedSettingsSchema,
 }).transform((config) => {
   const newConfig = {
     ...config,
