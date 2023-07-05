@@ -56,23 +56,6 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  renderInfo({
-    headline: [
-      'Stay tuned for changes to',
-      {command: formatPackageManagerCommand(options.app.packageManager, 'deploy')},
-      {char: '.'},
-    ],
-    body: "Soon, you'll be able to release all your extensions at the same time, directly from Shopify CLI.",
-    reference: [
-      {
-        link: {
-          url: 'https://shopify.dev/docs/apps/deployment/simplified-deployment',
-          label: 'Simplified extension deployment',
-        },
-      },
-    ],
-  })
-
   // eslint-disable-next-line prefer-const
   let {app, identifiers, partnersApp, token, deploymentMode} = await ensureDeployContext(options)
   const apiKey = identifiers.app
