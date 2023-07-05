@@ -268,7 +268,7 @@ function SelectInputInner<T>(
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
     const scrollbarHeight = Math.min(sectionHeight - 1, Math.ceil(Math.min(1, limit / items.length) * sectionHeight))
-    let scrollbarTopBuffer = Math.floor(state.visibleFromIndex / initialItems.length * sectionHeight)
+    let scrollbarTopBuffer = Math.min(sectionHeight - scrollbarHeight, Math.round(state.visibleFromIndex / initialItems.length * sectionHeight - scrollbarHeight / 2))
     let scrollbarBottomBuffer = sectionHeight - scrollbarHeight - scrollbarTopBuffer - 1
 
     // Ensure it scrolls all the way to the bottom when we hit the bottom
