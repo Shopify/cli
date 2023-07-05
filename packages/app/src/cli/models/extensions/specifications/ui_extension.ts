@@ -31,7 +31,6 @@ type UIExtensionLegacySchemaType = zod.infer<typeof UIExtensionLegacySchema>
 
 const UIExtensionSchema = BaseSchema.extend({
   type: zod.literal('ui_extension'),
-  handle: zod.string().optional(),
   capabilities: CapabilitiesSchema.optional(),
   targeting: zod.array(
     zod.object({
