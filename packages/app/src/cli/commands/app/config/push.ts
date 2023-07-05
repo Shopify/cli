@@ -1,7 +1,6 @@
 import {appFlags} from '../../../flags.js'
 import Command from '../../../utilities/app-command.js'
 import {loadAppConfiguration} from '../../../models/app/loader.js'
-import {getAppInfo} from '../../../services/local-storage.js'
 import {pushConfig} from '../../../services/app/config/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -23,8 +22,10 @@ export default class ConfigPush extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(ConfigPush)
-    const configName = flags.config || getAppInfo(flags.path)?.configFile
-    const {configuration, configurationPath} = await loadAppConfiguration({configName, directory: flags.path})
+    const {configuration, configurationPath} = await loadAppConfiguration({
+      configName: flags.config,
+      directory: flags.path,
+    })
 
     await pushConfig({configuration, configurationPath})
   }
