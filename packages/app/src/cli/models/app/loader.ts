@@ -574,10 +574,14 @@ async function logMetadataForLoadedApp(
   })
 }
 
+export function isValidAppConfigurationFile(config: string) {
+  const validFileRegex = /^shopify\.app(\.[-\w]+)?\.toml$/g
+  return validFileRegex.test(config)
+}
+
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
-    const validFileRegex = /^shopify\.app(\.[-\w]+)?\.toml$/g
-    if (validFileRegex.test(config)) {
+    if (isValidAppConfigurationFile(config)) {
       return config
     }
 

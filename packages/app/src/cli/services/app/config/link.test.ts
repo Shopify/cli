@@ -50,7 +50,7 @@ describe('link', () => {
     })
   })
 
-  test('creates a new config file when it does not exist', async () => {
+  test('creates a new shopify.app.toml file when it does not exist', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -59,13 +59,12 @@ describe('link', () => {
       }
       vi.mocked(load).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
-      vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
@@ -76,21 +75,68 @@ scopes = ""
 extension_directories = [ ]
 `
       expect(content).toEqual(expectedContent)
-      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'App "app1" connected to this codebase, file shopify.app.staging.toml created',
+        headline: 'App "app1" connected to this codebase, file shopify.app.toml created',
       })
     })
   })
 
-  test('updates the config file when it already exists', async () => {
+  test('creates a new shopify.app.staging.toml file when shopify.app.toml already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const filePath = joinPath(tmp, 'shopify.app.staging.toml')
-      const initialContent = `scopes = ""
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(load).mockResolvedValue(
+        testApp({
+          configurationPath: 'shopify.app.development.toml',
+          configuration: {
+            name: 'my app',
+            api_contact_email: 'example@example.com',
+            client_id: '12345',
+            scopes: 'write_products',
+            webhook_api_version: '2023-04',
+            application_url: 'https://myapp.com',
+          },
+        }),
+      )
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
+        testOrganizationApp({
+          apiKey: '12345',
+          applicationUrl: 'https://myapp.com',
+          title: 'my app',
+          requestedAccessScopes: ['write_products'],
+        }),
+      )
+      vi.mocked(selectConfigName).mockResolvedValue('staging')
 
-      [appInfo]
-      name = "other-app"
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const expectedContent = `client_id = "12345"
+name = "my app"
+application_url = "https://myapp.com"
+webhook_api_version = "2023-04"
+api_contact_email = "example@example.com"
+scopes = "write_products"
+`
+      expect(content).toEqual(expectedContent)
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'App "my app" connected to this codebase, file shopify.app.staging.toml created',
+      })
+    })
+  })
+
+  test('updates the shopify.app.toml when it already exists and is unlinked', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const initialContent = `scopes = ""
       `
       writeFileSync(filePath, initialContent)
       const options: LinkOptions = {
@@ -99,13 +145,12 @@ extension_directories = [ ]
       }
       vi.mocked(load).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
-      vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
@@ -117,7 +162,7 @@ extension_directories = [ ]
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'App "app1" connected to this codebase, file shopify.app.staging.toml updated',
+        headline: 'App "app1" connected to this codebase, file shopify.app.toml updated',
       })
     })
   })
@@ -173,13 +218,12 @@ extension_directories = [ ]
       }
       vi.mocked(load).mockRejectedValue(new Error('Shopify.app.toml not found'))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
-      vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
@@ -203,13 +247,12 @@ legacy_scopes_behavior = true
         ...REMOTE_APP,
         requestedAccessScopes: ['read_products', 'write_orders'],
       })
-      vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
