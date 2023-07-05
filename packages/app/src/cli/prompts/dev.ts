@@ -24,7 +24,8 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function getTomls(apps: OrganizationAppsResponse) {
+export async function getTomls() {
+  // todo: get proper dir
   const rootDirectory = '/Users/ryanbahan/cli-test-app'
   const regex = /^shopify\.app(\.[-\w]+)?\.toml$/g
   const clientIds: {[key: string]: string} = {}
@@ -46,7 +47,7 @@ export async function getTomls(apps: OrganizationAppsResponse) {
 }
 
 export async function selectAppPrompt(apps: OrganizationAppsResponse, orgId: string, token: string): Promise<string> {
-  const tomls = await getTomls(apps)
+  const tomls = await getTomls()
   const toAnswer = (app: MinimalOrganizationApp) => {
     if (tomls[app.apiKey]) {
       return {label: `${app.title} (${tomls[app.apiKey]})`, value: app.apiKey}
