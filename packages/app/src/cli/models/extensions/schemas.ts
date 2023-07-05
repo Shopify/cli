@@ -18,6 +18,10 @@ export const TypeSchema = zod.object({
   type: zod.string().default('ui_extension'),
 })
 
+export const ExtensionsArraySchema = zod.object({
+  extensions: zod.array(zod.any()).optional(),
+})
+
 export const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
@@ -41,6 +45,13 @@ export const BaseSchema = zod.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   categories: zod.array(zod.string()).optional(),
+  extensions: zod.array(zod.any()).optional(),
+})
+
+export const UnifiedSchema = zod.object({
+  name: zod.string(),
+  api_version: ApiVersionSchema.optional(),
+  extensions: zod.array(zod.any()),
 })
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>

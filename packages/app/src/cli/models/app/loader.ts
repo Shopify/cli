@@ -11,7 +11,7 @@ import {
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {TypeSchema} from '../extensions/schemas.js'
+import {ExtensionsArraySchema, TypeSchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getAppInfo} from '../../services/local-storage.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -302,36 +302,75 @@ class AppLoader {
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
 
-    const extensions = configPaths.map(async (configurationPath) => {
+    const extensionPromises = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const specification = await findSpecificationForConfig(
-        this.specifications,
-        configurationPath,
-        this.abortOrReport.bind(this),
-      )
 
-      if (!specification) return
+      const fileContent = await readFile(configurationPath)
+      const obj = decodeToml(fileContent)
+      const {extensions} = ExtensionsArraySchema.parse(obj)
 
-      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-      const entryPath = await this.findEntryPath(directory, specification)
+      let extensionInstances = []
+      if (extensions) {
+        const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
+        const extensionsPromises = configuration.extensions.map(async (extensionConfig) => {
+          const mergedConfig = {...configuration, ...extensionConfig}
+          const type = mergedConfig.type
+          const extensionSpecification = findSpecificationForType(this.specifications, type)
 
-      const extensionInstance = new ExtensionInstance({
-        configuration,
-        configurationPath,
-        entryPath,
-        directory,
-        specification,
-      })
+          if (!extensionSpecification) {
+            this.abortOrReport('Unknown extension type', undefined, configurationPath)
+            return
+          }
 
-      const validateResult = await extensionInstance.validate()
-      if (validateResult.isErr()) {
-        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+          const entryPath = await this.findEntryPath(directory, extensionSpecification)
+          const extensionInstance = new ExtensionInstance({
+            configuration: mergedConfig,
+            configurationPath,
+            entryPath,
+            directory,
+            specification: extensionSpecification,
+          })
+
+          const validateResult = await extensionInstance.validate()
+          if (validateResult.isErr()) {
+            this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+          } else {
+            return extensionInstance
+          }
+        })
+        extensionInstances = getArrayRejectingUndefined(await Promise.all(extensionsPromises))
+      } else {
+        const specification = await findSpecificationForConfig(
+          this.specifications,
+          configurationPath,
+          this.abortOrReport.bind(this),
+        )
+
+        if (!specification) return
+        const entryPath = await this.findEntryPath(directory, specification)
+        const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
+
+        const extensionInstance = new ExtensionInstance({
+          configuration,
+          configurationPath,
+          entryPath,
+          directory,
+          specification,
+        })
+
+        const validateResult = await extensionInstance.validate()
+        if (validateResult.isErr()) {
+          this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+        } else {
+          extensionInstances.push(extensionInstance)
+        }
       }
 
-      return extensionInstance
+      return extensionInstances
     })
 
-    const allExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+    const extensions = await Promise.all(extensionPromises)
+    const allExtensions = extensions.flat().filter((extension) => extension !== undefined) as ExtensionInstance[]
     return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
