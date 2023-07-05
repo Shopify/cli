@@ -267,9 +267,15 @@ function SelectInputInner<T>(
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
-    const scrollbarHeight = Math.floor(limit / initialItems.length * sectionHeight)
-    const scrollbarTopBuffer = Math.floor(state.visibleFromIndex / initialItems.length * sectionHeight)
-    const scrollbarBottomBuffer = sectionHeight - scrollbarHeight - scrollbarTopBuffer
+    const scrollbarHeight = Math.min(sectionHeight - 1, Math.ceil(Math.min(1, limit / items.length) * sectionHeight))
+    let scrollbarTopBuffer = Math.floor(state.visibleFromIndex / initialItems.length * sectionHeight)
+    let scrollbarBottomBuffer = sectionHeight - scrollbarHeight - scrollbarTopBuffer - 1
+
+    // Ensure it scrolls all the way to the bottom when we hit the bottom
+    if (state.visibleToIndex >= items.length - 1) {
+      scrollbarTopBuffer = sectionHeight - scrollbarHeight
+      scrollbarBottomBuffer = -1
+    }
 
     return (
       <Box flexDirection="row">
@@ -316,10 +322,22 @@ function SelectInputInner<T>(
           )}
         </Box>
         {hasLimit ? (
-          <Box width={1} flexDirection="column">
-            <Text backgroundColor="gray">{' '.repeat(scrollbarTopBuffer)}</Text>
-            <Text backgroundColor="cyan">{' '.repeat(scrollbarHeight)}</Text>
-            <Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text>
+          <Box width={1} height={sectionHeight} flexDirection="column">
+            {scrollbarTopBuffer > 1 ? (
+              <>
+                <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarTopBuffer - 1)}</Text></Box>
+                <Box width={1}><Text color="cyan" backgroundColor="gray">△</Text></Box>
+              </>
+            ) : scrollbarTopBuffer === 1 ?
+              <Box width={1}><Text color="cyan" backgroundColor="gray">△</Text></Box>
+            : null}
+            <Box width={1}><Text backgroundColor="cyan">{' '.repeat(scrollbarHeight)}</Text></Box>
+            {scrollbarBottomBuffer > 0 ? <>
+              <Box width={1}><Text color="cyan" backgroundColor="gray">▽</Text></Box>
+              <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text></Box>
+            </> : scrollbarBottomBuffer === 0 ?
+              <Box width={1}><Text color="cyan" backgroundColor="gray">▽</Text></Box>
+            : null}
           </Box>
         ) : null}
       </Box>
