@@ -270,14 +270,28 @@ function SelectInputInner<T>(
     // Leave 2 rows for top/bottom arrows when there is vertical room for them.
     const scrollbarFullHeight = sectionHeight >= 4 ? sectionHeight - 2 : sectionHeight
     const scrollboxHeight = Math.min(scrollbarFullHeight - 1, Math.ceil(Math.min(1, limit / items.length) * scrollbarFullHeight))
-    let scrollbarTopBuffer = Math.max(0, Math.min(scrollbarFullHeight - scrollboxHeight, Math.round(state.visibleFromIndex / initialItems.length * scrollbarFullHeight - scrollboxHeight / 2)))
-    let scrollbarBottomBuffer = scrollbarFullHeight - scrollboxHeight - scrollbarTopBuffer
 
+    let scrollbarTopBuffer: number
     // Ensure it scrolls all the way to the bottom when we hit the bottom
     if (state.visibleToIndex >= items.length - 1) {
       scrollbarTopBuffer = scrollbarFullHeight - scrollboxHeight
-      scrollbarBottomBuffer = 0
+    } else {
+      // This is the actual number of rows available for the scrollbar to go up and down
+      const scrollingLength = scrollbarFullHeight - scrollboxHeight
+      // This is the number of times the screen itself can scroll down
+      const scrollableIncrements = items.length - limit
+
+      scrollbarTopBuffer = Math.max(
+        // Never go negative, that causes errors!
+        0,
+        Math.min(
+          // Never have more buffer than filling in all spaces above the scrollbox
+          scrollbarFullHeight - scrollboxHeight,
+          Math.round((state.visibleFromIndex) / scrollableIncrements * scrollingLength)
+        )
+      )
     }
+    const scrollbarBottomBuffer = scrollbarFullHeight - scrollboxHeight - scrollbarTopBuffer
 
     return (
       <Box flexDirection="row">
