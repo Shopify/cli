@@ -15,14 +15,18 @@ export async function ensureFunctionsIds(
   const matchFunctions = await automaticMatchmaking(localFunctions, remoteFunctions, validIdentifiers, 'id')
   let validMatches = matchFunctions.identifiers
 
+  const functionsToCreate = matchFunctions.toCreate ?? []
+
   for (const pending of matchFunctions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
     const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
-    if (!confirmed) return err('user-cancelled')
-    validMatches[pending.local.localIdentifier] = pending.remote.id
+    if (confirmed) {
+      validMatches[pending.local.localIdentifier] = pending.remote.id
+    } else {
+      functionsToCreate.push(pending.local)
+    }
   }
 
-  const functionsToCreate = matchFunctions.toCreate ?? []
   let onlyRemoteFunctions = matchFunctions.toManualMatch.remote ?? []
 
   if (matchFunctions.toManualMatch.local.length > 0) {
