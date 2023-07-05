@@ -113,6 +113,58 @@ describe('pushConfig', () => {
     })
   })
 
+  test('successfully calls the update mutation with empty scopes', async () => {
+    const app = testApp({
+      configurationPath: 'shopify.app.development.toml',
+      configuration: {
+        name: 'my app',
+        api_contact_email: 'ryan@app.com',
+        client_id: '12345',
+        scopes: '',
+        webhook_api_version: '04-2023',
+        application_url: 'https://myapp.com',
+      },
+    })
+    const options: Options = {
+      configuration: app.configuration,
+      configurationPath: app.configurationPath,
+    }
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      apiKey: '12345',
+      applicationUrl: 'https://myapp.com',
+      contactEmail: 'ryan@app.com',
+      embedded: undefined,
+      gdprWebhooks: {
+        customerDataRequestUrl: undefined,
+        customerDeletionUrl: undefined,
+        shopDeletionUrl: undefined,
+      },
+      posEmbedded: undefined,
+      preferencesUrl: undefined,
+      redirectUrlAllowlist: undefined,
+      requestedAccessScopes: [],
+      title: 'my app',
+      webhookApiVersion: '04-2023',
+    })
+
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated app configuration for my app',
+      body: ['shopify.app.development.toml configuration is now live on Shopify.'],
+    })
+  })
+
   test('app proxy is updated upstream when defined', async () => {
     const app = testApp({
       configurationPath: 'shopify.app.development.toml',

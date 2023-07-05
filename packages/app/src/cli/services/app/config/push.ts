@@ -70,7 +70,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   }
 
   if (!usesLegacyScopesBehavior(configuration)) {
-    variables.requestedAccessScopes = configuration.scopes?.split(',') ?? []
+    variables.requestedAccessScopes = configuration.scopes?.length ? configuration.scopes.split(',') : []
   }
 
   if (configuration.proxy) {
