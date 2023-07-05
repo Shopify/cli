@@ -19,7 +19,7 @@ export async function ensureFunctionsIds(
 
   for (const pending of matchFunctions.toConfirm) {
     // eslint-disable-next-line no-await-in-loop
-    const confirmed = await matchConfirmationPrompt(pending.local, pending.remote)
+    const confirmed = await matchConfirmationPrompt(pending.local, pending.remote, 'function')
     if (confirmed) {
       validMatches[pending.local.localIdentifier] = pending.remote.id
     } else {

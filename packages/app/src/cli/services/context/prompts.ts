@@ -10,11 +10,15 @@ import {
   renderInfo,
 } from '@shopify/cli-kit/node/ui'
 
-export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
+export async function matchConfirmationPrompt(
+  local: LocalSource,
+  remote: RemoteSource,
+  type: 'extension' | 'function' = 'extension',
+) {
   return renderConfirmationPrompt({
     message: `Match ${local.configuration.name} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
-    confirmationMessage: `Yes, match to existing extension`,
-    cancellationMessage: `No, create as a new extension`,
+    confirmationMessage: `Yes, match to existing ${type}`,
+    cancellationMessage: `No, create as a new ${type}`,
   })
 }
 
