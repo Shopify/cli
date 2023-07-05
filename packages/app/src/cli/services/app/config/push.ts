@@ -43,7 +43,7 @@ export async function pushConfig({configuration, configurationPath}: Options) {
     if (usesLegacyScopesBehavior(configuration)) {
       const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
 
-      if (clearResult.appRequestedAccessScopesClear.userErrors.length > 0) {
+      if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
         const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
         abort(errors)
       }

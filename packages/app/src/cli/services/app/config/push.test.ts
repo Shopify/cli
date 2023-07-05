@@ -107,6 +107,10 @@ describe('pushConfig', () => {
       webhookApiVersion: '04-2023',
     })
 
+    expect(vi.mocked(partnersRequest).mock.calls[2]![2]!).toEqual({
+      apiKey: '12345',
+    })
+
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Updated app configuration for my app',
       body: ['shopify.app.development.toml configuration is now live on Shopify.'],
