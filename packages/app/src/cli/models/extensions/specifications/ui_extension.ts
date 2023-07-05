@@ -14,7 +14,7 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array.js'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -28,18 +28,6 @@ const UIExtensionLegacySchema = BaseSchema.extend({
 })
 
 type UIExtensionLegacySchemaType = zod.infer<typeof UIExtensionLegacySchema>
-
-const UIExtensionSchema = BaseSchema.extend({
-  type: zod.literal('ui_extension'),
-  capabilities: CapabilitiesSchema.optional(),
-  targeting: zod.array(
-    zod.object({
-      target: zod.string(),
-      module: zod.string(),
-      metafields: zod.array(MetafieldSchema).optional().default([]),
-    }),
-  ),
-})
 
 const UnifiedSettingsSchema = zod
   .object({
@@ -57,17 +45,35 @@ const UnifiedSettingsSchema = zod
   })
   .optional()
 
-const UIExtensionUnifiedSchema = BaseSchema.extend({
-  name: zod.string(),
-  description: zod.string().optional(),
+const UIExtensionSchema = BaseSchema.extend({
   type: zod.literal('ui_extension'),
-  extensions: zod.array(UIExtensionSchema).min(1).max(1),
+  name: zod.string().optional(),
+  description: zod.string().optional(),
+  api_version: zod.string().optional(),
+  capabilities: CapabilitiesSchema.optional(),
   settings: UnifiedSettingsSchema,
+  targeting: zod.array(
+    zod.object({
+      target: zod.string(),
+      module: zod.string(),
+      metafields: zod.array(MetafieldSchema).optional().default([]),
+    }),
+  ),
+})
+
+const UIExtensionUnifiedSchema = BaseSchema.extend({
+  settings: UnifiedSettingsSchema,
+  extensions: zod.array(UIExtensionSchema).min(1).max(1),
 }).transform((config) => {
   const newConfig: UIExtensionLegacySchemaType = {
-    ...config,
-    capabilities: config.extensions[0]?.capabilities,
+    name: config.extensions[0]?.name ?? config.name,
+    type: config.extensions[0]?.type ?? config.type,
+    description: config.extensions[0]?.description ?? config.description,
+    api_version: config.extensions[0]?.api_version ?? config.api_version,
     extension_points: getArrayRejectingUndefined(config.extensions[0]?.targeting ?? []),
+    capabilities: config.extensions[0]?.capabilities,
+    metafields: config.extensions[0]?.metafields ?? config.metafields,
+    settings: config.extensions[0]?.settings ?? config.settings,
   }
   return newConfig
 })
