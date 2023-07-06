@@ -283,9 +283,6 @@ export async function setupFunctionWatcher({
       .catch((updateError: unknown) => {
         outputWarn(`Error while deploying updated extension draft: ${JSON.stringify(updateError, null, 2)}`, stdout)
       })
-      .finally(() => {
-        buildController = null
-      })
   })
 
   signal.addEventListener('abort', () => {
