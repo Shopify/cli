@@ -7,6 +7,7 @@ import {
   isCurrentAppSchema,
   usesLegacyScopesBehavior,
 } from '../../../models/app/app.js'
+import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -40,11 +41,20 @@ export async function pushConfig({configuration, configurationPath}: Options) {
       abort(errors)
     }
 
-    if (usesLegacyScopesBehavior(configuration)) {
+    if (app.requestedAccessScopes && usesLegacyScopesBehavior(configuration)) {
       const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
 
       if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
-        const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
+        const errors = clearResult.appRequestedAccessScopesClear.userErrors.map((error) => error.message).join(', ')
+        abort(errors)
+      }
+    }
+
+    if (!configuration.proxy && app.appProxy) {
+      const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
+
+      if (deleteResult?.userErrors?.length > 0) {
+        const errors = deleteResult.userErrors.map((error) => error.message).join(', ')
         abort(errors)
       }
     }
