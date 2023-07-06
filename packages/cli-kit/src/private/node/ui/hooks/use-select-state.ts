@@ -1,8 +1,8 @@
-import {ItemWithKey} from '../components/SelectInput.js'
+import {Item} from '../components/SelectInput.js'
 import {useReducer, useCallback, useMemo, useState} from 'react'
 import {isDeepStrictEqual} from 'node:util'
 
-type Option<T> = ItemWithKey<T>
+type Option<T> = Item<T>
 
 type OptionMapItem<T> = Option<T> & {
   previous: OptionMapItem<T> | undefined

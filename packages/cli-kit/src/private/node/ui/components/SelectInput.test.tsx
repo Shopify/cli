@@ -77,7 +77,7 @@ describe('SelectInput', async () => {
     expect(onChange).toHaveBeenCalledWith(items[1])
   })
 
-  test('handles single digit numeric shortcuts', async () => {
+  test('throws an error if a key has more than 1 character', async () => {
     const onChange = vi.fn()
 
     const items = [
@@ -92,55 +92,12 @@ describe('SelectInput', async () => {
       {
         label: 'Third',
         value: 'third',
+        key: 'ab',
       },
     ]
 
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, '2')
-
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (1) First
-      [36m>[39m  [36m(2) Second[39m
-         (3) Third
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
-    `)
-    expect(onChange).toHaveBeenCalledWith(items[1])
-  })
-
-  test('handles keys with multiple digits', async () => {
-    const onChange = vi.fn()
-    const items = [
-      {
-        label: 'First',
-        value: 'first',
-      },
-      {
-        label: 'Second',
-        value: 'second',
-      },
-      {
-        label: 'Tenth',
-        value: 'tenth',
-        key: '10',
-      },
-    ]
-
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, '1', '0')
-
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "    (1) First
-          (2) Second
-      [36m>[39m  [36m(10) Tenth[39m
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
-    `)
-    expect(onChange).toHaveBeenCalledWith(items[2])
+    expect(renderInstance.lastFrame()).toMatch('SelectInput: Keys must be a single character')
   })
 
   test('handles pressing non existing keys', async () => {
@@ -164,7 +121,7 @@ describe('SelectInput', async () => {
 
     await waitForInputsToBeReady()
     // nothing changes when pressing a key that doesn't exist
-    await sendInputAndWait(renderInstance, 500, '4')
+    await sendInputAndWait(renderInstance, 100, '4')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36m(1) First[39m
@@ -176,8 +133,7 @@ describe('SelectInput', async () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
-  test('handles custom keys', async () => {
-    const onChange = vi.fn()
+  test("pads keys correctly if some items don't have them", async () => {
     const items = [
       {
         label: 'First',
@@ -194,19 +150,8 @@ describe('SelectInput', async () => {
       },
     ]
 
-    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, 't')
-
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (1) First
-         (2) Second
-      [36m>[39m  [36m(t) Third[39m
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
-    `)
-    expect(onChange).toHaveBeenCalledWith(items[2])
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} />)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot()
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
@@ -215,11 +160,11 @@ describe('SelectInput', async () => {
     const onChange = vi.fn()
 
     const items = [
-      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
-      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'first', value: 'first', group: 'Automations'},
+      {label: 'second', value: 'second', group: 'Automations'},
       {label: 'third', value: 'third', group: 'Merchant Admin'},
       {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
-      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'fifth', value: 'fifth'},
       {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth'},
@@ -399,11 +344,11 @@ describe('SelectInput', async () => {
 
   test('supports a limit of items to show', async () => {
     const items = [
-      {label: 'first', value: 'first', key: 'f'},
-      {label: 'second', value: 'second', key: 's'},
+      {label: 'first', value: 'first'},
+      {label: 'second', value: 'second'},
       {label: 'third', value: 'third'},
       {label: 'fourth', value: 'fourth'},
-      {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
+      {label: 'fifth', value: 'fifth', group: 'Automations'},
       {label: 'sixth', value: 'sixth', group: 'Automations'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
@@ -504,37 +449,7 @@ describe('SelectInput', async () => {
     expect(onSubmit).toHaveBeenCalledWith(items[1])
   })
 
-  test('using a shortcut calls onSubmit if submitWithShortcuts is true', async () => {
-    const onSubmit = vi.fn()
-    const items = [
-      {
-        label: 'First',
-        value: 'first',
-        key: 'f',
-      },
-      {
-        label: 'Second',
-        value: 'second',
-        key: 's',
-      },
-      {
-        label: 'Third',
-        value: 'third',
-        key: 't',
-      },
-    ]
-
-    const renderInstance = render(
-      <SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} submitWithShortcuts />,
-    )
-
-    await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 500, 's')
-
-    expect(onSubmit).toHaveBeenCalledWith(items[1])
-  })
-
-  test('using a shortcut does not call onSubmit if submitWithShortcuts is false', async () => {
+  test('using a shortcut calls onSubmit', async () => {
     const onSubmit = vi.fn()
     const items = [
       {
@@ -557,9 +472,9 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 500, 's')
+    await sendInputAndWait(renderInstance, 100, 's')
 
-    expect(onSubmit).not.toHaveBeenCalled()
+    expect(onSubmit).toHaveBeenCalledWith(items[1])
   })
 
   test('supports disabled options', async () => {
@@ -607,18 +522,15 @@ describe('SelectInput', async () => {
       {
         label: 'First',
         value: 'first',
-        key: 'f',
       },
       {
         label: 'Second',
         value: 'second',
-        key: 's',
         disabled: true,
       },
       {
         label: 'Third',
         value: 'third',
-        key: 't',
       },
     ]
 
@@ -677,5 +589,34 @@ describe('SelectInput', async () => {
     await sendInputAndWait(renderInstance, 100, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[2])
+  })
+
+  test("doesn't allow submitting disabled options with shortcuts", async () => {
+    const onSubmit = vi.fn()
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+        key: 'f',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+        key: 's',
+        disabled: true,
+      },
+      {
+        label: 'Third',
+        value: 'third',
+        key: 't',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 100, 's')
+
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })

@@ -171,7 +171,6 @@ describe('SelectPrompt', async () => {
       <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
-        infoMessage={infoMessage}
         onSubmit={() => {}}
       />,
     )
@@ -297,9 +296,7 @@ describe('SelectPrompt', async () => {
       {label: 'b', value: 'b', key: 'b'},
     ]
 
-    const renderInstance = render(
-      <SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" submitWithShortcuts />,
-    )
+    const renderInstance = render(<SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" />)
 
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?

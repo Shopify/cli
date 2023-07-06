@@ -370,7 +370,6 @@ export async function renderConfirmationPrompt({
     message,
     infoTable,
     gitDiff,
-    submitWithShortcuts: true,
     renderOptions,
     defaultValue,
     isConfirmationPrompt: true,

@@ -329,11 +329,11 @@ export const examples: {[key in string]: Example} = {
       renderSelectPrompt({
         message: 'Associate your project with the org Castile Ventures?',
         choices: [
-          {label: 'first', value: 'first', key: 'f'},
-          {label: 'second', value: 'second', key: 's'},
+          {label: 'first', value: 'first'},
+          {label: 'second', value: 'second'},
           {label: 'third (limit reached)', value: 'third', disabled: true},
           {label: 'fourth', value: 'fourth'},
-          {label: 'fifth', value: 'fifth', group: 'Automations', key: 'a'},
+          {label: 'fifth', value: 'fifth', group: 'Automations'},
           {label: 'sixth', value: 'sixth', group: 'Automations'},
           {label: 'seventh', value: 'seventh'},
           {label: 'eighth', value: 'eighth', group: 'Merchant Admin'},
