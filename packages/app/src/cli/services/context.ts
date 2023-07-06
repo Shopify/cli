@@ -146,6 +146,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
+  const preResetCurrentConfig = getAppInfo(options.directory)?.configFile
   let cachedInfo = getAppDevCachedInfo({
     reset: options.reset,
     directory: options.directory,
@@ -272,13 +273,15 @@ function buildOutput(
   useCloudflareTunnels: boolean,
   deploymentMode: DeploymentMode,
   cachedInfo?: CachedAppInfo,
+  preResetConfig?: string,
 ): DevContextOutput {
+  const isConfigSwitched = Boolean(preResetConfig) && preResetConfig !== cachedInfo?.configFile
   return {
     remoteApp: {
       ...app,
       apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
     },
-    remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
+    remoteAppUpdated: app.apiKey !== cachedInfo?.appId || isConfigSwitched,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
