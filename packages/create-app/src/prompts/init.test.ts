@@ -31,7 +31,7 @@ describe('init', () => {
 
   test('when name is passed', async () => {
     const answers = {
-      template: 'https://github.com/Shopify/shopify-app-template-node',
+      template: 'https://github.com/Shopify/shopify-app-template-remix',
     }
     const options = {name: 'app', directory: '/'}
 
