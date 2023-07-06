@@ -135,6 +135,7 @@ async function dev(options: DevOptions) {
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+  const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
 
   let previewUrl
   let shouldUpdateURLs = false
@@ -174,6 +175,7 @@ async function dev(options: DevOptions) {
     apiSecret,
     backendPort,
     frontendServerPort,
+    hmrServerPort,
   }
 
   await Promise.all(
@@ -315,6 +317,7 @@ interface DevWebOptions {
   web: Web
   backendPort: number
   frontendServerPort: number
+  hmrServerPort?: number
   apiKey: string
   apiSecret?: string
   hostname?: string
@@ -372,13 +375,25 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
     }),
     BACKEND_PORT: `${options.backendPort}`,
     FRONTEND_PORT: `${options.frontendServerPort}`,
+    ...(options.hmrServerPort && {
+      HMR_SERVER_PORT: `${options.hmrServerPort}`,
+    }),
     APP_URL: options.hostname,
     APP_ENV: 'development',
+    // Note: These are Remix-specific variables
+    REMIX_DEV_ORIGIN: options.hostname,
   }
+
+  const hmrServerOptions = options.hmrServerPort &&
+    options.web.configuration.roles.includes(WebType.Frontend) && {
+      port: options.hmrServerPort,
+      httpPaths: options.web.configuration.hmr_server!.http_paths,
+    }
 
   return {
     logPrefix: options.web.configuration.name ?? ['web', ...options.web.configuration.roles].join('-'),
     customPort: port,
+    ...(hmrServerOptions && {hmrServer: hmrServerOptions}),
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await exec(cmd!, args, {
         cwd: options.web.directory,
