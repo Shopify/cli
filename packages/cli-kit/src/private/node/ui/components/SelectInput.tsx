@@ -268,20 +268,26 @@ function SelectInputInner<T>(
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
-    const displayArrows = sectionHeight >= 4 && !shouldDisplayColors()
+    const noColor = !shouldDisplayColors()
+    const scrollContainerHeight = sectionHeight
+    const displayArrows = scrollContainerHeight >= 4 && noColor
+    const visibleListSectionLength = limit
+    const fullListLength = items.length
+    const visibleToIndex = state.visibleToIndex
+    const visibleFromIndex = state.visibleFromIndex
     // Leave 2 rows for top/bottom arrows when there is vertical room for them.
-    const scrollbarFullHeight = displayArrows ? sectionHeight - 2 : sectionHeight
-    const scrollboxHeight = Math.min(scrollbarFullHeight - 1, Math.ceil(Math.min(1, limit / items.length) * scrollbarFullHeight))
+    const scrollbarFullHeight = displayArrows ? scrollContainerHeight - 2 : scrollContainerHeight
+    const scrollboxHeight = Math.min(scrollbarFullHeight - 1, Math.ceil(Math.min(1, visibleListSectionLength / fullListLength) * scrollbarFullHeight))
 
     let scrollbarTopBuffer: number
     // Ensure it scrolls all the way to the bottom when we hit the bottom
-    if (state.visibleToIndex >= items.length - 1) {
+    if (visibleToIndex >= fullListLength - 1) {
       scrollbarTopBuffer = scrollbarFullHeight - scrollboxHeight
     } else {
       // This is the actual number of rows available for the scrollbar to go up and down
       const scrollingLength = scrollbarFullHeight - scrollboxHeight
       // This is the number of times the screen itself can scroll down
-      const scrollableIncrements = items.length - limit
+      const scrollableIncrements = fullListLength - visibleListSectionLength
 
       scrollbarTopBuffer = Math.max(
         // Never go negative, that causes errors!
@@ -289,7 +295,7 @@ function SelectInputInner<T>(
         Math.min(
           // Never have more buffer than filling in all spaces above the scrollbox
           scrollbarFullHeight - scrollboxHeight,
-          Math.round((state.visibleFromIndex) / scrollableIncrements * scrollingLength)
+          Math.round((visibleFromIndex) / scrollableIncrements * scrollingLength)
         )
       )
     }
@@ -297,8 +303,8 @@ function SelectInputInner<T>(
 
     const SCROLLBAR_BACKGROUND_CHAR = '╎'
     const SCROLLBOX_CHAR = '┃'
-    const scrollbarBackgroundChar = shouldDisplayColors() ? ' ' : SCROLLBAR_BACKGROUND_CHAR
-    const scrollboxChar = shouldDisplayColors() ? ' ' : SCROLLBOX_CHAR
+    const scrollbarBackgroundChar = noColor ? SCROLLBAR_BACKGROUND_CHAR : ' '
+    const scrollboxChar = noColor ? SCROLLBOX_CHAR : ' '
 
     return (
       <Box flexDirection="row">
@@ -325,7 +331,7 @@ function SelectInputInner<T>(
               ))}
             </Box>
             {hasLimit ? (
-              <Box width={1} height={sectionHeight} flexDirection="column" flexGrow={0}>
+              <Box width={1} height={scrollContainerHeight} flexDirection="column" flexGrow={0}>
                 {
                   displayArrows ? <Box width={1}><Text>△</Text></Box> : null
                 }
