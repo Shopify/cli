@@ -596,9 +596,5 @@ export function getAppConfigurationFileName(config?: string) {
 
 export function getAppConfigurationShorthand(path: string) {
   const match = basename(path).match(appConfigurationFileNameRegex)
-  if (match) {
-    const result = match[1]?.slice(1)
-    if (result === '.') return undefined
-    return result
-  }
+  return match?.[1]?.slice(1)
 }
