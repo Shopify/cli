@@ -1,4 +1,4 @@
-import {dotEnvFileNames} from '../../constants.js'
+import {getDotEnvFileName} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
@@ -45,7 +45,7 @@ export async function updateAppIdentifiers(
 
   if (!dotenvFile) {
     dotenvFile = {
-      path: joinPath(app.directory, dotEnvFileNames.production),
+      path: joinPath(app.directory, getDotEnvFileName(app.configurationPath)),
       variables: {},
     }
   }
