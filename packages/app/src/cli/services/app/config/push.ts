@@ -71,19 +71,19 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     // these values are mandatory, so we only read from the config file
     apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: configuration.application_url!,
-    contactEmail: configuration.api_contact_email!,
-    webhookApiVersion: configuration.webhook_api_version!,
+    applicationUrl: configuration.application_url,
+    contactEmail: configuration.api_contact_email,
+    webhookApiVersion: configuration.webhook_api_version,
     // these values are optional, so we fall back to configured values
-    redirectUrlAllowlist: configuration.auth?.redirect_urls ?? app.redirectUrlWhitelist,
+    redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
     gdprWebhooks: {
       customerDeletionUrl: configuration.privacy_compliance_webhooks?.customer_deletion_url ?? undefined,
       customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? undefined,
       shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? undefined,
     },
-    posEmbedded: configuration.pos?.embedded ?? app.posEmbedded,
-    preferencesUrl: configuration.app_preferences?.url ?? app.preferencesUrl,
+    posEmbedded: configuration.pos?.embedded ?? null,
+    preferencesUrl: configuration.app_preferences?.url ?? null,
   }
 
   if (!usesLegacyScopesBehavior(configuration)) {

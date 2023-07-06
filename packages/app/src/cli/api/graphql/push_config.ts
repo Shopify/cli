@@ -55,15 +55,15 @@ export interface PushConfigVariables {
   title: string
   apiKey: string
   applicationUrl?: string
-  redirectUrlAllowlist?: string[]
+  redirectUrlAllowlist?: string[] | null
   requestedAccessScopes?: string[]
   webhookApiVersion?: string
   contactEmail?: string
   gdprWebhooks?: GdprWebhooks
   appProxy?: AppProxy
-  posEmbedded?: boolean
+  posEmbedded?: boolean | null
   embedded?: boolean
-  preferencesUrl?: string
+  preferencesUrl?: string | null
 }
 
 export interface PushConfigSchema {

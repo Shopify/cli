@@ -47,9 +47,9 @@ describe('pushConfig', () => {
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
       },
-      posEmbedded: undefined,
-      preferencesUrl: undefined,
-      redirectUrlAllowlist: undefined,
+      posEmbedded: null,
+      preferencesUrl: null,
+      redirectUrlAllowlist: null,
       requestedAccessScopes: ['write_products'],
       title: 'my app',
       webhookApiVersion: '04-2023',
@@ -61,7 +61,7 @@ describe('pushConfig', () => {
     })
   })
 
-  test('successfully calls the update mutation without scopes when legacy behavior', async () => {
+  test.only('successfully calls the update mutation without scopes when legacy behavior', async () => {
     const app = testApp({
       configurationPath: 'shopify.app.development.toml',
       configuration: {
@@ -90,6 +90,8 @@ describe('pushConfig', () => {
 
     await pushConfig(options)
 
+    console.log(vi.mocked(partnersRequest).mock.calls)
+
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
@@ -100,9 +102,9 @@ describe('pushConfig', () => {
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
       },
-      posEmbedded: undefined,
-      preferencesUrl: undefined,
-      redirectUrlAllowlist: undefined,
+      posEmbedded: null,
+      preferencesUrl: null,
+      redirectUrlAllowlist: null,
       title: 'my app',
       webhookApiVersion: '04-2023',
     })
