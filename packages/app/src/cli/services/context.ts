@@ -252,7 +252,7 @@ function buildOutput(
       ...app,
       apiSecret: app.apiSecretKeys.length === 0 ? undefined : app.apiSecretKeys[0]!.secret,
     },
-    remoteAppUpdated: app.apiKey !== cachedInfo?.appId,
+    remoteAppUpdated: app.apiKey !== cachedInfo?.appId || app.apiKey !== cachedInfo?.previousAppId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
