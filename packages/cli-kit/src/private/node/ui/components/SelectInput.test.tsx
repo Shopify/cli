@@ -35,9 +35,9 @@ describe('SelectInput', async () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_UP)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (1) First
-      [36m>[39m  [36m(2) Second[39m
-         (3) Third
+      "   First
+      [36m>[39m  [36mSecond[39m
+         Third
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
@@ -68,9 +68,9 @@ describe('SelectInput', async () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (1) First
-      [36m>[39m  [36m(2) Second[39m
-         (3) Third
+      "   First
+      [36m>[39m  [36mSecond[39m
+         Third
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
@@ -78,6 +78,31 @@ describe('SelectInput', async () => {
   })
 
   test('throws an error if a key has more than 1 character', async () => {
+    const onChange = vi.fn()
+
+    const items = [
+      {
+        label: 'First',
+        value: 'first',
+        key: 'a',
+      },
+      {
+        label: 'Second',
+        value: 'second',
+        key: 'b',
+      },
+      {
+        label: 'Third',
+        value: 'third',
+        key: 'ab',
+      },
+    ]
+
+    const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
+    expect(renderInstance.lastFrame()).toMatch('SelectInput: Keys must be a single character')
+  })
+
+  test("throws an error if an item has key but others don't", async () => {
     const onChange = vi.fn()
 
     const items = [
@@ -92,12 +117,12 @@ describe('SelectInput', async () => {
       {
         label: 'Third',
         value: 'third',
-        key: 'ab',
+        key: 'a',
       },
     ]
 
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
-    expect(renderInstance.lastFrame()).toMatch('SelectInput: Keys must be a single character')
+    expect(renderInstance.lastFrame()).toMatch('SelectInput: All items must have keys if one does')
   })
 
   test('handles pressing non existing keys', async () => {
@@ -124,34 +149,13 @@ describe('SelectInput', async () => {
     await sendInputAndWait(renderInstance, 100, '4')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "[36m>[39m  [36m(1) First[39m
-         (2) Second
-         (3) Tenth
+      "[36m>[39m  [36mFirst[39m
+         Second
+         Tenth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
     expect(onChange).not.toHaveBeenCalled()
-  })
-
-  test("pads keys correctly if some items don't have them", async () => {
-    const items = [
-      {
-        label: 'First',
-        value: 'first',
-      },
-      {
-        label: 'Second',
-        value: 'second',
-      },
-      {
-        label: 'Third',
-        value: 'third',
-        key: 't',
-      },
-    ]
-
-    const renderInstance = render(<SelectInput items={items} onChange={() => {}} />)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot()
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
@@ -176,71 +180,48 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-         [36m>[39m   [36m(f) first[39m
-             (s) second
+         [36m>[39m  [36mfirst[39m
+            second
 
          [1mMerchant Admin[22m
-             (3) third
-             (4) fourth
+            third
+            fourth
 
          [1mOther[22m
-             (a) fifth
-             (6) sixth
-             (7) seventh
-             (8) eighth
-             (9) ninth
-            (10) tenth
+            fifth
+            sixth
+            seventh
+            eighth
+            ninth
+            tenth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, 'a')
-
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   [1mAutomations[22m
-             (f) first
-             (s) second
-
-         [1mMerchant Admin[22m
-             (3) third
-             (4) fourth
-
-         [1mOther[22m
-         [36m>[39m   [36m(a) fifth[39m
-             (6) sixth
-             (7) seventh
-             (8) eighth
-             (9) ninth
-            (10) tenth
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
-    `)
-    expect(onChange).toHaveBeenCalledWith(items[4])
-
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-             (f) first
-             (s) second
+            first
+            second
 
          [1mMerchant Admin[22m
-             (3) third
-             (4) fourth
+         [36m>[39m  [36mthird[39m
+            fourth
 
          [1mOther[22m
-             (a) fifth
-             (6) sixth
-         [36m>[39m   [36m(7) seventh[39m
-             (8) eighth
-             (9) ninth
-            (10) tenth
+            fifth
+            sixth
+            seventh
+            eighth
+            ninth
+            tenth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
-    expect(onChange).toHaveBeenLastCalledWith(items[6])
+    expect(onChange).toHaveBeenLastCalledWith(items[2])
   })
 
   test('allows disabling shortcuts', async () => {
@@ -297,9 +278,9 @@ describe('SelectInput', async () => {
     await waitForInputsToBeReady()
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (1) First
-      [36m>[39m  [36m(2) Second[39m
-         (3) Third
+      "   First
+      [36m>[39m  [36mSecond[39m
+         Third
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
@@ -333,9 +314,9 @@ describe('SelectInput', async () => {
     await waitForInputsToBeReady()
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "[36m>[39m  [36m(1) First[39m
-         (2) Second
-         (3) Third
+      "[36m>[39m  [36mFirst[39m
+         Second
+         Third
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [1m1-3 of many[22m  Keep scrolling to see more items"
@@ -360,15 +341,15 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-         [36m>[39m   [36m(a) fifth[39m
-             (2) sixth
+         [36m>[39m  [36mfifth[39m
+            sixth
 
          [1mMerchant Admin[22m
-             (3) eighth
-             (4) ninth
+            eighth
+            ninth
 
          [1mOther[22m
-             (f) first
+            first
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [2m10 options available, 5 visible.[22m"
@@ -383,15 +364,15 @@ describe('SelectInput', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "   [1mAutomations[22m
-             (2) sixth
+            sixth
 
          [1mMerchant Admin[22m
-             (3) eighth
-             (4) ninth
+            eighth
+            ninth
 
          [1mOther[22m
-             (f) first
-         [36m>[39m   [36m(s) second[39m
+            first
+         [36m>[39m  [36msecond[39m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [2m10 options available, 5 visible.[22m"
@@ -483,18 +464,15 @@ describe('SelectInput', async () => {
       {
         label: 'First',
         value: 'first',
-        key: 'f',
       },
       {
         label: 'Second',
         value: 'second',
-        key: 's',
         disabled: true,
       },
       {
         label: 'Third',
         value: 'third',
-        key: 't',
       },
     ]
 
@@ -504,9 +482,9 @@ describe('SelectInput', async () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   (f) First
-         [2m(s) Second[22m
-      [36m>[39m  [36m(t) Third[39m
+      "   First
+         [2mSecond[22m
+      [36m>[39m  [36mThird[39m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
@@ -539,9 +517,9 @@ describe('SelectInput', async () => {
     )
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "[36m>[39m  [36m(f) First[39m
-         [2m(s) Second[22m
-         (t) Third
+      "[36m>[39m  [36mFirst[39m
+         [2mSecond[22m
+         Third
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
@@ -583,7 +561,7 @@ describe('SelectInput', async () => {
          [2m(s) Second[22m
       [36m>[39m  [36m(t) Third[39m
 
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
+         [2mPress ↑↓ arrows to select, enter or a shortcut to confirm.[22m"
     `)
 
     await sendInputAndWait(renderInstance, 100, ENTER)

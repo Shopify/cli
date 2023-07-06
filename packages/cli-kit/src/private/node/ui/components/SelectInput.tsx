@@ -50,6 +50,16 @@ function highlightedLabel(label: string, term: string | undefined) {
   })
 }
 
+function validateKeys(items: Item<unknown>[]) {
+  if (items.some((item) => (item.key?.length ?? 0) > 1)) {
+    throw new Error('SelectInput: Keys must be a single character')
+  }
+
+  if (!items.every((item) => typeof item.key !== 'undefined' && item.key.length > 0)) {
+    throw new Error('SelectInput: All items must have keys if one does')
+  }
+}
+
 interface ItemProps<T> {
   item: Item<T>
   previousItem: Item<T> | undefined
@@ -58,7 +68,6 @@ interface ItemProps<T> {
   highlightedTerm?: string
   enableShortcuts: boolean
   hasAnyGroup: boolean
-  maxKeyLength: number
   index: number
 }
 
@@ -71,7 +80,6 @@ function Item<T>({
   enableShortcuts,
   items,
   hasAnyGroup,
-  maxKeyLength,
   index,
 }: ItemProps<T>): JSX.Element {
   const label = highlightedLabel(item.label, highlightedTerm)
@@ -105,9 +113,7 @@ function Item<T>({
 
       <Box key={index} marginLeft={hasAnyGroup ? 3 : 0}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Box marginLeft={showKey ? maxKeyLength - item.key!.length : 0}>
-          <Text color={labelColor}>{showKey ? `(${item.key}) ${label}` : label}</Text>
-        </Box>
+        <Text color={labelColor}>{showKey ? `(${item.key}) ${label}` : label}</Text>
       </Box>
     </Box>
   )
@@ -148,9 +154,7 @@ function SelectInputInner<T>(
   const items = sortBy(rawItems, 'group') as Item<T>[]
   const itemsHaveKeys = items.some((item) => typeof item.key !== 'undefined' && item.key.length > 0)
 
-  if (itemsHaveKeys && items.some((item) => item.key!.length > 1)) {
-    throw new Error('SelectInput: Keys must be a single character')
-  }
+  if (itemsHaveKeys) validateKeys(items)
 
   function maximumLinesLostToGroups(items: Item<T>[]): number {
     // Calculate a safe estimate of the limit needed based on the space available
@@ -240,7 +244,6 @@ function SelectInputInner<T>(
     )
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
-    const maxKeyLength = items.map((item) => item.key?.length ?? 0).reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
     const minHeight = hasAnyGroup ? 5 : 2
     return (
       <Box flexDirection="column" ref={ref}>
@@ -251,7 +254,7 @@ function SelectInputInner<T>(
         >
           {state.visibleOptions.map((item: Item<T>, index: number) => (
             <Item
-              key={item.key}
+              key={index}
               item={item}
               previousItem={state.visibleOptions[index - 1]}
               highlightedTerm={highlightedTerm}
@@ -259,7 +262,6 @@ function SelectInputInner<T>(
               items={state.visibleOptions}
               enableShortcuts={enableShortcuts}
               hasAnyGroup={hasAnyGroup}
-              maxKeyLength={maxKeyLength}
               index={index}
             />
           ))}
