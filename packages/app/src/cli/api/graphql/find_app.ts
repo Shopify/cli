@@ -18,6 +18,7 @@ export const FindAppQuery = gql`
       }
       applicationUrl
       redirectUrlWhitelist
+      requestedAccessScopes
     }
   }
 `
@@ -39,5 +40,6 @@ export interface FindAppQuerySchema {
     }
     applicationUrl: string
     redirectUrlWhitelist: string[]
+    requestedAccessScopes?: string[]
   }
 }

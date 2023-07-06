@@ -508,7 +508,7 @@ async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'f
   return undefined
 }
 
-function isWebType(web: Web, type: WebType): boolean {
+export function isWebType(web: Web, type: WebType): boolean {
   return web.configuration.roles.includes(type)
 }
 
@@ -580,6 +580,10 @@ async function logMetadataForLoadedApp(
 }
 
 export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
+
+export function isValidAppConfigurationFile(config: string) {
+  return appConfigurationFileNameRegex.test(config)
+}
 
 export function getAppConfigurationFileName(config?: string) {
   if (config) {
