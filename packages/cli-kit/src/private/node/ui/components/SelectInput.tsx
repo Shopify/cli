@@ -134,7 +134,7 @@ function SelectInputInner<T>(
     hasMorePages = false,
     morePagesMessage,
     infoMessage,
-    availableLines,
+    availableLines = MAX_AVAILABLE_LINES,
     submitWithShortcuts = false,
     onSubmit,
   }: SelectInputProps<T>,
@@ -156,7 +156,7 @@ function SelectInputInner<T>(
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
 
-  const availableLinesToUse = Math.min(availableLines ?? 0, MAX_AVAILABLE_LINES)
+  const availableLinesToUse = Math.min(availableLines, MAX_AVAILABLE_LINES)
 
   function maximumLinesLostToGroups(items: Item<T>[]): number {
     // Calculate a safe estimate of the limit needed based on the space available
