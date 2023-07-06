@@ -1,4 +1,5 @@
 import {PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
+import {ClearScopesSchema, clearRequestedScopes} from '../../../api/graphql/clear_requested_scopes.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
 import {
   AppConfiguration,
@@ -21,13 +22,10 @@ export interface Options {
 export async function pushConfig({configuration, configurationPath}: Options) {
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
-    const mutation = PushConfig
-    const query = GetConfig
-
     const configFileName = basename(configurationPath)
 
     const queryVariables = {apiKey: configuration.client_id}
-    const queryResult: GetConfigQuerySchema = await partnersRequest(query, token, queryVariables)
+    const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
 
     if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
 
@@ -35,11 +33,20 @@ export async function pushConfig({configuration, configurationPath}: Options) {
 
     const variables = getMutationVars(app, configuration)
 
-    const result: PushConfigSchema = await partnersRequest(mutation, token, variables)
+    const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
 
     if (result.appUpdate.userErrors.length > 0) {
       const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
       abort(errors)
+    }
+
+    if (usesLegacyScopesBehavior(configuration)) {
+      const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
+
+      if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
+        const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
+        abort(errors)
+      }
     }
 
     renderSuccess({
