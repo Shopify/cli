@@ -1,6 +1,7 @@
 import {debounce} from '../../../../public/common/function.js'
 import {useSelectState} from '../hooks/use-select-state.js'
 import {handleCtrlC} from '../../ui.js'
+import {shouldDisplayColors} from '../../../../public/node/output.js'
 import React, {useRef, useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
@@ -267,8 +268,9 @@ function SelectInputInner<T>(
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
+    const displayArrows = sectionHeight >= 4 && !shouldDisplayColors()
     // Leave 2 rows for top/bottom arrows when there is vertical room for them.
-    const scrollbarFullHeight = sectionHeight >= 4 ? sectionHeight - 2 : sectionHeight
+    const scrollbarFullHeight = displayArrows ? sectionHeight - 2 : sectionHeight
     const scrollboxHeight = Math.min(scrollbarFullHeight - 1, Math.ceil(Math.min(1, limit / items.length) * scrollbarFullHeight))
 
     let scrollbarTopBuffer: number
@@ -292,6 +294,11 @@ function SelectInputInner<T>(
       )
     }
     const scrollbarBottomBuffer = scrollbarFullHeight - scrollboxHeight - scrollbarTopBuffer
+
+    const SCROLLBAR_BACKGROUND_CHAR = '╎'
+    const SCROLLBOX_CHAR = '┃'
+    const scrollbarBackgroundChar = shouldDisplayColors() ? ' ' : SCROLLBAR_BACKGROUND_CHAR
+    const scrollboxChar = shouldDisplayColors() ? ' ' : SCROLLBOX_CHAR
 
     return (
       <Box flexDirection="row">
@@ -340,14 +347,12 @@ function SelectInputInner<T>(
         {hasLimit ? (
           <Box width={1} height={sectionHeight} flexDirection="column">
             {
-              // Only display up/down pointers if we have at least height=4
-              // so we have 2 rows for the bar to move + 2 rows for the pointers
-              sectionHeight >= 4 ? <Box width={1}><Text color="cyan">△</Text></Box> : null
+              displayArrows ? <Box width={1}><Text>△</Text></Box> : null
             }
-            <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarTopBuffer)}</Text></Box>
-            <Box width={1}><Text backgroundColor="cyan">{' '.repeat(scrollboxHeight)}</Text></Box>
-            <Box width={1}><Text backgroundColor="gray">{' '.repeat(scrollbarBottomBuffer)}</Text></Box>
-            {sectionHeight >= 4 ? <Box width={1}><Text color="cyan">▽</Text></Box> : null}
+            <Box width={1}><Text backgroundColor="gray">{scrollbarBackgroundChar.repeat(scrollbarTopBuffer)}</Text></Box>
+            <Box width={1}><Text backgroundColor="cyan">{scrollboxChar.repeat(scrollboxHeight)}</Text></Box>
+            <Box width={1}><Text backgroundColor="gray">{scrollbarBackgroundChar.repeat(scrollbarBottomBuffer)}</Text></Box>
+            {displayArrows ? <Box width={1}><Text>▽</Text></Box> : null}
           </Box>
         ) : null}
       </Box>
