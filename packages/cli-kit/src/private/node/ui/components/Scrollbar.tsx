@@ -55,12 +55,12 @@ const Scrollbar: FunctionComponent<ScrollbarProps> = ({
 
   return (
     <Box width={1} height={containerHeight} flexDirection="column" flexGrow={0}>
-      {
-        displayArrows ? <Box width={1}><Text>△</Text></Box> : null
-      }
+      {displayArrows ? <Box width={1}><Text>△</Text></Box> : null}
+
       <Box width={1}><Text backgroundColor="gray">{backgroundChar.repeat(topBuffer)}</Text></Box>
       <Box width={1}><Text backgroundColor="cyan">{scrollboxChar.repeat(scrollboxHeight)}</Text></Box>
       <Box width={1}><Text backgroundColor="gray">{backgroundChar.repeat(bottomBuffer)}</Text></Box>
+
       {displayArrows ? <Box width={1}><Text>▽</Text></Box> : null}
     </Box>
   )
