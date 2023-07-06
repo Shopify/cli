@@ -155,7 +155,7 @@ async function dev(options: DevOptions) {
         localApp,
       })
       if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }
 
