@@ -414,19 +414,18 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} availableLines={10} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   [1mAutomations[22m
-         [36m>[39m   [36m(a) fifth[39m
-             (2) sixth
+      "   [1mAutomations[22m                                \u001b[46m \u001b[49m
+         [36m>[39m   [36m(a) fifth[39m                              \u001b[46m \u001b[49m
+             (2) sixth                              \u001b[46m \u001b[49m
+                                                    \u001b[46m \u001b[49m
+         [1mMerchant Admin[22m                             \u001b[46m \u001b[49m
+             (3) eighth                             \u001b[100m \u001b[49m
+             (4) ninth                              \u001b[100m \u001b[49m
+                                                    \u001b[100m \u001b[49m
+         [1mOther[22m                                      \u001b[100m \u001b[49m
+             (f) first                              \u001b[100m \u001b[49m
 
-         [1mMerchant Admin[22m
-             (3) eighth
-             (4) ninth
-
-         [1mOther[22m
-             (f) first
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m10 options available, 5 visible.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
     await waitForInputsToBeReady()
@@ -437,19 +436,18 @@ describe('SelectInput', async () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   [1mAutomations[22m
-             (2) sixth
+      "   [1mAutomations[22m                                \u001b[100m \u001b[49m
+             (2) sixth                              \u001b[46m \u001b[49m
+                                                    \u001b[46m \u001b[49m
+         [1mMerchant Admin[22m                             \u001b[46m \u001b[49m
+             (3) eighth                             \u001b[46m \u001b[49m
+             (4) ninth                              \u001b[46m \u001b[49m
+                                                    \u001b[100m \u001b[49m
+         [1mOther[22m                                      \u001b[100m \u001b[49m
+             (f) first                              \u001b[100m \u001b[49m
+         [36m>[39m   [36m(s) second[39m                             \u001b[100m \u001b[49m
 
-         [1mMerchant Admin[22m
-             (3) eighth
-             (4) ninth
-
-         [1mOther[22m
-             (f) first
-         [36m>[39m   [36m(s) second[39m
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m10 options available, 5 visible.[22m"
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
   })
 
