@@ -3,7 +3,7 @@ import {AppConfiguration, AppInterface, isLegacyAppSchema} from '../../../models
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {isValidAppConfigurationFile, load} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -14,7 +14,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -78,9 +77,7 @@ async function loadConfigurationFileName(
   localApp?: AppInterface,
 ): Promise<string> {
   if (options.configName) {
-    return isValidAppConfigurationFile(options.configName)
-      ? options.configName
-      : `shopify.app.${slugify(options.configName)}.toml`
+    return getAppConfigurationFileName(options.configName)
   }
 
   if (!localApp?.configuration || (localApp && isLegacyAppSchema(localApp.configuration))) {

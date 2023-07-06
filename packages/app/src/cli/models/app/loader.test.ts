@@ -878,10 +878,14 @@ describe('getAppConfigurationFileName', () => {
     expect(getAppConfigurationFileName('local')).toEqual('shopify.app.local.toml')
   })
 
-  test('supports names with dashes and underscores', async () => {
+  test('supports names with dashes', async () => {
     // When / Then
     expect(getAppConfigurationFileName('cool-whip')).toEqual('shopify.app.cool-whip.toml')
-    expect(getAppConfigurationFileName('lucky_dog')).toEqual('shopify.app.lucky_dog.toml')
+  })
+
+  test('slugifies names', async () => {
+    // When / Then
+    expect(getAppConfigurationFileName('Cool Whip')).toEqual('shopify.app.cool-whip.toml')
   })
 })
 
@@ -898,10 +902,9 @@ describe('getAppConfigurationShorthand', () => {
     expect(getAppConfigurationShorthand('/very/long/path/shopify.app.foobar.toml')).toEqual('foobar')
   })
 
-  test('supports names with dashes and underscores', async () => {
+  test('supports names with dashes', async () => {
     // When / Then
     expect(getAppConfigurationShorthand('shopify.app.cool-whip.toml')).toEqual('cool-whip')
-    expect(getAppConfigurationShorthand('shopify.app.lucky_dog.toml')).toEqual('lucky_dog')
   })
 })
 

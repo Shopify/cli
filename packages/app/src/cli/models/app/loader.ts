@@ -31,6 +31,7 @@ import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -581,20 +582,16 @@ async function logMetadataForLoadedApp(
 
 export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 
-export function isValidAppConfigurationFile(config: string) {
-  return appConfigurationFileNameRegex.test(config)
-}
-
 export function getAppConfigurationFileName(config?: string) {
-  if (config) {
-    if (appConfigurationFileNameRegex.test(config)) {
-      return config
-    }
-
-    return `shopify.app.${config}.toml`
+  if (!config) {
+    return configurationFileNames.app
   }
 
-  return configurationFileNames.app
+  if (appConfigurationFileNameRegex.test(config)) {
+    return config
+  } else {
+    return `shopify.app.${slugify(config)}.toml`
+  }
 }
 
 export function getAppConfigurationShorthand(path: string) {
