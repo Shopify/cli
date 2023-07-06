@@ -17,7 +17,13 @@ const REMOTE_APP = testOrganizationApp()
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
-vi.mock('../../../models/app/loader.js')
+vi.mock('../../../models/app/loader.js', async () => {
+  const loader: any = await vi.importActual('../../../models/app/loader.js')
+  return {
+    ...loader,
+    load: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('../../dev/fetch.js')

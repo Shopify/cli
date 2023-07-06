@@ -6,7 +6,7 @@ import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('updateAppIdentifiers', () => {
-  test("persists the ids that are not environment variables in the system and it's deploy", async () => {
+  test('persists the ids that are not env variables when deploying', async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()
@@ -36,7 +36,38 @@ describe('updateAppIdentifiers', () => {
     })
   })
 
-  test("doesn't persist the ids that come from the system's environment and it's deploy", async () => {
+  test('persists the ids in the config-specific env file when deploying', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      // Given
+      const uiExtension = await testUIExtension()
+      const app = testApp({
+        directory: tmpDir,
+        allExtensions: [uiExtension],
+        configurationPath: joinPath(tmpDir, 'shopify.app.staging.toml'),
+      })
+
+      // When
+      const gotApp = await updateAppIdentifiers({
+        app,
+        identifiers: {
+          app: 'FOO',
+          extensions: {
+            my_extension: 'BAR',
+          },
+        },
+        command: 'deploy',
+      })
+
+      // Then
+      const dotEnvFile = await readAndParseDotEnv(joinPath(tmpDir, '.env.staging'))
+      expect(dotEnvFile.variables.SHOPIFY_API_KEY).toEqual('FOO')
+      expect(dotEnvFile.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+      expect(gotApp.dotenv?.variables.SHOPIFY_API_KEY).toEqual('FOO')
+      expect(gotApp.dotenv?.variables.SHOPIFY_MY_EXTENSION_ID).toEqual('BAR')
+    })
+  })
+
+  test("doesn't persist the ids that come from env vars when deploying", async () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()

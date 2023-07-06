@@ -31,6 +31,7 @@ import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -167,6 +168,20 @@ export async function load(options: AppLoaderConstructorArgs): Promise<AppInterf
   return loader.loaded()
 }
 
+export function getDotEnvFileName(configurationPath: string) {
+  const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
+  return configurationShorthand ? `${dotEnvFileNames.production}.${configurationShorthand}` : dotEnvFileNames.production
+}
+
+export async function loadDotEnv(appDirectory: string, configurationPath: string): Promise<DotEnvFile | undefined> {
+  let dotEnvFile: DotEnvFile | undefined
+  const dotEnvPath = joinPath(appDirectory, getDotEnvFileName(configurationPath))
+  if (await fileExists(dotEnvPath)) {
+    dotEnvFile = await readAndParseDotEnv(dotEnvPath)
+  }
+  return dotEnvFile
+}
+
 class AppLoader {
   private directory: string
   private mode: AppLoaderMode
@@ -200,7 +215,7 @@ class AppLoader {
       configName: this.configName,
     })
     const {appDirectory, configurationPath, configuration} = await configurationLoader.loaded()
-    const dotenv = await this.loadDotEnv(appDirectory)
+    const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
       appDirectory,
@@ -239,15 +254,6 @@ class AppLoader {
     })
 
     return appClass
-  }
-
-  async loadDotEnv(appDirectory: string): Promise<DotEnvFile | undefined> {
-    let dotEnvFile: DotEnvFile | undefined
-    const dotEnvPath = joinPath(appDirectory, dotEnvFileNames.production)
-    if (await fileExists(dotEnvPath)) {
-      dotEnvFile = await readAndParseDotEnv(dotEnvPath)
-    }
-    return dotEnvFile
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
@@ -574,19 +580,21 @@ async function logMetadataForLoadedApp(
   })
 }
 
-export function isValidAppConfigurationFile(config: string) {
-  const validFileRegex = /^shopify\.app(\.[-\w]+)?\.toml$/g
-  return validFileRegex.test(config)
-}
+export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 
 export function getAppConfigurationFileName(config?: string) {
-  if (config) {
-    if (isValidAppConfigurationFile(config)) {
-      return config
-    }
-
-    return `shopify.app.${config}.toml`
+  if (!config) {
+    return configurationFileNames.app
   }
 
-  return configurationFileNames.app
+  if (appConfigurationFileNameRegex.test(config)) {
+    return config
+  } else {
+    return `shopify.app.${slugify(config)}.toml`
+  }
+}
+
+export function getAppConfigurationShorthand(path: string) {
+  const match = basename(path).match(appConfigurationFileNameRegex)
+  return match?.[1]?.slice(1)
 }
