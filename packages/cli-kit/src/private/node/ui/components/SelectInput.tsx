@@ -303,24 +303,38 @@ function SelectInputInner<T>(
     return (
       <Box flexDirection="row">
         <Box flexDirection="column" ref={ref}>
-          <Box
-            flexDirection="column"
-            height={sectionHeight}
-            overflowY="hidden"
-          >
-            {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
-              <Item
-                key={item.key}
-                item={item}
-                previousItem={state.visibleOptions[index - 1]}
-                highlightedTerm={highlightedTerm}
-                isSelected={item.value === state.value}
-                items={state.visibleOptions}
-                enableShortcuts={enableShortcuts}
-                hasAnyGroup={hasAnyGroup}
-                maxKeyLength={maxKeyLength}
-              />
-            ))}
+          <Box flexDirection="row" height={sectionHeight} width="100%">
+            <Box
+              flexDirection="column"
+              height={sectionHeight}
+              overflowY="hidden"
+              flexGrow={1}
+            >
+              {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
+                <Item
+                  key={item.key}
+                  item={item}
+                  previousItem={state.visibleOptions[index - 1]}
+                  highlightedTerm={highlightedTerm}
+                  isSelected={item.value === state.value}
+                  items={state.visibleOptions}
+                  enableShortcuts={enableShortcuts}
+                  hasAnyGroup={hasAnyGroup}
+                  maxKeyLength={maxKeyLength}
+                />
+              ))}
+            </Box>
+            {hasLimit ? (
+              <Box width={1} height={sectionHeight} flexDirection="column" flexGrow={0}>
+                {
+                  displayArrows ? <Box width={1}><Text>△</Text></Box> : null
+                }
+                <Box width={1}><Text backgroundColor="gray">{scrollbarBackgroundChar.repeat(scrollbarTopBuffer)}</Text></Box>
+                <Box width={1}><Text backgroundColor="cyan">{scrollboxChar.repeat(scrollboxHeight)}</Text></Box>
+                <Box width={1}><Text backgroundColor="gray">{scrollbarBackgroundChar.repeat(scrollbarBottomBuffer)}</Text></Box>
+                {displayArrows ? <Box width={1}><Text>▽</Text></Box> : null}
+              </Box>
+            ) : null}
           </Box>
 
           {noItems ? (
@@ -343,17 +357,6 @@ function SelectInputInner<T>(
             </Box>
           )}
         </Box>
-        {hasLimit ? (
-          <Box width={1} height={sectionHeight} flexDirection="column">
-            {
-              displayArrows ? <Box width={1}><Text>△</Text></Box> : null
-            }
-            <Box width={1}><Text backgroundColor="gray">{scrollbarBackgroundChar.repeat(scrollbarTopBuffer)}</Text></Box>
-            <Box width={1}><Text backgroundColor="cyan">{scrollboxChar.repeat(scrollboxHeight)}</Text></Box>
-            <Box width={1}><Text backgroundColor="gray">{scrollbarBackgroundChar.repeat(scrollbarBottomBuffer)}</Text></Box>
-            {displayArrows ? <Box width={1}><Text>▽</Text></Box> : null}
-          </Box>
-        ) : null}
       </Box>
     )
   }
