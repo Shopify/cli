@@ -1,6 +1,6 @@
 import init from './init.js'
 import {describe, expect, vi, test} from 'vitest'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -18,6 +18,9 @@ describe('init', () => {
     const got = await init(options)
 
     // Then
+    expect(renderText).toHaveBeenCalledWith({
+      text: '\nWelcome. Let’s get started by naming your app project. You can change it later.',
+    })
     expect(renderTextPrompt).toHaveBeenCalledWith({
       message: 'Your app project name?',
       defaultValue: expect.stringMatching(/^\w+-\w+-app$/),
@@ -36,6 +39,9 @@ describe('init', () => {
     const got = await init(options)
 
     // Then
+    expect(renderText).toHaveBeenCalledWith({
+      text: '\nWelcome. Let’s get started by choosing a template for your app project.',
+    })
     expect(renderTextPrompt).not.toHaveBeenCalled()
     expect(got).toEqual({...options, ...answers, templateType: 'custom'})
   })
