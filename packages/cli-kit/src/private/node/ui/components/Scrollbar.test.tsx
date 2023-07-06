@@ -34,21 +34,21 @@ describe('Scrollbar', async () => {
       containerHeight: 10,
       visibleListSectionLength: 10,
       fullListLength: 50,
-      visibleFromIndex: 30,
+      visibleFromIndex: 20,
     }
 
     const {lastFrame} = render(<Scrollbar {...options} />)
 
-    // Scrollbar is towards the end
+    // Scrollbar is in the middle
     expect(lastFrame()).toMatchInlineSnapshot(`
       "\u001b[100m \u001b[49m
       \u001b[100m \u001b[49m
       \u001b[100m \u001b[49m
       \u001b[100m \u001b[49m
-      \u001b[100m \u001b[49m
-      \u001b[100m \u001b[49m
       \u001b[46m \u001b[49m
       \u001b[46m \u001b[49m
+      \u001b[100m \u001b[49m
+      \u001b[100m \u001b[49m
       \u001b[100m \u001b[49m
       \u001b[100m \u001b[49m"
     `)
@@ -84,21 +84,21 @@ describe('Scrollbar', async () => {
       containerHeight: 10,
       visibleListSectionLength: 10,
       fullListLength: 50,
-      visibleFromIndex: 30,
+      visibleFromIndex: 20,
       noColor: true,
     }
 
     const {lastFrame} = render(<Scrollbar {...options} />)
-    // Scrollbar is towards the end
+    // Scrollbar is in the middle
     expect(lastFrame()).toMatchInlineSnapshot(`
       "△
       │
       │
       │
-      │
-      │
       ║
       ║
+      │
+      │
       │
       ▽"
     `)
