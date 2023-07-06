@@ -340,7 +340,6 @@ function SelectInputInner<T>(
                   {morePagesMessage ? `  ${morePagesMessage}` : null}
                 </Text>
               ) : null}
-              {hasLimit ? <Text dimColor>{`${items.length} options available, ${limit} visible.`}</Text> : null}
             </Box>
           )}
         </Box>

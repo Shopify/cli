@@ -62,7 +62,7 @@ function AutocompletePrompt<T>({
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
-  const currentAvailableLines = stdout.rows - promptAreaHeight - 5
+  const currentAvailableLines = stdout.rows - promptAreaHeight - 4
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const paginatedSearch = useCallback(
@@ -95,7 +95,7 @@ function AutocompletePrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - 5
+      const newAvailableLines = stdout.rows - promptAreaHeight - 4
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }
