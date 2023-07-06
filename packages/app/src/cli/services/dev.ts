@@ -384,10 +384,11 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
     REMIX_DEV_ORIGIN: options.hostname,
   }
 
-  const hmrServerOptions = options.hmrServerPort && {
-    port: options.hmrServerPort,
-    httpPaths: options.web.configuration.hmr_server!.http_paths,
-  }
+  const hmrServerOptions = options.hmrServerPort &&
+    options.web.configuration.roles.includes(WebType.Frontend) && {
+      port: options.hmrServerPort,
+      httpPaths: options.web.configuration.hmr_server!.http_paths,
+    }
 
   return {
     logPrefix: options.web.configuration.name ?? ['web', ...options.web.configuration.roles].join('-'),
