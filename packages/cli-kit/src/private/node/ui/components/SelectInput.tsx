@@ -1,7 +1,7 @@
+import {Scrollbar} from './Scrollbar.js'
 import {debounce} from '../../../../public/common/function.js'
 import {useSelectState} from '../hooks/use-select-state.js'
 import {handleCtrlC} from '../../ui.js'
-import {Scrollbar} from './Scrollbar.js'
 import React, {useRef, useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
@@ -272,12 +272,7 @@ function SelectInputInner<T>(
       <Box flexDirection="row">
         <Box flexDirection="column" ref={ref}>
           <Box flexDirection="row" height={sectionHeight} width="100%">
-            <Box
-              flexDirection="column"
-              height={sectionHeight}
-              overflowY="hidden"
-              flexGrow={1}
-            >
+            <Box flexDirection="column" height={sectionHeight} overflowY="hidden" flexGrow={1}>
               {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
                 <Item
                   key={item.key}
@@ -299,7 +294,7 @@ function SelectInputInner<T>(
                 fullListLength={items.length}
                 visibleFromIndex={state.visibleFromIndex}
               />
-            ): null}
+            ) : null}
           </Box>
 
           {noItems ? (

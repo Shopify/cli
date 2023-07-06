@@ -25,7 +25,10 @@ const Scrollbar: FunctionComponent<ScrollbarProps> = ({
 
   // Leave 2 rows for top/bottom arrows when there is vertical room for them.
   const fullHeight = displayArrows ? containerHeight - 2 : containerHeight
-  const scrollboxHeight = Math.min(fullHeight - 1, Math.ceil(Math.min(1, visibleListSectionLength / fullListLength) * fullHeight))
+  const scrollboxHeight = Math.min(
+    fullHeight - 1,
+    Math.ceil(Math.min(1, visibleListSectionLength / fullListLength) * fullHeight),
+  )
 
   let topBuffer: number
   // Ensure it scrolls all the way to the bottom when we hit the bottom
@@ -43,8 +46,8 @@ const Scrollbar: FunctionComponent<ScrollbarProps> = ({
       Math.min(
         // Never have more buffer than filling in all spaces above the scrollbox
         fullHeight - scrollboxHeight,
-        Math.round((visibleFromIndex) / scrollableIncrements * scrollingLength)
-      )
+        Math.round((visibleFromIndex / scrollableIncrements) * scrollingLength),
+      ),
     )
   }
   const bottomBuffer = fullHeight - scrollboxHeight - topBuffer
@@ -56,13 +59,27 @@ const Scrollbar: FunctionComponent<ScrollbarProps> = ({
 
   return (
     <Box width={1} height={containerHeight} flexDirection="column" flexGrow={0}>
-      {displayArrows ? <Box width={1}><Text>△</Text></Box> : null}
+      {displayArrows ? (
+        <Box width={1}>
+          <Text>△</Text>
+        </Box>
+      ) : null}
 
-      <Box width={1}><Text backgroundColor={bgColor}>{backgroundChar.repeat(topBuffer)}</Text></Box>
-      <Box width={1}><Text backgroundColor={scrollboxColor}>{scrollboxChar.repeat(scrollboxHeight)}</Text></Box>
-      <Box width={1}><Text backgroundColor={bgColor}>{backgroundChar.repeat(bottomBuffer)}</Text></Box>
+      <Box width={1}>
+        <Text backgroundColor={bgColor}>{backgroundChar.repeat(topBuffer)}</Text>
+      </Box>
+      <Box width={1}>
+        <Text backgroundColor={scrollboxColor}>{scrollboxChar.repeat(scrollboxHeight)}</Text>
+      </Box>
+      <Box width={1}>
+        <Text backgroundColor={bgColor}>{backgroundChar.repeat(bottomBuffer)}</Text>
+      </Box>
 
-      {displayArrows ? <Box width={1}><Text>▽</Text></Box> : null}
+      {displayArrows ? (
+        <Box width={1}>
+          <Text>▽</Text>
+        </Box>
+      ) : null}
     </Box>
   )
 }
