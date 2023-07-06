@@ -36,6 +36,7 @@ export function buildTomlObject(extension: ExtensionRegistration) {
 
   const localExtensionRepresentation = {
     name: config.title,
+    handle: extension.uuid,
     type: extension.type.replace('_definition', ''),
     description: config.description,
     extensions: [
