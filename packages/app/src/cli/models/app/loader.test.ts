@@ -1,4 +1,4 @@
-import {getAppConfigurationFileName, getAppConfigurationShorthand, load, loadDotEnv} from './loader.js'
+import {getAppConfigurationShorthand, getAppConfigurationFileName, load, loadDotEnv} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
