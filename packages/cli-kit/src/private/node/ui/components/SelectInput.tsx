@@ -297,7 +297,6 @@ function SelectInputInner<T>(
                 containerHeight={sectionHeight}
                 visibleListSectionLength={limit}
                 fullListLength={items.length}
-                visibleToIndex={state.visibleToIndex}
                 visibleFromIndex={state.visibleFromIndex}
               />
             ): null}
