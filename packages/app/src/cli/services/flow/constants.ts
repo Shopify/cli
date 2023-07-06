@@ -30,7 +30,8 @@ export const uiTypesMap: [string, string][] = [
   ['boolean', 'checkbox'],
   ['email', 'email'],
   ['multi_line_text_field', 'text-multi-lines'],
-  ['number_integer', 'number'],
+  ['number_integer', 'int'],
   ['single_line_text_field', 'text-single-line'],
   ['url', 'url'],
+  ['number_decimal', 'number'],
 ]
