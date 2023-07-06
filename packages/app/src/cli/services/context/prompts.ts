@@ -107,7 +107,7 @@ function buildLegacyDeploymentInfoPrompt({
   }
 
   if (dashboardOnly.length > 0) {
-    infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
+    infoTable.push({header: 'Included from Partner dashboard', items: dashboardOnly.map((source) => source.title)})
   }
 
   if (onlyRemote.length > 0) {
@@ -161,7 +161,7 @@ async function buildUnifiedDeploymentInfoPrompt(
 
   if (dashboardOnlyFinal.length > 0) {
     infoTable.push({
-      header: 'Included from\nPartner dashboard',
+      header: 'Included from Partner dashboard',
       items: dashboardOnlyFinal.map((source) => source.title),
     })
   }

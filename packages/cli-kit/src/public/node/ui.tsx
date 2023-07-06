@@ -266,10 +266,12 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  * @example
  * ?  Associate your project with the org Castile Ventures?
  *
- *        Add:     • new-ext
- *
- *        Remove:  • integrated-demand-ext
- *                 • order-discount
+ *    ┃  Add
+ *    ┃  • new-ext
+ *    ┃
+ *    ┃  Remove
+ *    ┃  • integrated-demand-ext
+ *    ┃  • order-discount
  *
  *    Automations
  *    >   (a) fifth
@@ -324,12 +326,12 @@ export interface RenderConfirmationPromptOptions
  * @example
  * ?  Delete the following themes from the store?
  *
- *        Info message title
- *
- *        Info message body
- *
- *        • first theme (#1)
- *        • second theme (#2)
+ *    ┃  Info message title
+ *    ┃
+ *    ┃  Info message body
+ *    ┃
+ *    ┃  • first theme (#1)
+ *    ┃  • second theme (#2)
  *
  * >  (y) Yes, confirm changes
  *    (n) Cancel
@@ -389,9 +391,9 @@ export interface RenderAutocompleteOptions<T>
  * @example
  * ?  Select a template:   Type to search...
  *
- *        Info message title
- *
- *        Info message body
+ *    ┃  Info message title
+ *    ┃
+ *    ┃  Info message body
  *
  * >  first
  *    second
