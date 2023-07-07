@@ -120,7 +120,7 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         return state
       }
 
-      const needsToScroll = next.index >= state.visibleToIndex
+      const needsToScroll = next.index > state.visibleToIndex
 
       if (!needsToScroll) {
         return {
@@ -162,7 +162,7 @@ const reducer = <T>(state: State<T>, action: Action<T>): State<T> => {
         return state
       }
 
-      const needsToScroll = previous.index <= state.visibleFromIndex
+      const needsToScroll = previous.index < state.visibleFromIndex
 
       if (!needsToScroll) {
         return {
@@ -256,11 +256,8 @@ const createDefaultState = <T>({
 }: CreateDefaultStateProps<T>) => {
   const visibleOptionCount =
     typeof customVisibleOptionCount === 'number' ? Math.min(customVisibleOptionCount, options.length) : options.length
-
   const optionMap = new OptionMap(options)
-
   const defaultOption = typeof defaultValue === 'undefined' ? undefined : optionMap.get(defaultValue)
-
   let option = defaultOption && !defaultOption.disabled ? defaultOption : optionMap.first
 
   while (option && option.disabled) {
