@@ -320,6 +320,7 @@ class AppLoader {
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
+
           const type = mergedConfig.type
           const extensionSpecification = findSpecificationForType(this.specifications, type)
 
@@ -327,10 +328,11 @@ class AppLoader {
             this.abortOrReport('Unknown extension type', undefined, configurationPath)
             return
           }
+          const parsedConfig = extensionSpecification.schema.parse(mergedConfig)
 
           const entryPath = await this.findEntryPath(directory, extensionSpecification)
           const extensionInstance = new ExtensionInstance({
-            configuration: mergedConfig,
+            configuration: parsedConfig,
             configurationPath,
             entryPath,
             directory,
