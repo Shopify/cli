@@ -422,7 +422,6 @@ export interface RenderAutocompleteOptions<T>
  *    twenty-fifth
  *
  *    Press ↑↓ arrows to select, enter to confirm.
- *    50 options available, 25 visible.
  *
  */
 export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
