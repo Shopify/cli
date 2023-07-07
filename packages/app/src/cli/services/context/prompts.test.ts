@@ -152,7 +152,7 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
         items: ['extension1', 'extension2'],
       },
       {
-        header: `Included from\nPartner dashboard`,
+        header: `Included from Partner dashboard`,
         items: ['dashboard_title2'],
       },
       {
@@ -228,7 +228,7 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
         items: ['extension2'],
       },
       {
-        header: `Included from\nPartner dashboard`,
+        header: `Included from Partner dashboard`,
         items: ['dashboard_title2'],
       },
       {

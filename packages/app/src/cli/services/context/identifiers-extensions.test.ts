@@ -11,7 +11,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/node/result'
+import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const REGISTRATION_A = {
@@ -366,7 +366,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
 })
 
 describe('ensureExtensionsIds: matchmaking returns ok with some pending confirmation', () => {
-  test('do not confirms the pending ones and fails', async () => {
+  test('does not confirm the pending ones and creates them as new extensions', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(false)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -379,6 +379,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+    vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
 
     // When
     const got = await ensureExtensionsIds(options([EXTENSION_B]), {
@@ -387,7 +388,13 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     })
 
     // Then
-    expect(got).toEqual(err('user-cancelled'))
+    expect(createExtension).toBeCalledTimes(1)
+    expect(got).toEqual(
+      ok({
+        extensions: {EXTENSION_B: 'UUID_B'},
+        extensionIds: {EXTENSION_B: 'B'},
+      }),
+    )
   })
 })
 
@@ -587,13 +594,14 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         remote: [],
       },
     })
+    vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_B)
 
-    const opts = options([EXTENSION_A, EXTENSION_A_2])
+    const opts = options([EXTENSION_A, EXTENSION_A_2, EXTENSION_B])
     opts.force = true
 
     // When
     await ensureExtensionsIds(opts, {
-      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2, REGISTRATION_B],
       dashboardManagedExtensionRegistrations: [],
     })
 

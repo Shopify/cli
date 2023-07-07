@@ -39,13 +39,31 @@ export const PushConfig = gql`
   }
 `
 
+interface GdprWebhooks {
+  customerDeletionUrl?: string
+  customerDataRequestUrl?: string
+  shopDeletionUrl?: string
+}
+
+interface AppProxy {
+  proxyUrl: string
+  proxySubPath: string
+  proxySubPathPrefix: string
+}
+
 export interface PushConfigVariables {
   title: string
   apiKey: string
-  applicationUrl: string
-  redirectUrlAllowlist: string[]
-  requestedAccessScopes: string[]
-  webhookApiVersion: string
+  applicationUrl?: string
+  redirectUrlAllowlist?: string[]
+  requestedAccessScopes?: string[]
+  webhookApiVersion?: string
+  contactEmail?: string
+  gdprWebhooks?: GdprWebhooks
+  appProxy?: AppProxy
+  posEmbedded?: boolean
+  embedded?: boolean
+  preferencesUrl?: string
 }
 
 export interface PushConfigSchema {

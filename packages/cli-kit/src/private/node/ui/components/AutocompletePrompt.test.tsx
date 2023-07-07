@@ -206,10 +206,12 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-             Add:     • new-ext
-
-             Remove:  • integrated-demand-ext
-                      • order-discount
+         ┃  \u001b[1mAdd\u001b[22m
+         ┃  • new-ext
+         ┃
+         ┃  \u001b[1mRemove\u001b[22m
+         ┃  • integrated-demand-ext
+         ┃  • order-discount
 
       [36m>[39m  [36mfirst[39m
          second
@@ -250,9 +252,9 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-             [31mInfo message title[39m
-
-             Info message body
+         ┃  [31mInfo message title[39m
+         ┃
+         ┃  Info message body
 
       [36m>[39m  [36mfirst[39m
          second
@@ -408,6 +410,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m50 options available, 25 visible.[22m
       "
     `)
 
@@ -444,6 +447,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-sixth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -479,6 +483,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m50 options available, 25 visible.[22m
       "
     `)
 
@@ -516,6 +521,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-sixth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -669,6 +675,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-sixth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -704,6 +711,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m50 options available, 25 visible.[22m
       "
     `)
   })
@@ -756,7 +764,8 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [1m1-25 of many[22m  Find what you're looking for by typing its name.
+         [1m1-50 of many[22m  Find what you're looking for by typing its name.
+         [2m50 options available, 25 visible.[22m
       "
     `)
   })

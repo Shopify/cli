@@ -9,7 +9,7 @@ import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/node/result'
+import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 const REGISTRATION_A: RemoteSource = {
@@ -212,11 +212,25 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
+    const opts = options([FUNCTION_A, FUNCTION_A_2])
+
     // When
-    const got = await ensureFunctionsIds(options([FUNCTION_A, FUNCTION_A_2]), [REGISTRATION_A, REGISTRATION_A_2])
+    const got = await ensureFunctionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
     expect(got).toEqual(ok({}))
+    expect(deployConfirmationPrompt).toHaveBeenCalledWith(
+      {
+        question: 'Make the following changes to your functions in Shopify Partners?',
+        identifiers: {},
+        onlyRemote: [],
+        toCreate: [FUNCTION_A, FUNCTION_A_2],
+        dashboardOnly: [],
+      },
+      'legacy',
+      opts.appId,
+      opts.token,
+    )
   })
 })
 
@@ -248,7 +262,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 })
 
 describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmation', () => {
-  test('do not confirms the pending ones and fails', async () => {
+  test('do not confirms the pending ones and returns an empty object as functions will be automatically created when deployed', async () => {
     // Given
     vi.mocked(matchConfirmationPrompt).mockResolvedValueOnce(false)
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -262,11 +276,25 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
+    const opts = options([FUNCTION_B])
+
     // When
-    const got = await ensureFunctionsIds(options([FUNCTION_B]), [REGISTRATION_B])
+    const got = await ensureFunctionsIds(opts, [REGISTRATION_B])
 
     // Then
-    expect(got).toEqual(err('user-cancelled'))
+    expect(got).toEqual(ok({}))
+    expect(deployConfirmationPrompt).toHaveBeenCalledWith(
+      {
+        question: 'Make the following changes to your functions in Shopify Partners?',
+        identifiers: {},
+        onlyRemote: [],
+        toCreate: [FUNCTION_B],
+        dashboardOnly: [],
+      },
+      'legacy',
+      opts.appId,
+      opts.token,
+    )
   })
 })
 

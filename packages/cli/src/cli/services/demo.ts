@@ -70,6 +70,7 @@ const infoTableSchema = zod.union([
       color: zod.string().optional(),
       header: zod.string(),
       helperText: zod.string().optional(),
+      bullet: zod.string().optional(),
       items: zod.array(inlineTokenItemSchema),
     }),
   ),

@@ -22,7 +22,18 @@ export async function prompts() {
       {label: 'ninth', value: 'ninth', group: 'Merchant Admin'},
       {label: 'tenth', value: 'tenth'},
     ],
-    infoTable: {add: ['new-ext'], remove: ['integrated-demand-ext', 'order-discount']},
+    infoTable: [
+      {
+        header: 'add',
+        items: ['new-ext'],
+        bullet: '+',
+      },
+      {
+        header: 'remove',
+        items: ['integrated-demand-ext', 'order-discount'],
+        bullet: '-',
+      },
+    ],
   })
 
   await renderSelectPrompt({
