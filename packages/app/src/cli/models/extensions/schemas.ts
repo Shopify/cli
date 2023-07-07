@@ -36,6 +36,20 @@ export const ApiVersionSchema = zod.string()
 
 export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
+export const SettingsSchema = zod.object({
+  fields: zod
+    .array(
+      zod.object({
+        key: zod.string().optional(),
+        name: zod.string().optional(),
+        description: zod.string().optional(),
+        required: zod.boolean().optional(),
+        type: zod.string(),
+      }),
+    )
+    .optional(),
+})
+
 export const BaseSchema = zod.object({
   name: zod.string(),
   handle: zod.string().optional(),
@@ -47,6 +61,7 @@ export const BaseSchema = zod.object({
   metafields: zod.array(MetafieldSchema).optional().default([]),
   categories: zod.array(zod.string()).optional(),
   extensions: zod.array(zod.any()).optional(),
+  settings: SettingsSchema.optional(),
 })
 
 export const UnifiedSchema = zod.object({
