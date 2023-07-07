@@ -1,4 +1,4 @@
-import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy} from './build.js'
+import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy, jsExports} from './build.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -121,7 +121,7 @@ describe('bundleExtension', () => {
 })
 
 describe('runJavy', () => {
-  test('runs javy to compile JS into WASM', async () => {
+  test('runs javy to compile JS into Wasm', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
 
@@ -193,5 +193,57 @@ describe('runFunctionRunner', () => {
         stdout: 'inherit',
       },
     )
+  })
+})
+
+describe('jsExports', () => {
+  test('is empty when function does not have targets', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = undefined
+
+    // When
+    const got = jsExports(ourFunction)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  test('is empty when all target exports are undefined', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [{target: 'foo.bar'}, {target: 'foo.baz'}]
+
+    // When
+    const got = jsExports(ourFunction)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  test('returns the exports when all target exports are defined', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [
+      {target: 'foo.bar', export: 'fooBar'},
+      {target: 'foo.baz', export: 'fooBaz'},
+    ]
+
+    // When
+    const got = jsExports(ourFunction)
+
+    // Then
+    expect(got).toEqual(['fooBar', 'fooBaz'])
+  })
+
+  test('errors when mixing implicit and explicit exports', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [{target: 'foo.bar', export: 'fooBar'}, {target: 'foo.baz'}]
+
+    // When & Then
+    expect(() => {
+      jsExports(ourFunction)
+    }).toThrow(/Can't infer export name for 'foo.baz'/)
   })
 })

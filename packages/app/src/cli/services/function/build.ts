@@ -1,8 +1,11 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {build as esBuild} from 'esbuild'
-import {findPathUp} from '@shopify/cli-kit/node/fs'
+import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
+import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
@@ -16,15 +19,22 @@ interface JSFunctionBuildOptions {
   useTasks?: boolean
 }
 
-export async function buildJSFunction(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
+export async function buildJSFunction(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+  const exports = jsExports(fun)
+  const javyBuilder: JavyBuilder = exports.length === 0 ? DefaultJavyBuilder : new ExportJavyBuilder(exports)
+
   if (options.useTasks) {
-    return buildJSFunctionWithTasks(fun, options)
+    return buildJSFunctionWithTasks(fun, options, javyBuilder)
   } else {
-    return buildJSFunctionWithoutTasks(fun, options)
+    return buildJSFunctionWithoutTasks(fun, options, javyBuilder)
   }
 }
 
-async function buildJSFunctionWithoutTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
+async function buildJSFunctionWithoutTasks(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: JSFunctionBuildOptions,
+  builder: JavyBuilder,
+) {
   if (!options.signal?.aborted) {
     options.stdout.write(`Building function ${fun.localIdentifier}...`)
     options.stdout.write(`Building GraphQL types...\n`)
@@ -32,18 +42,22 @@ async function buildJSFunctionWithoutTasks(fun: ExtensionInstance, options: JSFu
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Bundling JS function...\n`)
-    await bundleExtension(fun, options)
+    await builder.bundle(fun, options)
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Running javy...\n`)
-    await runJavy(fun, options)
+    await builder.compile(fun, options)
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Done!\n`)
   }
 }
 
-export async function buildJSFunctionWithTasks(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
+export async function buildJSFunctionWithTasks(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: JSFunctionBuildOptions,
+  builder: JavyBuilder,
+) {
   await renderTasks([
     {
       title: 'Building GraphQL types',
@@ -54,13 +68,13 @@ export async function buildJSFunctionWithTasks(fun: ExtensionInstance, options: 
     {
       title: 'Bundling JS function',
       task: async () => {
-        await bundleExtension(fun, options)
+        await builder.bundle(fun, options)
       },
     },
     {
       title: 'Running javy',
       task: async () => {
-        await runJavy(fun, options)
+        await builder.compile(fun, options)
       },
     },
   ])
@@ -81,7 +95,7 @@ export async function buildGraphqlTypes(
   })
 }
 
-export async function bundleExtension(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
+export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>, _options: JSFunctionBuildOptions) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -115,8 +129,14 @@ function getESBuildOptions(directory: string, entryPoint: string, userFunction: 
   return esbuildOptions
 }
 
-export async function runJavy(fun: ExtensionInstance, options: JSFunctionBuildOptions) {
-  return exec('npm', ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js'], {
+export async function runJavy(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: JSFunctionBuildOptions,
+  extra: string[] = [],
+) {
+  const args = ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
+
+  return exec('npm', args, {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
@@ -128,7 +148,7 @@ interface FunctionRunnerOptions {
   json: boolean
 }
 
-export async function runFunctionRunner(fun: ExtensionInstance, options: FunctionRunnerOptions) {
+export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigType>, options: FunctionRunnerOptions) {
   const outputAsJson = options.json ? ['--json'] : []
   return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson], {
     cwd: fun.directory,
@@ -136,4 +156,122 @@ export async function runFunctionRunner(fun: ExtensionInstance, options: Functio
     stdout: 'inherit',
     stderr: 'inherit',
   })
+}
+
+export interface JavyBuilder {
+  bundle(
+    fun: ExtensionInstance<FunctionConfigType>,
+    options: JSFunctionBuildOptions,
+  ): Promise<BuildResult<BuildOptions>>
+  compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<void>
+}
+
+export const DefaultJavyBuilder: JavyBuilder = {
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+    return bundleExtension(fun, options)
+  },
+
+  async compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+    return runJavy(fun, options)
+  },
+}
+
+const JAVY_WORLD = 'shopify-function'
+export class ExportJavyBuilder implements JavyBuilder {
+  exports: string[]
+
+  constructor(exports: string[]) {
+    this.exports = exports
+  }
+
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, _options: JSFunctionBuildOptions) {
+    if (!fun.entrySourceFilePath) {
+      throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
+    }
+
+    const contents = this.entrypointContents
+    outputDebug('Generating dist/function.js using generated module:')
+    outputDebug(contents)
+
+    const esbuildOptions: Parameters<typeof esBuild>[0] = {
+      outfile: joinPath(fun.directory, 'dist/function.js'),
+      stdin: {
+        contents,
+        loader: 'ts',
+        resolveDir: fun.directory,
+      },
+      alias: {
+        'user-function': fun.entrySourceFilePath,
+      },
+      logLevel: 'silent',
+      bundle: true,
+      legalComments: 'none',
+      target: 'es2022',
+      format: 'esm',
+    }
+
+    return esBuild(esbuildOptions)
+  }
+
+  async compile(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+    const witContent = this.wit
+    outputDebug('Generating world to use with Javy:')
+    outputDebug(witContent)
+
+    return inTemporaryDirectory(async (dir) => {
+      const witPath = joinPath(dir, 'javy-world.wit')
+      await writeFile(witPath, witContent)
+
+      return runJavy(fun, options, ['--wit', witPath, '-n', JAVY_WORLD])
+    })
+  }
+
+  get wit() {
+    // % escapes the name to avoid conflict with reserved words, if any
+    const witExports = this.exports.map((name) => `export %${hyphenate(name)}: func()`)
+    return `package function:impl
+
+world ${JAVY_WORLD} {
+  ${witExports.join('\n  ')}
+}`
+  }
+
+  get entrypointContents() {
+    const prelude = `
+import run from "@shopify/shopify_function/run"`
+
+    const exports = this.exports.map((name) => {
+      const identifier = camelize(name)
+      const alias = camelize(`run-${name}`)
+      return `
+import { ${identifier} as ${alias} } from "user-function"
+export function ${identifier}() { return run(${alias}) }`
+    })
+
+    return `${prelude}\n${exports.join('\n')}`
+  }
+}
+
+export function jsExports(fun: ExtensionInstance<FunctionConfigType>) {
+  const targets = fun.configuration.targeting || []
+  const withoutExport = targets.find((target) => !target.export)
+  const withExports = targets.filter((target) => Boolean(target.export))
+
+  if (withoutExport && withExports.length > 0) {
+    throw new Error(`Can't infer export name for '${withoutExport.target}'. All targets must have an export, or none.`)
+  }
+
+  withExports.forEach((target) => {
+    const name = target.export!
+    if (!name.match(/^[a-z0-9-]+$/)) {
+      throw new Error(`Invalid export name: '${name}'.
+
+The TOML's exports must be kebab-case (lowercase, hyphen or numbers) to comply with WebAssembly's Component Model.
+camelCase JavaScript exports are automatically mapped to kebab-case Wasm exports.
+
+Suggestion: change the export name from '${name}' to '${hyphenate(name)}' in the TOML file.`)
+    }
+  })
+
+  return withExports.map((target) => target.export!)
 }
