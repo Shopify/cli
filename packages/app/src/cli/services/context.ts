@@ -78,7 +78,7 @@ interface DevContextOutput {
  *
  * We just need a valid app API key to access the Specifications API.
  * - If the API key is provided via flag, we use it.
- * - Else, if there is cached API key for the current directory, we use it.
+ * - Else, if there is an API key in the current config or cache, we use it.
  * - Else, we prompt the user to select/create an app.
  *
  * The selection is then cached as the "dev" app for the current directory.
@@ -138,11 +138,10 @@ export async function ensureGenerateContext(options: {
  * That means we have a valid organization, app and dev store selected.
  *
  * If there are app/store from flags, we check if they are valid. If they are not, throw an error.
- * If there is cached info (user ran `dev` previously), check if it is still valid and return it.
- * If there is no cached info (or is invalid):
+ * If there is info in the cache or current configuration, check if it is still valid and return it.
+ * If there is no info (or is invalid):
  *  - Show prompts to select an org, app and dev store
- *  - The new selection will be saved as global configuration
- *  - The `shopify.app.toml` file will be updated with the new app apiKey
+ *  - The info will be updated in the cache or current configuration
  *
  * @param options - Current dev context options
  * @returns The selected org, app and dev store
@@ -165,7 +164,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   if (!selectedApp || !selectedStore) {
     // if we have selected an app or a dev store from a command flag, we keep them
-    // if not, we try to load the app or the dev store from the cached information
+    // if not, we try to load the app or the dev store from the current config or cache
     // if that's not available, we prompt the user to choose an existing one or create a new one
     const [_selectedApp, _selectedStore] = await Promise.all([
       selectedApp || remoteApp || (cachedInfo?.appId && appFromId(cachedInfo.appId, token)),
@@ -332,6 +331,18 @@ export async function ensureThemeExtensionDevContext(
 
   return registration
 }
+
+/**
+ * Make sure there is a valid context to execute `deploy`
+ * That means we have a valid session, organization and app.
+ *
+ * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
+ * If there is no API key (or is invalid), show prompts to select an org and app.
+ * Finally, the info is updated in the env file.
+ *
+ * @param options - Current dev context options
+ * @returns The selected org, app and dev store
+ */
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
@@ -403,6 +414,17 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   return result
 }
 
+/**
+ * Make sure there is a valid context to execute `release`
+ * That means we have a valid session, organization and app.
+ *
+ * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
+ * If there is no API key (or is invalid), show prompts to select an org and app.
+ * Finally, the info is updated in the env file.
+ *
+ * @param options - Current dev context options
+ * @returns The selected org, app and dev store
+ */
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
@@ -539,7 +561,7 @@ interface AppDevCachedContext {
 }
 
 /**
- * Retrieve cached info from the global configuration based on the current local app
+ * Retrieve app info from the cache or the current configuration.
  * @param reset - Whether to reset the cache or not.
  * @param directory - The directory containing the app.
  * @param token - The partners token.
