@@ -98,27 +98,7 @@ export async function ensureGenerateContext(options: {
     return app.apiKey
   }
 
-  let cachedInfo = getAppDevCachedInfo({reset: options.reset, directory: options.directory})
-
-  const {configuration: localAppConfiguration, configurationPath} = await loadAppConfiguration({
-    directory: options.directory,
-    configName: cachedInfo?.configFile,
-  })
-
-  let remoteApp
-  if (isCurrentAppSchema(localAppConfiguration)) {
-    remoteApp = (await appFromId(localAppConfiguration.client_id, options.token))!
-    cachedInfo = {
-      ...cachedInfo,
-      directory: options.directory,
-      configFile: basename(configurationPath),
-      orgId: remoteApp.organizationId,
-      appId: remoteApp.apiKey,
-      title: remoteApp.title,
-      storeFqdn: localAppConfiguration.cli?.dev_store_url,
-      updateURLs: localAppConfiguration.cli?.automatically_update_urls_on_dev,
-    }
-  }
+  const {cachedInfo, remoteApp} = await getAppDevCachedContext(options)
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
@@ -167,31 +147,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  let cachedInfo = getAppDevCachedInfo({
-    reset: options.reset,
-    directory: options.directory,
-  })
-
-  const configName = options.config || cachedInfo?.configFile
-  const {configuration: localAppConfiguration, configurationPath} = await loadAppConfiguration({
-    directory: options.directory,
-    configName,
-  })
-
-  let remoteApp
-  if (isCurrentAppSchema(localAppConfiguration)) {
-    remoteApp = (await appFromId(localAppConfiguration.client_id, token))!
-    cachedInfo = {
-      ...cachedInfo,
-      directory: options.directory,
-      configFile: basename(configurationPath),
-      orgId: remoteApp.organizationId,
-      appId: remoteApp.apiKey,
-      title: remoteApp.title,
-      storeFqdn: localAppConfiguration.cli?.dev_store_url,
-      updateURLs: localAppConfiguration.cli?.automatically_update_urls_on_dev,
-    }
-  }
+  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
@@ -207,9 +163,12 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   const useCloudflareTunnels = organization.betas?.cliTunnelAlternative !== true
 
   if (!selectedApp || !selectedStore) {
+    // if we have selected an app or a dev store from a command flag, we keep them
+    // if not, we try to load the app or the dev store from the cached information
+    // if that's not available, we prompt the user to choose an existing one or create a new one
     const [_selectedApp, _selectedStore] = await Promise.all([
-      selectedApp ? selectedApp : remoteApp || appFromId(cachedInfo?.appId, token),
-      selectedStore ? selectedStore : storeFromFqdn(cachedInfo?.storeFqdn, orgId, token),
+      selectedApp || remoteApp || (cachedInfo?.appId && appFromId(cachedInfo.appId, token)),
+      selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, token)),
     ])
 
     if (_selectedApp) {
@@ -228,16 +187,16 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     }
   }
 
-  if (isCurrentAppSchema(localAppConfiguration)) {
+  if (isCurrentAppSchema(configuration)) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const configuration: AppConfiguration = {
-      ...localAppConfiguration,
+    const newConfiguration: AppConfiguration = {
+      ...configuration,
       cli: {
-        ...localAppConfiguration.cli,
+        ...configuration.cli,
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    writeFileSync(configurationPath, encodeToml(configuration))
+    writeFileSync(configurationPath, encodeToml(newConfiguration))
   } else {
     setAppInfo({
       appId: selectedApp.apiKey,
@@ -265,19 +224,13 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your config']
 
-const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
-  if (!appId) return
+const appFromId = async (appId: string, token: string): Promise<OrganizationApp> => {
   const app = await fetchAppFromApiKey(appId, token)
   if (!app) throw new BugError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
   return app
 }
 
-const storeFromFqdn = async (
-  storeFqdn: string | undefined,
-  orgId: string,
-  token: string,
-): Promise<OrganizationStore | undefined> => {
-  if (!storeFqdn) return
+const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): Promise<OrganizationStore> => {
   const result = await fetchStoreByDomain(orgId, token, storeFqdn)
   if (result?.store) {
     await convertToTestStoreIfNeeded(result.store, orgId, token)
@@ -577,14 +530,60 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
+interface AppDevCachedContext {
+  configuration: AppConfiguration
+  configurationPath: string
+  cachedInfo?: CachedAppInfo
+  remoteApp?: OrganizationApp
+}
+
 /**
  * Retrieve cached info from the global configuration based on the current local app
- * @param reset - Whether to reset the cache or not
+ * @param reset - Whether to reset the cache or not.
  * @param directory - The directory containing the app.
+ * @param token - The partners token.
  */
-function getAppDevCachedInfo({reset, directory}: {reset: boolean; directory: string}): CachedAppInfo | undefined {
+async function getAppDevCachedContext({
+  reset,
+  directory,
+  token,
+  config,
+}: {
+  reset: boolean
+  directory: string
+  token: string
+  config?: string
+}): Promise<AppDevCachedContext> {
   if (reset) clearAppInfo(directory)
-  return getAppInfo(directory)
+
+  let cachedInfo = getAppInfo(directory)
+
+  const {configuration, configurationPath} = await loadAppConfiguration({
+    directory,
+    configName: config || cachedInfo?.configFile,
+  })
+
+  let remoteApp
+  if (isCurrentAppSchema(configuration)) {
+    remoteApp = await appFromId(configuration.client_id, token)
+    cachedInfo = {
+      ...cachedInfo,
+      directory,
+      configFile: basename(configurationPath),
+      orgId: remoteApp.organizationId,
+      appId: remoteApp.apiKey,
+      title: remoteApp.title,
+      storeFqdn: configuration.cli?.dev_store_url,
+      updateURLs: configuration.cli?.automatically_update_urls_on_dev,
+    }
+  }
+
+  return {
+    configuration,
+    configurationPath,
+    cachedInfo,
+    remoteApp,
+  }
 }
 
 /**
