@@ -108,7 +108,18 @@ function SelectPrompt<T>({
           <TokenizedText item={messageWithPunctuation(message)} />
         </Box>
         {(infoTable || infoMessage || gitDiff) && !submitted ? (
-          <Box marginLeft={7} marginTop={1} flexDirection="column" gap={1}>
+          <Box
+            marginTop={1}
+            marginLeft={3}
+            paddingLeft={2}
+            borderStyle="bold"
+            borderLeft
+            borderRight={false}
+            borderTop={false}
+            borderBottom={false}
+            flexDirection="column"
+            gap={1}
+          >
             {infoMessage ? (
               <Box flexDirection="column" gap={1}>
                 <Text color={infoMessage.title.color}>

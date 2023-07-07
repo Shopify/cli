@@ -9,6 +9,7 @@ type Items = TokenItem<InlineToken>[]
 export interface InfoTableSection {
   color?: TextProps['color']
   header: string
+  bullet?: string
   helperText?: string
   items: Items
 }
@@ -24,7 +25,13 @@ export interface InfoTableProps {
 const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   const sections = Array.isArray(table)
     ? table
-    : Object.keys(table).map((header) => ({header, items: table[header]!, color: undefined, helperText: undefined}))
+    : Object.keys(table).map((header) => ({
+        header,
+        items: table[header]!,
+        color: undefined,
+        helperText: undefined,
+        bullet: undefined,
+      }))
 
   const headerColumnWidth = Math.max(
     ...sections.map((section) => {
@@ -39,14 +46,16 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
   return (
     <Box flexDirection="column">
       {sections.map((section, index) => (
-        <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1}>
+        <Box key={index} marginBottom={index === sections.length - 1 ? 0 : 1} flexDirection="column">
           {section.header.length > 0 && (
             <Box width={headerColumnWidth + 1}>
-              <Text color={section.color}>{capitalize(section.header)}:</Text>
+              <Text color={section.color} bold>
+                {capitalize(section.header)}
+              </Text>
             </Box>
           )}
-          <Box marginLeft={section.header.length > 0 ? 2 : 0} flexGrow={1} flexDirection="column" gap={1}>
-            <List margin={false} items={section.items} color={section.color} />
+          <Box flexGrow={1} flexDirection="column" gap={1}>
+            <List margin={false} items={section.items} color={section.color} bullet={section.bullet} />
             {section.helperText ? <Text color={section.color}>{section.helperText}</Text> : null}
           </Box>
         </Box>

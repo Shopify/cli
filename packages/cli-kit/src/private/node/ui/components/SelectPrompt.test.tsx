@@ -119,10 +119,18 @@ describe('SelectPrompt', async () => {
       {label: 'fourth', value: 'fourth'},
     ]
 
-    const infoTable = {
-      Add: ['new-ext'],
-      Remove: ['integrated-demand-ext', ['order-discount', {subdued: '(1)'}]],
-    }
+    const infoTable = [
+      {
+        header: 'Add',
+        items: ['new-ext'],
+        bullet: '+',
+      },
+      {
+        header: 'Remove',
+        items: ['integrated-demand-ext', ['order-discount', {subdued: '(1)'}]],
+        bullet: '-',
+      },
+    ]
 
     const renderInstance = render(
       <SelectPrompt
@@ -136,10 +144,12 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-             Add:     • new-ext
-
-             Remove:  • integrated-demand-ext
-                      • order-discount [2m(1)[22m
+         ┃  \u001b[1mAdd\u001b[22m
+         ┃  + new-ext
+         ┃
+         ┃  \u001b[1mRemove\u001b[22m
+         ┃  - integrated-demand-ext
+         ┃  - order-discount [2m(1)[22m
 
       [36m>[39m  [36mfirst[39m
          second
@@ -177,6 +187,10 @@ describe('SelectPrompt', async () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
+
+         ┃  [31mInfo message title[39m
+         ┃
+         ┃  Info message body
 
       [36m>[39m  [36mfirst[39m
          second

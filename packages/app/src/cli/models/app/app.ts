@@ -134,6 +134,7 @@ const baseWebConfigurationSchema = zod.object({
     dev: zod.string(),
   }),
   name: zod.string().optional(),
+  hmr_server: zod.object({http_paths: zod.string().array()}).optional(),
 })
 const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
 export const WebConfigurationSchema = zod.union([

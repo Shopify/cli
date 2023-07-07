@@ -36,9 +36,11 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     template: templateURLMap.node,
   } as const
 
-  renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
+  let welcomed = false
 
   if (!name) {
+    renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
+    welcomed = true
     name = await renderTextPrompt({
       message: 'Your app project name?',
       defaultValue: defaults.name,
@@ -57,6 +59,10 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   if (!template) {
+    if (!welcomed) {
+      renderText({text: '\nWelcome. Let’s get started by choosing a template for your app project.'})
+      welcomed = true
+    }
     template = await renderSelectPrompt({
       choices: Object.keys(templateURLMap).map((key) => {
         return {
