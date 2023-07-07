@@ -21,7 +21,6 @@ describe('extension-to-toml', () => {
 
     // Then
     expect(got).toEqual(`name = "action title"
-handle = "ad9947a9-bc0b-4855-82da-008aefbc1c71"
 type = "flow_action"
 description = "action description"
 
@@ -86,7 +85,6 @@ required = true
 
     // Then
     expect(got).toEqual(`name = "trigger title"
-handle = "e1cb40b1-2af2-4292-91a9-0824e0157bb2"
 type = "flow_trigger"
 description = "trigger description"
 
