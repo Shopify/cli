@@ -93,6 +93,7 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
     application_url: remoteApp.applicationUrl,
+    embedded: true,
     webhooks: {
       api_version: '2023-04',
     },
