@@ -16,28 +16,30 @@ export function getFlowExtensionsToMigrate(
   identifiers: IdentifiersExtensions,
 ) {
   const ids = getExtensionIds(localSources, identifiers)
+  const localExtensionTypesToMigrate = ['flow_action', 'flow_trigger']
   const remoteExtensionTypesToMigrate = ['flow_action_definition', 'flow_trigger_definition']
+  const typesMap = new Map<string, string>([
+    ['flow_action', 'flow_action_definition'],
+    ['flow_trigger', 'flow_trigger_definition'],
+  ])
 
-  return localSources.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
-    if (localSource.type === 'flow_action' || localSource.type === 'flow_trigger') {
-      const remoteSource = remoteSources.find((source) => {
-        const matchesId = source.uuid === ids[localSource.configuration.name]
-        const matchesTitle = source.title === localSource.configuration.name
+  const local = localSources.filter((source) => localExtensionTypesToMigrate.includes(source.type))
+  const remote = remoteSources.filter((source) => remoteExtensionTypesToMigrate.includes(source.type))
 
-        return matchesId || matchesTitle
-      })
+  const remoteSourcesMap = new Map<string, RemoteSource>()
+  remote.forEach((remoteSource) => {
+    remoteSourcesMap.set(remoteSource.uuid, remoteSource)
+    remoteSourcesMap.set(remoteSource.title, remoteSource)
+  })
 
-      if (!remoteSource) {
-        return accumulator
-      }
+  return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
+    const localSourceId = ids[localSource.configuration.name] ?? 'unknown'
+    const remoteSource = remoteSourcesMap.get(localSourceId) || remoteSourcesMap.get(localSource.configuration.name)
+    const typeMatch = typesMap.get(localSource.type) === remoteSource?.type
 
-      const typeIsToMigrate = remoteExtensionTypesToMigrate.includes(remoteSource.type)
-
-      if (typeIsToMigrate) {
-        accumulator.push({local: localSource, remote: remoteSource})
-      }
+    if (remoteSource && typeMatch) {
+      accumulator.push({local: localSource, remote: remoteSource})
     }
-
     return accumulator
   }, [])
 }
@@ -47,18 +49,21 @@ export async function migrateFlowExtensions(
   appId: string,
   remoteExtensions: RemoteSource[],
 ) {
-  await Promise.all(extensionsToMigrate.map(({remote}) => migrateFlowExtension(appId, remote.id)))
+  const migratedIDs = await Promise.all(extensionsToMigrate.map(({remote}) => migrateFlowExtension(appId, remote.id)))
 
-  return remoteExtensions.map((extension) => {
-    if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
-      const newType = extension.type === 'flow_action_definition' ? 'FLOW_ACTION' : 'FLOW_TRIGGER'
+  const typesMap = new Map<string, string>([
+    ['flow_action_definition', 'FLOW_ACTION'],
+    ['flow_trigger_definition', 'FLOW_TRIGGER'],
+  ])
+
+  return remoteExtensions
+    .filter((extension) => migratedIDs.includes(extension.id))
+    .map((extension) => {
       return {
         ...extension,
-        type: newType,
+        type: typesMap.get(extension.type) ?? extension.type,
       }
-    }
-    return extension
-  })
+    })
 }
 
 export async function migrateFlowExtension(
@@ -81,4 +86,6 @@ export async function migrateFlowExtension(
   if (!result?.migrateFlowExtension?.migratedFlowExtension) {
     throw new AbortError("Couldn't migrate to Flow extension")
   }
+
+  return registrationId
 }

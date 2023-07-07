@@ -39,8 +39,8 @@ describe('getExtensionsToMigrate()', () => {
       // Given
       const localExtension = getLocalExtension({type: 'flow_action'})
       const localExtensionB = getLocalExtension({type: 'flow_trigger', configuration: {name: 'my-trigger'}})
-      const remoteExtension = getRemoteExtension({type: 'flow_action_definition'})
-      const remoteExtensionB = getRemoteExtension({type: 'flow_trigger_definition', title: 'my-trigger'})
+      const remoteExtension = getRemoteExtension({type: 'flow_action_definition', title: 'my-action'})
+      const remoteExtensionB = getRemoteExtension({type: 'flow_trigger_definition', title: 'my-trigger', uuid: '5678'})
 
       // When
       const toMigrate = getFlowExtensionsToMigrate(
@@ -108,11 +108,11 @@ describe('migrateExtensions()', () => {
   test('performs a graphQL mutation for each extension', async () => {
     // Given
     const extensionsToMigrate = [
-      {local: getLocalExtension(), remote: getRemoteExtension()},
-      {local: getLocalExtension(), remote: getRemoteExtension()},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1'})},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2'})},
     ]
     const appId = '123abc'
-    const remoteExtensions = extensionsToMigrate.map(({remote}) => ({...remote, type: 'flow_action_definition'}))
+    const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
     // When
     await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions)
@@ -132,11 +132,11 @@ describe('migrateExtensions()', () => {
   test('Returns updated remoteExensions', async () => {
     // Given
     const extensionsToMigrate = [
-      {local: getLocalExtension(), remote: getRemoteExtension()},
-      {local: getLocalExtension(), remote: getRemoteExtension()},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1'})},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2'})},
     ]
     const appId = '123abc'
-    const remoteExtensions = extensionsToMigrate.map(({remote}) => ({...remote, type: 'flow_action_definition'}))
+    const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
     // When
     const result = await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions)

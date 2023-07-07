@@ -23,7 +23,6 @@ export async function ensureExtensionsIds(
   }: AppWithExtensions,
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
-  const allExtensions = [...remoteExtensions, ...dashboardOnlyExtensions]
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
   if (options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release') {
