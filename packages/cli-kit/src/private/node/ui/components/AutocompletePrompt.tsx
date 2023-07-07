@@ -37,13 +37,12 @@ enum PromptState {
   Error = 'error',
 }
 
-const PAGE_SIZE = 25
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 
 // eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
   message,
-  choices: initialChoices,
+  choices,
   infoTable,
   onSubmit,
   search,
@@ -51,14 +50,13 @@ function AutocompletePrompt<T>({
   abortSignal,
   infoMessage,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
-  const paginatedInitialChoices = initialChoices.slice(0, PAGE_SIZE)
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(paginatedInitialChoices[0])
+  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
   const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(paginatedInitialChoices.slice(0, PAGE_SIZE))
+  const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
   const {stdout} = useStdout()
-  const canSearch = initialChoices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
+  const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
@@ -68,7 +66,6 @@ function AutocompletePrompt<T>({
   const paginatedSearch = useCallback(
     async (term: string) => {
       const results = await search(term)
-      results.data = results.data.slice(0, PAGE_SIZE)
       return results
     },
     [search],
@@ -148,7 +145,7 @@ function AutocompletePrompt<T>({
           // has emptied the search term, so we want to show the default
           // choices instead
           if (searchTermRef.current.length === 0) {
-            setSearchResults(paginatedInitialChoices)
+            setSearchResults(choices)
             setHasMorePages(initialHasMorePages)
           } else {
             setSearchResults(result.data)
@@ -164,7 +161,7 @@ function AutocompletePrompt<T>({
           clearTimeout(setLoadingWhenSlow.current)
         })
     }, 300),
-    [initialHasMorePages, paginatedInitialChoices, paginatedSearch, searchResults],
+    [initialHasMorePages, choices, paginatedSearch, searchResults],
   )
 
   return isAborted ? null : (
@@ -186,7 +183,7 @@ function AutocompletePrompt<T>({
                 } else {
                   debounceSearch.cancel()
                   setPromptState(PromptState.Idle)
-                  setSearchResults(paginatedInitialChoices)
+                  setSearchResults(choices)
                 }
               }}
               placeholder="Type to search..."
@@ -232,7 +229,7 @@ function AutocompletePrompt<T>({
         <Box marginTop={1}>
           <SelectInput
             items={searchResults}
-            initialItems={paginatedInitialChoices}
+            initialItems={choices}
             enableShortcuts={false}
             emptyMessage="No results found."
             highlightedTerm={searchTerm}
