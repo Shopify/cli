@@ -88,6 +88,7 @@ export async function ensureGenerateContext(options: {
   directory: string
   reset: boolean
   token: string
+  config?: string
 }): Promise<string> {
   if (options.apiKey) {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
