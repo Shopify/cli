@@ -1,9 +1,9 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
+import {clearCurrentConfigFile, getAppInfo, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {isCurrentAppSchema} from '../../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
@@ -42,9 +42,21 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   const {configuration} = await loadAppConfiguration({configName: configFileName, directory})
 
   if (isCurrentAppSchema(configuration) && configuration.client_id) {
+    const previousConfigFile = getAppInfo(directory)?.configFile
+    let previousAppId
+    if (previousConfigFile && fileExistsSync(joinPath(directory, previousConfigFile))) {
+      const {configuration: previousConfiguration} = await loadAppConfiguration({
+        configName: previousConfigFile,
+        directory,
+      })
+
+      if (isCurrentAppSchema(previousConfiguration)) previousAppId = previousConfiguration.client_id
+    }
+
     setAppInfo({
       directory,
       configFile: configFileName,
+      previousAppId,
     })
   } else {
     throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
