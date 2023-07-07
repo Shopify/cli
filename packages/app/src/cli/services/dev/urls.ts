@@ -214,8 +214,8 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration) && newUpdateURLs !== undefined) {
       const localConfiguration: AppConfiguration = options.localApp.configuration
-      localConfiguration.cli = {
-        ...localConfiguration.cli,
+      localConfiguration.build = {
+        ...localConfiguration.build,
         automatically_update_urls_on_dev: newUpdateURLs,
       }
 

@@ -19,26 +19,34 @@ const LegacyAppSchema = zod
 const AppSchema = zod
   .object({
     name: zod.string(),
-    client_id: zod.string(),
-    scopes: zod.string().optional(),
     api_contact_email: zod.string().optional(),
-    webhook_api_version: zod.string().optional(),
+    client_id: zod.string(),
     application_url: zod.string().optional(),
-    legacy_scopes_behavior: zod.boolean().optional(),
     embedded: zod.boolean().optional(),
+    access_scopes: zod
+      .object({
+        scopes: zod.string().optional(),
+        use_legacy_install_flow: zod.boolean().optional(),
+      })
+      .optional(),
     auth: zod
       .object({
         redirect_urls: zod.array(zod.string()),
       })
       .optional(),
-    privacy_compliance_webhooks: zod
+    webhooks: zod
       .object({
-        customer_deletion_url: zod.string(),
-        customer_data_request_url: zod.string(),
-        shop_deletion_url: zod.string(),
+        api_version: zod.string().optional(),
+        privacy_compliance: zod
+          .object({
+            customer_deletion_url: zod.string(),
+            customer_data_request_url: zod.string(),
+            shop_deletion_url: zod.string(),
+          })
+          .optional(),
       })
       .optional(),
-    proxy: zod
+    app_proxy: zod
       .object({
         url: zod.string(),
         subpath: zod.string(),
@@ -55,7 +63,7 @@ const AppSchema = zod
         url: zod.string(),
       })
       .optional(),
-    cli: zod
+    build: zod
       .object({
         automatically_update_urls_on_dev: zod.boolean().optional(),
         dev_store_url: zod.string().optional(),
@@ -92,7 +100,7 @@ export function getAppScopes(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) {
     return config.scopes
   } else {
-    return config.scopes?.toString() ?? ''
+    return config.access_scopes?.scopes?.toString() ?? ''
   }
 }
 
@@ -101,7 +109,7 @@ export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
 
   if (isLegacyAppSchema(config)) return true
 
-  return Boolean(config.legacy_scopes_behavior)
+  return Boolean(config.access_scopes?.use_legacy_install_flow)
 }
 
 export function appIsLaunchable(app: AppInterface) {

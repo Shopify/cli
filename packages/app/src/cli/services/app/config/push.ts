@@ -50,7 +50,7 @@ export async function pushConfig({configuration, configurationPath}: Options) {
       }
     }
 
-    if (!configuration.proxy && app.appProxy) {
+    if (!configuration.app_proxy && app.appProxy) {
       const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
 
       if (deleteResult?.userErrors?.length > 0) {
@@ -68,33 +68,33 @@ export async function pushConfig({configuration, configurationPath}: Options) {
 
 const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   const variables: PushConfigVariables = {
-    // these values are mandatory, so we only read from the config file
     apiKey: configuration.client_id,
     title: configuration.name,
     applicationUrl: configuration.application_url,
     contactEmail: configuration.api_contact_email,
-    webhookApiVersion: configuration.webhook_api_version,
-    // these values are optional, so we fall back to configured values
+    webhookApiVersion: configuration.webhooks?.api_version,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
     gdprWebhooks: {
-      customerDeletionUrl: configuration.privacy_compliance_webhooks?.customer_deletion_url ?? undefined,
-      customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? undefined,
-      shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? undefined,
+      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url ?? undefined,
+      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
+      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,
     },
     posEmbedded: configuration.pos?.embedded ?? null,
     preferencesUrl: configuration.app_preferences?.url ?? null,
   }
 
   if (!usesLegacyScopesBehavior(configuration)) {
-    variables.requestedAccessScopes = configuration.scopes?.length ? configuration.scopes.split(',') : []
+    variables.requestedAccessScopes = configuration.access_scopes?.scopes?.length
+      ? configuration.access_scopes.scopes.split(',')
+      : []
   }
 
-  if (configuration.proxy) {
+  if (configuration.app_proxy) {
     variables.appProxy = {
-      proxySubPath: configuration.proxy.subpath,
-      proxySubPathPrefix: configuration.proxy.prefix,
-      proxyUrl: configuration.proxy.url,
+      proxySubPath: configuration.app_proxy.subpath,
+      proxySubPathPrefix: configuration.app_proxy.prefix,
+      proxyUrl: configuration.app_proxy.url,
     }
   }
 
