@@ -1,5 +1,5 @@
 import use, {UseOptions} from './use.js'
-import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
+import {testApp, testAppWithLegacyConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
@@ -125,7 +125,7 @@ describe('use', () => {
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
 
-      const app = testAppWithConfig({
+      const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
           client_id: 'something',
@@ -163,7 +163,7 @@ describe('use', () => {
       }
       vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
-      const app = testAppWithConfig({
+      const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
           client_id: 'something',
