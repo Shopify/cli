@@ -32,6 +32,7 @@ description = "action description"
 
 [[extensions]]
 type = "flow_action"
+handle = "flow-action-char"
 description = "action description"
 runtime_url = "https://google.es"
 config_page_url = "https://destinationsurl.test.dev"
@@ -98,6 +99,7 @@ description = "trigger description"
 
 [[extensions]]
 type = "flow_trigger"
+handle = "trigger-ext"
 description = "trigger description"
 
 [[settings.fields]]
