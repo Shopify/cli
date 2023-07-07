@@ -214,7 +214,8 @@ describe('ensureGenerateContext', () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
     vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
-    vi.mocked(loadAppConfiguration).mockResolvedValue({
+    vi.mocked(loadAppConfiguration).mockReset()
+    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       appDirectory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig().configuration,
