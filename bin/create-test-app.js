@@ -50,6 +50,7 @@ program
   )
   .option("--cleanup", "delete temp app afterwards", false)
   .option("--deploy", "deploy the app to Shopify", false)
+  .option("--config-as-code", "enable config as code", false)
   .action(async (options) => {
     // helpers
     const log = (message) => {
@@ -222,6 +223,11 @@ program
     // on windows pnpm sets the wrong paths, rerunning install fixes it
     log("Making sure node is setup correctly...");
     await appExec(nodePackageManager, ["install"]);
+
+    if (options.configAsCode) {
+      log("Enabling config as code...");
+      await appNodeExec(["shopify", "app", "config", "link"], []);
+    }
 
     if (extensions.has("ui")) {
       log("Generating UI extension...");

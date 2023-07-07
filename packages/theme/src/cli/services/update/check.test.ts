@@ -133,7 +133,7 @@ describe('check', () => {
   })
 
   test(`when an operation doesn't have the id property`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -165,7 +165,7 @@ describe('check', () => {
   })
 
   test(`when an operation doesn't have the action property`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -193,7 +193,7 @@ describe('check', () => {
   })
 
   test(`when operations contain a step with an invalid file property`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -227,7 +227,7 @@ describe('check', () => {
   })
 
   test(`when operations contain a step with an invalid key property`, async () => {
-    const actions = ['add', 'delete', 'update']
+    const actions = ['add', 'delete']
 
     for (const action of actions) {
       // Given
@@ -295,7 +295,7 @@ describe('check', () => {
   })
 
   test(`when operations contain a step with an invalid action property`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -329,7 +329,7 @@ describe('check', () => {
   })
 
   test(`when operations contain a step with an invalid action property`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -364,7 +364,7 @@ describe('check', () => {
   })
 
   test(`when operations contain a step missing required properties`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -418,7 +418,7 @@ describe('check', () => {
   })
 
   test(`when a step has additional properties`, async () => {
-    const actions = ['add', 'delete', 'copy', 'move', 'update']
+    const actions = ['add', 'delete', 'copy', 'move']
 
     for (const action of actions) {
       // Given
@@ -478,13 +478,6 @@ function data() {
             from_key: 'key1',
             to_key: 'key2',
           },
-          {
-            action: 'update',
-            file: 'file.json',
-            key: 'key1',
-            old_value: 'key1',
-            new_value: 'key2',
-          },
         ],
       },
       {
@@ -514,13 +507,6 @@ function operation(action: string) {
       file: 'file.json',
       key: 'key1',
       value: ['key1'],
-    },
-    update: {
-      action: 'update',
-      file: 'file.json',
-      key: 'key1',
-      old_value: 'key1',
-      new_value: 'key2',
     },
     move: {
       action: 'move',
