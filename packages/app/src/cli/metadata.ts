@@ -2,7 +2,7 @@ import {MonorailEventPublic, MonorailEventSensitive} from '@shopify/cli-kit/node
 import {createRuntimeMetadataContainer} from '@shopify/cli-kit/node/metadata'
 import type {PickByPrefix} from '@shopify/cli-kit/common/ts/pick-by-prefix'
 
-type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_'> &
+type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_' | 'cmd_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_shared_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_dev_'> &

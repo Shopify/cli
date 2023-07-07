@@ -32,12 +32,14 @@ import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 
 const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
 type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
+const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
 
 async function loadConfigurationFile(
   filepath: string,
@@ -214,7 +216,8 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {appDirectory, configurationPath, configuration} = await configurationLoader.loaded()
+    const {appDirectory, configurationPath, configuration, configurationLoadResultMetadata} =
+      await configurationLoader.loaded()
     const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
@@ -251,6 +254,7 @@ class AppLoader {
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
       usedCustomLayoutForExtensions: usedCustomLayout,
+      configurationLoadResultMetadata,
     })
 
     return appClass
@@ -406,6 +410,29 @@ interface AppConfigurationLoaderConstructorArgs {
   configName?: string
 }
 
+type LinkedConfigurationSource =
+  // Config file was passed via a flag to a command
+  | 'flag'
+  // Config file came from the cache (i.e. app use)
+  | 'cached'
+  // Config file is based on the default shopify.app.toml
+  | 'default'
+
+type ConfigurationLoadResultMetadata = {
+  allClientIdsByConfigName: {[key: string]: string}
+} & (
+  | {
+      usesLinkedConfig: false
+    }
+  | {
+      usesLinkedConfig: true
+      name: string
+      gitTracked: boolean
+      source: LinkedConfigurationSource
+      usesCliManagedUrls?: boolean
+    }
+)
+
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
@@ -418,10 +445,36 @@ class AppConfigurationLoader {
 
   async loaded() {
     const appDirectory = await this.getAppDirectory()
+    let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     this.configName = this.configName ?? getAppInfo(appDirectory)?.configFile
-    const configurationPath = await this.getConfigurationPath(appDirectory)
+    if (this.configName === undefined) {
+      configSource = 'default'
+    }
+
+    const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
-    return {appDirectory, configuration, configurationPath}
+
+    const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
+
+    let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
+      usesLinkedConfig: false,
+      allClientIdsByConfigName,
+    }
+
+    if (configuration.client_id !== undefined) {
+      const gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
+
+      configurationLoadResultMetadata = {
+        ...configurationLoadResultMetadata,
+        usesLinkedConfig: true,
+        name: configurationFileName,
+        gitTracked,
+        source: configSource,
+        usesCliManagedUrls: configuration.cli?.automatically_update_urls_on_dev,
+      }
+    }
+
+    return {appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
@@ -436,7 +489,7 @@ class AppConfigurationLoader {
     // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
     const appDirectory = await findPathUp(
       async (directory) => {
-        const found = await glob(joinPath(directory, 'shopify.app*.toml'))
+        const found = await glob(joinPath(directory, appConfigurationFileNameGlob))
         if (found.length > 0) {
           return directory
         }
@@ -463,12 +516,44 @@ class AppConfigurationLoader {
     const configurationPath = joinPath(appDirectory, configurationFileName)
 
     if (await fileExists(configurationPath)) {
-      return configurationPath
+      return {configurationPath, configurationFileName}
     } else {
       throw new AbortError(
         outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(this.directory)}.`,
       )
     }
+  }
+
+  /**
+   * Looks for all likely linked config files in the app folder, parses, and returns a mapping of name to client ID.
+   */
+  async getAllLinkedConfigClientIds(appDirectory: string): Promise<{[key: string]: string}> {
+    const configNamesToClientId: {[key: string]: string} = {}
+    const candidates = await glob(joinPath(appDirectory, appConfigurationFileNameGlob))
+
+    const entries = (
+      await Promise.all(
+        candidates.map(async (candidateFile) => {
+          try {
+            const configuration = await parseConfigurationFile(
+              // we only care about the client ID, so no need to parse the entire file
+              zod.object({client_id: zod.string().optional()}),
+              candidateFile,
+              // we're not interested in error reporting at all
+              noopAbortOrReport,
+            )
+            if (configuration.client_id !== undefined) {
+              configNamesToClientId[basename(candidateFile)] = configuration.client_id
+              return [basename(candidateFile), configuration.client_id] as [string, string]
+            }
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch {
+            // can ignore errors in parsing
+          }
+        }),
+      )
+    ).filter((entry) => entry !== undefined) as [string, string][]
+    return Object.fromEntries(entries)
   }
 
   abort<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
@@ -518,9 +603,11 @@ async function logMetadataForLoadedApp(
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
     usedCustomLayoutForExtensions: boolean
+    configurationLoadResultMetadata: ConfigurationLoadResultMetadata
   },
 ) {
   await metadata.addPublicMetadata(async () => {
+    const loadMetadata = loadingStrategy.configurationLoadResultMetadata
     const projectType = await getProjectType(app.webs)
 
     const extensionFunctionCount = app.allExtensions.filter((extension) => extension.isFunctionExtension).length
@@ -570,6 +657,18 @@ async function logMetadataForLoadedApp(
       app_web_frontend_any: webFrontendCount > 0,
       app_web_frontend_count: webFrontendCount,
       env_package_manager_workspaces: app.usesWorkspaces,
+      // Generic config as code instrumentation
+      cmd_app_all_configs_any: Object.keys(loadMetadata.allClientIdsByConfigName).length > 0,
+      cmd_app_all_configs_clients: JSON.stringify(loadMetadata.allClientIdsByConfigName),
+      cmd_app_linked_config_used: loadMetadata.usesLinkedConfig,
+      ...(loadMetadata.usesLinkedConfig
+        ? {
+            cmd_app_linked_config_name: loadMetadata.name,
+            cmd_app_linked_config_git_tracked: loadMetadata.gitTracked,
+            cmd_app_linked_config_source: loadMetadata.source,
+            cmd_app_linked_config_uses_cli_managed_urls: loadMetadata.usesCliManagedUrls,
+          }
+        : {}),
     }
   })
 
@@ -581,6 +680,7 @@ async function logMetadataForLoadedApp(
 }
 
 export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
+const appConfigurationFileNameGlob = 'shopify.app*.toml'
 
 export function getAppConfigurationFileName(config?: string) {
   if (!config) {

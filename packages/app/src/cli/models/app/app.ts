@@ -13,6 +13,8 @@ const LegacyAppSchema = zod
     scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
+    // This means we can check if `client_id` exists to discriminate between the two schemas.
+    client_id: zod.undefined(),
   })
   .strict()
 
