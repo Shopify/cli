@@ -273,22 +273,20 @@ function SelectInputInner<T>(
     return (
       <Box flexDirection="column" ref={ref} gap={1}>
         <Box flexDirection="row" height={sectionHeight} width="100%">
-          <Box flexGrow={1}>
-            <Box flexDirection="column" overflowY="hidden">
-              {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
-                <Item
-                  key={item.key}
-                  item={item}
-                  previousItem={state.visibleOptions[index - 1]}
-                  highlightedTerm={highlightedTerm}
-                  isSelected={item.value === state.value}
-                  items={state.visibleOptions}
-                  enableShortcuts={enableShortcuts}
-                  hasAnyGroup={hasAnyGroup}
-                  maxKeyLength={maxKeyLength}
-                />
-              ))}
-            </Box>
+          <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
+            {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
+              <Item
+                key={item.key}
+                item={item}
+                previousItem={state.visibleOptions[index - 1]}
+                highlightedTerm={highlightedTerm}
+                isSelected={item.value === state.value}
+                items={state.visibleOptions}
+                enableShortcuts={enableShortcuts}
+                hasAnyGroup={hasAnyGroup}
+                maxKeyLength={maxKeyLength}
+              />
+            ))}
           </Box>
 
           {hasLimit ? (
