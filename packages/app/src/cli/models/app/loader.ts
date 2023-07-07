@@ -31,6 +31,7 @@ import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 const defaultExtensionDirectory = 'extensions/*'
 
@@ -369,7 +370,7 @@ class AppLoader {
     })
 
     const extensions = await Promise.all(extensionPromises)
-    const allExtensions = extensions.flat().filter((extension) => extension !== undefined) as ExtensionInstance[]
+    const allExtensions = getArrayRejectingUndefined(extensions.flat())
     return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
