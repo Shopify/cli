@@ -20,7 +20,12 @@ export const templateURLMap = {
   node: 'https://github.com/Shopify/shopify-app-template-node',
   php: 'https://github.com/Shopify/shopify-app-template-php',
   ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
+  none: 'https://github.com/Shopify/shopify-app-template-none',
 } as const
+
+const templateLabels: {[key: string]: string} = {
+  none: 'none (build an app with extensions only)',
+}
 
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let name = options.name
@@ -31,9 +36,11 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     template: templateURLMap.node,
   } as const
 
-  renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
+  let welcomed = false
 
   if (!name) {
+    renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
+    welcomed = true
     name = await renderTextPrompt({
       message: 'Your app project name?',
       defaultValue: defaults.name,
@@ -52,16 +59,20 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   if (!template) {
+    if (!welcomed) {
+      renderText({text: '\nWelcome. Let’s get started by choosing a template for your app project.'})
+      welcomed = true
+    }
     template = await renderSelectPrompt({
       choices: Object.keys(templateURLMap).map((key) => {
         return {
-          label: key,
+          label: templateLabels[key] || key,
           value: key,
         }
       }),
       message: 'Which template would you like to use?',
       defaultValue: Object.keys(templateURLMap).find(
-        (key) => templateURLMap[key as 'node' | 'php' | 'ruby'] === defaults.template,
+        (key) => templateURLMap[key as keyof typeof templateURLMap] === defaults.template,
       ),
     })
   }

@@ -10,11 +10,15 @@ import {
   renderInfo,
 } from '@shopify/cli-kit/node/ui'
 
-export async function matchConfirmationPrompt(local: LocalSource, remote: RemoteSource) {
+export async function matchConfirmationPrompt(
+  local: LocalSource,
+  remote: RemoteSource,
+  type: 'extension' | 'function' = 'extension',
+) {
   return renderConfirmationPrompt({
     message: `Match ${local.configuration.name} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
-    confirmationMessage: `Yes, that's right`,
-    cancellationMessage: `No, cancel`,
+    confirmationMessage: `Yes, match to existing ${type}`,
+    cancellationMessage: `No, create as a new ${type}`,
   })
 }
 
@@ -103,7 +107,7 @@ function buildLegacyDeploymentInfoPrompt({
   }
 
   if (dashboardOnly.length > 0) {
-    infoTable.push({header: 'Included from\nPartner dashboard', items: dashboardOnly.map((source) => source.title)})
+    infoTable.push({header: 'Included from Partner dashboard', items: dashboardOnly.map((source) => source.title)})
   }
 
   if (onlyRemote.length > 0) {
@@ -157,7 +161,7 @@ async function buildUnifiedDeploymentInfoPrompt(
 
   if (dashboardOnlyFinal.length > 0) {
     infoTable.push({
-      header: 'Included from\nPartner dashboard',
+      header: 'Included from Partner dashboard',
       items: dashboardOnlyFinal.map((source) => source.title),
     })
   }

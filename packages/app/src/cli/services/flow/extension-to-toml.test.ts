@@ -62,7 +62,7 @@ required = false
 [[settings.fields]]
 key = "number name"
 description = "number help"
-type = "number_integer"
+type = "number_decimal"
 name = "number label"
 required = true
 `)
@@ -108,7 +108,7 @@ description = ""
 [[settings.fields]]
 key = "number property"
 description = "number description"
-type = "number_integer"
+type = "number_decimal"
 
 [[settings.fields]]
 key = "email name"

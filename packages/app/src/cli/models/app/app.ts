@@ -1,4 +1,4 @@
-import {AppErrors} from './loader.js'
+import {AppErrors, isWebType} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -10,7 +10,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 const LegacyAppSchema = zod
   .object({
     name: zod.string().optional(),
-    scopes: zod.string(),
+    scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
@@ -24,6 +24,7 @@ const AppSchema = zod
     api_contact_email: zod.string().optional(),
     webhook_api_version: zod.string().optional(),
     application_url: zod.string().optional(),
+    legacy_scopes_behavior: zod.boolean().optional(),
     embedded: zod.boolean().optional(),
     auth: zod
       .object({
@@ -97,6 +98,21 @@ export function getAppScopes(config: AppConfiguration) {
   }
 }
 
+export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
+  const config = 'configurationPath' in app ? app.configuration : app
+
+  if (isLegacyAppSchema(config)) return true
+
+  return Boolean(config.legacy_scopes_behavior)
+}
+
+export function appIsLaunchable(app: AppInterface) {
+  const frontendConfig = app?.webs?.find((web) => isWebType(web, WebType.Frontend))
+  const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
+
+  return Boolean(frontendConfig || backendConfig)
+}
+
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
@@ -118,6 +134,7 @@ const baseWebConfigurationSchema = zod.object({
     dev: zod.string(),
   }),
   name: zod.string().optional(),
+  hmr_server: zod.object({http_paths: zod.string().array()}).optional(),
 })
 const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
 export const WebConfigurationSchema = zod.union([

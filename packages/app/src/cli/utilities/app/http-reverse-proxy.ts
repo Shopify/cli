@@ -22,6 +22,15 @@ export interface ReverseHTTPProxyTarget {
    * forwarded to this target
    */
   pathPrefix?: string
+
+  /**
+   * The configuration for a separate HMR server for this target.
+   */
+  hmrServer?: {
+    port: number
+    httpPaths: string[]
+  }
+
   /**
    * A callback to invoke the process. stdout and stderr should be used
    * to send standard output and error data that gets formatted with the
@@ -62,6 +71,12 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
     proxyTargets.map(async (target): Promise<OutputProcess> => {
       const targetPort = target.customPort || (await getAvailableTCPPort())
       rules[target.pathPrefix ?? 'default'] = `http://localhost:${targetPort}`
+      const hmrServer = target.hmrServer
+      if (hmrServer) {
+        rules.websocket = `http://localhost:${hmrServer.port}`
+        hmrServer.httpPaths.forEach((path) => (rules[path] = `http://localhost:${hmrServer.port}`))
+      }
+
       return {
         prefix: target.logPrefix,
         action: async (stdout, stderr, signal) => {
@@ -98,7 +113,7 @@ ${outputToken.json(JSON.stringify(rules))}
 
   // Capture websocket requests and forward them to the proxy
   server.on('upgrade', function (req, socket, head) {
-    const target = match(rules, req)
+    const target = match(rules, req, true)
     if (target) {
       return proxy.ws(req, socket, head, {target}, (err) => {
         outputWarn(`Error forwarding websocket request: ${err}`)
@@ -120,12 +135,14 @@ ${outputToken.json(JSON.stringify(rules))}
   await Promise.all([renderDev(renderConcurrentOptions, previewUrl), server.listen(portNumber)])
 }
 
-function match(rules: {[key: string]: string}, req: http.IncomingMessage) {
+function match(rules: {[key: string]: string}, req: http.IncomingMessage, websocket = false) {
   const path: string = req.url ?? '/'
 
   for (const pathPrefix in rules) {
     if (path.startsWith(pathPrefix)) return rules[pathPrefix]
   }
+
+  if (websocket && rules.websocket) return rules.websocket
 
   return rules.default
 }

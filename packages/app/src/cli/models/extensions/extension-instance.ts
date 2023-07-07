@@ -270,7 +270,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
     const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
     if (!configValue) return undefined
-    return {uuid: identifiers.extensions[this.localIdentifier]!, config: JSON.stringify(configValue), context: ''}
+
+    const contextValue = (configValue.handle as string) || ''
+
+    return {
+      uuid: identifiers.extensions[this.localIdentifier]!,
+      config: JSON.stringify(configValue),
+      context: contextValue,
+    }
   }
 }
 
