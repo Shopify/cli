@@ -130,7 +130,7 @@ describe('use', () => {
           name: 'something',
           client_id: 'something',
           api_contact_email: 'bob@bob.com',
-          webhook_api_version: '2023-04',
+          webhooks: {api_version: '2023-04'},
           application_url: 'https://example.com',
         },
       })
@@ -166,10 +166,10 @@ describe('use', () => {
       const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
-          client_id: 'something',
           api_contact_email: 'bob@bob.com',
-          webhook_api_version: '2023-04',
           application_url: 'https://example.com',
+          client_id: 'something',
+          webhooks: {api_version: '2023-04'},
         },
       })
       vi.mocked(loadAppConfiguration).mockResolvedValue({

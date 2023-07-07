@@ -10,13 +10,29 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
 
-export function testApp(app: Partial<AppInterface> = {}): AppInterface {
+export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
+  const getConfig = () => {
+    if (schemaType === 'legacy') {
+      return {scopes: '', extension_directories: []}
+    } else {
+      return {
+        application_url: 'https://myapp.com',
+        client_id: '12345',
+        name: 'my app',
+        api_contact_email: 'wils@bahan-lee.com',
+        webhooks: {
+          api_version: '2023-04',
+        },
+      }
+    }
+  }
+
   const newApp = new App(
     app.name ?? 'App',
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
-    app.configuration ?? {scopes: '', extension_directories: []},
+    app.configuration ?? getConfig(),
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [
@@ -50,6 +66,9 @@ interface TestAppWithConfigOptions {
 export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
   const configuration: AppConfiguration = {
     scopes: '',
+    name: 'name',
+    api_contact_email: 'bob@bob.com',
+    client_id: '1234',
     extension_directories: [],
     ...config,
   }
