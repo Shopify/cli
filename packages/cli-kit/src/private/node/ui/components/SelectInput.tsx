@@ -269,54 +269,52 @@ function SelectInputInner<T>(
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
     return (
-      <Box flexDirection="row">
-        <Box flexDirection="column" ref={ref}>
-          <Box flexDirection="row" height={sectionHeight} width="100%">
-            <Box flexDirection="column" height={sectionHeight} overflowY="hidden" flexGrow={1}>
-              {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
-                <Item
-                  key={item.key}
-                  item={item}
-                  previousItem={state.visibleOptions[index - 1]}
-                  highlightedTerm={highlightedTerm}
-                  isSelected={item.value === state.value}
-                  items={state.visibleOptions}
-                  enableShortcuts={enableShortcuts}
-                  hasAnyGroup={hasAnyGroup}
-                  maxKeyLength={maxKeyLength}
-                />
-              ))}
-            </Box>
-            {hasLimit ? (
-              <Scrollbar
-                containerHeight={sectionHeight}
-                visibleListSectionLength={limit}
-                fullListLength={items.length}
-                visibleFromIndex={state.visibleFromIndex}
+      <Box flexDirection="column" ref={ref} gap={1}>
+        <Box flexDirection="row" height={sectionHeight} width="100%">
+          <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
+            {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
+              <Item
+                key={item.key}
+                item={item}
+                previousItem={state.visibleOptions[index - 1]}
+                highlightedTerm={highlightedTerm}
+                isSelected={item.value === state.value}
+                items={state.visibleOptions}
+                enableShortcuts={enableShortcuts}
+                hasAnyGroup={hasAnyGroup}
+                maxKeyLength={maxKeyLength}
               />
+            ))}
+          </Box>
+          {hasLimit ? (
+            <Scrollbar
+              containerHeight={sectionHeight}
+              visibleListSectionLength={limit}
+              fullListLength={items.length}
+              visibleFromIndex={state.visibleFromIndex}
+            />
+          ) : null}
+        </Box>
+
+        {noItems ? (
+          <Box marginLeft={3}>
+            <Text dimColor>Try again with a different keyword.</Text>
+          </Box>
+        ) : (
+          <Box marginLeft={3} flexDirection="column">
+            <Text dimColor>
+              {infoMessage
+                ? infoMessage
+                : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
+            </Text>
+            {hasMorePages ? (
+              <Text>
+                <Text bold>1-{items.length} of many</Text>
+                {morePagesMessage ? `  ${morePagesMessage}` : null}
+              </Text>
             ) : null}
           </Box>
-
-          {noItems ? (
-            <Box marginTop={1} marginLeft={3} height={2}>
-              <Text dimColor>Try again with a different keyword.</Text>
-            </Box>
-          ) : (
-            <Box marginTop={1} marginLeft={3} flexDirection="column">
-              <Text dimColor>
-                {infoMessage
-                  ? infoMessage
-                  : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
-              </Text>
-              {hasMorePages ? (
-                <Text>
-                  <Text bold>1-{items.length} of many</Text>
-                  {morePagesMessage ? `  ${morePagesMessage}` : null}
-                </Text>
-              ) : null}
-            </Box>
-          )}
-        </Box>
+        )}
       </Box>
     )
   }

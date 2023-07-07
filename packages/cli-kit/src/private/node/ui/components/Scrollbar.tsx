@@ -58,12 +58,8 @@ const Scrollbar: FunctionComponent<ScrollbarProps> = ({
   const scrollboxColor = noColor ? undefined : 'cyan'
 
   return (
-    <Box width={1} height={containerHeight} flexDirection="column" flexGrow={0}>
-      {displayArrows ? (
-        <Box width={1}>
-          <Text>△</Text>
-        </Box>
-      ) : null}
+    <Box flexDirection="column">
+      {displayArrows ? <Text>△</Text> : null}
 
       <Box width={1}>
         <Text backgroundColor={bgColor}>{backgroundChar.repeat(topBuffer)}</Text>
@@ -75,11 +71,7 @@ const Scrollbar: FunctionComponent<ScrollbarProps> = ({
         <Text backgroundColor={bgColor}>{backgroundChar.repeat(bottomBuffer)}</Text>
       </Box>
 
-      {displayArrows ? (
-        <Box width={1}>
-          <Text>▽</Text>
-        </Box>
-      ) : null}
+      {displayArrows ? <Text>▽</Text> : null}
     </Box>
   )
 }
