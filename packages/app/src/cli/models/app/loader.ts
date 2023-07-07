@@ -84,6 +84,16 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   if (!configurationObject) return fallbackOutput
 
+  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+}
+
+export async function parseConfigurationObject<TSchema extends zod.ZodType>(
+  schema: TSchema,
+  filepath: string,
+  configurationObject: unknown,
+  abortOrReport: AbortOrReport,
+): Promise<zod.TypeOf<TSchema>> {
+  const fallbackOutput = {} as zod.TypeOf<TSchema>
   const parseResult = schema.safeParse(configurationObject)
 
   if (!parseResult.success) {
@@ -298,6 +308,39 @@ class AppLoader {
     }
   }
 
+  async createExtensionInstance(
+    type: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    configurationObject: any,
+    configurationPath: string,
+    directory: string,
+  ): Promise<ExtensionInstance | undefined> {
+    const specification = findSpecificationForType(this.specifications, type)
+    if (!specification) return
+    const configuration = await parseConfigurationObject(
+      specification.schema,
+      configurationPath,
+      configurationObject,
+      this.abortOrReport.bind(this),
+    )
+
+    const entryPath = await this.findEntryPath(directory, specification)
+
+    const extensionInstance = new ExtensionInstance({
+      configuration,
+      configurationPath,
+      entryPath,
+      directory,
+      specification,
+    })
+
+    const validateResult = await extensionInstance.validate()
+    if (validateResult.isErr()) {
+      this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+    }
+    return extensionInstance
+  }
+
   async loadExtensions(
     appDirectory: string,
     extensionDirectories?: string[],
@@ -313,68 +356,19 @@ class AppLoader {
 
       const fileContent = await readFile(configurationPath)
       const obj = decodeToml(fileContent)
-      const {extensions} = ExtensionsArraySchema.parse(obj)
+      const {extensions, type} = ExtensionsArraySchema.parse(obj)
 
-      let extensionInstances = []
       if (extensions) {
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsPromises = configuration.extensions.map(async (extensionConfig) => {
-          const mergedConfig = {...configuration, ...extensionConfig}
-
-          const type = mergedConfig.type
-          const extensionSpecification = findSpecificationForType(this.specifications, type)
-
-          if (!extensionSpecification) {
-            this.abortOrReport('Unknown extension type', undefined, configurationPath)
-            return
-          }
-          const parsedConfig = extensionSpecification.schema.parse(mergedConfig)
-
-          const entryPath = await this.findEntryPath(directory, extensionSpecification)
-          const extensionInstance = new ExtensionInstance({
-            configuration: parsedConfig,
-            configurationPath,
-            entryPath,
-            directory,
-            specification: extensionSpecification,
-          })
-
-          const validateResult = await extensionInstance.validate()
-          if (validateResult.isErr()) {
-            this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
-          } else {
-            return extensionInstance
-          }
+          const config = {...configuration, ...extensionConfig}
+          return this.createExtensionInstance(config.type, config, configurationPath, directory)
         })
-        extensionInstances = getArrayRejectingUndefined(await Promise.all(extensionsPromises))
+        return getArrayRejectingUndefined(await Promise.all(extensionsPromises))
       } else {
-        const specification = await findSpecificationForConfig(
-          this.specifications,
-          configurationPath,
-          this.abortOrReport.bind(this),
-        )
-
-        if (!specification) return
-        const entryPath = await this.findEntryPath(directory, specification)
-        const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-
-        const extensionInstance = new ExtensionInstance({
-          configuration,
-          configurationPath,
-          entryPath,
-          directory,
-          specification,
-        })
-
-        const validateResult = await extensionInstance.validate()
-        if (validateResult.isErr()) {
-          this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
-        } else {
-          extensionInstances.push(extensionInstance)
-        }
+        const instance = await this.createExtensionInstance(type, obj, configurationPath, directory)
+        return [instance]
       }
-
-      return extensionInstances
     })
 
     const extensions = await Promise.all(extensionPromises)
