@@ -31,7 +31,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       contactEmail: 'wils@bahan-lee.com',
-      embedded: undefined,
+      embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
@@ -75,7 +75,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       contactEmail: 'wils@bahan-lee.com',
-      embedded: undefined,
+      embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
@@ -118,7 +118,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       contactEmail: 'wils@bahan-lee.com',
-      embedded: undefined,
+      embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
@@ -195,7 +195,7 @@ describe('pushConfig', () => {
       },
       webhookApiVersion: '2023-04',
       redirectUrlAllowlist: null,
-      embedded: undefined,
+      embedded: true,
       posEmbedded: null,
       preferencesUrl: null,
       requestedAccessScopes: [],

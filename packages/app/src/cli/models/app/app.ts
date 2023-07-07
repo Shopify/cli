@@ -19,10 +19,10 @@ const LegacyAppSchema = zod
 const AppSchema = zod
   .object({
     name: zod.string(),
-    api_contact_email: zod.string().optional(),
+    api_contact_email: zod.string(),
     client_id: zod.string(),
-    application_url: zod.string().optional(),
-    embedded: zod.boolean().optional(),
+    application_url: zod.string(),
+    embedded: zod.boolean(),
     access_scopes: zod
       .object({
         scopes: zod.string().optional(),
@@ -34,18 +34,16 @@ const AppSchema = zod
         redirect_urls: zod.array(zod.string()),
       })
       .optional(),
-    webhooks: zod
-      .object({
-        api_version: zod.string().optional(),
-        privacy_compliance: zod
-          .object({
-            customer_deletion_url: zod.string(),
-            customer_data_request_url: zod.string(),
-            shop_deletion_url: zod.string(),
-          })
-          .optional(),
-      })
-      .optional(),
+    webhooks: zod.object({
+      api_version: zod.string(),
+      privacy_compliance: zod
+        .object({
+          customer_deletion_url: zod.string(),
+          customer_data_request_url: zod.string(),
+          shop_deletion_url: zod.string(),
+        })
+        .optional(),
+    }),
     app_proxy: zod
       .object({
         url: zod.string(),
