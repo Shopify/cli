@@ -74,6 +74,7 @@ describe('link', () => {
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
+embedded = true
 api_contact_email = "example@example.com"
 extension_directories = [ ]
 
@@ -129,6 +130,7 @@ use_legacy_install_flow = true
       const expectedContent = `client_id = "12345"
 name = "my app"
 application_url = "https://myapp.com"
+embedded = true
 api_contact_email = "example@example.com"
 
 [webhooks]
@@ -167,6 +169,7 @@ scopes = "write_products"
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
+embedded = true
 api_contact_email = "example@example.com"
 extension_directories = [ ]
 
@@ -243,6 +246,7 @@ use_legacy_install_flow = true
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
+embedded = true
 api_contact_email = "example@example.com"
 
 [webhooks]
@@ -276,6 +280,7 @@ use_legacy_install_flow = true
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
+embedded = true
 api_contact_email = "example@example.com"
 extension_directories = [ ]
 
