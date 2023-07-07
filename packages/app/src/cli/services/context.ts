@@ -208,7 +208,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     })
   }
 
-  await showCachedContextSummary({
+  await showDevReusedValues({
     directory: options.directory,
     selectedApp,
     selectedStore,
@@ -609,7 +609,7 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-async function showCachedContextSummary({
+async function showDevReusedValues({
   directory,
   organization,
   selectedApp,
@@ -637,11 +637,8 @@ async function showCachedContextSummary({
   }
 
   const packageManager = await getPackageManager(directory)
-  const headline = cachedInfo.configFile
-    ? `Using ${getAppConfigurationFileName(cachedInfo.configFile)}:`
-    : 'Using these settings:'
   renderInfo({
-    headline,
+    headline: reusedValuesTableTitle(cachedInfo),
     body: [
       {
         list: {
@@ -656,7 +653,7 @@ async function showCachedContextSummary({
 
 function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager) {
   renderInfo({
-    headline: 'Using these settings:',
+    headline: reusedValuesTableTitle(cachedAppInfo),
     body: [
       {
         list: {
@@ -667,6 +664,12 @@ function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, pac
       {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
     ],
   })
+}
+
+function reusedValuesTableTitle(cachedInfo: CachedAppInfo) {
+  return cachedInfo.configFile
+    ? `Using ${getAppConfigurationFileName(cachedInfo.configFile)}:`
+    : 'Using these settings:'
 }
 
 /**
