@@ -181,6 +181,7 @@ describe('SelectPrompt', async () => {
       <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
+        infoMessage={infoMessage}
         onSubmit={() => {}}
       />,
     )

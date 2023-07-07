@@ -1,5 +1,11 @@
 import {SelectInput} from './SelectInput.js'
-import {sendInputAndWait, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
+import {
+  sendInputAndWait,
+  sendInputAndWaitForChange,
+  waitForInputsToBeReady,
+  render,
+  getLastFrameAfterUnmount,
+} from '../../testing/ui.js'
 import {platformAndArch} from '../../../../public/node/os.js'
 import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
@@ -99,7 +105,7 @@ describe('SelectInput', async () => {
     ]
 
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
-    expect(renderInstance.lastFrame()).toMatch('SelectInput: Keys must be a single character')
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatch('SelectInput: Keys must be a single character')
   })
 
   test("throws an error if an item has key but others don't", async () => {
@@ -122,7 +128,7 @@ describe('SelectInput', async () => {
     ]
 
     const renderInstance = render(<SelectInput items={items} onChange={onChange} />)
-    expect(renderInstance.lastFrame()).toMatch('SelectInput: All items must have keys if one does')
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatch('SelectInput: All items must have keys if one does')
   })
 
   test('handles pressing non existing keys', async () => {
