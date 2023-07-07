@@ -32,7 +32,7 @@ export function buildTomlObject(extension: ExtensionRegistration) {
   const fields = configFromSerializedFields(extension.type as FlowPartnersExtensionTypes, config.fields ?? [])
 
   const localExtensionRepresentation = {
-    name: extension.title,
+    name: config.title,
     type: extension.type.replace('_definition', ''),
     description: config.description,
     extensions: [
