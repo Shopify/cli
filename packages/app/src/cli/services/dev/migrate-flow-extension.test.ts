@@ -1,6 +1,6 @@
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from './migrate-flow-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
-import {ExtensionMigrateFlowExtensionQuery} from '../../api/graphql/extension_migrate_flow_extension.js'
+import {MigrateFlowExtensionMutation} from '../../api/graphql/extension_migrate_flow_extension.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -119,11 +119,11 @@ describe('migrateExtensions()', () => {
 
     // Then
     expect(partnersRequest).toHaveBeenCalledTimes(extensionsToMigrate.length)
-    expect(partnersRequest).toHaveBeenCalledWith(ExtensionMigrateFlowExtensionQuery, 'mockToken', {
+    expect(partnersRequest).toHaveBeenCalledWith(MigrateFlowExtensionMutation, 'mockToken', {
       apiKey: appId,
       registrationId: extensionsToMigrate[0]!.remote.id,
     })
-    expect(partnersRequest).toHaveBeenCalledWith(ExtensionMigrateFlowExtensionQuery, 'mockToken', {
+    expect(partnersRequest).toHaveBeenCalledWith(MigrateFlowExtensionMutation, 'mockToken', {
       apiKey: appId,
       registrationId: extensionsToMigrate[1]!.remote.id,
     })

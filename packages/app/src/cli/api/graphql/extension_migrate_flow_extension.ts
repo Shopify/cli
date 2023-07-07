@@ -1,6 +1,6 @@
 import {gql} from 'graphql-request'
 
-export const ExtensionMigrateFlowExtensionQuery = gql`
+export const MigrateFlowExtensionMutation = gql`
   mutation MigrateFlowExtension($apiKey: String!, $registrationId: ID!) {
     migrateFlowExtension(input: {apiKey: $apiKey, registrationId: $registrationId}) {
       migratedFlowExtension
@@ -12,12 +12,12 @@ export const ExtensionMigrateFlowExtensionQuery = gql`
   }
 `
 
-export interface ExtensionMigrateFlowExtensionVariables {
+export interface MigrateFlowExtensionVariables {
   apiKey: string
   registrationId: string
 }
 
-export interface ExtensionMigrateFlowExtensionSchema {
+export interface MigrateFlowExtensionSchema {
   migrateFlowExtension: {
     migratedFlowExtension: boolean
     userErrors: {

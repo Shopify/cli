@@ -2,9 +2,9 @@ import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {
-  ExtensionMigrateFlowExtensionQuery,
-  ExtensionMigrateFlowExtensionSchema,
-  ExtensionMigrateFlowExtensionVariables,
+  MigrateFlowExtensionMutation,
+  MigrateFlowExtensionSchema,
+  MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -62,20 +62,16 @@ export async function migrateFlowExtensions(
 }
 
 export async function migrateFlowExtension(
-  apiKey: ExtensionMigrateFlowExtensionVariables['apiKey'],
-  registrationId: ExtensionMigrateFlowExtensionVariables['registrationId'],
+  apiKey: MigrateFlowExtensionVariables['apiKey'],
+  registrationId: MigrateFlowExtensionVariables['registrationId'],
 ) {
   const token = await ensureAuthenticatedPartners()
-  const variables: ExtensionMigrateFlowExtensionVariables = {
+  const variables: MigrateFlowExtensionVariables = {
     apiKey,
     registrationId,
   }
 
-  const result: ExtensionMigrateFlowExtensionSchema = await partnersRequest(
-    ExtensionMigrateFlowExtensionQuery,
-    token,
-    variables,
-  )
+  const result: MigrateFlowExtensionSchema = await partnersRequest(MigrateFlowExtensionMutation, token, variables)
 
   if (result?.migrateFlowExtension?.userErrors?.length > 0) {
     const errors = result.migrateFlowExtension.userErrors.map((error) => error.message).join(', ')
