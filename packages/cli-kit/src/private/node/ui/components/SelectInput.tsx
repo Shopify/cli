@@ -157,17 +157,19 @@ function SelectInputInner<T>(
     key: item.key ?? (index + 1).toString(),
   })) as ItemWithKey<T>[]
 
+  const availableLinesToUse = Math.min(availableLines, MAX_AVAILABLE_LINES)
+
   function maximumLinesLostToGroups(items: Item<T>[]): number {
     // Calculate a safe estimate of the limit needed based on the space available
     const numberOfGroups = new Set(items.map((item) => item.group).filter((group) => group)).size
     // Add 1 to numberOfGroups because we also have a default Other group
-    const maxVisibleGroups = Math.ceil(Math.min((availableLines + 1) / 3, numberOfGroups + 1))
+    const maxVisibleGroups = Math.ceil(Math.min((availableLinesToUse + 1) / 3, numberOfGroups + 1))
     // If we have x visible groups, we lose 1 line to the first group + 2 lines to the rest
     return numberOfGroups > 0 ? (maxVisibleGroups - 1) * 2 + 1 : 0
   }
 
   const maxLinesLostToGroups = maximumLinesLostToGroups(items)
-  const limit = Math.max(2, availableLines - maxLinesLostToGroups)
+  const limit = Math.max(2, availableLinesToUse - maxLinesLostToGroups)
   const hasLimit = items.length > limit
 
   const inputStack = useRef<string | null>(null)
@@ -263,7 +265,7 @@ function SelectInputInner<T>(
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
     const minHeight = hasAnyGroup ? 5 : 2
-    const sectionHeight = Math.max(minHeight, Math.min(availableLines, optionsHeight))
+    const sectionHeight = Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))
     const maxKeyLength = itemsWithKeys
       .map((item) => item.key?.length ?? 0)
       .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)

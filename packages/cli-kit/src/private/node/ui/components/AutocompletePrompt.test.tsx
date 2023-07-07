@@ -410,6 +410,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m50 options available, 25 visible.[22m
       "
     `)
 
@@ -446,6 +447,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-sixth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -481,6 +483,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m50 options available, 25 visible.[22m
       "
     `)
 
@@ -518,6 +521,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-sixth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -671,6 +675,7 @@ describe('AutocompletePrompt', async () => {
          th[1mi[22mrty-sixth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -706,6 +711,7 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
+         [2m50 options available, 25 visible.[22m
       "
     `)
   })
@@ -758,7 +764,8 @@ describe('AutocompletePrompt', async () => {
          twenty-fifth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [1m1-25 of many[22m  Find what you're looking for by typing its name.
+         [1m1-50 of many[22m  Find what you're looking for by typing its name.
+         [2m50 options available, 25 visible.[22m
       "
     `)
   })
