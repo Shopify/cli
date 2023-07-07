@@ -310,10 +310,10 @@ async function dev(options: DevOptions) {
       additionalProcesses,
     })
   }
+}
 
-  function setPreviousAppId(directory: string, apiKey: string) {
-    setAppInfo({directory, previousAppId: apiKey})
-  }
+function setPreviousAppId(directory: string, apiKey: string) {
+  setAppInfo({directory, previousAppId: apiKey})
 }
 
 function isWebType(web: Web, type: WebType): boolean {

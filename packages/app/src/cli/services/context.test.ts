@@ -306,7 +306,7 @@ describe('ensureDevContext', async () => {
       expect(got).toEqual({
         remoteApp: {...APP2, apiSecret: 'secret2'},
         storeFqdn: STORE1.shopDomain,
-        remoteAppUpdated: false,
+        remoteAppUpdated: true,
         useCloudflareTunnels: true,
         updateURLs: true,
         config: CACHED1_WITH_CONFIG.configFile,
@@ -503,6 +503,28 @@ dev_store_url = "domain1"
     })
   })
 
+  test('returns remoteAppUpdated true when previous app id is different', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
+    // vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    const got = await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP1, apiSecret: 'secret1'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
+      useCloudflareTunnels: true,
+      updateURLs: undefined,
+      deploymentMode: 'legacy',
+      config: CACHED1_WITH_CONFIG.configFile,
+    })
+  })
+
   test('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
@@ -524,7 +546,7 @@ dev_store_url = "domain1"
 
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(getAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
