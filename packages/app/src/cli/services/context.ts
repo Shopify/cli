@@ -97,7 +97,27 @@ export async function ensureGenerateContext(options: {
     }
     return app.apiKey
   }
-  const cachedInfo = getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+
+  let cachedInfo = getAppDevCachedInfo({reset: options.reset, directory: options.directory})
+
+  const {configuration: localAppConfiguration, configurationPath} = await loadAppConfiguration({
+    directory: options.directory,
+    configName: cachedInfo?.configFile,
+  })
+
+  if (isCurrentAppSchema(localAppConfiguration)) {
+    const remoteApp = (await appFromId(localAppConfiguration.client_id, options.token))!
+    cachedInfo = {
+      ...cachedInfo,
+      directory: options.directory,
+      configFile: basename(configurationPath),
+      orgId: remoteApp.organizationId,
+      appId: remoteApp.apiKey,
+      title: remoteApp.title,
+      storeFqdn: localAppConfiguration.cli?.dev_store_url,
+      updateURLs: localAppConfiguration.cli?.automatically_update_urls_on_dev,
+    }
+  }
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
@@ -242,12 +262,12 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   return result
 }
 
-const resetHelpMessage = 'You can pass `--reset` to your command to reset your config.'
+const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your config']
 
 const appFromId = async (appId: string | undefined, token: string): Promise<OrganizationApp | undefined> => {
   if (!appId) return
   const app = await fetchAppFromApiKey(appId, token)
-  if (!app) throw new BugError(`Couldn't find the app with Client ID "${appId}". ${resetHelpMessage}`)
+  if (!app) throw new BugError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
   return app
 }
 
@@ -465,7 +485,6 @@ export async function fetchAppAndIdentifiers(
   options: {
     app: AppInterface
     reset: boolean
-    packageManager?: PackageManager
     apiKey?: string
   },
   token: string,
@@ -473,19 +492,14 @@ export async function fetchAppAndIdentifiers(
   let envIdentifiers = getAppIdentifiers({app: options.app})
   let partnersApp: OrganizationApp | undefined
 
-  if (options.reset) {
+  if (isCurrentAppSchema(options.app.configuration)) {
+    const apiKey = options.apiKey ?? options.app.configuration.client_id
+    partnersApp = await appFromId(apiKey, token)
+  } else if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
   } else if (envIdentifiers.app) {
     const apiKey = options.apiKey ?? envIdentifiers.app
-    partnersApp = await fetchAppFromApiKey(apiKey, token)
-    if (!partnersApp) {
-      throw new AbortError(
-        outputContent`Couldn't find the app with Client ID ${apiKey}`,
-        outputContent`• If you didn't intend to select this app, run ${
-          outputContent`${outputToken.packagejsonScript(options.app.packageManager, 'deploy', '--reset')}`.value
-        }`,
-      )
-    }
+    partnersApp = await appFromId(apiKey, token)
   } else {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
