@@ -19,7 +19,7 @@ export const TypeSchema = zod.object({
 })
 
 export const ExtensionsArraySchema = zod.object({
-  type: zod.string(),
+  type: zod.string().optional(),
   extensions: zod.array(zod.any()).optional(),
 })
 

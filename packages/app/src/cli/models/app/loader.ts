@@ -24,7 +24,6 @@ import {
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
@@ -310,8 +309,7 @@ class AppLoader {
 
   async createExtensionInstance(
     type: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    configurationObject: any,
+    configurationObject: unknown,
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
@@ -364,10 +362,9 @@ class AppLoader {
           const config = {...configuration, ...extensionConfig}
           return this.createExtensionInstance(config.type, config, configurationPath, directory)
         })
-        return getArrayRejectingUndefined(await Promise.all(extensionsPromises))
-      } else {
-        const instance = await this.createExtensionInstance(type, obj, configurationPath, directory)
-        return [instance]
+        return Promise.all(extensionsPromises)
+      } else if (type) {
+        return this.createExtensionInstance(type, obj, configurationPath, directory)
       }
     })
 
