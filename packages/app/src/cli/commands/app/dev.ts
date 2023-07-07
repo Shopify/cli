@@ -118,7 +118,7 @@ export default class Dev extends Command {
 
     await dev({
       directory: flags.path,
-      config: flags.config,
+      configName: flags.config,
       apiKey,
       storeFqdn: flags.store,
       reset: flags.reset,

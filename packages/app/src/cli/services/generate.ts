@@ -35,7 +35,7 @@ export interface GenerateOptions {
   template?: string
   name?: string
   cloneUrl?: string
-  config?: string
+  configName?: string
 }
 
 async function generate(options: GenerateOptions) {

@@ -57,7 +57,7 @@ const MANIFEST_VERSION = '3'
 export interface DevOptions {
   directory: string
   id?: number
-  config?: string
+  configName?: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -90,7 +90,7 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
-    config,
+    configName,
     deploymentMode,
   } = await ensureDevContext(options, token)
 
@@ -103,7 +103,7 @@ async function dev(options: DevOptions) {
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
-  let localApp = await load({directory: options.directory, specifications, configName: config})
+  let localApp = await load({directory: options.directory, specifications, configName})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
