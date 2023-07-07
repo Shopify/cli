@@ -105,8 +105,9 @@ export async function ensureGenerateContext(options: {
     configName: cachedInfo?.configFile,
   })
 
+  let remoteApp
   if (isCurrentAppSchema(localAppConfiguration)) {
-    const remoteApp = (await appFromId(localAppConfiguration.client_id, options.token))!
+    remoteApp = (await appFromId(localAppConfiguration.client_id, options.token))!
     cachedInfo = {
       ...cachedInfo,
       directory: options.directory,
@@ -128,7 +129,7 @@ export async function ensureGenerateContext(options: {
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
-    const app = await fetchAppFromApiKey(cachedInfo.appId, options.token)
+    const app = remoteApp || (await fetchAppFromApiKey(cachedInfo.appId, options.token))
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
