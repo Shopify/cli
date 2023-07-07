@@ -51,7 +51,6 @@ function SelectPrompt<T>({
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
   const currentAvailableLines = stdout.rows - promptAreaHeight - 5
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
-  const choicesHaveKeys = choices.some((choice) => typeof choice.key !== 'undefined' && choice.key.length > 0)
 
   const wrapperRef = useCallback((node) => {
     if (node !== null) {
