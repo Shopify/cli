@@ -118,17 +118,15 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all(
-    [
-      generateFrontendURL({
-        ...options,
-        app: localApp,
-        tunnelClient,
-      }),
-      getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-      getURLs(apiKey, token),
-    ],
-  )
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
+    generateFrontendURL({
+      ...options,
+      app: localApp,
+      tunnelClient,
+    }),
+    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
+    getURLs(apiKey, token),
+  ])
   let frontendServerPort = frontendConfig?.configuration.port
   if (frontendConfig) {
     if (!frontendServerPort) {
