@@ -328,7 +328,7 @@ function isWebType(web: Web, type: WebType): boolean {
 interface DevWebOptions {
   web: Web
   backendPort: number
-  frontendServerPort: number
+  frontendServerPort: number | undefined
   hmrServerPort?: number
   apiKey: string
   apiSecret?: string
