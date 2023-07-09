@@ -118,7 +118,7 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, frontendServerPort, currentURLs] = await Promise.all(
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all(
     [
       generateFrontendURL({
         ...options,
@@ -126,11 +126,16 @@ async function dev(options: DevOptions) {
         tunnelClient,
       }),
       getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-      frontendConfig?.configuration.port || getAvailableTCPPort(),
       getURLs(apiKey, token),
     ],
   )
-  if (frontendConfig && !frontendConfig.configuration.port) frontendConfig.configuration.port = frontendServerPort
+  let frontendServerPort = frontendConfig?.configuration.port
+  if (frontendConfig) {
+    if (!frontendServerPort) {
+      frontendServerPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
+    }
+    frontendConfig.configuration.port = frontendServerPort
+  }
 
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   const proxyTargets: ReverseHTTPProxyTarget[] = []
