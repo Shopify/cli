@@ -250,28 +250,24 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
         },
       ]
     }
-    const errorsBody =
-      errors.length === 1
-        ? errors[0]?.message
-        : {
-            list: {
-              items: errors.map((error) => error.message),
-            },
-          }
+
+    if (errors.length === 1) {
+      return [
+        {
+          body: errors[0]!.message,
+        },
+      ]
+    }
 
     return [
       {
-        body: errorsBody,
-      },
-      {
-        title: 'Next Steps',
         body: {
           list: {
-            items: ['View details about this version in the Partner Dashboard.'],
+            items: errors.map((error) => error.message),
           },
         },
       },
-    ] as ErrorCustomSection[]
+    ]
   } else {
     return []
   }
