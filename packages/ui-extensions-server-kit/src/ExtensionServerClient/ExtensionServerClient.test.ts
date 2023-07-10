@@ -673,7 +673,7 @@ describe('ExtensionServerClient', () => {
 
   describe('onConnection()', () => {
     test('enables listening to connection open events', async () => {
-      const {socket, client} = setup({
+      const {client} = setup({
         connection: {automaticConnect: false, url: 'ws://example-host.com:8000/extensions/'},
       })
       const openListener = vi.fn()
@@ -687,14 +687,14 @@ describe('ExtensionServerClient', () => {
         expect(openListener).toHaveBeenCalledWith(expect.objectContaining({type: 'open'}))
 
         disconnect()
-        socket.close()
       }, 100)
     })
 
     test('unsubscribes from connection open events', async () => {
-      const {socket, client} = setup({
+      const {client} = setup({
         connection: {automaticConnect: false, url: 'ws://example-host.com:8000/extensions/'},
       })
+
       const openListener = vi.fn()
       const unsubscribe = client.onConnection('open', openListener)
 
@@ -707,29 +707,27 @@ describe('ExtensionServerClient', () => {
       setTimeout(() => {
         expect(openListener).toHaveBeenCalledTimes(0)
         disconnect()
-        socket.close()
       }, 100)
     })
 
     test('enables listening to connection close events', async () => {
-      const {socket, client} = setup()
+      const {client} = setup()
       const closeListener = vi.fn()
       client.onConnection('close', closeListener)
       const disconnect = client.connect()
 
       disconnect()
 
-      // Unfortunately I couldn't find a way to assert after the open event was dispatch
+      // Unfortunately I couldn't find a way to assert after the close event was dispatch
       // without using a setTimeout
       setTimeout(() => {
         expect(closeListener).toHaveBeenCalledTimes(1)
         expect(closeListener).toHaveBeenCalledWith(expect.objectContaining({type: 'close'}))
-        socket.close()
       }, 100)
     })
 
     test('unsubscribes from connection close events', async () => {
-      const {socket, client} = setup()
+      const {client} = setup()
       const closeListener = vi.fn()
       const unsubscribe = client.onConnection('close', closeListener)
 
@@ -739,11 +737,10 @@ describe('ExtensionServerClient', () => {
 
       disconnect()
 
-      // Unfortunately I couldn't find a way to assert after the open event was dispatch
+      // Unfortunately I couldn't find a way to assert after the close event was dispatch
       // without using a setTimeout
       setTimeout(() => {
         expect(closeListener).toHaveBeenCalledTimes(0)
-        socket.close()
       }, 100)
     })
   })
