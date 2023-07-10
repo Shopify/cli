@@ -24,12 +24,10 @@ vi.mock('@shopify/cli-kit/node/ui')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {},
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {},
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({

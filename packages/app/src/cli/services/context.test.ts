@@ -100,13 +100,11 @@ const APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {cliTunnelAlternative: false},
   website: '',
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {cliTunnelAlternative: true},
   website: '',
 }
 
@@ -307,7 +305,6 @@ describe('ensureDevContext', async () => {
         remoteApp: {...APP2, apiSecret: 'secret2'},
         storeFqdn: STORE1.shopDomain,
         remoteAppUpdated: true,
-        useCloudflareTunnels: true,
         updateURLs: true,
         config: CACHED1_WITH_CONFIG.configFile,
         deploymentMode: 'legacy',
@@ -485,7 +482,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
     })
@@ -518,29 +514,9 @@ dev_store_url = "domain1"
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
       config: CACHED1_WITH_CONFIG.configFile,
-    })
-  })
-
-  test('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
-    // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-
-    // When
-    const got = await ensureDevContext(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP1, apiSecret: 'secret1'},
-      storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
-      useCloudflareTunnels: false,
-      updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
   })
 
@@ -558,7 +534,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: false,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
     })
@@ -608,7 +583,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
     })
@@ -666,7 +640,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: false,
       updateURLs: undefined,
       deploymentMode: 'unified',
     })
@@ -692,7 +665,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: false,
       updateURLs: undefined,
       deploymentMode: 'unified',
     })

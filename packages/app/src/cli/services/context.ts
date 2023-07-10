@@ -68,7 +68,6 @@ interface DevContextOutput {
   remoteAppUpdated: boolean
   storeFqdn: string
   updateURLs: boolean | undefined
-  useCloudflareTunnels: boolean
   config?: string
   deploymentMode: DeploymentMode
 }
@@ -160,7 +159,6 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   const organization = await fetchOrgFromId(orgId, token)
-  const useCloudflareTunnels = organization.betas?.cliTunnelAlternative !== true
 
   if (!selectedApp || !selectedStore) {
     // if we have selected an app or a dev store from a command flag, we keep them
@@ -217,7 +215,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, deploymentMode, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -243,7 +241,6 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
 function buildOutput(
   app: OrganizationApp,
   store: OrganizationStore,
-  useCloudflareTunnels: boolean,
   deploymentMode: DeploymentMode,
   cachedInfo?: CachedAppInfo,
 ): DevContextOutput {
@@ -255,7 +252,6 @@ function buildOutput(
     remoteAppUpdated: app.apiKey !== cachedInfo?.previousAppId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
-    useCloudflareTunnels,
     config: cachedInfo?.configFile,
     deploymentMode,
   }

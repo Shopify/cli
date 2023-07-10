@@ -18,8 +18,8 @@ afterEach(() => {
 describe('output', () => {
   describe('outputUpdateURLsResult', () => {
     const urls = {
-      applicationUrl: 'https://lala.ngrok.io/',
-      redirectUrlWhitelist: ['https://lala.ngrok.io/auth/callback'],
+      applicationUrl: 'https://lala.cloudflare.io/',
+      redirectUrlWhitelist: ['https://lala.cloudflare.io/auth/callback'],
     }
 
     test('shows info about tunnel URL and links to Partners Dashboard when app is brand new', async () => {
