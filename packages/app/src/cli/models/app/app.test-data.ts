@@ -44,15 +44,14 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
 
 interface TestAppWithConfigOptions {
   app?: Partial<AppInterface>
-  config: Partial<AppConfiguration>
+  config: object
 }
 export function testAppWithConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
-  const configuration = {
+  const configuration: AppConfiguration = {
     scopes: '',
     extension_directories: [],
     ...config,
   }
-
   return testApp({...app, configuration})
 }
 
