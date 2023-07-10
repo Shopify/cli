@@ -1,6 +1,7 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
 import {functionFlags, inFunctionContext} from '../../../services/function/common.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
+import {appFlags} from '../../../flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import Command from '@shopify/cli-kit/node/base-command'
@@ -10,6 +11,7 @@ export default class FetchSchema extends Command {
 
   static flags = {
     ...globalFlags,
+    ...appFlags,
     ...functionFlags,
     'api-key': Flags.string({
       hidden: true,
@@ -36,14 +38,19 @@ export default class FetchSchema extends Command {
     if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
-    await inFunctionContext(this.config, flags.path, async (app, ourFunction) => {
-      await generateSchemaService({
-        app,
-        extension: ourFunction,
-        apiKey,
-        stdout: flags.stdout,
-        path: flags.path,
-      })
+    await inFunctionContext({
+      commandConfig: this.config,
+      path: flags.path,
+      configName: flags.configName,
+      callback: async (app, ourFunction) => {
+        await generateSchemaService({
+          app,
+          extension: ourFunction,
+          apiKey,
+          stdout: flags.stdout,
+          path: flags.path,
+        })
+      },
     })
   }
 }

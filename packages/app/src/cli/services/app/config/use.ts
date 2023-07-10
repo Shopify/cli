@@ -1,20 +1,20 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
+import {clearCurrentConfigFile, getAppInfo, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {isCurrentAppSchema} from '../../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 
 export interface UseOptions {
   directory: string
-  config?: string
+  configName?: string
   reset?: boolean
 }
 
-export default async function use({directory, config, reset = false}: UseOptions): Promise<void> {
+export default async function use({directory, configName, reset = false}: UseOptions): Promise<void> {
   if (reset) {
     clearCurrentConfigFile(directory)
     renderSuccess({
@@ -24,7 +24,7 @@ export default async function use({directory, config, reset = false}: UseOptions
     return
   }
 
-  const configFileName = (await getConfigFileName(directory, config)).valueOrAbort()
+  const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
   await saveCurrentConfig({configFileName, directory})
 
@@ -42,18 +42,30 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   const {configuration} = await loadAppConfiguration({configName: configFileName, directory})
 
   if (isCurrentAppSchema(configuration) && configuration.client_id) {
+    const previousConfigFile = getAppInfo(directory)?.configFile
+    let previousAppId
+    if (previousConfigFile && fileExistsSync(joinPath(directory, previousConfigFile))) {
+      const {configuration: previousConfiguration} = await loadAppConfiguration({
+        configName: previousConfigFile,
+        directory,
+      })
+
+      if (isCurrentAppSchema(previousConfiguration)) previousAppId = previousConfiguration.client_id
+    }
+
     setAppInfo({
       directory,
       configFile: configFileName,
+      previousAppId,
     })
   } else {
     throw new AbortError(`Configuration file ${configFileName} needs a client_id.`)
   }
 }
 
-async function getConfigFileName(directory: string, config?: string): Promise<Result<string, string>> {
-  if (config) {
-    const configFile = getAppConfigurationFileName(config)
+async function getConfigFileName(directory: string, configName?: string): Promise<Result<string, string>> {
+  if (configName) {
+    const configFile = getAppConfigurationFileName(configName)
     if (await fileExists(joinPath(directory, configFile))) {
       return ok(configFile)
     } else {

@@ -12,10 +12,10 @@ export const appFlags = {
     default: async () => cwd(),
     env: 'SHOPIFY_FLAG_PATH',
   }),
-  environment: Flags.string({
-    hidden: true,
-    char: 'e',
-    description: 'The environment to apply to the current command.',
-    env: 'SHOPIFY_FLAG_ENVIRONMENT',
+  config: Flags.string({
+    hidden: false,
+    char: 'c',
+    description: 'The name of the app configuration.',
+    env: 'SHOPIFY_FLAG_APP_CONFIG',
   }),
 }

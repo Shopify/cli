@@ -18,9 +18,9 @@ export const schemaUrlV1 =
 
 export const schemaV1 = z
   .object({
-    $schema: z.string(),
-    theme_name: z.string(),
-    theme_version: z.string(),
+    $schema: z.string().describe('The URL for the JSON schema version used for validation and execution.'),
+    theme_name: z.string().describe('The name of the theme to which the update extension script applies.'),
+    theme_version: z.string().describe('The version of the theme to which the update extension script applies.'),
     operations: z
       .array(
         z
@@ -31,88 +31,114 @@ export const schemaV1 = z
                 z.union([
                   z
                     .object({
-                      action: z.literal('move'),
-                      file: z.any().superRefine((x, ctx) => {
-                        const schemas = [z.string(), z.object({source: z.string(), target: z.string()})]
-                        const errors = schemas.reduce(
-                          (errors: z.ZodError[], schema) =>
-                            ((result) => ('error' in result ? [...errors, result.error] : errors))(schema.safeParse(x)),
-                          [],
-                        )
-                        if (schemas.length - errors.length !== 1) {
-                          ctx.addIssue({
-                            path: ctx.path,
-                            code: 'invalid_union',
-                            unionErrors: errors,
-                            message: 'Invalid input: Should pass single schema',
-                          })
-                        }
-                      }),
-                      from_key: z.string(),
-                      to_key: z.string(),
+                      action: z.literal('move').describe('The action type.'),
+                      file: z
+                        .any()
+                        .superRefine((x, ctx) => {
+                          const schemas = [
+                            z
+                              .string()
+                              .describe(
+                                'The relative path of the file, within the theme folder, to move the key-value pair.',
+                              ),
+                            z.object({
+                              source: z.string().describe('The relative path of source file.'),
+                              target: z.string().describe('The relative path of target file.'),
+                            }),
+                          ]
+                          const errors = schemas.reduce(
+                            (errors: z.ZodError[], schema) =>
+                              ((result) => ('error' in result ? [...errors, result.error] : errors))(
+                                schema.safeParse(x),
+                              ),
+                            [],
+                          )
+                          if (schemas.length - errors.length !== 1) {
+                            ctx.addIssue({
+                              path: ctx.path,
+                              code: 'invalid_union',
+                              unionErrors: errors,
+                              message: 'Invalid input: Should pass single schema',
+                            })
+                          }
+                        })
+                        .describe(
+                          "The file referenced in this step can be either a string, if the source and target are the same, or an object with 'source' and 'target' properties.",
+                        ),
+                      from_key: z.string().describe('The key to move from.'),
+                      to_key: z.string().describe('The key to move to.'),
                     })
                     .strict(),
                   z
                     .object({
-                      action: z.literal('copy'),
-                      file: z.any().superRefine((x, ctx) => {
-                        const schemas = [z.string(), z.object({source: z.string(), target: z.string()})]
-                        const errors = schemas.reduce(
-                          (errors: z.ZodError[], schema) =>
-                            ((result) => ('error' in result ? [...errors, result.error] : errors))(schema.safeParse(x)),
-                          [],
-                        )
-                        if (schemas.length - errors.length !== 1) {
-                          ctx.addIssue({
-                            path: ctx.path,
-                            code: 'invalid_union',
-                            unionErrors: errors,
-                            message: 'Invalid input: Should pass single schema',
-                          })
-                        }
-                      }),
-                      from_key: z.string(),
-                      to_key: z.string(),
+                      action: z.literal('copy').describe('The action type.'),
+                      file: z
+                        .any()
+                        .superRefine((x, ctx) => {
+                          const schemas = [
+                            z.string().describe('The relative path of the file to copy the key-value pair.'),
+                            z.object({
+                              source: z.string().describe('The relative path of source file.'),
+                              target: z.string().describe('The relative path of target file.'),
+                            }),
+                          ]
+                          const errors = schemas.reduce(
+                            (errors: z.ZodError[], schema) =>
+                              ((result) => ('error' in result ? [...errors, result.error] : errors))(
+                                schema.safeParse(x),
+                              ),
+                            [],
+                          )
+                          if (schemas.length - errors.length !== 1) {
+                            ctx.addIssue({
+                              path: ctx.path,
+                              code: 'invalid_union',
+                              unionErrors: errors,
+                              message: 'Invalid input: Should pass single schema',
+                            })
+                          }
+                        })
+                        .describe(
+                          "The file referenced in this step can be either a string, if the source and target are the same, or an object with 'source' and 'target' properties.",
+                        ),
+                      from_key: z.string().describe('The key to copy from.'),
+                      to_key: z.string().describe('The key to copy to.'),
                     })
                     .strict(),
                   z
                     .object({
-                      action: z.literal('add'),
-                      file: z.string(),
-                      key: z.string(),
-                      value: z.any().superRefine((x, ctx) => {
-                        const schemas = [z.record(z.any()), z.array(z.any())]
-                        const errors = schemas.reduce(
-                          (errors: z.ZodError[], schema) =>
-                            ((result) => ('error' in result ? [...errors, result.error] : errors))(schema.safeParse(x)),
-                          [],
-                        )
-                        if (schemas.length - errors.length !== 1) {
-                          ctx.addIssue({
-                            path: ctx.path,
-                            code: 'invalid_union',
-                            unionErrors: errors,
-                            message: 'Invalid input: Should pass single schema',
-                          })
-                        }
-                      }),
+                      action: z.literal('add').describe('The action type.'),
+                      file: z.string().describe('The relative path of the file to add the key-value pair to.'),
+                      key: z.string().describe('The existing key to add the value to.'),
+                      value: z
+                        .any()
+                        .superRefine((x, ctx) => {
+                          const schemas = [z.record(z.any()), z.array(z.any())]
+                          const errors = schemas.reduce(
+                            (errors: z.ZodError[], schema) =>
+                              ((result) => ('error' in result ? [...errors, result.error] : errors))(
+                                schema.safeParse(x),
+                              ),
+                            [],
+                          )
+                          if (schemas.length - errors.length !== 1) {
+                            ctx.addIssue({
+                              path: ctx.path,
+                              code: 'invalid_union',
+                              unionErrors: errors,
+                              message: 'Invalid input: Should pass single schema',
+                            })
+                          }
+                        })
+                        .describe('The value to add, either as an object or an array.'),
                     })
                     .strict(),
                   z
                     .object({
-                      action: z.literal('update'),
-                      file: z.string(),
-                      key: z.string(),
-                      old_value: z.string(),
-                      new_value: z.string(),
-                    })
-                    .strict(),
-                  z
-                    .object({
-                      action: z.literal('delete'),
-                      file: z.string(),
-                      key: z.string(),
-                      value: z.string().optional(),
+                      action: z.literal('delete').describe('The action type.'),
+                      file: z.string().describe('The relative path of the file to delete the key-value pair from.'),
+                      key: z.string().describe('The key to delete.'),
+                      value: z.string().describe('The optional value to delete in the key.').optional(),
                     })
                     .strict(),
                 ]),
@@ -121,6 +147,7 @@ export const schemaV1 = z
           })
           .strict(),
       )
-      .min(1),
+      .min(1)
+      .describe('An array of operations to be performed on the theme during an update.'),
   })
   .strict()

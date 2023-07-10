@@ -121,6 +121,7 @@ module.exports = {
     '@shopify/cli/no-vi-mock-in-callbacks': 'error',
     '@shopify/cli/prompt-message-format': 'warn',
     '@shopify/cli/banner-headline-format': 'warn',
+    '@shopify/cli/required-fields-when-loading-app': 'error',
     'no-restricted-syntax': [
       'error',
       {
@@ -142,6 +143,7 @@ module.exports = {
       rules: {
         '@typescript-eslint/no-explicit-any': 'off',
         'no-restricted-syntax': 'off',
+        '@shopify/cli/required-fields-when-loading-app': 'off',
       },
     },
   ],

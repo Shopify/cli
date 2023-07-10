@@ -1,4 +1,7 @@
  app build                         @shopify/app                 
+ app config link                   @shopify/app                 
+ app config push                   @shopify/app                 
+ app config use                    @shopify/app                 
  app deploy                        @shopify/app                 
  app dev                           @shopify/app                 
  app env pull                      @shopify/app                 

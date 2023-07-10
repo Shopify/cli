@@ -1183,14 +1183,6 @@ describe('deploymentErrorsToCustomSections', () => {
       {
         body: 'First error message.',
       },
-      {
-        title: 'Next Steps',
-        body: {
-          list: {
-            items: ['View details about this version in the Partner Dashboard.'],
-          },
-        },
-      },
     ])
   })
 
@@ -1223,14 +1215,6 @@ describe('deploymentErrorsToCustomSections', () => {
         body: {
           list: {
             items: ['First error message.', 'Second error message.'],
-          },
-        },
-      },
-      {
-        title: 'Next Steps',
-        body: {
-          list: {
-            items: ['View details about this version in the Partner Dashboard.'],
           },
         },
       },

@@ -2,7 +2,7 @@ import link, {LinkOptions} from './link.js'
 import {saveCurrentConfig} from './use.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {load} from '../../../models/app/loader.js'
+import {loadApp} from '../../../models/app/loader.js'
 import {fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -21,7 +21,7 @@ vi.mock('../../../models/app/loader.js', async () => {
   const loader: any = await vi.importActual('../../../models/app/loader.js')
   return {
     ...loader,
-    load: vi.fn(),
+    loadApp: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/ui')
@@ -44,7 +44,7 @@ describe('link', () => {
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         configName: 'Default value',
       }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -63,7 +63,7 @@ describe('link', () => {
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -95,7 +95,7 @@ extension_directories = [ ]
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(load).mockResolvedValue(
+      vi.mocked(loadApp).mockResolvedValue(
         testApp({
           configurationPath: 'shopify.app.development.toml',
           configuration: {
@@ -149,7 +149,7 @@ scopes = "write_products"
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -181,7 +181,7 @@ extension_directories = [ ]
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         apiKey: 'api-key',
       }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
       vi.mocked(fetchAppFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -202,7 +202,7 @@ extension_directories = [ ]
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         apiKey: '1234-5678',
       }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
       vi.mocked(fetchAppFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -222,7 +222,7 @@ extension_directories = [ ]
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(load).mockRejectedValue(new Error('Shopify.app.toml not found'))
+      vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -248,7 +248,7 @@ legacy_scopes_behavior = true
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(load).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...REMOTE_APP,
         requestedAccessScopes: ['read_products', 'write_orders'],

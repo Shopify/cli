@@ -1,7 +1,7 @@
 import use, {UseOptions} from './use.js'
-import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
+import {testApp, testAppWithConfig, testAppWithLegacyConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
+import {clearCurrentConfigFile, getAppInfo, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -22,7 +22,7 @@ describe('use', () => {
       // Given
       const options: UseOptions = {
         directory: tmp,
-        config: 'invalid',
+        configName: 'invalid',
         reset: true,
       }
 
@@ -46,7 +46,7 @@ describe('use', () => {
       // Given
       const options: UseOptions = {
         directory: tmp,
-        config: 'not-there',
+        configName: 'not-there',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.not-there.toml')
 
@@ -64,7 +64,7 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.no-id.toml')
       const options: UseOptions = {
         directory: tmp,
-        config: 'no-id',
+        configName: 'no-id',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.no-id.toml')
 
@@ -89,7 +89,7 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.invalid.toml')
       const options: UseOptions = {
         directory: tmp,
-        config: 'invalid',
+        configName: 'invalid',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.invalid.toml')
 
@@ -121,11 +121,11 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.staging.toml')
       const options: UseOptions = {
         directory: tmp,
-        config: 'staging',
+        configName: 'staging',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
 
-      const app = testAppWithConfig({
+      const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
           client_id: 'something',
@@ -147,6 +147,171 @@ describe('use', () => {
       expect(setAppInfo).toHaveBeenCalledWith({
         directory: tmp,
         configFile: 'shopify.app.staging.toml',
+        previousAppId: undefined,
+      })
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Using configuration file shopify.app.staging.toml',
+      })
+    })
+  })
+
+  test('saves previousAppId when user switches to different config', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      createConfigFile(tmp, 'shopify.app.dev.toml')
+      createConfigFile(tmp, 'shopify.app.staging.toml')
+
+      const options: UseOptions = {
+        directory: tmp,
+        config: 'staging',
+      }
+
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
+
+      const previousApp = testAppWithConfig({
+        config: {
+          name: 'something old',
+          client_id: 'previous-app',
+          api_contact_email: 'bob@bob.com',
+          webhook_api_version: '2023-04',
+          application_url: 'https://example.com',
+        },
+      })
+      const app = testAppWithConfig({
+        config: {
+          name: 'something new',
+          client_id: 'new-app',
+          api_contact_email: 'bob@bob.com',
+          webhook_api_version: '2023-04',
+          application_url: 'https://example.com',
+        },
+      })
+
+      vi.mocked(getAppInfo).mockReturnValue({directory: tmp, configFile: 'shopify.app.dev.toml'})
+
+      vi.mocked(loadAppConfiguration)
+        .mockResolvedValueOnce({
+          appDirectory: tmp,
+          configurationPath: `${tmp}/shopify.app.staging.toml`,
+          configuration: app.configuration,
+        })
+        .mockResolvedValueOnce({
+          appDirectory: tmp,
+          configurationPath: `${tmp}/shopify.app.dev.toml`,
+          configuration: previousApp.configuration,
+        })
+
+      // When
+      await use(options)
+
+      // Then
+      expect(setAppInfo).toHaveBeenCalledWith({
+        directory: tmp,
+        configFile: 'shopify.app.staging.toml',
+        previousAppId: 'previous-app',
+      })
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Using configuration file shopify.app.staging.toml',
+      })
+    })
+  })
+
+  test('sets previousAppId to undefined when previous config file does not exist', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      createConfigFile(tmp, 'shopify.app.staging.toml')
+
+      const options: UseOptions = {
+        directory: tmp,
+        config: 'staging',
+      }
+
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
+
+      const app = testAppWithConfig({
+        config: {
+          name: 'something new',
+          client_id: 'new-app',
+          api_contact_email: 'bob@bob.com',
+          webhook_api_version: '2023-04',
+          application_url: 'https://example.com',
+        },
+      })
+
+      vi.mocked(getAppInfo).mockReturnValue({directory: tmp, configFile: 'shopify.app.dev.toml'})
+
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: `${tmp}/shopify.app.staging.toml`,
+        configuration: app.configuration,
+      })
+
+      // When
+      await use(options)
+
+      // Then
+      expect(setAppInfo).toHaveBeenCalledWith({
+        directory: tmp,
+        configFile: 'shopify.app.staging.toml',
+        previousAppId: undefined,
+      })
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'Using configuration file shopify.app.staging.toml',
+      })
+    })
+  })
+
+  test('sets previousAppId to undefined when previous config file is legacy schema', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      createConfigFile(tmp, 'shopify.app.dev.toml')
+      createConfigFile(tmp, 'shopify.app.staging.toml')
+
+      const options: UseOptions = {
+        directory: tmp,
+        config: 'staging',
+      }
+
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
+
+      const previousApp = testAppWithLegacyConfig({
+        config: {
+          name: 'something old',
+          scopes: 'read_products',
+        },
+      })
+      const app = testAppWithConfig({
+        config: {
+          name: 'something new',
+          client_id: 'new-app',
+          api_contact_email: 'bob@bob.com',
+          webhook_api_version: '2023-04',
+          application_url: 'https://example.com',
+        },
+      })
+
+      vi.mocked(getAppInfo).mockReturnValue({directory: tmp, configFile: 'shopify.app.dev.toml'})
+
+      vi.mocked(loadAppConfiguration)
+        .mockResolvedValueOnce({
+          appDirectory: tmp,
+          configurationPath: `${tmp}/shopify.app.staging.toml`,
+          configuration: app.configuration,
+        })
+        .mockResolvedValueOnce({
+          appDirectory: tmp,
+          configurationPath: `${tmp}/shopify.app.dev.toml`,
+          configuration: previousApp.configuration,
+        })
+
+      // When
+      await use(options)
+
+      // Then
+      expect(setAppInfo).toHaveBeenCalledWith({
+        directory: tmp,
+        configFile: 'shopify.app.staging.toml',
+        previousAppId: undefined,
       })
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Using configuration file shopify.app.staging.toml',
@@ -163,7 +328,7 @@ describe('use', () => {
       }
       vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
-      const app = testAppWithConfig({
+      const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
           client_id: 'something',

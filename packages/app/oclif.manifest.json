@@ -31,12 +31,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "skip-dependencies-installation": {
@@ -93,12 +93,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "api-key": {
@@ -191,18 +191,11 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "config": {
           "name": "config",
           "type": "option",
-          "description": "Name of the config file.",
+          "char": "c",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -355,12 +348,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "client-id": {
@@ -403,12 +396,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "json": {
@@ -458,12 +451,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "api-key": {
@@ -623,12 +616,11 @@
     },
     "app:config:link": {
       "id": "app:config:link",
-      "description": "Fetch your app's config from the Partner Dashboard.",
+      "description": "Fetch your app configuration from the Partner Dashboard.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
       "pluginType": "core",
-      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -652,12 +644,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "client-id": {
@@ -666,25 +658,17 @@
           "description": "The Client ID of your app.",
           "hidden": false,
           "multiple": false
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "description": "Name of the config file.",
-          "hidden": false,
-          "multiple": false
         }
       },
       "args": {}
     },
     "app:config:push": {
       "id": "app:config:push",
-      "description": "Push your app's config to the Partner Dashboard.",
+      "description": "Push your app configuration to the Partner Dashboard.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
       "pluginType": "core",
-      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -708,18 +692,11 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "config": {
           "name": "config",
           "type": "option",
-          "description": "Name of the config file.",
+          "char": "c",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         }
@@ -728,12 +705,11 @@
     },
     "app:config:use": {
       "id": "app:config:use",
-      "description": "Set a particular configuration to use.",
+      "description": "Activate an app configuration.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
       "pluginType": "core",
-      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -756,14 +732,6 @@
           "description": "The path to your app directory.",
           "multiple": false,
           "default": "."
-        },
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
         },
         "reset": {
           "name": "reset",
@@ -776,7 +744,7 @@
       "args": {
         "config": {
           "name": "config",
-          "description": "Name of the config file."
+          "description": "The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'."
         }
       }
     },
@@ -810,12 +778,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "env-file": {
@@ -859,12 +827,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         }
       },
@@ -900,6 +868,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
@@ -934,6 +910,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
         },
         "json": {
           "name": "json",
@@ -976,6 +960,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
         },
         "api-key": {
           "name": "api-key",
@@ -1032,6 +1024,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
@@ -1069,12 +1069,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "type": {
@@ -1175,6 +1175,14 @@
           "multiple": false,
           "default": "."
         },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
+        },
         "api-key": {
           "name": "api-key",
           "type": "option",
@@ -1234,12 +1242,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "type": {
@@ -1342,12 +1350,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
           "multiple": false
         },
         "api-key": {

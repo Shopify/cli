@@ -2,7 +2,7 @@ import {fetchExtensionTemplates} from './generate/fetch-template-specifications.
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
-import {load as loadApp} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
@@ -29,19 +29,24 @@ import {groupBy} from '@shopify/cli-kit/common/collection'
 export interface GenerateOptions {
   directory: string
   reset: boolean
-  config: Config
+  commandConfig: Config
   apiKey?: string
   type?: string
   template?: string
   name?: string
   cloneUrl?: string
+  configName?: string
 }
 
 async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
-  const specifications = await fetchSpecifications({token, apiKey, config: options.config})
-  const app: AppInterface = await loadApp({directory: options.directory, specifications})
+  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
+  const app: AppInterface = await loadApp({
+    directory: options.directory,
+    configName: options.configName,
+    specifications,
+  })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
 
