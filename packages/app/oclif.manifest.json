@@ -31,12 +31,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "skip-dependencies-installation": {
@@ -93,12 +93,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "api-key": {
@@ -191,17 +191,10 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "config": {
           "name": "config",
           "type": "option",
+          "char": "c",
           "description": "Name of the config file.",
           "hidden": false,
           "multiple": false
@@ -355,12 +348,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "client-id": {
@@ -403,12 +396,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "json": {
@@ -458,12 +451,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "api-key": {
@@ -652,25 +645,18 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "description": "Name of the config file.",
           "hidden": false,
           "multiple": false
         }
@@ -708,17 +694,10 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
-          "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
-          "multiple": false
-        },
         "config": {
           "name": "config",
           "type": "option",
+          "char": "c",
           "description": "Name of the config file.",
           "hidden": false,
           "multiple": false
@@ -757,12 +736,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "reset": {
@@ -810,12 +789,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "env-file": {
@@ -859,12 +838,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         }
       },
@@ -900,6 +879,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
@@ -934,6 +921,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
+          "multiple": false
         },
         "json": {
           "name": "json",
@@ -976,6 +971,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
+          "multiple": false
         },
         "api-key": {
           "name": "api-key",
@@ -1032,6 +1035,14 @@
           "hidden": false,
           "multiple": false,
           "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
+          "multiple": false
         }
       },
       "args": {}
@@ -1069,12 +1080,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "type": {
@@ -1175,6 +1186,14 @@
           "multiple": false,
           "default": "."
         },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
+          "multiple": false
+        },
         "api-key": {
           "name": "api-key",
           "type": "option",
@@ -1234,12 +1253,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "type": {
@@ -1342,12 +1361,12 @@
           "multiple": false,
           "default": "."
         },
-        "environment": {
-          "name": "environment",
+        "config": {
+          "name": "config",
           "type": "option",
-          "char": "e",
-          "description": "The environment to apply to the current command.",
-          "hidden": true,
+          "char": "c",
+          "description": "Name of the config file.",
+          "hidden": false,
           "multiple": false
         },
         "api-key": {
