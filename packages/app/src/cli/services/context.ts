@@ -27,7 +27,6 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {getPackageManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
@@ -115,8 +114,7 @@ export async function ensureGenerateContext(options: {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
-    const packageManager = await getPackageManager(options.directory)
-    showGenerateReusedValues(org.businessName, cachedInfo, packageManager)
+    showReusedGenerateValues(org.businessName, cachedInfo)
     return app.apiKey
   } else {
     const orgId = cachedInfo?.orgId || (await selectOrg(options.token))
@@ -207,8 +205,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     })
   }
 
-  await showDevReusedValues({
-    directory: options.directory,
+  await showReusedDevValues({
     selectedApp,
     selectedStore,
     cachedInfo,
@@ -222,7 +219,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   return result
 }
 
-const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your config']
+const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
 const appFromId = async (appId: string, token: string): Promise<OrganizationApp> => {
   const app = await fetchAppFromApiKey(appId, token)
@@ -365,6 +362,9 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       ],
     })
   }
+
+  const org = await fetchOrgFromId(partnersApp.organizationId, token)
+  showReusedDeployValues(org.businessName, options.app, partnersApp)
 
   const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
 
@@ -621,7 +621,6 @@ async function selectOrg(token: string): Promise<string> {
 }
 
 interface ReusedValuesOptions {
-  directory: string
   organization: Organization
   selectedApp: OrganizationApp
   selectedStore: OrganizationStore
@@ -631,13 +630,7 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-async function showDevReusedValues({
-  directory,
-  organization,
-  selectedApp,
-  selectedStore,
-  cachedInfo,
-}: ReusedValuesOptions) {
+async function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
 
   const usingDifferentSettings =
@@ -658,7 +651,6 @@ async function showDevReusedValues({
     items.push(`Tunnel:       ${cachedInfo.tunnelPlugin}`)
   }
 
-  const packageManager = await getPackageManager(directory)
   renderInfo({
     headline: reusedValuesTableTitle(cachedInfo),
     body: [
@@ -667,13 +659,13 @@ async function showDevReusedValues({
           items,
         },
       },
-      '\nTo reset your default dev config, run',
-      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+      '\n',
+      ...resetHelpMessage,
     ],
   })
 }
 
-function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, packageManager: PackageManager) {
+export function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
   renderInfo({
     headline: reusedValuesTableTitle(cachedAppInfo),
     body: [
@@ -682,8 +674,27 @@ function showGenerateReusedValues(org: string, cachedAppInfo: CachedAppInfo, pac
           items: [`Org:          ${org}`, `App:          ${cachedAppInfo.title}`],
         },
       },
-      '\nTo reset your default dev config, run',
-      {command: formatPackageManagerCommand(packageManager, 'dev', '--reset')},
+      '\n',
+      ...resetHelpMessage,
+    ],
+  })
+}
+
+export function showReusedDeployValues(
+  org: string,
+  app: AppInterface,
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
+) {
+  renderInfo({
+    headline: app.dotenv?.path ? `Using ${basename(app.dotenv.path)}:` : 'Using these settings:',
+    body: [
+      {
+        list: {
+          items: [`Org:          ${org}`, `App:          ${remoteApp.title}`],
+        },
+      },
+      '\n',
+      ...resetHelpMessage,
     ],
   })
 }

@@ -463,10 +463,12 @@ dev_store_url = "domain1"
               ],
             },
           },
-          '\nTo reset your default dev config, run',
+          '\n',
+          'You can pass',
           {
-            command: 'npm run dev -- --reset',
+            command: '--reset',
           },
+          'to your command to reset your app configuration.',
         ],
         headline: 'Using shopify.app.dev.toml:',
       })
@@ -583,10 +585,12 @@ dev_store_url = "domain1"
             ],
           },
         },
-        '\nTo reset your default dev config, run',
+        '\n',
+        'You can pass',
         {
-          command: 'npm run dev -- --reset',
+          command: '--reset',
         },
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using these settings:',
     })

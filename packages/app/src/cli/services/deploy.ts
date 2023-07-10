@@ -69,7 +69,7 @@ export async function deploy(options: DeployOptions) {
   outputNewline()
   switch (deploymentMode) {
     case 'legacy':
-      outputInfo(`Deploying your work to Shopify Partners. It will be part of ${partnersApp.title}`)
+      outputInfo(`Deploying your work to Shopify Partners.`)
       break
     case 'unified':
       outputInfo(`Releasing a new app version as part of ${partnersApp.title}`)
