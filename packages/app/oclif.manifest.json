@@ -35,7 +35,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -97,7 +97,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -195,7 +195,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -352,7 +352,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -400,7 +400,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -455,7 +455,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -649,7 +649,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -698,7 +698,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         }
@@ -736,14 +736,6 @@
           "multiple": false,
           "default": "."
         },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "Name of the config file.",
-          "hidden": false,
-          "multiple": false
-        },
         "reset": {
           "name": "reset",
           "type": "boolean",
@@ -755,7 +747,7 @@
       "args": {
         "config": {
           "name": "config",
-          "description": "Name of the config file."
+          "description": "The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'."
         }
       }
     },
@@ -793,7 +785,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -842,7 +834,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         }
@@ -884,7 +876,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         }
@@ -926,7 +918,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -976,7 +968,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -1040,7 +1032,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         }
@@ -1084,7 +1076,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -1190,7 +1182,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -1257,7 +1249,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },
@@ -1365,7 +1357,7 @@
           "name": "config",
           "type": "option",
           "char": "c",
-          "description": "Name of the config file.",
+          "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
         },

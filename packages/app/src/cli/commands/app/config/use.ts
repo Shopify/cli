@@ -4,6 +4,10 @@ import Command from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
+// This is one of the few commands where we don't need a
+// `--config` flag, because we're passing it as an argument.
+const {config, ...appFlagsWithoutConfig} = appFlags
+
 export default class ConfigUse extends Command {
   static hidden = true
 
@@ -11,7 +15,7 @@ export default class ConfigUse extends Command {
 
   static flags = {
     ...globalFlags,
-    ...appFlags,
+    ...appFlagsWithoutConfig,
     reset: Flags.boolean({
       hidden: false,
       description: 'Reset current configuration.',
@@ -24,7 +28,7 @@ export default class ConfigUse extends Command {
     // we want to this argument to be optional so that the user
     // can also select one from the list of available app tomls.
     config: Args.string({
-      description: 'Name of the config file.',
+      description: "The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.",
     }),
   }
 

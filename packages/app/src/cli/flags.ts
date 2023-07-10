@@ -15,7 +15,7 @@ export const appFlags = {
   config: Flags.string({
     hidden: false,
     char: 'c',
-    description: 'Name of the config file.',
+    description: 'The name of the app configuration.',
     env: 'SHOPIFY_FLAG_APP_CONFIG',
   }),
 }
