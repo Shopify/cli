@@ -163,7 +163,7 @@ describe('use', () => {
 
       const options: UseOptions = {
         directory: tmp,
-        config: 'staging',
+        configName: 'staging',
       }
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
@@ -223,7 +223,7 @@ describe('use', () => {
 
       const options: UseOptions = {
         directory: tmp,
-        config: 'staging',
+        configName: 'staging',
       }
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
@@ -269,7 +269,7 @@ describe('use', () => {
 
       const options: UseOptions = {
         directory: tmp,
-        config: 'staging',
+        configName: 'staging',
       }
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')

@@ -521,7 +521,7 @@ dev_store_url = "domain1"
       useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
-      config: CACHED1_WITH_CONFIG.configFile,
+      configName: CACHED1_WITH_CONFIG.configFile,
     })
   })
 
