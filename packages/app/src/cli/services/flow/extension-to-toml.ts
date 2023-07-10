@@ -2,6 +2,7 @@ import {configFromSerializedFields} from './serialize-partners-fields.js'
 import {FlowPartnersExtensionTypes} from './types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 interface FlowConfig {
   title: string
@@ -38,6 +39,7 @@ export function buildTomlObject(extension: ExtensionRegistration) {
     extensions: [
       {
         type: extension.type.replace('_definition', ''),
+        handle: slugify(extension.title),
         description: config.description,
         runtime_url: config.url,
         config_page_url: config.custom_configuration_page_url,
