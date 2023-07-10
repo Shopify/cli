@@ -46,13 +46,30 @@ interface TestAppWithConfigOptions {
   app?: Partial<AppInterface>
   config: object
 }
-export function testAppWithConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+
+export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
   const configuration: AppConfiguration = {
     scopes: '',
     extension_directories: [],
     ...config,
   }
   return testApp({...app, configuration})
+}
+
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+  const app = options?.app || testApp()
+  app.configuration = {
+    client_id: 'config-api-key',
+    name: 'app1',
+    scopes: 'read_products',
+    application_url: 'https://my-apps-url.com',
+    auth: {
+      redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+    },
+    ...options?.config,
+  }
+
+  return app as AppInterface
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {

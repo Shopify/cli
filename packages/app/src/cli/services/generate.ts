@@ -29,18 +29,19 @@ import {groupBy} from '@shopify/cli-kit/common/collection'
 export interface GenerateOptions {
   directory: string
   reset: boolean
-  config: Config
+  commandConfig: Config
   apiKey?: string
   type?: string
   template?: string
   name?: string
   cloneUrl?: string
+  config?: string
 }
 
 async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
-  const specifications = await fetchSpecifications({token, apiKey, config: options.config})
+  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   const app: AppInterface = await loadApp({directory: options.directory, specifications})
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)

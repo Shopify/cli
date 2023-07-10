@@ -17,6 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
+import {setAppInfo} from './local-storage.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -117,19 +118,22 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, frontendServerPort, currentURLs] = await Promise.all(
-    [
-      generateFrontendURL({
-        ...options,
-        app: localApp,
-        tunnelClient,
-      }),
-      getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-      frontendConfig?.configuration.port || getAvailableTCPPort(),
-      getURLs(apiKey, token),
-    ],
-  )
-  if (frontendConfig && !frontendConfig.configuration.port) frontendConfig.configuration.port = frontendServerPort
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
+    generateFrontendURL({
+      ...options,
+      app: localApp,
+      tunnelClient,
+    }),
+    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
+    getURLs(apiKey, token),
+  ])
+  let frontendServerPort = frontendConfig?.configuration.port
+  if (frontendConfig) {
+    if (!frontendServerPort) {
+      frontendServerPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
+    }
+    frontendConfig.configuration.port = frontendServerPort
+  }
 
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   const proxyTargets: ReverseHTTPProxyTarget[] = []
@@ -288,6 +292,8 @@ async function dev(options: DevOptions) {
     })
   }
 
+  setPreviousAppId(options.directory, apiKey)
+
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
   await reportAnalyticsEvent({config: options.commandConfig})
@@ -309,6 +315,10 @@ async function dev(options: DevOptions) {
   }
 }
 
+function setPreviousAppId(directory: string, apiKey: string) {
+  setAppInfo({directory, previousAppId: apiKey})
+}
+
 function isWebType(web: Web, type: WebType): boolean {
   return web.configuration.roles.includes(type)
 }
@@ -316,7 +326,7 @@ function isWebType(web: Web, type: WebType): boolean {
 interface DevWebOptions {
   web: Web
   backendPort: number
-  frontendServerPort: number
+  frontendServerPort: number | undefined
   hmrServerPort?: number
   apiKey: string
   apiSecret?: string

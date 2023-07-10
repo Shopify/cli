@@ -38,13 +38,15 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
+  const configValue = (await extension.deployConfig({apiKey, token, unifiedDeployment})) || {}
+  const {handle, ...remainingConfigs} = configValue
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...(await extension.deployConfig({apiKey, token, unifiedDeployment})),
+      ...remainingConfigs,
       serialized_script: encodedFile,
     }),
-    context: undefined,
+    context: handle as string,
     registrationId,
   }
   const mutation = ExtensionUpdateDraftMutation
