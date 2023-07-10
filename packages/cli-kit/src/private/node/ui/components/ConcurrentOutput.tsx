@@ -6,7 +6,7 @@ import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
+import {Box, Key, Static, Text, useInput, useStdout, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
@@ -142,6 +142,20 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
   })
 
+  const {stdout} = useStdout()
+  const rightBorderOnly = {
+    borderStyle: 'single' as const,
+    borderRight: true,
+    borderLeft: false,
+    borderTop: false,
+    borderBottom: false,
+    paddingRight: 1,
+    borderTopRight: false,
+    borderBottomRight: false,
+    borderTopLeft: false,
+    borderBottomLeft: false,
+  }
+
   return (
     <>
       <Static items={processOutput}>
@@ -149,26 +163,18 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           return (
             <Box flexDirection="column" key={index}>
               {chunk.lines.map((line, index) => (
-                <Box key={index} flexDirection="row" gap={1}>
+                <Box gap={1} key={index} flexDirection="row" width={stdout.columns}>
                   {showTimestamps ? (
-                    <Box gap={1}>
+                    <Box flexShrink={0} {...rightBorderOnly} borderRightColor={chunk.color}>
                       <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
-
-                      <Text bold color={chunk.color}>
-                        {figures.lineVertical}
-                      </Text>
                     </Box>
                   ) : null}
 
-                  <Box width={prefixColumnSize}>
+                  <Box width={prefixColumnSize + 2} flexShrink={0} {...rightBorderOnly} borderRightColor={chunk.color}>
                     <Text color={chunk.color}>{chunk.prefix}</Text>
                   </Box>
 
-                  <Text bold color={chunk.color}>
-                    {figures.lineVertical}
-                  </Text>
-
-                  <Box flexGrow={1}>
+                  <Box flexShrink={1}>
                     <Text color={chunk.color}>{line}</Text>
                   </Box>
                 </Box>
