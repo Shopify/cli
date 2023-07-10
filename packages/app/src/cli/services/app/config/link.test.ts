@@ -21,7 +21,7 @@ vi.mock('../../../models/app/loader.js', async () => {
   const loader: any = await vi.importActual('../../../models/app/loader.js')
   return {
     ...loader,
-    load: vi.fn(),
+    loadApp: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/ui')

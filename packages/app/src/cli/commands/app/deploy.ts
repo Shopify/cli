@@ -78,7 +78,7 @@ export default class Deploy extends Command {
     }))
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({specifications, directory: flags.path})
+    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
     await deploy({
       app,
       apiKey,

@@ -27,7 +27,12 @@ export default class EnvPull extends Command {
     const {flags} = await this.parse(EnvPull)
     const envFile = joinPath(flags.path, flags['env-file'])
     const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({specifications, directory: flags.path, mode: 'report'})
+    const app: AppInterface = await loadApp({
+      specifications,
+      directory: flags.path,
+      configName: flags.config,
+      mode: 'report',
+    })
     outputInfo(await pullEnv(app, {envFile}))
   }
 }

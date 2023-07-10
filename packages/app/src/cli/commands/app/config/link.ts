@@ -17,11 +17,6 @@ export default class ConfigLink extends Command {
       description: 'The Client ID of your app.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
     }),
-    config: Flags.string({
-      hidden: false,
-      description: 'Name of the config file.',
-      env: 'SHOPIFY_FLAG_APP_CONFIG',
-    }),
   }
 
   public async run(): Promise<void> {

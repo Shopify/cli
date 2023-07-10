@@ -27,13 +27,13 @@ describe('ensure we are within a function context', () => {
     let ranCallback = false
 
     // When
-    await inFunctionContext(
-      new Config({root: ''}),
-      joinPath(app.directory, 'extensions/my-function'),
-      async (_app, _fun) => {
+    await inFunctionContext({
+      commandConfig: new Config({root: ''}),
+      path: joinPath(app.directory, 'extensions/my-function'),
+      callback: async (_app, _fun) => {
         ranCallback = true
       },
-    )
+    })
 
     // Then
     expect(ranCallback).toBe(true)
@@ -46,8 +46,12 @@ describe('ensure we are within a function context', () => {
 
     // When
     await expect(
-      inFunctionContext(new Config({root: ''}), 'random/dir', async (_app, _fun) => {
-        ranCallback = true
+      inFunctionContext({
+        commandConfig: new Config({root: ''}),
+        path: 'random/dir',
+        callback: async (_app, _fun) => {
+          ranCallback = true
+        },
       }),
     ).rejects.toThrowError()
 

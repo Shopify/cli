@@ -13,11 +13,6 @@ export default class Dev extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    config: Flags.string({
-      hidden: false,
-      description: 'Name of the config file.',
-      env: 'SHOPIFY_FLAG_APP_CONFIG',
-    }),
     'api-key': Flags.string({
       hidden: true,
       description: 'The API key of your app.',

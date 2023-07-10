@@ -42,7 +42,11 @@ async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
-  const app: AppInterface = await loadApp({directory: options.directory, specifications})
+  const app: AppInterface = await loadApp({
+    directory: options.directory,
+    configName: options.configName,
+    specifications,
+  })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
 

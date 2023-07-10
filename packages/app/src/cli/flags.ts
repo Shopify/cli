@@ -18,4 +18,10 @@ export const appFlags = {
     description: 'The environment to apply to the current command.',
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
   }),
+  config: Flags.string({
+    hidden: false,
+    char: 'c',
+    description: 'Name of the config file.',
+    env: 'SHOPIFY_FLAG_APP_CONFIG',
+  }),
 }
