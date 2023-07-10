@@ -14,6 +14,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
+import link from './app/config/link.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppConfiguration, AppInterface, isCurrentAppSchema, appIsLaunchable} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -47,7 +48,6 @@ import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {basename} from '@shopify/cli-kit/node/path'
-import link from './app/config/link.js'
 import {Config} from '@oclif/core'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
@@ -161,8 +161,8 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   }
 
   if ((previousCachedInfo?.configFile && options.reset) || (cachedContext.cachedInfo === undefined && !options.reset)) {
-    const newCachedContext = await link(options)
-    cachedContext = {...newCachedContext}
+    await link(options)
+    cachedContext = await getAppDevCachedContext({...options, reset: false, configName: undefined, token})
   }
 
   const {configuration, configurationPath, cachedInfo, remoteApp} = cachedContext
