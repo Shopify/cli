@@ -24,7 +24,7 @@ import * as template from '@shopify/cli-kit/node/liquid'
 import * as file from '@shopify/cli-kit/node/fs'
 import * as git from '@shopify/cli-kit/node/git'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {hyphenate} from '@shopify/cli-kit/common/string'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 // vi.mock('@shopify/cli-kit/node/node-package-manager')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
@@ -222,7 +222,7 @@ describe('initialize a extension', async () => {
         expect(recursiveDirectoryCopySpy).toHaveBeenCalledWith(expect.any(String), expect.any(String), {
           srcFileExtension: ext,
           name,
-          handle: hyphenate(name),
+          handle: slugify(name),
           flavor,
         })
       })
@@ -257,7 +257,7 @@ describe('initialize a extension', async () => {
         {
           srcFileExtension: 'js',
           name,
-          handle: hyphenate(name),
+          handle: slugify(name),
           flavor: extensionFlavor,
         },
       )
