@@ -3,7 +3,7 @@ import {AppConfiguration, AppInterface, isLegacyAppSchema} from '../../../models
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {getAppConfigurationFileName, load} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -45,7 +45,7 @@ export default async function link(options: LinkOptions): Promise<void> {
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
   try {
     const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
-    const app = await load({
+    const app = await loadApp({
       specifications,
       directory: options.directory,
       mode: 'report',

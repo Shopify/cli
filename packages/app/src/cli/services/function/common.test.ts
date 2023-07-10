@@ -1,5 +1,5 @@
 import {inFunctionContext} from './common.js'
-import {load as loadApp} from '../../models/app/loader.js'
+import {loadApp} from '../../models/app/loader.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'

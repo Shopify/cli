@@ -3,7 +3,7 @@ import Command from '../../../utilities/app-command.js'
 import versionList from '../../../services/versions-list.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {load as loadApp} from '../../../models/app/loader.js'
+import {loadApp} from '../../../models/app/loader.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 

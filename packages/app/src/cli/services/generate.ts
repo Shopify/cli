@@ -2,7 +2,7 @@ import {fetchExtensionTemplates} from './generate/fetch-template-specifications.
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {AppInterface} from '../models/app/app.js'
-import {load as loadApp} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,

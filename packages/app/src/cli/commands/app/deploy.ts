@@ -1,7 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
 import {AppInterface} from '../../models/app/app.js'
-import {load as loadApp} from '../../models/app/loader.js'
+import {loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'

@@ -1,6 +1,6 @@
 import {appFlags} from '../../../flags.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {load as loadApp} from '../../../models/app/loader.js'
+import {loadApp} from '../../../models/app/loader.js'
 import {pullEnv} from '../../../services/app/env/pull.js'
 import Command from '../../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'

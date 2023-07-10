@@ -24,7 +24,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {load} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
@@ -103,7 +103,7 @@ async function dev(options: DevOptions) {
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
-  let localApp = await load({directory: options.directory, specifications, configName})
+  let localApp = await loadApp({directory: options.directory, specifications, configName})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
