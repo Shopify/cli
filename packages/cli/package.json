@@ -148,6 +148,9 @@
       "app": {
         "description": "Build Shopify apps."
       },
+      "app:config": {
+        "description": "Manage app configuration."
+      },
       "app:env": {
         "description": "Manage environment variables."
       },

@@ -9,9 +9,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 const {config, ...appFlagsWithoutConfig} = appFlags
 
 export default class ConfigUse extends Command {
-  static hidden = true
-
-  static description = 'Set a particular configuration to use.'
+  static description = 'Activate an app configuration.'
 
   static flags = {
     ...globalFlags,

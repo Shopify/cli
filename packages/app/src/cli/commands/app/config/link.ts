@@ -5,9 +5,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigLink extends Command {
-  static hidden = true
-
-  static description = "Fetch your app's config from the Partner Dashboard."
+  static description = 'Fetch your app configuration from the Partner Dashboard.'
 
   static flags = {
     ...globalFlags,
