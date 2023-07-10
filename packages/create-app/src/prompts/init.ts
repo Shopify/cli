@@ -18,9 +18,6 @@ interface InitOutput {
 // That way we don't have to update the CLI every time we add a template
 export const templateURLMap = {
   remix: 'https://github.com/Shopify/shopify-app-template-remix',
-  node: 'https://github.com/Shopify/shopify-app-template-node',
-  php: 'https://github.com/Shopify/shopify-app-template-php',
-  ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
   none: 'https://github.com/Shopify/shopify-app-template-none',
 } as const
 
