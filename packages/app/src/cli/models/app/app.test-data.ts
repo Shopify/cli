@@ -77,15 +77,9 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
 }
 
 export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
-  const app = options?.app || testApp()
+  const app = options?.app || testApp({}, 'current')
   app.configuration = {
-    client_id: 'config-api-key',
-    name: 'app1',
-    scopes: 'read_products',
-    application_url: 'https://my-apps-url.com',
-    auth: {
-      redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-    },
+    ...DEFAULT_CONFIG,
     ...options?.config,
   }
 

@@ -224,16 +224,16 @@ describe('ensureGenerateContext', () => {
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       appDirectory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
-      configuration: testAppWithConfig().configuration,
+      configuration: testAppWithConfig({config: {client_id: APP1.apiKey}}).configuration,
     })
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP1)
 
     // When
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith('config-api-key', 'token')
-    expect(got).toEqual(APP2.apiKey)
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP1.apiKey, 'token')
+    expect(got).toEqual(APP1.apiKey)
   })
 
   test('selects a new app and returns the api key', async () => {
@@ -632,7 +632,7 @@ dev_store_url = "domain1"
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
           api_contact_email: 'wils@bahan-lee.com',
-          webhook_api_version: '2023-04',
+          webhooks: {api_version: '2023-04'},
           embedded: true,
         },
       })
@@ -776,7 +776,7 @@ describe('ensureDeployContext', () => {
 
   test("fetches the app from the partners' API and returns it alongside the id when config as code is enabled", async () => {
     // Given
-    const app = testAppWithConfig()
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -792,7 +792,7 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith('config-api-key', 'token')
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
