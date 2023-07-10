@@ -150,6 +150,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
+  const previousCachedInfo = options.reset ? getAppInfo(options.directory) : undefined
   let {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
 
   if (cachedInfo === undefined && !options.reset) {
@@ -159,7 +160,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     outputInfo(explanation)
   }
 
-  if (!cachedInfo?.configFile && !options.reset || ) {
+  if ((previousCachedInfo?.configFile && options.reset) || (cachedInfo === undefined && !options.reset)) {
     await link(options)
     const linkedCachedContext = await getAppDevCachedContext({...options, config: undefined, token})
     configuration = linkedCachedContext.configuration
