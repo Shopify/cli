@@ -20,6 +20,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   protected EVENT_THAT_WILL_MUTATE_THE_SERVER = ['update']
 
   protected listeners: {[key: string]: Set<any>} = {}
+  protected connectionListeners: {close: Set<any>; open: Set<any>} = {close: new Set(), open: new Set()}
 
   protected connected = false
 
@@ -125,18 +126,28 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     this.connection?.send(JSON.stringify({event: 'dispatch', data: {type: event, payload: data}}))
   }
 
+  public onConnection<TEvent extends keyof typeof this.connectionListeners>(
+    event: TEvent,
+    listener: (event: Event) => void,
+  ): () => void {
+    this.connectionListeners[event].add(listener)
+    return () => this.connectionListeners[event].delete(listener)
+  }
+
   protected initializeConnection() {
     if (!this.connection) {
       return
     }
 
-    this.connection.onopen = () => {
+    this.connection.addEventListener('open', (event) => {
       this.connected = true
-    }
+      this.connectionListeners.open.forEach((listener) => listener(event))
+    })
 
-    this.connection.onclose = () => {
+    this.connection.addEventListener('close', (event) => {
       this.connected = false
-    }
+      this.connectionListeners.close.forEach((listener) => listener(event))
+    })
 
     this.connection?.addEventListener('message', (message) => {
       try {
