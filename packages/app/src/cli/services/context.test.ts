@@ -309,7 +309,7 @@ describe('ensureDevContext', async () => {
         remoteAppUpdated: true,
         useCloudflareTunnels: true,
         updateURLs: true,
-        config: CACHED1_WITH_CONFIG.configFile,
+        configName: CACHED1_WITH_CONFIG.configFile,
         deploymentMode: 'legacy',
       })
       expect(setAppInfo).not.toHaveBeenCalled()
@@ -351,7 +351,7 @@ describe('ensureDevContext', async () => {
         {
           directory: 'app_directory',
           reset: false,
-          config: 'dev',
+          configName: 'dev',
         },
         'token',
       )
@@ -393,7 +393,7 @@ describe('ensureDevContext', async () => {
         {
           directory: 'app_directory',
           reset: false,
-          config: 'dev',
+          configName: 'dev',
         },
         'token',
       )
@@ -445,7 +445,7 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          config: 'dev',
+          configName: 'dev',
         },
         'token',
       )

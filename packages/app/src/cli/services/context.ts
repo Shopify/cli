@@ -58,7 +58,7 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 export interface DevContextOptions {
   directory: string
   apiKey?: string
-  config?: string
+  configName?: string
   storeFqdn?: string
   reset: boolean
 }
@@ -69,7 +69,7 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   useCloudflareTunnels: boolean
-  config?: string
+  configName?: string
   deploymentMode: DeploymentMode
 }
 
@@ -88,7 +88,7 @@ export async function ensureGenerateContext(options: {
   directory: string
   reset: boolean
   token: string
-  config?: string
+  configName?: string
 }): Promise<string> {
   if (options.apiKey) {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
@@ -256,7 +256,7 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     useCloudflareTunnels,
-    config: cachedInfo?.configFile,
+    configName: cachedInfo?.configFile,
     deploymentMode,
   }
 }
@@ -570,12 +570,12 @@ async function getAppDevCachedContext({
   reset,
   directory,
   token,
-  config,
+  configName,
 }: {
   reset: boolean
   directory: string
   token: string
-  config?: string
+  configName?: string
 }): Promise<AppDevCachedContext> {
   if (reset) clearAppInfo(directory)
 
@@ -583,7 +583,7 @@ async function getAppDevCachedContext({
 
   const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
-    configName: config || cachedInfo?.configFile,
+    configName: configName || cachedInfo?.configFile,
   })
 
   let remoteApp

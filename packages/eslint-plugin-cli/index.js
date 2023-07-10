@@ -11,6 +11,7 @@ module.exports = {
     'prompt-message-format': require('./rules/prompt-message-format'),
     'specific-imports-in-bootstrap-code': require('./rules/specific-imports-in-bootstrap-code'),
     'banner-headline-format': require('./rules/banner-headline-format'),
+    'required-fields-when-loading-app': require('./rules/required-fields-when-loading-app'),
   },
 
   configs: {

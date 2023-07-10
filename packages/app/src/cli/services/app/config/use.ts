@@ -10,11 +10,11 @@ import {Result, err, ok} from '@shopify/cli-kit/node/result'
 
 export interface UseOptions {
   directory: string
-  config?: string
+  configName?: string
   reset?: boolean
 }
 
-export default async function use({directory, config, reset = false}: UseOptions): Promise<void> {
+export default async function use({directory, configName, reset = false}: UseOptions): Promise<void> {
   if (reset) {
     clearCurrentConfigFile(directory)
     renderSuccess({
@@ -24,7 +24,7 @@ export default async function use({directory, config, reset = false}: UseOptions
     return
   }
 
-  const configFileName = (await getConfigFileName(directory, config)).valueOrAbort()
+  const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
   await saveCurrentConfig({configFileName, directory})
 
@@ -63,9 +63,9 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   }
 }
 
-async function getConfigFileName(directory: string, config?: string): Promise<Result<string, string>> {
-  if (config) {
-    const configFile = getAppConfigurationFileName(config)
+async function getConfigFileName(directory: string, configName?: string): Promise<Result<string, string>> {
+  if (configName) {
+    const configFile = getAppConfigurationFileName(configName)
     if (await fileExists(joinPath(directory, configFile))) {
       return ok(configFile)
     } else {
