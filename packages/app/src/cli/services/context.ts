@@ -47,6 +47,8 @@ import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {basename} from '@shopify/cli-kit/node/path'
+import link from './app/config/link.js'
+import {Config} from '@oclif/core'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -61,6 +63,7 @@ export interface DevContextOptions {
   configName?: string
   storeFqdn?: string
   reset: boolean
+  commandConfig: Config
 }
 
 interface DevContextOutput {
@@ -147,14 +150,22 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
+  const previousCachedInfo = options.reset ? getAppInfo(options.directory) : undefined
+  let cachedContext = await getAppDevCachedContext({...options, token})
 
-  if (cachedInfo === undefined && !options.reset) {
+  if (cachedContext.cachedInfo === undefined && !options.reset) {
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
     outputInfo(explanation)
   }
+
+  if ((previousCachedInfo?.configFile && options.reset) || (cachedContext.cachedInfo === undefined && !options.reset)) {
+    const newCachedContext = await link(options)
+    cachedContext = {...newCachedContext}
+  }
+
+  const {configuration, configurationPath, cachedInfo, remoteApp} = cachedContext
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
@@ -175,6 +186,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       selectedApp = _selectedApp
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
+      // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
     }
@@ -553,7 +565,7 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
-interface AppDevCachedContext {
+export interface AppDevCachedContext {
   configuration: AppConfiguration
   configurationPath: string
   cachedInfo?: CachedAppInfo
