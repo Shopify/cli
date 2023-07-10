@@ -47,6 +47,8 @@ import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {basename} from '@shopify/cli-kit/node/path'
+import link from './app/config/link.js'
+import {Config} from '@oclif/core'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -61,6 +63,7 @@ export interface DevContextOptions {
   configName?: string
   storeFqdn?: string
   reset: boolean
+  commandConfig: Config
 }
 
 interface DevContextOutput {
@@ -147,13 +150,22 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
+  let {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
 
   if (cachedInfo === undefined && !options.reset) {
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
     outputInfo(explanation)
+  }
+
+  if (!cachedInfo?.configFile && !options.reset || ) {
+    await link(options)
+    const linkedCachedContext = await getAppDevCachedContext({...options, config: undefined, token})
+    configuration = linkedCachedContext.configuration
+    configurationPath = linkedCachedContext.configurationPath
+    cachedInfo = linkedCachedContext.cachedInfo
+    remoteApp = linkedCachedContext.remoteApp
   }
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
