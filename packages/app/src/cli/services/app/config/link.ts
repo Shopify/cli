@@ -4,7 +4,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {AppDevCachedContext, InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {Config} from '@oclif/core'
@@ -14,7 +14,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {getAppInfo} from '../../local-storage.js'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -23,7 +22,7 @@ export interface LinkOptions {
   configName?: string
 }
 
-export default async function link(options: LinkOptions): Promise<AppDevCachedContext> {
+export default async function link(options: LinkOptions): Promise<void> {
   const localApp = await loadAppConfigFromDefaultToml(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
@@ -35,20 +34,12 @@ export default async function link(options: LinkOptions): Promise<AppDevCachedCo
   writeFileSync(configFilePath, encodeToml(configuration))
 
   await saveCurrentConfig({configFileName, directory: options.directory})
-  const cachedInfo = getAppInfo(options.directory)
 
   renderSuccess({
     headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${
       fileAlreadyExists ? 'updated' : 'created'
     }`,
   })
-
-  return {
-    configuration: localApp.configuration,
-    configurationPath: localApp.configurationPath,
-    cachedInfo,
-    remoteApp,
-  }
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {

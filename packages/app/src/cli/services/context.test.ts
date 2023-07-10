@@ -21,6 +21,7 @@ import {
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {resolveDeploymentMode} from './deploy/mode.js'
+import link from './app/config/link.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -39,7 +40,6 @@ import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
-import link from './app/config/link.js'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
@@ -184,7 +184,7 @@ beforeEach(async () => {
 
 describe('ensureGenerateContext', () => {
   beforeEach(() => {
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+    vi.mocked(loadAppConfiguration).mockResolvedValue({
       appDirectory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
@@ -267,7 +267,7 @@ describe('ensureGenerateContext', () => {
 
 describe('ensureDevContext', async () => {
   beforeEach(() => {
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+    vi.mocked(loadAppConfiguration).mockResolvedValue({
       appDirectory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
@@ -666,27 +666,26 @@ dev_store_url = "domain1"
   test('reset triggers link if opted into config in code', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const filePath = joinPath(tmp, 'shopify.app.dev.toml')
-      // Given
       vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
-      vi.mocked(link).mockResolvedValue({
+      const filePath = joinPath(tmp, 'shopify.app.dev.toml')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: filePath,
         configuration: {
-          application_url: APP2.applicationUrl,
           client_id: APP2.apiKey,
-          name: APP2.title,
+          name: APP2.apiKey,
+          application_url: APP2.applicationUrl,
           api_contact_email: 'wils@bahan-lee.com',
           webhook_api_version: '2023-04',
           embedded: true,
         },
-        configurationPath: filePath,
-        remoteApp: APP2,
-        cachedInfo: {directory: 'path/to', configFile: 'shopify.app.dev.toml'},
       })
+      vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
 
       // When
       const got = await ensureDevContext({...INPUT, reset: true}, 'token')
 
-      //Then
+      // Then
       expect(link).toBeCalled()
       expect(got.remoteApp).toEqual({...APP2, apiSecret: 'secret2'})
       expect(got.configName).toEqual('shopify.app.dev.toml')
