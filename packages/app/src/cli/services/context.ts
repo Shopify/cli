@@ -162,7 +162,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   if ((previousCachedInfo?.configFile && options.reset) || (cachedInfo === undefined && !options.reset)) {
     await link(options)
-    const linkedCachedContext = await getAppDevCachedContext({...options, config: undefined, token})
+    const linkedCachedContext = await getAppDevCachedContext({...options, reset: false, config: undefined, token})
     configuration = linkedCachedContext.configuration
     configurationPath = linkedCachedContext.configurationPath
     cachedInfo = linkedCachedContext.cachedInfo
