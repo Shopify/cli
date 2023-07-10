@@ -1,3 +1,4 @@
+import {Scrollbar} from './Scrollbar.js'
 import {useSelectState} from '../hooks/use-select-state.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {useCallback, forwardRef, useEffect} from 'react'
@@ -247,34 +248,43 @@ function SelectInputInner<T>(
   } else {
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
     const minHeight = hasAnyGroup ? 5 : 2
+    const sectionHeight = Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))
+
     return (
-      <Box flexDirection="column" ref={ref}>
-        <Box
-          flexDirection="column"
-          height={Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))}
-          overflowY="hidden"
-        >
-          {state.visibleOptions.map((item: Item<T>, index: number) => (
-            <Item
-              key={index}
-              item={item}
-              previousItem={state.visibleOptions[index - 1]}
-              highlightedTerm={highlightedTerm}
-              isSelected={item.value === state.value}
-              items={state.visibleOptions}
-              enableShortcuts={enableShortcuts}
-              hasAnyGroup={hasAnyGroup}
-              index={index}
+      <Box flexDirection="column" ref={ref} gap={1}>
+        <Box flexDirection="row" height={sectionHeight} width="100%">
+          <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
+            {state.visibleOptions.map((item: Item<T>, index: number) => (
+              <Item
+                key={index}
+                item={item}
+                previousItem={state.visibleOptions[index - 1]}
+                highlightedTerm={highlightedTerm}
+                isSelected={item.value === state.value}
+                items={state.visibleOptions}
+                enableShortcuts={enableShortcuts}
+                hasAnyGroup={hasAnyGroup}
+                index={index}
+              />
+            ))}
+          </Box>
+
+          {hasLimit ? (
+            <Scrollbar
+              containerHeight={sectionHeight}
+              visibleListSectionLength={limit}
+              fullListLength={items.length}
+              visibleFromIndex={state.visibleFromIndex}
             />
-          ))}
+          ) : null}
         </Box>
 
         {noItems ? (
-          <Box marginTop={1} marginLeft={3} height={2}>
+          <Box marginLeft={3}>
             <Text dimColor>Try again with a different keyword.</Text>
           </Box>
         ) : (
-          <Box marginTop={1} marginLeft={3} flexDirection="column">
+          <Box marginLeft={3} flexDirection="column">
             <Text dimColor>
               {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
                 itemsHaveKeys ? 'or a shortcut ' : ''
@@ -286,7 +296,6 @@ function SelectInputInner<T>(
                 {morePagesMessage ? `  ${morePagesMessage}` : null}
               </Text>
             ) : null}
-            {hasLimit ? <Text dimColor>{`${items.length} options available, ${limit} visible.`}</Text> : null}
           </Box>
         )}
       </Box>

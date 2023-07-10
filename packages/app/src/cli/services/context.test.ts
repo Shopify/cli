@@ -24,7 +24,7 @@ import {resolveDeploymentMode} from './deploy/mode.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
+import {testApp, testAppWithConfig, testOrganizationApp, testThemeExtensions} from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName, isWebType, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
@@ -175,6 +175,16 @@ beforeEach(async () => {
 })
 
 describe('ensureGenerateContext', () => {
+  beforeEach(() => {
+    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+      appDirectory: '/app',
+      configurationPath: '/app/shopify.app.toml',
+      configuration: {
+        scopes: 'read_products',
+      },
+    })
+  })
+
   test('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
@@ -186,6 +196,7 @@ describe('ensureGenerateContext', () => {
     // Then
     expect(got).toEqual(APP2.apiKey)
   })
+
   test('returns the cached api key', async () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token'}
@@ -198,6 +209,27 @@ describe('ensureGenerateContext', () => {
     // Then
     expect(got).toEqual(APP2.apiKey)
   })
+
+  test('returns the api key from the current config', async () => {
+    // Given
+    const input = {directory: '/app', reset: false, token: 'token'}
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(loadAppConfiguration).mockReset()
+    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+      appDirectory: '/app',
+      configurationPath: CACHED1_WITH_CONFIG.configFile!,
+      configuration: testAppWithConfig().configuration,
+    })
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+
+    // When
+    const got = await ensureGenerateContext(input)
+
+    // Then
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith('config-api-key', 'token')
+    expect(got).toEqual(APP2.apiKey)
+  })
+
   test('selects a new app and returns the api key', async () => {
     // Given
     const input = {directory: '/app', reset: true, token: 'token'}
@@ -274,7 +306,7 @@ describe('ensureDevContext', async () => {
       expect(got).toEqual({
         remoteApp: {...APP2, apiSecret: 'secret2'},
         storeFqdn: STORE1.shopDomain,
-        remoteAppUpdated: false,
+        remoteAppUpdated: true,
         useCloudflareTunnels: true,
         updateURLs: true,
         config: CACHED1_WITH_CONFIG.configFile,
@@ -471,6 +503,28 @@ dev_store_url = "domain1"
     })
   })
 
+  test('returns remoteAppUpdated true when previous app id is different', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
+    // vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+    // When
+    const got = await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(got).toEqual({
+      remoteApp: {...APP1, apiSecret: 'secret1'},
+      storeFqdn: STORE1.shopDomain,
+      remoteAppUpdated: true,
+      useCloudflareTunnels: true,
+      updateURLs: undefined,
+      deploymentMode: 'legacy',
+      config: CACHED1_WITH_CONFIG.configFile,
+    })
+  })
+
   test('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
     // Given
     vi.mocked(getAppInfo).mockReturnValue(undefined)
@@ -492,7 +546,7 @@ dev_store_url = "domain1"
 
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(getAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
@@ -698,6 +752,32 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).toHaveBeenCalled()
+    expect(got.partnersApp.id).toEqual(APP2.id)
+    expect(got.partnersApp.title).toEqual(APP2.title)
+    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.identifiers).toEqual(identifiers)
+    expect(got.deploymentMode).toEqual('legacy')
+  })
+
+  test("fetches the app from the partners' API and returns it alongside the id when config as code is enabled", async () => {
+    // Given
+    const app = testAppWithConfig()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    // When
+    const got = await ensureDeployContext(options(app))
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith('config-api-key', 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)

@@ -68,7 +68,7 @@ function SelectPrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - 5
+      const newAvailableLines = stdout.rows - promptAreaHeight - 4
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }

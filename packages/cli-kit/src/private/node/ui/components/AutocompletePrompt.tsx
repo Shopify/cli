@@ -38,6 +38,7 @@ enum PromptState {
 }
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
+const SELECT_INPUT_FOOTER_HEIGHT = 4
 
 // eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
@@ -60,7 +61,7 @@ function AutocompletePrompt<T>({
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
-  const currentAvailableLines = stdout.rows - promptAreaHeight - 5
+  const currentAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const paginatedSearch = useCallback(
@@ -92,7 +93,7 @@ function AutocompletePrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - 5
+      const newAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }

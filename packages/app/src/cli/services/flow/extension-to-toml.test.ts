@@ -26,7 +26,7 @@ describe('extension-to-toml', () => {
     const decodedToml = decodeToml(got)
     const parsed = FlowActionExtensionSchema.parse(decodedToml)
     expect(parsed.type).toEqual('flow_action')
-    expect(got).toEqual(`name = "flow action @ Char!"
+    expect(got).toEqual(`name = "action title"
 type = "flow_action"
 description = "action description"
 
@@ -92,7 +92,7 @@ required = true
     const decodedToml = decodeToml(got)
     const parsed = FlowTriggerExtensionSchema.parse(decodedToml)
     expect(parsed.type).toEqual('flow_trigger')
-    expect(got).toEqual(`name = 'trigger ext!"*^ÑÇ¨:"!'
+    expect(got).toEqual(`name = "trigger title"
 type = "flow_trigger"
 description = "trigger description"
 
