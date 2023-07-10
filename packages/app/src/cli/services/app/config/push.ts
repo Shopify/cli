@@ -98,7 +98,6 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     }
   }
 
-  console.log(variables)
   return variables
 }
 
