@@ -151,23 +151,21 @@ export async function ensureGenerateContext(options: {
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
   const previousCachedInfo = options.reset ? getAppInfo(options.directory) : undefined
-  let {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
+  let cachedContext = await getAppDevCachedContext({...options, token})
 
-  if (cachedInfo === undefined && !options.reset) {
+  if (cachedContext.cachedInfo === undefined && !options.reset) {
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
     outputInfo(explanation)
   }
 
-  if ((previousCachedInfo?.configFile && options.reset) || (cachedInfo === undefined && !options.reset)) {
-    await link(options)
-    const linkedCachedContext = await getAppDevCachedContext({...options, reset: false, configName: undefined, token})
-    configuration = linkedCachedContext.configuration
-    configurationPath = linkedCachedContext.configurationPath
-    cachedInfo = linkedCachedContext.cachedInfo
-    remoteApp = linkedCachedContext.remoteApp
+  if ((previousCachedInfo?.configFile && options.reset) || (cachedContext.cachedInfo === undefined && !options.reset)) {
+    const newCachedContext = await link(options)
+    cachedContext = {...newCachedContext}
   }
+
+  const {configuration, configurationPath, cachedInfo, remoteApp} = cachedContext
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
@@ -567,7 +565,7 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
-interface AppDevCachedContext {
+export interface AppDevCachedContext {
   configuration: AppConfiguration
   configurationPath: string
   cachedInfo?: CachedAppInfo
