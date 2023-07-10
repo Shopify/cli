@@ -7,6 +7,7 @@ import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.j
 import {AppDevCachedContext, InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
+import {getAppInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -14,7 +15,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {getAppInfo} from '../../local-storage.js'
 
 export interface LinkOptions {
   commandConfig: Config
