@@ -61,7 +61,7 @@ export interface PushConfigVariables {
   contactEmail?: string
   gdprWebhooks?: GdprWebhooks
   appProxy?: AppProxy
-  posEmbedded?: boolean | null
+  posEmbedded?: boolean
   embedded?: boolean
   preferencesUrl?: string | null
 }

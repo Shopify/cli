@@ -80,7 +80,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
       customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
       shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,
     },
-    posEmbedded: configuration.pos?.embedded ?? null,
+    posEmbedded: configuration.pos?.embedded ?? false,
     preferencesUrl: configuration.app_preferences?.url ?? null,
   }
 
@@ -98,6 +98,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     }
   }
 
+  console.log(variables)
   return variables
 }
 
