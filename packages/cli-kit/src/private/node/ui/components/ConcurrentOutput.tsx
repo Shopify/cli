@@ -142,41 +142,24 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
   })
 
-  const {stdout} = useStdout()
-  const rightBorderOnly = {
-    borderStyle: 'single' as const,
-    borderRight: true,
-    borderLeft: false,
-    borderTop: false,
-    borderBottom: false,
-    paddingRight: 1,
-    borderTopRight: false,
-    borderBottomRight: false,
-    borderTopLeft: false,
-    borderBottomLeft: false,
-  }
+  const {lineVertical} = figures
 
   return (
     <>
       <Static items={processOutput}>
         {(chunk, index) => {
+          const prefixBuffer = ' '.repeat(prefixColumnSize - chunk.prefix.length)
           return (
             <Box flexDirection="column" key={index}>
               {chunk.lines.map((line, index) => (
-                <Box gap={1} key={index} flexDirection="row" width={stdout.columns}>
-                  {showTimestamps ? (
-                    <Box flexShrink={0} {...rightBorderOnly} borderRightColor={chunk.color}>
-                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
-                    </Box>
-                  ) : null}
+                <Box key={index} flexDirection="row">
+                  <Text color={chunk.color}>
+                    {showTimestamps ? (
+                      <Text>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} {lineVertical} </Text>
+                    ) : null}
 
-                  <Box width={prefixColumnSize + 2} flexShrink={0} {...rightBorderOnly} borderRightColor={chunk.color}>
-                    <Text color={chunk.color}>{chunk.prefix}</Text>
-                  </Box>
-
-                  <Box flexShrink={1}>
-                    <Text color={chunk.color}>{line}</Text>
-                  </Box>
+                    <Text>{chunk.prefix}{prefixBuffer} {lineVertical} {line}</Text>
+                  </Text>
                 </Box>
               ))}
             </Box>
