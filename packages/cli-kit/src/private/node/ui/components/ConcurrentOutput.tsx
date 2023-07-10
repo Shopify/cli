@@ -6,7 +6,7 @@ import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useState} from 'react'
-import {Box, Key, Static, Text, useInput, useStdout, TextProps, useStdin} from 'ink'
+import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
@@ -155,10 +155,15 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                 <Box key={index} flexDirection="row">
                   <Text color={chunk.color}>
                     {showTimestamps ? (
-                      <Text>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} {lineVertical} </Text>
+                      <Text>
+                        {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} {lineVertical}{' '}
+                      </Text>
                     ) : null}
 
-                    <Text>{chunk.prefix}{prefixBuffer} {lineVertical} {line}</Text>
+                    <Text>
+                      {chunk.prefix}
+                      {prefixBuffer} {lineVertical} {line}
+                    </Text>
                   </Text>
                 </Box>
               ))}
