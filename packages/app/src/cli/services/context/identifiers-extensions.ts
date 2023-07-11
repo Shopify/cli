@@ -33,23 +33,22 @@ export async function ensureExtensionsIds(
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
-  const allExtensionsToMigrate = [...uiExtensionsToMigrate, ...flowExtensionsToMigrate]
 
-  if (allExtensionsToMigrate.length > 0) {
-    const confirmedMigration = await extensionMigrationPrompt(allExtensionsToMigrate)
+  if (uiExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
     if (!confirmedMigration) return err('user-cancelled')
+    remoteExtensions = await migrateExtensionsToUIExtension(uiExtensionsToMigrate, options.appId, remoteExtensions)
+  }
 
-    if (uiExtensionsToMigrate.length > 0) {
-      remoteExtensions = await migrateExtensionsToUIExtension(uiExtensionsToMigrate, options.appId, remoteExtensions)
-    }
-    if (flowExtensionsToMigrate.length > 0) {
-      const newRemoteExtensions = await migrateFlowExtensions(
-        flowExtensionsToMigrate,
-        options.appId,
-        dashboardOnlyExtensions,
-      )
-      remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
-    }
+  if (flowExtensionsToMigrate.length > 0) {
+    const confirmedMigration = await extensionMigrationPrompt(flowExtensionsToMigrate, false)
+    if (!confirmedMigration) return err('user-cancelled')
+    const newRemoteExtensions = await migrateFlowExtensions(
+      flowExtensionsToMigrate,
+      options.appId,
+      dashboardOnlyExtensions,
+    )
+    remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }
 
   const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
