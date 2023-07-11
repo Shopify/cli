@@ -346,16 +346,16 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} availableLines={10} />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   [1mAutomations[22m                                                                                     [46m [49m
-         [36m>[39m  [36mfifth[39m                                                                                        [46m [49m
-            sixth                                                                                        [46m [49m
-                                                                                                         [46m [49m
-         [1mMerchant Admin[22m                                                                                  [46m [49m
-            eighth                                                                                       [100m [49m
-            ninth                                                                                        [100m [49m
-                                                                                                         [100m [49m
-         [1mOther[22m                                                                                           [100m [49m
-            first                                                                                        [100m [49m
+      "   [1mAutomations[22m                                                                 [46m [49m
+         [36m>[39m  [36mfifth[39m                                                                    [46m [49m
+            sixth                                                                    [46m [49m
+                                                                                     [46m [49m
+         [1mMerchant Admin[22m                                                              [46m [49m
+            eighth                                                                   [100m [49m
+            ninth                                                                    [100m [49m
+                                                                                     [100m [49m
+         [1mOther[22m                                                                       [100m [49m
+            first                                                                    [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
@@ -368,16 +368,16 @@ describe('SelectInput', async () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "   [1mAutomations[22m                                                                                     [100m [49m
-            sixth                                                                                        [46m [49m
-                                                                                                         [46m [49m
-         [1mMerchant Admin[22m                                                                                  [46m [49m
-            eighth                                                                                       [46m [49m
-            ninth                                                                                        [46m [49m
-                                                                                                         [100m [49m
-         [1mOther[22m                                                                                           [100m [49m
-            first                                                                                        [100m [49m
-         [36m>[39m  [36msecond[39m                                                                                       [100m [49m
+      "   [1mAutomations[22m                                                                 [100m [49m
+            sixth                                                                    [46m [49m
+                                                                                     [46m [49m
+         [1mMerchant Admin[22m                                                              [46m [49m
+            eighth                                                                   [46m [49m
+            ninth                                                                    [46m [49m
+                                                                                     [100m [49m
+         [1mOther[22m                                                                       [100m [49m
+            first                                                                    [100m [49m
+         [36m>[39m  [36msecond[39m                                                                   [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
