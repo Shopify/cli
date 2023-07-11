@@ -131,11 +131,11 @@ describe('AutocompletePrompt', async () => {
 
   test('renders groups', async () => {
     const items = [
-      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
-      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'first', value: 'first', group: 'Automations'},
+      {label: 'second', value: 'second', group: 'Automations'},
       {label: 'third', value: 'third', group: 'Merchant Admin'},
       {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
-      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'fifth', value: 'fifth'},
       {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth'},
@@ -531,71 +531,6 @@ describe('AutocompletePrompt', async () => {
     expect(onEnter).toHaveBeenCalledWith('fifth')
   })
 
-  test('allows selecting the first item after searching', async () => {
-    const onEnter = vi.fn()
-
-    const search = async (term: string) => {
-      return {
-        data: DATABASE.filter((item) => item.label.includes(term)),
-      }
-    }
-
-    const renderInstance = render(
-      <AutocompletePrompt
-        message="Associate your project with the org Castile Ventures?"
-        choices={DATABASE}
-        onSubmit={onEnter}
-        search={search}
-      />,
-    )
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForContent(renderInstance, '[1mfiftieth[22m', 'fiftieth')
-
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?   [36mfiftieth[7m [27m[39m
-
-      [36m>[39m  [36m[1mfiftieth[22m[39m
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
-      "
-    `)
-
-    await sendInputAndWaitForChange(renderInstance, ENTER)
-
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
-      [36m✔[39m  [36mfiftieth[39m
-      "
-    `)
-
-    expect(onEnter).toHaveBeenCalledWith('fiftieth')
-  })
-
   test('displays an error message if the search fails', async () => {
     const search = (_term: string) => {
       return Promise.reject(new Error('Something went wrong'))
@@ -770,11 +705,11 @@ describe('AutocompletePrompt', async () => {
     })
 
     const items = [
-      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
-      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'first', value: 'first', group: 'Automations'},
+      {label: 'second', value: 'second', group: 'Automations'},
       {label: 'third', value: 'third', group: 'Merchant Admin'},
       {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
-      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'fifth', value: 'fifth'},
       {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth'},

@@ -142,35 +142,29 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
   })
 
+  const {lineVertical} = figures
+
   return (
     <>
       <Static items={processOutput}>
         {(chunk, index) => {
+          const prefixBuffer = ' '.repeat(prefixColumnSize - chunk.prefix.length)
           return (
             <Box flexDirection="column" key={index}>
               {chunk.lines.map((line, index) => (
-                <Box key={index} flexDirection="row" gap={1}>
-                  {showTimestamps ? (
-                    <Box gap={1}>
-                      <Text color={chunk.color}>{new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')}</Text>
-
-                      <Text bold color={chunk.color}>
-                        {figures.lineVertical}
+                <Box key={index} flexDirection="row">
+                  <Text color={chunk.color}>
+                    {showTimestamps ? (
+                      <Text>
+                        {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} {lineVertical}{' '}
                       </Text>
-                    </Box>
-                  ) : null}
+                    ) : null}
 
-                  <Box width={prefixColumnSize}>
-                    <Text color={chunk.color}>{chunk.prefix}</Text>
-                  </Box>
-
-                  <Text bold color={chunk.color}>
-                    {figures.lineVertical}
+                    <Text>
+                      {chunk.prefix}
+                      {prefixBuffer} {lineVertical} {line}
+                    </Text>
                   </Text>
-
-                  <Box flexGrow={1}>
-                    <Text color={chunk.color}>{line}</Text>
-                  </Box>
                 </Box>
               ))}
             </Box>
