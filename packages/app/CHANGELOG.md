@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.47.4
+
+### Patch Changes
+
+- a509a5dcb: Fix subscription ui extension using pnpm
+- Updated dependencies [a24f841f1]
+  - @shopify/cli-kit@3.47.4
+  - @shopify/plugin-cloudflare@3.47.4
+  - @shopify/plugin-ngrok@3.47.4
+
 ## 3.47.3
 
 ### Patch Changes

@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.47.4
+
+### Patch Changes
+
+- a24f841f1: Fix image_url on data attributes
+
 ## 3.47.3
 
 ## 3.47.2
