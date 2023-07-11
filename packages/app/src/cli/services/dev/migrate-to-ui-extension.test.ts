@@ -1,4 +1,4 @@
-import {getExtensionsToMigrate, migrateExtensionsToUIExtension} from './migrate-to-ui-extension.js'
+import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from './migrate-to-ui-extension.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {ExtensionMigrateToUiExtensionQuery} from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
@@ -40,7 +40,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION'})
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
@@ -52,7 +52,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION'})
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([])
@@ -64,7 +64,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = {...getRemoteExtension(), type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'}
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([])
@@ -78,7 +78,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'my-extension'})
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
@@ -90,7 +90,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'my-extension'})
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([])
@@ -102,7 +102,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION', title: 'my-extension'})
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([])
@@ -119,7 +119,7 @@ describe('getExtensionsToMigrate()', () => {
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'does-not-match', uuid: '5678'})
 
       // When
-      const toMigrate = getExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
 
       // Then
       expect(toMigrate).toStrictEqual([])

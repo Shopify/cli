@@ -187,19 +187,29 @@ async function buildUnifiedDeploymentInfoPrompt(
   return infoTable
 }
 
-export async function extensionMigrationPrompt(toMigrate: LocalRemoteSource[]): Promise<boolean> {
-  const migrationNames = toMigrate.map(({local}) => local.configuration.name).join(',')
+export async function extensionMigrationPrompt(
+  toMigrate: LocalRemoteSource[],
+  includeRemoteType = true,
+): Promise<boolean> {
+  const migrationNames = toMigrate.map(({local}) => `"${local.configuration.name}"`).join(', ')
   const allMigrationTypes = toMigrate.map(({remote}) => remote.type.toLocaleLowerCase())
-  const uniqueMigrationTypes = allMigrationTypes.filter((type, i) => allMigrationTypes.indexOf(type) === i).join(',')
+  const uniqueMigrationTypes = allMigrationTypes
+    .filter((type, i) => allMigrationTypes.indexOf(type) === i)
+    .map((name) => `"${name}"`)
+    .join(', ')
 
   renderInfo({
     headline: "Extension migrations can't be undone.",
     body: `Your ${migrationNames} configuration has been updated. Migrating gives you access to new features and won't impact the end user experience. All previous extension versions will reflect this change.`,
   })
 
+  const confirmMessage = includeRemoteType
+    ? `Yes, confirm migration from ${uniqueMigrationTypes}`
+    : 'Yes, confirm migration'
+
   return renderConfirmationPrompt({
     message: `Migrate ${migrationNames}?`,
-    confirmationMessage: `Yes, confirm migration from ${uniqueMigrationTypes}`,
+    confirmationMessage: confirmMessage,
     cancellationMessage: 'No, cancel',
   })
 }
