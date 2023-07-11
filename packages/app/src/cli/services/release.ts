@@ -59,7 +59,7 @@ export async function release(options: ReleaseOptions) {
 
   if (release.userErrors?.length > 0) {
     renderError({
-      headline: "Version couldn't be released",
+      headline: "Version couldn't be released.",
       body: [
         ...linkAndMessage,
         `${linkAndMessage.length > 0 ? '\n\n' : ''}${release.userErrors.map((error) => error.message).join(', ')}`,

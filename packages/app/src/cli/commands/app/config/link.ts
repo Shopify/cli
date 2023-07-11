@@ -5,9 +5,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigLink extends Command {
-  static hidden = true
-
-  static description = "Fetch your app's config from the Partner Dashboard."
+  static description = 'Fetch your app configuration from the Partner Dashboard.'
 
   static flags = {
     ...globalFlags,
@@ -16,11 +14,6 @@ export default class ConfigLink extends Command {
       hidden: false,
       description: 'The Client ID of your app.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
-    }),
-    config: Flags.string({
-      hidden: false,
-      description: 'Name of the config file.',
-      env: 'SHOPIFY_FLAG_APP_CONFIG',
     }),
   }
 

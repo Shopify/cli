@@ -149,7 +149,7 @@ Please check the configuration in ${tomlPath}`),
         })
 
         // When
-        const host = 'http://1234.ngrok.io'
+        const host = 'http://1234.cloudflare.io'
         const previewMessage = await uiExtension.previewMessage(host, 'not_used')
 
         // Then

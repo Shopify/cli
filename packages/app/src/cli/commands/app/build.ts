@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
-import {load as loadApp} from '../../models/app/loader.js'
+import {loadApp} from '../../models/app/loader.js'
 import build from '../../services/build.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
@@ -43,7 +43,7 @@ export default class Build extends Command {
     }))
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({specifications, directory: flags.path})
+    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
   }
 }

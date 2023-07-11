@@ -32,14 +32,6 @@ The [`@shopify/cli-kit`](https://www.npmjs.com/package/@shopify/cli-kit) NPM pac
 - [Using UI Kit](cli-kit/ui-kit/readme.md)
 - [Contributing to UI Kit](cli-kit/ui-kit/contributing.md)
 
-## Plugins
-
-[Plugins](./cli/plugins.md) are NPM packages that extend, customize, and augment core CLI functionality. Some plugins are developed by Shopify (included in the list below), and we refer to them as official plugins, while external developers develop others. If you want to develop a plugin, we recommend checking out the resources in the development section below.
-
-### List of official plugins
-
-* [Ngrok tunnel](./plugins/ngrok.md)
-
 ## Decision Record
 
 The following pages document the rationale behind some decisions that we made:

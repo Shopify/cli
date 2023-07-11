@@ -14,6 +14,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
+import link from './app/config/link.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppConfiguration, AppInterface, isCurrentAppSchema, appIsLaunchable} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -46,6 +47,7 @@ import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {basename} from '@shopify/cli-kit/node/path'
+import {Config} from '@oclif/core'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -57,9 +59,10 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 export interface DevContextOptions {
   directory: string
   apiKey?: string
-  config?: string
+  configName?: string
   storeFqdn?: string
   reset: boolean
+  commandConfig: Config
 }
 
 interface DevContextOutput {
@@ -67,8 +70,7 @@ interface DevContextOutput {
   remoteAppUpdated: boolean
   storeFqdn: string
   updateURLs: boolean | undefined
-  useCloudflareTunnels: boolean
-  config?: string
+  configName?: string
   deploymentMode: DeploymentMode
 }
 
@@ -87,7 +89,7 @@ export async function ensureGenerateContext(options: {
   directory: string
   reset: boolean
   token: string
-  config?: string
+  configName?: string
 }): Promise<string> {
   if (options.apiKey) {
     const app = await fetchAppFromApiKey(options.apiKey, options.token)
@@ -145,20 +147,27 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
+  const previousCachedInfo = options.reset ? getAppInfo(options.directory) : undefined
+  let cachedContext = await getAppDevCachedContext({...options, token})
 
-  if (cachedInfo === undefined && !options.reset) {
+  if (cachedContext.cachedInfo === undefined && !options.reset) {
     const explanation =
       `\nLooks like this is the first time you're running dev for this project.\n` +
       'Configure your preferences by answering a few questions.\n'
     outputInfo(explanation)
   }
 
+  if ((previousCachedInfo?.configFile && options.reset) || (cachedContext.cachedInfo === undefined && !options.reset)) {
+    await link(options)
+    cachedContext = await getAppDevCachedContext({...options, reset: false, configName: undefined, token})
+  }
+
+  const {configuration, configurationPath, cachedInfo, remoteApp} = cachedContext
+
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
   const organization = await fetchOrgFromId(orgId, token)
-  const useCloudflareTunnels = organization.betas?.cliTunnelAlternative !== true
 
   if (!selectedApp || !selectedStore) {
     // if we have selected an app or a dev store from a command flag, we keep them
@@ -173,6 +182,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       selectedApp = _selectedApp
     } else {
       const {apps} = await fetchOrgAndApps(orgId, token)
+      // get toml names somewhere close to here
       const localAppName = await loadAppName(options.directory)
       selectedApp = await selectOrCreateApp(localAppName, apps, organization, token)
     }
@@ -214,7 +224,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 
   await enableDeveloperPreview(selectedApp, token)
   const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  const result = buildOutput(selectedApp, selectedStore, useCloudflareTunnels, deploymentMode, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, deploymentMode, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -240,7 +250,6 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
 function buildOutput(
   app: OrganizationApp,
   store: OrganizationStore,
-  useCloudflareTunnels: boolean,
   deploymentMode: DeploymentMode,
   cachedInfo?: CachedAppInfo,
 ): DevContextOutput {
@@ -252,8 +261,7 @@ function buildOutput(
     remoteAppUpdated: app.apiKey !== cachedInfo?.previousAppId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
-    useCloudflareTunnels,
-    config: cachedInfo?.configFile,
+    configName: cachedInfo?.configFile,
     deploymentMode,
   }
 }
@@ -553,7 +561,7 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
-interface AppDevCachedContext {
+export interface AppDevCachedContext {
   configuration: AppConfiguration
   configurationPath: string
   cachedInfo?: CachedAppInfo
@@ -570,12 +578,12 @@ async function getAppDevCachedContext({
   reset,
   directory,
   token,
-  config,
+  configName,
 }: {
   reset: boolean
   directory: string
   token: string
-  config?: string
+  configName?: string
 }): Promise<AppDevCachedContext> {
   if (reset) clearAppInfo(directory)
 
@@ -583,7 +591,7 @@ async function getAppDevCachedContext({
 
   const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
-    configName: config || cachedInfo?.configFile,
+    configName: configName || cachedInfo?.configFile,
   })
 
   let remoteApp
@@ -646,10 +654,6 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
     `Dev store:    ${cachedInfo.storeFqdn}`,
     `Update URLs:  ${updateURLs}`,
   ]
-
-  if (cachedInfo.tunnelPlugin) {
-    items.push(`Tunnel:       ${cachedInfo.tunnelPlugin}`)
-  }
 
   renderInfo({
     headline: reusedValuesTableTitle(cachedInfo),
