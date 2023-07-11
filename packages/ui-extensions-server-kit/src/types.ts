@@ -91,13 +91,14 @@ export interface ExtensionPoint {
   resource: ResourceURL
   root: ResourceURL
   localization?: FlattenedLocalization | Localization | null
-  label?: string
+  name: string
 }
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
 
 export interface ExtensionPayload {
   type: string
+  name: string
   externalType: string
   assets: {[name: string]: Asset}
   development: {
