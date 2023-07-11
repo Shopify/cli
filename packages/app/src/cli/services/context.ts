@@ -89,6 +89,7 @@ export async function ensureGenerateContext(options: {
   directory: string
   reset: boolean
   token: string
+  commandConfig: Config
   configName?: string
 }): Promise<string> {
   if (options.apiKey) {
@@ -147,22 +148,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const previousCachedInfo = options.reset ? getAppInfo(options.directory) : undefined
-  let cachedContext = await getAppDevCachedContext({...options, token})
-
-  if (cachedContext.cachedInfo === undefined && !options.reset) {
-    const explanation =
-      `\nLooks like this is the first time you're running dev for this project.\n` +
-      'Configure your preferences by answering a few questions.\n'
-    outputInfo(explanation)
-  }
-
-  if ((previousCachedInfo?.configFile && options.reset) || (cachedContext.cachedInfo === undefined && !options.reset)) {
-    await link(options)
-    cachedContext = await getAppDevCachedContext({...options, reset: false, configName: undefined, token})
-  }
-
-  const {configuration, configurationPath, cachedInfo, remoteApp} = cachedContext
+  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
@@ -584,15 +570,31 @@ async function getAppDevCachedContext({
   directory,
   token,
   configName,
+  commandConfig,
 }: {
   reset: boolean
   directory: string
   token: string
   configName?: string
+  commandConfig: Config
 }): Promise<AppDevCachedContext> {
+  const previousCachedInfo = reset ? getAppInfo(directory) : undefined
+
   if (reset) clearAppInfo(directory)
 
   let cachedInfo = getAppInfo(directory)
+
+  if (cachedInfo === undefined && !reset) {
+    const explanation =
+      `\nLooks like this is the first time you're running dev for this project.\n` +
+      'Configure your preferences by answering a few questions.\n'
+    outputInfo(explanation)
+  }
+
+  if ((previousCachedInfo?.configFile && reset) || (cachedInfo === undefined && !reset)) {
+    await link({directory, commandConfig})
+    cachedInfo = getAppInfo(directory)
+  }
 
   const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
