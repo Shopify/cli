@@ -19,7 +19,6 @@ vi.mock('@shopify/cli-kit/node/context/spin')
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {},
 }
 const STORE1: OrganizationStore = {
   shopId: '1',

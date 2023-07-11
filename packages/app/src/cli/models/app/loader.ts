@@ -173,7 +173,7 @@ interface AppLoaderConstructorArgs {
  * Load the local app from the given directory and using the provided extensions/functions specifications.
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
-export async function load(options: AppLoaderConstructorArgs): Promise<AppInterface> {
+export async function loadApp(options: AppLoaderConstructorArgs): Promise<AppInterface> {
   const loader = new AppLoader(options)
   return loader.loaded()
 }
@@ -615,15 +615,15 @@ async function logMetadataForLoadedApp(
 
 export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
 
-export function getAppConfigurationFileName(config?: string) {
-  if (!config) {
+export function getAppConfigurationFileName(configName?: string) {
+  if (!configName) {
     return configurationFileNames.app
   }
 
-  if (appConfigurationFileNameRegex.test(config)) {
-    return config
+  if (appConfigurationFileNameRegex.test(configName)) {
+    return configName
   } else {
-    return `shopify.app.${slugify(config)}.toml`
+    return `shopify.app.${slugify(configName)}.toml`
   }
 }
 

@@ -1,7 +1,7 @@
 import generate from './generate.js'
 import {ensureGenerateContext} from './context.js'
 import {generateExtensionTemplate} from './generate/extension.js'
-import {load as loadApp} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import {
   testApp,
   testFunctionExtension,

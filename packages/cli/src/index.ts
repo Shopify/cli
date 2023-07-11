@@ -5,9 +5,9 @@ import fs from 'fs'
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.
 // This means that any cleanup code that depends on "process.on('exit', ...)" will
-// not be called. The ngrok plugin is an example of that. Here we make sure to print
+// not be called. The tunnel plugin is an example of that. Here we make sure to print
 // the error stack and manually call exit so that the cleanup code is called. This
-// makes sure that there are no lingering ngrok processes.
+// makes sure that there are no lingering tunnel processes.
 process.on('uncaughtException', (err) => {
   fs.writeSync(process.stderr.fd, `${err.stack}\n`)
   process.exit(1)

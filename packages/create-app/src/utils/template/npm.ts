@@ -19,7 +19,6 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
     const cliPath = await packagePath('cli')
     const appPath = await packagePath('app')
     const cliKitPath = await packagePath('cli-kit')
-    const pluginNgrokPath = await packagePath('plugin-ngrok')
     const pluginCloudflarePath = await packagePath('plugin-cloudflare')
     const didYouMeanPath = await packagePath('plugin-did-you-mean')
 
@@ -32,7 +31,6 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
       '@shopify/cli': cliPath,
       '@shopify/app': appPath,
       '@shopify/cli-kit': cliKitPath,
-      '@shopify/plugin-ngrok': pluginNgrokPath,
       '@shopify/plugin-did-you-mean': didYouMeanPath,
       '@shopify/plugin-cloudflare': pluginCloudflarePath,
     }

@@ -319,7 +319,6 @@ describe('AutocompletePrompt', async () => {
 
 
          [2mTry again with a different keyword.[22m
-
       "
     `)
 
@@ -383,34 +382,33 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
-      [36m>[39m  [36mfirst[39m
-         second
-         third
-         fourth
-         fifth
-         sixth
-         seventh
-         eighth
-         ninth
-         tenth
-         eleventh
-         twelfth
-         thirteenth
-         fourteenth
-         fifteenth
-         sixteenth
-         seventeenth
-         eighteenth
-         nineteenth
-         twentieth
-         twenty-first
-         twenty-second
-         twenty-third
-         twenty-fourth
-         twenty-fifth
+      [36m>[39m  [36mfirst[39m                                      [46m [49m
+         second                                     [46m [49m
+         third                                      [46m [49m
+         fourth                                     [46m [49m
+         fifth                                      [46m [49m
+         sixth                                      [46m [49m
+         seventh                                    [46m [49m
+         eighth                                     [46m [49m
+         ninth                                      [46m [49m
+         tenth                                      [46m [49m
+         eleventh                                   [46m [49m
+         twelfth                                    [46m [49m
+         thirteenth                                 [46m [49m
+         fourteenth                                 [100m [49m
+         fifteenth                                  [100m [49m
+         sixteenth                                  [100m [49m
+         seventeenth                                [100m [49m
+         eighteenth                                 [100m [49m
+         nineteenth                                 [100m [49m
+         twentieth                                  [100m [49m
+         twenty-first                               [100m [49m
+         twenty-second                              [100m [49m
+         twenty-third                               [100m [49m
+         twenty-fourth                              [100m [49m
+         twenty-fifth                               [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m50 options available, 25 visible.[22m
       "
     `)
 
@@ -420,34 +418,33 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36mi[7m [27m[39m
 
-      [36m>[39m  [36mf[1mi[22mrst[39m
-         th[1mi[22mrd
-         f[1mi[22mfth
-         s[1mi[22mxth
-         e[1mi[22mghth
-         n[1mi[22mnth
-         th[1mi[22mrteenth
-         f[1mi[22mfteenth
-         s[1mi[22mxteenth
-         e[1mi[22mghteenth
-         n[1mi[22mneteenth
-         twent[1mi[22meth
-         twenty-f[1mi[22mrst
-         twenty-th[1mi[22mrd
-         twenty-f[1mi[22mfth
-         twenty-s[1mi[22mxth
-         twenty-e[1mi[22mghth
-         twenty-n[1mi[22mnth
-         th[1mi[22mrtieth
-         th[1mi[22mrty-first
-         th[1mi[22mrty-second
-         th[1mi[22mrty-third
-         th[1mi[22mrty-fourth
-         th[1mi[22mrty-fifth
-         th[1mi[22mrty-sixth
+      [36m>[39m  [36mf[1mi[22mrst[39m                                      [46m [49m
+         th[1mi[22mrd                                      [46m [49m
+         f[1mi[22mfth                                      [46m [49m
+         s[1mi[22mxth                                      [46m [49m
+         e[1mi[22mghth                                     [46m [49m
+         n[1mi[22mnth                                      [46m [49m
+         th[1mi[22mrteenth                                 [46m [49m
+         f[1mi[22mfteenth                                  [46m [49m
+         s[1mi[22mxteenth                                  [46m [49m
+         e[1mi[22mghteenth                                 [46m [49m
+         n[1mi[22mneteenth                                 [46m [49m
+         twent[1mi[22meth                                  [46m [49m
+         twenty-f[1mi[22mrst                               [46m [49m
+         twenty-th[1mi[22mrd                               [46m [49m
+         twenty-f[1mi[22mfth                               [46m [49m
+         twenty-s[1mi[22mxth                               [46m [49m
+         twenty-e[1mi[22mghth                              [46m [49m
+         twenty-n[1mi[22mnth                               [46m [49m
+         th[1mi[22mrtieth                                  [100m [49m
+         th[1mi[22mrty-first                               [100m [49m
+         th[1mi[22mrty-second                              [100m [49m
+         th[1mi[22mrty-third                               [100m [49m
+         th[1mi[22mrty-fourth                              [100m [49m
+         th[1mi[22mrty-fifth                               [100m [49m
+         th[1mi[22mrty-sixth                               [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -456,34 +453,33 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
-      [36m>[39m  [36mfirst[39m
-         second
-         third
-         fourth
-         fifth
-         sixth
-         seventh
-         eighth
-         ninth
-         tenth
-         eleventh
-         twelfth
-         thirteenth
-         fourteenth
-         fifteenth
-         sixteenth
-         seventeenth
-         eighteenth
-         nineteenth
-         twentieth
-         twenty-first
-         twenty-second
-         twenty-third
-         twenty-fourth
-         twenty-fifth
+      [36m>[39m  [36mfirst[39m                                      [46m [49m
+         second                                     [46m [49m
+         third                                      [46m [49m
+         fourth                                     [46m [49m
+         fifth                                      [46m [49m
+         sixth                                      [46m [49m
+         seventh                                    [46m [49m
+         eighth                                     [46m [49m
+         ninth                                      [46m [49m
+         tenth                                      [46m [49m
+         eleventh                                   [46m [49m
+         twelfth                                    [46m [49m
+         thirteenth                                 [46m [49m
+         fourteenth                                 [100m [49m
+         fifteenth                                  [100m [49m
+         sixteenth                                  [100m [49m
+         seventeenth                                [100m [49m
+         eighteenth                                 [100m [49m
+         nineteenth                                 [100m [49m
+         twentieth                                  [100m [49m
+         twenty-first                               [100m [49m
+         twenty-second                              [100m [49m
+         twenty-third                               [100m [49m
+         twenty-fourth                              [100m [49m
+         twenty-fifth                               [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m50 options available, 25 visible.[22m
       "
     `)
 
@@ -494,34 +490,33 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36mi[7m [27m[39m
 
-         f[1mi[22mrst
-         th[1mi[22mrd
-      [36m>[39m  [36mf[1mi[22mfth[39m
-         s[1mi[22mxth
-         e[1mi[22mghth
-         n[1mi[22mnth
-         th[1mi[22mrteenth
-         f[1mi[22mfteenth
-         s[1mi[22mxteenth
-         e[1mi[22mghteenth
-         n[1mi[22mneteenth
-         twent[1mi[22meth
-         twenty-f[1mi[22mrst
-         twenty-th[1mi[22mrd
-         twenty-f[1mi[22mfth
-         twenty-s[1mi[22mxth
-         twenty-e[1mi[22mghth
-         twenty-n[1mi[22mnth
-         th[1mi[22mrtieth
-         th[1mi[22mrty-first
-         th[1mi[22mrty-second
-         th[1mi[22mrty-third
-         th[1mi[22mrty-fourth
-         th[1mi[22mrty-fifth
-         th[1mi[22mrty-sixth
+         f[1mi[22mrst                                      [46m [49m
+         th[1mi[22mrd                                      [46m [49m
+      [36m>[39m  [36mf[1mi[22mfth[39m                                      [46m [49m
+         s[1mi[22mxth                                      [46m [49m
+         e[1mi[22mghth                                     [46m [49m
+         n[1mi[22mnth                                      [46m [49m
+         th[1mi[22mrteenth                                 [46m [49m
+         f[1mi[22mfteenth                                  [46m [49m
+         s[1mi[22mxteenth                                  [46m [49m
+         e[1mi[22mghteenth                                 [46m [49m
+         n[1mi[22mneteenth                                 [46m [49m
+         twent[1mi[22meth                                  [46m [49m
+         twenty-f[1mi[22mrst                               [46m [49m
+         twenty-th[1mi[22mrd                               [46m [49m
+         twenty-f[1mi[22mfth                               [46m [49m
+         twenty-s[1mi[22mxth                               [46m [49m
+         twenty-e[1mi[22mghth                              [46m [49m
+         twenty-n[1mi[22mnth                               [46m [49m
+         th[1mi[22mrtieth                                  [100m [49m
+         th[1mi[22mrty-first                               [100m [49m
+         th[1mi[22mrty-second                              [100m [49m
+         th[1mi[22mrty-third                               [100m [49m
+         th[1mi[22mrty-fourth                              [100m [49m
+         th[1mi[22mrty-fifth                               [100m [49m
+         th[1mi[22mrty-sixth                               [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -648,34 +643,33 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36mi[7m [27m[39m
 
-      [36m>[39m  [36mf[1mi[22mrst[39m
-         th[1mi[22mrd
-         f[1mi[22mfth
-         s[1mi[22mxth
-         e[1mi[22mghth
-         n[1mi[22mnth
-         th[1mi[22mrteenth
-         f[1mi[22mfteenth
-         s[1mi[22mxteenth
-         e[1mi[22mghteenth
-         n[1mi[22mneteenth
-         twent[1mi[22meth
-         twenty-f[1mi[22mrst
-         twenty-th[1mi[22mrd
-         twenty-f[1mi[22mfth
-         twenty-s[1mi[22mxth
-         twenty-e[1mi[22mghth
-         twenty-n[1mi[22mnth
-         th[1mi[22mrtieth
-         th[1mi[22mrty-first
-         th[1mi[22mrty-second
-         th[1mi[22mrty-third
-         th[1mi[22mrty-fourth
-         th[1mi[22mrty-fifth
-         th[1mi[22mrty-sixth
+      [36m>[39m  [36mf[1mi[22mrst[39m                                      [46m [49m
+         th[1mi[22mrd                                      [46m [49m
+         f[1mi[22mfth                                      [46m [49m
+         s[1mi[22mxth                                      [46m [49m
+         e[1mi[22mghth                                     [46m [49m
+         n[1mi[22mnth                                      [46m [49m
+         th[1mi[22mrteenth                                 [46m [49m
+         f[1mi[22mfteenth                                  [46m [49m
+         s[1mi[22mxteenth                                  [46m [49m
+         e[1mi[22mghteenth                                 [46m [49m
+         n[1mi[22mneteenth                                 [46m [49m
+         twent[1mi[22meth                                  [46m [49m
+         twenty-f[1mi[22mrst                               [46m [49m
+         twenty-th[1mi[22mrd                               [46m [49m
+         twenty-f[1mi[22mfth                               [46m [49m
+         twenty-s[1mi[22mxth                               [46m [49m
+         twenty-e[1mi[22mghth                              [46m [49m
+         twenty-n[1mi[22mnth                               [46m [49m
+         th[1mi[22mrtieth                                  [100m [49m
+         th[1mi[22mrty-first                               [100m [49m
+         th[1mi[22mrty-second                              [100m [49m
+         th[1mi[22mrty-third                               [100m [49m
+         th[1mi[22mrty-fourth                              [100m [49m
+         th[1mi[22mrty-fifth                               [100m [49m
+         th[1mi[22mrty-sixth                               [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m36 options available, 25 visible.[22m
       "
     `)
 
@@ -684,34 +678,33 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
-      [36m>[39m  [36mfirst[39m
-         second
-         third
-         fourth
-         fifth
-         sixth
-         seventh
-         eighth
-         ninth
-         tenth
-         eleventh
-         twelfth
-         thirteenth
-         fourteenth
-         fifteenth
-         sixteenth
-         seventeenth
-         eighteenth
-         nineteenth
-         twentieth
-         twenty-first
-         twenty-second
-         twenty-third
-         twenty-fourth
-         twenty-fifth
+      [36m>[39m  [36mfirst[39m                                      [46m [49m
+         second                                     [46m [49m
+         third                                      [46m [49m
+         fourth                                     [46m [49m
+         fifth                                      [46m [49m
+         sixth                                      [46m [49m
+         seventh                                    [46m [49m
+         eighth                                     [46m [49m
+         ninth                                      [46m [49m
+         tenth                                      [46m [49m
+         eleventh                                   [46m [49m
+         twelfth                                    [46m [49m
+         thirteenth                                 [46m [49m
+         fourteenth                                 [100m [49m
+         fifteenth                                  [100m [49m
+         sixteenth                                  [100m [49m
+         seventeenth                                [100m [49m
+         eighteenth                                 [100m [49m
+         nineteenth                                 [100m [49m
+         twentieth                                  [100m [49m
+         twenty-first                               [100m [49m
+         twenty-second                              [100m [49m
+         twenty-third                               [100m [49m
+         twenty-fourth                              [100m [49m
+         twenty-fifth                               [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
-         [2m50 options available, 25 visible.[22m
       "
     `)
   })
@@ -737,35 +730,34 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
-      [36m>[39m  [36mfirst[39m
-         second
-         third
-         fourth
-         fifth
-         sixth
-         seventh
-         eighth
-         ninth
-         tenth
-         eleventh
-         twelfth
-         thirteenth
-         fourteenth
-         fifteenth
-         sixteenth
-         seventeenth
-         eighteenth
-         nineteenth
-         twentieth
-         twenty-first
-         twenty-second
-         twenty-third
-         twenty-fourth
-         twenty-fifth
+      [36m>[39m  [36mfirst[39m                                                        [46m [49m
+         second                                                       [46m [49m
+         third                                                        [46m [49m
+         fourth                                                       [46m [49m
+         fifth                                                        [46m [49m
+         sixth                                                        [46m [49m
+         seventh                                                      [46m [49m
+         eighth                                                       [46m [49m
+         ninth                                                        [46m [49m
+         tenth                                                        [46m [49m
+         eleventh                                                     [46m [49m
+         twelfth                                                      [46m [49m
+         thirteenth                                                   [46m [49m
+         fourteenth                                                   [100m [49m
+         fifteenth                                                    [100m [49m
+         sixteenth                                                    [100m [49m
+         seventeenth                                                  [100m [49m
+         eighteenth                                                   [100m [49m
+         nineteenth                                                   [100m [49m
+         twentieth                                                    [100m [49m
+         twenty-first                                                 [100m [49m
+         twenty-second                                                [100m [49m
+         twenty-third                                                 [100m [49m
+         twenty-fourth                                                [100m [49m
+         twenty-fifth                                                 [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [1m1-50 of many[22m  Find what you're looking for by typing its name.
-         [2m50 options available, 25 visible.[22m
       "
     `)
   })
@@ -807,15 +799,14 @@ describe('AutocompletePrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
 
-         [1mAutomations[22m
-         [36m>[39m  [36mfirst[39m
-            second
-
-         [1mMerchant Admin[22m
+         [1mAutomations[22m                                                  \u001b[46m \u001b[49m
+         [36m>[39m  [36mfirst[39m                                                     \u001b[100m \u001b[49m
+            second                                                    \u001b[100m \u001b[49m
+                                                                      \u001b[100m \u001b[49m
+         [1mMerchant Admin[22m                                               \u001b[100m \u001b[49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
          [1m1-10 of many[22m  Find what you're looking for by typing its name.
-         [2m10 options available, 2 visible.[22m
       "
     `)
   })

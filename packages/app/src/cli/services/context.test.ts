@@ -21,6 +21,7 @@ import {
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
 import {resolveDeploymentMode} from './deploy/mode.js'
+import link from './app/config/link.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -38,6 +39,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {Config} from '@oclif/core'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch')
@@ -53,6 +55,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./deploy/mode.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('./app/config/link.js')
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
@@ -100,13 +103,11 @@ const APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {cliTunnelAlternative: false},
   website: '',
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {cliTunnelAlternative: true},
   website: '',
 }
 
@@ -129,9 +130,12 @@ const STORE2: OrganizationStore = {
   convertableToPartnerTest: false,
 }
 
+const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
+
 const INPUT: DevContextOptions = {
   directory: 'app_directory',
   reset: false,
+  commandConfig: COMMAND_CONFIG,
 }
 
 const INPUT_WITH_DATA: DevContextOptions = {
@@ -139,6 +143,7 @@ const INPUT_WITH_DATA: DevContextOptions = {
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'domain1',
+  commandConfig: COMMAND_CONFIG,
 }
 
 const BAD_INPUT_WITH_DATA: DevContextOptions = {
@@ -146,6 +151,7 @@ const BAD_INPUT_WITH_DATA: DevContextOptions = {
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'invalid_store_domain',
+  commandConfig: COMMAND_CONFIG,
 }
 
 const FETCH_RESPONSE = {
@@ -176,7 +182,7 @@ beforeEach(async () => {
 
 describe('ensureGenerateContext', () => {
   beforeEach(() => {
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+    vi.mocked(loadAppConfiguration).mockResolvedValue({
       appDirectory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
@@ -259,7 +265,7 @@ describe('ensureGenerateContext', () => {
 
 describe('ensureDevContext', async () => {
   beforeEach(() => {
-    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+    vi.mocked(loadAppConfiguration).mockResolvedValue({
       appDirectory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
@@ -298,6 +304,7 @@ describe('ensureDevContext', async () => {
         {
           directory: 'app_directory',
           reset: false,
+          commandConfig: COMMAND_CONFIG,
         },
         'token',
       )
@@ -306,10 +313,9 @@ describe('ensureDevContext', async () => {
       expect(got).toEqual({
         remoteApp: {...APP2, apiSecret: 'secret2'},
         storeFqdn: STORE1.shopDomain,
-        remoteAppUpdated: false,
-        useCloudflareTunnels: true,
+        remoteAppUpdated: true,
         updateURLs: true,
-        config: CACHED1_WITH_CONFIG.configFile,
+        configName: CACHED1_WITH_CONFIG.configFile,
         deploymentMode: 'legacy',
       })
       expect(setAppInfo).not.toHaveBeenCalled()
@@ -351,7 +357,8 @@ describe('ensureDevContext', async () => {
         {
           directory: 'app_directory',
           reset: false,
-          config: 'dev',
+          configName: 'dev',
+          commandConfig: COMMAND_CONFIG,
         },
         'token',
       )
@@ -393,7 +400,8 @@ describe('ensureDevContext', async () => {
         {
           directory: 'app_directory',
           reset: false,
-          config: 'dev',
+          configName: 'dev',
+          commandConfig: COMMAND_CONFIG,
         },
         'token',
       )
@@ -445,7 +453,8 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          config: 'dev',
+          configName: 'dev',
+          commandConfig: COMMAND_CONFIG,
         },
         'token',
       )
@@ -463,10 +472,12 @@ dev_store_url = "domain1"
               ],
             },
           },
-          '\nTo reset your default dev config, run',
+          '\n',
+          'You can pass',
           {
-            command: 'npm run dev -- --reset',
+            command: '--reset',
           },
+          'to your command to reset your app configuration.',
         ],
         headline: 'Using shopify.app.dev.toml:',
       })
@@ -485,7 +496,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
     })
@@ -503,10 +513,12 @@ dev_store_url = "domain1"
     })
   })
 
-  test('returns useCloudflareTunnels false if the beta is enabled in partners', async () => {
+  test('returns remoteAppUpdated true when previous app id is different', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+    vi.mocked(getAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
+    // vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
     const got = await ensureDevContext(INPUT, 'token')
@@ -516,15 +528,15 @@ dev_store_url = "domain1"
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: false,
       updateURLs: undefined,
       deploymentMode: 'legacy',
+      configName: CACHED1_WITH_CONFIG.configFile,
     })
   })
 
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(getAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
@@ -536,7 +548,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: false,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
     })
@@ -561,10 +572,12 @@ dev_store_url = "domain1"
             ],
           },
         },
-        '\nTo reset your default dev config, run',
+        '\n',
+        'You can pass',
         {
-          command: 'npm run dev -- --reset',
+          command: '--reset',
         },
+        'to your command to reset your app configuration.',
       ],
       headline: 'Using these settings:',
     })
@@ -586,7 +599,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: true,
       updateURLs: undefined,
       deploymentMode: 'legacy',
     })
@@ -618,17 +630,66 @@ dev_store_url = "domain1"
 
   test('resets cached state if reset is true', async () => {
     // When
+    vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+
     await ensureDevContext({...INPUT, reset: true}, 'token')
 
     // Then
     expect(clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
     expect(fetchOrgAndApps).toBeCalled()
+    expect(link).not.toBeCalled()
+  })
+
+  test('reset triggers link if opted into config in code', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
+      const filePath = joinPath(tmp, 'shopify.app.dev.toml')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        appDirectory: tmp,
+        configurationPath: filePath,
+        configuration: {
+          client_id: APP2.apiKey,
+          name: APP2.apiKey,
+          application_url: APP2.applicationUrl,
+          api_contact_email: 'wils@bahan-lee.com',
+          webhook_api_version: '2023-04',
+          embedded: true,
+        },
+      })
+      vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+
+      // When
+      const got = await ensureDevContext({...INPUT, reset: true}, 'token')
+
+      // Then
+      expect(link).toBeCalled()
+      expect(got.remoteApp).toEqual({...APP2, apiSecret: 'secret2'})
+      expect(got.configName).toEqual('shopify.app.dev.toml')
+    })
+  })
+
+  test('links an app when running dev for the first time', async () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+
+    // When
+    await ensureDevContext(INPUT, 'token')
+
+    // Then
+    expect(link).toBeCalled()
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+      "
+      Looks like this is the first time you're running dev for this project.
+      Configure your preferences by answering a few questions.
+      "
+    `)
   })
 
   test('dev enables automatically the development store preview if the unified deployments beta is enabled', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(getAppInfo).mockReturnValueOnce(undefined)
     vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
     vi.mocked(selectOrCreateApp).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
     vi.mocked(partnersRequest).mockResolvedValueOnce({
@@ -644,7 +705,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: false,
       updateURLs: undefined,
       deploymentMode: 'unified',
     })
@@ -670,7 +730,6 @@ dev_store_url = "domain1"
       remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
-      useCloudflareTunnels: false,
       updateURLs: undefined,
       deploymentMode: 'unified',
     })
