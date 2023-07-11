@@ -1,4 +1,4 @@
-import {BaseSchema} from '../schemas.js'
+import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
   validateNonCommerceObjectShape,
@@ -10,7 +10,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export const FlowActionExtensionSchema = BaseSchema.extend({
+export const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_action'),
   runtime_url: zod.string().url().refine(startsWithHttps),
   validation_url: zod.string().url().refine(startsWithHttps).optional(),

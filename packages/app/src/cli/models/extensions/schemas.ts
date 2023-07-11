@@ -60,8 +60,8 @@ export const HandleSchema = zod
 
 export const BaseSchema = zod.object({
   name: zod.string(),
-  handle: HandleSchema,
   type: zod.string(),
+  handle: HandleSchema.optional(),
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),
@@ -70,6 +70,10 @@ export const BaseSchema = zod.object({
   categories: zod.array(zod.string()).optional(),
   extensions: zod.array(zod.any()).optional(),
   settings: SettingsSchema.optional(),
+})
+
+export const BaseSchemaWithHandle = BaseSchema.extend({
+  handle: HandleSchema,
 })
 
 export const UnifiedSchema = zod
