@@ -1,5 +1,7 @@
 # @shopify/cli-kit
 
+## 3.47.5
+
 ## 3.47.4
 
 ### Patch Changes

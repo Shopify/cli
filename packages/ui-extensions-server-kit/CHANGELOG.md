@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 4.2.2
+
+### Patch Changes
+
+- 5c8330e93: @shopify/ui-extensions-server-kit enable subscribing to connection open/close events
+
 ## 4.2.1
 
 ### Patch Changes
