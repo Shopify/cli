@@ -743,7 +743,7 @@ automatically_update_urls_on_dev = true
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await load({directory: tmpDir, specifications})
+    await loadApp({directory: tmpDir, specifications})
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
