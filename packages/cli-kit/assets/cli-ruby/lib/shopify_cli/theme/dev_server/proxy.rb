@@ -102,7 +102,7 @@ module ShopifyCLI
         def patch_body(env, body)
           return [""] unless body
 
-          body.gsub(%r{(data-.+=(["']))(http:|https:)?//#{shop}(.*)(\2)}) do |_|
+          body.gsub(%r{(data-base-url=(["']))(http:|https:)?//#{shop}(.*?)(\2)}) do |_|
             match = Regexp.last_match
             "#{match[1]}http://#{host(env)}#{match[4]}#{match[5]}"
           end
