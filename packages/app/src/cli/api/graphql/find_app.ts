@@ -19,6 +19,21 @@ export const FindAppQuery = gql`
       applicationUrl
       redirectUrlWhitelist
       requestedAccessScopes
+      webhookApiVersion
+      embedded
+      posEmbedded
+      preferencesUrl
+      contactEmail
+      gdprWebhooks {
+        customerDeletionUrl
+        customerDataRequestUrl
+        shopDeletionUrl
+      }
+      appProxy {
+        subPath
+        subPathPrefix
+        url
+      }
     }
   }
 `
@@ -41,5 +56,20 @@ export interface FindAppQuerySchema {
     applicationUrl: string
     redirectUrlWhitelist: string[]
     requestedAccessScopes?: string[]
+    contactEmail: string
+    webhookApiVersion: string
+    embedded: boolean
+    posEmbedded?: boolean
+    preferencesUrl?: string
+    gdprWebhooks?: {
+      customerDeletionUrl?: string
+      customerDataRequestUrl?: string
+      shopDeletionUrl?: string
+    }
+    appProxy?: {
+      proxySubPath: string
+      proxySubPathPrefix: string
+      proxyUrl: string
+    }
   }
 }
