@@ -1,5 +1,5 @@
 import {selectApp} from '../select-app.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes, isLegacyAppSchema} from '../../../models/app/app.js'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 type Format = 'json' | 'text'
@@ -15,7 +15,9 @@ export async function outputEnv(app: AppInterface, format: Format): Promise<Outp
     return outputContent`${outputToken.json({
       SHOPIFY_API_KEY: selectedApp.apiKey,
       SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
-      SCOPES: app.configuration.scopes,
+      SCOPES: isLegacyAppSchema(app.configuration)
+        ? app.configuration.scopes
+        : app.configuration.access_scopes?.scopes ?? '',
     })}`
   } else {
     return outputContent`

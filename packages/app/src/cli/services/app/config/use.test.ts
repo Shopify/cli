@@ -1,5 +1,5 @@
 import use, {UseOptions} from './use.js'
-import {testApp, testAppWithLegacyConfig} from '../../../models/app/app.test-data.js'
+import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
@@ -125,12 +125,12 @@ describe('use', () => {
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
 
-      const app = testAppWithLegacyConfig({
+      const app = testAppWithConfig({
         config: {
           name: 'something',
           client_id: 'something',
           api_contact_email: 'bob@bob.com',
-          webhook_api_version: '2023-04',
+          webhooks: {api_version: '2023-04'},
           application_url: 'https://example.com',
         },
       })
@@ -163,13 +163,13 @@ describe('use', () => {
       }
       vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
-      const app = testAppWithLegacyConfig({
+      const app = testAppWithConfig({
         config: {
           name: 'something',
-          client_id: 'something',
           api_contact_email: 'bob@bob.com',
-          webhook_api_version: '2023-04',
           application_url: 'https://example.com',
+          client_id: 'something',
+          webhooks: {api_version: '2023-04'},
         },
       })
       vi.mocked(loadAppConfiguration).mockResolvedValue({

@@ -1,5 +1,5 @@
 import {saveCurrentConfig} from './use.js'
-import {AppConfiguration, AppInterface, isLegacyAppSchema} from '../../../models/app/app.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema, isLegacyAppSchema} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
@@ -93,18 +93,14 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
     application_url: remoteApp.applicationUrl,
-    webhook_api_version: '2023-04',
+    embedded: true,
+    webhooks: {
+      api_version: '2023-04',
+    },
     api_contact_email: 'example@example.com',
   }
 
-  if (remoteApp.requestedAccessScopes) {
-    configuration.scopes = remoteApp.requestedAccessScopes.join(',')
-  } else if (typeof localApp.configuration?.scopes === 'string') {
-    configuration.legacy_scopes_behavior = true
-    configuration.scopes = localApp.configuration.scopes
-  } else {
-    configuration.legacy_scopes_behavior = true
-  }
+  configuration.access_scopes = getAccessScopes(localApp, remoteApp)
 
   if (localApp.configuration?.extension_directories) {
     configuration.extension_directories = localApp.configuration.extension_directories
@@ -115,4 +111,29 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
   }
 
   return configuration
+}
+
+const getAccessScopes = (localApp: AppInterface, remoteApp: OrganizationApp) => {
+  // if we have upstream scopes, use them
+  if (remoteApp.requestedAccessScopes) {
+    return {
+      scopes: remoteApp.requestedAccessScopes.join(','),
+    }
+    // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
+  } else if (isLegacyAppSchema(localApp.configuration) && localApp.configuration.scopes) {
+    return {
+      scopes: localApp.configuration.scopes,
+      use_legacy_install_flow: true,
+    }
+  } else if (isCurrentAppSchema(localApp.configuration) && localApp.configuration.access_scopes?.scopes) {
+    return {
+      scopes: localApp.configuration.access_scopes.scopes,
+      use_legacy_install_flow: true,
+    }
+    // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
+  } else {
+    return {
+      use_legacy_install_flow: true,
+    }
+  }
 }

@@ -74,11 +74,15 @@ describe('link', () => {
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-webhook_api_version = "2023-04"
+embedded = true
 api_contact_email = "example@example.com"
-legacy_scopes_behavior = true
-scopes = ""
 extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-04"
+
+[access_scopes]
+use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
@@ -103,7 +107,7 @@ extension_directories = [ ]
             api_contact_email: 'example@example.com',
             client_id: '12345',
             scopes: 'write_products',
-            webhook_api_version: '2023-04',
+            webhooks: {api_version: '2023-04'},
             application_url: 'https://myapp.com',
           },
         }),
@@ -126,8 +130,13 @@ extension_directories = [ ]
       const expectedContent = `client_id = "12345"
 name = "my app"
 application_url = "https://myapp.com"
-webhook_api_version = "2023-04"
+embedded = true
 api_contact_email = "example@example.com"
+
+[webhooks]
+api_version = "2023-04"
+
+[access_scopes]
 scopes = "write_products"
 `
       expect(content).toEqual(expectedContent)
@@ -160,11 +169,15 @@ scopes = "write_products"
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-webhook_api_version = "2023-04"
+embedded = true
 api_contact_email = "example@example.com"
-legacy_scopes_behavior = true
-scopes = ""
 extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-04"
+
+[access_scopes]
+use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -233,9 +246,14 @@ extension_directories = [ ]
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-webhook_api_version = "2023-04"
+embedded = true
 api_contact_email = "example@example.com"
-legacy_scopes_behavior = true
+
+[webhooks]
+api_version = "2023-04"
+
+[access_scopes]
+use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
     })
@@ -262,10 +280,15 @@ legacy_scopes_behavior = true
       const expectedContent = `client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
-webhook_api_version = "2023-04"
+embedded = true
 api_contact_email = "example@example.com"
-scopes = "read_products,write_orders"
 extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-04"
+
+[access_scopes]
+scopes = "read_products,write_orders"
 `
       expect(content).toEqual(expectedContent)
     })
