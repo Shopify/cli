@@ -650,10 +650,6 @@ async function showDevReusedValues({
     `Update URLs:  ${updateURLs}`,
   ]
 
-  if (cachedInfo.tunnelPlugin) {
-    items.push(`Tunnel:       ${cachedInfo.tunnelPlugin}`)
-  }
-
   const packageManager = await getPackageManager(directory)
   renderInfo({
     headline: reusedValuesTableTitle(cachedInfo),
