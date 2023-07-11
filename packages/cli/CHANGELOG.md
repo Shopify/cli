@@ -1,5 +1,13 @@
 # @shopify/cli
 
+## 3.47.4
+
+### Patch Changes
+
+- Updated dependencies [a24f841f1]
+  - @shopify/cli-kit@3.47.4
+  - @shopify/plugin-did-you-mean@3.47.4
+
 ## 3.47.3
 
 ### Patch Changes
