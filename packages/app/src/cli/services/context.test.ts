@@ -822,6 +822,7 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
+      '',
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -873,6 +874,7 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
+      '',
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -916,6 +918,7 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
+      '',
     )
   })
 
