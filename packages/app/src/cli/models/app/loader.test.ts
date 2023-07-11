@@ -508,7 +508,7 @@ automatically_update_urls_on_dev = true
       name = "My Field"
       description = "My Field Description"
       required = true
-      type = "string"
+      type = "single_line_text_field"
       `
     await writeBlockConfig({
       blockConfiguration,

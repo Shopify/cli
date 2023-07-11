@@ -14,7 +14,7 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -119,7 +119,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.localIdentifier = this.configuration.handle ? this.configuration.handle : basename(options.directory)
+    this.localIdentifier = this.configuration.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.useExtensionsFramework = false
     this.outputPath = this.directory

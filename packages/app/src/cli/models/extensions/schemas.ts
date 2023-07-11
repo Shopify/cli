@@ -51,9 +51,16 @@ export const SettingsSchema = zod.object({
     .optional(),
 })
 
+export const HandleSchema = zod
+  .string()
+  .trim()
+  .min(3, 'Handle needs to have at least 3 characters')
+  .max(30, "Handle can't exceed 30 characters")
+  .regex(/^[a-zA-Z0-9.\-_]*$/, 'Handle can only contain alphanumeric characters, periods, hyphens, and underscores')
+
 export const BaseSchema = zod.object({
   name: zod.string(),
-  handle: zod.string().optional(),
+  handle: HandleSchema,
   type: zod.string(),
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
