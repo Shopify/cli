@@ -9,6 +9,7 @@ import {
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 export function getFlowExtensionsToMigrate(
   localSources: LocalSource[],
@@ -26,15 +27,16 @@ export function getFlowExtensionsToMigrate(
   const local = localSources.filter((source) => localExtensionTypesToMigrate.includes(source.type))
   const remote = remoteSources.filter((source) => remoteExtensionTypesToMigrate.includes(source.type))
 
+  // Map remote sources by uuid and slugified title (the slugified title is used for matching with local folder)
   const remoteSourcesMap = new Map<string, RemoteSource>()
   remote.forEach((remoteSource) => {
     remoteSourcesMap.set(remoteSource.uuid, remoteSource)
-    remoteSourcesMap.set(remoteSource.title, remoteSource)
+    remoteSourcesMap.set(slugify(remoteSource.title), remoteSource)
   })
 
   return local.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
-    const localSourceId = ids[localSource.configuration.name] ?? 'unknown'
-    const remoteSource = remoteSourcesMap.get(localSourceId) || remoteSourcesMap.get(localSource.configuration.name)
+    const localSourceId = ids[localSource.localIdentifier] ?? 'unknown'
+    const remoteSource = remoteSourcesMap.get(localSourceId) || remoteSourcesMap.get(localSource.localIdentifier)
     const typeMatch = typesMap.get(localSource.type) === remoteSource?.type
 
     if (remoteSource && typeMatch) {

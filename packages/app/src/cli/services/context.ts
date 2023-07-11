@@ -483,9 +483,10 @@ export async function fetchAppAndIdentifiers(
     partnersApp = await appFromId(apiKey, token)
   } else if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
+  } else if (options.apiKey) {
+    partnersApp = await appFromId(options.apiKey, token)
   } else if (envIdentifiers.app) {
-    const apiKey = options.apiKey ?? envIdentifiers.app
-    partnersApp = await appFromId(apiKey, token)
+    partnersApp = await appFromId(envIdentifiers.app, token)
   } else if (reuseFromDev) {
     partnersApp = await fetchDevAppAndPrompt(options.app, token)
   }
