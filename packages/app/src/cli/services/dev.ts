@@ -25,7 +25,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {load} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
@@ -58,7 +58,7 @@ const MANIFEST_VERSION = '3'
 export interface DevOptions {
   directory: string
   id?: number
-  config?: string
+  configName?: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -89,14 +89,14 @@ async function dev(options: DevOptions) {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-    config,
+    configName,
     deploymentMode,
   } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
-  let localApp = await load({directory: options.directory, specifications, configName: config})
+  let localApp = await loadApp({directory: options.directory, specifications, configName})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
@@ -110,19 +110,22 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, frontendServerPort, currentURLs] = await Promise.all(
-    [
-      generateFrontendURL({
-        ...options,
-        app: localApp,
-        tunnelClient,
-      }),
-      getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-      frontendConfig?.configuration.port || getAvailableTCPPort(),
-      getURLs(apiKey, token),
-    ],
-  )
-  if (frontendConfig && !frontendConfig.configuration.port) frontendConfig.configuration.port = frontendServerPort
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
+    generateFrontendURL({
+      ...options,
+      app: localApp,
+      tunnelClient,
+    }),
+    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
+    getURLs(apiKey, token),
+  ])
+  let frontendServerPort = frontendConfig?.configuration.port
+  if (frontendConfig) {
+    if (!frontendServerPort) {
+      frontendServerPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
+    }
+    frontendConfig.configuration.port = frontendServerPort
+  }
 
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   const proxyTargets: ReverseHTTPProxyTarget[] = []
@@ -315,7 +318,7 @@ function isWebType(web: Web, type: WebType): boolean {
 interface DevWebOptions {
   web: Web
   backendPort: number
-  frontendServerPort: number
+  frontendServerPort: number | undefined
   hmrServerPort?: number
   apiKey: string
   apiSecret?: string

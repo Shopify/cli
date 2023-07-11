@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
-import {load as loadApp} from '../../models/app/loader.js'
+import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {release} from '../../services/release.js'
@@ -42,7 +42,7 @@ export default class Release extends Command {
     }))
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({specifications, directory: flags.path})
+    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
     await release({
       app,
       apiKey: flags['api-key'],
