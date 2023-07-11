@@ -106,7 +106,7 @@ async function dev(options: DevOptions) {
   const backendConfig = localApp.webs.find((web) => isWebType(web, WebType.Backend))
   const webhooksPath =
     localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
-  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
 
   await validateCustomPorts(localApp.webs)
 
