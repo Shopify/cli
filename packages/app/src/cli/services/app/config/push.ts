@@ -41,7 +41,10 @@ export async function pushConfig({configuration, configurationPath}: Options) {
       abort(errors)
     }
 
-    if (app.requestedAccessScopes && usesLegacyScopesBehavior(configuration)) {
+    const shouldDeleteScopes =
+      configuration.access_scopes?.scopes?.length === 0 || usesLegacyScopesBehavior(configuration)
+
+    if (app.requestedAccessScopes && shouldDeleteScopes) {
       const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
 
       if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
