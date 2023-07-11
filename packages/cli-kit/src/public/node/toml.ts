@@ -1,3 +1,4 @@
+import {JsonMap} from '../../private/common/json.js'
 import * as toml from '@iarna/toml'
 
 /**
@@ -16,6 +17,8 @@ export function decodeToml(input: string): object {
  * @param content - JSON object.
  * @returns TOML string.
  */
-export function encodeToml(content: toml.JsonMap): string {
-  return toml.stringify(content)
+export function encodeToml(content: JsonMap): string {
+  // our JsonMap type is fine with nulls/undefined, but the typing for TOML library isn't.
+  const tomlSafeContent = content as toml.JsonMap
+  return toml.stringify(tomlSafeContent)
 }

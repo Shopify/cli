@@ -63,7 +63,7 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
   const environmentData = await getEnvironmentData(config)
   const sensitiveEnvironmentData = await getSensitiveEnvironmentData(config)
 
-  const payload = {
+  let payload = {
     public: {
       command: startCommand,
       time_start: startTime,
@@ -93,6 +93,9 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       }),
     },
   }
+
+  // strip undefined fields -- they make up the majority of payloads due to wide metadata structure.
+  payload = JSON.parse(JSON.stringify(payload))
 
   return sanitizePayload(payload)
 }

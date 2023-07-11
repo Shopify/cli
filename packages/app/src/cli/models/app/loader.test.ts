@@ -21,6 +21,13 @@ describe('load', () => {
   const appConfiguration = `
 scopes = "read_products"
 `
+  const linkedAppConfiguration = `
+client_id = "1234567890"
+name = "for-testing"
+
+[cli]
+automatically_update_urls_on_dev = true
+`
 
   beforeAll(async () => {
     specifications = await loadFSExtensionsSpecifications()
@@ -93,6 +100,12 @@ scopes = "read_products"
     await writeFile(configPath, blockConfiguration)
     return {blockDir, configPath}
   }
+
+  const configAsCodeLegacyMetadata = () => ({
+    cmd_app_all_configs_any: false,
+    cmd_app_all_configs_clients: JSON.stringify({}),
+    cmd_app_linked_config_used: false,
+  })
 
   test("throws an error if the directory doesn't exist", async () => {
     await inTemporaryDirectory(async (tmp) => {
@@ -696,7 +709,11 @@ scopes = "read_products"
 
     await loadApp({directory: tmpDir, specifications})
 
-    expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      project_type: 'node',
+      env_package_manager_workspaces: false,
+      ...configAsCodeLegacyMetadata(),
+    })
   })
 
   test(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
@@ -710,7 +727,35 @@ scopes = "read_products"
 
     await loadApp({directory: tmpDir, specifications})
 
-    expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      project_type: 'node',
+      env_package_manager_workspaces: true,
+      ...configAsCodeLegacyMetadata(),
+    })
+  })
+
+  test(`updates metadata after loading a config as code application`, async () => {
+    const {webDirectory} = await writeConfig(linkedAppConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await load({directory: tmpDir, specifications})
+
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      project_type: 'node',
+      env_package_manager_workspaces: true,
+      cmd_app_linked_config_used: true,
+      cmd_app_linked_config_uses_cli_managed_urls: true,
+      cmd_app_all_configs_any: true,
+      cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
+      cmd_app_linked_config_name: 'shopify.app.toml',
+      cmd_app_linked_config_git_tracked: true,
+      cmd_app_linked_config_source: 'default',
+    })
   })
 
   describe('customer_accounts_ui_extension', () => {
