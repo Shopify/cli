@@ -25,7 +25,6 @@ export interface SelectPromptProps<T> {
   infoTable?: InfoTableProps['table']
   gitDiff?: GitDiffProps
   defaultValue?: T
-  submitWithShortcuts?: boolean
   abortSignal?: AbortSignal
   infoMessage?: InfoMessage
 }
@@ -39,7 +38,6 @@ function SelectPrompt<T>({
   gitDiff,
   onSubmit,
   defaultValue,
-  submitWithShortcuts = false,
   abortSignal,
 }: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
   if (choices.length === 0) {
@@ -148,13 +146,7 @@ function SelectPrompt<T>({
           <SelectInput
             defaultValue={defaultValue}
             items={choices}
-            infoMessage={
-              submitWithShortcuts
-                ? `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter or a shortcut to confirm.`
-                : undefined
-            }
             availableLines={availableLines}
-            submitWithShortcuts={submitWithShortcuts}
             onSubmit={submitAnswer}
           />
         </Box>
