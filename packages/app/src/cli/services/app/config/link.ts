@@ -119,11 +119,11 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
     }
   }
 
-  if (remoteApp.appProxy?.proxyUrl) {
+  if (remoteApp.appProxy?.url) {
     configuration.app_proxy = {
-      url: remoteApp.appProxy.proxyUrl,
-      subpath: remoteApp.appProxy.proxySubPath,
-      prefix: remoteApp.appProxy.proxySubPathPrefix,
+      url: remoteApp.appProxy.url,
+      subpath: remoteApp.appProxy.subPath,
+      prefix: remoteApp.appProxy.subPathPrefix,
     }
   }
 

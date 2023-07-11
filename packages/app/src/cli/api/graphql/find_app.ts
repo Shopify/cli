@@ -67,9 +67,9 @@ export interface FindAppQuerySchema {
       shopDeletionUrl?: string
     }
     appProxy?: {
-      proxySubPath: string
-      proxySubPathPrefix: string
-      proxyUrl: string
+      subPath: string
+      subPathPrefix: string
+      url: string
     }
   }
 }
