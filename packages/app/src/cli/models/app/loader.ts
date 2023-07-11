@@ -7,6 +7,7 @@ import {
   WebType,
   getAppScopes,
   AppConfiguration,
+  isCurrentAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -461,7 +462,7 @@ class AppConfigurationLoader {
       allClientIdsByConfigName,
     }
 
-    if (configuration.client_id !== undefined) {
+    if (isCurrentAppSchema(configuration)) {
       let gitTracked = false
       try {
         gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]

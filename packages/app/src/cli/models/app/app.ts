@@ -13,8 +13,6 @@ const LegacyAppSchema = zod
     scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
-    // This means we can check if `client_id` exists to discriminate between the two schemas.
-    client_id: zod.undefined(),
   })
   .strict()
 
@@ -73,18 +71,16 @@ export const AppConfigurationSchema = zod.union([AppSchema, LegacyAppSchema])
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
  * @param item - the item to validate
- * @param strict - whether to allow keys not defined in the schema
  */
-export function isLegacyAppSchema(item: unknown): item is zod.infer<typeof LegacyAppSchema> {
+export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
   return isType(LegacyAppSchema, item)
 }
 
 /**
  * Check whether a shopify.app.toml schema is valid against the current schema definition.
  * @param item - the item to validate
- * @param strict - whether to allow keys not defined in the schema
  */
-export function isCurrentAppSchema(item: unknown): item is zod.infer<typeof AppSchema> {
+export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   return isType(AppSchema, item)
 }
 
