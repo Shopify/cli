@@ -462,7 +462,13 @@ class AppConfigurationLoader {
     }
 
     if (configuration.client_id !== undefined) {
-      const gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
+      let gitTracked = false
+      try {
+        gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        // leave as false
+      }
 
       configurationLoadResultMetadata = {
         ...configurationLoadResultMetadata,
