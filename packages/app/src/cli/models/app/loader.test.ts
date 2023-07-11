@@ -22,10 +22,16 @@ describe('load', () => {
 scopes = "read_products"
 `
   const linkedAppConfiguration = `
-client_id = "1234567890"
 name = "for-testing"
+api_contact_email = "me@example.com"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
 
-[cli]
+[webhooks]
+api_version = "2023-07"
+
+[build]
 automatically_update_urls_on_dev = true
 `
 
@@ -743,7 +749,7 @@ automatically_update_urls_on_dev = true
     })
     await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
 
-    await load({directory: tmpDir, specifications})
+    await loadApp({directory: tmpDir, specifications})
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
