@@ -361,11 +361,11 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-         [1mAutomations[22m                                [46m [49m
-         [36m>[39m  [36mfirst[39m                                   [100m [49m
-            second                                  [100m [49m
-                                                    [100m [49m
-         [1mMerchant Admin[22m                             [100m [49m
+         [1mAutomations[22m                                                                 [46m [49m
+         [36m>[39m  [36mfirst[39m                                                                    [100m [49m
+            second                                                                   [100m [49m
+                                                                                     [100m [49m
+         [1mMerchant Admin[22m                                                              [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
