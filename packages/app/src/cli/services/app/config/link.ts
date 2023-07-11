@@ -7,7 +7,6 @@ import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.j
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
-import {getAppInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'

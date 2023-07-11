@@ -17,7 +17,7 @@ describe('versionDiffByVersion', () => {
     expect(outputMock.error()).toMatchInlineSnapshot(`
       "╭─ error ──────────────────────────────────────────────────────────────────────╮
       │                                                                              │
-      │  Version couldn't be released                                                │
+      │  Version couldn't be released.                                               │
       │                                                                              │
       │  Version version could not be found.                                         │
       │                                                                              │
