@@ -58,7 +58,7 @@ jobs:
   main:
     name: Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'push' || github.event_name == 'merge_group' }}
+    if: ${{ github.event_name == 'push' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -106,7 +106,7 @@ jobs:
   pr-platform-agnostic:
     name: ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -172,7 +172,7 @@ jobs:
     name: test with Node ${{ matrix.node }} in ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     needs: pr-platform-agnostic
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
     strategy:
       matrix:
