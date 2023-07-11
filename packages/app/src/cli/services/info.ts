@@ -1,6 +1,6 @@
 import {outputEnv} from './app/env/show.js'
-import {CachedAppInfo, getAppInfo} from './local-storage.js'
-import {AppInterface, getAppScopes} from '../models/app/app.js'
+import {getAppInfo} from './local-storage.js'
+import {AppInterface, getAppScopes, isCurrentAppSchema} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -53,7 +53,6 @@ const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configur
 
 class AppInfo {
   private app: AppInterface
-  private cachedAppInfo: CachedAppInfo | undefined
 
   constructor(app: AppInterface) {
     this.app = app
@@ -71,8 +70,9 @@ class AppInfo {
   }
 
   devConfigsSection(): [string, string] {
-    const title = 'Configs for Dev'
+    const title = `Current app configuration`
 
+    let configName = NOT_CONFIGURED_TEXT
     let appName = NOT_CONFIGURED_TEXT
     let storeDescription = NOT_CONFIGURED_TEXT
     let apiKey = NOT_CONFIGURED_TEXT
@@ -82,7 +82,16 @@ class AppInfo {
       'dev',
     )}`.value
     const cachedAppInfo = getAppInfo(this.app.directory)
-    if (cachedAppInfo) {
+    if (isCurrentAppSchema(this.app.configuration)) {
+      configName = this.app.configurationPath
+      appName = this.app.configuration.name
+      apiKey = this.app.configuration.client_id
+      if (this.app.configuration.cli?.dev_store_url) storeDescription = this.app.configuration.cli.dev_store_url
+      if (this.app.configuration.cli?.automatically_update_urls_on_dev) {
+        updateURLs = this.app.configuration.cli.automatically_update_urls_on_dev ? 'Always' : 'Never'
+      }
+      postscript = outputContent`💡 To change these, use the '--config' flag.`.value
+    } else if (cachedAppInfo) {
       if (cachedAppInfo.title) appName = cachedAppInfo.title
       if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
       if (cachedAppInfo.appId) apiKey = cachedAppInfo.appId
@@ -94,7 +103,8 @@ class AppInfo {
       )}`.value
     }
     const lines = [
-      ['App', appName],
+      ['Configuration file', configName],
+      ['App name', appName],
       ['Dev store', storeDescription],
       ['Client ID', apiKey],
       ['Update URLs', updateURLs],
@@ -104,10 +114,7 @@ class AppInfo {
 
   projectSettingsSection(): [string, string] {
     const title = 'Your Project'
-    const lines = [
-      ['Name', this.app.name],
-      ['Root location', this.app.directory],
-    ]
+    const lines = [['Root location', this.app.directory]]
     return [title, linesToColumns(lines)]
   }
 
