@@ -21,17 +21,32 @@ export const CreateAppQuery = gql`
     ) {
       app {
         id
-        apiKey
         title
-        appType
-        applicationUrl
-        redirectUrlWhitelist
-        requestedAccessScopes
+        apiKey
+        organizationId
         apiSecretKeys {
           secret
         }
         appType
         grantedScopes
+        applicationUrl
+        redirectUrlWhitelist
+        requestedAccessScopes
+        webhookApiVersion
+        embedded
+        posEmbedded
+        preferencesUrl
+        contactEmail
+        gdprWebhooks {
+          customerDeletionUrl
+          customerDataRequestUrl
+          shopDeletionUrl
+        }
+        appProxy {
+          subPath
+          subPathPrefix
+          url
+        }
       }
       userErrors {
         field
@@ -54,17 +69,36 @@ export interface CreateAppQuerySchema {
   appCreate: {
     app: {
       id: string
-      apiKey: string
       title: string
-      applicationUrl: string
-      redirectUrlWhitelist: string[]
+      apiKey: string
       organizationId: string
       apiSecretKeys: {
         secret: string
       }[]
       appType: string
       grantedScopes: string[]
-      requestedAccessScopes: string[]
+      betas?: {
+        unifiedAppDeployment?: boolean
+        unifiedAppDeploymentOptIn?: boolean
+      }
+      applicationUrl: string
+      redirectUrlWhitelist: string[]
+      requestedAccessScopes?: string[]
+      contactEmail: string
+      webhookApiVersion: string
+      embedded: boolean
+      posEmbedded?: boolean
+      preferencesUrl?: string
+      gdprWebhooks?: {
+        customerDeletionUrl?: string
+        customerDataRequestUrl?: string
+        shopDeletionUrl?: string
+      }
+      appProxy?: {
+        proxySubPath: string
+        proxySubPathPrefix: string
+        proxyUrl: string
+      }
     }
     userErrors: {
       field: string[]
