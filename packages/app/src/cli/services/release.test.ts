@@ -134,7 +134,7 @@ describe('release', () => {
         '\nmessage',
         '\n\nsome kind of error 1, some kind of error 2',
       ],
-      headline: "Version couldn't be released",
+      headline: "Version couldn't be released.",
     })
   })
 })
