@@ -68,11 +68,11 @@ export async function createApp(
   appName: string,
   token: string,
   isLaunchable?: boolean,
-  scopes = '',
+  scopes?: string,
 ): Promise<OrganizationApp> {
   const name = await appNamePrompt(appName)
 
-  const variables = getAppVars(org, name, isLaunchable, scopes)
+  const variables = getAppVars(org, name, isLaunchable, scopes ?? '')
 
   const query = CreateAppQuery
   const result: CreateAppQuerySchema = await partnersRequest(query, token, variables)
