@@ -12,8 +12,6 @@ export const FlowTriggerExtensionSchema = BaseSchema.extend({
     .array(
       zod.object({
         type: zod.literal('flow_trigger'),
-        schema: zod.string().optional(),
-        return_type_ref: zod.string().optional(),
       }),
     )
     .min(1),
@@ -54,8 +52,6 @@ const flowTriggerSpecification = createExtensionSpecification({
       title: config.name,
       description: config.description,
       fields: serializeFields('flow_trigger', config.settings?.fields),
-      schema: extension.schema,
-      return_type_ref: extension.return_type_ref,
     }
   },
 })
