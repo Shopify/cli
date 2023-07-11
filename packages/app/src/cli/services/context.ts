@@ -462,7 +462,9 @@ export async function fetchOrCreateOrganizationApp(app: AppInterface, token: str
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
-  const scopes = app.configuration.scopes
+  const scopes = isCurrentAppSchema(app.configuration)
+    ? app.configuration.access_scopes?.scopes
+    : app.configuration.scopes
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
   return partnersApp
 }
