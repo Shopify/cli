@@ -791,8 +791,7 @@
           "type": "option",
           "description": "Specify an environment file to update if the update flag is set",
           "hidden": false,
-          "multiple": false,
-          "default": ".env"
+          "multiple": false
         }
       },
       "args": {}

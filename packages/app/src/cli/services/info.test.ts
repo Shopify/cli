@@ -1,7 +1,7 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectApp} from './app/select-app.js'
 import {getAppInfo} from './local-storage.js'
+import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
@@ -14,7 +14,7 @@ import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
-vi.mock('./app/select-app.js')
+vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -106,7 +106,7 @@ describe('info', () => {
         pageInfo: {hasNextPage: false},
       },
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
@@ -147,7 +147,7 @@ describe('info', () => {
         pageInfo: {hasNextPage: false},
       },
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
@@ -212,7 +212,7 @@ describe('info', () => {
         pageInfo: {hasNextPage: false},
       },
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When

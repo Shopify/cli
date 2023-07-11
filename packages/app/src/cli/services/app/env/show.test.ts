@@ -1,6 +1,6 @@
 import {showEnv} from './show.js'
 import {fetchOrgAndApps, fetchOrganizations} from '../../dev/fetch.js'
-import {selectApp} from '../select-app.js'
+import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
@@ -11,7 +11,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 vi.mock('../../dev/fetch.js')
-vi.mock('../select-app.js')
+vi.mock('../fetch-app-from-config-or-select.js')
 vi.mock('../../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -39,7 +39,7 @@ describe('env show', () => {
       stores: [],
       apps: {nodes: [organizationApp], pageInfo: {hasNextPage: false}},
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(token)
 
     // When
