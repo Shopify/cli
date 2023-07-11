@@ -1,6 +1,6 @@
 import {deployConfirmationPrompt} from './prompts.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {InfoTableSection, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {InfoTableSection, renderConfirmationPrompt, renderSternConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -9,49 +9,45 @@ vi.mock('@shopify/cli-kit/node/api/partners')
 describe('deployConfirmationPrompt', () => {
   test('when legacy deployment mode should render confirmation prompt with the source summary', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(renderSternConfirmationPrompt).mockResolvedValue(true)
 
     // When
-    const response = await deployConfirmationPrompt(buildSourceSummary(), 'legacy', 'apiKey', 'token')
+    const response = await deployConfirmationPrompt(buildSourceSummary(), 'legacy', 'apiKey', 'token', 'name')
 
     // Then
     expect(response).toBe(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith(legacyRenderConfirmationPromptContent())
+    expect(renderSternConfirmationPrompt).toHaveBeenCalledWith(legacyRenderConfirmationPromptContent())
   })
 
   test('when unified deployment mode but without any active version should render confirmation prompt with the source summary', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(renderSternConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValue({app: {}})
 
     // When
-    const response = await deployConfirmationPrompt(buildSourceSummary(), 'unified', 'apiKey', 'token')
+    const response = await deployConfirmationPrompt(buildSourceSummary(), 'unified', 'apiKey', 'token', 'name')
 
     // Then
     expect(response).toBe(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-      legacyRenderConfirmationPromptContent('Yes, release this new version'),
-    )
+    expect(renderSternConfirmationPrompt).toHaveBeenCalledWith(legacyRenderConfirmationPromptContent())
   })
 
   test('when unified deployment mode and an active version should render confirmation prompt with the comparison between source summary and active version', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(renderSternConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
 
     // When
-    const response = await deployConfirmationPrompt(buildSourceSummary(), 'unified', 'apiKey', 'token')
+    const response = await deployConfirmationPrompt(buildSourceSummary(), 'unified', 'apiKey', 'token', 'name')
 
     // Then
     expect(response).toBe(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-      unifiedRenderConfirmationPromptContent('Yes, release this new version'),
-    )
+    expect(renderSternConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent())
   })
 
   test('when unified deployment mode and current extension registration and active version include same dashboard extension we should show it only in the dashboard section', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(renderSternConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
     const sourceSummary = buildSourceSummary()
     sourceSummary.dashboardOnly.push({
@@ -62,21 +58,21 @@ describe('deployConfirmationPrompt', () => {
     })
 
     // When
-    const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+    const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token', 'name')
 
     // Then
     // Add 'dashboard_title1' to the dashboar section
-    const expectedContent = unifiedRenderConfirmationPromptContent('Yes, release this new version')
+    const expectedContent = unifiedRenderConfirmationPromptContent()
     expectedContent.infoTable[0]?.items?.push(['dashboard_title1', {subdued: '(from Partner Dashboard)'}])
     // Remove 'dashboard_title1' from the deleted section
     expectedContent.infoTable[1]?.items?.pop()
     expect(response).toBe(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
+    expect(renderSternConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
   })
 
   test('when unified deployment mode and current dashboard extension registration and non dashboard active version include same extension we should show as new, not dashboard', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(renderSternConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
     // Add dashboard extension to the current non dashboard registrations
     let sourceSummary = buildSourceSummary()
@@ -89,11 +85,11 @@ describe('deployConfirmationPrompt', () => {
     }
 
     // When
-    const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+    const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token', 'name')
 
     // Then
     // Remove dashboard section
-    const expectedContent = unifiedRenderConfirmationPromptContent('Yes, release this new version')
+    const expectedContent = unifiedRenderConfirmationPromptContent()
     // Add dashboard extension to the create section
     expectedContent.infoTable[0]?.items?.splice(1, 1)
     expectedContent.infoTable[0]?.items?.splice(2, 1)
@@ -104,7 +100,36 @@ describe('deployConfirmationPrompt', () => {
       ['id1', {subdued: '(new)'}],
     )
     expect(response).toBe(true)
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
+    expect(renderSternConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
+  })
+
+  test('when no removed extensions we should show selection confirmation prompt', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+    // When
+    const sourceSummary = {...buildSourceSummary(), onlyRemote: []}
+    const response = await deployConfirmationPrompt(sourceSummary, 'legacy', 'apiKey', 'token', 'name')
+
+    // Then
+    expect(response).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      cancellationMessage: 'No, cancel',
+      confirmationMessage: 'Yes, deploy to push changes',
+      infoTable: [
+        {
+          header: 'Includes:',
+          items: [
+            ['id1', {subdued: '(new)'}],
+            'extension1',
+            'extension2',
+            ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+          ],
+          bullet: '+',
+        },
+      ],
+      message: 'question',
+    })
   })
 })
 
@@ -142,10 +167,12 @@ function buildSourceSummary() {
   }
 }
 
-function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deploy to push changes') {
+function legacyRenderSelectionConfirmationPromptContent() {}
+
+function legacyRenderConfirmationPromptContent() {
   return {
-    cancellationMessage: 'No, cancel',
-    confirmationMessage,
+    message: 'question',
+    answer: 'name',
     infoTable: [
       {
         header: 'Includes:',
@@ -164,7 +191,6 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
         helperText: 'This can permanently delete app user data.',
       },
     ],
-    message: 'question',
   }
 }
 
@@ -218,10 +244,10 @@ function activeVersionContent() {
   }
 }
 
-function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, deploy to push changes') {
+function unifiedRenderConfirmationPromptContent() {
   return {
-    cancellationMessage: 'No, cancel',
-    confirmationMessage,
+    message: 'question',
+    answer: 'name',
     infoTable: [
       {
         header: 'Includes:',
@@ -240,6 +266,5 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
         bullet: '-',
       },
     ] as InfoTableSection[],
-    message: 'question',
   }
 }

@@ -7,6 +7,7 @@ import {
   InfoTableSection,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
+  renderSternConfirmationPrompt,
   renderInfo,
 } from '@shopify/cli-kit/node/ui'
 
@@ -52,6 +53,7 @@ export async function deployConfirmationPrompt(
   deploymentMode: DeploymentMode,
   apiKey: string,
   token: string,
+  appName: string,
 ): Promise<boolean> {
   let infoTable: InfoTableSection[] = await buildUnifiedDeploymentInfoPrompt(
     apiKey,
@@ -80,12 +82,20 @@ export async function deployConfirmationPrompt(
     }
   })()
 
-  return renderConfirmationPrompt({
-    message: question,
-    infoTable,
-    confirmationMessage,
-    cancellationMessage: 'No, cancel',
-  })
+  if (onlyRemote.length) {
+    return renderSternConfirmationPrompt({
+      message: question,
+      answer: appName,
+      infoTable,
+    })
+  } else {
+    return renderConfirmationPrompt({
+      message: question,
+      infoTable,
+      confirmationMessage,
+      cancellationMessage: 'No, cancel',
+    })
+  }
 }
 
 function buildLegacyDeploymentInfoPrompt({

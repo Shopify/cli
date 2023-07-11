@@ -252,4 +252,54 @@ describe('TextPrompt', () => {
       "
     `)
   })
+
+  test('shows an instruction when provided', async () => {
+    const renderInstance = render(
+      <TextPrompt onSubmit={() => {}} message="Do something serious?" instruction="Type `yolo` to confirm:" />,
+    )
+
+    await waitForInputsToBeReady()
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Do something serious?
+
+         Type \`yolo\` to confirm:
+      >
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+      "
+    `)
+  })
+
+  test('shows an info table when provided', async () => {
+    const infoTable = [
+      {
+        header: 'Includes:',
+        items: ['new-ext'],
+        bullet: '+',
+      },
+      {
+        header: 'Removes:',
+        items: ['integrated-demand-ext', ['order-discount', {subdued: '(1)'}]],
+        bullet: '-',
+      },
+    ]
+
+    const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" infoTable={infoTable} />)
+
+    await waitForInputsToBeReady()
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Test question:
+
+         ┃  Includes:
+         ┃  + new-ext
+         ┃
+         ┃  Removes:
+         ┃  - integrated-demand-ext
+         ┃  - order-discount (1)
+      >
+         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+      "
+    `)
+  })
 })

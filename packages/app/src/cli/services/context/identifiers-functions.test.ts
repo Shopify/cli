@@ -230,6 +230,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
       'legacy',
       opts.appId,
       opts.token,
+      opts.appName,
     )
   })
 })
@@ -358,6 +359,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
       'legacy',
       opts.appId,
       opts.token,
+      opts.appName,
     )
   })
 

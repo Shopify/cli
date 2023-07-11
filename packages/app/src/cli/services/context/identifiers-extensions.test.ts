@@ -539,6 +539,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       'unified',
       opt.appId,
       opt.token,
+      opt.appName,
     )
   })
 
@@ -577,6 +578,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       'legacy',
       opt.appId,
       opt.token,
+      opt.appName,
     )
   })
 

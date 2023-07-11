@@ -380,6 +380,50 @@ export async function renderConfirmationPrompt({
   })
 }
 
+export interface RenderSternConfirmationPromptOptions
+  extends Pick<TextPromptProps, 'message' | 'infoTable' | 'abortSignal'> {
+  answer: string
+  renderOptions?: RenderOptions
+}
+
+/**
+ * Renders a stern confirmation prompt to the console.
+ * @example
+ * ?  Delete the following themes from the store?
+ *
+ *    ┃  Includes:
+ *    ┃  + new-ext
+ *    ┃
+ *    ┃  Removes:
+ *    ┃  - integrated-demand-ext
+ *    ┃  - order-discount (1)
+ *
+ *    Type `Mega App` to confirm:
+ * >
+ *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+ *
+ */
+export async function renderSternConfirmationPrompt({
+  message,
+  answer,
+  renderOptions,
+  abortSignal,
+  infoTable,
+}: RenderSternConfirmationPromptOptions): Promise<boolean> {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'sternConfirmationPrompt', properties: arguments[0]})
+
+  const result = await renderTextPrompt({
+    message,
+    instruction: `Type \`${answer}\` to confirm`,
+    renderOptions,
+    validate: (val) => (val === answer ? undefined : `"${val}" does not match ${answer}`),
+    abortSignal,
+    infoTable,
+  })
+  return result === answer
+}
+
 export interface RenderAutocompleteOptions<T>
   extends PartialBy<Omit<AutocompletePromptProps<T>, 'onSubmit'>, 'search'> {
   renderOptions?: RenderOptions

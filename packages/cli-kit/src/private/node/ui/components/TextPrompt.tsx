@@ -1,4 +1,5 @@
 import {TextInput} from './TextInput.js'
+import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
@@ -11,6 +12,7 @@ import figures from 'figures'
 
 export interface TextPromptProps {
   message: string
+  instruction?: string
   onSubmit: (value: string) => void
   defaultValue?: string
   password?: boolean
@@ -21,10 +23,12 @@ export interface TextPromptProps {
   previewPrefix?: (value: string) => string | undefined
   previewValue?: (value: string) => string | undefined
   previewSuffix?: (value: string) => string | undefined
+  infoTable?: InfoTableProps['table']
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
   message,
+  instruction,
   onSubmit,
   validate,
   defaultValue = '',
@@ -35,6 +39,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   previewPrefix,
   previewValue,
   previewSuffix,
+  infoTable,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -89,6 +94,29 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
+      {infoTable ? (
+        <Box
+          marginTop={1}
+          marginLeft={3}
+          paddingLeft={2}
+          borderStyle="bold"
+          borderLeft
+          borderRight={false}
+          borderTop={false}
+          borderBottom={false}
+          flexDirection="column"
+          gap={1}
+        >
+          <InfoTable table={infoTable} />
+        </Box>
+      ) : null}
+      {instruction ? (
+        <Box>
+          <Box marginTop={1} marginLeft={3}>
+            <TokenizedText item={messageWithPunctuation(instruction)} />
+          </Box>
+        </Box>
+      ) : null}
       {submitted && !error ? (
         <Box>
           <Box marginRight={2}>

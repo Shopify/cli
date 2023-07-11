@@ -103,6 +103,7 @@ export async function ensureExtensionsIds(
       options.deploymentMode,
       options.appId,
       options.token,
+      options.appName,
     )
     if (!confirmed) return err('user-cancelled')
   }
