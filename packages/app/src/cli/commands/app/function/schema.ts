@@ -17,7 +17,6 @@ export default class FetchSchema extends Command {
       hidden: true,
       name: 'API key',
       description: 'The API key to fetch the schema with.',
-      required: false,
       env: 'SHOPIFY_FLAG_APP_API_KEY',
     }),
     'client-id': Flags.string({
