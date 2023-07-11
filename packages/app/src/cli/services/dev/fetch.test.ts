@@ -47,7 +47,6 @@ const FETCH_ORG_RESPONSE_VALUE = {
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        betas: ORG1.betas,
         apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
         stores: {nodes: [STORE1]},
       },
@@ -60,7 +59,6 @@ const FETCH_STORE_RESPONSE_VALUE = {
       {
         id: ORG1.id,
         businessName: ORG1.businessName,
-        betas: ORG1.betas,
         website: ORG1.website,
         stores: {nodes: [STORE1]},
       },
