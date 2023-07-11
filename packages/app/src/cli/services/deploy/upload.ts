@@ -173,6 +173,9 @@ export async function uploadExtensionsBundle(
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
       result.appDeploy.userErrors,
       options.extensionIds,
+      {
+        version: options.version,
+      },
     )
 
     if (result.appDeploy.deployment) {
@@ -203,6 +206,9 @@ const GENERIC_ERRORS_TITLE = '\n'
 export function deploymentErrorsToCustomSections(
   errors: AppDeploySchema['appDeploy']['userErrors'],
   extensionIds: IdentifiersExtensions,
+  flags: {
+    version?: string
+  } = {},
 ): ErrorCustomSection[] {
   const isExtensionError = (error: (typeof errors)[0]) => {
     return error.details?.some((detail) => detail.extension_id) ?? false
@@ -220,37 +226,48 @@ export function deploymentErrorsToCustomSections(
   const [cliErrors, partnersErrors] = partition(extensionErrors, (error) => isCliError(error, extensionIds))
 
   const customSections = [
-    ...generalErrorsSection(nonExtensionErrors),
+    ...generalErrorsSection(nonExtensionErrors, {version: flags.version}),
     ...cliErrorsSections(cliErrors),
     ...partnersErrorsSections(partnersErrors),
   ]
   return customSections
 }
 
-function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']) {
+function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors'], flags: {version?: string} = {}) {
   if (errors.length > 0) {
-    const errorsBody =
-      errors.length === 1
-        ? errors[0]?.message
-        : {
-            list: {
-              items: errors.map((error) => error.message),
-            },
-          }
+    if (
+      errors.filter((error) => error.field.includes('version_tag') && error.message === 'has already been taken')
+        .length > 0 &&
+      flags.version
+    ) {
+      return [
+        {
+          body: [
+            'An app version with the name',
+            {userInput: flags.version},
+            'already exists. Deploy again with a different version name.',
+          ],
+        },
+      ]
+    }
+
+    if (errors.length === 1) {
+      return [
+        {
+          body: errors[0]!.message,
+        },
+      ]
+    }
 
     return [
       {
-        body: errorsBody,
-      },
-      {
-        title: 'Next Steps',
         body: {
           list: {
-            items: ['View details about this version in the Partner Dashboard.'],
+            items: errors.map((error) => error.message),
           },
         },
       },
-    ] as ErrorCustomSection[]
+    ]
   } else {
     return []
   }

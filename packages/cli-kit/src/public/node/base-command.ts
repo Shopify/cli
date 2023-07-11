@@ -3,11 +3,12 @@ import {loadEnvironment} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {renderInfo} from './ui.js'
+import {renderInfo, renderWarning} from './ui.js'
 import {outputContent, outputInfo, outputToken} from './output.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {JsonMap} from '../../private/common/json.js'
+import {underscore} from '../common/string.js'
 import {Command} from '@oclif/core'
 import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
@@ -32,7 +33,28 @@ abstract class BaseCommand extends Command {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
+    this.showNpmFlagWarning()
     return super.init()
+  }
+
+  // NPM creates an environment variable for every flag passed to a script.
+  // This function checks for the presence of any of the available CLI flags
+  // and warns the user to use the `--` separator.
+  protected showNpmFlagWarning(): void {
+    const commandVariables = this.constructor as unknown as {_flags: JsonMap}
+    const commandFlags = Object.keys(commandVariables._flags || {})
+    const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key)}`)
+
+    if (possibleNpmEnvVars.some((flag) => process.env[flag])) {
+      renderWarning({
+        body: [
+          'NPM scripts require an extra',
+          {command: '--'},
+          'separator to pass the flags. Example:',
+          {command: 'npm run dev -- --reset'},
+        ],
+      })
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types

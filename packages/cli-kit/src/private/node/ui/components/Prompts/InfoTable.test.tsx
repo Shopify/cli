@@ -16,11 +16,13 @@ describe('InfoTable', async () => {
     )
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "Header 1:          • some
-                         • items
+      "Header 1
+      • some
+      • items
 
-      Header 2           • one item Shopify ( https://shopify.com )
-      longer text here:"
+      Header 2
+      longer text here
+      • one item Shopify ( https://shopify.com )"
     `)
   })
 

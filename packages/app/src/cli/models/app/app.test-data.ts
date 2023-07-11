@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface} from './app.js'
+import {App, AppConfiguration, AppInterface, WebType} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -19,7 +19,15 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     app.configuration ?? {scopes: '', extension_directories: []},
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
-    app.webs ?? [],
+    app.webs ?? [
+      {
+        directory: '',
+        configuration: {
+          roles: [WebType.Backend],
+          commands: {dev: ''},
+        },
+      },
+    ],
     app.allExtensions ?? [],
     app.usesWorkspaces ?? false,
     app.dotenv,
@@ -38,9 +46,30 @@ interface TestAppWithConfigOptions {
   app?: Partial<AppInterface>
   config: Partial<AppConfiguration>
 }
-export function testAppWithConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
-  const configuration = {scopes: '', extension_directories: [], ...config}
+export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
+  const configuration = {
+    scopes: '',
+    extension_directories: [],
+    ...config,
+  }
+
   return testApp({...app, configuration})
+}
+
+export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
+  const app = options?.app || testApp()
+  app.configuration = {
+    client_id: 'config-api-key',
+    name: 'app1',
+    scopes: 'read_products',
+    application_url: 'https://my-apps-url.com',
+    auth: {
+      redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+    },
+    ...options?.config,
+  }
+
+  return app as AppInterface
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {

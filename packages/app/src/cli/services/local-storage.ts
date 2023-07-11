@@ -10,7 +10,7 @@ export interface CachedAppInfo {
   orgId?: string
   storeFqdn?: string
   updateURLs?: boolean
-  tunnelPlugin?: string
+  previousAppId?: string
 }
 
 // We store each app info using the directory as the key

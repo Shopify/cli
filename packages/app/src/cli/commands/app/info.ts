@@ -1,7 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
 import {Format, info} from '../../services/info.js'
-import {load as loadApp} from '../../models/app/loader.js'
+import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
@@ -30,7 +30,12 @@ export default class AppInfo extends Command {
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
     const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({specifications, directory: flags.path, mode: 'report'})
+    const app: AppInterface = await loadApp({
+      specifications,
+      directory: flags.path,
+      configName: flags.config,
+      mode: 'report',
+    })
     outputInfo(await info(app, {format: (flags.json ? 'json' : 'text') as Format, webEnv: flags['web-env']}))
     if (app.errors) process.exit(2)
   }

@@ -150,7 +150,6 @@ function whatToTry() {
         items: [
           ['Run the command again'],
           ['Add the flag', {command: '--tunnel-url {URL}'}, 'to use a custom tunnel URL'],
-          ['Add the flag', {command: '--tunnel ngrok'}, 'to use Ngrok as the tunnel provider'],
         ],
       },
     },

@@ -10,7 +10,6 @@
     "@shopify/cli-kit",
     "@shopify/theme",
     "@shopify/ui-extensions-dev-console-app",
-    "@shopify/plugin-ngrok",
     "@shopify/plugin-cloudflare",
     "@shopify/plugin-did-you-mean"
   ]],

@@ -26,12 +26,13 @@ describe('extension-to-toml', () => {
     const decodedToml = decodeToml(got)
     const parsed = FlowActionExtensionSchema.parse(decodedToml)
     expect(parsed.type).toEqual('flow_action')
-    expect(got).toEqual(`name = "flow action @ Char!"
+    expect(got).toEqual(`name = "action title"
 type = "flow_action"
 description = "action description"
 
 [[extensions]]
 type = "flow_action"
+handle = "flow-action-char"
 description = "action description"
 runtime_url = "https://google.es"
 config_page_url = "https://destinationsurl.test.dev"
@@ -62,7 +63,7 @@ required = false
 [[settings.fields]]
 key = "number name"
 description = "number help"
-type = "number_integer"
+type = "number_decimal"
 name = "number label"
 required = true
 `)
@@ -92,12 +93,13 @@ required = true
     const decodedToml = decodeToml(got)
     const parsed = FlowTriggerExtensionSchema.parse(decodedToml)
     expect(parsed.type).toEqual('flow_trigger')
-    expect(got).toEqual(`name = 'trigger ext!"*^ÑÇ¨:"!'
+    expect(got).toEqual(`name = "trigger title"
 type = "flow_trigger"
 description = "trigger description"
 
 [[extensions]]
 type = "flow_trigger"
+handle = "trigger-ext"
 description = "trigger description"
 
 [[settings.fields]]
@@ -108,7 +110,7 @@ description = ""
 [[settings.fields]]
 key = "number property"
 description = "number description"
-type = "number_integer"
+type = "number_decimal"
 
 [[settings.fields]]
 key = "email name"

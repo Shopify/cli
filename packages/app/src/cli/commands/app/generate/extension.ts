@@ -83,7 +83,7 @@ export default class AppGenerateExtension extends Command {
       name: flags.name,
       cloneUrl: flags['clone-url'],
       template: flags.template,
-      config: this.config,
+      commandConfig: this.config,
     })
   }
 }

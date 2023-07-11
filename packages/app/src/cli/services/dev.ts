@@ -17,6 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
+import {setAppInfo} from './local-storage.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -24,7 +25,7 @@ import {
 import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
-import {load} from '../models/app/loader.js'
+import {loadApp} from '../models/app/loader.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
@@ -57,7 +58,7 @@ const MANIFEST_VERSION = '3'
 export interface DevOptions {
   directory: string
   id?: number
-  config?: string
+  configName?: string
   apiKey?: string
   storeFqdn?: string
   reset: boolean
@@ -67,7 +68,6 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -80,7 +80,7 @@ async function dev(options: DevOptions) {
 
   let tunnelClient: TunnelClient | undefined
   if (!options.tunnelUrl && !options.noTunnel) {
-    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'cloudflare')
   }
 
   const token = await ensureAuthenticatedPartners()
@@ -89,21 +89,14 @@ async function dev(options: DevOptions) {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-    useCloudflareTunnels,
-    config,
+    configName,
     deploymentMode,
   } = await ensureDevContext(options, token)
-
-  if (!options.tunnelUrl && !options.noTunnel && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
-    // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
-    tunnelClient?.stopTunnel()
-    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
-  }
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
-  let localApp = await load({directory: options.directory, specifications, configName: config})
+  let localApp = await loadApp({directory: options.directory, specifications, configName})
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
@@ -117,24 +110,28 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, frontendServerPort, currentURLs] = await Promise.all(
-    [
-      generateFrontendURL({
-        ...options,
-        app: localApp,
-        tunnelClient,
-      }),
-      getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-      frontendConfig?.configuration.port || getAvailableTCPPort(),
-      getURLs(apiKey, token),
-    ],
-  )
-  if (frontendConfig && !frontendConfig.configuration.port) frontendConfig.configuration.port = frontendServerPort
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
+    generateFrontendURL({
+      ...options,
+      app: localApp,
+      tunnelClient,
+    }),
+    getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
+    getURLs(apiKey, token),
+  ])
+  let frontendServerPort = frontendConfig?.configuration.port
+  if (frontendConfig) {
+    if (!frontendServerPort) {
+      frontendServerPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
+    }
+    frontendConfig.configuration.port = frontendServerPort
+  }
 
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
   const proxyTargets: ReverseHTTPProxyTarget[] = []
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
+  const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
 
   let previewUrl
   let shouldUpdateURLs = false
@@ -154,7 +151,7 @@ async function dev(options: DevOptions) {
         localApp,
       })
       if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }
 
@@ -174,6 +171,7 @@ async function dev(options: DevOptions) {
     apiSecret,
     backendPort,
     frontendServerPort,
+    hmrServerPort,
   }
 
   await Promise.all(
@@ -286,6 +284,8 @@ async function dev(options: DevOptions) {
     })
   }
 
+  setPreviousAppId(options.directory, apiKey)
+
   await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
 
   await reportAnalyticsEvent({config: options.commandConfig})
@@ -307,6 +307,10 @@ async function dev(options: DevOptions) {
   }
 }
 
+function setPreviousAppId(directory: string, apiKey: string) {
+  setAppInfo({directory, previousAppId: apiKey})
+}
+
 function isWebType(web: Web, type: WebType): boolean {
   return web.configuration.roles.includes(type)
 }
@@ -314,7 +318,8 @@ function isWebType(web: Web, type: WebType): boolean {
 interface DevWebOptions {
   web: Web
   backendPort: number
-  frontendServerPort: number
+  frontendServerPort: number | undefined
+  hmrServerPort?: number
   apiKey: string
   apiSecret?: string
   hostname?: string
@@ -372,13 +377,25 @@ async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyT
     }),
     BACKEND_PORT: `${options.backendPort}`,
     FRONTEND_PORT: `${options.frontendServerPort}`,
+    ...(options.hmrServerPort && {
+      HMR_SERVER_PORT: `${options.hmrServerPort}`,
+    }),
     APP_URL: options.hostname,
     APP_ENV: 'development',
+    // Note: These are Remix-specific variables
+    REMIX_DEV_ORIGIN: options.hostname,
   }
+
+  const hmrServerOptions = options.hmrServerPort &&
+    options.web.configuration.roles.includes(WebType.Frontend) && {
+      port: options.hmrServerPort,
+      httpPaths: options.web.configuration.hmr_server!.http_paths,
+    }
 
   return {
     logPrefix: options.web.configuration.name ?? ['web', ...options.web.configuration.roles].join('-'),
     customPort: port,
+    ...(hmrServerOptions && {hmrServer: hmrServerOptions}),
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await exec(cmd!, args, {
         cwd: options.web.directory,

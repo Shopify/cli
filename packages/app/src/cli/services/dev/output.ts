@@ -1,19 +1,22 @@
 import {PartnersURLs} from './urls.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {getAppConfigurationShorthand} from '../../models/app/loader.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
   urls: PartnersURLs,
-  app: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'> & {apiSecret?: string},
+  localApp: AppInterface,
 ) {
-  const dashboardURL = await partnersURL(app.organizationId, app.id)
-  if (app.newApp) {
+  const dashboardURL = await partnersURL(remoteApp.organizationId, remoteApp.id)
+  if (remoteApp.newApp) {
     renderInfo({
       headline: `For your convenience, we've given your app a default URL: ${urls.applicationUrl}.`,
       body: [
@@ -23,15 +26,30 @@ export async function outputUpdateURLsResult(
       ],
     })
   } else if (!updated) {
-    renderInfo({
-      body: [
-        'To make URL updates manually, you can add the following URLs as redirects in your',
-        dashboardURL,
-        {char: ':'},
-        '\n\n',
-        {list: {items: urls.redirectUrlWhitelist}},
-      ],
-    })
+    if (isCurrentAppSchema(localApp.configuration)) {
+      const fileName = basename(localApp.configurationPath)
+      const configName = getAppConfigurationShorthand(fileName)
+      renderInfo({
+        body: [
+          `To update URLs manually, add the following URLs to ${fileName} under auth > redirect_urls and run\n`,
+          {
+            command: `npm run shopify app config push -- --config=${configName}`,
+          },
+          '\n\n',
+          {list: {items: urls.redirectUrlWhitelist}},
+        ],
+      })
+    } else {
+      renderInfo({
+        body: [
+          'To make URL updates manually, you can add the following URLs as redirects in your',
+          dashboardURL,
+          {char: ':'},
+          '\n\n',
+          {list: {items: urls.redirectUrlWhitelist}},
+        ],
+      })
+    }
   }
 }
 

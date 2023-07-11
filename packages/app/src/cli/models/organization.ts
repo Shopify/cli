@@ -2,9 +2,6 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
-  betas?: {
-    cliTunnelAlternative?: boolean
-  }
 }
 
 export interface MinimalOrganizationApp {
@@ -27,6 +24,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   }
   applicationUrl: string
   redirectUrlWhitelist: string[]
+  requestedAccessScopes?: string[]
 }
 
 export interface OrganizationStore {

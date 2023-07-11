@@ -1,5 +1,5 @@
 import use, {UseOptions} from './use.js'
-import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
+import {testApp, testAppWithLegacyConfig} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
@@ -22,7 +22,7 @@ describe('use', () => {
       // Given
       const options: UseOptions = {
         directory: tmp,
-        config: 'invalid',
+        configName: 'invalid',
         reset: true,
       }
 
@@ -46,7 +46,7 @@ describe('use', () => {
       // Given
       const options: UseOptions = {
         directory: tmp,
-        config: 'not-there',
+        configName: 'not-there',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.not-there.toml')
 
@@ -64,7 +64,7 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.no-id.toml')
       const options: UseOptions = {
         directory: tmp,
-        config: 'no-id',
+        configName: 'no-id',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.no-id.toml')
 
@@ -89,7 +89,7 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.invalid.toml')
       const options: UseOptions = {
         directory: tmp,
-        config: 'invalid',
+        configName: 'invalid',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.invalid.toml')
 
@@ -121,11 +121,11 @@ describe('use', () => {
       createConfigFile(tmp, 'shopify.app.staging.toml')
       const options: UseOptions = {
         directory: tmp,
-        config: 'staging',
+        configName: 'staging',
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.staging.toml')
 
-      const app = testAppWithConfig({
+      const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
           client_id: 'something',
@@ -163,7 +163,7 @@ describe('use', () => {
       }
       vi.mocked(selectConfigFile).mockResolvedValue(ok('shopify.app.local.toml'))
 
-      const app = testAppWithConfig({
+      const app = testAppWithLegacyConfig({
         config: {
           name: 'something',
           client_id: 'something',

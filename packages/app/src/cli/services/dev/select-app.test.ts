@@ -31,12 +31,10 @@ const LOCAL_APP: AppInterface = testApp({
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {},
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {},
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({
@@ -72,6 +70,27 @@ describe('createApp', () => {
 
     // When
     const got = await createApp(ORG2, LOCAL_APP.name, 'token')
+
+    // Then
+    expect(got).toEqual(APP1)
+    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
+  })
+
+  test('creates an app with non-launchable defaults', async () => {
+    // Given
+    vi.mocked(appNamePrompt).mockResolvedValue('app-name')
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
+    const variables = {
+      org: 2,
+      title: 'app-name',
+      appUrl: 'https://shopify.dev/apps/default-app-home',
+      redir: ['https://shopify.dev/apps/default-app-home/api/auth'],
+      requestedAccessScopes: [],
+      type: 'undecided',
+    }
+
+    // When
+    const got = await createApp(ORG2, LOCAL_APP.name, 'token', false)
 
     // Then
     expect(got).toEqual(APP1)

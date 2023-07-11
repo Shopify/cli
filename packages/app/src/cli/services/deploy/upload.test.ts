@@ -1183,14 +1183,6 @@ describe('deploymentErrorsToCustomSections', () => {
       {
         body: 'First error message.',
       },
-      {
-        title: 'Next Steps',
-        body: {
-          list: {
-            items: ['View details about this version in the Partner Dashboard.'],
-          },
-        },
-      },
     ])
   })
 
@@ -1226,13 +1218,40 @@ describe('deploymentErrorsToCustomSections', () => {
           },
         },
       },
+    ])
+  })
+
+  test('returns a specific error message when the error is about the version being already taken', () => {
+    // Given
+    const errors = [
       {
-        title: 'Next Steps',
-        body: {
-          list: {
-            items: ['View details about this version in the Partner Dashboard.'],
-          },
-        },
+        field: ['version_tag'],
+        message: 'has already been taken',
+        category: '',
+        details: [],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(
+      errors,
+      {
+        'amortizable-marketplace-ext': '123',
+        'amortizable-marketplace-ext-2': '456',
+      },
+      {
+        version: 'already-taken-version',
+      },
+    )
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        body: [
+          'An app version with the name',
+          {userInput: 'already-taken-version'},
+          'already exists. Deploy again with a different version name.',
+        ],
       },
     ])
   })
