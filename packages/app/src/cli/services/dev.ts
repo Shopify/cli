@@ -68,7 +68,6 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -81,7 +80,7 @@ async function dev(options: DevOptions) {
 
   let tunnelClient: TunnelClient | undefined
   if (!options.tunnelUrl && !options.noTunnel) {
-    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'cloudflare')
   }
 
   const token = await ensureAuthenticatedPartners()
@@ -90,16 +89,9 @@ async function dev(options: DevOptions) {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-    useCloudflareTunnels,
     configName,
     deploymentMode,
   } = await ensureDevContext(options, token)
-
-  if (!options.tunnelUrl && !options.noTunnel && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
-    // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
-    tunnelClient?.stopTunnel()
-    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
-  }
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
