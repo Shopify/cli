@@ -92,12 +92,43 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
+    api_contact_email: remoteApp.contactEmail!,
     application_url: remoteApp.applicationUrl,
-    embedded: true,
+    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
-      api_version: '2023-04',
+      api_version: remoteApp.webhookApiVersion || '2023-07',
     },
-    api_contact_email: 'example@example.com',
+    auth: {
+      redirect_urls: remoteApp.redirectUrlWhitelist,
+    },
+    pos: {
+      embedded: remoteApp.posEmbedded || false,
+    },
+  }
+
+  const hasAnyPrivacyWebhook =
+    remoteApp.gdprWebhooks?.customerDataRequestUrl ||
+    remoteApp.gdprWebhooks?.customerDeletionUrl ||
+    remoteApp.gdprWebhooks?.shopDeletionUrl
+
+  if (hasAnyPrivacyWebhook) {
+    configuration.webhooks.privacy_compliance = {
+      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl || '',
+      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl || '',
+      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl || '',
+    }
+  }
+
+  if (remoteApp.appProxy?.url) {
+    configuration.app_proxy = {
+      url: remoteApp.appProxy.url,
+      subpath: remoteApp.appProxy.subPath,
+      prefix: remoteApp.appProxy.subPathPrefix,
+    }
+  }
+
+  if (remoteApp.preferencesUrl) {
+    configuration.app_preferences = {url: remoteApp.preferencesUrl}
   }
 
   configuration.access_scopes = getAccessScopes(localApp, remoteApp)
