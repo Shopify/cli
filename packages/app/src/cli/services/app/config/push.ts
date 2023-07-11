@@ -42,9 +42,10 @@ export async function pushConfig({configuration, configurationPath}: Options) {
     }
 
     const shouldDeleteScopes =
-      configuration.access_scopes?.scopes?.length === 0 || usesLegacyScopesBehavior(configuration)
+      app.requestedAccessScopes &&
+      (configuration.access_scopes?.scopes === undefined || usesLegacyScopesBehavior(configuration))
 
-    if (app.requestedAccessScopes && shouldDeleteScopes) {
+    if (shouldDeleteScopes) {
       const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
 
       if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
@@ -87,7 +88,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     preferencesUrl: configuration.app_preferences?.url ?? null,
   }
 
-  if (!usesLegacyScopesBehavior(configuration)) {
+  if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
     variables.requestedAccessScopes = configuration.access_scopes?.scopes?.length
       ? configuration.access_scopes.scopes.split(',')
       : []

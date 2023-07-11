@@ -40,7 +40,6 @@ describe('pushConfig', () => {
       posEmbedded: false,
       preferencesUrl: null,
       redirectUrlAllowlist: null,
-      requestedAccessScopes: [],
       title: 'my app',
       webhookApiVersion: '2023-04',
     })
@@ -88,6 +87,55 @@ describe('pushConfig', () => {
       webhookApiVersion: '2023-04',
     })
 
+    expect(vi.mocked(partnersRequest).mock.calls.length).toEqual(2)
+
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated app configuration for my app',
+      body: ['shopify.app.toml configuration is now live on Shopify.'],
+    })
+  })
+
+  test('successfully calls the update mutation without scopes when legacy behavior. does call scopes clear when upstream has scopes.', async () => {
+    const app = testApp({}, 'current')
+
+    app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
+    const options: Options = {
+      configuration: app.configuration,
+      configurationPath: app.configurationPath,
+    }
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+        requestedAccessScopes: ['read_orders'],
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      apiKey: '12345',
+      applicationUrl: 'https://myapp.com',
+      contactEmail: 'wils@bahan-lee.com',
+      embedded: true,
+      gdprWebhooks: {
+        customerDataRequestUrl: undefined,
+        customerDeletionUrl: undefined,
+        shopDeletionUrl: undefined,
+      },
+      posEmbedded: false,
+      preferencesUrl: null,
+      redirectUrlAllowlist: null,
+      title: 'my app',
+      webhookApiVersion: '2023-04',
+    })
+
+    expect(vi.mocked(partnersRequest).mock.calls[2]![0]!).toContain('appRequestedAccessScopesClear')
+    expect(vi.mocked(partnersRequest).mock.calls[2]![2]!).toEqual({apiKey: '12345'})
+
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Updated app configuration for my app',
       body: ['shopify.app.toml configuration is now live on Shopify.'],
@@ -132,6 +180,52 @@ describe('pushConfig', () => {
       webhookApiVersion: '2023-04',
     })
 
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated app configuration for my app',
+      body: ['shopify.app.toml configuration is now live on Shopify.'],
+    })
+  })
+
+  test('deletes requested access scopes when scopes are omitted', async () => {
+    const app = testApp({}, 'current')
+    app.configuration = {...app.configuration, access_scopes: undefined}
+
+    const options: Options = {
+      configuration: app.configuration,
+      configurationPath: app.configurationPath,
+    }
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+        requestedAccessScopes: ['read_orders'],
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      apiKey: '12345',
+      applicationUrl: 'https://myapp.com',
+      contactEmail: 'wils@bahan-lee.com',
+      embedded: true,
+      gdprWebhooks: {
+        customerDataRequestUrl: undefined,
+        customerDeletionUrl: undefined,
+        shopDeletionUrl: undefined,
+      },
+      posEmbedded: false,
+      preferencesUrl: null,
+      redirectUrlAllowlist: null,
+      title: 'my app',
+      webhookApiVersion: '2023-04',
+    })
+
+    expect(vi.mocked(partnersRequest).mock.calls[2]![0]!).toContain('appRequestedAccessScopesClear')
+    expect(vi.mocked(partnersRequest).mock.calls[2]![2]!).toEqual({apiKey: '12345'})
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Updated app configuration for my app',
       body: ['shopify.app.toml configuration is now live on Shopify.'],
@@ -198,7 +292,6 @@ describe('pushConfig', () => {
       embedded: true,
       posEmbedded: false,
       preferencesUrl: null,
-      requestedAccessScopes: [],
       appProxy: {
         proxySubPath: 'foo',
         proxySubPathPrefix: 'foo',
