@@ -1,5 +1,6 @@
 import {Scrollbar} from './Scrollbar.js'
 import {useSelectState} from '../hooks/use-select-state.js'
+import useLayout from '../hooks/use-layout.js'
 import {handleCtrlC} from '../../ui.js'
 import React, {useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
@@ -232,6 +233,7 @@ function SelectInputInner<T>(
     },
     {isActive: focus},
   )
+  const {twoThirds} = useLayout()
 
   if (loading) {
     return (
@@ -251,7 +253,7 @@ function SelectInputInner<T>(
     const sectionHeight = Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))
 
     return (
-      <Box flexDirection="column" ref={ref} gap={1}>
+      <Box flexDirection="column" ref={ref} gap={1} width={twoThirds}>
         <Box flexDirection="row" height={sectionHeight} width="100%">
           <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
             {state.visibleOptions.map((item: Item<T>, index: number) => (
