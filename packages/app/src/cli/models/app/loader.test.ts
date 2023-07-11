@@ -237,7 +237,7 @@ automatically_update_urls_on_dev = true
 
     // When
     let app = await loadApp({directory: tmpDir, specifications})
-    const web = app.webs[0]
+    const web = app.webs[0]!
     // Force npm to symlink the workspace directory
     await writeFile(
       joinPath(web.directory, 'package.json'),
