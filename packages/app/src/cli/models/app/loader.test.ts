@@ -471,6 +471,59 @@ scopes = "read_products"
     expect(extensions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
+  test('loads the app with several extensions defined in a single toml file', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      name = "my_extension_1"
+      api_version = "2022-07"
+      description = "global description"
+
+      [[extensions]]
+      type = "checkout_post_purchase"
+      description = "custom description"
+
+      [[extensions]]
+      type = "flow_action"
+      name = "my_extension_1_flow"
+      runtime_url = "https://example.com"
+
+      [settings]
+      [[settings.fields]]
+      key = "my_field"
+      name = "My Field"
+      description = "My Field Description"
+      required = true
+      type = "string"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(2)
+    const extensions = app.allExtensions.sort((extA, extB) =>
+      extA.configuration.name < extB.configuration.name ? -1 : 1,
+    )
+    expect(extensions[0]!.configuration.name).toBe('my_extension_1')
+    expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
+    expect(extensions[0]!.configuration.api_version).toBe('2022-07')
+    expect(extensions[0]!.configuration.settings!.fields![0]!.key).toBe('my_field')
+    expect(extensions[0]!.configuration.description).toBe('custom description')
+
+    expect(extensions[1]!.configuration.name).toBe('my_extension_1_flow')
+    expect(extensions[1]!.configuration.type).toBe('flow_action')
+    expect(extensions[1]!.configuration.api_version).toBe('2022-07')
+    expect(extensions[1]!.configuration.settings!.fields![0]!.key).toBe('my_field')
+    expect(extensions[1]!.configuration.description).toBe('global description')
+  })
+
   test('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
     // Given
     await writeConfig(appConfiguration)

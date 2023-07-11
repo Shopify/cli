@@ -65,11 +65,14 @@ export const BaseSchema = zod.object({
   settings: SettingsSchema.optional(),
 })
 
-export const UnifiedSchema = zod.object({
-  name: zod.string(),
-  api_version: ApiVersionSchema.optional(),
-  extensions: zod.array(zod.any()),
-})
+export const UnifiedSchema = zod
+  .object({
+    name: zod.string(),
+    api_version: ApiVersionSchema.optional(),
+    extensions: zod.array(zod.any()),
+  })
+  // Include any other field not defined in the schema
+  .passthrough()
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
