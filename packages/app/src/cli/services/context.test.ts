@@ -699,12 +699,6 @@ dev_store_url = "domain1"
 
     // Then
     expect(link).toBeCalled()
-    expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "
-      Looks like this is the first time you're running dev for this project.
-      Configure your preferences by answering a few questions.
-      "
-    `)
   })
 
   test('dev enables automatically the development store preview if the unified deployments beta is enabled', async () => {

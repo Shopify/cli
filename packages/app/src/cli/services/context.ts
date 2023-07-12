@@ -584,13 +584,6 @@ async function getAppDevCachedContext({
 
   let cachedInfo = getAppInfo(directory)
 
-  if (previousCachedInfo === undefined) {
-    const explanation =
-      `\nLooks like this is the first time you're running dev for this project.\n` +
-      'Configure your preferences by answering a few questions.\n'
-    outputInfo(explanation)
-  }
-
   if ((previousCachedInfo?.configFile && reset) || previousCachedInfo === undefined) {
     await link({directory, commandConfig})
     cachedInfo = getAppInfo(directory)
