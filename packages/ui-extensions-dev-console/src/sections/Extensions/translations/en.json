@@ -1,5 +1,6 @@
 {
-  "intro": "See code changes reflected live. Share preview links with teammates or clients.",
+  "intro": "{installLink} to see changes live. Share preview links with teammates or clients.",
+  "introInstallCta": "Install your app",
   "extensionList": {
     "name": "Name",
     "preview": "Preview link",
