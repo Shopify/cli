@@ -3,7 +3,6 @@ import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from 
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {zod} from '@shopify/cli-kit/node/schema'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -15,7 +14,7 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
   return config.extension_points !== undefined || config.targeting !== undefined
 }
 
-const missingExtensionPointsMessage = 'No extension points defined, add a `targeting` field to your configuration'
+const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
 const UIExtensionSchema = BaseSchema.extend({
   extension_points: NewExtensionPointsSchema.optional(),
@@ -30,11 +29,7 @@ const UIExtensionSchema = BaseSchema.extend({
         metafields: targeting.metafields ?? config.metafields ?? [],
       }
     })
-    const newConfig = {
-      ...config,
-      extension_points: extensionPoints ?? [],
-    }
-    return newConfig
+    return {...config, extension_points: extensionPoints}
   })
 
 const spec = createExtensionSpecification({
