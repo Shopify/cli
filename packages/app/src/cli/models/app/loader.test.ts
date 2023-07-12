@@ -501,12 +501,12 @@ automatically_update_urls_on_dev = true
 
       [[extensions]]
       type = "checkout_post_purchase"
-      handle = "checkout_ext"
+      handle = "checkout-ext"
       description = "custom description"
 
       [[extensions]]
       type = "flow_action"
-      handle = "flow_ext"
+      handle = "flow-ext"
       name = "my_extension_1_flow"
       runtime_url = "https://example.com"
 
