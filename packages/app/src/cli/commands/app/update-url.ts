@@ -13,11 +13,13 @@ export default class UpdateURL extends Command {
       hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID of your app.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
     'app-url': Flags.string({
       hidden: false,
