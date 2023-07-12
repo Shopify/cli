@@ -80,19 +80,34 @@ export const AppSchema = zod
   })
   .passthrough()
 
-export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema]).superRefine((schema, ctx) => {
-  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
-  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
+export const AppConfigurationSchema = zod
+  .union([LegacyAppSchema, AppSchema])
+  .superRefine((schema, ctx) => {
+    const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
+    const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
 
-  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-  for (const field in schema) {
-    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
-      return AppSchema
+    // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
+    for (const field in schema) {
+      if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
+        const result = AppSchema.strict().safeParse(schema)
+
+        if (!result.success) {
+          result.error.errors.forEach((error) => ctx.addIssue(error))
+        }
+      }
     }
-  }
 
-  return LegacyAppSchema
-})
+    return zod.NEVER
+  })
+  .superRefine((schema, ctx) => {
+    const result = LegacyAppSchema.strict().safeParse(schema)
+
+    if (!result.success) {
+      result.error.errors.forEach((error) => ctx.addIssue(error))
+    }
+
+    return zod.NEVER
+  })
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
