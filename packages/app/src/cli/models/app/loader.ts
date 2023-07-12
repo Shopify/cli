@@ -9,6 +9,7 @@ import {
   AppConfiguration,
   isCurrentAppSchema,
   AppSchema,
+  LegacyAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -104,6 +105,11 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   if (!parseResult.success) {
     if ('client_id' in (configurationObject as {[key: string]: unknown})) {
       const nextParse = AppSchema.safeParse(configurationObject)
+      if (!nextParse.success) {
+        parseResult = nextParse
+      }
+    } else if ('scopes' in (configurationObject as {[key: string]: unknown})) {
+      const nextParse = LegacyAppSchema.safeParse(configurationObject)
       if (!nextParse.success) {
         parseResult = nextParse
       }

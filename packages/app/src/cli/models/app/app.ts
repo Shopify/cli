@@ -7,7 +7,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-const LegacyAppSchema = zod
+export const LegacyAppSchema = zod
   .object({
     name: zod.string().optional(),
     scopes: zod.string().default(''),
