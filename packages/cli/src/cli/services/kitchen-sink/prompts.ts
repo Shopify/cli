@@ -183,4 +183,22 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
     confirmationMessage: 'Yes, confirm changes',
     cancellationMessage: 'No, make changes later',
   })
+
+  // renderTextPrompt with dangerous confirmation
+  await renderTextPrompt({
+    message: 'Release this version of Mega App?',
+    infoTable: [
+      {
+        header: 'Includes',
+        items: ['My subscription extension', 'Order discount function', 'Subscription cancelled trigger', 'Add subscription action'],
+        bullet: '+',
+      },
+      {
+        header: 'Removes',
+        items: ['product-discount-function', 'product-subscription-extension'],
+        bullet: '-',
+      },
+    ],
+    exactString: 'Mega App',
+  })
 }
