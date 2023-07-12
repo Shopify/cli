@@ -7,14 +7,15 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-const LegacyAppSchema = zod
+export const LegacyAppSchema = zod
   .object({
+    client_id: zod.number().optional(),
     name: zod.string().optional(),
     scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
-  .passthrough()
+  .strict()
 
 // adding http or https presence and absence of new lines to url validation
 const validateUrl = (zodType: zod.ZodString) => {
@@ -78,36 +79,9 @@ export const AppSchema = zod
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
-  .passthrough()
+  .strict()
 
-export const AppConfigurationSchema = zod
-  .union([LegacyAppSchema, AppSchema])
-  .superRefine((schema, ctx) => {
-    const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
-    const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
-
-    // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-    for (const field in schema) {
-      if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
-        const result = AppSchema.strict().safeParse(schema)
-
-        if (!result.success) {
-          result.error.errors.forEach((error) => ctx.addIssue(error))
-        }
-      }
-    }
-
-    return zod.NEVER
-  })
-  .superRefine((schema, ctx) => {
-    const result = LegacyAppSchema.strict().safeParse(schema)
-
-    if (!result.success) {
-      result.error.errors.forEach((error) => ctx.addIssue(error))
-    }
-
-    return zod.NEVER
-  })
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
