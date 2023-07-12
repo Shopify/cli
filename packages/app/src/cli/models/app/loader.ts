@@ -8,6 +8,7 @@ import {
   getAppScopes,
   AppConfiguration,
   isCurrentAppSchema,
+  AppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -97,9 +98,16 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport,
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
-  const parseResult = schema.safeParse(configurationObject)
+
+  let parseResult = schema.safeParse(configurationObject)
 
   if (!parseResult.success) {
+    if ('client_id' in (configurationObject as {[key: string]: unknown})) {
+      const nextParse = AppSchema.safeParse(configurationObject)
+      if (!nextParse.success) {
+        parseResult = nextParse
+      }
+    }
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
       outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,

@@ -16,7 +16,7 @@ const LegacyAppSchema = zod
   })
   .strict()
 
-const AppSchema = zod
+export const AppSchema = zod
   .object({
     name: zod.string(),
     api_contact_email: zod.string(),
