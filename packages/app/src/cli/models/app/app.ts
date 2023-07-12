@@ -102,6 +102,15 @@ export function getAppScopes(config: AppConfiguration) {
   }
 }
 
+/**
+ * Get scopes as an array from a given app.toml config file.
+ * @param config - a configuration file
+ */
+export function getAppScopesArray(config: AppConfiguration) {
+  const scopes = getAppScopes(config)
+  return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
+}
+
 export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
   const config = 'configurationPath' in app ? app.configuration : app
 

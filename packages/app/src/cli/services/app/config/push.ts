@@ -6,6 +6,7 @@ import {
   CurrentAppConfiguration,
   isCurrentAppSchema,
   usesLegacyScopesBehavior,
+  getAppScopesArray,
 } from '../../../models/app/app.js'
 import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -89,9 +90,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   }
 
   if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
-    variables.requestedAccessScopes = configuration.access_scopes?.scopes?.length
-      ? configuration.access_scopes.scopes.split(',')
-      : []
+    variables.requestedAccessScopes = getAppScopesArray(configuration)
   }
 
   if (configuration.app_proxy) {

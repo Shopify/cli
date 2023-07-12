@@ -5,9 +5,9 @@ import {
   App,
   AppInterface,
   WebType,
-  getAppScopes,
   AppConfiguration,
   isCurrentAppSchema,
+  getAppScopesArray,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -687,12 +687,7 @@ async function logMetadataForLoadedApp(
       app_extensions_ui_count: extensionUICount,
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
-      app_scopes: JSON.stringify(
-        getAppScopes(app.configuration)
-          .split(',')
-          .map((scope) => scope.trim())
-          .sort(),
-      ),
+      app_scopes: JSON.stringify(getAppScopesArray(app.configuration).sort()),
       app_web_backend_any: webBackendCount > 0,
       app_web_backend_count: webBackendCount,
       app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
