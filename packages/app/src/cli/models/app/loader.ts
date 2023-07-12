@@ -477,7 +477,7 @@ class AppConfigurationLoader {
         name: configurationFileName,
         gitTracked,
         source: configSource,
-        usesCliManagedUrls: configuration.cli?.automatically_update_urls_on_dev,
+        usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
       }
     }
 

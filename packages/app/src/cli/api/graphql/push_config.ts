@@ -55,7 +55,7 @@ export interface PushConfigVariables {
   title: string
   apiKey: string
   applicationUrl?: string
-  redirectUrlAllowlist?: string[]
+  redirectUrlAllowlist?: string[] | null
   requestedAccessScopes?: string[]
   webhookApiVersion?: string
   contactEmail?: string
@@ -63,7 +63,7 @@ export interface PushConfigVariables {
   appProxy?: AppProxy
   posEmbedded?: boolean
   embedded?: boolean
-  preferencesUrl?: string
+  preferencesUrl?: string | null
 }
 
 export interface PushConfigSchema {

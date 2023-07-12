@@ -20,7 +20,7 @@ interface ImportFlowOptions {
 
 export async function importFlowExtensions(options: ImportFlowOptions) {
   const token = await ensureAuthenticatedPartners()
-  const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, token)
+  const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, token, false)
   const flowExtensions = await getActiveDashboardExtensions({token, apiKey: partnersApp.apiKey})
 
   if (flowExtensions.length === 0) {

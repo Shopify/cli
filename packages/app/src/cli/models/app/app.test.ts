@@ -1,4 +1,4 @@
-import {getUIExtensionRendererVersion, isCurrentAppSchema, isLegacyAppSchema} from './app.js'
+import {CurrentAppConfiguration, getUIExtensionRendererVersion, isCurrentAppSchema, isLegacyAppSchema} from './app.js'
 import {testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -6,22 +6,24 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 const DEFAULT_APP = testApp()
 
-const CORRECT_CURRENT_APP_SCHEMA = {
+const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   name: 'app 1',
   api_contact_email: 'ryan@shopify.com',
   client_id: '12345',
-  webhook_api_version: '02-2023',
+  webhooks: {
+    api_version: '2023-04',
+    privacy_compliance: {
+      customer_deletion_url: 'https://google.com/',
+      customer_data_request_url: 'https://google.com/',
+      shop_deletion_url: 'https://google.com/',
+    },
+  },
   application_url: 'http://example.com',
   embedded: true,
   auth: {
     redirect_urls: ['https://google.com'],
   },
-  privacy_compliance_webhooks: {
-    customer_deletion_url: 'https://google.com/',
-    customer_data_request_url: 'https://google.com/',
-    shop_deletion_url: 'https://google.com/',
-  },
-  proxy: {
+  app_proxy: {
     url: 'https://google.com/',
     subpath: 'https://google.com/',
     prefix: 'https://google.com/',
@@ -32,7 +34,7 @@ const CORRECT_CURRENT_APP_SCHEMA = {
   app_preferences: {
     url: 'https://google.com/',
   },
-  cli: {
+  build: {
     automatically_update_urls_on_dev: true,
     dev_store_url: 'https://google.com/',
   },
