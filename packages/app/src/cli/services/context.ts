@@ -35,7 +35,6 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {
   outputContent,
-  outputInfo,
   outputToken,
   formatPackageManagerCommand,
   outputNewline,
@@ -102,13 +101,6 @@ export async function ensureGenerateContext(options: {
   }
 
   const {cachedInfo, remoteApp} = await getAppDevCachedContext(options)
-
-  if (cachedInfo === undefined && !options.reset) {
-    const explanation =
-      `\nLooks like this is the first time you're running 'generate extension' for this project.\n` +
-      'Configure your preferences by answering a few questions.\n'
-    outputInfo(explanation)
-  }
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
