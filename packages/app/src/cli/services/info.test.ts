@@ -42,8 +42,8 @@ describe('info', () => {
 
     // Then
     expect(unstyled(result)).toMatch(/Configuration file\s*\/tmp\/project\/shopify.app.toml/)
-    expect(unstyled(result)).toMatch(/App name\s*app1/)
-    expect(unstyled(result)).toMatch(/Client ID\s*config-api-key/)
+    expect(unstyled(result)).toMatch(/App name\s*my app/)
+    expect(unstyled(result)).toMatch(/Client ID\s*12345/)
     expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
     expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)

@@ -85,9 +85,9 @@ class AppInfo {
       configName = this.app.configurationPath
       appName = this.app.configuration.name
       apiKey = this.app.configuration.client_id
-      if (this.app.configuration.cli?.dev_store_url) storeDescription = this.app.configuration.cli.dev_store_url
-      if (this.app.configuration.cli?.automatically_update_urls_on_dev) {
-        updateURLs = this.app.configuration.cli.automatically_update_urls_on_dev ? 'Always' : 'Never'
+      if (this.app.configuration.build?.dev_store_url) storeDescription = this.app.configuration.build.dev_store_url
+      if (this.app.configuration.build?.automatically_update_urls_on_dev) {
+        updateURLs = this.app.configuration.build.automatically_update_urls_on_dev ? 'Always' : 'Never'
       }
       postscript = outputContent`💡 To change these, use the '--config' flag.`.value
     } else if (cachedAppInfo) {

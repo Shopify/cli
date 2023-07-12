@@ -19,6 +19,9 @@ const DEFAULT_CONFIG = {
     api_version: '2023-04',
   },
   embedded: true,
+  access_scopes: {
+    scopes: 'read_products',
+  },
 }
 
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
