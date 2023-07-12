@@ -1,12 +1,11 @@
 import {OutputProcess} from '../../../../public/node/output.js'
-import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
 import {treeKill} from '../../tree-kill.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import React, {FunctionComponent, useState} from 'react'
-import {Box, Key, Static, Text, useInput, TextProps, useStdin} from 'ink'
+import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
+import {Box, Key, Static, Text, useInput, TextProps, useStdin, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
@@ -26,6 +25,8 @@ export interface ConcurrentOutputProps {
     shortcuts: Shortcut[]
     subTitle?: string
   }
+  // If set, the component is not automatically unmounted once the processes have all finished
+  keepOpenAfterStopping?: boolean
 }
 interface Chunk {
   color: TextProps['color']
@@ -77,48 +78,41 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   showTimestamps = true,
   onInput,
   footer,
+  keepOpenAfterStopping,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
-  const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
+  const {exit: unmountInk} = useApp()
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {isRawModeSupported} = useStdin()
   const [state, setState] = useState<ConcurrentOutputState>(ConcurrentOutputState.Running)
 
-  function lineColor(index: number) {
-    const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
-    return concurrentColors[colorIndex]!
-  }
+  const writableStream = useCallback(
+    (process: OutputProcess, index: number) => {
+      const concurrentColors: TextProps['color'][] = ['yellow', 'cyan', 'magenta', 'green', 'blue']
+      function lineColor(index: number) {
+        const colorIndex = index < concurrentColors.length ? index : index % concurrentColors.length
+        return concurrentColors[colorIndex]!
+      }
+      return new Writable({
+        write(chunk, _encoding, next) {
+          const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
+          addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
 
-  const writableStream = (process: OutputProcess, index: number) => {
-    return new Writable({
-      write(chunk, _encoding, next) {
-        const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-        addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
+          setProcessOutput((previousProcessOutput) => [
+            ...previousProcessOutput,
+            {
+              color: lineColor(index),
+              prefix: process.prefix,
+              lines,
+            },
+          ])
 
-        setProcessOutput((previousProcessOutput) => [
-          ...previousProcessOutput,
-          {
-            color: lineColor(index),
-            prefix: process.prefix,
-            lines,
-          },
-        ])
-
-        next()
-      },
-    })
-  }
-
-  const runProcesses = () => {
-    return Promise.all(
-      processes.map(async (process, index) => {
-        const stdout = writableStream(process, index)
-        const stderr = writableStream(process, index)
-
-        await process.action(stdout, stderr, abortSignal)
-      }),
-    )
-  }
+          next()
+        },
+      })
+    },
+    [footer],
+  )
 
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -133,14 +127,29 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     {isActive: typeof onInput !== 'undefined' && useShortcuts},
   )
 
-  useAsyncAndUnmount(runProcesses, {
-    onFulfilled: () => {
-      setState(ConcurrentOutputState.Stopped)
-    },
-    onRejected: () => {
-      setState(ConcurrentOutputState.Stopped)
-    },
-  })
+  useEffect(() => {
+    const runProcesses = () => {
+      return Promise.all(
+        processes.map(async (process, index) => {
+          const stdout = writableStream(process, index)
+          const stderr = writableStream(process, index)
+
+          await process.action(stdout, stderr, abortSignal)
+        }),
+      )
+    }
+    runProcesses()
+      .then(() => {
+        if (!keepOpenAfterStopping) {
+          setState(ConcurrentOutputState.Stopped)
+          unmountInk()
+        }
+      })
+      .catch((error) => {
+        setState(ConcurrentOutputState.Stopped)
+        unmountInk(error)
+      })
+  }, [abortSignal, processes, writableStream, unmountInk, keepOpenAfterStopping])
 
   const {lineVertical} = figures
 
