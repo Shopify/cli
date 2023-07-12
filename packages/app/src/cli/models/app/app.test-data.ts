@@ -163,9 +163,9 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
-
+  const parsed = specification.schema.parse(configuration)
   const extension = new ExtensionInstance({
-    configuration,
+    configuration: parsed,
     configurationPath: '',
     directory,
     specification,
@@ -180,7 +180,6 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     type: 'tax_calculation' as const,
     metafields: [],
     runtime_context: 'strict',
-    settings: [],
   }
 
   const allSpecs = await loadFSExtensionsSpecifications()
