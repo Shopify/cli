@@ -10,7 +10,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
 
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
