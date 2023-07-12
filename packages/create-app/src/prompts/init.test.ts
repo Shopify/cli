@@ -67,7 +67,7 @@ describe('init', () => {
         {label: 'none (build an app with extensions only)', value: 'none'},
       ],
       message: 'Which template would you like to use?',
-      defaultValue: 'node',
+      defaultValue: 'remix',
     })
     expect(got).toEqual({...options, ...answers, templateType: 'none'})
   })
