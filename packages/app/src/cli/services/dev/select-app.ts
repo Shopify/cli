@@ -21,6 +21,7 @@ export async function selectOrCreateApp(
   org: Organization,
   token: string,
   isLaunchable?: boolean,
+  scopes?: string,
 ): Promise<OrganizationApp> {
   let createNewApp = apps.nodes.length === 0
   if (!createNewApp) {
@@ -28,7 +29,7 @@ export async function selectOrCreateApp(
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    return createApp(org, localAppName, token, isLaunchable)
+    return createApp(org, localAppName, token, isLaunchable, scopes)
   } else {
     const selectedAppApiKey = await selectAppPrompt(apps, org.id, token)
     const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
@@ -40,13 +41,14 @@ export async function selectOrCreateApp(
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
-const getAppVars = (org: Organization, name: string, isLaunchable = true) => {
+const getAppVars = (org: Organization, name: string, isLaunchable = true, scopes: string) => {
   if (isLaunchable) {
     return {
       org: parseInt(org.id, 10),
       title: `${name}`,
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
+      requestedAccessScopes: scopes?.length ? scopes.split(',') : [],
       type: 'undecided',
     }
   } else {
@@ -66,10 +68,11 @@ export async function createApp(
   appName: string,
   token: string,
   isLaunchable?: boolean,
+  scopes?: string,
 ): Promise<OrganizationApp> {
   const name = await appNamePrompt(appName)
 
-  const variables = getAppVars(org, name, isLaunchable)
+  const variables = getAppVars(org, name, isLaunchable, scopes ?? '')
 
   const query = CreateAppQuery
   const result: CreateAppQuerySchema = await partnersRequest(query, token, variables)

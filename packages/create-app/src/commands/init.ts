@@ -60,6 +60,7 @@ export default class Init extends Command {
 
     await addPublicMetadata(() => ({
       cmd_create_app_template: promptAnswers.templateType,
+      cmd_create_app_template_url: promptAnswers.template,
     }))
 
     await initService({

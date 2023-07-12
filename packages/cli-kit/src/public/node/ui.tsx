@@ -274,20 +274,20 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    ┃  • order-discount
  *
  *    Automations
- *    >   (a) fifth
- *        (2) sixth
+ *    >  fifth
+ *       sixth
  *
  *    Merchant Admin
- *        (3) eighth
- *        (4) ninth
+ *       eighth
+ *       ninth
  *
  *    Other
- *        (f) first
- *        (s) second
- *        (7) third (limit reached)
- *        (8) fourth
- *        (9) seventh
- *       (10) tenth
+ *       first
+ *       second
+ *       third (limit reached)
+ *       fourth
+ *       seventh
+ *       tenth
  *
  *    Press ↑↓ arrows to select, enter to confirm.
  *
@@ -372,7 +372,6 @@ export async function renderConfirmationPrompt({
     message,
     infoTable,
     gitDiff,
-    submitWithShortcuts: true,
     renderOptions,
     defaultValue,
     isConfirmationPrompt: true,

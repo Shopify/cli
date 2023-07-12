@@ -118,15 +118,16 @@ async function mockApp(newConfig = false): Promise<AppInterface> {
   const themeExtension = await testThemeExtensions()
   const uiExtension = await testUIExtension()
 
-  const configuration = newConfig ? {name: 'lala', client_id: 'abc'} : {scopes: 'my-scope'}
   const configurationPath = joinPath('/', newConfig ? 'shopify.app.staging.toml' : 'shopify.app.toml')
 
-  return testApp({
-    name: 'my-super-customer-accounts-app',
-    directory: '/',
-    configurationPath,
-    configuration,
-    nodeDependencies,
-    allExtensions: [functionExtension, themeExtension, uiExtension],
-  })
+  return testApp(
+    {
+      name: 'my-super-customer-accounts-app',
+      directory: '/',
+      configurationPath,
+      nodeDependencies,
+      allExtensions: [functionExtension, themeExtension, uiExtension],
+    },
+    newConfig ? 'current' : 'legacy',
+  )
 }

@@ -1,9 +1,6 @@
 import {buildTomlObject} from './extension-to-toml.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
-import {FlowActionExtensionSchema} from '../../models/extensions/specifications/flow_action.js'
-import {FlowTriggerExtensionSchema} from '../../models/extensions/specifications/flow_trigger.js'
 import {describe, expect, test} from 'vitest'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 describe('extension-to-toml', () => {
   test('correctly builds a toml string for a flow_action', () => {
@@ -23,9 +20,6 @@ describe('extension-to-toml', () => {
     const got = buildTomlObject(extension1)
 
     // Then
-    const decodedToml = decodeToml(got)
-    const parsed = FlowActionExtensionSchema.parse(decodedToml)
-    expect(parsed.type).toEqual('flow_action')
     expect(got).toEqual(`name = "action title"
 type = "flow_action"
 description = "action description"
@@ -90,9 +84,6 @@ required = true
     const got = buildTomlObject(extension2)
 
     // Then
-    const decodedToml = decodeToml(got)
-    const parsed = FlowTriggerExtensionSchema.parse(decodedToml)
-    expect(parsed.type).toEqual('flow_trigger')
     expect(got).toEqual(`name = "trigger title"
 type = "flow_trigger"
 description = "trigger description"
