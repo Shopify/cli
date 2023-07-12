@@ -27,6 +27,7 @@ const flowTriggerSpecification = createExtensionSpecification({
   deployConfig: async (config) => {
     return {
       title: config.name,
+      handle: config.handle,
       description: config.description,
       fields: serializeFields('flow_trigger', config.settings?.fields),
     }
