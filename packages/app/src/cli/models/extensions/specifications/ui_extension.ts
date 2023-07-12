@@ -1,12 +1,5 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {
-  NewExtensionPointSchemaType,
-  NewExtensionPointsSchema,
-  BaseSchema,
-  CapabilitiesSchema,
-  MetafieldSchema,
-  BaseSchemaWithHandle,
-} from '../schemas.js'
+import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -18,65 +11,31 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
-const UIExtensionLegacySchema = BaseSchema.extend({
-  settings: zod
-    .object({
-      fields: zod.any().optional(),
-    })
-    .optional(),
-  extension_points: NewExtensionPointsSchema,
-})
+const validatePoints = (config: {extension_points?: unknown[]; targeting?: unknown[]}) => {
+  return config.extension_points !== undefined || config.targeting !== undefined
+}
 
-type UIExtensionLegacySchemaType = zod.infer<typeof UIExtensionLegacySchema>
-
-const UnifiedSettingsSchema = zod
-  .object({
-    fields: zod
-      .array(
-        zod.object({
-          key: zod.string().optional(),
-          name: zod.string().optional(),
-          description: zod.string().optional(),
-          required: zod.boolean().optional(),
-          type: zod.string(),
-        }),
-      )
-      .optional(),
-  })
-  .optional()
+const missingExtensionPointsMessage = 'No extension points defined, add a `targeting` field to your configuration'
 
 const UIExtensionSchema = BaseSchema.extend({
-  type: zod.literal('ui_extension'),
-  name: zod.string().optional(),
-  description: zod.string().optional(),
-  api_version: zod.string().optional(),
-  capabilities: CapabilitiesSchema.optional(),
-  settings: UnifiedSettingsSchema,
-  targeting: zod.array(
-    zod.object({
-      target: zod.string(),
-      module: zod.string(),
-      metafields: zod.array(MetafieldSchema).optional().default([]),
-    }),
-  ),
+  extension_points: NewExtensionPointsSchema.optional(),
+  targeting: NewExtensionPointsSchema.optional(),
 })
-
-const UIExtensionUnifiedSchema = BaseSchemaWithHandle.transform((config) => {
-  const extensionPoints = (config.targeting ?? []).map((targeting) => {
-    return {
-      target: targeting.target,
-      module: targeting.module,
-      metafields: targeting.metafields ?? config.metafields ?? [],
+  .refine((config) => validatePoints(config), missingExtensionPointsMessage)
+  .transform((config) => {
+    const extensionPoints = (config.targeting ?? config.extension_points ?? []).map((targeting) => {
+      return {
+        target: targeting.target,
+        module: targeting.module,
+        metafields: targeting.metafields ?? config.metafields ?? [],
+      }
+    })
+    const newConfig = {
+      ...config,
+      extension_points: extensionPoints ?? [],
     }
+    return newConfig
   })
-  const newConfig: UIExtensionLegacySchemaType = {
-    ...config,
-    extension_points: extensionPoints ?? [],
-  }
-  return newConfig
-})
-
-const UnionSchema = zod.union([UIExtensionUnifiedSchema, UIExtensionLegacySchema])
 
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
@@ -84,7 +43,7 @@ const spec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
-  schema: UnionSchema,
+  schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
     const needsCart =
@@ -138,6 +97,10 @@ async function validateUIExtensionPointConfig(
   const errors: string[] = []
   const uniqueTargets: string[] = []
   const duplicateTargets: string[] = []
+
+  if (!extensionPoints || extensionPoints.length === 0) {
+    return err(missingExtensionPointsMessage)
+  }
 
   for await (const {module, target} of extensionPoints) {
     const fullPath = joinPath(directory, module)
