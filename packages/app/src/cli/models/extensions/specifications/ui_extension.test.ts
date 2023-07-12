@@ -12,14 +12,13 @@ describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
     extensionPoints?: {target: string; module: string; label?: string}[]
-    configuration?: any
   }
 
-  async function getTestUIExtension({directory, extensionPoints, configuration}: GetUIExtensionProps) {
+  async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
     const configurationPath = joinPath(directory, configurationFileNames.extension.ui)
     const allSpecs = await loadFSExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-    const config = configuration ?? {
+    const configuration = {
       extension_points: extensionPoints,
       api_version: '2023-01' as const,
       name: 'UI Extension',
@@ -34,7 +33,7 @@ describe('ui_extension', async () => {
     }
 
     return new ExtensionInstance({
-      configuration: config,
+      configuration,
       directory,
       specification,
       configurationPath,
