@@ -43,8 +43,9 @@ describe('info', () => {
     // Then
     expect(unstyled(result)).toMatch(/Configuration file\s*\/tmp\/project\/shopify.app.toml/)
     expect(unstyled(result)).toMatch(/App name\s*app1/)
-    expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Client ID\s*config-api-key/)
+    expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
+    expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
   })
 
@@ -64,9 +65,11 @@ describe('info', () => {
     const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
 
     // Then
+    expect(unstyled(result)).toMatch(/Configuration file\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/App name\s*My App/)
-    expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
     expect(unstyled(result)).toMatch(/Client ID\s*123/)
+    expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
+    expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 

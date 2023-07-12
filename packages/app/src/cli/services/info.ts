@@ -63,7 +63,6 @@ class AppInfo {
       this.devConfigsSection(),
       this.projectSettingsSection(),
       await this.appComponentsSection(),
-      this.accessScopesSection(),
       await this.systemInfoSection(),
     ]
     return sections.map((sectionContents: [string, string]) => formatSection(...sectionContents)).join('\n\n')
@@ -105,8 +104,9 @@ class AppInfo {
     const lines = [
       ['Configuration file', configName],
       ['App name', appName],
-      ['Dev store', storeDescription],
       ['Client ID', apiKey],
+      ['Access scopes', getAppScopes(this.app.configuration)],
+      ['Dev store', storeDescription],
       ['Update URLs', updateURLs],
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
@@ -121,7 +121,7 @@ class AppInfo {
   async appComponentsSection(): Promise<[string, string]> {
     const title = 'Directory Components'
 
-    let body = `\n${this.webComponentsSection()}`
+    let body = this.webComponentsSection()
 
     function augmentWithExtensions<TExtension extends Configurable>(
       extensions: TExtension[],
@@ -207,14 +207,6 @@ class AppInfo {
     const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).split('\n')
     const errorLines = [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)]
     return outputContent`${outputToken.errorText(errorLines.join('\n'))}`.value
-  }
-
-  accessScopesSection(): [string, string] {
-    const title = 'Access Scopes in Root TOML File'
-    const lines = getAppScopes(this.app.configuration)
-      .split(',')
-      .map((scope) => [scope])
-    return [title, linesToColumns(lines)]
   }
 
   async systemInfoSection(): Promise<[string, string]> {
