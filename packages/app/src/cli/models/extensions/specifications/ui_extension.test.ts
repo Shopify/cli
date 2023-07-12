@@ -6,6 +6,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -87,6 +88,7 @@ describe('ui_extension', async () => {
         },
         settings: {},
       }
+
       // When
       const got = specification.schema.parse(configuration)
 
@@ -98,6 +100,35 @@ describe('ui_extension', async () => {
           metafields: [{namespace: 'test', key: 'test'}],
         },
       ])
+    })
+
+    test('returns error if there is no targeting or extension_points', async () => {
+      // Given
+      const allSpecs = await loadFSExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        type: 'ui_extension',
+        metafields: [{namespace: 'test', key: 'test'}],
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+        },
+        settings: {},
+      }
+
+      // When/Then
+      expect(() => specification.schema.parse(configuration)).toThrowError(
+        new zod.ZodError([
+          {
+            code: zod.ZodIssueCode.custom,
+            message: 'No extension targets defined, add a `targeting` field to your configuration',
+            path: [],
+          },
+        ]),
+      )
     })
 
     test('returns err(message) when extensionPoints[n].module does not map to a file', async () => {
