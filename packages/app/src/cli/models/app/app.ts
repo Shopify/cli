@@ -14,7 +14,7 @@ const LegacyAppSchema = zod
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
-  .strict()
+  .passthrough()
 
 // adding http or https presence and absence of new lines to url validation
 const validateUrl = (zodType: zod.ZodString) => {
@@ -24,7 +24,7 @@ const validateUrl = (zodType: zod.ZodString) => {
     .refine((value) => !value.includes('\n'), {message: 'Invalid url'})
 }
 
-const AppSchema = zod
+export const AppSchema = zod
   .object({
     name: zod.string().max(30),
     api_contact_email: zod.string().email(),
@@ -78,9 +78,21 @@ const AppSchema = zod
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
-  .strict()
+  .passthrough()
 
-export const AppConfigurationSchema = zod.union([AppSchema, LegacyAppSchema])
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema]).superRefine((schema, ctx) => {
+  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
+  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
+
+  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
+  for (const field in schema) {
+    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
+      return AppSchema
+    }
+  }
+
+  return LegacyAppSchema
+})
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
@@ -120,7 +132,7 @@ export function getAppScopesArray(config: AppConfiguration) {
 }
 
 export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
-  const config = 'configurationPath' in app ? app.configuration : app
+  const config: unknown = 'configurationPath' in app ? app.configuration : app
 
   if (isLegacyAppSchema(config)) return true
 
