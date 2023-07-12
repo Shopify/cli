@@ -54,9 +54,11 @@ export const SettingsSchema = zod.object({
 export const HandleSchema = zod
   .string()
   .trim()
-  .min(3, 'Handle needs to have at least 3 characters')
+  .nonempty("Handle can't be empty")
   .max(30, "Handle can't exceed 30 characters")
-  .regex(/^[a-zA-Z0-9.\-_]*$/, 'Handle can only contain alphanumeric characters, periods, hyphens, and underscores')
+  .regex(/^[a-zA-Z0-9-]*$/, 'Handle can only contain alphanumeric characters and hyphens')
+  .refine((handle) => !handle.startsWith('-') && !handle.endsWith('-'), "Handle can't start or end with a hyphen")
+  .refine((handle) => [...handle].some((char) => char !== '-'), "Handle can't be all hyphens")
 
 export const BaseSchema = zod.object({
   name: zod.string(),
