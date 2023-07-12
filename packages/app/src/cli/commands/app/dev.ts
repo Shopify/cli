@@ -6,7 +6,6 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -36,6 +35,7 @@ export default class Dev extends Command {
       description: 'Reset all your settings.',
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
+      exclusive: ['config'],
     }),
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
@@ -93,9 +93,6 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
-    if (flags.config && flags.reset) {
-      throw new AbortError("You can't use reset and config flags at the same time")
-    }
     if (flags['api-key']) showApiKeyDeprecationWarning()
     const apiKey = flags['client-id'] || flags['api-key']
 
