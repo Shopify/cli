@@ -14,6 +14,7 @@ import {
 import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
+import figures from './figures.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -509,6 +510,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {
+  exactString?: string
   renderOptions?: RenderOptions
 }
 
@@ -520,11 +522,23 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+export async function renderTextPrompt({exactString, renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
+
+  if (exactString) {
+    const displayString = outputContent`${outputToken.yellow(exactString)}`.value
+    props.finalInstruction = {
+      color: 'red',
+      text: `${figures.warning} Type ${displayString} to confirm:`,
+    }
+    props.validate = (value) => {
+      return value === exactString ? undefined : `Value must be exactly ${displayString}`
+    }
+    props.successMessage = 'Confirmed'
+  }
 
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {

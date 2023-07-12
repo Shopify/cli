@@ -1,16 +1,24 @@
 import {TextInput} from './TextInput.js'
-import {TokenizedText} from './TokenizedText.js'
+import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
+import {InfoMessage} from './SelectPrompt.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
+import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
-import {Box, useApp, useInput, Text} from 'ink'
+import {Box, useApp, useInput, Text, TextProps} from 'ink'
 import figures from 'figures'
 
 export interface TextPromptProps {
   message: string
+  infoTable?: InfoTableProps['table']
+  finalInstruction?: {
+    color?: TextProps['color']
+    text: TokenItem<Exclude<InlineToken, UserInputToken | LinkToken>>
+  }
+  successMessage?: string
   onSubmit: (value: string) => void
   defaultValue?: string
   password?: boolean
@@ -25,6 +33,9 @@ export interface TextPromptProps {
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
   message,
+  infoTable,
+  finalInstruction,
+  successMessage,
   onSubmit,
   validate,
   defaultValue = '',
@@ -53,7 +64,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     [allowEmpty, validate],
   )
 
-  const {oneThird} = useLayout()
+  const {oneThird, twoThirds} = useLayout()
   const [answer, setAnswer] = useState<string>('')
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const displayEmptyValue = answerOrDefault === ''
@@ -82,13 +93,41 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   })
 
   return isAborted ? null : (
-    <Box flexDirection="column" marginBottom={1} width={oneThird}>
+    <Box flexDirection="column" marginBottom={1} width={twoThirds}>
       <Box>
         <Box marginRight={2}>
           <Text>?</Text>
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
+      {(infoTable || finalInstruction) && (error || !submitted) ? (
+        <Box
+          flexDirection="column"
+          gap={1}
+          marginTop={1}
+          marginLeft={3}
+        >
+          <Box
+            paddingLeft={2}
+            borderStyle="bold"
+            borderLeft
+            borderRight={false}
+            borderTop={false}
+            borderBottom={false}
+            flexDirection="column"
+            gap={1}
+          >
+            {infoTable ? <InfoTable table={infoTable} /> : null}
+          </Box>
+          <Box>
+            {finalInstruction ? (
+              <Text color={finalInstruction.color}>
+                {finalInstruction.text}
+              </Text>
+            ) : null}
+          </Box>
+        </Box>
+      ) : null}
       {submitted && !error ? (
         <Box>
           <Box marginRight={2}>
@@ -97,12 +136,14 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
 
           <Box flexGrow={1}>
             <Text color="cyan" dimColor={displayEmptyValue}>
-              {password ? '*'.repeat(answer.length) : displayedAnswer}
+              {successMessage ? successMessage :
+                password ? '*'.repeat(answer.length) :
+                displayedAnswer}
             </Text>
           </Box>
         </Box>
       ) : (
-        <Box flexDirection="column">
+        <Box flexDirection="column" width={oneThird}>
           <Box>
             <Box marginRight={2}>
               <Text color={color}>{`>`}</Text>
