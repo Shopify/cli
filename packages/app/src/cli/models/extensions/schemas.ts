@@ -68,7 +68,6 @@ export const BaseSchema = zod.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   categories: zod.array(zod.string()).optional(),
-  extensions: zod.array(zod.any()).optional(),
   settings: SettingsSchema.optional(),
 })
 

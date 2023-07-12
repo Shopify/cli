@@ -6,8 +6,6 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_trigger'),
-  schema: zod.string().optional(),
-  return_type_ref: zod.string().optional(),
 }).refine((config) => {
   const fields = config.settings?.fields ?? []
   const settingsFieldsAreValid = fields.every((field) => validateNonCommerceObjectShape(field, 'flow_trigger'))
@@ -31,8 +29,6 @@ const flowTriggerSpecification = createExtensionSpecification({
       title: config.name,
       description: config.description,
       fields: serializeFields('flow_trigger', config.settings?.fields),
-      schema: config.schema,
-      return_type_ref: config.return_type_ref,
     }
   },
 })

@@ -366,11 +366,11 @@ class AppLoader {
         // If the extension is an array, it's a unified toml file.
         // Parse all extensions by merging each extension config with the global unified configuration.
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
-        const extensionsPromises = configuration.extensions.map(async (extensionConfig) => {
+        const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const config = {...configuration, ...extensionConfig}
           return this.createExtensionInstance(config.type, config, configurationPath, directory)
         })
-        return Promise.all(extensionsPromises)
+        return Promise.all(extensionsInstancesPromises)
       } else if (type) {
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
