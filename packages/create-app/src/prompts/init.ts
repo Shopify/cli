@@ -10,7 +10,7 @@ interface InitOptions {
 interface InitOutput {
   name: string
   template: string
-  // e.g. 'node', 'ruby', 'php'
+  // e.g. 'remix'
   templateType: keyof typeof templateURLMap | 'custom'
 }
 
