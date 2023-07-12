@@ -43,6 +43,7 @@ export default class AppGenerateExtension extends Command {
       description: 'Reset all your settings.',
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
+      exclusive: ['config'],
     }),
     'api-key': Flags.string({
       hidden: true,
