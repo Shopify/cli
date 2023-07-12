@@ -199,8 +199,8 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const newConfiguration: AppConfiguration = {
       ...configuration,
-      cli: {
-        ...configuration.cli,
+      build: {
+        ...configuration.build,
         dev_store_url: selectedStore?.shopDomain,
       },
     }
@@ -462,7 +462,10 @@ export async function fetchOrCreateOrganizationApp(app: AppInterface, token: str
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable)
+  const scopes = isCurrentAppSchema(app.configuration)
+    ? app.configuration.access_scopes?.scopes
+    : app.configuration.scopes
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
   return partnersApp
 }
 
@@ -606,8 +609,8 @@ async function getAppDevCachedContext({
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
-      storeFqdn: configuration.cli?.dev_store_url,
-      updateURLs: configuration.cli?.automatically_update_urls_on_dev,
+      storeFqdn: configuration.build?.dev_store_url,
+      updateURLs: configuration.build?.automatically_update_urls_on_dev,
     }
   }
 

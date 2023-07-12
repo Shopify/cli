@@ -10,13 +10,32 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
 
-export function testApp(app: Partial<AppInterface> = {}): AppInterface {
+const DEFAULT_CONFIG = {
+  application_url: 'https://myapp.com',
+  client_id: '12345',
+  name: 'my app',
+  api_contact_email: 'wils@bahan-lee.com',
+  webhooks: {
+    api_version: '2023-04',
+  },
+  embedded: true,
+}
+
+export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
+  const getConfig = () => {
+    if (schemaType === 'legacy') {
+      return {scopes: '', extension_directories: []}
+    } else {
+      return DEFAULT_CONFIG
+    }
+  }
+
   const newApp = new App(
     app.name ?? 'App',
     app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
-    app.configuration ?? {scopes: '', extension_directories: []},
+    app.configuration ?? getConfig(),
     app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [
@@ -50,6 +69,7 @@ interface TestAppWithConfigOptions {
 export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
   const configuration: AppConfiguration = {
     scopes: '',
+    name: 'name',
     extension_directories: [],
     ...config,
   }
@@ -57,15 +77,9 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
 }
 
 export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
-  const app = options?.app || testApp()
+  const app = options?.app || testApp({}, 'current')
   app.configuration = {
-    client_id: 'config-api-key',
-    name: 'app1',
-    scopes: 'read_products',
-    application_url: 'https://my-apps-url.com',
-    auth: {
-      redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-    },
+    ...DEFAULT_CONFIG,
     ...options?.config,
   }
 
@@ -77,6 +91,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     id: '1',
     title: 'app1',
     apiKey: 'api-key',
+    contactEmail: 'example@example.com',
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',
     grantedScopes: [],

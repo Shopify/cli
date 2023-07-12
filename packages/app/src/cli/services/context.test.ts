@@ -224,16 +224,16 @@ describe('ensureGenerateContext', () => {
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       appDirectory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
-      configuration: testAppWithConfig().configuration,
+      configuration: testAppWithConfig({config: {client_id: APP1.apiKey}}).configuration,
     })
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP1)
 
     // When
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith('config-api-key', 'token')
-    expect(got).toEqual(APP2.apiKey)
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP1.apiKey, 'token')
+    expect(got).toEqual(APP1.apiKey)
   })
 
   test('selects a new app and returns the api key', async () => {
@@ -282,19 +282,16 @@ describe('ensureDevContext', async () => {
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         appDirectory: tmp,
         configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
-        configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          auth: {
-            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
+        configuration: testAppWithConfig({
+          config: {
+            name: APP2.apiKey,
+            client_id: APP2.apiKey,
+            build: {
+              automatically_update_urls_on_dev: true,
+              dev_store_url: STORE1.shopDomain,
+            },
           },
-          cli: {
-            automatically_update_urls_on_dev: true,
-            dev_store_url: STORE1.shopDomain,
-          },
-        },
+        }).configuration,
       })
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -343,7 +340,7 @@ describe('ensureDevContext', async () => {
           auth: {
             redirect_urls: ['https://my-apps-url.com/auth/shopify'],
           },
-          cli: {
+          build: {
             automatically_update_urls_on_dev: true,
             dev_store_url: STORE1.shopDomain,
           },
@@ -371,7 +368,7 @@ describe('ensureDevContext', async () => {
     })
   })
 
-  test('prompts to select store & update urls when not set in config file', async () => {
+  test('prompts to select store when not set in config file', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
@@ -379,19 +376,8 @@ describe('ensureDevContext', async () => {
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         appDirectory: tmp,
-        configurationPath: filePath,
-        configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          auth: {
-            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-          },
-          cli: {
-            automatically_update_urls_on_dev: true,
-          },
-        },
+        configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
+        configuration: testApp({}, 'current').configuration,
       })
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
@@ -409,47 +395,39 @@ describe('ensureDevContext', async () => {
       // Then
       expect(selectStore).toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.dev.toml'))
-      const expectedContent = `client_id = "key2"
-name = "app2"
-scopes = "read_products"
-application_url = "https://my-apps-url.com"
+      const expectedContent = `application_url = "https://myapp.com"
+client_id = "12345"
+name = "my app"
+api_contact_email = "wils@bahan-lee.com"
+embedded = true
 
-[auth]
-redirect_urls = [ "https://my-apps-url.com/auth/shopify" ]
+[webhooks]
+api_version = "2023-04"
 
-[cli]
-automatically_update_urls_on_dev = true
+[build]
 dev_store_url = "domain1"
 `
       expect(content).toEqual(expectedContent)
     })
   })
 
-  test('shows the correct banner content when running for the first time with config file', async () => {
+  test('shows the correct banner content when running for the first time with linked config file', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       vi.mocked(getAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         appDirectory: tmp,
-        configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
-        configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          auth: {
-            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-          },
-        },
+        configurationPath: joinPath(tmp, 'shopify.app.toml'),
+        configuration: testApp({}, 'current').configuration,
       })
 
-      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.dev.toml')
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
       // When
-      await ensureDevContext(
+      const val = await ensureDevContext(
         {
           directory: 'app_directory',
           reset: false,
@@ -479,7 +457,7 @@ dev_store_url = "domain1"
           },
           'to your command to reset your app configuration.',
         ],
-        headline: 'Using shopify.app.dev.toml:',
+        headline: 'Using shopify.app.toml:',
       })
     })
   })
@@ -654,7 +632,7 @@ dev_store_url = "domain1"
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
           api_contact_email: 'wils@bahan-lee.com',
-          webhook_api_version: '2023-04',
+          webhooks: {api_version: '2023-04'},
           embedded: true,
         },
       })
@@ -798,7 +776,7 @@ describe('ensureDeployContext', () => {
 
   test("fetches the app from the partners' API and returns it alongside the id when config as code is enabled", async () => {
     // Given
-    const app = testAppWithConfig()
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -814,7 +792,7 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith('config-api-key', 'token')
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
@@ -844,6 +822,7 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
+      '',
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -895,6 +874,7 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
+      '',
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -938,6 +918,7 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
+      '',
     )
   })
 

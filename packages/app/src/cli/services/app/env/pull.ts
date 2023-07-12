@@ -1,5 +1,5 @@
 import {selectApp} from '../select-app.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppInterface, isLegacyAppSchema} from '../../../models/app/app.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -19,8 +19,9 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
   const updatedValues = {
     SHOPIFY_API_KEY: selectedApp.apiKey,
     SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
-    SCOPES:
-      app.configuration.scopes === 'string' ? app.configuration.scopes : app.configuration.scopes?.toString() ?? '',
+    SCOPES: isLegacyAppSchema(app.configuration)
+      ? app.configuration.scopes
+      : app.configuration.access_scopes?.scopes ?? '',
   }
 
   if (await fileExists(envFile)) {
