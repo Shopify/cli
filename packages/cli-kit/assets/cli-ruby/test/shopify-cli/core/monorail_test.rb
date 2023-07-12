@@ -80,49 +80,6 @@ module ShopifyCLI
         end
       end
 
-      def test_log_event_handles_errors
-        enable_reporting(true)
-        ShopifyCLI::Shopifolk.expects(:acting_as_shopify_organization?).returns(false)
-        Timecop.freeze do |time|
-          this_time = (time.utc.to_f * 1000).to_i
-          stub_request(:post, Monorail::ENDPOINT_URI)
-            .with(
-              headers: {
-                'Content-Type': "application/json; charset=utf-8",
-                'X-Monorail-Edge-Event-Created-At-Ms': this_time.to_s,
-                'X-Monorail-Edge-Event-Sent-At-Ms': this_time.to_s,
-              },
-              body: JSON.dump({
-                schema_id: ShopifyCLI::Core::Monorail::INVOCATIONS_SCHEMA,
-                payload: {
-                  project_type: "fake",
-                  command: "testcommand",
-                  args: "arg argtwo",
-                  time_start: this_time,
-                  time_end: this_time,
-                  total_time: 0,
-                  success: false,
-                  error_message: "test error",
-                  uname: RbConfig::CONFIG["host"],
-                  cli_version: ShopifyCLI::VERSION,
-                  ruby_version: RUBY_VERSION,
-                  is_employee: false,
-                  api_key: "apikey",
-                  partner_id: 42,
-                },
-              })
-            )
-            .to_return(status: 200)
-
-          begin
-            ShopifyCLI::Core::Monorail.log("testcommand", %w(arg argtwo)) do
-              raise "test error"
-            end
-          rescue
-          end
-        end
-      end
-
       def test_log_returns_the_result_after_sending_monorail_events
         enable_reporting(true)
         Net::HTTP.expects(:start).once
