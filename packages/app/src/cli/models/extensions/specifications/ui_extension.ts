@@ -5,6 +5,7 @@ import {
   BaseSchema,
   CapabilitiesSchema,
   MetafieldSchema,
+  BaseSchemaWithHandle,
 } from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
@@ -14,7 +15,6 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -61,26 +61,17 @@ const UIExtensionSchema = BaseSchema.extend({
   ),
 })
 
-const UIExtensionUnifiedSchema = BaseSchema.extend({
-  settings: UnifiedSettingsSchema,
-  extensions: zod.array(UIExtensionSchema).min(1).max(1),
-}).transform((config) => {
-  const extensionPoints = config.extensions[0]?.targeting.map((targeting) => {
+const UIExtensionUnifiedSchema = BaseSchemaWithHandle.transform((config) => {
+  const extensionPoints = (config.targeting ?? []).map((targeting) => {
     return {
       target: targeting.target,
       module: targeting.module,
-      metafields: targeting.metafields ?? config.extensions[0]?.metafields ?? [],
+      metafields: targeting.metafields ?? config.metafields ?? [],
     }
   })
   const newConfig: UIExtensionLegacySchemaType = {
-    name: config.extensions[0]?.name ?? config.name,
-    type: config.extensions[0]?.type ?? config.type,
-    description: config.extensions[0]?.description ?? config.description,
-    api_version: config.extensions[0]?.api_version ?? config.api_version,
+    ...config,
     extension_points: extensionPoints ?? [],
-    capabilities: config.extensions[0]?.capabilities,
-    metafields: config.extensions[0]?.metafields ?? [],
-    settings: config.extensions[0]?.settings,
   }
   return newConfig
 })

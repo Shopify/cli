@@ -67,6 +67,7 @@ export const BaseSchema = zod.object({
   description: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),
+  targeting: zod.array(NewExtensionPointSchema).optional(),
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   categories: zod.array(zod.string()).optional(),
