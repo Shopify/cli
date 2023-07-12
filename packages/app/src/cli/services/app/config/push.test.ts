@@ -1,19 +1,26 @@
-import {Options, pushConfig} from './push.js'
+import {PushOptions, pushConfig} from './push.js'
 import {testApp} from '../../../models/app/app.test-data.js'
-import {describe, vi, test, expect} from 'vitest'
+import {confirmPushChanges} from '../../../prompts/config.js'
+import {describe, vi, test, expect, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../../prompts/config.js')
 
 describe('pushConfig', () => {
+  beforeEach(() => {
+    vi.mocked(confirmPushChanges).mockResolvedValue(true)
+  })
+
   test('successfully calls the update mutation when push is run and a file is present', async () => {
     const app = testApp({}, 'current')
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -54,9 +61,10 @@ describe('pushConfig', () => {
     const app = testApp({}, 'current')
 
     app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -99,9 +107,10 @@ describe('pushConfig', () => {
     const app = testApp({}, 'current')
 
     app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -146,9 +155,10 @@ describe('pushConfig', () => {
     const app = testApp({}, 'current')
     app.configuration = {...app.configuration, access_scopes: {scopes: ''}}
 
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -190,9 +200,10 @@ describe('pushConfig', () => {
     const app = testApp({}, 'current')
     app.configuration = {...app.configuration, access_scopes: undefined}
 
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -234,9 +245,10 @@ describe('pushConfig', () => {
 
   test('returns error when update mutation fails', async () => {
     const app = testApp({}, 'current')
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -261,9 +273,10 @@ describe('pushConfig', () => {
       },
     }
 
-    const options: Options = {
+    const options: PushOptions = {
       configuration: app.configuration,
       configurationPath: app.configurationPath,
+      force: true,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -303,5 +316,29 @@ describe('pushConfig', () => {
       headline: 'Updated app configuration for my app',
       body: ['shopify.app.toml configuration is now live on Shopify.'],
     })
+  })
+
+  test('does nothing when the operation is not confirmed', async () => {
+    const app = testApp({}, 'current')
+    const options: PushOptions = {
+      configuration: app.configuration,
+      configurationPath: app.configurationPath,
+      force: false,
+    }
+    vi.mocked(confirmPushChanges).mockReset()
+    vi.mocked(confirmPushChanges).mockResolvedValue(false)
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    await pushConfig(options)
+
+    expect(confirmPushChanges).toHaveBeenCalled()
+    expect(renderSuccess).not.toHaveBeenCalled()
   })
 })

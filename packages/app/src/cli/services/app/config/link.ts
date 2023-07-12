@@ -88,7 +88,7 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
+export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,

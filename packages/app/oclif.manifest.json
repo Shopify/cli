@@ -683,6 +683,14 @@
           "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
+        },
+        "force": {
+          "name": "force",
+          "type": "boolean",
+          "char": "f",
+          "description": "Push configuration without asking for confirmation.",
+          "hidden": false,
+          "allowNo": false
         }
       },
       "args": {}
