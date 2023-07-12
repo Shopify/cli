@@ -75,12 +75,12 @@ async function loadConfigurationFile(
   }
 }
 
-const isCurrentSchema = (schema: any) => {
+const isCurrentSchema = (schema: unknown) => {
   const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
   const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
 
   // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-  for (const field in schema) {
+  for (const field in schema as {}) {
     if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
       return true
     }
