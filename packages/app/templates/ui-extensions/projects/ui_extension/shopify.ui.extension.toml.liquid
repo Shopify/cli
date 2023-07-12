@@ -1,5 +1,4 @@
 name = "{{ name }}"
-type = "ui_extension"
 api_version = "2022-10"
 
 [capabilities]
@@ -7,11 +6,15 @@ api_access = true
 network_access = true
 block_progress = true
 
-[[extension_points]]
-target = "Checkout::Dynamic::Render"
-module = "./src/CheckoutDynamicRender.{{ srcFileExtension }}"
+[[extensions]]
+type = "ui_extension"
+handle = {{ handle }}
 
-# [[extension_points.metafields]]
+[[extensions.targeting]]
+module = "./src/CheckoutDynamicRender.{{ srcFileExtension }}"
+target = "Checkout::Dynamic::Render"
+
+# [[extensions.metafields]]
 # namespace = "my-namespace"
 # key = "my-key"
 
@@ -22,3 +25,4 @@ module = "./src/CheckoutDynamicRender.{{ srcFileExtension }}"
 #   type = "single_line_text_field"
 #   name = "Banner title"
 #   description = "Enter a title for the banner"
+#   required = false
