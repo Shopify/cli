@@ -18,8 +18,8 @@ afterEach(() => {
 describe('output', () => {
   describe('outputUpdateURLsResult', () => {
     const urls = {
-      applicationUrl: 'https://lala.ngrok.io/',
-      redirectUrlWhitelist: ['https://lala.ngrok.io/auth/callback'],
+      applicationUrl: 'https://lala.cloudflare.io/',
+      redirectUrlWhitelist: ['https://lala.cloudflare.io/auth/callback'],
     }
 
     test('shows info about tunnel URL and links to Partners Dashboard when app is brand new', async () => {
@@ -118,15 +118,16 @@ async function mockApp(newConfig = false): Promise<AppInterface> {
   const themeExtension = await testThemeExtensions()
   const uiExtension = await testUIExtension()
 
-  const configuration = newConfig ? {name: 'lala', client_id: 'abc'} : {scopes: 'my-scope'}
   const configurationPath = joinPath('/', newConfig ? 'shopify.app.staging.toml' : 'shopify.app.toml')
 
-  return testApp({
-    name: 'my-super-customer-accounts-app',
-    directory: '/',
-    configurationPath,
-    configuration,
-    nodeDependencies,
-    allExtensions: [functionExtension, themeExtension, uiExtension],
-  })
+  return testApp(
+    {
+      name: 'my-super-customer-accounts-app',
+      directory: '/',
+      configurationPath,
+      nodeDependencies,
+      allExtensions: [functionExtension, themeExtension, uiExtension],
+    },
+    newConfig ? 'current' : 'legacy',
+  )
 }

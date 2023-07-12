@@ -21,6 +21,19 @@ describe('load', () => {
   const appConfiguration = `
 scopes = "read_products"
 `
+  const linkedAppConfiguration = `
+name = "for-testing"
+api_contact_email = "me@example.com"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[build]
+automatically_update_urls_on_dev = true
+`
 
   beforeAll(async () => {
     specifications = await loadFSExtensionsSpecifications()
@@ -93,6 +106,12 @@ scopes = "read_products"
     await writeFile(configPath, blockConfiguration)
     return {blockDir, configPath}
   }
+
+  const configAsCodeLegacyMetadata = () => ({
+    cmd_app_all_configs_any: false,
+    cmd_app_all_configs_clients: JSON.stringify({}),
+    cmd_app_linked_config_used: false,
+  })
 
   test("throws an error if the directory doesn't exist", async () => {
     await inTemporaryDirectory(async (tmp) => {
@@ -224,10 +243,10 @@ scopes = "read_products"
 
     // When
     let app = await loadApp({directory: tmpDir, specifications})
-    const web = app.webs[0]
+    const web = app.webs[0]!
     // Force npm to symlink the workspace directory
     await writeFile(
-      joinPath(web!.directory, 'package.json'),
+      joinPath(web.directory, 'package.json'),
       JSON.stringify({name: 'web', dependencies: {'empty-npm-package': '1.0.0'}, devDependencies: {}}),
     )
     await installNodeModules({
@@ -471,6 +490,61 @@ scopes = "read_products"
     expect(extensions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_2_ID')
   })
 
+  test('loads the app with several extensions defined in a single toml file', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      name = "my_extension_1"
+      api_version = "2022-07"
+      description = "global description"
+
+      [[extensions]]
+      type = "checkout_post_purchase"
+      handle = "checkout-ext"
+      description = "custom description"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "flow-ext"
+      name = "my_extension_1_flow"
+      runtime_url = "https://example.com"
+
+      [settings]
+      [[settings.fields]]
+      key = "my_field"
+      name = "My Field"
+      description = "My Field Description"
+      required = true
+      type = "single_line_text_field"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(2)
+    const extensions = app.allExtensions.sort((extA, extB) =>
+      extA.configuration.name < extB.configuration.name ? -1 : 1,
+    )
+    expect(extensions[0]!.configuration.name).toBe('my_extension_1')
+    expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
+    expect(extensions[0]!.configuration.api_version).toBe('2022-07')
+    expect(extensions[0]!.configuration.settings!.fields![0]!.key).toBe('my_field')
+    expect(extensions[0]!.configuration.description).toBe('custom description')
+
+    expect(extensions[1]!.configuration.name).toBe('my_extension_1_flow')
+    expect(extensions[1]!.configuration.type).toBe('flow_action')
+    expect(extensions[1]!.configuration.api_version).toBe('2022-07')
+    expect(extensions[1]!.configuration.settings!.fields![0]!.key).toBe('my_field')
+    expect(extensions[1]!.configuration.description).toBe('global description')
+  })
+
   test('loads the app supports extensions with the following sources paths: index.js, index.jsx, src/index.js, src/index.jsx', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -696,7 +770,11 @@ scopes = "read_products"
 
     await loadApp({directory: tmpDir, specifications})
 
-    expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: false})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      project_type: 'node',
+      env_package_manager_workspaces: false,
+      ...configAsCodeLegacyMetadata(),
+    })
   })
 
   test(`updates metadata after loading with a flag that indicates the usage of workspaces`, async () => {
@@ -710,7 +788,35 @@ scopes = "read_products"
 
     await loadApp({directory: tmpDir, specifications})
 
-    expect(metadata.getAllPublicMetadata()).toMatchObject({project_type: 'node', env_package_manager_workspaces: true})
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      project_type: 'node',
+      env_package_manager_workspaces: true,
+      ...configAsCodeLegacyMetadata(),
+    })
+  })
+
+  test(`updates metadata after loading a config as code application`, async () => {
+    const {webDirectory} = await writeConfig(linkedAppConfiguration, {
+      workspaces: ['packages/*'],
+      name: 'my_app',
+      dependencies: {},
+      devDependencies: {},
+    })
+    await writeFile(joinPath(webDirectory, 'package.json'), JSON.stringify({}))
+
+    await loadApp({directory: tmpDir, specifications})
+
+    expect(metadata.getAllPublicMetadata()).toMatchObject({
+      project_type: 'node',
+      env_package_manager_workspaces: true,
+      cmd_app_linked_config_used: true,
+      cmd_app_linked_config_uses_cli_managed_urls: true,
+      cmd_app_all_configs_any: true,
+      cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
+      cmd_app_linked_config_name: 'shopify.app.toml',
+      cmd_app_linked_config_git_tracked: true,
+      cmd_app_linked_config_source: 'default',
+    })
   })
 
   describe('customer_accounts_ui_extension', () => {

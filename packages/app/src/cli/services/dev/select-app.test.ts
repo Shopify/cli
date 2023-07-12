@@ -2,7 +2,7 @@ import {createApp, selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {testApp, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testApp, testAppWithLegacyConfig, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -31,12 +31,10 @@ const LOCAL_APP: AppInterface = testApp({
 const ORG1: Organization = {
   id: '1',
   businessName: 'org1',
-  betas: {},
 }
 const ORG2: Organization = {
   id: '2',
   businessName: 'org2',
-  betas: {},
 }
 const APP1 = testOrganizationApp({apiKey: 'key1'})
 const APP2 = testOrganizationApp({
@@ -58,8 +56,9 @@ beforeEach(() => {
 })
 
 describe('createApp', () => {
-  test('sends request to create app and returns it', async () => {
+  test('sends request to create app with launchable defaults and returns it', async () => {
     // Given
+    const localApp = testAppWithLegacyConfig({config: {scopes: 'write_products'}})
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
@@ -67,14 +66,15 @@ describe('createApp', () => {
       title: 'app-name',
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
+      requestedAccessScopes: ['write_products'],
       type: 'undecided',
     }
 
     // When
-    const got = await createApp(ORG2, LOCAL_APP.name, 'token')
+    const got = await createApp(ORG2, localApp.name, 'token', true, 'write_products')
+    expect(got).toEqual(APP1)
 
     // Then
-    expect(got).toEqual(APP1)
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
@@ -139,6 +139,7 @@ describe('selectOrCreateApp', () => {
       title: 'app-name',
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
+      requestedAccessScopes: [],
       type: 'undecided',
     }
 

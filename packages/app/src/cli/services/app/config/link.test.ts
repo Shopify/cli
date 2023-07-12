@@ -73,12 +73,22 @@ describe('link', () => {
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-application_url = "https://example.com"
-webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
-legacy_scopes_behavior = true
-scopes = ""
+application_url = "https://example.com"
+embedded = true
 extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
@@ -103,7 +113,7 @@ extension_directories = [ ]
             api_contact_email: 'example@example.com',
             client_id: '12345',
             scopes: 'write_products',
-            webhook_api_version: '2023-04',
+            webhooks: {api_version: '2023-04'},
             application_url: 'https://myapp.com',
           },
         }),
@@ -125,9 +135,20 @@ extension_directories = [ ]
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `client_id = "12345"
 name = "my app"
-application_url = "https://myapp.com"
-webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
+application_url = "https://myapp.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
 scopes = "write_products"
 `
       expect(content).toEqual(expectedContent)
@@ -159,12 +180,22 @@ scopes = "write_products"
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-application_url = "https://example.com"
-webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
-legacy_scopes_behavior = true
-scopes = ""
+application_url = "https://example.com"
+embedded = true
 extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -232,10 +263,21 @@ extension_directories = [ ]
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-application_url = "https://example.com"
-webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
-legacy_scopes_behavior = true
+application_url = "https://example.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
     })
@@ -261,11 +303,22 @@ legacy_scopes_behavior = true
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-application_url = "https://example.com"
-webhook_api_version = "2023-04"
 api_contact_email = "example@example.com"
-scopes = "read_products,write_orders"
+application_url = "https://example.com"
+embedded = true
 extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+scopes = "read_products,write_orders"
 `
       expect(content).toEqual(expectedContent)
     })

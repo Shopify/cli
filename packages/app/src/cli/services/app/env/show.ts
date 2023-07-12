@@ -15,7 +15,7 @@ export async function outputEnv(app: AppInterface, format: Format): Promise<Outp
     return outputContent`${outputToken.json({
       SHOPIFY_API_KEY: orgApp.apiKey,
       SHOPIFY_API_SECRET: orgApp.apiSecretKeys[0]?.secret,
-      SCOPES: app.configuration.scopes,
+      SCOPES: getAppScopes(app.configuration),
     })}`
   } else {
     return outputContent`

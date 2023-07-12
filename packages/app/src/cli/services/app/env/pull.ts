@@ -1,4 +1,4 @@
-import {AppInterface} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
@@ -19,8 +19,7 @@ export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['
   const updatedValues = {
     SHOPIFY_API_KEY: orgApp.apiKey,
     SHOPIFY_API_SECRET: orgApp.apiSecretKeys[0]?.secret,
-    SCOPES:
-      app.configuration.scopes === 'string' ? app.configuration.scopes : app.configuration.scopes?.toString() ?? '',
+    SCOPES: getAppScopes(app.configuration),
   }
 
   if (await fileExists(envFile)) {

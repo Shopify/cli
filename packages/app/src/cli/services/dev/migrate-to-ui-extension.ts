@@ -10,7 +10,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export function getExtensionsToMigrate(
+export function getUIExtensionsToMigrate(
   localSources: LocalSource[],
   remoteSources: RemoteSource[],
   identifiers: IdentifiersExtensions,

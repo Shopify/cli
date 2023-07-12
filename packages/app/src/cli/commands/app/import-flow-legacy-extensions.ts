@@ -22,7 +22,6 @@ export default class AppImportFlowExtension extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(AppImportFlowExtension)
-
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
