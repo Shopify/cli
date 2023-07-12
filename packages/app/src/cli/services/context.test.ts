@@ -29,7 +29,6 @@ import {testApp, testAppWithConfig, testOrganizationApp, testThemeExtensions} fr
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName, isWebType, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
-import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -37,8 +36,6 @@ import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 
 vi.mock('./local-storage.js')
@@ -54,7 +51,6 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./deploy/mode.js')
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('./app/config/link.js')
 
 beforeEach(() => {
@@ -319,7 +315,6 @@ describe('ensureDevContext', async () => {
         useCloudflareTunnels: true,
         updateURLs: true,
         configName: CACHED1_WITH_CONFIG.configFile,
-        deploymentMode: 'legacy',
       })
       expect(setAppInfo).not.toHaveBeenCalled()
 
@@ -499,7 +494,6 @@ dev_store_url = "domain1"
       remoteAppUpdated: true,
       useCloudflareTunnels: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
@@ -532,7 +526,6 @@ dev_store_url = "domain1"
       remoteAppUpdated: true,
       useCloudflareTunnels: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
       configName: CACHED1_WITH_CONFIG.configFile,
     })
   })
@@ -552,7 +545,6 @@ dev_store_url = "domain1"
       remoteAppUpdated: true,
       useCloudflareTunnels: false,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
   })
 
@@ -572,7 +564,6 @@ dev_store_url = "domain1"
       remoteAppUpdated: false,
       useCloudflareTunnels: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
@@ -622,7 +613,6 @@ dev_store_url = "domain1"
       remoteAppUpdated: true,
       useCloudflareTunnels: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
     expect(setAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
@@ -707,62 +697,6 @@ dev_store_url = "domain1"
       Configure your preferences by answering a few questions.
       "
     `)
-  })
-
-  test('dev enables automatically the development store preview if the unified deployments beta is enabled', async () => {
-    // Given
-    vi.mocked(getAppInfo).mockReturnValueOnce(undefined)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-    vi.mocked(selectOrCreateApp).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: true}},
-    })
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDevContext(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
-      storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
-      useCloudflareTunnels: false,
-      updateURLs: undefined,
-      deploymentMode: 'unified',
-    })
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: true},
-    })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Development store preview enabled"')
-  })
-
-  test('display an error to enable dev preview if the beta is enabled in partners but an error is returned', async () => {
-    // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-    vi.mocked(selectOrCreateApp).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error enabling'))
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDevContext(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
-      storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
-      useCloudflareTunnels: false,
-      updateURLs: undefined,
-      deploymentMode: 'unified',
-    })
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: true},
-    })
-    expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to enable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
-    )
   })
 })
 
@@ -962,74 +896,6 @@ describe('ensureDeployContext', () => {
       ORG1,
       'token',
       true,
-    )
-  })
-
-  test('deploy disables automatically the development store preview if the unified deployments beta is enabled', async () => {
-    // Given
-    const app = testApp()
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: false}},
-    })
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDeployContext(options(app))
-
-    // Then
-    expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
-    expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
-
-    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: false},
-    })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Development store preview disabled"')
-  })
-
-  test('display an error to disable dev preview if the beta is enabled in partners but an error is returned', async () => {
-    // Given
-    const app = testApp()
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error disabling'))
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDeployContext(options(app))
-
-    // Then
-    expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
-    expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
-
-    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: false},
-    })
-    expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to disable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
     )
   })
 })

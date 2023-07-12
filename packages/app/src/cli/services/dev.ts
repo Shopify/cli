@@ -92,7 +92,6 @@ async function dev(options: DevOptions) {
     updateURLs: cachedUpdateURLs,
     useCloudflareTunnels,
     configName,
-    deploymentMode,
   } = await ensureDevContext(options, token)
 
   if (!options.tunnelUrl && !options.noTunnel && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
@@ -235,7 +234,7 @@ async function dev(options: DevOptions) {
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
-      deploymentMode,
+      deploymentMode: unifiedDeployment ? 'unified' : 'legacy',
       token,
       envIdentifiers: prodEnvIdentifiers,
     })
@@ -270,7 +269,7 @@ async function dev(options: DevOptions) {
       ensureAuthenticatedStorefront(),
       themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
     ])
-    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, deploymentMode === 'unified')
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, unifiedDeployment)
     additionalProcesses.push(devExt)
   }
 
