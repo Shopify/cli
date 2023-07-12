@@ -77,6 +77,8 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
+const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
+
 const APP1: OrganizationApp = testOrganizationApp({
   id: '1',
   title: 'app1',
@@ -129,8 +131,6 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
-
-const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
 const INPUT: DevContextOptions = {
   directory: 'app_directory',
@@ -193,7 +193,7 @@ describe('ensureGenerateContext', () => {
 
   test('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
-    const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token'}
+    const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
@@ -205,7 +205,7 @@ describe('ensureGenerateContext', () => {
 
   test('returns the cached api key', async () => {
     // Given
-    const input = {directory: '/app', reset: false, token: 'token'}
+    const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(getAppInfo).mockReturnValue(CACHED1)
 
@@ -218,27 +218,69 @@ describe('ensureGenerateContext', () => {
 
   test('returns the api key from the current config', async () => {
     // Given
-    const input = {directory: '/app', reset: false, token: 'token'}
+    const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
     vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       appDirectory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
-      configuration: testAppWithConfig({config: {client_id: APP1.apiKey}}).configuration,
+      configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP1)
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP1.apiKey, 'token')
-    expect(got).toEqual(APP1.apiKey)
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(got).toEqual(APP2.apiKey)
+  })
+
+  test('links an app on first command run', async () => {
+    // Given
+    const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
+    vi.mocked(getAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(loadAppConfiguration).mockReset()
+    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+      appDirectory: '/app',
+      configurationPath: CACHED1_WITH_CONFIG.configFile!,
+      configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
+    })
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+
+    // When
+    const got = await ensureGenerateContext(input)
+
+    // Then
+    expect(link).toBeCalled()
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(got).toEqual(APP2.apiKey)
+  })
+
+  test('links an app on reset if already opted into config in code', async () => {
+    // Given
+    const input = {directory: '/app', reset: true, token: 'token', commandConfig: COMMAND_CONFIG}
+    vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(loadAppConfiguration).mockReset()
+    vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
+      appDirectory: '/app',
+      configurationPath: CACHED1_WITH_CONFIG.configFile!,
+      configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
+    })
+    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+
+    // When
+    const got = await ensureGenerateContext(input)
+
+    // Then
+    expect(link).toBeCalled()
+    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(got).toEqual(APP2.apiKey)
   })
 
   test('selects a new app and returns the api key', async () => {
     // Given
-    const input = {directory: '/app', reset: true, token: 'token'}
+    const input = {directory: '/app', reset: true, token: 'token', commandConfig: COMMAND_CONFIG}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
     vi.mocked(getAppInfo).mockReturnValue(undefined)
