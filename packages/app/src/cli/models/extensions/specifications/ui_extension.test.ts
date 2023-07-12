@@ -11,13 +11,14 @@ describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
     extensionPoints?: {target: string; module: string; label?: string}[]
+    configuration?: any
   }
 
-  async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
+  async function getTestUIExtension({directory, extensionPoints, configuration}: GetUIExtensionProps) {
     const configurationPath = joinPath(directory, configurationFileNames.extension.ui)
     const allSpecs = await loadFSExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
-    const configuration = {
+    const config = configuration ?? {
       extension_points: extensionPoints,
       api_version: '2023-01' as const,
       name: 'UI Extension',
@@ -32,7 +33,7 @@ describe('ui_extension', async () => {
     }
 
     return new ExtensionInstance({
-      configuration,
+      configuration: config,
       directory,
       specification,
       configurationPath,
@@ -63,6 +64,40 @@ describe('ui_extension', async () => {
         // Then
         expect(result).toStrictEqual(ok({}))
       })
+    })
+
+    test('targeting object is transformed into extension_points. metafields are inherited', async () => {
+      const allSpecs = await loadFSExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        type: 'ui_extension',
+        metafields: [{namespace: 'test', key: 'test'}],
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+        },
+        settings: {},
+      }
+      // When
+      const got = specification.schema.parse(configuration)
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [{namespace: 'test', key: 'test'}],
+        },
+      ])
     })
 
     test('returns err(message) when extensionPoints[n].module does not map to a file', async () => {
