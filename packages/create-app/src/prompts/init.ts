@@ -77,11 +77,12 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     })
   }
 
+  const templateIsPredefined = Object.prototype.hasOwnProperty.call(templateURLMap, template)
   const answers: InitOutput = {
     ...options,
     name,
     template,
-    templateType: Object.hasOwn(templateURLMap, template) ? (template as keyof typeof templateURLMap) : 'custom',
+    templateType: templateIsPredefined ? (template as keyof typeof templateURLMap) : 'custom',
   }
 
   const templateURL = templateURLMap[answers.template as keyof typeof templateURLMap]

@@ -5,14 +5,14 @@ import {
   App,
   AppInterface,
   WebType,
-  getAppScopes,
   AppConfiguration,
   isCurrentAppSchema,
+  getAppScopesArray,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {TypeSchema} from '../extensions/schemas.js'
+import {ExtensionsArraySchema, TypeSchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getAppInfo} from '../../services/local-storage.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -25,7 +25,6 @@ import {
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
@@ -33,6 +32,7 @@ import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 
 const defaultExtensionDirectory = 'extensions/*'
@@ -87,6 +87,16 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   if (!configurationObject) return fallbackOutput
 
+  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+}
+
+export async function parseConfigurationObject<TSchema extends zod.ZodType>(
+  schema: TSchema,
+  filepath: string,
+  configurationObject: unknown,
+  abortOrReport: AbortOrReport,
+): Promise<zod.TypeOf<TSchema>> {
+  const fallbackOutput = {} as zod.TypeOf<TSchema>
   const parseResult = schema.safeParse(configurationObject)
 
   if (!parseResult.success) {
@@ -303,6 +313,38 @@ class AppLoader {
     }
   }
 
+  async createExtensionInstance(
+    type: string,
+    configurationObject: unknown,
+    configurationPath: string,
+    directory: string,
+  ): Promise<ExtensionInstance | undefined> {
+    const specification = findSpecificationForType(this.specifications, type)
+    if (!specification) return
+    const configuration = await parseConfigurationObject(
+      specification.schema,
+      configurationPath,
+      configurationObject,
+      this.abortOrReport.bind(this),
+    )
+
+    const entryPath = await this.findEntryPath(directory, specification)
+
+    const extensionInstance = new ExtensionInstance({
+      configuration,
+      configurationPath,
+      entryPath,
+      directory,
+      specification,
+    })
+
+    const validateResult = await extensionInstance.validate()
+    if (validateResult.isErr()) {
+      this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+    }
+    return extensionInstance
+  }
+
   async loadExtensions(
     appDirectory: string,
     extensionDirectories?: string[],
@@ -313,36 +355,30 @@ class AppLoader {
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
 
-    const extensions = configPaths.map(async (configurationPath) => {
+    const extensionPromises = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-      const specification = await findSpecificationForConfig(
-        this.specifications,
-        configurationPath,
-        this.abortOrReport.bind(this),
-      )
 
-      if (!specification) return
+      const fileContent = await readFile(configurationPath)
+      const obj = decodeToml(fileContent)
+      const {extensions, type} = ExtensionsArraySchema.parse(obj)
 
-      const configuration = await this.parseConfigurationFile(specification.schema, configurationPath)
-      const entryPath = await this.findEntryPath(directory, specification)
-
-      const extensionInstance = new ExtensionInstance({
-        configuration,
-        configurationPath,
-        entryPath,
-        directory,
-        specification,
-      })
-
-      const validateResult = await extensionInstance.validate()
-      if (validateResult.isErr()) {
-        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+      if (extensions) {
+        // If the extension is an array, it's a unified toml file.
+        // Parse all extensions by merging each extension config with the global unified configuration.
+        const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
+        const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
+          const config = {...configuration, ...extensionConfig}
+          return this.createExtensionInstance(config.type, config, configurationPath, directory)
+        })
+        return Promise.all(extensionsInstancesPromises)
+      } else if (type) {
+        // Legacy toml file with a single extension.
+        return this.createExtensionInstance(type, obj, configurationPath, directory)
       }
-
-      return extensionInstance
     })
 
-    const allExtensions = getArrayRejectingUndefined(await Promise.all(extensions))
+    const extensions = await Promise.all(extensionPromises)
+    const allExtensions = getArrayRejectingUndefined(extensions.flat())
     return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
@@ -651,12 +687,7 @@ async function logMetadataForLoadedApp(
       app_extensions_ui_count: extensionUICount,
       app_name_hash: hashString(app.name),
       app_path_hash: hashString(app.directory),
-      app_scopes: JSON.stringify(
-        getAppScopes(app.configuration)
-          .split(',')
-          .map((scope) => scope.trim())
-          .sort(),
-      ),
+      app_scopes: JSON.stringify(getAppScopesArray(app.configuration).sort()),
       app_web_backend_any: webBackendCount > 0,
       app_web_backend_count: webBackendCount,
       app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,

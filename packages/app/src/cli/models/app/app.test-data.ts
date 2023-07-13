@@ -10,7 +10,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
 
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
@@ -166,9 +166,9 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
-
+  const parsed = specification.schema.parse(configuration)
   const extension = new ExtensionInstance({
-    configuration,
+    configuration: parsed,
     configurationPath: '',
     directory,
     specification,
@@ -183,7 +183,6 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     type: 'tax_calculation' as const,
     metafields: [],
     runtime_context: 'strict',
-    settings: [],
   }
 
   const allSpecs = await loadFSExtensionsSpecifications()

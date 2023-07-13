@@ -226,7 +226,10 @@
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "skip-dependencies-installation": {
           "name": "skip-dependencies-installation",
@@ -1105,7 +1108,10 @@
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "api-key": {
           "name": "api-key",
@@ -1278,7 +1284,10 @@
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "api-key": {
           "name": "api-key",
