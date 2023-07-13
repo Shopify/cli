@@ -47,7 +47,6 @@ export default class UpdateURL extends Command {
     })
 
     const options: UpdateURLOptions = {
-      app,
       apiKey,
       appURL: flags['app-url'],
       redirectURLs: flags['redirect-urls']?.split(','),

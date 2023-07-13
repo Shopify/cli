@@ -11,7 +11,13 @@ vi.mock('../dev/urls.js')
 vi.mock('../../prompts/update-url.js')
 vi.mock('@shopify/cli-kit/node/session')
 
-const APP1 = testAppWithConfig()
+const APP1 = testAppWithConfig({
+  app: {configurationPath: 'my-app/shopify.app.development.toml'},
+  config: {
+    client_id: 'api-key-1',
+    application_url: 'https://myapp.com',
+  },
+})
 const ORG_APP1 = testOrganizationApp()
 
 beforeEach(async () => {
@@ -23,7 +29,6 @@ describe('update-url', () => {
     // Given
     const options: UpdateURLOptions = {
       app: APP1,
-      apiKey: 'api-key-from-flag',
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
     }
@@ -37,8 +42,9 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key-from-flag',
+      'api-key-1',
       'token',
+      APP1,
     )
   })
 
@@ -60,8 +66,9 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key',
+      'api-key-1',
       'token',
+      APP1,
     )
   })
 
@@ -71,7 +78,6 @@ describe('update-url', () => {
     vi.mocked(appUrlPrompt).mockResolvedValue('https://myapp.example.com')
     const options: UpdateURLOptions = {
       app: APP1,
-      apiKey: 'api-key-from-flag',
       redirectURLs: ['https://example.com/callback'],
     }
 
@@ -84,8 +90,9 @@ describe('update-url', () => {
         applicationUrl: 'https://myapp.example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key-from-flag',
+      'api-key-1',
       'token',
+      APP1,
     )
   })
 
@@ -98,7 +105,6 @@ describe('update-url', () => {
     ])
     const options: UpdateURLOptions = {
       app: APP1,
-      apiKey: 'api-key-from-flag',
       appURL: 'https://example.com',
     }
 
@@ -111,24 +117,18 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback1', 'https://example.com/callback2'],
       },
-      'api-key-from-flag',
+      'api-key-1',
       'token',
+      APP1,
     )
   })
 
-  test('updates the configuration file when opted into config in code', async () => {
+  test('updates the configuration file when no configuration and api key passed in', async () => {
     // Given
-    const app = testAppWithConfig({
-      app: {configurationPath: 'my-app/shopify.app.development.toml'},
-      config: {
-        client_id: 'api-key-1',
-        application_url: 'https://myapp.com',
-      },
-    })
     const options: UpdateURLOptions = {
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
-      app,
+      apiKey: 'api-key-from-flag',
     }
 
     // When
@@ -140,9 +140,9 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key-1',
+      'api-key-from-flag',
       'token',
-      app,
+      undefined,
     )
   })
 })
