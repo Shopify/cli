@@ -15,7 +15,8 @@ import {fileExists, glob, readFile} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
+import {deepCompare} from '@shopify/cli-kit/common/object'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -76,10 +77,12 @@ export async function confirmPushChanges(options: PushOptions, app: App) {
   if (options.force) return true
 
   const {configuration, configurationPath} = options
-  const localConfiguration = await readFile(configurationPath)
-  const remoteConfiguration = encodeToml(mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp))
+  const localConfigurationToml = await readFile(configurationPath)
+  const localConfiguration = decodeToml(localConfigurationToml)
+  const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
+  const remoteConfigurationToml = encodeToml(remoteConfiguration)
 
-  if (localConfiguration === remoteConfiguration) {
+  if (deepCompare(localConfiguration, remoteConfiguration)) {
     renderInfo({headline: 'No changes to update.'})
     return false
   }
@@ -87,8 +90,8 @@ export async function confirmPushChanges(options: PushOptions, app: App) {
   return renderConfirmationPrompt({
     message: ['Make the following changes to your remote configuration?'],
     gitDiff: {
-      baselineContent: remoteConfiguration,
-      updatedContent: localConfiguration,
+      baselineContent: remoteConfigurationToml,
+      updatedContent: localConfigurationToml,
     },
     defaultValue: true,
     confirmationMessage: 'Yes, confirm changes',

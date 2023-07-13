@@ -55,3 +55,15 @@ export function mapValues<T extends object, TResult>(
   const lodashMapValues = require('lodash/mapValues.js')
   return lodashMapValues(source, callback)
 }
+
+/**
+ * Deeply compares two objects and returns true if they are equal.
+ *
+ * @param one - The first object to be compared.
+ * @param two - The second object to be compared.
+ * @returns True if the objects are equal, false otherwise.
+ */
+export function deepCompare(one: object, two: object): object {
+  const lodashIsEqual = require('lodash/isEqual.js')
+  return lodashIsEqual(one, two)
+}
