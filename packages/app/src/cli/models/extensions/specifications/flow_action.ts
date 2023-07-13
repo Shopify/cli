@@ -1,9 +1,10 @@
 import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
-  validateNonCommerceObjectShape,
+  validateFieldShape,
   startsWithHttps,
   validateCustomConfigurationPageConfig,
+  validateReturnTypeConfig,
 } from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -25,8 +26,12 @@ export const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
     config.validation_url,
   )
   const fields = config.settings?.fields ?? []
-  const settingsFieldsAreValid = fields.every((field) => validateNonCommerceObjectShape(field, 'flow_action'))
-  return configurationPageIsValid && settingsFieldsAreValid
+  const settingsFieldsAreValid = fields.every((field, index) =>
+    validateFieldShape(field, 'flow_action', config.handle, index),
+  )
+  const returnTypeIsValid = validateReturnTypeConfig(config.return_type_ref, config.schema)
+
+  return configurationPageIsValid && settingsFieldsAreValid && returnTypeIsValid
 })
 
 /**
