@@ -367,8 +367,9 @@ class AppLoader {
         // Parse all extensions by merging each extension config with the global unified configuration.
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
-          const config = {...configuration, ...extensionConfig}
-          return this.createExtensionInstance(config.type, config, configurationPath, directory)
+          const mergedConfig = {...configuration, ...extensionConfig}
+          const {extensions, ...restConfig} = mergedConfig
+          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
