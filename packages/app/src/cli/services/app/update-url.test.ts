@@ -115,4 +115,34 @@ describe('update-url', () => {
       'token',
     )
   })
+
+  test('updates the configuration file when opted into config in code', async () => {
+    // Given
+    const app = testAppWithConfig({
+      app: {configurationPath: 'my-app/shopify.app.development.toml'},
+      config: {
+        client_id: 'api-key-1',
+        application_url: 'https://myapp.com',
+      },
+    })
+    const options: UpdateURLOptions = {
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+      app,
+    }
+
+    // When
+    await updateURL(options)
+
+    // Then
+    expect(updateURLs).toHaveBeenCalledWith(
+      {
+        applicationUrl: 'https://example.com',
+        redirectUrlWhitelist: ['https://example.com/callback'],
+      },
+      'api-key-1',
+      'token',
+      app,
+    )
+  })
 })

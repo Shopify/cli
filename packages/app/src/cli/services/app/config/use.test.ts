@@ -70,7 +70,7 @@ describe('use', () => {
 
       const appWithoutClientID = testApp()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: appWithoutClientID.configurationPath,
         configuration: appWithoutClientID.configuration,
       })
@@ -135,7 +135,7 @@ describe('use', () => {
         },
       })
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: app.configurationPath,
         configuration: app.configuration,
       })
@@ -173,7 +173,7 @@ describe('use', () => {
         },
       })
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: app.configurationPath,
         configuration: app.configuration,
       })

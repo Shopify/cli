@@ -183,7 +183,7 @@ beforeEach(async () => {
 describe('ensureGenerateContext', () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
         scopes: 'read_products',
@@ -222,7 +222,7 @@ describe('ensureGenerateContext', () => {
     vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -242,7 +242,7 @@ describe('ensureGenerateContext', () => {
     vi.mocked(getAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -263,7 +263,7 @@ describe('ensureGenerateContext', () => {
     vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -308,7 +308,7 @@ describe('ensureGenerateContext', () => {
 describe('ensureDevContext', async () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
         scopes: 'read_products',
@@ -322,7 +322,7 @@ describe('ensureDevContext', async () => {
       vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
         configuration: testAppWithConfig({
           config: {
@@ -372,7 +372,7 @@ describe('ensureDevContext', async () => {
       vi.mocked(getAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
           client_id: APP2.apiKey,
@@ -417,7 +417,7 @@ describe('ensureDevContext', async () => {
       writeFileSync(filePath, '')
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: testApp({}, 'current').configuration,
       })
@@ -462,7 +462,7 @@ dev_store_url = "domain1"
       vi.mocked(getAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.toml'),
         configuration: testApp({}, 'current').configuration,
       })
@@ -670,7 +670,7 @@ dev_store_url = "domain1"
       vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: filePath,
         configuration: {
           client_id: APP2.apiKey,
