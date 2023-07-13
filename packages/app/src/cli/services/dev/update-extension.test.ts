@@ -1,7 +1,7 @@
 import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
-import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
+import {parseConfigurationFile} from '../../models/app/loader.js'
 import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -175,7 +175,6 @@ describe('updateExtensionConfig()', () => {
         },
       })
 
-      vi.mocked(findSpecificationForConfig).mockResolvedValue({} as any)
       vi.mocked(parseConfigurationFile).mockResolvedValue({
         runtime_context: 'strict',
         settings: {type: 'object', another: 'setting'},

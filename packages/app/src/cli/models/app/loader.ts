@@ -117,32 +117,6 @@ export function findSpecificationForType(specifications: ExtensionSpecification[
   )
 }
 
-export async function findSpecificationForConfig(
-  specifications: ExtensionSpecification[],
-  configurationPath: string,
-  abortOrReport: AbortOrReport,
-) {
-  const fileContent = await readFile(configurationPath)
-  const obj = decodeToml(fileContent)
-  const {type} = TypeSchema.parse(obj)
-  const specification = findSpecificationForType(specifications, type)
-
-  if (!specification) {
-    const isShopifolk = await isShopify()
-    const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
-    abortOrReport(
-      outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
-        isShopifolk ? shopifolkMessage : ''
-      }`,
-      undefined,
-      configurationPath,
-    )
-    return undefined
-  }
-
-  return specification
-}
-
 export class AppErrors {
   private errors: {
     [key: string]: OutputMessage

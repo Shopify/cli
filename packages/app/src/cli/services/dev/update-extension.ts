@@ -3,13 +3,15 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateSchema,
 } from '../../api/graphql/update_draft.js'
-import {findSpecificationForConfig, parseConfigurationFile} from '../../models/app/loader.js'
+import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -85,14 +87,28 @@ export async function updateExtensionConfig({
     throw new AbortError(errorMessage)
   }
 
-  const specification = await findSpecificationForConfig(specifications, extension.configurationPath, abort)
+  const fileContent = await readFile(extension.configurationPath)
+  let configObject = decodeToml(fileContent)
+  const {extensions} = ExtensionsArraySchema.parse(configObject)
 
-  if (!specification) {
-    return
+  if (extensions) {
+    // If the config has an array, find our extension using the handle.
+    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, abort)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
+    if (!extensionConfig) return
+    configObject = {...configuration, ...extensionConfig}
   }
 
-  const configuration = await parseConfigurationFile(specification.schema, extension.configurationPath, abort)
+  const newConfig = await parseConfigurationObject(
+    extension.specification.schema,
+    extension.configurationPath,
+    configObject,
+    abort,
+  )
+
+  // const configuration = await parseConfigurationFile(specification.schema, extension.configurationPath, abort)
   // eslint-disable-next-line require-atomic-updates
-  extension.configuration = configuration
+  extension.configuration = newConfig
   return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
 }
