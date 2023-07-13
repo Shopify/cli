@@ -104,7 +104,6 @@ export async function updateExtensionConfig({
     abort,
   )
 
-  // const configuration = await parseConfigurationFile(specification.schema, extension.configurationPath, abort)
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = newConfig
   return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})

@@ -97,7 +97,6 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
   const parseResult = schema.safeParse(configurationObject)
-
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
