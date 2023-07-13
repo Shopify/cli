@@ -186,8 +186,6 @@ describe('ConcurrentOutput', () => {
     )
 
     await waitForInputsToBeReady()
-    expect(onInput).toHaveBeenCalledTimes(0)
-
     renderInstance.stdin.write('a')
     expect(onInput).toHaveBeenCalledTimes(1)
     expect(onInput.mock.calls[0]![0]).toBe('a')
@@ -337,5 +335,59 @@ describe('ConcurrentOutput', () => {
       Preview URL: https://shopify.com
       "
     `)
+  })
+
+  test('renders the shortcuts and accepts inputs when the processes resolve and keepRunningAfterProcessesResolve is true', async () => {
+    const onInput = vi.fn()
+    // Given
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+      },
+    }
+
+    // When
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[backendProcess]}
+        abortSignal={new AbortController().signal}
+        footer={{
+          shortcuts: [
+            {
+              key: 'p',
+              action: 'preview in your browser',
+            },
+            {
+              key: 'q',
+              action: 'quit',
+            },
+          ],
+          subTitle: `Preview URL: https://shopify.com`,
+        }}
+        onInput={onInput}
+        keepRunningAfterProcessesResolve
+      />,
+    )
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "0000-00-00 00:00:00 │ backend │ first backend message
+      0000-00-00 00:00:00 │ backend │ second backend message
+      0000-00-00 00:00:00 │ backend │ third backend message
+
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      "
+    `)
+
+    renderInstance.stdin.write('a')
+    expect(onInput).toHaveBeenCalledTimes(1)
+    expect(onInput.mock.calls[0]![0]).toBe('a')
   })
 })
