@@ -2,7 +2,6 @@ import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile} from '../../models/app/loader.js'
-import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -152,8 +151,6 @@ describe('updateExtensionDraft()', () => {
 
 describe('updateExtensionConfig()', () => {
   test('updates draft with new config', async () => {
-    const specifications = await loadFSExtensionsSpecifications()
-
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
         runtime_context: 'strict',
@@ -190,7 +187,6 @@ describe('updateExtensionConfig()', () => {
         registrationId,
         stdout,
         stderr,
-        specifications,
         unifiedDeployment: true,
       })
 

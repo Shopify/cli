@@ -5,7 +5,6 @@ import {
 } from '../../api/graphql/update_draft.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -69,7 +68,6 @@ interface UpdateExtensionConfigOptions {
   registrationId: string
   stdout: Writable
   stderr: Writable
-  specifications: ExtensionSpecification[]
   unifiedDeployment: boolean
 }
 
@@ -80,7 +78,6 @@ export async function updateExtensionConfig({
   registrationId,
   stdout,
   stderr,
-  specifications,
   unifiedDeployment,
 }: UpdateExtensionConfigOptions) {
   const abort = (errorMessage: OutputMessage) => {

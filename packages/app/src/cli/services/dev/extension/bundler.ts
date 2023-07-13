@@ -6,7 +6,6 @@ import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
@@ -174,7 +173,6 @@ interface SetupConfigWatcherOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
-  specifications: ExtensionSpecification[]
   unifiedDeployment: boolean
 }
 
@@ -186,7 +184,6 @@ export async function setupConfigWatcher({
   stdout,
   stderr,
   signal,
-  specifications,
   unifiedDeployment,
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
@@ -200,7 +197,6 @@ export async function setupConfigWatcher({
       registrationId,
       stdout,
       stderr,
-      specifications,
       unifiedDeployment,
     }).catch((_: unknown) => {})
   })

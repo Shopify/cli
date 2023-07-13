@@ -9,7 +9,6 @@ import {
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -232,7 +231,6 @@ describe('setupConfigWatcher()', async () => {
   const registrationId = 'mock-registration-id'
   const stdout = new Writable()
   const stderr = new Writable()
-  const specifications = await loadFSExtensionsSpecifications()
 
   test('starts watching the configuration file', async () => {
     const chokidarCloseSpy = vi.fn()
@@ -256,7 +254,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal,
-      specifications,
       unifiedDeployment: true,
     })
 
@@ -281,7 +278,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal: abortController.signal,
-      specifications,
       unifiedDeployment: true,
     })
 
@@ -291,7 +287,6 @@ describe('setupConfigWatcher()', async () => {
       apiKey: 'mock-api-key',
       extension: mockExtension,
       registrationId: 'mock-registration-id',
-      specifications,
       stdout,
       stderr,
       token: 'mock-token',
@@ -321,7 +316,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal: abortController.signal,
-      specifications,
       unifiedDeployment: true,
     })
 
@@ -352,7 +346,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal: abortController.signal,
-      specifications,
       unifiedDeployment: true,
     })
 

@@ -32,7 +32,6 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -242,7 +241,6 @@ async function dev(options: DevOptions) {
         token,
         extensions: draftableExtensions,
         remoteExtensions,
-        specifications,
         unifiedDeployment,
       }),
     )
@@ -472,7 +470,6 @@ interface DevDraftableExtensionsOptions {
   remoteExtensions: {
     [key: string]: string
   }
-  specifications: ExtensionSpecification[]
   unifiedDeployment: boolean
 }
 
@@ -483,7 +480,6 @@ export function devDraftableExtensionTarget({
   apiKey,
   token,
   remoteExtensions,
-  specifications,
   unifiedDeployment,
 }: DevDraftableExtensionsOptions) {
   return {
@@ -521,7 +517,6 @@ export function devDraftableExtensionTarget({
                 stdout,
                 stderr,
                 signal,
-                specifications,
                 unifiedDeployment,
               }),
             ]
