@@ -3,6 +3,7 @@ import {
   renderConfirmationPrompt,
   renderSelectPrompt,
   renderTextPrompt,
+  renderDangerousConfirmationPrompt,
 } from '@shopify/cli-kit/node/ui'
 import figures from '@shopify/cli-kit/node/figures'
 
@@ -185,7 +186,7 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
   })
 
   // renderTextPrompt with dangerous confirmation
-  await renderTextPrompt({
+  await renderDangerousConfirmationPrompt({
     message: 'Release this version of Mega App?',
     infoTable: [
       {
@@ -199,6 +200,6 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
         bullet: '-',
       },
     ],
-    exactString: 'Mega App',
+    confirmation: 'Mega App',
   })
 }

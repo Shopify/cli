@@ -1,6 +1,5 @@
 import {TextInput} from './TextInput.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
-import {InfoMessage} from './SelectPrompt.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -18,8 +17,9 @@ export interface TextPromptProps {
     color?: TextProps['color']
     text: TokenItem<Exclude<InlineToken, UserInputToken | LinkToken>>
   }
+  exitOnEsc?: boolean
   successMessage?: string
-  onSubmit: (value: string) => void
+  onSubmit: (value: string | undefined) => void
   defaultValue?: string
   password?: boolean
   validate?: (value: string) => string | undefined
@@ -35,6 +35,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   message,
   infoTable,
   finalInstruction,
+  exitOnEsc = false,
   successMessage,
   onSubmit,
   validate,
@@ -71,6 +72,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
+  const [cancelled, setCancelled] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
   const shouldShowError = submitted && error
   const color = shouldShowError ? 'red' : 'cyan'
@@ -79,6 +81,14 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
 
   useInput((input, key) => {
     handleCtrlC(input, key)
+
+    if (exitOnEsc && key.escape) {
+      setSubmitted(true)
+      setCancelled(true)
+      setError(undefined)
+      onSubmit(undefined)
+      unmountInk()
+    }
 
     if (key.return) {
       setSubmitted(true)
@@ -128,7 +138,17 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           </Box>
         </Box>
       ) : null}
-      {submitted && !error ? (
+      {cancelled ? (
+        <Box>
+          <Box marginRight={2}>
+            <Text color="red">{figures.cross}</Text>
+          </Box>
+
+          <Box flexGrow={1}>
+            <Text color="red">Cancelled</Text>
+          </Box>
+        </Box>
+      ) : submitted && !error ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -136,9 +156,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
 
           <Box flexGrow={1}>
             <Text color="cyan" dimColor={displayEmptyValue}>
-              {successMessage ? successMessage :
-                password ? '*'.repeat(answer.length) :
-                displayedAnswer}
+              {successMessage ?? (password ? '*'.repeat(answer.length) : displayedAnswer)}
             </Text>
           </Box>
         </Box>

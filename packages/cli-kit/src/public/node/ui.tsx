@@ -510,7 +510,6 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {
-  exactString?: string
   renderOptions?: RenderOptions
 }
 
@@ -522,27 +521,50 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-export async function renderTextPrompt({exactString, renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
+export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 
-  if (exactString) {
-    const displayString = outputContent`${outputToken.yellow(exactString)}`.value
-    props.finalInstruction = {
+  // eslint-disable-next-line max-params
+  return new Promise((resolve, reject) => {
+    render(<TextPrompt {...props} onSubmit={(value: string | undefined) => resolve(value!)} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
+  })
+}
+
+export interface RenderDangerousConfirmationPromptOptions extends RenderTextPromptOptions {
+  confirmation: string
+}
+
+export async function renderDangerousConfirmationPrompt({confirmation, renderOptions, ...props}: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
+
+  const displayString = outputContent`${outputToken.yellow(confirmation)}`.value
+  props = {
+    finalInstruction: {
       color: 'red',
-      text: `${figures.warning} Type ${displayString} to confirm:`,
-    }
-    props.validate = (value) => {
-      return value === exactString ? undefined : `Value must be exactly ${displayString}`
-    }
-    props.successMessage = 'Confirmed'
+      text: `${figures.warning} Type ${displayString} to confirm, or press Escape to cancel.`,
+    },
+    exitOnEsc: true,
+    validate : (value) => {
+      return value === confirmation ? undefined : `Value must be exactly ${displayString}`
+    },
+    successMessage: 'Confirmed',
+    ...props,
   }
 
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
-    render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
+    render(<TextPrompt {...props} onSubmit={(value: string | undefined) => resolve(Boolean(value))} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
