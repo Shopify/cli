@@ -7,6 +7,7 @@ on:
 
 jobs:
   remind:
+    name: "[PR] Remind reviewers"
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.full_name == github.repository
     steps:
