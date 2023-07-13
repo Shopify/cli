@@ -14,7 +14,7 @@ vi.mock('@shopify/cli-kit/node/session')
 const APP1 = testAppWithConfig({
   app: {configurationPath: 'my-app/shopify.app.development.toml'},
   config: {
-    client_id: 'api-key-1',
+    client_id: 'api-key',
     application_url: 'https://myapp.com',
   },
 })
@@ -32,6 +32,7 @@ describe('update-url', () => {
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
     }
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORG_APP1)
 
     // When
     await updateURL(options)
@@ -42,7 +43,7 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key-1',
+      'api-key',
       'token',
       APP1,
     )
@@ -66,7 +67,7 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key-1',
+      'api-key',
       'token',
       APP1,
     )
@@ -76,6 +77,8 @@ describe('update-url', () => {
     // Given
     vi.mocked(getURLs).mockResolvedValue({applicationUrl: 'https://example.com', redirectUrlWhitelist: []})
     vi.mocked(appUrlPrompt).mockResolvedValue('https://myapp.example.com')
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORG_APP1)
+
     const options: UpdateURLOptions = {
       app: APP1,
       redirectURLs: ['https://example.com/callback'],
@@ -90,7 +93,7 @@ describe('update-url', () => {
         applicationUrl: 'https://myapp.example.com',
         redirectUrlWhitelist: ['https://example.com/callback'],
       },
-      'api-key-1',
+      'api-key',
       'token',
       APP1,
     )
@@ -103,6 +106,7 @@ describe('update-url', () => {
       'https://example.com/callback1',
       'https://example.com/callback2',
     ])
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORG_APP1)
     const options: UpdateURLOptions = {
       app: APP1,
       appURL: 'https://example.com',
@@ -117,7 +121,7 @@ describe('update-url', () => {
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback1', 'https://example.com/callback2'],
       },
-      'api-key-1',
+      'api-key',
       'token',
       APP1,
     )
