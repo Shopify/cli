@@ -104,7 +104,7 @@ jobs:
           branch-name: ${{ github.ref_name }}
 
   pr-platform-agnostic:
-    name: "[PR] Build ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}"
+    name: "[PR] Run ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
