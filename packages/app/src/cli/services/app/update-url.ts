@@ -1,10 +1,12 @@
-import {selectApp} from './select-app.js'
+import {fetchAppFromConfigOrSelect} from './fetch-app-from-config-or-select.js'
 import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
+import {AppInterface} from '../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export interface UpdateURLOptions {
+  app: AppInterface
   apiKey?: string
   appURL?: string
   redirectURLs?: string[]
@@ -12,8 +14,8 @@ export interface UpdateURLOptions {
 
 export default async function updateURL(options: UpdateURLOptions): Promise<void> {
   const token = await ensureAuthenticatedPartners()
-  const apiKey = options.apiKey || (await selectApp()).apiKey
-  const newURLs = await getNewURLs(token, apiKey, {appURL: options.appURL, redirectURLs: options.redirectURLs})
+  const apiKey = options.apiKey || (await fetchAppFromConfigOrSelect(options.app)).apiKey
+  const newURLs = await getNewURLs(token, apiKey, options)
   await updateURLs(newURLs, apiKey, token)
   printResult(newURLs)
 }

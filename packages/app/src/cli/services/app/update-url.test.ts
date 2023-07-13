@@ -1,17 +1,18 @@
 import updateURL, {UpdateURLOptions} from './update-url.js'
-import {selectApp} from './select-app.js'
+import {fetchAppFromConfigOrSelect} from './fetch-app-from-config-or-select.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
-import {testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testAppWithConfig, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, vi, beforeEach, expect, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
-vi.mock('./select-app.js')
+vi.mock('./fetch-app-from-config-or-select.js')
 vi.mock('../dev/urls.js')
 vi.mock('../../prompts/update-url.js')
 vi.mock('@shopify/cli-kit/node/session')
 
-const APP1 = testOrganizationApp()
+const APP1 = testAppWithConfig()
+const ORG_APP1 = testOrganizationApp()
 
 beforeEach(async () => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
@@ -21,6 +22,7 @@ describe('update-url', () => {
   test('updates the URLs provided as flags', async () => {
     // Given
     const options: UpdateURLOptions = {
+      app: APP1,
       apiKey: 'api-key-from-flag',
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
@@ -42,8 +44,9 @@ describe('update-url', () => {
 
   test('asks for the application when the api key is not provided', async () => {
     // Given
-    vi.mocked(selectApp).mockResolvedValue(APP1)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORG_APP1)
     const options: UpdateURLOptions = {
+      app: APP1,
       appURL: 'https://example.com',
       redirectURLs: ['https://example.com/callback'],
     }
@@ -67,6 +70,7 @@ describe('update-url', () => {
     vi.mocked(getURLs).mockResolvedValue({applicationUrl: 'https://example.com', redirectUrlWhitelist: []})
     vi.mocked(appUrlPrompt).mockResolvedValue('https://myapp.example.com')
     const options: UpdateURLOptions = {
+      app: APP1,
       apiKey: 'api-key-from-flag',
       redirectURLs: ['https://example.com/callback'],
     }
@@ -93,6 +97,7 @@ describe('update-url', () => {
       'https://example.com/callback2',
     ])
     const options: UpdateURLOptions = {
+      app: APP1,
       apiKey: 'api-key-from-flag',
       appURL: 'https://example.com',
     }

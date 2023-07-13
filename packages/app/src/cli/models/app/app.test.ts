@@ -1,5 +1,12 @@
-import {CurrentAppConfiguration, getUIExtensionRendererVersion, isCurrentAppSchema, isLegacyAppSchema} from './app.js'
-import {testApp, testUIExtension} from './app.test-data.js'
+import {
+  CurrentAppConfiguration,
+  getAppScopes,
+  getAppScopesArray,
+  getUIExtensionRendererVersion,
+  isCurrentAppSchema,
+  isLegacyAppSchema,
+} from './app.js'
+import {DEFAULT_CONFIG, testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -169,6 +176,30 @@ describe('getUIExtensionRendererVersion', () => {
       // Then
       expect(got).toEqual('not_found')
     })
+  })
+})
+
+describe('getAppScopes', () => {
+  test('returns the scopes key when schema is legacy', () => {
+    const config = {scopes: 'read_themes,read_products'}
+    expect(getAppScopes(config)).toEqual('read_themes,read_products')
+  })
+
+  test('returns the access_scopes.scopes key when schema is current', () => {
+    const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes,read_themes'}}
+    expect(getAppScopes(config)).toEqual('read_themes,read_themes')
+  })
+})
+
+describe('getAppScopesArray', () => {
+  test('returns the scopes key when schema is legacy', () => {
+    const config = {scopes: 'read_themes, read_order ,write_products'}
+    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+  })
+
+  test('returns the access_scopes.scopes key when schema is current', () => {
+    const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
+    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
   })
 })
 

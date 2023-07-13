@@ -98,8 +98,17 @@ export function getAppScopes(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) {
     return config.scopes
   } else {
-    return config.access_scopes?.scopes?.toString() ?? ''
+    return config.access_scopes?.scopes ?? ''
   }
+}
+
+/**
+ * Get scopes as an array from a given app.toml config file.
+ * @param config - a configuration file
+ */
+export function getAppScopesArray(config: AppConfiguration) {
+  const scopes = getAppScopes(config)
+  return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
 }
 
 export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {

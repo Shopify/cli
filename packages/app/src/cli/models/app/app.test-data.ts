@@ -10,7 +10,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
 
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
@@ -19,6 +19,9 @@ const DEFAULT_CONFIG = {
     api_version: '2023-04',
   },
   embedded: true,
+  access_scopes: {
+    scopes: 'read_products',
+  },
 }
 
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {

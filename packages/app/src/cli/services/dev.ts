@@ -133,11 +133,11 @@ async function dev(options: DevOptions) {
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
   const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
 
-  let previewUrl
+  // By default, preview goes to the direct URL for the app.
+  let previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   let shouldUpdateURLs = false
 
   if (frontendConfig || backendConfig) {
-    previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
     if (options.update) {
       const newURLs = generatePartnersURLs(
         exposedUrl,
@@ -203,6 +203,7 @@ async function dev(options: DevOptions) {
   const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
 
   if (previewableExtensions.length > 0) {
+    // If any previewable extensions, the preview URL should be the dev console approach
     previewUrl = `${proxyUrl}/extensions/dev-console`
     const devExt = await devUIExtensionsTarget({
       app: localApp,

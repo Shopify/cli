@@ -35,6 +35,7 @@ export default class Dev extends Command {
       description: 'Reset all your settings.',
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
+      exclusive: ['config'],
     }),
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
