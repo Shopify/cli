@@ -9,16 +9,15 @@ export interface UpdateURLOptions {
   apiKey?: string
   appURL?: string
   redirectURLs?: string[]
-  app?: AppConfigurationInterface
+  app: AppConfigurationInterface
 }
 
 export default async function updateURL(options: UpdateURLOptions): Promise<void> {
   const token = await ensureAuthenticatedPartners()
   const configuration = options.app?.configuration
-  const apiKey =
-    configuration && isCurrentAppSchema(configuration)
-      ? configuration.client_id
-      : options.apiKey || (await selectApp()).apiKey
+  const apiKey = isCurrentAppSchema(configuration)
+    ? configuration.client_id
+    : options.apiKey || (await selectApp()).apiKey
   const newURLs = await getNewURLs(token, apiKey, options)
   await updateURLs(newURLs, apiKey, token, options.app)
 
