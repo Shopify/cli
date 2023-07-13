@@ -1,6 +1,6 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {getAppInfo} from './local-storage.js'
+import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
@@ -34,7 +34,7 @@ describe('info', () => {
 
   test('returns the current config when present', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
     const app = testAppWithConfig()
 
     // When
@@ -58,7 +58,7 @@ describe('info', () => {
       storeFqdn: 'my-app.example.com',
       updateURLs: true,
     }
-    vi.mocked(getAppInfo).mockReturnValue(cachedAppInfo)
+    vi.mocked(getCachedAppInfo).mockReturnValue(cachedAppInfo)
     const app = mockApp()
 
     // When

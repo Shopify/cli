@@ -11,7 +11,7 @@ import {
 import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
-import {setAppInfo} from '../local-storage.js'
+import {setCachedAppInfo} from '../local-storage.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -232,7 +232,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     await shouldOrPromptUpdateURLs(options)
 
     // Then
-    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       directory: '/path',
       updateURLs: true,
     })
@@ -322,7 +322,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -339,7 +339,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -359,7 +359,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -378,7 +378,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 1234,
       usingLocalhost: false,
     })
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 

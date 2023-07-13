@@ -1,5 +1,5 @@
 import {outputEnv} from './app/env/show.js'
-import {getAppInfo} from './local-storage.js'
+import {getCachedAppInfo} from './local-storage.js'
 import {AppInterface, getAppScopes, isCurrentAppSchema} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -80,7 +80,7 @@ class AppInfo {
       this.app.packageManager,
       'dev',
     )}`.value
-    const cachedAppInfo = getAppInfo(this.app.directory)
+    const cachedAppInfo = getCachedAppInfo(this.app.directory)
     if (isCurrentAppSchema(this.app.configuration)) {
       configName = this.app.configurationPath
       appName = this.app.configuration.name

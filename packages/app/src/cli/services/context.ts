@@ -12,7 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
-import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -116,7 +116,7 @@ export async function ensureGenerateContext(options: {
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
-    setAppInfo({
+    setCachedAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -184,7 +184,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     }
     writeFileSync(configurationPath, encodeToml(newConfiguration))
   } else {
-    setAppInfo({
+    setCachedAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -283,7 +283,7 @@ interface DeployContextOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = getAppInfo(app.directory)?.appId
+  const devAppId = getCachedAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -570,15 +570,15 @@ async function getAppDevCachedContext({
   configName?: string
   commandConfig: Config
 }): Promise<AppDevCachedContext> {
-  const previousCachedInfo = getAppInfo(directory)
+  const previousCachedInfo = getCachedAppInfo(directory)
 
-  if (reset) clearAppInfo(directory)
+  if (reset) clearCachedAppInfo(directory)
 
-  let cachedInfo = getAppInfo(directory)
+  let cachedInfo = getCachedAppInfo(directory)
 
   if ((previousCachedInfo?.configFile && reset) || previousCachedInfo === undefined) {
     await link({directory, commandConfig})
-    cachedInfo = getAppInfo(directory)
+    cachedInfo = getCachedAppInfo(directory)
   }
 
   const {configuration, configurationPath} = await loadAppConfiguration({
