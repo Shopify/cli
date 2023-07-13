@@ -214,6 +214,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+scopes = "read_products"
 use_legacy_install_flow = true
 `
       const updatedContent = baselineContent.replace('app1', 'app2')
@@ -264,6 +265,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+scopes = "read_products"
 use_legacy_install_flow = true
 `
       const updatedContent = baselineContent
@@ -305,6 +307,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+scopes = "read_products"
 use_legacy_install_flow = true
 `
       const updatedContent = `client_id = "api-key"
@@ -323,6 +326,7 @@ use_legacy_install_flow = true
       embedded = false
 
       [access_scopes]
+      scopes = "read_products"
       use_legacy_install_flow = true
       `
       writeFileSync(configurationPath, updatedContent)
