@@ -86,7 +86,7 @@ export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, prev
       },
     }
   }
-  return renderConcurrent({...options, keepOpenAfterStopping: true})
+  return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
 }
 
 function outputThemeExtensionsMessage(extensions: ExtensionInstance[]) {
