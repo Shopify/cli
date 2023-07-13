@@ -100,7 +100,7 @@ export async function ensureGenerateContext(options: {
     return app.apiKey
   }
 
-  const {cachedInfo, remoteApp} = await getAppDevCachedContext(options)
+  const {cachedInfo, remoteApp} = await getAppContext(options)
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
@@ -140,7 +140,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
+  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppContext({...options, token})
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
@@ -544,7 +544,7 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
-export interface AppDevCachedContext {
+export interface AppContext {
   configuration: AppConfiguration
   configurationPath: string
   cachedInfo?: CachedAppInfo
@@ -553,11 +553,12 @@ export interface AppDevCachedContext {
 
 /**
  * Retrieve app info from the cache or the current configuration.
+ *
  * @param reset - Whether to reset the cache or not.
  * @param directory - The directory containing the app.
  * @param token - The partners token.
  */
-async function getAppDevCachedContext({
+async function getAppContext({
   reset,
   directory,
   token,
@@ -569,17 +570,18 @@ async function getAppDevCachedContext({
   token: string
   configName?: string
   commandConfig: Config
-}): Promise<AppDevCachedContext> {
+}): Promise<AppContext> {
   const previousCachedInfo = getCachedAppInfo(directory)
 
   if (reset) clearCachedAppInfo(directory)
 
-  let cachedInfo = getCachedAppInfo(directory)
-
-  if ((previousCachedInfo?.configFile && reset) || previousCachedInfo === undefined) {
+  // if this is the first time we are setting up this app, or
+  // if we had config-as-code enabled and we're resetting
+  if (previousCachedInfo === undefined || (previousCachedInfo.configFile && reset)) {
     await link({directory, commandConfig})
-    cachedInfo = getCachedAppInfo(directory)
   }
+
+  let cachedInfo = getCachedAppInfo(directory)
 
   const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
