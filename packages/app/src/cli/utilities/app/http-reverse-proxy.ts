@@ -40,7 +40,7 @@ export interface ReverseHTTPProxyTarget {
 }
 
 interface Options {
-  previewUrl: string | undefined
+  previewUrl: string
   portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]

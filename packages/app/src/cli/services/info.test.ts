@@ -1,10 +1,10 @@
 import {info} from './info.js'
 import {fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
-import {selectApp} from './app/select-app.js'
 import {getAppInfo} from './local-storage.js'
+import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
+import {testApp, testAppWithConfig, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {describe, expect, vi, test} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -14,7 +14,7 @@ import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
-vi.mock('./app/select-app.js')
+vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -32,7 +32,24 @@ describe('info', () => {
     expect(unstyled(result)).toMatch('Shopify CLI       2.2.2 💡 Version 2.2.3 available! Run yarn shopify upgrade')
   })
 
-  test('returns the current configs for dev when present', async () => {
+  test('returns the current config when present', async () => {
+    // Given
+    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    const app = testAppWithConfig()
+
+    // When
+    const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
+
+    // Then
+    expect(unstyled(result)).toMatch(/Configuration file\s*\/tmp\/project\/shopify.app.toml/)
+    expect(unstyled(result)).toMatch(/App name\s*my app/)
+    expect(unstyled(result)).toMatch(/Client ID\s*12345/)
+    expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
+    expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
+  })
+
+  test('returns the current cache from dev when present', async () => {
     // Given
     const cachedAppInfo = {
       directory: '/path',
@@ -48,9 +65,11 @@ describe('info', () => {
     const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
 
     // Then
-    expect(unstyled(result)).toMatch(/App\s*My App/)
-    expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
+    expect(unstyled(result)).toMatch(/Configuration file\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/App name\s*My App/)
     expect(unstyled(result)).toMatch(/Client ID\s*123/)
+    expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
+    expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
   })
 
@@ -62,7 +81,7 @@ describe('info', () => {
     const result = stringifyMessage(await info(app, {format: 'text', webEnv: false}))
 
     // Then
-    expect(unstyled(result)).toMatch(/App\s*Not yet configured/)
+    expect(unstyled(result)).toMatch(/App name\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Client ID\s*Not yet configured/)
     expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
@@ -106,7 +125,7 @@ describe('info', () => {
         pageInfo: {hasNextPage: false},
       },
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
@@ -147,7 +166,7 @@ describe('info', () => {
         pageInfo: {hasNextPage: false},
       },
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
@@ -212,7 +231,7 @@ describe('info', () => {
         pageInfo: {hasNextPage: false},
       },
     })
-    vi.mocked(selectApp).mockResolvedValue(organizationApp)
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
     // When
