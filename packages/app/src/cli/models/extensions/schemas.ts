@@ -81,7 +81,6 @@ export const UnifiedSchema = zod.object({
   name: zod.string(),
   api_version: ApiVersionSchema.optional(),
   description: zod.string().optional(),
-  capabilities: CapabilitiesSchema.optional(),
   extensions: zod.array(zod.any()),
 })
 
