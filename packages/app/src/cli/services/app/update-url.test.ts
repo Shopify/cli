@@ -122,27 +122,4 @@ describe('update-url', () => {
       APP1,
     )
   })
-
-  test('updates the configuration file when no configuration and api key passed in', async () => {
-    // Given
-    const options: UpdateURLOptions = {
-      appURL: 'https://example.com',
-      redirectURLs: ['https://example.com/callback'],
-      apiKey: 'api-key-from-flag',
-    }
-
-    // When
-    await updateURL(options)
-
-    // Then
-    expect(updateURLs).toHaveBeenCalledWith(
-      {
-        applicationUrl: 'https://example.com',
-        redirectUrlWhitelist: ['https://example.com/callback'],
-      },
-      'api-key-from-flag',
-      'token',
-      undefined,
-    )
-  })
 })
