@@ -1,8 +1,8 @@
 import {Scrollbar} from './Scrollbar.js'
-import {debounce} from '../../../../public/common/function.js'
 import {useSelectState} from '../hooks/use-select-state.js'
+import useLayout from '../hooks/use-layout.js'
 import {handleCtrlC} from '../../ui.js'
-import React, {useRef, useCallback, forwardRef, useEffect} from 'react'
+import React, {useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -28,9 +28,7 @@ export interface SelectInputProps<T> {
   errorMessage?: string
   hasMorePages?: boolean
   morePagesMessage?: string
-  infoMessage?: string
   availableLines?: number
-  submitWithShortcuts?: boolean
   onSubmit?: (item: Item<T>) => void
 }
 
@@ -41,10 +39,6 @@ export interface Item<T> {
   group?: string
   helperText?: string
   disabled?: boolean
-}
-
-export interface ItemWithKey<T> extends Item<T> {
-  key: string
 }
 
 function highlightedLabel(label: string, term: string | undefined) {
@@ -58,15 +52,25 @@ function highlightedLabel(label: string, term: string | undefined) {
   })
 }
 
+function validateKeys(items: Item<unknown>[]) {
+  if (items.some((item) => (item.key?.length ?? 0) > 1)) {
+    throw new Error('SelectInput: Keys must be a single character')
+  }
+
+  if (!items.every((item) => typeof item.key !== 'undefined' && item.key.length > 0)) {
+    throw new Error('SelectInput: All items must have keys if one does')
+  }
+}
+
 interface ItemProps<T> {
-  item: ItemWithKey<T>
-  previousItem: ItemWithKey<T> | undefined
-  items: ItemWithKey<T>[]
+  item: Item<T>
+  previousItem: Item<T> | undefined
+  items: Item<T>[]
   isSelected: boolean
   highlightedTerm?: string
   enableShortcuts: boolean
   hasAnyGroup: boolean
-  maxKeyLength: number
+  index: number
 }
 
 // eslint-disable-next-line react/function-component-definition
@@ -78,7 +82,7 @@ function Item<T>({
   enableShortcuts,
   items,
   hasAnyGroup,
-  maxKeyLength,
+  index,
 }: ItemProps<T>): JSX.Element {
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
@@ -94,9 +98,11 @@ function Item<T>({
     title = item.group ?? (hasAnyGroup ? 'Other' : undefined)
   }
 
+  const showKey = enableShortcuts && item.key && item.key.length > 0
+
   return (
     <Box
-      key={item.key}
+      key={index}
       flexDirection="column"
       marginTop={items.indexOf(item) !== 0 && title ? 1 : 0}
       minHeight={title ? 2 : 1}
@@ -107,11 +113,9 @@ function Item<T>({
         </Box>
       ) : null}
 
-      <Box key={item.key} marginLeft={hasAnyGroup ? 3 : 0}>
+      <Box key={index} marginLeft={hasAnyGroup ? 3 : 0}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
-        <Box marginLeft={enableShortcuts ? maxKeyLength - item.key.length : 0}>
-          <Text color={labelColor}>{enableShortcuts ? `(${item.key}) ${label}` : label}</Text>
-        </Box>
+        <Text color={labelColor}>{showKey ? `(${item.key}) ${label}` : label}</Text>
       </Box>
     </Box>
   )
@@ -134,9 +138,7 @@ function SelectInputInner<T>(
     errorMessage,
     hasMorePages = false,
     morePagesMessage,
-    infoMessage,
     availableLines = MAX_AVAILABLE_LINES,
-    submitWithShortcuts = false,
     onSubmit,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
@@ -152,10 +154,9 @@ function SelectInputInner<T>(
   const sortBy = require('lodash/sortBy')
   const hasAnyGroup = rawItems.some((item) => typeof item.group !== 'undefined')
   const items = sortBy(rawItems, 'group') as Item<T>[]
-  const itemsWithKeys = items.map((item, index) => ({
-    ...item,
-    key: item.key ?? (index + 1).toString(),
-  })) as ItemWithKey<T>[]
+  const itemsHaveKeys = items.some((item) => typeof item.key !== 'undefined' && item.key.length > 0)
+
+  if (itemsHaveKeys) validateKeys(items)
 
   const availableLinesToUse = Math.min(availableLines, MAX_AVAILABLE_LINES)
 
@@ -172,11 +173,9 @@ function SelectInputInner<T>(
   const limit = Math.max(2, availableLinesToUse - maxLinesLostToGroups)
   const hasLimit = items.length > limit
 
-  const inputStack = useRef<string | null>(null)
-
   const state = useSelectState({
     visibleOptionCount: limit,
-    options: itemsWithKeys,
+    options: items,
     defaultValue,
   })
 
@@ -202,7 +201,7 @@ function SelectInputInner<T>(
 
         if (itemWithKey && !itemWithKey.disabled) {
           // keep this order of operations so that there is no flickering
-          if (submitWithShortcuts && onSubmit && item) {
+          if (onSubmit && item) {
             onSubmit(item)
           }
 
@@ -210,17 +209,7 @@ function SelectInputInner<T>(
         }
       }
     },
-    [items, onSubmit, state, submitWithShortcuts],
-  )
-
-  // disable exhaustive-deps because we want to memoize the debounce function itself
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const debounceHandleShortcuts = useCallback(
-    debounce((newInputStack) => {
-      handleShortcuts(newInputStack)
-      inputStack.current = null
-    }, 300),
-    [handleShortcuts],
+    [items, onSubmit, state],
   )
 
   useInput(
@@ -237,18 +226,14 @@ function SelectInputInner<T>(
 
       // check that no special modifier (shift, control, etc.) is being pressed
       if (enableShortcuts && input.length > 0 && Object.values(key).every((value) => value === false)) {
-        const newInputStack = inputStack.current === null ? input : inputStack.current + input
-
-        inputStack.current = newInputStack
-        debounceHandleShortcuts(newInputStack)
+        handleShortcuts(input)
       } else {
-        debounceHandleShortcuts.cancel()
-        inputStack.current = null
         handleArrows(key)
       }
     },
     {isActive: focus},
   )
+  const {twoThirds} = useLayout()
 
   if (loading) {
     return (
@@ -266,17 +251,14 @@ function SelectInputInner<T>(
     const optionsHeight = initialItems.length + maximumLinesLostToGroups(initialItems)
     const minHeight = hasAnyGroup ? 5 : 2
     const sectionHeight = Math.max(minHeight, Math.min(availableLinesToUse, optionsHeight))
-    const maxKeyLength = itemsWithKeys
-      .map((item) => item.key?.length ?? 0)
-      .reduce((lenA, lenB) => Math.max(lenA, lenB), 0)
 
     return (
-      <Box flexDirection="column" ref={ref} gap={1}>
+      <Box flexDirection="column" ref={ref} gap={1} width={twoThirds}>
         <Box flexDirection="row" height={sectionHeight} width="100%">
           <Box flexDirection="column" overflowY="hidden" flexGrow={1}>
-            {state.visibleOptions.map((item: ItemWithKey<T>, index: number) => (
+            {state.visibleOptions.map((item: Item<T>, index: number) => (
               <Item
-                key={item.key}
+                key={index}
                 item={item}
                 previousItem={state.visibleOptions[index - 1]}
                 highlightedTerm={highlightedTerm}
@@ -284,7 +266,7 @@ function SelectInputInner<T>(
                 items={state.visibleOptions}
                 enableShortcuts={enableShortcuts}
                 hasAnyGroup={hasAnyGroup}
-                maxKeyLength={maxKeyLength}
+                index={index}
               />
             ))}
           </Box>
@@ -306,9 +288,9 @@ function SelectInputInner<T>(
         ) : (
           <Box marginLeft={3} flexDirection="column">
             <Text dimColor>
-              {infoMessage
-                ? infoMessage
-                : `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm.`}
+              {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
+                itemsHaveKeys ? 'or a shortcut ' : ''
+              }to confirm.`}
             </Text>
             {hasMorePages ? (
               <Text>

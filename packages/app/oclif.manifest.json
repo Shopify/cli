@@ -226,7 +226,10 @@
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "skip-dependencies-installation": {
           "name": "skip-dependencies-installation",
@@ -277,22 +280,6 @@
             "tunnel-url",
             "tunnel"
           ]
-        },
-        "tunnel": {
-          "name": "tunnel",
-          "type": "option",
-          "description": "Select the tunnel provider",
-          "hidden": false,
-          "multiple": false,
-          "options": [
-            "cloudflare",
-            "ngrok"
-          ],
-          "exclusive": [
-            "tunnel-url",
-            "no-tunnel"
-          ],
-          "default": "cloudflare"
         },
         "theme": {
           "name": "theme",
@@ -1121,7 +1108,10 @@
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "api-key": {
           "name": "api-key",
@@ -1294,7 +1284,10 @@
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "api-key": {
           "name": "api-key",

@@ -20,6 +20,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppInterface
@@ -182,6 +183,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
           await recursiveLiquidTemplateCopy(templateDirectory, directory, {
             srcFileExtension,
             name,
+            handle: slugify(name),
             flavor: extensionFlavor?.value ?? '',
           })
         })

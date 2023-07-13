@@ -10,7 +10,6 @@ export interface CachedAppInfo {
   orgId?: string
   storeFqdn?: string
   updateURLs?: boolean
-  tunnelPlugin?: string
   previousAppId?: string
 }
 

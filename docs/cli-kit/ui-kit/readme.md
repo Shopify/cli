@@ -175,7 +175,7 @@ export interface Item<T> {
 
 As you can tell from the interface, select prompts support grouping and shortcut keys (the `key` attribute) that can be used to jump straight to the item. Because keys can be made of multiple characters, the input is debounced slightly so that we can keep capturing keys pressed fast enough and chain them before we select the appropriate item.
 
-Once the user presses either `Enter` or a shortcut (if `submitWithShortcuts` is `true`) the function will resolve with the value of the `value` key.
+Once the user presses either `Enter` or a shortcut the function will resolve with the value of the `value` key.
 
 If you need to add some more context to help the user make a decision you can pass an `infoTable` to show to the user right below the question.
 

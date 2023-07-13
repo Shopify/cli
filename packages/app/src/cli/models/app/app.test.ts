@@ -1,27 +1,36 @@
-import {getUIExtensionRendererVersion, isCurrentAppSchema, isLegacyAppSchema} from './app.js'
-import {testApp, testUIExtension} from './app.test-data.js'
+import {
+  CurrentAppConfiguration,
+  getAppScopes,
+  getAppScopesArray,
+  getUIExtensionRendererVersion,
+  isCurrentAppSchema,
+  isLegacyAppSchema,
+} from './app.js'
+import {DEFAULT_CONFIG, testApp, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 const DEFAULT_APP = testApp()
 
-const CORRECT_CURRENT_APP_SCHEMA = {
+const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   name: 'app 1',
   api_contact_email: 'ryan@shopify.com',
   client_id: '12345',
-  webhook_api_version: '02-2023',
+  webhooks: {
+    api_version: '2023-04',
+    privacy_compliance: {
+      customer_deletion_url: 'https://google.com/',
+      customer_data_request_url: 'https://google.com/',
+      shop_deletion_url: 'https://google.com/',
+    },
+  },
   application_url: 'http://example.com',
   embedded: true,
   auth: {
     redirect_urls: ['https://google.com'],
   },
-  privacy_compliance_webhooks: {
-    customer_deletion_url: 'https://google.com/',
-    customer_data_request_url: 'https://google.com/',
-    shop_deletion_url: 'https://google.com/',
-  },
-  proxy: {
+  app_proxy: {
     url: 'https://google.com/',
     subpath: 'https://google.com/',
     prefix: 'https://google.com/',
@@ -32,7 +41,7 @@ const CORRECT_CURRENT_APP_SCHEMA = {
   app_preferences: {
     url: 'https://google.com/',
   },
-  cli: {
+  build: {
     automatically_update_urls_on_dev: true,
     dev_store_url: 'https://google.com/',
   },
@@ -167,6 +176,30 @@ describe('getUIExtensionRendererVersion', () => {
       // Then
       expect(got).toEqual('not_found')
     })
+  })
+})
+
+describe('getAppScopes', () => {
+  test('returns the scopes key when schema is legacy', () => {
+    const config = {scopes: 'read_themes,read_products'}
+    expect(getAppScopes(config)).toEqual('read_themes,read_products')
+  })
+
+  test('returns the access_scopes.scopes key when schema is current', () => {
+    const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes,read_themes'}}
+    expect(getAppScopes(config)).toEqual('read_themes,read_themes')
+  })
+})
+
+describe('getAppScopesArray', () => {
+  test('returns the scopes key when schema is legacy', () => {
+    const config = {scopes: 'read_themes, read_order ,write_products'}
+    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+  })
+
+  test('returns the access_scopes.scopes key when schema is current', () => {
+    const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
+    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
   })
 })
 

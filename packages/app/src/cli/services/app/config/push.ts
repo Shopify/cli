@@ -6,7 +6,9 @@ import {
   CurrentAppConfiguration,
   isCurrentAppSchema,
   usesLegacyScopesBehavior,
+  getAppScopesArray,
 } from '../../../models/app/app.js'
+import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -40,11 +42,24 @@ export async function pushConfig({configuration, configurationPath}: Options) {
       abort(errors)
     }
 
-    if (usesLegacyScopesBehavior(configuration)) {
+    const shouldDeleteScopes =
+      app.requestedAccessScopes &&
+      (configuration.access_scopes?.scopes === undefined || usesLegacyScopesBehavior(configuration))
+
+    if (shouldDeleteScopes) {
       const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
 
       if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
-        const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
+        const errors = clearResult.appRequestedAccessScopesClear.userErrors.map((error) => error.message).join(', ')
+        abort(errors)
+      }
+    }
+
+    if (!configuration.app_proxy && app.appProxy) {
+      const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
+
+      if (deleteResult?.userErrors?.length > 0) {
+        const errors = deleteResult.userErrors.map((error) => error.message).join(', ')
         abort(errors)
       }
     }
@@ -58,33 +73,31 @@ export async function pushConfig({configuration, configurationPath}: Options) {
 
 const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   const variables: PushConfigVariables = {
-    // these values are mandatory, so we only read from the config file
     apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: configuration.application_url!,
-    contactEmail: configuration.api_contact_email!,
-    webhookApiVersion: configuration.webhook_api_version!,
-    // these values are optional, so we fall back to configured values
-    redirectUrlAllowlist: configuration.auth?.redirect_urls ?? app.redirectUrlWhitelist,
+    applicationUrl: configuration.application_url,
+    contactEmail: configuration.api_contact_email,
+    webhookApiVersion: configuration.webhooks?.api_version,
+    redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
     gdprWebhooks: {
-      customerDeletionUrl: configuration.privacy_compliance_webhooks?.customer_deletion_url ?? undefined,
-      customerDataRequestUrl: configuration.privacy_compliance_webhooks?.customer_data_request_url ?? undefined,
-      shopDeletionUrl: configuration.privacy_compliance_webhooks?.shop_deletion_url ?? undefined,
+      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url ?? undefined,
+      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
+      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,
     },
-    posEmbedded: configuration.pos?.embedded ?? app.posEmbedded,
-    preferencesUrl: configuration.app_preferences?.url ?? app.preferencesUrl,
+    posEmbedded: configuration.pos?.embedded ?? false,
+    preferencesUrl: configuration.app_preferences?.url ?? null,
   }
 
-  if (!usesLegacyScopesBehavior(configuration)) {
-    variables.requestedAccessScopes = configuration.scopes?.length ? configuration.scopes.split(',') : []
+  if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
+    variables.requestedAccessScopes = getAppScopesArray(configuration)
   }
 
-  if (configuration.proxy) {
+  if (configuration.app_proxy) {
     variables.appProxy = {
-      proxySubPath: configuration.proxy.subpath,
-      proxySubPathPrefix: configuration.proxy.prefix,
-      proxyUrl: configuration.proxy.url,
+      proxySubPath: configuration.app_proxy.subpath,
+      proxySubPathPrefix: configuration.app_proxy.prefix,
+      proxyUrl: configuration.app_proxy.url,
     }
   }
 

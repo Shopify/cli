@@ -35,6 +35,7 @@ export default class Dev extends Command {
       description: 'Reset all your settings.',
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
+      exclusive: ['config'],
     }),
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
@@ -71,14 +72,6 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_NO_TUNNEL',
       default: false,
       exclusive: ['tunnel-url', 'tunnel'],
-    }),
-    tunnel: Flags.string({
-      hidden: false,
-      description: 'Select the tunnel provider',
-      env: 'SHOPIFY_FLAG_TUNNEL',
-      default: 'cloudflare',
-      options: ['cloudflare', 'ngrok'],
-      exclusive: ['tunnel-url', 'no-tunnel'],
     }),
     theme: Flags.string({
       hidden: false,
@@ -123,7 +116,6 @@ export default class Dev extends Command {
       subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
       tunnelUrl: flags['tunnel-url'],
-      tunnelProvider: flags.tunnel,
       noTunnel: flags['no-tunnel'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],

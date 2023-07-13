@@ -4,6 +4,7 @@ import {ExtensionRow, PostPurchaseRow, AppHomeRow, Row} from './components'
 import en from './translations/en.json'
 import {useExtensions} from './hooks/useExtensions'
 import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
+import {useApp} from './hooks/useApp'
 import {useI18n} from '@shopify/react-i18n'
 import React from 'react'
 import {QuestionMarkMajor} from '@shopify/polaris-icons'
@@ -19,6 +20,7 @@ export function Extensions() {
 
   const extensionIds = useExtensions()
   const {surface} = useExtensionServerOptions()
+  const {app} = useApp()
 
   if (!extensionIds.length) {
     return (
@@ -28,9 +30,17 @@ export function Extensions() {
     )
   }
 
+  const introMessage = i18n.translate('intro', {
+    installLink: (
+      <a href={app?.url} target={'_blank'} aria-label={i18n.translate('introInstallCta')}>
+        {i18n.translate('introInstallCta')}
+      </a>
+    ),
+  })
+
   return (
     <section className={styles.ExtensionList}>
-      {isEmbedded ? null : <p className={styles.Intro}>{i18n.translate('intro')}</p>}
+      {isEmbedded ? null : <p className={styles.Intro}>{introMessage}</p>}
       <table>
         <thead>
           <Row>

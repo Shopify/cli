@@ -1,37 +1,15 @@
-import {BaseSchema} from '../schemas.js'
+import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {validateNonCommerceObjectShape} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export const FlowTriggerExtensionSchema = BaseSchema.extend({
-  name: zod.string(),
-  description: zod.string().optional(),
+export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_trigger'),
-  extensions: zod
-    .array(
-      zod.object({
-        type: zod.literal('flow_trigger'),
-        schema: zod.string().optional(),
-        return_type_ref: zod.string().optional(),
-      }),
-    )
-    .min(1),
-  settings: zod
-    .object({
-      fields: zod
-        .array(
-          zod
-            .object({
-              key: zod.string().optional(),
-              description: zod.string().optional(),
-              type: zod.string(),
-            })
-            .refine((field) => validateNonCommerceObjectShape(field, 'flow_trigger')),
-        )
-        .optional(),
-    })
-    .optional(),
+}).refine((config) => {
+  const fields = config.settings?.fields ?? []
+  const settingsFieldsAreValid = fields.every((field) => validateNonCommerceObjectShape(field, 'flow_trigger'))
+  return settingsFieldsAreValid
 })
 
 /**
@@ -47,15 +25,11 @@ const flowTriggerSpecification = createExtensionSpecification({
   // Should be removed after unified deployment is 100% rolled out
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config) => {
-    const {extensions} = config
-    const extension = extensions[0]!
-
     return {
       title: config.name,
+      handle: config.handle,
       description: config.description,
       fields: serializeFields('flow_trigger', config.settings?.fields),
-      schema: extension.schema,
-      return_type_ref: extension.return_type_ref,
     }
   },
 })

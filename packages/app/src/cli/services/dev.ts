@@ -22,7 +22,7 @@ import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
-import {AppInterface, AppConfiguration, Web, WebType} from '../models/app/app.js'
+import {AppInterface, Web, WebType, isLegacyAppSchema} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {loadApp} from '../models/app/loader.js'
@@ -68,7 +68,6 @@ export interface DevOptions {
   subscriptionProductUrl?: string
   checkoutCartUrl?: string
   tunnelUrl?: string
-  tunnelProvider: string
   noTunnel: boolean
   theme?: string
   themeExtensionPort?: number
@@ -81,7 +80,7 @@ async function dev(options: DevOptions) {
 
   let tunnelClient: TunnelClient | undefined
   if (!options.tunnelUrl && !options.noTunnel) {
-    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, options.tunnelProvider)
+    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'cloudflare')
   }
 
   const token = await ensureAuthenticatedPartners()
@@ -90,15 +89,8 @@ async function dev(options: DevOptions) {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-    useCloudflareTunnels,
     configName,
   } = await ensureDevContext(options, token)
-
-  if (!options.tunnelUrl && !options.noTunnel && !useCloudflareTunnels && options.tunnelProvider === 'cloudflare') {
-    // If we can't use cloudflare, stop the previous optimistic tunnel and start a new one
-    tunnelClient?.stopTunnel()
-    tunnelClient = await startTunnelPlugin(options.commandConfig, tunnelPort, 'ngrok')
-  }
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
@@ -113,7 +105,7 @@ async function dev(options: DevOptions) {
   const backendConfig = localApp.webs.find((web) => isWebType(web, WebType.Backend))
   const webhooksPath =
     localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
-  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
 
   await validateCustomPorts(localApp.webs)
 
@@ -174,7 +166,9 @@ async function dev(options: DevOptions) {
 
   const webOptions = {
     apiKey,
-    scopes: localApp.configuration.scopes,
+    scopes: isLegacyAppSchema(localApp.configuration)
+      ? localApp.configuration.scopes
+      : localApp.configuration.access_scopes?.scopes,
     apiSecret,
     backendPort,
     frontendServerPort,
@@ -330,7 +324,7 @@ interface DevWebOptions {
   apiKey: string
   apiSecret?: string
   hostname?: string
-  scopes?: AppConfiguration['scopes']
+  scopes?: string
 }
 
 async function devNonProxyTarget(options: DevWebOptions, port: number): Promise<OutputProcess> {

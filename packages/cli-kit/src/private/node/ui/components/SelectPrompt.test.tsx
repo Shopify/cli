@@ -67,11 +67,11 @@ describe('SelectPrompt', async () => {
 
   test('renders groups', async () => {
     const items = [
-      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
-      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'first', value: 'first', group: 'Automations'},
+      {label: 'second', value: 'second', group: 'Automations'},
       {label: 'third', value: 'third', group: 'Merchant Admin'},
       {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
-      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'fifth', value: 'fifth'},
       {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth'},
@@ -91,20 +91,20 @@ describe('SelectPrompt', async () => {
       "?  Associate your project with the org Castile Ventures?
 
          [1mAutomations[22m
-         [36m>[39m   [36m(f) first[39m
-             (s) second
+         [36m>[39m  [36mfirst[39m
+            second
 
          [1mMerchant Admin[22m
-             (3) third
-             (4) fourth
+            third
+            fourth
 
          [1mOther[22m
-             (a) fifth
-             (6) sixth
-             (7) seventh
-             (8) eighth
-             (9) ninth
-            (10) tenth
+            fifth
+            sixth
+            seventh
+            eighth
+            ninth
+            tenth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -151,10 +151,10 @@ describe('SelectPrompt', async () => {
          ┃  - integrated-demand-ext
          ┃  - order-discount [2m(1)[22m
 
-      [36m>[39m  [36m(1) first[39m
-         (2) second
-         (3) third
-         (4) fourth
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -193,10 +193,10 @@ describe('SelectPrompt', async () => {
          ┃
          ┃  Info message body
 
-      [36m>[39m  [36m(1) first[39m
-         (2) second
-         (3) third
-         (4) fourth
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -230,7 +230,7 @@ describe('SelectPrompt', async () => {
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
 
-      >  (1) a
+      >  a
 
 
          Press ↑↓ arrows to select, enter to confirm.
@@ -252,8 +252,8 @@ describe('SelectPrompt', async () => {
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
 
-         (1) a
-      >  (2) b
+         a
+      >  b
 
          Press ↑↓ arrows to select, enter to confirm.
       "
@@ -282,8 +282,8 @@ describe('SelectPrompt', async () => {
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
 
-      >  (1) a
-         (2) b
+      >  a
+         b
 
          Press ↑↓ arrows to select, enter to confirm.
       "
@@ -307,9 +307,7 @@ describe('SelectPrompt', async () => {
       {label: 'b', value: 'b', key: 'b'},
     ]
 
-    const renderInstance = render(
-      <SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" submitWithShortcuts />,
-    )
+    const renderInstance = render(<SelectPrompt choices={items} onSubmit={onEnter} message="Test question?" />)
 
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
@@ -340,11 +338,11 @@ describe('SelectPrompt', async () => {
     })
 
     const items = [
-      {label: 'first', value: 'first', group: 'Automations', key: 'f'},
-      {label: 'second', value: 'second', group: 'Automations', key: 's'},
+      {label: 'first', value: 'first', group: 'Automations'},
+      {label: 'second', value: 'second', group: 'Automations'},
       {label: 'third', value: 'third', group: 'Merchant Admin'},
       {label: 'fourth', value: 'fourth', group: 'Merchant Admin'},
-      {label: 'fifth', value: 'fifth', key: 'a'},
+      {label: 'fifth', value: 'fifth'},
       {label: 'sixth', value: 'sixth'},
       {label: 'seventh', value: 'seventh'},
       {label: 'eighth', value: 'eighth'},
@@ -363,11 +361,11 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-         [1mAutomations[22m                                \u001b[46m \u001b[49m
-         [36m>[39m   [36m(f) first[39m                              \u001b[100m \u001b[49m
-             (s) second                             \u001b[100m \u001b[49m
-                                                    \u001b[100m \u001b[49m
-         [1mMerchant Admin[22m                             \u001b[100m \u001b[49m
+         [1mAutomations[22m                                                                 [46m [49m
+         [36m>[39m  [36mfirst[39m                                                                    [100m [49m
+            second                                                                   [100m [49m
+                                                                                     [100m [49m
+         [1mMerchant Admin[22m                                                              [100m [49m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -392,8 +390,8 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-         (1) yes
-      [36m>[39m  [36m(2) no[39m
+         yes
+      [36m>[39m  [36mno[39m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -420,8 +418,8 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-         (1) yes
-      [36m>[39m  [36m(2) no[39m
+         yes
+      [36m>[39m  [36mno[39m
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -432,8 +430,8 @@ describe('SelectPrompt', async () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
 
-      [36m>[39m  [36m(1) yes[39m
-         (2) no
+      [36m>[39m  [36myes[39m
+         no
 
          [2mPress ↑↓ arrows to select, enter to confirm.[22m
       "
@@ -462,8 +460,8 @@ describe('SelectPrompt', async () => {
     expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
       "?  Test question?
 
-      >  (1) a
-         (2) b
+      >  a
+         b
 
          Press ↑↓ arrows to select, enter to confirm.
       "
