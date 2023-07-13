@@ -81,6 +81,7 @@ export async function updateExtensionConfig({
   unifiedDeployment,
 }: UpdateExtensionConfigOptions) {
   const abort = (errorMessage: OutputMessage) => {
+    stdout.write(errorMessage)
     throw new AbortError(errorMessage)
   }
 
@@ -93,7 +94,15 @@ export async function updateExtensionConfig({
     const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, abort)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
-    if (!extensionConfig) return
+    if (!extensionConfig) {
+      abort(
+        `ERROR: Invalid handle
+  - Expected handle: "${extension.handle}"
+  - Configuration file path: ${extension.configurationPath}.
+  - Handles are immutable, you can't change them once they are set.`,
+      )
+    }
+
     configObject = {...configuration, ...extensionConfig}
   }
 
