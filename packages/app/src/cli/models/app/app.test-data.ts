@@ -80,13 +80,13 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
 }
 
 export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
-  const app = options?.app || testApp({}, 'current')
+  const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   }
 
-  return app as AppInterface
+  return app
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {

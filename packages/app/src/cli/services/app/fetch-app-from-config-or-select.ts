@@ -1,12 +1,12 @@
 import {selectApp} from './select-app.js'
-import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppConfigurationInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {fetchAppFromApiKey} from '../dev/fetch.js'
 import {InvalidApiKeyErrorMessage} from '../context.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export async function fetchAppFromConfigOrSelect(app: AppInterface): Promise<OrganizationApp> {
+export async function fetchAppFromConfigOrSelect(app: AppConfigurationInterface): Promise<OrganizationApp> {
   let organizationApp
   if (isCurrentAppSchema(app.configuration)) {
     const token = await ensureAuthenticatedPartners()

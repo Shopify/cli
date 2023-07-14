@@ -5,9 +5,9 @@ import {
   App,
   AppInterface,
   WebType,
-  AppConfiguration,
   isCurrentAppSchema,
   getAppScopesArray,
+  AppConfigurationInterface,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -199,8 +199,12 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {appDirectory, configurationPath, configuration, configurationLoadResultMetadata} =
-      await configurationLoader.loaded()
+    const {
+      directory: appDirectory,
+      configurationPath,
+      configuration,
+      configurationLoadResultMetadata,
+    } = await configurationLoader.loaded()
     const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
@@ -397,12 +401,6 @@ class AppLoader {
   }
 }
 
-export interface AppConfigurationInterface {
-  appDirectory: string
-  configuration: AppConfiguration
-  configurationPath: string
-}
-
 /**
  * Parse the app configuration file from the given directory.
  * If the app configuration does not match any known schemas, it will throw an error.
@@ -489,7 +487,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
