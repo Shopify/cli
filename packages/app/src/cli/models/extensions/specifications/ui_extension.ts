@@ -1,5 +1,5 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchemaWithHandle, BaseSchema} from '../schemas.js'
+import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
