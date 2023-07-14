@@ -15,7 +15,7 @@ env:
 
 jobs:
   type-diff:
-    name: Type-diff with Node ${{ matrix.node }} in ${{ matrix.os }}
+    name: "[PR] Type-diff with Node ${{ matrix.node }} in ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 30

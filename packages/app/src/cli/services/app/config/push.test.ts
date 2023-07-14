@@ -40,6 +40,7 @@ describe('pushConfig', () => {
       posEmbedded: false,
       preferencesUrl: null,
       redirectUrlAllowlist: null,
+      requestedAccessScopes: ['read_products'],
       title: 'my app',
       webhookApiVersion: '2023-04',
     })
@@ -289,6 +290,7 @@ describe('pushConfig', () => {
       },
       webhookApiVersion: '2023-04',
       redirectUrlAllowlist: null,
+      requestedAccessScopes: ['read_products'],
       embedded: true,
       posEmbedded: false,
       preferencesUrl: null,
