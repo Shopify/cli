@@ -58,8 +58,9 @@ export async function getUIExtensionPayload(
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     version: renderer?.version,
-
     title: extension.configuration.name,
+    handle: extension.configuration.handle || extension.localIdentifier,
+    name: extension.configuration.name,
     apiVersion: extension.configuration.api_version,
     approvalScopes: options.grantedScopes,
   }

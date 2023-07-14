@@ -98,7 +98,6 @@ export type ExtensionPoints = string[] | ExtensionPoint[] | null
 
 export interface ExtensionPayload {
   type: string
-  name: string
   externalType: string
   assets: {[name: string]: Asset}
   development: {
@@ -115,7 +114,8 @@ export interface ExtensionPayload {
   uuid: string
   version: string
   surface: Surface
-  title: string
+  name: string
+  handle: string
   extensionPoints: ExtensionPoints
   categories?: string[]
   capabilities?: {

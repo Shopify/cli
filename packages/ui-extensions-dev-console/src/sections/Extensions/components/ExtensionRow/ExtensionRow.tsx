@@ -29,7 +29,7 @@ export function ExtensionRow({uuid}: Props) {
   return (
     <Row onMouseEnter={focus} onMouseLeave={unfocus}>
       <td>
-        <span className={styles.Title}>{extension.title}</span>
+        <span className={styles.Title}>{extension.handle}</span>
       </td>
       <td>
         <PreviewLinks extension={extension} />
@@ -44,7 +44,7 @@ export function ExtensionRow({uuid}: Props) {
               ? {
                   url: extension.development.root.url,
                   type: extension.surface,
-                  title: extension.title,
+                  title: extension.handle,
                 }
               : undefined
           }

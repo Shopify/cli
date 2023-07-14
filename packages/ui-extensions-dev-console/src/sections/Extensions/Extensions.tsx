@@ -34,7 +34,7 @@ export function Extensions() {
       <table>
         <thead>
           <Row>
-            <th>{i18n.translate('extensionList.name')}</th>
+            <th>{i18n.translate('extensionList.handle')}</th>
             <th>{i18n.translate('extensionList.preview')}</th>
             <th>{i18n.translate('extensionList.mobile')}</th>
             <th>

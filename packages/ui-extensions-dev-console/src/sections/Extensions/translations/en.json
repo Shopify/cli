@@ -1,7 +1,7 @@
 {
   "intro": "See code changes reflected live. Share preview links with teammates or clients.",
   "extensionList": {
-    "name": "Name",
+    "handle": "Handle",
     "preview": "Preview link",
     "mobile": "Mobile",
     "view": "View",
