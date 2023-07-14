@@ -1,5 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
@@ -151,7 +151,7 @@ export async function updateURLs(
   urls: PartnersURLs,
   apiKey: string,
   token: string,
-  localApp?: AppInterface,
+  localApp?: AppConfigurationInterface,
 ): Promise<void> {
   const variables: UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = UpdateURLsQuery

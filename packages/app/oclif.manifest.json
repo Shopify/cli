@@ -504,19 +504,40 @@
           "hidden": false,
           "allowNo": false
         },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
+        },
         "api-key": {
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "app-url": {
           "name": "app-url",
