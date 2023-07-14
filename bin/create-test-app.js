@@ -48,6 +48,10 @@ program
     "-p, --package-manager <packageManager>",
     `package manager to be used: ${packageManagers.join(", ")}`
   )
+  .option(
+    "-t, --template <template>",
+    "template to be used for the app",
+  )
   .option("--cleanup", "delete temp app afterwards", false)
   .option("--deploy", "deploy the app to Shopify", false)
   .option("--config-as-code", "enable config as code", false)
@@ -66,6 +70,7 @@ program
       : new Set(options.extensions.split(","));
 
     const appName = options.name;
+    const template = options.template || "node";
     const appPath = path.join(homeDir, "Desktop", appName);
 
     switch (options.packageManager) {
@@ -152,7 +157,7 @@ program
           ["create-app"],
           [
             "--local",
-            "--template=node",
+            `--template=${template}`,
             `--name=${appName}`,
             `--path=${path.join(homeDir, "Desktop")}`,
           ],
@@ -170,7 +175,7 @@ program
         break;
       case "nightly":
         log(`Creating new app in '${appPath}'...`);
-        let initArgs = ["--template=node", `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
+        let initArgs = [`--template=${template}`, `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
         switch (nodePackageManager) {
           case "yarn":
             // yarn doesn't support 'create @shopify/app@nightly' syntax

@@ -98,7 +98,7 @@ export function getAppScopes(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) {
     return config.scopes
   } else {
-    return config.access_scopes?.scopes?.toString() ?? ''
+    return config.access_scopes?.scopes ?? ''
   }
 }
 

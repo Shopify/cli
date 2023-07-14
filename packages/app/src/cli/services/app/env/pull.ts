@@ -1,5 +1,5 @@
-import {selectApp} from '../select-app.js'
-import {AppInterface, isLegacyAppSchema} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -14,14 +14,12 @@ export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Pro
 }
 
 export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<OutputMessage> {
-  const selectedApp = await selectApp()
+  const orgApp = await fetchAppFromConfigOrSelect(app)
 
   const updatedValues = {
-    SHOPIFY_API_KEY: selectedApp.apiKey,
-    SHOPIFY_API_SECRET: selectedApp.apiSecretKeys[0]?.secret,
-    SCOPES: isLegacyAppSchema(app.configuration)
-      ? app.configuration.scopes
-      : app.configuration.access_scopes?.scopes ?? '',
+    SHOPIFY_API_KEY: orgApp.apiKey,
+    SHOPIFY_API_SECRET: orgApp.apiSecretKeys[0]?.secret,
+    SCOPES: getAppScopes(app.configuration),
   }
 
   if (await fileExists(envFile)) {

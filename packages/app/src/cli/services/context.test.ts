@@ -441,6 +441,9 @@ embedded = true
 [webhooks]
 api_version = "2023-04"
 
+[access_scopes]
+scopes = "read_products"
+
 [build]
 dev_store_url = "domain1"
 `

@@ -57,7 +57,7 @@ export function outputExtensionsMessages(app: AppInterface) {
   outputThemeExtensionsMessage(app.allExtensions.filter((ext) => ext.isThemeExtension))
 }
 
-export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string | undefined) {
+export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string) {
   let options = renderConcurrentOptions
 
   if (previewUrl) {
@@ -86,7 +86,7 @@ export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, prev
       },
     }
   }
-  return renderConcurrent(options)
+  return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
 }
 
 function outputThemeExtensionsMessage(extensions: ExtensionInstance[]) {
