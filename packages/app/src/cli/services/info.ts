@@ -1,6 +1,6 @@
 import {outputEnv} from './app/env/show.js'
-import {getAppInfo} from './local-storage.js'
-import {AppInterface, getAppScopes, isCurrentAppSchema} from '../models/app/app.js'
+import {getAppContext} from './context.js'
+import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -15,10 +15,12 @@ import {
   stringifyMessage,
   getOutputUpdateCLIReminder,
 } from '@shopify/cli-kit/node/output'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export type Format = 'json' | 'text'
-interface InfoOptions {
+export interface InfoOptions {
   format: Format
+  configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
 }
@@ -27,23 +29,23 @@ interface Configurable {
   externalType: string
 }
 
-export async function info(app: AppInterface, {format, webEnv}: InfoOptions): Promise<OutputMessage> {
-  if (webEnv) {
-    return infoWeb(app, {format})
+export async function info(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+  if (options.webEnv) {
+    return infoWeb(app, options)
   } else {
-    return infoApp(app, {format})
+    return infoApp(app, options)
   }
 }
 
-export async function infoWeb(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<OutputMessage> {
+export async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise<OutputMessage> {
   return outputEnv(app, format)
 }
 
-export async function infoApp(app: AppInterface, {format}: Omit<InfoOptions, 'webEnv'>): Promise<OutputMessage> {
-  if (format === 'json') {
+export async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
+  if (options.format === 'json') {
     return outputContent`${JSON.stringify(app, null, 2)}`
   } else {
-    const appInfo = new AppInfo(app)
+    const appInfo = new AppInfo(app, options)
     return appInfo.output()
   }
 }
@@ -53,14 +55,16 @@ const NOT_CONFIGURED_TEXT = outputContent`${outputToken.italic('Not yet configur
 
 class AppInfo {
   private app: AppInterface
+  private options: InfoOptions
 
-  constructor(app: AppInterface) {
+  constructor(app: AppInterface, options: InfoOptions) {
     this.app = app
+    this.options = options
   }
 
   async output(): Promise<string> {
     const sections: [string, string][] = [
-      this.devConfigsSection(),
+      await this.devConfigsSection(),
       this.projectSettingsSection(),
       await this.appComponentsSection(),
       await this.systemInfoSection(),
@@ -68,46 +72,37 @@ class AppInfo {
     return sections.map((sectionContents: [string, string]) => formatSection(...sectionContents)).join('\n\n')
   }
 
-  devConfigsSection(): [string, string] {
+  async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
+    const token = await ensureAuthenticatedPartners()
+    const {cachedInfo} = await getAppContext({
+      token,
+      directory: this.app.directory,
+      reset: false,
+      configName: this.options.configName,
+      promptLinkingApp: false,
+    })
 
-    let configName = NOT_CONFIGURED_TEXT
-    let appName = NOT_CONFIGURED_TEXT
-    let storeDescription = NOT_CONFIGURED_TEXT
-    let apiKey = NOT_CONFIGURED_TEXT
-    let updateURLs = NOT_CONFIGURED_TEXT
-    let postscript = outputContent`💡 These will be populated when you run ${outputToken.packagejsonScript(
+    const postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
       this.app.packageManager,
       'dev',
+      '--reset',
     )}`.value
-    const cachedAppInfo = getAppInfo(this.app.directory)
-    if (isCurrentAppSchema(this.app.configuration)) {
-      configName = this.app.configurationPath
-      appName = this.app.configuration.name
-      apiKey = this.app.configuration.client_id
-      if (this.app.configuration.build?.dev_store_url) storeDescription = this.app.configuration.build.dev_store_url
-      if (this.app.configuration.build?.automatically_update_urls_on_dev) {
-        updateURLs = this.app.configuration.build.automatically_update_urls_on_dev ? 'Always' : 'Never'
-      }
-      postscript = outputContent`💡 To change these, use the '--config' flag.`.value
-    } else if (cachedAppInfo) {
-      if (cachedAppInfo.title) appName = cachedAppInfo.title
-      if (cachedAppInfo.storeFqdn) storeDescription = cachedAppInfo.storeFqdn
-      if (cachedAppInfo.appId) apiKey = cachedAppInfo.appId
-      if (cachedAppInfo.updateURLs !== undefined) updateURLs = cachedAppInfo.updateURLs ? 'Always' : 'Never'
-      postscript = outputContent`💡 To change these, run ${outputToken.packagejsonScript(
-        this.app.packageManager,
-        'dev',
-        '--reset',
-      )}`.value
+
+    let updateUrls
+    if (cachedInfo?.updateURLs === undefined) {
+      updateUrls = NOT_CONFIGURED_TEXT
+    } else {
+      updateUrls = cachedInfo.updateURLs ? 'Always' : 'Never'
     }
+
     const lines = [
-      ['Configuration file', configName],
-      ['App name', appName],
-      ['Client ID', apiKey],
+      ['Configuration file', cachedInfo?.configFile || configurationFileNames.app],
+      ['App name', cachedInfo?.title || NOT_CONFIGURED_TEXT],
+      ['Client ID', cachedInfo?.appId || NOT_CONFIGURED_TEXT],
       ['Access scopes', getAppScopes(this.app.configuration)],
-      ['Dev store', storeDescription],
-      ['Update URLs', updateURLs],
+      ['Dev store', cachedInfo?.storeFqdn || NOT_CONFIGURED_TEXT],
+      ['Update URLs', updateUrls],
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
   }

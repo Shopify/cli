@@ -41,9 +41,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   configurationPath: string
   outputPath: string
   handle: string
+  specification: ExtensionSpecification
 
   private useExtensionsFramework: boolean
-  private specification: ExtensionSpecification
 
   get graphQLType() {
     if (this.features.includes('function')) {

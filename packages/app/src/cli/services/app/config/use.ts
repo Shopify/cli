@@ -1,5 +1,5 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setAppInfo} from '../../local-storage.js'
+import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {isCurrentAppSchema} from '../../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -42,7 +42,7 @@ export async function saveCurrentConfig({configFileName, directory}: SaveCurrent
   const {configuration} = await loadAppConfiguration({configName: configFileName, directory})
 
   if (isCurrentAppSchema(configuration) && configuration.client_id) {
-    setAppInfo({
+    setCachedAppInfo({
       directory,
       configFile: configFileName,
     })
