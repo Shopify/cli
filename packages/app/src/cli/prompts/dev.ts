@@ -113,14 +113,3 @@ export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: str
     },
   })
 }
-
-export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'cancel'> {
-  return renderSelectPrompt({
-    message: 'How would you like your tunnel to work in the future?',
-    choices: [
-      {label: 'Always use it by default', value: 'always'},
-      {label: 'Use it now and ask me next time', value: 'yes'},
-      {label: 'Nevermind, cancel dev', value: 'cancel'},
-    ],
-  })
-}

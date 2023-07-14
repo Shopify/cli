@@ -6,7 +6,6 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
   updateURLsPrompt,
-  tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationStore} from '../models/organization.js'
 import {testOrganizationApp} from '../models/app/app.test-data.js'
@@ -233,27 +232,6 @@ describe('updateURLsPrompt', () => {
         {label: 'Yes, this time', value: 'yes'},
         {label: 'No, not now', value: 'no'},
         {label: `Never, don't ask again`, value: 'never'},
-      ],
-    })
-  })
-})
-
-describe('tunnelConfigurationPrompt', () => {
-  test('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
-
-    // When
-    const got = await tunnelConfigurationPrompt()
-
-    // Then
-    expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'How would you like your tunnel to work in the future?',
-      choices: [
-        {label: 'Always use it by default', value: 'always'},
-        {label: 'Use it now and ask me next time', value: 'yes'},
-        {label: 'Nevermind, cancel dev', value: 'cancel'},
       ],
     })
   })
