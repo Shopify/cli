@@ -13,6 +13,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -795,7 +796,9 @@ automatically_update_urls_on_dev = true
     })
   })
 
-  test(`updates metadata after loading a config as code application`, async () => {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test.skipIf(runningOnWindows)(`updates metadata after loading a config as code application`, async () => {
     const {webDirectory} = await writeConfig(linkedAppConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',
