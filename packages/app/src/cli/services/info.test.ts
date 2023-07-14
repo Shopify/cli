@@ -11,7 +11,6 @@ import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {Config} from '@oclif/core'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('./local-storage.js')
@@ -24,7 +23,6 @@ vi.mock('@shopify/cli-kit/node/node-package-manager')
 const infoOptions: InfoOptions = {
   format: 'text',
   webEnv: false,
-  commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
 }
 
 describe('info', () => {

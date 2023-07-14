@@ -577,13 +577,9 @@ export async function getAppContext({
 
   if (reset) clearCachedAppInfo(directory)
 
-  // if this is the first time we are setting up this app, or
-  // if we had config-as-code enabled and we're resetting
-  if (
-    promptLinkingApp &&
-    commandConfig &&
-    (previousCachedInfo === undefined || (previousCachedInfo.configFile && reset))
-  ) {
+  const firstTimeSetup = previousCachedInfo === undefined
+  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
+  if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting)) {
     await link({directory, commandConfig})
   }
 
