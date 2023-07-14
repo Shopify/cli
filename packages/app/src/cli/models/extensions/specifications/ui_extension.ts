@@ -1,5 +1,5 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchemaWithHandle} from '../schemas.js'
+import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchemaWithHandle, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -16,7 +16,7 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
-const UIExtensionSchema = BaseSchemaWithHandle.extend({
+const UIExtensionSchema = BaseSchema.extend({
   extension_points: NewExtensionPointsSchema.optional(),
   targeting: NewExtensionPointsSchema.optional(),
 })

@@ -321,6 +321,7 @@ class AppLoader {
   ): Promise<ExtensionInstance | undefined> {
     const specification = findSpecificationForType(this.specifications, type)
     if (!specification) return
+
     const configuration = await parseConfigurationObject(
       specification.schema,
       configurationPath,
@@ -369,6 +370,14 @@ class AppLoader {
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
           const {extensions, ...restConfig} = mergedConfig
+          if (!restConfig.handle) {
+            // Handle is required for unified config extensions.
+            return this.abortOrReport(
+              outputContent`Missing handle for extension "${restConfig.name}" at ${configurationPath}`,
+              undefined,
+              configurationPath,
+            )
+          }
           return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
