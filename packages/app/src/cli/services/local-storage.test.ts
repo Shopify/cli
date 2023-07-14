@@ -1,4 +1,10 @@
-import {AppLocalStorageSchema, clearAppInfo, clearCurrentConfigFile, getAppInfo, setAppInfo} from './local-storage.js'
+import {
+  AppLocalStorageSchema,
+  clearCachedAppInfo,
+  clearCurrentConfigFile,
+  getCachedAppInfo,
+  setCachedAppInfo,
+} from './local-storage.js'
 import {describe, expect, test} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -13,10 +19,10 @@ describe('getAppInfo', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
-      setAppInfo(APP1, storage)
+      setCachedAppInfo(APP1, storage)
 
       // When
-      const got = getAppInfo(APP1.directory, storage)
+      const got = getCachedAppInfo(APP1.directory, storage)
 
       // Then
       expect(got).toEqual(APP1)
@@ -29,7 +35,7 @@ describe('getAppInfo', async () => {
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
 
       // When
-      const got = getAppInfo('app3', storage)
+      const got = getCachedAppInfo('app3', storage)
 
       // Then
       expect(got).toEqual(undefined)
@@ -45,7 +51,7 @@ describe('setAppInfo', async () => {
       storage.set(APP1.directory, APP1)
 
       // When
-      setAppInfo(APP1Updated, storage)
+      setCachedAppInfo(APP1Updated, storage)
       const got = storage.get(APP1.directory)
 
       // Then
@@ -59,7 +65,7 @@ describe('setAppInfo', async () => {
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
 
       // When
-      setAppInfo({appId: 'app2', directory: '/app2', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, storage)
+      setCachedAppInfo({appId: 'app2', directory: '/app2', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, storage)
       const got = storage.get(APP2.directory)
 
       // Then
@@ -73,7 +79,10 @@ describe('setAppInfo', async () => {
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
 
       // When
-      setAppInfo({appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId}, storage)
+      setCachedAppInfo(
+        {appId: 'app2', directory: '\\app2\\something', storeFqdn: APP2.storeFqdn, orgId: APP2.orgId},
+        storage,
+      )
       const got = storage.get('/app2/something')
 
       // Then
@@ -91,8 +100,8 @@ describe('clearAppInfo', async () => {
       storage.set(APP2.directory, APP2)
 
       // When
-      clearAppInfo(APP1.directory, storage)
-      const got = getAppInfo(APP1.directory, storage)
+      clearCachedAppInfo(APP1.directory, storage)
+      const got = getCachedAppInfo(APP1.directory, storage)
 
       // Then
       expect(got).toEqual(undefined)
@@ -105,11 +114,11 @@ describe('clearCurrentConfigFile', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const storage = new LocalStorage<AppLocalStorageSchema>({cwd})
-      setAppInfo({directory: APP1_WITH_CONFIG_FILE.directory, configFile: 'shopify.app.staging.toml'})
+      setCachedAppInfo({directory: APP1_WITH_CONFIG_FILE.directory, configFile: 'shopify.app.staging.toml'})
 
       // When
       clearCurrentConfigFile(APP1_WITH_CONFIG_FILE.directory, storage)
-      const got = getAppInfo(APP1_WITH_CONFIG_FILE.directory, storage)
+      const got = getCachedAppInfo(APP1_WITH_CONFIG_FILE.directory, storage)
 
       // Then
       expect(got?.configFile).toBeUndefined()

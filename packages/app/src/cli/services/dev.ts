@@ -17,7 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
-import {setAppInfo} from './local-storage.js'
+import {setCachedAppInfo} from './local-storage.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -311,7 +311,7 @@ async function dev(options: DevOptions) {
 }
 
 function setPreviousAppId(directory: string, apiKey: string) {
-  setAppInfo({directory, previousAppId: apiKey})
+  setCachedAppInfo({directory, previousAppId: apiKey})
 }
 
 function isWebType(web: Web, type: WebType): boolean {
