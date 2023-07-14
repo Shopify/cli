@@ -83,8 +83,8 @@ const generateExtensionPrompts = async (
   return {extensionTemplate, extensionContent}
 }
 
-async function promptName(directory: string, defaultName: string, number = 0): Promise<string> {
-  const name = number === 0 ? defaultName : `${defaultName}-${number}`
+async function promptName(directory: string, defaultName: string, number = 1): Promise<string> {
+  const name = number <= 1 ? defaultName : `${defaultName}-${number}`
   const fullPath = joinPath(directory, name)
   if (fileExistsSync(fullPath)) {
     return promptName(directory, defaultName, number + 1)
