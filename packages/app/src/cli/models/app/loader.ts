@@ -12,7 +12,7 @@ import {
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {ExtensionsArraySchema, TypeSchema, UnifiedSchema} from '../extensions/schemas.js'
+import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -27,7 +27,6 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -98,7 +97,6 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
   const parseResult = schema.safeParse(configurationObject)
-
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
@@ -115,32 +113,6 @@ export function findSpecificationForType(specifications: ExtensionSpecification[
     (spec) =>
       spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
   )
-}
-
-export async function findSpecificationForConfig(
-  specifications: ExtensionSpecification[],
-  configurationPath: string,
-  abortOrReport: AbortOrReport,
-) {
-  const fileContent = await readFile(configurationPath)
-  const obj = decodeToml(fileContent)
-  const {type} = TypeSchema.parse(obj)
-  const specification = findSpecificationForType(specifications, type)
-
-  if (!specification) {
-    const isShopifolk = await isShopify()
-    const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
-    abortOrReport(
-      outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
-        isShopifolk ? shopifolkMessage : ''
-      }`,
-      undefined,
-      configurationPath,
-    )
-    return undefined
-  }
-
-  return specification
 }
 
 export class AppErrors {
