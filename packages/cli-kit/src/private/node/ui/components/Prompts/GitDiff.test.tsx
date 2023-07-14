@@ -1,6 +1,6 @@
 import {GitDiff} from './GitDiff.js'
-import {render} from '../../testing/ui.js'
-import {unstyled} from '../../../../public/node/output.js'
+import {render} from '../../../testing/ui.js'
+import {unstyled} from '../../../../../public/node/output.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 
@@ -10,13 +10,23 @@ afterEach(async () => {
 
 describe('GitDiff', async () => {
   test('renders correctly when no changes exist', async () => {
-    const {lastFrame} = render(<GitDiff baselineContent="hello" updatedContent="hello" />)
+    const gitDiff = {
+      baselineContent: 'hello',
+      updatedContent: 'hello',
+    }
+
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(lastFrame()).toEqual('No changes.')
   })
 
   test('renders correctly when changes exist', async () => {
-    const {lastFrame} = render(<GitDiff baselineContent="hello\n" updatedContent="world\n" />)
+    const gitDiff = {
+      baselineContent: 'hello\n',
+      updatedContent: 'world\n',
+    }
+
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "  @@ -1 +1 @@
@@ -26,7 +36,12 @@ describe('GitDiff', async () => {
   })
 
   test('renders correctly when changes exist and are several lines long', async () => {
-    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
+    const gitDiff = {
+      baselineContent: 'hello\nworld\n',
+      updatedContent: 'world\nhello\n',
+    }
+
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "  @@ -1,2 +1,2 @@
@@ -37,7 +52,12 @@ describe('GitDiff', async () => {
   })
 
   test('displays color correctly', async () => {
-    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
+    const gitDiff = {
+      baselineContent: 'hello\nworld\n',
+      updatedContent: 'world\nhello\n',
+    }
+
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(lastFrame()).toMatchInlineSnapshot(`
       "\u001b[36m  @@ -1,2 +1,2 @@\u001b[m
@@ -49,7 +69,12 @@ describe('GitDiff', async () => {
 
   test('respects no-color mode', async () => {
     vi.stubGlobal('process', {...process, env: {...process.env, FORCE_COLOR: '0'}})
-    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello\n" />)
+    const gitDiff = {
+      baselineContent: 'hello\nworld\n',
+      updatedContent: 'world\nhello\n',
+    }
+
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(lastFrame()!).toMatchInlineSnapshot(`
       "  @@ -1,2 +1,2 @@
@@ -66,13 +91,19 @@ describe('GitDiff', async () => {
         world
       + hello"
     `
+
+    const gitDiff = {
+      baselineContent: 'hello\nworld\n',
+      updatedContent: 'world\nhello',
+    }
+
     // Removing a newline
 
-    const {lastFrame} = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello" />)
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
 
-    const lastFrame2 = render(<GitDiff baselineContent="hello\nworld\n" updatedContent="world\nhello" />).lastFrame
+    const lastFrame2 = render(<GitDiff gitDiff={gitDiff} />).lastFrame
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
   })
@@ -97,7 +128,13 @@ sit
 amet
 foo
 qux`
-    const {lastFrame} = render(<GitDiff baselineContent={baselineContent} updatedContent={updatedContent} />)
+
+    const gitDiff = {
+      baselineContent,
+      updatedContent,
+    }
+
+    const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "  @@ -1,3 +1,3 @@

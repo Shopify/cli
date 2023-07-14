@@ -1,33 +1,28 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
-import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
-import {GitDiff, GitDiffProps} from './GitDiff.js'
+import {InlineToken, LinkToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {GitDiff, GitDiffProps} from './Prompts/GitDiff.js'
+import {InfoMessage, InfoMessageProps} from './Prompts/InfoMessage.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {ReactElement, useCallback, useLayoutEffect, useState} from 'react'
-import {Box, measureElement, Text, useApp, useStdout, TextProps} from 'ink'
+import {Box, measureElement, Text, useApp, useStdout} from 'ink'
 import figures from 'figures'
 import ansiEscapes from 'ansi-escapes'
-
-export interface InfoMessage {
-  title: {
-    color?: TextProps['color']
-    text: TokenItem<Exclude<InlineToken, UserInputToken | LinkToken>>
-  }
-  body: TokenItem
-}
 
 export interface SelectPromptProps<T> {
   message: TokenItem<Exclude<InlineToken, LinkToken>>
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
-  gitDiff?: GitDiffProps
+  gitDiff?: GitDiffProps['gitDiff']
   defaultValue?: T
   abortSignal?: AbortSignal
-  infoMessage?: InfoMessage
+  infoMessage?: InfoMessageProps['message']
 }
+
+const SELECT_INPUT_FOOTER_HEIGHT = 4
 
 // eslint-disable-next-line react/function-component-definition
 function SelectPrompt<T>({
@@ -68,7 +63,7 @@ function SelectPrompt<T>({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - 4
+      const newAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }
@@ -119,16 +114,9 @@ function SelectPrompt<T>({
             flexDirection="column"
             gap={1}
           >
-            {infoMessage ? (
-              <Box flexDirection="column" gap={1}>
-                <Text color={infoMessage.title.color}>
-                  <TokenizedText item={infoMessage.title.text} />
-                </Text>
-                <TokenizedText item={infoMessage.body} />
-              </Box>
-            ) : null}
+            {infoMessage ? <InfoMessage message={infoMessage} /> : null}
             {infoTable ? <InfoTable table={infoTable} /> : null}
-            {gitDiff ? <GitDiff {...gitDiff} /> : null}
+            {gitDiff ? <GitDiff gitDiff={gitDiff} /> : null}
           </Box>
         ) : null}
       </Box>

@@ -2,7 +2,8 @@ import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.j
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {TokenizedText} from './TokenizedText.js'
-import {InfoMessage} from './SelectPrompt.js'
+import {InfoMessage, InfoMessageProps} from './Prompts/InfoMessage.js'
+import {GitDiff, GitDiffProps} from './Prompts/GitDiff.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -27,7 +28,8 @@ export interface AutocompletePromptProps<T> {
   hasMorePages?: boolean
   search: (term: string) => Promise<SearchResults<T>>
   abortSignal?: AbortSignal
-  infoMessage?: InfoMessage
+  infoMessage?: InfoMessageProps['message']
+  gitDiff?: GitDiffProps['gitDiff']
 }
 
 enum PromptState {
@@ -50,6 +52,7 @@ function AutocompletePrompt<T>({
   hasMorePages: initialHasMorePages = false,
   abortSignal,
   infoMessage,
+  gitDiff,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
@@ -167,56 +170,52 @@ function AutocompletePrompt<T>({
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
-      <Box ref={promptAreaRef}>
-        <Box marginRight={2}>
-          <Text>?</Text>
-        </Box>
-        <TokenizedText item={messageWithPunctuation(message)} />
-        {promptState !== PromptState.Submitted && canSearch ? (
-          <Box marginLeft={3}>
-            <TextInput
-              value={searchTerm}
-              onChange={(term) => {
-                setSearchTerm(term)
+      <Box ref={promptAreaRef} flexDirection="column">
+        <Box>
+          <Box marginRight={2}>
+            <Text>?</Text>
+          </Box>
+          <TokenizedText item={messageWithPunctuation(message)} />
+          {promptState !== PromptState.Submitted && canSearch ? (
+            <Box marginLeft={3}>
+              <TextInput
+                value={searchTerm}
+                onChange={(term) => {
+                  setSearchTerm(term)
 
-                if (term.length > 0) {
-                  debounceSearch(term)
-                } else {
-                  debounceSearch.cancel()
-                  setPromptState(PromptState.Idle)
-                  setSearchResults(choices)
-                }
-              }}
-              placeholder="Type to search..."
-            />
+                  if (term.length > 0) {
+                    debounceSearch(term)
+                  } else {
+                    debounceSearch.cancel()
+                    setPromptState(PromptState.Idle)
+                    setSearchResults(choices)
+                  }
+                }}
+                placeholder="Type to search..."
+              />
+            </Box>
+          ) : null}
+        </Box>
+
+        {(infoTable || infoMessage || gitDiff) && promptState !== PromptState.Submitted ? (
+          <Box
+            marginTop={1}
+            marginLeft={3}
+            paddingLeft={2}
+            borderStyle="bold"
+            borderLeft
+            borderRight={false}
+            borderTop={false}
+            borderBottom={false}
+            flexDirection="column"
+            gap={1}
+          >
+            {infoMessage ? <InfoMessage message={infoMessage} /> : null}
+            {infoTable ? <InfoTable table={infoTable} /> : null}
+            {gitDiff ? <GitDiff gitDiff={gitDiff} /> : null}
           </Box>
         ) : null}
       </Box>
-
-      {(infoTable || infoMessage) && promptState !== PromptState.Submitted ? (
-        <Box
-          marginTop={1}
-          marginLeft={3}
-          paddingLeft={2}
-          borderStyle="bold"
-          borderLeft
-          borderRight={false}
-          borderTop={false}
-          borderBottom={false}
-          flexDirection="column"
-          gap={1}
-        >
-          {infoMessage ? (
-            <Box flexDirection="column" gap={1}>
-              <Text color={infoMessage.title.color}>
-                <TokenizedText item={infoMessage.title.text} />
-              </Text>
-              <TokenizedText item={infoMessage.body} />
-            </Box>
-          ) : null}
-          {infoTable ? <InfoTable table={infoTable} /> : null}
-        </Box>
-      ) : null}
 
       {promptState === PromptState.Submitted ? (
         <Box>
