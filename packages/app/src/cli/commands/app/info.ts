@@ -41,7 +41,6 @@ export default class AppInfo extends Command {
         format: (flags.json ? 'json' : 'text') as Format,
         webEnv: flags['web-env'],
         configName: flags.config,
-        commandConfig: this.config,
       }),
     )
     if (app.errors) process.exit(2)

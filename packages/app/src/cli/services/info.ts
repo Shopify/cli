@@ -15,13 +15,11 @@ import {
   stringifyMessage,
   getOutputUpdateCLIReminder,
 } from '@shopify/cli-kit/node/output'
-import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
   format: Format
-  commandConfig: Config
   configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
@@ -82,7 +80,6 @@ class AppInfo {
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
-      commandConfig: this.options.commandConfig,
       promptLinkingApp: false,
     })
 

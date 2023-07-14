@@ -569,8 +569,8 @@ export async function getAppContext({
   reset: boolean
   directory: string
   token: string
-  commandConfig: Config
   configName?: string
+  commandConfig?: Config
   promptLinkingApp?: boolean
 }): Promise<AppContext> {
   const previousCachedInfo = getCachedAppInfo(directory)
@@ -579,7 +579,11 @@ export async function getAppContext({
 
   // if this is the first time we are setting up this app, or
   // if we had config-as-code enabled and we're resetting
-  if (promptLinkingApp && (previousCachedInfo === undefined || (previousCachedInfo.configFile && reset))) {
+  if (
+    promptLinkingApp &&
+    commandConfig &&
+    (previousCachedInfo === undefined || (previousCachedInfo.configFile && reset))
+  ) {
     await link({directory, commandConfig})
   }
 
