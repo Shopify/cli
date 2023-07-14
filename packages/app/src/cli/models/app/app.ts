@@ -16,12 +16,20 @@ const LegacyAppSchema = zod
   })
   .strict()
 
+// adding http or https presence and absence of new lines to url validation
+const validateUrl = (zodType: zod.ZodString) => {
+  return zodType
+    .url()
+    .refine((value) => Boolean(value.match(/^(https?:\/\/)/)), {message: 'Invalid url'})
+    .refine((value) => !value.includes('\n'), {message: 'Invalid url'})
+}
+
 const AppSchema = zod
   .object({
-    name: zod.string(),
-    api_contact_email: zod.string(),
+    name: zod.string().max(30),
+    api_contact_email: zod.string().email(),
     client_id: zod.string(),
-    application_url: zod.string(),
+    application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),
     access_scopes: zod
       .object({
@@ -31,22 +39,22 @@ const AppSchema = zod
       .optional(),
     auth: zod
       .object({
-        redirect_urls: zod.array(zod.string()),
+        redirect_urls: zod.array(validateUrl(zod.string())),
       })
       .optional(),
     webhooks: zod.object({
       api_version: zod.string(),
       privacy_compliance: zod
         .object({
-          customer_deletion_url: zod.string(),
-          customer_data_request_url: zod.string(),
-          shop_deletion_url: zod.string(),
+          customer_deletion_url: validateUrl(zod.string()),
+          customer_data_request_url: validateUrl(zod.string()),
+          shop_deletion_url: validateUrl(zod.string()),
         })
         .optional(),
     }),
     app_proxy: zod
       .object({
-        url: zod.string(),
+        url: validateUrl(zod.string()),
         subpath: zod.string(),
         prefix: zod.string(),
       })
@@ -58,7 +66,7 @@ const AppSchema = zod
       .optional(),
     app_preferences: zod
       .object({
-        url: zod.string(),
+        url: validateUrl(zod.string().max(255)),
       })
       .optional(),
     build: zod

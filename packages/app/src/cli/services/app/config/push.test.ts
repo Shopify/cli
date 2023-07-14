@@ -256,7 +256,7 @@ describe('pushConfig', () => {
     app.configuration = {
       ...app.configuration,
       app_proxy: {
-        url: 'foo',
+        url: 'https://foo/',
         subpath: 'foo',
         prefix: 'foo',
       },
@@ -297,7 +297,7 @@ describe('pushConfig', () => {
       appProxy: {
         proxySubPath: 'foo',
         proxySubPathPrefix: 'foo',
-        proxyUrl: 'foo',
+        proxyUrl: 'https://foo/',
       },
     })
 
