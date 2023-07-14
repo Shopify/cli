@@ -464,11 +464,14 @@ type ConfigurationLoadResultMetadata = {
   | {
       usesLinkedConfig: true
       name: string
-      gitTracked: boolean
+      gitTracked: boolean | undefined
       source: LinkedConfigurationSource
       usesCliManagedUrls?: boolean
     }
 )
+
+// don't wait longer than this for `git-ignore` to finish
+const GIT_IGNORE_TIMEOUT_MS = 500
 
 class AppConfigurationLoader {
   private directory: string
@@ -499,13 +502,10 @@ class AppConfigurationLoader {
     }
 
     if (isCurrentAppSchema(configuration)) {
-      let gitTracked = false
-      try {
-        gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch {
-        // leave as false
-      }
+      const gitTracked = await resolvePromiseOrUndefinedWithATimeout(async () => {
+        const isIgnored = (await checkIfIgnoredInGitRepository(appDirectory, [configurationPath])).length > 0
+        return !isIgnored
+      }, GIT_IGNORE_TIMEOUT_MS)
 
       configurationLoadResultMetadata = {
         ...configurationLoadResultMetadata,
@@ -601,6 +601,47 @@ class AppConfigurationLoader {
 
   abort<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
     throw new AbortError(errorMessage)
+  }
+}
+
+/**
+ * Runs a promise, racing it against a timeout to cut short execution.
+ *
+ * Any errors or promise rejections are swallowed and replaced with undefined
+ *
+ * @param getActionPromise - function returning a promise for the work you want to run
+ * @param timeoutMs - timeout in ms to race the work against
+ * @returns the result of the given action, or undefined, in at most `timeoutMs` milliseconds
+ */
+async function resolvePromiseOrUndefinedWithATimeout<T>(
+  getActionPromise: () => Promise<T>,
+  timeoutMs = 500,
+): Promise<T | undefined> {
+  const actionPromise = (async () => {
+    let actionResult
+    try {
+      actionResult = await getActionPromise()
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // leave as-is
+    }
+    return actionResult
+  })()
+
+  const timeoutPromise = new Promise<T>((_resolve, reject) => {
+    const id = setTimeout(() => {
+      clearTimeout(id)
+      reject(new Error('Operation timed out'))
+    }, timeoutMs)
+  })
+
+  try {
+    const result = await Promise.race([actionPromise, timeoutPromise])
+    return result
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // we'd only hit this if both promises fail, happy to return with an undefined
+    return undefined
   }
 }
 

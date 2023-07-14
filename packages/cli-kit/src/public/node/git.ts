@@ -29,6 +29,7 @@ export async function initializeGitRepository(directory: string, initialBranch =
  *
  * @param directory - The absolute path to the directory containing the files.
  * @param files - The list of files to check against.
+ * @returns A list of the files that are ignored by the .gitignore.
  */
 export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
