@@ -8,7 +8,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function fetchAppFromConfigOrSelect(app: AppConfigurationInterface): Promise<OrganizationApp> {
   let organizationApp
-  if (app?.configuration && isCurrentAppSchema(app.configuration)) {
+  if (isCurrentAppSchema(app.configuration)) {
     const token = await ensureAuthenticatedPartners()
     const apiKey = app.configuration.client_id
     organizationApp = await fetchAppFromApiKey(apiKey, token)
