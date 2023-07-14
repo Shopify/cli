@@ -17,7 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
-import {setAppInfo} from './local-storage.js'
+import {setCachedAppInfo} from './local-storage.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -32,7 +32,6 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -243,7 +242,6 @@ async function dev(options: DevOptions) {
         token,
         extensions: draftableExtensions,
         remoteExtensions,
-        specifications,
         unifiedDeployment,
       }),
     )
@@ -311,7 +309,7 @@ async function dev(options: DevOptions) {
 }
 
 function setPreviousAppId(directory: string, apiKey: string) {
-  setAppInfo({directory, previousAppId: apiKey})
+  setCachedAppInfo({directory, previousAppId: apiKey})
 }
 
 function isWebType(web: Web, type: WebType): boolean {
@@ -473,7 +471,6 @@ interface DevDraftableExtensionsOptions {
   remoteExtensions: {
     [key: string]: string
   }
-  specifications: ExtensionSpecification[]
   unifiedDeployment: boolean
 }
 
@@ -484,7 +481,6 @@ export function devDraftableExtensionTarget({
   apiKey,
   token,
   remoteExtensions,
-  specifications,
   unifiedDeployment,
 }: DevDraftableExtensionsOptions) {
   return {
@@ -522,7 +518,6 @@ export function devDraftableExtensionTarget({
                 stdout,
                 stderr,
                 signal,
-                specifications,
                 unifiedDeployment,
               }),
             ]

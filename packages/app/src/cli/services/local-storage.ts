@@ -27,7 +27,7 @@ function appLocalStorage() {
   return _appLocalStorageInstance
 }
 
-export function getAppInfo(
+export function getCachedAppInfo(
   directory: string,
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): CachedAppInfo | undefined {
@@ -36,18 +36,16 @@ export function getAppInfo(
   return config.get(normalized)
 }
 
-export function clearAppInfo(directory: string, config: LocalStorage<AppLocalStorageSchema> = appLocalStorage()): void {
+export function clearCachedAppInfo(
+  directory: string,
+  config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
+): void {
   const normalized = normalizePath(directory)
   outputDebug(outputContent`Clearing app information for directory ${outputToken.path(normalized)}...`)
   config.delete(normalized)
 }
 
-export function clearAllAppInfo(config: LocalStorage<AppLocalStorageSchema> = appLocalStorage()): void {
-  outputDebug(outputContent`Clearing all app information...`)
-  config.clear()
-}
-
-export function setAppInfo(
+export function setCachedAppInfo(
   options: CachedAppInfo,
   config: LocalStorage<AppLocalStorageSchema> = appLocalStorage(),
 ): void {
