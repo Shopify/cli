@@ -1,11 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
-import {
-  renderAutocompletePrompt,
-  renderConfirmationPrompt,
-  renderSelectPrompt,
-  renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -98,15 +93,11 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
   })
 }
 
-export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<string> {
-  return renderSelectPrompt({
+export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
+  return renderConfirmationPrompt({
     message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
-    choices: [
-      {label: 'Always by default', value: 'always'},
-      {label: 'Yes, this time', value: 'yes'},
-      {label: 'No, not now', value: 'no'},
-      {label: `Never, don't ask again`, value: 'never'},
-    ],
+    confirmationMessage: "Yes, update my app's URL automatically",
+    cancellationMessage: "No, I'll update my app's URL manually",
     infoTable: {
       'Current app URL': [currentAppUrl],
       'Current redirect URLs': currentRedirectUrls,

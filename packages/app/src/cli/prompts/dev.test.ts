@@ -10,12 +10,7 @@ import {
 import {Organization, OrganizationStore} from '../models/organization.js'
 import {testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {
-  renderAutocompletePrompt,
-  renderConfirmationPrompt,
-  renderSelectPrompt,
-  renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -211,7 +206,7 @@ describe('createAsNewAppPrompt', () => {
 describe('updateURLsPrompt', () => {
   test('asks about the URL update and shows 4 different options', async () => {
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await updateURLsPrompt('http://current-url', [
@@ -220,19 +215,15 @@ describe('updateURLsPrompt', () => {
     ])
 
     // Then
-    expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
+    expect(got).toEqual(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
       infoTable: {
         'Current app URL': ['http://current-url'],
         'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
       },
-      choices: [
-        {label: 'Always by default', value: 'always'},
-        {label: 'Yes, this time', value: 'yes'},
-        {label: 'No, not now', value: 'no'},
-        {label: `Never, don't ask again`, value: 'never'},
-      ],
+      confirmationMessage: "Yes, update my app's URL automatically",
+      cancellationMessage: "No, I'll update my app's URL manually",
     })
   })
 })
