@@ -27,7 +27,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -349,7 +349,10 @@ class AppLoader {
           if (!restConfig.handle) {
             // Handle is required for unified config extensions.
             return this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${configurationPath}`,
+              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+                appDirectory,
+                configurationPath,
+              )}`,
               undefined,
               configurationPath,
             )
@@ -360,6 +363,14 @@ class AppLoader {
       } else if (type) {
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
+      } else {
+        return this.abortOrReport(
+          outputContent`Invalid extension type at "${outputToken.path(
+            relativePath(appDirectory, configurationPath),
+          )}". Please specify a type.`,
+          undefined,
+          configurationPath,
+        )
       }
     })
 
