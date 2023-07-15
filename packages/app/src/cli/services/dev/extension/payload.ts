@@ -59,7 +59,7 @@ export async function getUIExtensionPayload(
     // @ts-ignore
     version: renderer?.version,
     title: extension.configuration.name,
-    handle: extension.configuration.handle || extension.localIdentifier,
+    handle: extension.handle,
     name: extension.configuration.name,
     apiVersion: extension.configuration.api_version,
     approvalScopes: options.grantedScopes,
