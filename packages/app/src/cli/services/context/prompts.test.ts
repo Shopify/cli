@@ -1,6 +1,6 @@
 import {deployConfirmationPrompt} from './prompts.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {InfoTableSection, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -97,7 +97,12 @@ describe('deployConfirmationPrompt', () => {
     // Add dashboard extension to the create section
     expectedContent.infoTable[0]?.items?.splice(1, 1)
     expectedContent.infoTable[0]?.items?.splice(2, 1)
-    expectedContent.infoTable[0]?.items?.splice(1, 0, ['dashboard_title2', {subdued: '(new)'}], ['id1', {subdued: '(new)'}])
+    expectedContent.infoTable[0]?.items?.splice(
+      1,
+      0,
+      ['dashboard_title2', {subdued: '(new)'}],
+      ['id1', {subdued: '(new)'}],
+    )
     expect(response).toBe(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
   })
@@ -234,7 +239,7 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
         items: ['title3', 'dashboard_title1'],
         bullet: '-',
       },
-    ],
+    ] as InfoTableSection[],
     message: 'question',
   }
 }
