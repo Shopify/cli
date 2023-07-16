@@ -144,20 +144,20 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
     confirmationMessage,
     infoTable: [
       {
-        header: 'Add',
-        items: ['id1'],
+        header: 'Includes',
+        items: [
+          ['id1', {subdued: '(new)'}],
+          'extension1',
+          'extension2',
+          ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+        ],
+        bullet: '+',
       },
       {
-        header: 'Update',
-        items: ['extension1', 'extension2'],
-      },
-      {
-        header: `Included from Partner dashboard`,
-        items: ['dashboard_title2'],
-      },
-      {
-        header: 'Missing locally',
+        header: 'Removes',
         items: ['remote_title1'],
+        bullet: '-',
+        helperText: 'This can permanently delete app user data.',
       },
     ],
     message: 'question',
