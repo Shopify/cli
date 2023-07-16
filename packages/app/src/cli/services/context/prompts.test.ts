@@ -143,7 +143,7 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
     confirmationMessage,
     infoTable: [
       {
-        header: 'Includes',
+        header: 'Includes:',
         items: [
           ['id1', {subdued: '(new)'}],
           'extension1',
@@ -153,7 +153,7 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
         bullet: '+',
       },
       {
-        header: 'Removes',
+        header: 'Removes:',
         items: ['remote_title1'],
         bullet: '-',
         helperText: 'This can permanently delete app user data.',
@@ -219,7 +219,7 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
     confirmationMessage,
     infoTable: [
       {
-        header: 'Includes',
+        header: 'Includes:',
         items: [
           ['extension1', {subdued: '(new)'}],
           ['id1', {subdued: '(new)'}],
@@ -229,7 +229,7 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
         bullet: '+',
       },
       {
-        header: 'Removed',
+        header: 'Removes:',
         helperText: 'This can permanently delete app user data.',
         items: ['title3', 'dashboard_title1'],
         bullet: '-',

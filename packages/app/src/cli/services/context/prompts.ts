@@ -103,12 +103,12 @@ function buildLegacyDeploymentInfoPrompt({
   ]
 
   if (included.length > 0) {
-    infoTable.push({header: 'Includes', items: included, bullet: '+'})
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
   if (onlyRemote.length > 0) {
     infoTable.push({
-      header: 'Removes',
+      header: 'Removes:',
       items: onlyRemote.map((source) => source.title),
       bullet: '-',
       helperText: 'This can permanently delete app user data.',
@@ -158,7 +158,7 @@ async function buildUnifiedDeploymentInfoPrompt(
     ...dashboardOnlyFinal.map((source) => [source.title, {subdued: '(from Partner Dashboard)'}]),
   ]
   if (included.length > 0) {
-    infoTable.push({header: 'Includes', items: included, bullet: '+'})
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
   const localRegistrationAndDashboard = [
@@ -170,7 +170,7 @@ async function buildUnifiedDeploymentInfoPrompt(
     .map((module) => module.registrationTitle)
   if (onlyRemote.length > 0) {
     const missingLocallySection: InfoTableSection = {
-      header: 'Removed',
+      header: 'Removes:',
       helperText: 'This can permanently delete app user data.',
       items: onlyRemote,
       bullet: '-',
