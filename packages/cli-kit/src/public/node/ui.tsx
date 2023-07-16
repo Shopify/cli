@@ -541,6 +541,29 @@ export interface RenderDangerousConfirmationPromptOptions extends RenderTextProm
   confirmation: string
 }
 
+/**
+ * Renders a dangerous confirmation prompt to the console, forcing the user to
+ * type a confirmation string to proceed.
+ * @example
+ * ?  Release a new version of nightly-app-2023-06-19?
+ *
+ *    ┃  Includes:
+ *    ┃  + web-px (new)
+ *    ┃  + sub-ui-ext
+ *    ┃  + theme-app-ext
+ *    ┃  + paymentify (from Partner Dashboard)
+ *    ┃
+ *    ┃  Removes:
+ *    ┃  - prod-discount-fun
+ *    ┃
+ *    ┃  This can permanently delete app user data.
+ *
+ *    Type nightly-app-2023-06-19 to confirm, or press Escape
+ *    to cancel.
+ * >   
+ *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+ *
+ */
 export async function renderDangerousConfirmationPrompt({
   confirmation,
   renderOptions,
