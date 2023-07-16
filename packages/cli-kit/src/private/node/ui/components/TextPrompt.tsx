@@ -1,13 +1,13 @@
 import {TextInput} from './TextInput.js'
-import {InlineToken, LinkToken, TokenItem, TokenizedText, UserInputToken} from './TokenizedText.js'
+import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
-import {Box, useApp, useInput, Text, TextProps} from 'ink'
+import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 
 export interface TextPromptProps {
@@ -99,6 +99,8 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     }
   })
 
+  const completed = submitted && !error
+
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} width={twoThirds}>
       <Box>
@@ -107,92 +109,115 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {(infoTable || finalInstruction) && (error || !submitted) ? (
-        <Box
-          flexDirection="column"
-          gap={1}
-          marginTop={1}
-          marginLeft={3}
-        >
-          <Box
-            paddingLeft={2}
-            borderStyle="bold"
-            borderLeft
-            borderRight={false}
-            borderTop={false}
-            borderBottom={false}
-            flexDirection="column"
-            gap={1}
-          >
-            {infoTable ? <InfoTable table={infoTable} /> : null}
-          </Box>
-          <Box>
-            {finalInstruction ? <TokenizedText item={finalInstruction} /> : null}
-          </Box>
-        </Box>
-      ) : null}
-      {cancelled ? (
-        <Box>
-          <Box marginRight={2}>
-            <Text color="red">{figures.cross}</Text>
-          </Box>
-
-          <Box flexGrow={1}>
-            <Text color="red">Cancelled</Text>
-          </Box>
-        </Box>
-      ) : submitted && !error ? (
-        <Box>
-          <Box marginRight={2}>
-            <Text color="cyan">{figures.tick}</Text>
-          </Box>
-
-          <Box flexGrow={1}>
-            <Text color="cyan" dimColor={displayEmptyValue}>
-              {successMessage ?? (password ? '*'.repeat(answer.length) : displayedAnswer)}
-            </Text>
-          </Box>
-        </Box>
+      {completed ? (
+        <CompletedPrompt {...{cancelled, displayEmptyValue, successMessage, password, answer, displayedAnswer}} />
       ) : (
-        <Box flexDirection="column" width={oneThird}>
-          <Box>
-            <Box marginRight={2}>
-              <Text color={color}>{`>`}</Text>
-            </Box>
-            <Box flexGrow={1}>
-              <TextInput
-                value={answer}
-                onChange={(answer) => {
-                  setAnswer(answer)
-                  setSubmitted(false)
-                }}
-                defaultValue={defaultValue}
-                color={color}
-                password={password}
-              />
-            </Box>
-          </Box>
-          <Box marginLeft={3}>
-            <Text color={color}>{underline}</Text>
-          </Box>
-          {shouldShowError ? (
-            <Box marginLeft={3}>
-              <Text color={color}><TokenizedText item={error} /></Text>
+        <>
+          {infoTable || finalInstruction ? (
+            <Box flexDirection="column" gap={1} marginTop={1} marginLeft={3}>
+              <Box
+                paddingLeft={2}
+                borderStyle="bold"
+                borderLeft
+                borderRight={false}
+                borderTop={false}
+                borderBottom={false}
+                flexDirection="column"
+                gap={1}
+              >
+                {infoTable ? <InfoTable table={infoTable} /> : null}
+              </Box>
+              <Box>{finalInstruction ? <TokenizedText item={finalInstruction} /> : null}</Box>
             </Box>
           ) : null}
-        </Box>
+          <Box flexDirection="column" width={oneThird}>
+            <Box>
+              <Box marginRight={2}>
+                <Text color={color}>{`>`}</Text>
+              </Box>
+              <Box flexGrow={1}>
+                <TextInput
+                  value={answer}
+                  onChange={(answer) => {
+                    setAnswer(answer)
+                    setSubmitted(false)
+                  }}
+                  defaultValue={defaultValue}
+                  color={color}
+                  password={password}
+                />
+              </Box>
+            </Box>
+            <Box marginLeft={3}>
+              <Text color={color}>{underline}</Text>
+            </Box>
+            {shouldShowError ? (
+              <Box marginLeft={3}>
+                <Text color={color}>
+                  <TokenizedText item={error} />
+                </Text>
+              </Box>
+            ) : null}
+          </Box>
+          {previewValue && !submitted ? (
+            <Box marginLeft={3}>
+              <Text>
+                <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
+                <Text color={color}>{previewValue(answerOrDefault)}</Text>
+                <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
+              </Text>
+            </Box>
+          ) : null}
+        </>
       )}
-      {previewValue && !submitted ? (
-        <Box marginLeft={3}>
-          <Text>
-            <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
-            <Text color={color}>{previewValue(answerOrDefault)}</Text>
-            <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
-          </Text>
-        </Box>
-      ) : null}
     </Box>
   )
+}
+
+interface CompletedPromptProps {
+  cancelled: boolean
+  displayEmptyValue: boolean
+  successMessage?: string
+  password?: boolean
+  answer: string
+  displayedAnswer: string
+}
+
+const CompletedPrompt: FunctionComponent<CompletedPromptProps> = ({
+  cancelled,
+  displayEmptyValue,
+  successMessage,
+  password,
+  answer,
+  displayedAnswer,
+}) => {
+  if (cancelled) {
+    return (
+      <Box>
+        <Box marginRight={2}>
+          <Text color="red">{figures.cross}</Text>
+        </Box>
+
+        <Box flexGrow={1}>
+          <Text color="red">Cancelled</Text>
+        </Box>
+      </Box>
+    )
+  } else {
+    return (
+      <Box>
+        <Box marginRight={2}>
+          <Text color="cyan">{figures.tick}</Text>
+        </Box>
+
+        <Box flexGrow={1}>
+          <Text color="cyan" dimColor={displayEmptyValue}>
+            {successMessage ?? (password ? '*'.repeat(answer.length) : displayedAnswer)}
+          </Text>
+        </Box>
+      </Box>
+    )
+  }
 }
 
 export {TextPrompt}

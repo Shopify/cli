@@ -14,7 +14,6 @@ import {
 import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
-import figures from './figures.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -542,21 +541,20 @@ export interface RenderDangerousConfirmationPromptOptions extends RenderTextProm
   confirmation: string
 }
 
-export async function renderDangerousConfirmationPrompt({confirmation, renderOptions, ...props}: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
+export async function renderDangerousConfirmationPrompt({
+  confirmation,
+  renderOptions,
+  ...props
+}: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
   throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
 
-  const displayString = outputContent`${outputToken.yellow(confirmation)}`.value
-  props = {
-    finalInstruction: [
-      'Type',
-      {userInput: confirmation},
-      'to confirm, or press Escape to cancel.',
-    ],
+  const finalProps = {
+    finalInstruction: ['Type', {userInput: confirmation}, 'to confirm, or press Escape to cancel.'],
     exitOnEsc: true,
-    validate : (value) => {
+    validate: (value: string) => {
       return value === confirmation ? undefined : ['Value must be exactly', {userInput: confirmation}]
     },
     successMessage: 'Confirmed',
@@ -565,7 +563,7 @@ export async function renderDangerousConfirmationPrompt({confirmation, renderOpt
 
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
-    render(<TextPrompt {...props} onSubmit={(value: string | undefined) => resolve(Boolean(value))} />, {
+    render(<TextPrompt {...finalProps} onSubmit={(value: string | undefined) => resolve(Boolean(value))} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })

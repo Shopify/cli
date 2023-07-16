@@ -191,7 +191,12 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
     infoTable: [
       {
         header: 'Includes',
-        items: ['My subscription extension', 'Order discount function', 'Subscription cancelled trigger', 'Add subscription action'],
+        items: [
+          'My subscription extension',
+          'Order discount function',
+          'Subscription cancelled trigger',
+          'Add subscription action',
+        ],
         bullet: '+',
       },
       {
