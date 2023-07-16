@@ -13,16 +13,13 @@ import figures from 'figures'
 export interface TextPromptProps {
   message: string
   infoTable?: InfoTableProps['table']
-  finalInstruction?: {
-    color?: TextProps['color']
-    text: TokenItem<Exclude<InlineToken, UserInputToken | LinkToken>>
-  }
+  finalInstruction?: TokenItem<InlineToken>
   exitOnEsc?: boolean
   successMessage?: string
   onSubmit: (value: string | undefined) => void
   defaultValue?: string
   password?: boolean
-  validate?: (value: string) => string | undefined
+  validate?: (value: string) => TokenItem<InlineToken> | undefined
   allowEmpty?: boolean
   emptyDisplayedValue?: string
   abortSignal?: AbortSignal
@@ -53,7 +50,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   }
 
   const validateAnswer = useCallback(
-    (value: string): string | undefined => {
+    (value: string): TokenItem<InlineToken> | undefined => {
       if (validate) {
         return validate(value)
       }
@@ -73,7 +70,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const {exit: unmountInk} = useApp()
   const [submitted, setSubmitted] = useState(false)
   const [cancelled, setCancelled] = useState(false)
-  const [error, setError] = useState<string | undefined>(undefined)
+  const [error, setError] = useState<TokenItem<InlineToken> | undefined>(undefined)
   const shouldShowError = submitted && error
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
@@ -130,11 +127,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
             {infoTable ? <InfoTable table={infoTable} /> : null}
           </Box>
           <Box>
-            {finalInstruction ? (
-              <Text color={finalInstruction.color}>
-                {finalInstruction.text}
-              </Text>
-            ) : null}
+            {finalInstruction ? <TokenizedText item={finalInstruction} /> : null}
           </Box>
         </Box>
       ) : null}
@@ -184,7 +177,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           </Box>
           {shouldShowError ? (
             <Box marginLeft={3}>
-              <Text color={color}>{error}</Text>
+              <Text color={color}><TokenizedText item={error} /></Text>
             </Box>
           ) : null}
         </Box>

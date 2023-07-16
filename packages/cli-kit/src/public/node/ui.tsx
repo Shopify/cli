@@ -550,13 +550,14 @@ export async function renderDangerousConfirmationPrompt({confirmation, renderOpt
 
   const displayString = outputContent`${outputToken.yellow(confirmation)}`.value
   props = {
-    finalInstruction: {
-      color: 'red',
-      text: `${figures.warning} Type ${displayString} to confirm, or press Escape to cancel.`,
-    },
+    finalInstruction: [
+      'Type',
+      {userInput: confirmation},
+      'to confirm, or press Escape to cancel.',
+    ],
     exitOnEsc: true,
     validate : (value) => {
-      return value === confirmation ? undefined : `Value must be exactly ${displayString}`
+      return value === confirmation ? undefined : ['Value must be exactly', {userInput: confirmation}]
     },
     successMessage: 'Confirmed',
     ...props,
