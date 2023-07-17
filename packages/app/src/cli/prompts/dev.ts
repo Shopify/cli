@@ -96,8 +96,8 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
 export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
   return renderConfirmationPrompt({
     message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
-    confirmationMessage: "Yes, update my app's URL automatically",
-    cancellationMessage: "No, I'll update my app's URL manually",
+    confirmationMessage: 'Yes, automatically update',
+    cancellationMessage: 'No, never',
     infoTable: {
       'Current app URL': [currentAppUrl],
       'Current redirect URLs': currentRedirectUrls,

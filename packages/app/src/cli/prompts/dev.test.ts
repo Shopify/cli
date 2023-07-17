@@ -222,8 +222,8 @@ describe('updateURLsPrompt', () => {
         'Current app URL': ['http://current-url'],
         'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
       },
-      confirmationMessage: "Yes, update my app's URL automatically",
-      cancellationMessage: "No, I'll update my app's URL manually",
+      confirmationMessage: 'Yes, automatically update',
+      cancellationMessage: 'No, never',
     })
   })
 })
