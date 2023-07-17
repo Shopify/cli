@@ -81,7 +81,7 @@ describe('manualMatch: when all sources are matched', () => {
 
     // Then
     const expected: ManualMatchResult = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-a-2': 'UUID_A_2'},
       toCreate: [],
       onlyRemote: [],
     }
@@ -99,7 +99,7 @@ describe('manualMatch: when there are more local sources', () => {
 
     // Then
     const expected: ManualMatchResult = {
-      identifiers: {EXTENSION_A: 'UUID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toCreate: [EXTENSION_A_2],
       onlyRemote: [],
     }
@@ -125,7 +125,7 @@ describe('manualMatch: when there are more local sources and user selects to cre
 
     // Then
     const expected: ManualMatchResult = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_A_2'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-b': 'UUID_A_2'},
       toCreate: [EXTENSION_A_2],
       onlyRemote: [],
     }

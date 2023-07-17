@@ -108,14 +108,13 @@ describe('getAppIdentifiers', () => {
       // Given
       const uiExtension = await testUIExtension({
         directory: '/tmp/project/extensions/my-extension',
-        localIdentifier: 'my-extension',
         idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
       })
       const app = testApp({
         directory: tmpDir,
         dotenv: {
           path: joinPath(tmpDir, '.env'),
-          variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+          variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
         },
         allExtensions: [uiExtension],
       })
@@ -127,7 +126,7 @@ describe('getAppIdentifiers', () => {
 
       // Then
       expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['my-extension']).toEqual('BAR')
+      expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
     })
   })
 
@@ -136,7 +135,6 @@ describe('getAppIdentifiers', () => {
       // Given
       const uiExtension = await testUIExtension({
         directory: '/tmp/project/extensions/my-extension',
-        localIdentifier: 'my-extension',
         idEnvironmentVariableName: 'SHOPIFY_MY_EXTENSION_ID',
       })
       const app = testApp({
@@ -149,12 +147,12 @@ describe('getAppIdentifiers', () => {
         {
           app,
         },
-        {SHOPIFY_API_KEY: 'FOO', SHOPIFY_MY_EXTENSION_ID: 'BAR'},
+        {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
       )
 
       // Then
       expect(got.app).toEqual('FOO')
-      expect((got.extensions ?? {})['my-extension']).toEqual('BAR')
+      expect((got.extensions ?? {})['test-ui-extension']).toEqual('BAR')
     })
   })
 })

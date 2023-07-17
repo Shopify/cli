@@ -33,7 +33,7 @@ describe('themeExtensionArgs', async () => {
       '--extension-id',
       'extension ID',
       '--extension-title',
-      'my-extension',
+      'theme-extension-name',
       '--extension-type',
       'THEME_APP_EXTENSION',
 
