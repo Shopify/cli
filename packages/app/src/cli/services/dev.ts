@@ -485,8 +485,11 @@ export function devDraftableExtensionTarget({
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       // Functions will only be passed to this target if unified deployments are enabled
+      // ESBuild will take care of triggering an initial build & upload for the extensions with ESBUILD feature.
+      // For the rest we need to manually upload an initial draft.
+      const initialDraftExtensions = extensions.filter((ext) => !ext.isESBuildExtension)
       await Promise.all(
-        extensions.map(async (extension) => {
+        initialDraftExtensions.map(async (extension) => {
           await extension.build({app, stdout, stderr, useTasks: false, signal})
           const registrationId = remoteExtensions[extension.localIdentifier]
           if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
