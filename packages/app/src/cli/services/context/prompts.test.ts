@@ -1,6 +1,6 @@
 import {deployConfirmationPrompt} from './prompts.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {InfoTableSection, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -67,14 +67,14 @@ describe('deployConfirmationPrompt', () => {
     // Then
     // Add 'dashboard_title1' to the dashboar section
     const expectedContent = unifiedRenderConfirmationPromptContent('Yes, release this new version')
-    expectedContent.infoTable[2]?.items?.push('dashboard_title1')
+    expectedContent.infoTable[0]?.items?.push(['dashboard_title1', {subdued: '(from Partner Dashboard)'}])
     // Remove 'dashboard_title1' from the deleted section
-    expectedContent.infoTable[3]?.items?.splice(1, 1)
+    expectedContent.infoTable[1]?.items?.pop()
     expect(response).toBe(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
   })
 
-  test('when unified deployment mode and current dashboard extension registration and non dashboard active version include same extension we should not show it in the dashboard section', async () => {
+  test('when unified deployment mode and current dashboard extension registration and non dashboard active version include same extension we should show as new, not dashboard', async () => {
     // Given
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
@@ -94,11 +94,15 @@ describe('deployConfirmationPrompt', () => {
     // Then
     // Remove dashboard section
     const expectedContent = unifiedRenderConfirmationPromptContent('Yes, release this new version')
-    expectedContent.infoTable.splice(2, 1)
     // Add dashboard extension to the create section
     expectedContent.infoTable[0]?.items?.splice(1, 1)
-    expectedContent.infoTable[0]?.items?.push('dashboard_title2')
-    expectedContent.infoTable[0]?.items?.push('id1')
+    expectedContent.infoTable[0]?.items?.splice(2, 1)
+    expectedContent.infoTable[0]?.items?.splice(
+      1,
+      0,
+      ['dashboard_title2', {subdued: '(new)'}],
+      ['id1', {subdued: '(new)'}],
+    )
     expect(response).toBe(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith(expectedContent)
   })
@@ -144,20 +148,20 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
     confirmationMessage,
     infoTable: [
       {
-        header: 'Add',
-        items: ['id1'],
+        header: 'Includes:',
+        items: [
+          ['id1', {subdued: '(new)'}],
+          'extension1',
+          'extension2',
+          ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+        ],
+        bullet: '+',
       },
       {
-        header: 'Update',
-        items: ['extension1', 'extension2'],
-      },
-      {
-        header: `Included from Partner dashboard`,
-        items: ['dashboard_title2'],
-      },
-      {
-        header: 'Missing locally',
+        header: 'Removes:',
         items: ['remote_title1'],
+        bullet: '-',
+        helperText: 'This can permanently delete app user data.',
       },
     ],
     message: 'question',
@@ -220,24 +224,22 @@ function unifiedRenderConfirmationPromptContent(confirmationMessage = 'Yes, depl
     confirmationMessage,
     infoTable: [
       {
-        header: 'Add',
-        items: ['extension1', 'id1'],
+        header: 'Includes:',
+        items: [
+          ['extension1', {subdued: '(new)'}],
+          ['id1', {subdued: '(new)'}],
+          'extension2',
+          ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+        ],
+        bullet: '+',
       },
       {
-        header: 'Update',
-        items: ['extension2'],
-      },
-      {
-        header: `Included from Partner dashboard`,
-        items: ['dashboard_title2'],
-      },
-      {
-        header: 'Removed',
-        helperText: 'Will be removed for users when this version is released.',
-        color: 'red',
+        header: 'Removes:',
+        helperText: 'This can permanently delete app user data.',
         items: ['title3', 'dashboard_title1'],
+        bullet: '-',
       },
-    ],
+    ] as InfoTableSection[],
     message: 'question',
   }
 }
