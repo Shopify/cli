@@ -54,7 +54,7 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {name: ''} as AppInterface
+    return {configuration: {scopes: ''}} as AppInterface
   }
 }
 
