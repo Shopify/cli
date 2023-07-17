@@ -112,7 +112,9 @@ describe('TextPrompt', () => {
 
   test('submitting the value with a custom success message', async () => {
     const onSubmit = vi.fn()
-    const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" successMessage="Woot woot!" />)
+    const renderInstance = render(
+      <TextPrompt onSubmit={onSubmit} message="Test question" successMessage="Woot woot!" />,
+    )
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'A')
