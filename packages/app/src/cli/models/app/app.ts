@@ -249,6 +249,13 @@ export class App implements AppInterface {
   }
 }
 
+export class EmptyApp extends App {
+  constructor() {
+    const configuration = {scopes: '', extension_directories: []}
+    super('', '', '', 'npm', configuration, '', {}, [], [], false)
+  }
+}
+
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
 
 /**
