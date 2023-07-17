@@ -28,6 +28,10 @@ import {
   ListToken,
   TokenItem,
 } from '../../private/node/ui/components/TokenizedText.js'
+import {
+  DangerousConfirmationPrompt,
+  DangerousConfirmationPromptProps,
+} from '../../private/node/ui/components/DangerousConfirmationPrompt.js'
 import {SelectPrompt, SelectPromptProps, InfoMessage} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
@@ -537,8 +541,8 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   })
 }
 
-export interface RenderDangerousConfirmationPromptOptions extends RenderTextPromptOptions {
-  confirmation: string
+export interface RenderDangerousConfirmationPromptOptions extends Omit<DangerousConfirmationPromptProps, 'onSubmit'> {
+  renderOptions?: RenderOptions
 }
 
 /**
@@ -560,12 +564,11 @@ export interface RenderDangerousConfirmationPromptOptions extends RenderTextProm
  *
  *    Type nightly-app-2023-06-19 to confirm, or press Escape
  *    to cancel.
- * >   
+ * >
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
 export async function renderDangerousConfirmationPrompt({
-  confirmation,
   renderOptions,
   ...props
 }: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
@@ -574,19 +577,9 @@ export async function renderDangerousConfirmationPrompt({
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
 
-  const finalProps = {
-    finalInstruction: ['Type', {userInput: confirmation}, 'to confirm, or press Escape to cancel.'],
-    exitOnEsc: true,
-    validate: (value: string) => {
-      return value === confirmation ? undefined : ['Value must be exactly', {userInput: confirmation}]
-    },
-    successMessage: 'Confirmed',
-    ...props,
-  }
-
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
-    render(<TextPrompt {...finalProps} onSubmit={(value: string | undefined) => resolve(Boolean(value))} />, {
+    render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
