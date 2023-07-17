@@ -30,6 +30,7 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   availableLines?: number
   onSubmit?: (item: Item<T>) => void
+  inputFixedAreaRef?: React.RefObject<DOMElement>
 }
 
 export interface Item<T> {
@@ -140,6 +141,7 @@ function SelectInputInner<T>(
     morePagesMessage,
     availableLines = MAX_AVAILABLE_LINES,
     onSubmit,
+    inputFixedAreaRef,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
 ): JSX.Element | null {
@@ -281,25 +283,27 @@ function SelectInputInner<T>(
           ) : null}
         </Box>
 
-        {noItems ? (
-          <Box marginLeft={3}>
-            <Text dimColor>Try again with a different keyword.</Text>
-          </Box>
-        ) : (
-          <Box marginLeft={3} flexDirection="column">
-            <Text dimColor>
-              {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
-                itemsHaveKeys ? 'or a shortcut ' : ''
-              }to confirm.`}
-            </Text>
-            {hasMorePages ? (
-              <Text>
-                <Text bold>1-{items.length} of many</Text>
-                {morePagesMessage ? `  ${morePagesMessage}` : null}
+        <Box ref={inputFixedAreaRef}>
+          {noItems ? (
+            <Box marginLeft={3}>
+              <Text dimColor>Try again with a different keyword.</Text>
+            </Box>
+          ) : (
+            <Box marginLeft={3} flexDirection="column">
+              <Text dimColor>
+                {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
+                  itemsHaveKeys ? 'or a shortcut ' : ''
+                }to confirm.`}
               </Text>
-            ) : null}
-          </Box>
-        )}
+              {hasMorePages ? (
+                <Text>
+                  <Text bold>1-{items.length} of many</Text>
+                  {morePagesMessage ? `  ${morePagesMessage}` : null}
+                </Text>
+              ) : null}
+            </Box>
+          )}
+        </Box>
       </Box>
     )
   }
