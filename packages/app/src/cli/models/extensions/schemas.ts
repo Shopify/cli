@@ -32,18 +32,17 @@ export const ApiVersionSchema = zod.string()
 
 export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
+export const FieldSchema = zod.object({
+  key: zod.string().optional(),
+  name: zod.string().optional(),
+  description: zod.string().optional(),
+  required: zod.boolean().optional(),
+  type: zod.string(),
+  validations: zod.array(zod.any()).optional(),
+})
+
 export const SettingsSchema = zod.object({
-  fields: zod
-    .array(
-      zod.object({
-        key: zod.string().optional(),
-        name: zod.string().optional(),
-        description: zod.string().optional(),
-        required: zod.boolean().optional(),
-        type: zod.string(),
-      }),
-    )
-    .optional(),
+  fields: zod.array(FieldSchema).optional(),
 })
 
 export const HandleSchema = zod
@@ -54,6 +53,15 @@ export const HandleSchema = zod
   .regex(/^[a-zA-Z0-9-]*$/, 'Handle can only contain alphanumeric characters and hyphens')
   .refine((handle) => !handle.startsWith('-') && !handle.endsWith('-'), "Handle can't start or end with a hyphen")
   .refine((handle) => [...handle].some((char) => char !== '-'), "Handle can't be all hyphens")
+
+export const FlowReturnObject = SettingsSchema.extend({
+  description: zod.string().optional(),
+  key: zod.string(),
+})
+
+export const FlowReturnSchema = zod.object({
+  objects: zod.array(FlowReturnObject).optional(),
+})
 
 export const BaseSchema = zod.object({
   name: zod.string(),
@@ -77,6 +85,8 @@ export const UnifiedSchema = zod.object({
   api_version: ApiVersionSchema.optional(),
   description: zod.string().optional(),
   extensions: zod.array(zod.any()),
+  settings: SettingsSchema.optional(),
+  return: FlowReturnSchema.optional(),
 })
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>

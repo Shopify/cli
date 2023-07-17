@@ -1,4 +1,4 @@
-import {BaseSchemaWithHandle} from '../schemas.js'
+import {BaseSchemaWithHandle, FlowReturnSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
   validateNonCommerceObjectShape,
@@ -6,6 +6,7 @@ import {
   validateCustomConfigurationPageConfig,
 } from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
+import {loadSchemaPatchFromReturns} from '../../../services/flow/serialize-metafield-to-sdl.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -18,6 +19,7 @@ export const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   config_page_preview_url: zod.string().url().refine(startsWithHttps).optional(),
   schema: zod.string().optional(),
   return_type_ref: zod.string().optional(),
+  return: FlowReturnSchema.optional(),
 }).refine((config) => {
   const configurationPageIsValid = validateCustomConfigurationPageConfig(
     config.config_page_url,
@@ -61,6 +63,13 @@ const flowActionSpecification = createExtensionSpecification({
   // Should be removed after unified deployment is 100% rolled out
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, extensionPath) => {
+    let schemaPatch
+    if (config.return) {
+      schemaPatch = loadSchemaPatchFromReturns(config.return)
+    } else {
+      schemaPatch = await loadSchemaPatchFromPath(extensionPath, config.schema)
+    }
+
     return {
       title: config.name,
       handle: config.handle,
@@ -70,7 +79,7 @@ const flowActionSpecification = createExtensionSpecification({
       validation_url: config.validation_url,
       custom_configuration_page_url: config.config_page_url,
       custom_configuration_page_preview_url: config.config_page_preview_url,
-      schema_patch: await loadSchemaPatchFromPath(extensionPath, config.schema),
+      schema_patch: schemaPatch,
       return_type_ref: config.return_type_ref,
     }
   },
