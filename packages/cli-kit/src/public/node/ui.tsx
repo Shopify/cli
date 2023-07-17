@@ -533,7 +533,7 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
 
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
-    render(<TextPrompt {...props} onSubmit={(value: string | undefined) => resolve(value!)} />, {
+    render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
