@@ -5,16 +5,16 @@ import {
   App,
   AppInterface,
   WebType,
-  AppConfiguration,
   isCurrentAppSchema,
   getAppScopesArray,
+  AppConfigurationInterface,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {ExtensionsArraySchema, TypeSchema, UnifiedSchema} from '../extensions/schemas.js'
+import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {getAppInfo} from '../../services/local-storage.js'
+import {getCachedAppInfo} from '../../services/local-storage.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -27,7 +27,6 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -98,7 +97,6 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
   const parseResult = schema.safeParse(configurationObject)
-
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
@@ -115,32 +113,6 @@ export function findSpecificationForType(specifications: ExtensionSpecification[
     (spec) =>
       spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
   )
-}
-
-export async function findSpecificationForConfig(
-  specifications: ExtensionSpecification[],
-  configurationPath: string,
-  abortOrReport: AbortOrReport,
-) {
-  const fileContent = await readFile(configurationPath)
-  const obj = decodeToml(fileContent)
-  const {type} = TypeSchema.parse(obj)
-  const specification = findSpecificationForType(specifications, type)
-
-  if (!specification) {
-    const isShopifolk = await isShopify()
-    const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
-    abortOrReport(
-      outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
-        isShopifolk ? shopifolkMessage : ''
-      }`,
-      undefined,
-      configurationPath,
-    )
-    return undefined
-  }
-
-  return specification
 }
 
 export class AppErrors {
@@ -227,8 +199,12 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {appDirectory, configurationPath, configuration, configurationLoadResultMetadata} =
-      await configurationLoader.loaded()
+    const {
+      directory: appDirectory,
+      configurationPath,
+      configuration,
+      configurationLoadResultMetadata,
+    } = await configurationLoader.loaded()
     const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
@@ -425,12 +401,6 @@ class AppLoader {
   }
 }
 
-export interface AppConfigurationInterface {
-  appDirectory: string
-  configuration: AppConfiguration
-  configurationPath: string
-}
-
 /**
  * Parse the app configuration file from the given directory.
  * If the app configuration does not match any known schemas, it will throw an error.
@@ -483,7 +453,7 @@ class AppConfigurationLoader {
   async loaded() {
     const appDirectory = await this.getAppDirectory()
     let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    this.configName = this.configName ?? getAppInfo(appDirectory)?.configFile
+    this.configName = this.configName ?? getCachedAppInfo(appDirectory)?.configFile
     if (this.configName === undefined) {
       configSource = 'default'
     }
@@ -517,7 +487,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

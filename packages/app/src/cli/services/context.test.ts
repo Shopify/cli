@@ -19,7 +19,7 @@ import {
   ensureReleaseContext,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
-import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -179,7 +179,7 @@ beforeEach(async () => {
 describe('ensureGenerateContext', () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
         scopes: 'read_products',
@@ -203,7 +203,7 @@ describe('ensureGenerateContext', () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -215,10 +215,10 @@ describe('ensureGenerateContext', () => {
   test('returns the api key from the current config', async () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -235,10 +235,10 @@ describe('ensureGenerateContext', () => {
   test('links an app on first command run', async () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
-    vi.mocked(getAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -256,10 +256,10 @@ describe('ensureGenerateContext', () => {
   test('links an app on reset if already opted into config in code', async () => {
     // Given
     const input = {directory: '/app', reset: true, token: 'token', commandConfig: COMMAND_CONFIG}
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -279,7 +279,7 @@ describe('ensureGenerateContext', () => {
     const input = {directory: '/app', reset: true, token: 'token', commandConfig: COMMAND_CONFIG}
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -292,7 +292,7 @@ describe('ensureGenerateContext', () => {
       ORG1,
       'token',
     )
-    expect(setAppInfo).toHaveBeenCalledWith({
+    expect(setCachedAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,
       title: APP1.title,
       directory: '/app',
@@ -304,7 +304,7 @@ describe('ensureGenerateContext', () => {
 describe('ensureDevContext', async () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
         scopes: 'read_products',
@@ -315,10 +315,10 @@ describe('ensureDevContext', async () => {
   test('returns selected data using config file set in cache', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      vi.mocked(getAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+      vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
         configuration: testAppWithConfig({
           config: {
@@ -352,7 +352,7 @@ describe('ensureDevContext', async () => {
         updateURLs: true,
         configName: CACHED1_WITH_CONFIG.configFile,
       })
-      expect(setAppInfo).not.toHaveBeenCalled()
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
 
       expect(metadata.getAllPublicMetadata()).toMatchObject({
         api_key: APP2.apiKey,
@@ -364,10 +364,10 @@ describe('ensureDevContext', async () => {
   test('loads the correct file when config flag is passed in', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      vi.mocked(getAppInfo).mockReturnValue(undefined)
+      vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
           client_id: APP2.apiKey,
@@ -412,7 +412,7 @@ describe('ensureDevContext', async () => {
       writeFileSync(filePath, '')
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: testApp({}, 'current').configuration,
       })
@@ -454,10 +454,10 @@ dev_store_url = "domain1"
   test('shows the correct banner content when running for the first time with linked config file', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      vi.mocked(getAppInfo).mockReturnValue(undefined)
+      vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.toml'),
         configuration: testApp({}, 'current').configuration,
       })
@@ -504,7 +504,7 @@ dev_store_url = "domain1"
 
   test('returns selected data and updates internal state, without cached state', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
 
     // When
     const got = await ensureDevContext(INPUT, 'token')
@@ -516,7 +516,7 @@ dev_store_url = "domain1"
       remoteAppUpdated: true,
       updateURLs: undefined,
     })
-    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
       storeFqdn: STORE1.shopDomain,
@@ -532,7 +532,7 @@ dev_store_url = "domain1"
 
   test('returns remoteAppUpdated true when previous app id is different', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
+    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
     // vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -552,7 +552,7 @@ dev_store_url = "domain1"
 
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
+    vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
@@ -568,7 +568,7 @@ dev_store_url = "domain1"
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
-    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
       title: APP1.title,
       storeFqdn: STORE1.shopDomain,
@@ -601,7 +601,7 @@ dev_store_url = "domain1"
 
   test('returns selected data and updates internal state, with inputs from flags', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -616,7 +616,7 @@ dev_store_url = "domain1"
       remoteAppUpdated: true,
       updateURLs: undefined,
     })
-    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
       directory: INPUT_WITH_DATA.directory,
       storeFqdn: STORE1.shopDomain,
@@ -632,7 +632,7 @@ dev_store_url = "domain1"
 
   test('throws if the store input is not valid', async () => {
     // Given
-    vi.mocked(getAppInfo).mockReturnValue(undefined)
+    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
@@ -644,13 +644,13 @@ dev_store_url = "domain1"
 
   test('resets cached state if reset is true', async () => {
     // When
-    vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1)
+    vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
     await ensureDevContext({...INPUT, reset: true}, 'token')
 
     // Then
-    expect(clearAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
+    expect(clearCachedAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
     expect(fetchOrgAndApps).toBeCalled()
     expect(link).not.toBeCalled()
   })
@@ -658,10 +658,10 @@ dev_store_url = "domain1"
   test('reset triggers link if opted into config in code', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      vi.mocked(getAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
+      vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: filePath,
         configuration: {
           client_id: APP2.apiKey,
@@ -732,7 +732,7 @@ describe('ensureDeployContext', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(getAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)

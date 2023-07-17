@@ -1,8 +1,8 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
-import {setAppInfo} from '../local-storage.js'
+import {setCachedAppInfo} from '../local-storage.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -151,7 +151,7 @@ export async function updateURLs(
   urls: PartnersURLs,
   apiKey: string,
   token: string,
-  localApp?: AppInterface,
+  localApp?: AppConfigurationInterface,
 ): Promise<void> {
   const variables: UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = UpdateURLsQuery
@@ -221,7 +221,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
 
       writeFileSync(options.localApp.configurationPath, encodeToml(localConfiguration))
     } else {
-      setAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+      setCachedAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
     }
   }
   return shouldUpdate

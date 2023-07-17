@@ -14,10 +14,6 @@ export const CapabilitiesSchema = zod.object({
   api_access: zod.boolean().optional(),
 })
 
-export const TypeSchema = zod.object({
-  type: zod.string().default('ui_extension'),
-})
-
 export const ExtensionsArraySchema = zod.object({
   type: zod.string().optional(),
   extensions: zod.array(zod.any()).optional(),

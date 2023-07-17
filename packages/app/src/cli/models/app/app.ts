@@ -169,13 +169,16 @@ export interface Web {
   framework?: string
 }
 
-export interface AppInterface {
-  name: string
-  idEnvironmentVariableName: string
+export interface AppConfigurationInterface {
   directory: string
-  packageManager: PackageManager
   configuration: AppConfiguration
   configurationPath: string
+}
+
+export interface AppInterface extends AppConfigurationInterface {
+  name: string
+  idEnvironmentVariableName: string
+  packageManager: PackageManager
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
