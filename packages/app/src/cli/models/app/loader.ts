@@ -498,7 +498,7 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
 
-    const file = await loadConfigurationFile(configurationPath, noopAbortOrReport, decodeToml)
+    const file = await loadConfigurationFile(configurationPath, this.abort, decodeToml)
 
     const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
 

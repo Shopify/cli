@@ -1,9 +1,15 @@
-import {getAppConfigurationShorthand, getAppConfigurationFileName, loadApp, loadDotEnv} from './loader.js'
+import {
+  getAppConfigurationShorthand,
+  getAppConfigurationFileName,
+  loadApp,
+  loadDotEnv,
+  parseConfigurationObject,
+} from './loader.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
+import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
   yarnLockfile,
@@ -14,6 +20,9 @@ import {
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {AppConfigurationSchema, AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {outputContent} from '@shopify/cli-kit/node/output.js'
+import {DEFAULT_CONFIG} from './app.test-data.js'
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -1110,5 +1119,97 @@ describe('loadDotEnv', () => {
       expect(got).toBeDefined()
       expect(got!.variables.FOO).toEqual('bar')
     })
+  })
+})
+
+describe('parseConfigurationObject', () => {
+  test('throws an error if fields are missing in a current schema TOML file', async () => {
+    const configurationObject = {
+      ...DEFAULT_CONFIG,
+      embedded: undefined,
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'undefined',
+        path: ['embedded'],
+        message: 'Required',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('throws an error if fields are missing in a legacy schema TOML file', async () => {
+    const configurationObject = {
+      scopes: [],
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: ['scopes'],
+        message: 'Expected string, received array',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('throws an error if fields are missing in a frontend config web TOML file', async () => {
+    const configurationObject = {
+      type: 11,
+      commands: {dev: ''},
+      roles: 1,
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_union',
+        unionErrors: [
+          {
+            issues: [
+              {
+                code: 'invalid_type',
+                expected: 'array',
+                received: 'number',
+                path: ['roles'],
+                message: 'Expected array, received number',
+              },
+            ],
+            name: 'ZodError',
+          },
+          {
+            issues: [
+              {
+                expected: "'frontend' | 'backend' | 'background'",
+                received: 'number',
+                code: 'invalid_type',
+                path: ['type'],
+                message: "Expected 'frontend' | 'backend' | 'background', received number",
+              },
+            ],
+            name: 'ZodError',
+          },
+        ],
+        path: [],
+        message: 'Invalid input',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 })
