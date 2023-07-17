@@ -104,7 +104,7 @@ describe('AutocompletePrompt', async () => {
 
     const renderInstance = render(
       <AutocompletePrompt
-        message="Associate your project with the org Castile Ventures?"
+        message={['Associate your project with the org', {userInput: 'Castile Ventures?'}]}
         choices={items}
         infoTable={infoTable}
         onSubmit={onEnter}
@@ -121,7 +121,7 @@ describe('AutocompletePrompt', async () => {
     await sendInputAndWaitForChange(renderInstance, ENTER)
 
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
+      "?  Associate your project with the org [36mCastile Ventures?[39m
       [36m✔[39m  [36msecond[39m
       "
     `)
@@ -212,6 +212,46 @@ describe('AutocompletePrompt', async () => {
          ┃  \u001b[1mRemove\u001b[22m
          ┃  • integrated-demand-ext
          ┃  • order-discount
+
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+      "
+    `)
+  })
+
+  test('supports a git diff', async () => {
+    const items = [
+      {label: 'first', value: 'first'},
+      {label: 'second', value: 'second'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
+    ]
+
+    const gitDiff = {
+      baselineContent: 'hello\n',
+      updatedContent: 'world\n',
+    }
+
+    const renderInstance = render(
+      <AutocompletePrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        gitDiff={gitDiff}
+        onSubmit={() => {}}
+        search={() => Promise.resolve({data: []} as SearchResults<string>)}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         ┃  [36m  @@ -1 +1 @@[m
+         ┃  [31m- hello[m
+         ┃  [32m+ [m[32mworld[m
 
       [36m>[39m  [36mfirst[39m
          second
