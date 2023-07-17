@@ -5,6 +5,7 @@ import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
+import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
@@ -50,14 +51,15 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   )
 
   const {oneThird} = useLayout()
-  const [answer, setAnswer] = useState<string>('')
+  const {state, setState, answer, setAnswer} = usePrompt<string>({
+    initialAnswer: '',
+  })
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const displayEmptyValue = answerOrDefault === ''
   const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
-  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
-  const shouldShowError = submitted && error
+  const shouldShowError = state === PromptState.Submitted && error
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
@@ -66,7 +68,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     handleCtrlC(input, key)
 
     if (key.return) {
-      setSubmitted(true)
+      setState(PromptState.Submitted)
       const error = validateAnswer(answerOrDefault)
       setError(error)
 
@@ -85,7 +87,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {submitted && !error ? (
+      {state === PromptState.Submitted && !error ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -108,7 +110,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
                 value={answer}
                 onChange={(answer) => {
                   setAnswer(answer)
-                  setSubmitted(false)
+                  setState(PromptState.Submitted)
                 }}
                 defaultValue={defaultValue}
                 color={color}
