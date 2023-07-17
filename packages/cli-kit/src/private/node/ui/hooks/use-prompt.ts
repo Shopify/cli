@@ -7,11 +7,18 @@ export enum PromptState {
   Error = 'error',
 }
 
-export default function usePrompt() {
-  const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
+interface UsePromptProps<T> {
+  initialAnswer: T
+}
+
+export default function usePrompt<T>({initialAnswer}: UsePromptProps<T>) {
+  const [state, setState] = useState<PromptState>(PromptState.Idle)
+  const [answer, setAnswer] = useState<T>(initialAnswer)
 
   return {
-    state: promptState,
-    setState: setPromptState,
+    state,
+    setState,
+    answer,
+    setAnswer,
   }
 }

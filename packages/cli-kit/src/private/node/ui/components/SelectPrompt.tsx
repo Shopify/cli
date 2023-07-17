@@ -5,7 +5,7 @@ import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
-import React, {ReactElement, useCallback, useState} from 'react'
+import React, {ReactElement, useCallback} from 'react'
 import {useApp} from 'ink'
 
 export interface SelectPromptProps<T> {
@@ -33,9 +33,10 @@ function SelectPrompt<T>({
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(undefined)
   const {exit: unmountInk} = useApp()
-  const {state, setState} = usePrompt()
+  const {state, setState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
+    initialAnswer: undefined,
+  })
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
@@ -44,7 +45,7 @@ function SelectPrompt<T>({
       unmountInk()
       onSubmit(answer.value)
     },
-    [unmountInk, onSubmit, setState],
+    [setAnswer, setState, unmountInk, onSubmit],
   )
 
   return (

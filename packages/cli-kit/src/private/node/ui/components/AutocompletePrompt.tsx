@@ -43,13 +43,14 @@ function AutocompletePrompt<T>({
   infoMessage,
   gitDiff,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
-  const {state, setState} = usePrompt()
+  const {state, setState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
+    initialAnswer: choices[0],
+  })
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -69,7 +70,7 @@ function AutocompletePrompt<T>({
         onSubmit(answer.value)
       }
     },
-    [state, onSubmit, unmountInk, setState],
+    [state, setAnswer, setState, unmountInk, onSubmit],
   )
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
