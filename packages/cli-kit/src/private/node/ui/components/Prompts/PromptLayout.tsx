@@ -24,8 +24,6 @@ export interface PromptLayoutProps {
   input: ReactElement
 }
 
-const FOOTER_HEIGHT = 4
-
 const PromptLayout = ({
   message,
   infoTable,
@@ -40,9 +38,9 @@ const PromptLayout = ({
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
-  const currentAvailableLines = stdout.rows - promptAreaHeight - FOOTER_HEIGHT
+  const [inputFixedAreaHeight, setInputFixedAreaHeight] = useState(0)
+  const currentAvailableLines = stdout.rows - promptAreaHeight - inputFixedAreaHeight
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
-  const inputComponent = cloneElement(input, {availableLines})
 
   const wrapperRef = useCallback(
     (node) => {
@@ -63,9 +61,19 @@ const PromptLayout = ({
     }
   }, [])
 
+  const inputFixedAreaRef = useCallback((node) => {
+    if (node !== null) {
+      const {height} = measureElement(node)
+      // + 3 accounts for the margins inside the input elements and the last empty line of the terminal
+      setInputFixedAreaHeight(height + 3)
+    }
+  }, [])
+
+  const inputComponent = cloneElement(input, {availableLines, inputFixedAreaRef})
+
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - FOOTER_HEIGHT
+      const newAvailableLines = stdout.rows - promptAreaHeight - inputFixedAreaHeight
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }
@@ -77,7 +85,7 @@ const PromptLayout = ({
     return () => {
       stdout.off('resize', onResize)
     }
-  }, [wrapperHeight, promptAreaHeight, stdout, availableLines])
+  }, [wrapperHeight, promptAreaHeight, stdout, availableLines, inputFixedAreaHeight])
 
   const {isAborted} = useAbortSignal(abortSignal)
 
