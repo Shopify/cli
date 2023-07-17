@@ -96,22 +96,23 @@ function buildLegacyDeploymentInfoPrompt({
 }: Omit<SourceSummary, 'question'>) {
   const infoTable: InfoTableSection[] = []
 
-  if (toCreate.length > 0) {
-    infoTable.push({header: 'Add', items: toCreate.map((source) => source.localIdentifier)})
-  }
+  const included = [
+    ...toCreate.map((source) => [source.localIdentifier, {subdued: '(new)'}]),
+    ...Object.keys(identifiers),
+    ...dashboardOnly.map((source) => [source.title, {subdued: '(from Partner Dashboard)'}]),
+  ]
 
-  const toUpdate = Object.keys(identifiers)
-
-  if (toUpdate.length > 0) {
-    infoTable.push({header: 'Update', items: toUpdate})
-  }
-
-  if (dashboardOnly.length > 0) {
-    infoTable.push({header: 'Included from Partner dashboard', items: dashboardOnly.map((source) => source.title)})
+  if (included.length > 0) {
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
   if (onlyRemote.length > 0) {
-    infoTable.push({header: 'Missing locally', items: onlyRemote.map((source) => source.title)})
+    infoTable.push({
+      header: 'Removes:',
+      items: onlyRemote.map((source) => source.title),
+      bullet: '-',
+      helperText: 'This can permanently delete app user data.',
+    })
   }
 
   return infoTable
@@ -151,19 +152,13 @@ async function buildUnifiedDeploymentInfoPrompt(
   }
 
   toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
-  if (toCreateFinal.length > 0) {
-    infoTable.push({header: 'Add', items: toCreateFinal})
-  }
-
-  if (toUpdate.length > 0) {
-    infoTable.push({header: 'Update', items: toUpdate})
-  }
-
-  if (dashboardOnlyFinal.length > 0) {
-    infoTable.push({
-      header: 'Included from Partner dashboard',
-      items: dashboardOnlyFinal.map((source) => source.title),
-    })
+  const included = [
+    ...toCreateFinal.map((identifier) => [identifier, {subdued: '(new)'}]),
+    ...toUpdate,
+    ...dashboardOnlyFinal.map((source) => [source.title, {subdued: '(from Partner Dashboard)'}]),
+  ]
+  if (included.length > 0) {
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
   const localRegistrationAndDashboard = [
@@ -175,10 +170,10 @@ async function buildUnifiedDeploymentInfoPrompt(
     .map((module) => module.registrationTitle)
   if (onlyRemote.length > 0) {
     const missingLocallySection: InfoTableSection = {
-      header: 'Removed',
-      color: 'red',
-      helperText: 'Will be removed for users when this version is released.',
+      header: 'Removes:',
+      helperText: 'This can permanently delete app user data.',
       items: onlyRemote,
+      bullet: '-',
     }
 
     infoTable.push(missingLocallySection)

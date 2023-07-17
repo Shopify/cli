@@ -169,13 +169,16 @@ export interface Web {
   framework?: string
 }
 
-export interface AppInterface {
-  name: string
-  idEnvironmentVariableName: string
+export interface AppConfigurationInterface {
   directory: string
-  packageManager: PackageManager
   configuration: AppConfiguration
   configurationPath: string
+}
+
+export interface AppInterface extends AppConfigurationInterface {
+  name: string
+  idEnvironmentVariableName: string
+  packageManager: PackageManager
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -243,6 +246,13 @@ export class App implements AppInterface {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
+  }
+}
+
+export class EmptyApp extends App {
+  constructor() {
+    const configuration = {scopes: '', extension_directories: []}
+    super('', '', '', 'npm', configuration, '', {}, [], [], false)
   }
 }
 

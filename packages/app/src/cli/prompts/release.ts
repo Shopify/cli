@@ -11,17 +11,18 @@ export async function confirmReleasePrompt(
 
   if (extensions.length > 0) {
     infoTable.push({
-      header: 'Extensions',
+      header: 'Includes:',
       items: extensions.map((extension) => extension.registrationTitle),
+      bullet: '+',
     })
   }
 
   if (versionsDiff.removed.length > 0) {
     infoTable.push({
-      header: 'Removed',
-      color: 'red',
-      helperText: 'Will be removed for users when this version is released.',
+      header: 'Removes:',
+      helperText: 'This can permanently delete app user data.',
       items: versionsDiff.removed.map((extension) => extension.registrationTitle),
+      bullet: '-',
     })
   }
   const confirm = await renderConfirmationPrompt({

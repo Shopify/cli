@@ -218,11 +218,37 @@ describe('TextPrompt', () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, '180')
 
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  How tall are you in cm?
-      >  180 
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
-         You are 1.8m tall.
+      [36m>[39m  [36m180[7m [27m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         You are [36m1.8[39mm tall.
+      "
+    `)
+  })
+
+  test('the preview footer wraps when the value is very long', async () => {
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={() => {}}
+        message="How tall are you?"
+        previewPrefix={() => 'You are '}
+        previewValue={(value) =>
+          `incredibly humongously savagely unnaturally monstrously pathetically arrogantly ${value}`
+        }
+        previewSuffix={() => ' tall.'}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, 'uber')
+
+    expect(renderInstance.lastFrame()!).toMatchInlineSnapshot(`
+      "?  How tall are you?
+      [36m>[39m  [36muber[7m [27m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         You are [36mincredibly humongously savagely unnaturally monstrously pathetically [39m
+         [36marrogantly uber[39m tall.
       "
     `)
   })

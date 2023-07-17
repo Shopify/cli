@@ -31,7 +31,7 @@ describe('uploadFunctionExtensions', () => {
     extension = await testFunctionExtension({
       dir: '/my-function',
       config: {
-        name: 'function',
+        name: 'my-function',
         type: 'order_discounts',
         description: 'my function',
         build: {

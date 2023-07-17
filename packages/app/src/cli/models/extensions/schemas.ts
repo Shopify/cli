@@ -73,14 +73,12 @@ export const BaseSchemaWithHandle = BaseSchema.extend({
   handle: HandleSchema,
 })
 
-export const UnifiedSchema = zod
-  .object({
-    name: zod.string(),
-    api_version: ApiVersionSchema.optional(),
-    extensions: zod.array(zod.any()),
-  })
-  // Include any other field not defined in the schema
-  .passthrough()
+export const UnifiedSchema = zod.object({
+  name: zod.string(),
+  api_version: ApiVersionSchema.optional(),
+  description: zod.string().optional(),
+  extensions: zod.array(zod.any()),
+})
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 

@@ -39,6 +39,24 @@ enum ConcurrentOutputState {
   Stopped = 'stopped',
 }
 
+function addLeadingZero(number: number) {
+  if (number < 10) {
+    return `0${number}`
+  } else {
+    return number.toString()
+  }
+}
+
+function currentTime() {
+  const currentDateTime = new Date()
+
+  const hours = addLeadingZero(currentDateTime.getHours())
+  const minutes = addLeadingZero(currentDateTime.getMinutes())
+  const seconds = addLeadingZero(currentDateTime.getSeconds())
+
+  return `${hours}:${minutes}:${seconds}`
+}
+
 /**
  * Renders output from concurrent processes to the terminal.
  * Output will be divided in a three column layout
@@ -166,7 +184,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                   <Text color={chunk.color}>
                     {showTimestamps ? (
                       <Text>
-                        {new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')} {lineVertical}{' '}
+                        {currentTime()} {lineVertical}{' '}
                       </Text>
                     ) : null}
 

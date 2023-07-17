@@ -22,29 +22,17 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateQuery,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
+
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
-import {
-  outputContent,
-  outputToken,
-  formatPackageManagerCommand,
-  outputNewline,
-  outputCompleted,
-  outputWarn,
-} from '@shopify/cli-kit/node/output'
+import {outputContent, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {basename} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 
@@ -70,7 +58,6 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   configName?: string
-  deploymentMode: DeploymentMode
 }
 
 /**
@@ -200,9 +187,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     organization,
   })
 
-  await enableDeveloperPreview(selectedApp, token)
-  const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  const result = buildOutput(selectedApp, selectedStore, deploymentMode, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -225,12 +210,7 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
   }
 }
 
-function buildOutput(
-  app: OrganizationApp,
-  store: OrganizationStore,
-  deploymentMode: DeploymentMode,
-  cachedInfo?: CachedAppInfo,
-): DevContextOutput {
+function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -240,7 +220,6 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     configName: cachedInfo?.configFile,
-    deploymentMode,
   }
 }
 
@@ -376,8 +355,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     ...options,
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
-
-  await disableDeveloperPreview(partnersApp, token)
 
   const result = {
     app: options.app,
@@ -736,65 +713,9 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   }))
 }
 
-export async function enableDeveloperPreview(app: OrganizationApp, token: string) {
-  return developerPreviewUpdate(app, token, true)
-}
-
-export async function disableDeveloperPreview(app: OrganizationApp, token: string) {
-  return developerPreviewUpdate(app, token, false)
-}
-
-async function developerPreviewUpdate(app: OrganizationApp, token: string, enabled: boolean) {
-  if (!app.betas?.unifiedAppDeployment) return
-
-  const tasks = [
-    {
-      title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
-      task: async () => {
-        let result: DevelopmentStorePreviewUpdateSchema | undefined
-        let error: string | undefined
-        try {
-          const query = DevelopmentStorePreviewUpdateQuery
-          const variables: DevelopmentStorePreviewUpdateInput = {
-            input: {
-              apiKey: app.apiKey,
-              enabled,
-            },
-          }
-          result = await partnersRequest(query, token, variables)
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          error = err.message
-        }
-
-        if ((result && result.developmentStorePreviewUpdate.userErrors?.length > 0) || error) {
-          const previewURL = outputToken.link(
-            'Partner Dashboard',
-            await devPreviewURL({orgId: app.organizationId, appId: app.id}),
-          )
-          outputWarn(
-            outputContent`Unable to ${
-              enabled ? 'enable' : 'disable'
-            } development store preview for this app. You can change this setting in the ${previewURL}.'}`,
-          )
-        } else {
-          outputCompleted(`Development store preview ${enabled ? 'enabled' : 'disabled'}`)
-        }
-      },
-    },
-  ]
-  await renderTasks(tasks)
-  outputNewline()
-}
-
 async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(partnerId),
     api_key: env.apiKey,
   }))
-}
-
-async function devPreviewURL(options: {orgId: string; appId: string}) {
-  const fqdn = await partnersFqdn()
-  return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
 }
