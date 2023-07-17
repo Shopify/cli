@@ -15,7 +15,6 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
-import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {
@@ -486,16 +485,12 @@ export function devDraftableExtensionTarget({
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       // Functions will only be passed to this target if unified deployments are enabled
-      const functions = extensions.filter((ext) => ext.isFunctionExtension)
+      // ESBuild will take care of triggering an initial build & upload for the extensions with ESBUILD feature.
+      // For the rest we need to manually upload an initial draft.
+      const initialDraftExtensions = extensions.filter((ext) => !ext.isESBuildExtension)
       await Promise.all(
-        functions.map(async (extension) => {
-          await buildFunctionExtension(extension, {
-            app,
-            stdout,
-            stderr,
-            useTasks: false,
-            signal,
-          })
+        initialDraftExtensions.map(async (extension) => {
+          await extension.build({app, stdout, stderr, useTasks: false, signal})
           const registrationId = remoteExtensions[extension.localIdentifier]
           if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
           await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
