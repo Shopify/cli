@@ -190,34 +190,22 @@ const CompletedPrompt: FunctionComponent<CompletedPromptProps> = ({
   password,
   answer,
   displayedAnswer,
-}) => {
-  if (cancelled) {
-    return (
-      <Box>
-        <Box marginRight={2}>
-          <Text color="red">{figures.cross}</Text>
-        </Box>
+}) => (
+  <Box>
+    <Box marginRight={2}>
+      {cancelled ? <Text color="red">{figures.cross}</Text> : <Text color="cyan">{figures.tick}</Text>}
+    </Box>
 
-        <Box flexGrow={1}>
-          <Text color="red">Cancelled</Text>
-        </Box>
-      </Box>
-    )
-  } else {
-    return (
-      <Box>
-        <Box marginRight={2}>
-          <Text color="cyan">{figures.tick}</Text>
-        </Box>
-
-        <Box flexGrow={1}>
-          <Text color="cyan" dimColor={displayEmptyValue}>
-            {successMessage ?? (password ? '*'.repeat(answer.length) : displayedAnswer)}
-          </Text>
-        </Box>
-      </Box>
-    )
-  }
-}
+    <Box flexGrow={1}>
+      {cancelled ? (
+        <Text color="red">Cancelled</Text>
+      ) : (
+        <Text color="cyan" dimColor={displayEmptyValue}>
+          {successMessage ?? (password ? '*'.repeat(answer.length) : displayedAnswer)}
+        </Text>
+      )}
+    </Box>
+  </Box>
+)
 
 export {TextPrompt}
