@@ -1,5 +1,11 @@
 import {saveCurrentConfig} from './use.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema, isLegacyAppSchema} from '../../../models/app/app.js'
+import {
+  AppConfiguration,
+  AppInterface,
+  EmptyApp,
+  isCurrentAppSchema,
+  isLegacyAppSchema,
+} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
@@ -54,7 +60,7 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {name: ''} as AppInterface
+    return new EmptyApp()
   }
 }
 
