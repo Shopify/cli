@@ -22,7 +22,6 @@ export const ExtensionsArraySchema = zod.object({
 export const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
-  label: zod.string().optional(),
   metafields: zod.array(MetafieldSchema).optional(),
 })
 

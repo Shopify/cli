@@ -14,7 +14,8 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
   const uuid = `00000000-0000-0000-0000-${pad(id++)}`
   const lastUpdated = Date.now()
   return {
-    title: 'My extension',
+    handle: 'my-extension',
+    name: 'My extension',
     surface: 'admin',
     type: 'purchase_option',
     externalType: 'external_type',

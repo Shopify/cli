@@ -2,7 +2,7 @@
   "intro": "{installLink} to see changes live. Share preview links with teammates or clients.",
   "introInstallCta": "Install your app",
   "extensionList": {
-    "name": "Name",
+    "handle": "Handle",
     "preview": "Preview link",
     "mobile": "Mobile",
     "view": "View",
