@@ -4,9 +4,9 @@ import {unstyled} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import colors from '@shopify/cli-kit/node/colors'
 
 const ENTER = '\r'
-const ESC = '\x1b'
 
 describe('TextPrompt', () => {
   test('default state', () => {
@@ -110,23 +110,6 @@ describe('TextPrompt', () => {
     `)
   })
 
-  test('submitting the value with a custom success message', async () => {
-    const onSubmit = vi.fn()
-    const renderInstance = render(
-      <TextPrompt onSubmit={onSubmit} message="Test question" successMessage="Woot woot!" />,
-    )
-
-    await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, 'A')
-    await sendInputAndWaitForChange(renderInstance, ENTER)
-    expect(onSubmit).toHaveBeenCalledWith('A')
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
-      "?  Test question:
-      ✔  Woot woot!
-      "
-    `)
-  })
-
   test("display the default value when allow empty is enabled but the user don't modify it", async () => {
     const onSubmit = vi.fn()
     const renderInstance = render(
@@ -222,30 +205,12 @@ describe('TextPrompt', () => {
     await expect(promise).resolves.toEqual(undefined)
   })
 
-  test('can use Escape key to exit the prompt gracefully', async () => {
-    const onSubmit = vi.fn()
-    const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" exitOnEsc />)
-    await waitForInputsToBeReady()
-    const promise = renderInstance.waitUntilExit()
-    await sendInputAndWaitForChange(renderInstance, ESC)
-
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
-      "?  Test question:
-      ✘  Cancelled
-      "
-    `)
-    await expect(promise).resolves.toEqual(undefined)
-    expect(onSubmit).toHaveBeenCalledWith(undefined)
-  })
-
   test('shows a preview footer when provided', async () => {
     const renderInstance = render(
       <TextPrompt
         onSubmit={() => {}}
         message="How tall are you in cm?"
-        previewPrefix={() => 'You are '}
-        previewValue={(value) => String(Number(value) / 100)}
-        previewSuffix={() => 'm tall.'}
+        preview={(value) => `You are ${colors.cyan(String(Number(value) / 100))}m tall.`}
       />,
     )
 
@@ -266,11 +231,11 @@ describe('TextPrompt', () => {
       <TextPrompt
         onSubmit={() => {}}
         message="How tall are you?"
-        previewPrefix={() => 'You are '}
-        previewValue={(value) =>
-          `incredibly humongously savagely unnaturally monstrously pathetically arrogantly ${value}`
+        preview={(value) =>
+          `You are ${colors.cyan(
+            `incredibly humongously savagely unnaturally monstrously pathetically arrogantly ${value}`,
+          )} tall.`
         }
-        previewSuffix={() => ' tall.'}
       />,
     )
 
