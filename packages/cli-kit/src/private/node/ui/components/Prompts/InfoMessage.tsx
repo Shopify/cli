@@ -12,13 +12,18 @@ export interface InfoMessageProps {
   }
 }
 
-const InfoMessage: FunctionComponent<InfoMessageProps> = ({message}) => {
+const InfoMessage: FunctionComponent<InfoMessageProps> = ({
+  message: {
+    title: {color, text: title},
+    body,
+  },
+}) => {
   return (
     <Box flexDirection="column" gap={1}>
-      <Text color={message.title.color}>
-        <TokenizedText item={message.title.text} />
+      <Text color={color}>
+        <TokenizedText item={title} />
       </Text>
-      <TokenizedText item={message.body} />
+      <TokenizedText item={body} />
     </Box>
   )
 }
