@@ -30,7 +30,7 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions): Promise<void> {
   const localApp = await loadAppConfigFromDefaultToml(options)
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey)
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
   const fileAlreadyExists = await fileExists(configFilePath)
@@ -64,10 +64,14 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
   }
 }
 
-async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined): Promise<OrganizationApp> {
+async function loadRemoteApp(
+  localApp: AppInterface,
+  apiKey: string | undefined,
+  directory?: string,
+): Promise<OrganizationApp> {
   const token = await ensureAuthenticatedPartners()
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, token)
+    return fetchOrCreateOrganizationApp(localApp, token, directory)
   }
   const app = await fetchAppFromApiKey(apiKey, token)
   if (!app) {

@@ -2,6 +2,9 @@ import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models
 import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {readFileSync, readdirSync} from 'fs'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
@@ -15,8 +18,48 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function selectAppPrompt(apps: OrganizationAppsResponse, orgId: string, token: string): Promise<string> {
-  const toAnswer = (app: MinimalOrganizationApp) => ({label: app.title, value: app.apiKey})
+export async function getTomls(apps: OrganizationAppsResponse, appDirectory?: string) {
+  if (!appDirectory) {
+    return {}
+  }
+
+  const regex = /^shopify\.app(\.[-\w]+)?\.toml$/g
+  const clientIds: {[key: string]: string} = {}
+
+  readdirSync(appDirectory).forEach((file) => {
+    if (regex.test(file)) {
+      const filePath = joinPath(appDirectory, file)
+      const fileContent = readFileSync(filePath, 'utf8')
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const parsedToml: {[key: string]: any} = decodeToml(fileContent)
+
+      if (parsedToml.client_id) {
+        clientIds[parsedToml.client_id] = file
+      }
+    }
+  })
+
+  return clientIds
+}
+
+export async function selectAppPrompt(
+  apps: OrganizationAppsResponse,
+  orgId: string,
+  token: string,
+  options?: {
+    directory?: string
+  },
+): Promise<string> {
+  const tomls = await getTomls(apps, options?.directory)
+
+  const toAnswer = (app: MinimalOrganizationApp) => {
+    if (tomls[app.apiKey]) {
+      return {label: `${app.title} (${tomls[app.apiKey]})`, value: app.apiKey}
+    }
+
+    return {label: app.title, value: app.apiKey}
+  }
+
   const appList = apps.nodes.map(toAnswer)
 
   return renderAutocompletePrompt({

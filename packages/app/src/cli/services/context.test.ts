@@ -156,6 +156,12 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+const DEFAULT_SELECT_APP_OPTIONS = {
+  directory: undefined,
+  isLaunchable: true,
+  scopes: '',
+}
+
 const options = (app: AppInterface): DeployContextOptions => {
   return {
     app,
@@ -793,8 +799,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -845,8 +850,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -889,8 +893,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
   })
 })
