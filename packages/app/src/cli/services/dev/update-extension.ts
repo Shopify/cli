@@ -10,6 +10,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
+import {relativizePath} from '@shopify/cli-kit/node/path'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {Writable} from 'stream'
 
@@ -98,7 +99,7 @@ export async function updateExtensionConfig({
       abort(
         `ERROR: Invalid handle
   - Expected handle: "${extension.handle}"
-  - Configuration file path: ${extension.configurationPath}.
+  - Configuration file path: ${relativizePath(extension.configurationPath)}.
   - Handles are immutable, you can't change them once they are set.`,
       )
     }

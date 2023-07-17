@@ -619,7 +619,7 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
   if (!cachedInfo?.configFile && usingDifferentSettings) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
 
   const items = [
     `Org:          ${organization.businessName}`,

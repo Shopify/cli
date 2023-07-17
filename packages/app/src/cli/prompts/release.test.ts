@@ -22,8 +22,9 @@ describe('confirmReleasePrompt', () => {
       message: 'Release this version of test app?',
       infoTable: [
         {
-          header: 'Extensions',
+          header: 'Includes:',
           items: ['theme-app-ext', 'sub-ui-ext'],
+          bullet: '+',
         },
       ],
       confirmationMessage: 'Yes, release this version',
@@ -48,10 +49,10 @@ describe('confirmReleasePrompt', () => {
       message: 'Release this version of test app?',
       infoTable: [
         {
-          header: 'Removed',
-          color: 'red',
-          helperText: 'Will be removed for users when this version is released.',
+          header: 'Removes:',
+          helperText: 'This can permanently delete app user data.',
           items: ['sub-ui-ext'],
+          bullet: '-',
         },
       ],
       confirmationMessage: 'Yes, release this version',

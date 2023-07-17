@@ -66,7 +66,12 @@ export interface UIExtensionPayload {
   uuid: string
   version?: string
   surface: string
+  // @deprecated: we should be using handle instead
   title: string
+  // unique internal developer facing name for the extension
+  handle: string
+  // user facing name for the extension
+  name: string
   approvalScopes: string[]
 }
 

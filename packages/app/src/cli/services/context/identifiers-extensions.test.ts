@@ -113,12 +113,11 @@ vi.mock('../dev/migrate-to-ui-extension')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
-    localIdentifier: 'EXTENSION_A',
     configurationPath: '',
     directory: 'EXTENSION_A',
     type: 'checkout_post_purchase',
     configuration: {
-      name: '',
+      name: 'EXTENSION A',
       type: 'checkout_post_purchase',
       metafields: [],
       capabilities: {network_access: false, block_progress: false, api_access: false},
@@ -127,12 +126,11 @@ beforeAll(async () => {
   })
 
   EXTENSION_A_2 = await testUIExtension({
-    localIdentifier: 'EXTENSION_A_2',
     configurationPath: '',
     directory: 'EXTENSION_A_2',
     type: 'checkout_post_purchase',
     configuration: {
-      name: '',
+      name: 'EXTENSION A 2',
       type: 'checkout_post_purchase',
       metafields: [],
       capabilities: {network_access: false, block_progress: false, api_access: false},
@@ -142,12 +140,11 @@ beforeAll(async () => {
   })
 
   EXTENSION_B = await testUIExtension({
-    localIdentifier: 'EXTENSION_B',
     configurationPath: '',
     directory: 'EXTENSION_B',
     type: 'checkout_post_purchase',
     configuration: {
-      name: '',
+      name: 'EXTENSION_B',
       type: 'checkout_post_purchase',
       metafields: [],
       capabilities: {network_access: false, block_progress: false, api_access: false},
@@ -159,7 +156,7 @@ beforeAll(async () => {
   FUNCTION_A = await testFunctionExtension({
     dir: '/function',
     config: {
-      name: '',
+      name: 'FUNCTION A',
       type: 'product_discounts',
       description: 'Function',
       build: {
@@ -248,9 +245,9 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
         extensions: {
           EXTENSION_A: 'UUID_A',
           EXTENSION_A_2: 'UUID_A_2',
-          EXTENSION_B: 'UUID_B',
+          'extension-b': 'UUID_B',
         },
-        extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', EXTENSION_B: 'B'},
+        extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2', 'extension-b': 'B'},
       }),
     )
   })
@@ -288,9 +285,9 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending manual matche
       ok({
         extensions: {
           EXTENSION_A: 'UUID_A',
-          EXTENSION_A_2: 'UUID_A_3',
+          'extension-a-2': 'UUID_A_3',
         },
-        extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_3'},
+        extensionIds: {EXTENSION_A: 'A', 'extension-a-2': 'A_3'},
       }),
     )
     expect(manualMatchIds).toBeCalledWith(
@@ -326,8 +323,8 @@ describe('ensureExtensionsIds: matchmaking returns ok with pending some pending 
     expect(createExtension).toBeCalledTimes(2)
     expect(got).toEqual(
       ok({
-        extensions: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-        extensionIds: {EXTENSION_A: 'A', EXTENSION_A_2: 'A_2'},
+        extensions: {'extension-a': 'UUID_A', 'extension-a-2': 'UUID_A_2'},
+        extensionIds: {'extension-a': 'A', 'extension-a-2': 'A_2'},
       }),
     )
   })
@@ -358,8 +355,8 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     expect(createExtension).not.toBeCalled()
     expect(got).toEqual(
       ok({
-        extensions: {EXTENSION_B: 'UUID_B'},
-        extensionIds: {EXTENSION_B: 'B'},
+        extensions: {'extension-b': 'UUID_B'},
+        extensionIds: {'extension-b': 'B'},
       }),
     )
   })
@@ -391,8 +388,8 @@ describe('ensureExtensionsIds: matchmaking returns ok with some pending confirma
     expect(createExtension).toBeCalledTimes(1)
     expect(got).toEqual(
       ok({
-        extensions: {EXTENSION_B: 'UUID_B'},
-        extensionIds: {EXTENSION_B: 'B'},
+        extensions: {'extension-b': 'UUID_B'},
+        extensionIds: {'extension-b': 'B'},
       }),
     )
   })
