@@ -370,17 +370,13 @@ describe('ensureDevContext', async () => {
         directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          auth: {
-            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-          },
-          build: {
-            automatically_update_urls_on_dev: true,
-            dev_store_url: STORE1.shopDomain,
-          },
+          name: 'my app',
+          api_contact_email: 'example@example.com',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {api_version: '2023-04'},
+          application_url: 'https://myapp.com',
+          embedded: true,
         },
       })
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
