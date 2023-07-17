@@ -1,5 +1,5 @@
 import {TextInput} from './TextInput.js'
-import {TokenizedText} from './TokenizedText.js'
+import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -18,9 +18,7 @@ export interface TextPromptProps {
   allowEmpty?: boolean
   emptyDisplayedValue?: string
   abortSignal?: AbortSignal
-  previewPrefix?: (value: string) => string | undefined
-  previewValue?: (value: string) => string | undefined
-  previewSuffix?: (value: string) => string | undefined
+  preview?: (value: string) => TokenItem<InlineToken>
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -32,9 +30,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   allowEmpty = false,
   emptyDisplayedValue = '(empty)',
   abortSignal,
-  previewPrefix,
-  previewValue,
-  previewSuffix,
+  preview,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -128,17 +124,13 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
               <Text color={color}>{error}</Text>
             </Box>
           ) : null}
+          {!shouldShowError && preview ? (
+            <Box marginLeft={3}>
+              <TokenizedText item={preview(answerOrDefault)} />
+            </Box>
+          ) : null}
         </Box>
       )}
-      {previewValue && !submitted ? (
-        <Box marginLeft={3}>
-          <Text>
-            <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
-            <Text color={color}>{previewValue(answerOrDefault)}</Text>
-            <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
-          </Text>
-        </Box>
-      ) : null}
     </Box>
   )
 }
