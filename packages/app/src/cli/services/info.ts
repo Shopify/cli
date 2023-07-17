@@ -93,7 +93,7 @@ class AppInfo {
     if (cachedInfo?.updateURLs === undefined) {
       updateUrls = NOT_CONFIGURED_TEXT
     } else {
-      updateUrls = cachedInfo.updateURLs ? 'Always' : 'Never'
+      updateUrls = cachedInfo.updateURLs ? 'Yes' : 'No'
     }
 
     const lines = [

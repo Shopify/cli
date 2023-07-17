@@ -112,7 +112,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Client ID\s*123/)
       expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
       expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
-      expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
+      expect(unstyled(result)).toMatch(/Update URLs\s*Yes/)
     })
   })
 

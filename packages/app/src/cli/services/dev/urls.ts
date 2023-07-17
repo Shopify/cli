@@ -191,40 +191,27 @@ export interface ShouldOrPromptUpdateURLsOptions {
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
   if (options.newApp || !terminalSupportsRawMode()) return true
-  let shouldUpdate: boolean = options.cachedUpdateURLs === true
+  let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
+
   if (options.cachedUpdateURLs === undefined) {
-    const response = await updateURLsPrompt(
+    shouldUpdateURLs = await updateURLsPrompt(
       options.currentURLs.applicationUrl,
       options.currentURLs.redirectUrlWhitelist,
     )
-    let newUpdateURLs: boolean | undefined
-    /* eslint-disable no-fallthrough */
-    switch (response) {
-      case 'always':
-        newUpdateURLs = true
-      case 'yes':
-        shouldUpdate = true
-        break
-      case 'never':
-        newUpdateURLs = false
-      case 'no':
-        shouldUpdate = false
-    }
-    /* eslint-enable no-fallthrough */
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration) && newUpdateURLs !== undefined) {
+    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
       const localConfiguration: AppConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
-        automatically_update_urls_on_dev: newUpdateURLs,
+        automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
       writeFileSync(options.localApp.configurationPath, encodeToml(localConfiguration))
     } else {
-      setCachedAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+      setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }
   }
-  return shouldUpdate
+  return shouldUpdateURLs
 }
 
 export function validatePartnersURLs(urls: PartnersURLs): void {
