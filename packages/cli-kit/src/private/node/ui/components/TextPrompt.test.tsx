@@ -6,6 +6,7 @@ import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 
 const ENTER = '\r'
+const ESC = '\x1b'
 
 describe('TextPrompt', () => {
   test('default state', () => {
@@ -202,6 +203,22 @@ describe('TextPrompt', () => {
 
     expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
+  })
+
+  test('can use Escape key to exit the prompt gracefully', async () => {
+    const onSubmit = vi.fn()
+    const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" exitOnEsc />)
+    await waitForInputsToBeReady()
+    const promise = renderInstance.waitUntilExit()
+    await sendInputAndWaitForChange(renderInstance, ESC)
+
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "?  Test question:
+      ✘  Cancelled
+      "
+    `)
+    await expect(promise).resolves.toEqual(undefined)
+    expect(onSubmit).toHaveBeenCalledWith(undefined)
   })
 
   test('shows a preview footer when provided', async () => {
