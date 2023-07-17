@@ -121,7 +121,7 @@ export function getAppScopesArray(config: AppConfiguration) {
 }
 
 export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
-  const config: unknown = 'configurationPath' in app ? app.configuration : app
+  const config: AppInterface | AppConfiguration = 'configurationPath' in app ? app.configuration : app
 
   if (isLegacyAppSchema(config)) return true
 

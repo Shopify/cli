@@ -5,6 +5,8 @@ import {
   loadDotEnv,
   parseConfigurationObject,
 } from './loader.js'
+import {AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {DEFAULT_CONFIG} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -20,9 +22,7 @@ import {
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {AppConfigurationSchema, AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
-import {outputContent} from '@shopify/cli-kit/node/output.js'
-import {DEFAULT_CONFIG} from './app.test-data.js'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []

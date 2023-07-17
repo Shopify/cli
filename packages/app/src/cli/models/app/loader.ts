@@ -1,5 +1,4 @@
 import {
-  AppConfigurationSchema,
   Web,
   WebConfigurationSchema,
   App,
@@ -80,7 +79,7 @@ const isCurrentSchema = (schema: unknown) => {
   const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
 
   // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-  for (const field in schema as {}) {
+  for (const field in schema as {[key: string]: unknown}) {
     if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
       return true
     }
