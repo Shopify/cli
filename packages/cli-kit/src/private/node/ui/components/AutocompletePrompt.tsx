@@ -48,7 +48,7 @@ function AutocompletePrompt<T>({
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
-  const {state, setState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
+  const {promptState, setPromptState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
     initialAnswer: undefined,
   })
 
@@ -62,15 +62,15 @@ function AutocompletePrompt<T>({
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
-      if (state === PromptState.Idle) {
+      if (promptState === PromptState.Idle) {
         setAnswer(answer)
-        setState(PromptState.Submitted)
+        setPromptState(PromptState.Submitted)
         setSearchTerm('')
         unmountInk()
         onSubmit(answer.value)
       }
     },
-    [state, setAnswer, setState, unmountInk, onSubmit],
+    [promptState, setAnswer, setPromptState, unmountInk, onSubmit],
   )
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
@@ -85,7 +85,7 @@ function AutocompletePrompt<T>({
   const debounceSearch = useCallback(
     debounce((term: string) => {
       setLoadingWhenSlow.current = setTimeout(() => {
-        setState(PromptState.Loading)
+        setPromptState(PromptState.Loading)
       }, 100)
       paginatedSearch(term)
         .then((result) => {
@@ -100,10 +100,10 @@ function AutocompletePrompt<T>({
             setHasMorePages(result.meta?.hasNextPage ?? false)
           }
 
-          setState(PromptState.Idle)
+          setPromptState(PromptState.Idle)
         })
         .catch(() => {
-          setState(PromptState.Error)
+          setPromptState(PromptState.Error)
         })
         .finally(() => {
           clearTimeout(setLoadingWhenSlow.current)
@@ -115,13 +115,13 @@ function AutocompletePrompt<T>({
   return (
     <PromptLayout
       message={message}
-      state={state}
+      state={promptState}
       infoTable={infoTable}
       infoMessage={infoMessage}
       gitDiff={gitDiff}
       abortSignal={abortSignal}
       header={
-        state !== PromptState.Submitted && canSearch ? (
+        promptState !== PromptState.Submitted && canSearch ? (
           <Box marginLeft={3}>
             <TextInput
               value={searchTerm}
@@ -132,7 +132,7 @@ function AutocompletePrompt<T>({
                   debounceSearch(term)
                 } else {
                   debounceSearch.cancel()
-                  setState(PromptState.Idle)
+                  setPromptState(PromptState.Idle)
                   setSearchResults(choices)
                 }
               }}
@@ -149,9 +149,11 @@ function AutocompletePrompt<T>({
           enableShortcuts={false}
           emptyMessage="No results found."
           highlightedTerm={searchTerm}
-          loading={state === PromptState.Loading}
+          loading={promptState === PromptState.Loading}
           errorMessage={
-            state === PromptState.Error ? 'There has been an error while searching. Please try again later.' : undefined
+            promptState === PromptState.Error
+              ? 'There has been an error while searching. Please try again later.'
+              : undefined
           }
           hasMorePages={hasMorePages}
           morePagesMessage="Find what you're looking for by typing its name."

@@ -12,12 +12,12 @@ interface UsePromptProps<T> {
 }
 
 export default function usePrompt<T>({initialAnswer}: UsePromptProps<T>) {
-  const [state, setState] = useState<PromptState>(PromptState.Idle)
+  const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
   const [answer, setAnswer] = useState<T>(initialAnswer)
 
   return {
-    state,
-    setState,
+    promptState,
+    setPromptState,
     answer,
     setAnswer,
   }

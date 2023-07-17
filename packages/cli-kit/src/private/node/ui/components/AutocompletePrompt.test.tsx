@@ -104,7 +104,7 @@ describe('AutocompletePrompt', async () => {
 
     const renderInstance = render(
       <AutocompletePrompt
-        message={['Associate your project with the org', {userInput: 'Castile Ventures?'}]}
+        message={['Associate your project with the org', {userInput: 'Castile Ventures'}, {char: '?'}]}
         choices={items}
         infoTable={infoTable}
         onSubmit={onEnter}
@@ -121,7 +121,7 @@ describe('AutocompletePrompt', async () => {
     await sendInputAndWaitForChange(renderInstance, ENTER)
 
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
-      "?  Associate your project with the org [36mCastile Ventures?[39m
+      "?  Associate your project with the org [36mCastile Ventures[39m?
       [36m✔[39m  [36msecond[39m
       "
     `)

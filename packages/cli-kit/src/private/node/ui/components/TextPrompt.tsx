@@ -51,7 +51,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   )
 
   const {oneThird} = useLayout()
-  const {state, setState, answer, setAnswer} = usePrompt<string>({
+  const {promptState, setPromptState, answer, setAnswer} = usePrompt<string>({
     initialAnswer: '',
   })
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
@@ -59,7 +59,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
   const [error, setError] = useState<string | undefined>(undefined)
-  const shouldShowError = state === PromptState.Submitted && error
+  const shouldShowError = promptState === PromptState.Submitted && error
   const color = shouldShowError ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
@@ -68,7 +68,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     handleCtrlC(input, key)
 
     if (key.return) {
-      setState(PromptState.Submitted)
+      setPromptState(PromptState.Submitted)
       const error = validateAnswer(answerOrDefault)
       setError(error)
 
@@ -87,7 +87,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {state === PromptState.Submitted && !error ? (
+      {promptState === PromptState.Submitted && !error ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -110,7 +110,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
                 value={answer}
                 onChange={(answer) => {
                   setAnswer(answer)
-                  setState(PromptState.Submitted)
+                  setPromptState(PromptState.Idle)
                 }}
                 defaultValue={defaultValue}
                 color={color}

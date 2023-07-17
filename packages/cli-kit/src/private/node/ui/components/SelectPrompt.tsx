@@ -34,24 +34,24 @@ function SelectPrompt<T>({
     throw new Error('SelectPrompt requires at least one choice')
   }
   const {exit: unmountInk} = useApp()
-  const {state, setState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
+  const {promptState, setPromptState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
     initialAnswer: undefined,
   })
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
       setAnswer(answer)
-      setState(PromptState.Submitted)
+      setPromptState(PromptState.Submitted)
       unmountInk()
       onSubmit(answer.value)
     },
-    [setAnswer, setState, unmountInk, onSubmit],
+    [setAnswer, setPromptState, unmountInk, onSubmit],
   )
 
   return (
     <PromptLayout
       message={message}
-      state={state}
+      state={promptState}
       submittedAnswerLabel={answer?.label}
       infoTable={infoTable}
       infoMessage={infoMessage}
