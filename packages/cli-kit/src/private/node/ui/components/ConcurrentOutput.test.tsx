@@ -72,12 +72,12 @@ describe('ConcurrentOutput', () => {
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 │ backend  │ first backend message
-      0000-00-00 00:00:00 │ backend  │ second backend message
-      0000-00-00 00:00:00 │ backend  │ third backend message
-      0000-00-00 00:00:00 │ frontend │ first frontend message
-      0000-00-00 00:00:00 │ frontend │ second frontend message
-      0000-00-00 00:00:00 │ frontend │ third frontend message
+      "00:00:00 │ backend  │ first backend message
+      00:00:00 │ backend  │ second backend message
+      00:00:00 │ backend  │ third backend message
+      00:00:00 │ frontend │ first frontend message
+      00:00:00 │ frontend │ second frontend message
+      00:00:00 │ frontend │ third frontend message
 
       › Press p │ preview in your browser
       › Press q │ quit
@@ -153,12 +153,12 @@ describe('ConcurrentOutput', () => {
 
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 │ backend  │ first backend message
-      0000-00-00 00:00:00 │ backend  │ second backend message
-      0000-00-00 00:00:00 │ backend  │ third backend message
-      0000-00-00 00:00:00 │ frontend │ first frontend message
-      0000-00-00 00:00:00 │ frontend │ second frontend message
-      0000-00-00 00:00:00 │ frontend │ third frontend message
+      "00:00:00 │ backend  │ first backend message
+      00:00:00 │ backend  │ second backend message
+      00:00:00 │ backend  │ third backend message
+      00:00:00 │ frontend │ first frontend message
+      00:00:00 │ frontend │ second frontend message
+      00:00:00 │ frontend │ third frontend message
 
       Preview URL: https://shopify.com
       "
@@ -234,9 +234,9 @@ describe('ConcurrentOutput', () => {
     abortController.abort()
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 │ backend │ first backend message
-      0000-00-00 00:00:00 │ backend │ second backend message
-      0000-00-00 00:00:00 │ backend │ third backend message
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
 
       Preview URL: https://shopify.com
       "
@@ -283,9 +283,9 @@ describe('ConcurrentOutput', () => {
     await expect(renderInstance.waitUntilExit()).rejects.toThrowError('something went wrong')
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 │ backend │ first backend message
-      0000-00-00 00:00:00 │ backend │ second backend message
-      0000-00-00 00:00:00 │ backend │ third backend message
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
 
       Preview URL: https://shopify.com
       "
@@ -328,9 +328,9 @@ describe('ConcurrentOutput', () => {
     await renderInstance.waitUntilExit()
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 │ backend │ first backend message
-      0000-00-00 00:00:00 │ backend │ second backend message
-      0000-00-00 00:00:00 │ backend │ third backend message
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
 
       Preview URL: https://shopify.com
       "
@@ -375,9 +375,9 @@ describe('ConcurrentOutput', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "0000-00-00 00:00:00 │ backend │ first backend message
-      0000-00-00 00:00:00 │ backend │ second backend message
-      0000-00-00 00:00:00 │ backend │ third backend message
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
 
       › Press p │ preview in your browser
       › Press q │ quit
