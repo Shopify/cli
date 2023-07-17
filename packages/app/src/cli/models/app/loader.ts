@@ -27,7 +27,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -297,6 +297,7 @@ class AppLoader {
   ): Promise<ExtensionInstance | undefined> {
     const specification = findSpecificationForType(this.specifications, type)
     if (!specification) return
+
     const configuration = await parseConfigurationObject(
       specification.schema,
       configurationPath,
@@ -343,13 +344,33 @@ class AppLoader {
         // Parse all extensions by merging each extension config with the global unified configuration.
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
-          const config = {...configuration, ...extensionConfig}
-          return this.createExtensionInstance(config.type, config, configurationPath, directory)
+          const mergedConfig = {...configuration, ...extensionConfig}
+          const {extensions, ...restConfig} = mergedConfig
+          if (!restConfig.handle) {
+            // Handle is required for unified config extensions.
+            return this.abortOrReport(
+              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+                appDirectory,
+                configurationPath,
+              )}`,
+              undefined,
+              configurationPath,
+            )
+          }
+          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
+      } else {
+        return this.abortOrReport(
+          outputContent`Invalid extension type at "${outputToken.path(
+            relativePath(appDirectory, configurationPath),
+          )}". Please specify a type.`,
+          undefined,
+          configurationPath,
+        )
       }
     })
 

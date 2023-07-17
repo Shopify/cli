@@ -271,8 +271,16 @@ automatically_update_urls_on_dev = true
 
   test('throws an error if the extension configuration file is invalid', async () => {
     // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
     const blockConfiguration = `
       wrong = "my_extension"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -280,7 +288,56 @@ automatically_update_urls_on_dev = true
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Fix a schema error in/)
+  })
+
+  test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "my_extension-global"
+
+      [[extensions]]
+      name = "my_extension"
+      type = "checkout_post_purchase"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
+      /Missing handle for extension "my_extension"/,
+    )
+  })
+
+  test('throws an error if the extension configuration is missing both extensions and type', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "my_extension-global"
+      handle = "handle"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type/)
   })
 
   test('loads the app with web blocks', async () => {
@@ -428,7 +485,7 @@ automatically_update_urls_on_dev = true
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('custom_extension')
+    expect(app.allExtensions[0]!.localIdentifier).toBe('custom-extension')
   })
 
   test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -511,8 +568,8 @@ automatically_update_urls_on_dev = true
       name = "my_extension_1_flow"
       runtime_url = "https://example.com"
 
-      [settings]
-      [[settings.fields]]
+      [extensions.settings]
+      [[extensions.settings.fields]]
       key = "my_field"
       name = "My Field"
       description = "My Field Description"
@@ -536,7 +593,6 @@ automatically_update_urls_on_dev = true
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
-    expect(extensions[0]!.configuration.settings!.fields![0]!.key).toBe('my_field')
     expect(extensions[0]!.configuration.description).toBe('custom description')
 
     expect(extensions[1]!.configuration.name).toBe('my_extension_1_flow')

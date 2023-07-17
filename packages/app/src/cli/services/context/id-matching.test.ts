@@ -246,7 +246,7 @@ describe('automaticMatchmaking: some local of the same type, only one remote', (
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toConfirm: [],
       toCreate: [EXTENSION_A_2],
       toManualMatch: {local: [], remote: []},
@@ -278,7 +278,7 @@ describe('automaticMatchmaking: some local of the same type, one matching remote
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toConfirm: [{local: EXTENSION_A_2, remote: REGISTRATION_A_3}],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -336,7 +336,7 @@ describe('automaticMatchmaking: same number of local and remote with matching ty
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-b': 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -357,7 +357,7 @@ describe('automaticMatchmaking: more local than remote, all remote match some lo
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-b': 'UUID_B'},
       toConfirm: [],
       toCreate: [EXTENSION_C, EXTENSION_D],
       toManualMatch: {local: [], remote: []},
@@ -389,7 +389,7 @@ describe('automaticMatchmaking: some sources match, but other are missing', () =
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toConfirm: [],
       toCreate: [EXTENSION_B],
       toManualMatch: {local: [], remote: [REGISTRATION_C]},
@@ -406,8 +406,8 @@ describe('automaticMatchmaking: multiple sources of the same type locally and re
     // Then
     const expected = {
       identifiers: {
-        EXTENSION_A: 'UUID_A',
-        EXTENSION_A_2: 'UUID_A_2',
+        'extension-a': 'UUID_A',
+        'extension-a-2': 'UUID_A_2',
       },
       toConfirm: [],
       toCreate: [],
@@ -430,8 +430,8 @@ describe('automaticMatchmaking: multiple sources of the same type locally and re
     // Then
     const expected = {
       identifiers: {
-        EXTENSION_A: 'UUID_A',
-        EXTENSION_A_2: 'UUID_A_2',
+        'extension-a': 'UUID_A',
+        'extension-a-2': 'UUID_A_2',
       },
       toConfirm: [],
       toCreate: [EXTENSION_B],
@@ -448,7 +448,7 @@ describe('automaticMatchmaking: more remote of the same type than local', () => 
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: [REGISTRATION_A_2]},
@@ -480,7 +480,7 @@ describe('automaticMatchmaking: more remote of different types than local', () =
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A'},
+      identifiers: {'extension-a': 'UUID_A'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: [REGISTRATION_B]},
@@ -503,7 +503,7 @@ describe('automaticMatchmaking: some sources have uuid, others can be matched', 
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-b': 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -526,7 +526,7 @@ describe("automaticMatchmaking: some sources have uuid, but doesn't match a remo
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_B: 'UUID_B'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-b': 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -549,7 +549,7 @@ describe('automaticMatchmaking: duplicated sources types but some of them alread
 
     // Then
     const expected = {
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2', EXTENSION_B: 'UUID_B'},
+      identifiers: {'extension-a': 'UUID_A', 'extension-a-2': 'UUID_A_2', 'extension-b': 'UUID_B'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -616,7 +616,7 @@ describe('automaticMatchmaking: functions', () => {
 
     // Then
     const expected = {
-      identifiers: {FUNCTION_A: 'FUNCTION_A'},
+      identifiers: {'function-a': 'FUNCTION_A'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -631,13 +631,13 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
     const got = await automaticMatchmaking(
       [FUNCTION_A],
       [REGISTRATION_FUNCTION_A],
-      {FUNCTION_A: 'LEGACY_FUNCTION_ULID_A'},
+      {'function-a': 'LEGACY_FUNCTION_ULID_A'},
       'id',
     )
 
     // Then
     const expected = {
-      identifiers: {FUNCTION_A: 'FUNCTION_UUID_A'},
+      identifiers: {'function-a': 'FUNCTION_UUID_A'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
@@ -651,13 +651,13 @@ describe('automaticMatchmaking: migrates functions with legacy IDs to extension 
     const got = await automaticMatchmaking(
       [FUNCTION_A],
       [REGISTRATION_FUNCTION_A],
-      {FUNCTION_A: 'LEGACY_FUNCTION_UUID_A'},
+      {'function-a': 'LEGACY_FUNCTION_UUID_A'},
       'id',
     )
 
     // Then
     const expected = {
-      identifiers: {FUNCTION_A: 'FUNCTION_UUID_A'},
+      identifiers: {'function-a': 'FUNCTION_UUID_A'},
       toConfirm: [],
       toCreate: [],
       toManualMatch: {local: [], remote: []},
