@@ -10,7 +10,7 @@ interface InitOptions {
 interface InitOutput {
   name: string
   template: string
-  // e.g. 'remix'
+  // e.g. 'Remix'
   templateType: keyof typeof templateURLMap | 'custom'
 }
 
@@ -22,6 +22,7 @@ export const templateURLMap = {
 } as const
 
 const templateLabels: {[key: string]: string} = {
+  remix: 'Remix',
   none: 'none (build an app with extensions only)',
 }
 

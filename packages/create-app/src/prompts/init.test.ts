@@ -63,7 +63,7 @@ describe('init', () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
-        {label: 'remix', value: 'remix'},
+        {label: 'Remix', value: 'remix'},
         {label: 'none (build an app with extensions only)', value: 'none'},
       ],
       message: 'Which template would you like to use?',
