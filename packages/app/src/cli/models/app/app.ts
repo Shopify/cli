@@ -46,9 +46,9 @@ const AppSchema = zod
       api_version: zod.string(),
       privacy_compliance: zod
         .object({
-          customer_deletion_url: validateUrl(zod.string()),
-          customer_data_request_url: validateUrl(zod.string()),
-          shop_deletion_url: validateUrl(zod.string()),
+          customer_deletion_url: validateUrl(zod.string()).optional(),
+          customer_data_request_url: validateUrl(zod.string()).optional(),
+          shop_deletion_url: validateUrl(zod.string()).optional(),
         })
         .optional(),
     }),
