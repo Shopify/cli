@@ -24,7 +24,7 @@ export interface PromptLayoutProps {
   input: ReactElement
 }
 
-const SELECT_INPUT_FOOTER_HEIGHT = 4
+const FOOTER_HEIGHT = 4
 
 const PromptLayout = ({
   message,
@@ -40,7 +40,7 @@ const PromptLayout = ({
   const {stdout} = useStdout()
   const [wrapperHeight, setWrapperHeight] = useState(0)
   const [promptAreaHeight, setPromptAreaHeight] = useState(0)
-  const currentAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
+  const currentAvailableLines = stdout.rows - promptAreaHeight - FOOTER_HEIGHT
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
   const inputComponent = cloneElement(input, {availableLines})
 
@@ -65,7 +65,7 @@ const PromptLayout = ({
 
   useLayoutEffect(() => {
     function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
+      const newAvailableLines = stdout.rows - promptAreaHeight - FOOTER_HEIGHT
       if (newAvailableLines !== availableLines) {
         setAvailableLines(newAvailableLines)
       }
