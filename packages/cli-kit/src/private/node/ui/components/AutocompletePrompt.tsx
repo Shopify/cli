@@ -6,6 +6,7 @@ import {GitDiffProps} from './Prompts/GitDiff.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {ReactElement, useCallback, useRef, useState} from 'react'
 import {Box, useApp} from 'ink'
 
@@ -28,13 +29,6 @@ export interface AutocompletePromptProps<T> {
   gitDiff?: GitDiffProps['gitDiff']
 }
 
-enum PromptState {
-  Idle = 'idle',
-  Loading = 'loading',
-  Submitted = 'submitted',
-  Error = 'error',
-}
-
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 
 // eslint-disable-next-line react/function-component-definition
@@ -51,11 +45,11 @@ function AutocompletePrompt<T>({
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
-  const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
+  const {state, setState} = usePrompt()
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -67,15 +61,15 @@ function AutocompletePrompt<T>({
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
-      if (promptState === PromptState.Idle) {
+      if (state === PromptState.Idle) {
         setAnswer(answer)
-        setPromptState(PromptState.Submitted)
+        setState(PromptState.Submitted)
         setSearchTerm('')
         unmountInk()
         onSubmit(answer.value)
       }
     },
-    [promptState, onSubmit, unmountInk],
+    [state, onSubmit, unmountInk, setState],
   )
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
@@ -90,7 +84,7 @@ function AutocompletePrompt<T>({
   const debounceSearch = useCallback(
     debounce((term: string) => {
       setLoadingWhenSlow.current = setTimeout(() => {
-        setPromptState(PromptState.Loading)
+        setState(PromptState.Loading)
       }, 100)
       paginatedSearch(term)
         .then((result) => {
@@ -105,10 +99,10 @@ function AutocompletePrompt<T>({
             setHasMorePages(result.meta?.hasNextPage ?? false)
           }
 
-          setPromptState(PromptState.Idle)
+          setState(PromptState.Idle)
         })
         .catch(() => {
-          setPromptState(PromptState.Error)
+          setState(PromptState.Error)
         })
         .finally(() => {
           clearTimeout(setLoadingWhenSlow.current)
@@ -120,13 +114,13 @@ function AutocompletePrompt<T>({
   return (
     <PromptLayout
       message={message}
-      submitted={promptState === PromptState.Submitted}
+      state={state}
       infoTable={infoTable}
       infoMessage={infoMessage}
       gitDiff={gitDiff}
       abortSignal={abortSignal}
       header={
-        promptState !== PromptState.Submitted && canSearch ? (
+        state !== PromptState.Submitted && canSearch ? (
           <Box marginLeft={3}>
             <TextInput
               value={searchTerm}
@@ -137,7 +131,7 @@ function AutocompletePrompt<T>({
                   debounceSearch(term)
                 } else {
                   debounceSearch.cancel()
-                  setPromptState(PromptState.Idle)
+                  setState(PromptState.Idle)
                   setSearchResults(choices)
                 }
               }}
@@ -154,11 +148,9 @@ function AutocompletePrompt<T>({
           enableShortcuts={false}
           emptyMessage="No results found."
           highlightedTerm={searchTerm}
-          loading={promptState === PromptState.Loading}
+          loading={state === PromptState.Loading}
           errorMessage={
-            promptState === PromptState.Error
-              ? 'There has been an error while searching. Please try again later.'
-              : undefined
+            state === PromptState.Error ? 'There has been an error while searching. Please try again later.' : undefined
           }
           hasMorePages={hasMorePages}
           morePagesMessage="Find what you're looking for by typing its name."

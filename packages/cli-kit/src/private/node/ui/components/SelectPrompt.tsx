@@ -4,6 +4,7 @@ import {GitDiffProps} from './Prompts/GitDiff.js'
 import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {ReactElement, useCallback, useState} from 'react'
 import {useApp} from 'ink'
 
@@ -34,22 +35,22 @@ function SelectPrompt<T>({
   }
   const [answer, setAnswer] = useState<SelectItem<T> | undefined>(undefined)
   const {exit: unmountInk} = useApp()
-  const [submitted, setSubmitted] = useState(false)
+  const {state, setState} = usePrompt()
 
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
       setAnswer(answer)
-      setSubmitted(true)
+      setState(PromptState.Submitted)
       unmountInk()
       onSubmit(answer.value)
     },
-    [unmountInk, onSubmit],
+    [unmountInk, onSubmit, setState],
   )
 
   return (
     <PromptLayout
       message={message}
-      submitted={submitted}
+      state={state}
       submittedAnswerLabel={answer?.label}
       infoTable={infoTable}
       infoMessage={infoMessage}

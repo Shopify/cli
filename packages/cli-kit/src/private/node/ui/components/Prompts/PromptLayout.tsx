@@ -5,6 +5,7 @@ import {InlineToken, LinkToken, TokenItem, TokenizedText} from '../TokenizedText
 import {messageWithPunctuation} from '../../utilities.js'
 import {AbortSignal} from '../../../../../public/node/abort.js'
 import useAbortSignal from '../../hooks/use-abort-signal.js'
+import {PromptState} from '../../hooks/use-prompt.js'
 import React, {ReactElement, cloneElement, useCallback, useLayoutEffect, useState} from 'react'
 import {Box, measureElement, Text, useStdout} from 'ink'
 import figures from 'figures'
@@ -18,7 +19,7 @@ export interface PromptLayoutProps {
   infoMessage?: InfoMessageProps['message']
   gitDiff?: GitDiffProps['gitDiff']
   header?: ReactElement | null
-  submitted: boolean
+  state: PromptState
   submittedAnswerLabel?: string
   input: ReactElement
 }
@@ -32,7 +33,7 @@ const PromptLayout = ({
   infoMessage,
   gitDiff,
   header,
-  submitted,
+  state,
   input,
   submittedAnswerLabel,
 }: PromptLayoutProps): ReactElement | null => {
@@ -91,7 +92,7 @@ const PromptLayout = ({
           {header}
         </Box>
 
-        {(infoTable || infoMessage || gitDiff) && !submitted ? (
+        {(infoTable || infoMessage || gitDiff) && state !== PromptState.Submitted ? (
           <Box
             marginTop={1}
             marginLeft={3}
@@ -111,7 +112,7 @@ const PromptLayout = ({
         ) : null}
       </Box>
 
-      {submitted && submittedAnswerLabel ? (
+      {state === PromptState.Submitted && submittedAnswerLabel ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
