@@ -3,7 +3,7 @@ import {gql} from 'graphql-request'
 export const AppVersionByTagQuery = gql`
   query AppVersionByTag($apiKey: String!, $versionTag: String!) {
     app(apiKey: $apiKey) {
-      deployment(versionTag: $versionTag) {
+      appVersion(versionTag: $versionTag) {
         id
         uuid
         versionTag
@@ -21,7 +21,7 @@ interface ErrorDetail {
 
 export interface AppVersionByTagSchema {
   app: {
-    deployment: {
+    appVersion: {
       id: number
       uuid: string
       versionTag: string

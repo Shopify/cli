@@ -46,7 +46,7 @@ interface DeployOptions {
   /** App version identifier */
   version?: string
 
-  /** The git reference url of the deployment */
+  /** The git reference url of the app version */
   commitReference?: string
 }
 
