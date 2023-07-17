@@ -132,9 +132,11 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
       )}
       {previewValue && !submitted ? (
         <Box marginLeft={3}>
-          <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
-          <Text color={color}>{previewValue(answerOrDefault)}</Text>
-          <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
+          <Text>
+            <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
+            <Text color={color}>{previewValue(answerOrDefault)}</Text>
+            <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
+          </Text>
         </Box>
       ) : null}
     </Box>
