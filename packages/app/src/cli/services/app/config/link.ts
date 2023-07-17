@@ -28,7 +28,7 @@ export interface LinkOptions {
   configName?: string
 }
 
-export default async function link(options: LinkOptions): Promise<void> {
+export default async function link(options: LinkOptions): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
@@ -46,6 +46,8 @@ export default async function link(options: LinkOptions): Promise<void> {
       fileAlreadyExists ? 'updated' : 'created'
     }`,
   })
+
+  return configuration
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {

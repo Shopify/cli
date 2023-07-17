@@ -7,6 +7,7 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
@@ -40,6 +41,7 @@ const deploymentContext = (app: AppInterface, noRelease = false): DeployContextO
     noRelease,
     reset: false,
     force: false,
+    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   }
 }
 

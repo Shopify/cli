@@ -162,6 +162,7 @@ const options = (app: AppInterface): DeployContextOptions => {
     reset: false,
     force: false,
     noRelease: false,
+    commandConfig: COMMAND_CONFIG,
   }
 }
 
@@ -913,6 +914,7 @@ describe('ensureReleaseContext', () => {
         apiKey: 'key1',
         reset: false,
         force: false,
+        commandConfig: COMMAND_CONFIG,
       }),
     ).rejects.toThrowError('')
   })
@@ -930,6 +932,7 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
+      commandConfig: COMMAND_CONFIG,
     })
 
     // Then
