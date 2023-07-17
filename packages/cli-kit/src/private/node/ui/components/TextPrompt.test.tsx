@@ -110,6 +110,21 @@ describe('TextPrompt', () => {
     `)
   })
 
+  test('submitting the value with a custom success message', async () => {
+    const onSubmit = vi.fn()
+    const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" successMessage="Woot woot!" />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, 'A')
+    await sendInputAndWaitForChange(renderInstance, ENTER)
+    expect(onSubmit).toHaveBeenCalledWith('A')
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
+      "?  Test question:
+      ✔  Woot woot!
+      "
+    `)
+  })
+
   test("display the default value when allow empty is enabled but the user don't modify it", async () => {
     const onSubmit = vi.fn()
     const renderInstance = render(
