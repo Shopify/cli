@@ -49,7 +49,7 @@ function AutocompletePrompt<T>({
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
   const {state, setState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
-    initialAnswer: choices[0],
+    initialAnswer: undefined,
   })
 
   const paginatedSearch = useCallback(
