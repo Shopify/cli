@@ -311,7 +311,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
-  if (!partnersApp.betas?.unifiedAppDeployment) {
+  if (!partnersApp.betas?.unifiedAppDeploymentOptIn && !partnersApp.betas?.unifiedAppDeployment) {
     renderInfo({
       headline: [
         'Stay tuned for changes to',
