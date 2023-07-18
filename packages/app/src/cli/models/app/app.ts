@@ -28,7 +28,6 @@ const validateUrl = (zodType: zod.ZodString) => {
 export const AppSchema = zod
   .object({
     name: zod.string().max(30),
-    api_contact_email: zod.string().email(),
     client_id: zod.string(),
     application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),

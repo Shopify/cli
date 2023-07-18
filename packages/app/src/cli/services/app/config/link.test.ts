@@ -73,7 +73,6 @@ describe('link', () => {
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -110,7 +109,6 @@ use_legacy_install_flow = true
           configurationPath: 'shopify.app.development.toml',
           configuration: {
             name: 'my app',
-            api_contact_email: 'example@example.com',
             client_id: '12345',
             scopes: 'write_products',
             webhooks: {api_version: '2023-04'},
@@ -136,7 +134,6 @@ use_legacy_install_flow = true
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `client_id = "12345"
 name = "my app"
-api_contact_email = "example@example.com"
 application_url = "https://myapp.com"
 embedded = true
 
@@ -181,7 +178,6 @@ scopes = "write_products"
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -264,7 +260,6 @@ use_legacy_install_flow = true
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -305,7 +300,6 @@ use_legacy_install_flow = true
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]

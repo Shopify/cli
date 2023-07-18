@@ -30,7 +30,6 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
-      contactEmail: 'wils@bahan-lee.com',
       embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
@@ -74,7 +73,6 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
-      contactEmail: 'wils@bahan-lee.com',
       embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
@@ -120,7 +118,6 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
-      contactEmail: 'wils@bahan-lee.com',
       embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
@@ -166,7 +163,6 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
-      contactEmail: 'wils@bahan-lee.com',
       embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
@@ -211,7 +207,6 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
-      contactEmail: 'wils@bahan-lee.com',
       embedded: true,
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
@@ -277,7 +272,6 @@ describe('pushConfig', () => {
         userErrors: [
           {message: "I don't like this name", field: ['input', 'title']},
           {message: 'funny api key', field: ['input', 'api_key']},
-          {message: 'cannot include shopify', field: ['input', 'partner_email']},
           {message: 'this url is blocked', field: ['input', 'application_url']},
           {message: 'suspicious', field: ['input', 'redirect_url_whitelist']},
           {message: 'invalid scope: read_minds', field: ['input', 'requested_access_scopes']},
@@ -300,7 +294,6 @@ describe('pushConfig', () => {
     // Then
     await expect(result).rejects.toThrow(`name: I don't like this name
 client_id: funny api key
-api_contact_email: cannot include shopify
 application_url: this url is blocked
 auth > redirect_urls: suspicious
 access_scopes > scopes: invalid scope: read_minds
@@ -346,7 +339,6 @@ app_preferences > url: this url is blocked 6`)
       apiKey: '12345',
       title: 'my app',
       applicationUrl: 'https://myapp.com',
-      contactEmail: 'wils@bahan-lee.com',
       gdprWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
