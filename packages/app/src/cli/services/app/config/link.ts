@@ -48,6 +48,8 @@ export default async function link(options: LinkOptions): Promise<void> {
   })
 }
 
+// toml does not support comments and there aren't currently any good/maintained libs for this,
+// so for now, we manually add comments
 async function writeFile(configFilePath: string, configuration: AppConfiguration) {
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
