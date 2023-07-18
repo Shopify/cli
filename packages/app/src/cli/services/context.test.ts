@@ -371,7 +371,6 @@ describe('ensureDevContext', async () => {
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
           name: 'my app',
-          api_contact_email: 'example@example.com',
           client_id: '12345',
           scopes: 'write_products',
           webhooks: {api_version: '2023-04'},
@@ -431,7 +430,6 @@ describe('ensureDevContext', async () => {
       const expectedContent = `application_url = "https://myapp.com"
 client_id = "12345"
 name = "my app"
-api_contact_email = "wils@bahan-lee.com"
 embedded = true
 
 [webhooks]
@@ -663,7 +661,6 @@ dev_store_url = "domain1"
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
-          api_contact_email: 'wils@bahan-lee.com',
           webhooks: {api_version: '2023-04'},
           embedded: true,
         },

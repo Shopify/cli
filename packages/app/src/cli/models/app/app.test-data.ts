@@ -14,7 +14,6 @@ export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
-  api_contact_email: 'wils@bahan-lee.com',
   webhooks: {
     api_version: '2023-04',
   },
@@ -94,7 +93,6 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     id: '1',
     title: 'app1',
     apiKey: 'api-key',
-    contactEmail: 'example@example.com',
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',
     grantedScopes: [],

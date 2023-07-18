@@ -98,7 +98,6 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
-    api_contact_email: remoteApp.contactEmail!,
     application_url: remoteApp.applicationUrl,
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
