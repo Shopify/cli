@@ -15,7 +15,7 @@ import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
+import {readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -36,7 +36,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
-  writeFileSync(configFilePath, encodeToml(configuration))
+  await writeFile(configFilePath, configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
@@ -60,6 +60,27 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   }
 
   return configuration
+}
+
+async function writeFile(configFilePath: string, configuration: AppConfiguration) {
+  const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
+  const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
+
+  writeFileSync(configFilePath, encodeToml(configuration))
+  const fileSplit = (await readFile(configFilePath)).split(/(\r\n|\r|\n)/)
+
+  fileSplit.unshift('\n')
+  fileSplit.unshift(initialComment)
+
+  fileSplit.forEach((line, index) => {
+    if (line === '[access_scopes]') {
+      fileSplit.splice(index + 1, 0, scopesComment)
+    }
+  })
+
+  const file = fileSplit.join('')
+
+  writeFileSync(configFilePath, file)
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
