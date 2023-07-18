@@ -6,11 +6,20 @@ import {QRCodeModal, Row, Status, View} from '..'
 import {useExtension} from '../../hooks/useExtension'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
+import {ExtensionPayload, isUIExtension} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
 
 interface Props {
   uuid: ExtensionPayload['uuid']
+}
+
+function showMobileQrCode(extension: ExtensionPayload) {
+  if (isUIExtension(extension)) {
+    // We currently don't have support for any of the new UI extensions on Mobile
+    return false
+  }
+
+  return extension.surface === 'point_of_sale' || extension.surface === 'admin'
 }
 
 export function ExtensionRow({uuid}: Props) {
@@ -35,9 +44,11 @@ export function ExtensionRow({uuid}: Props) {
         <PreviewLinks extension={extension} />
       </td>
       <td>
-        <Button type="button" onClick={() => setShowModal(true)}>
-          {i18n.translate('viewMobile')}
-        </Button>
+        {showMobileQrCode(extension) && (
+          <Button id="showQRCodeModalButton" type="button" onClick={() => setShowModal(true)}>
+            {i18n.translate('viewMobile')}
+          </Button>
+        )}
         <QRCodeModal
           code={
             showModal

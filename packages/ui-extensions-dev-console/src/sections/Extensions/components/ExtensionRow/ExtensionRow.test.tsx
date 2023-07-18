@@ -23,12 +23,33 @@ vi.mock('..', () => ({
 mockI18n(en)
 
 describe('<ExtensionRow/>', () => {
-  const extension = mockExtension()
+  const legacyAdminExtension = mockExtension({type: 'product_subscription', surface: 'admin'})
+  const legacyPosExtension = mockExtension({type: 'pos_ui_extension', surface: 'point_of_sale'})
+  const legacyPostPurchaseExtension = mockExtension({type: 'post_purchase', surface: 'post-checkout'})
+  const legacyCheckoutExtension = mockExtension({type: 'checkout_ui_extension', surface: 'checkout'})
+  const adminUiExtension = mockExtension({
+    type: 'ui_extension',
+    surface: 'admin',
+    extensionPoints: [{target: 'admin.product-details.block.render'}],
+  })
+  const checkoutUiExtension = mockExtension({
+    type: 'ui_extension',
+    surface: 'checkout',
+    extensionPoints: [{target: 'purchase.checkout.cart-line-list.render-after'}],
+  })
+
   const defaultProps = {
-    uuid: extension.uuid,
+    uuid: legacyAdminExtension.uuid,
   }
   const defaultState = {
-    extensions: [extension],
+    extensions: [
+      legacyAdminExtension,
+      legacyPosExtension,
+      legacyPostPurchaseExtension,
+      legacyCheckoutExtension,
+      adminUiExtension,
+      checkoutUiExtension,
+    ],
   }
 
   test('renders a <QRCodeModal/>, closed by default', () => {
@@ -37,18 +58,90 @@ describe('<ExtensionRow/>', () => {
     expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
   })
 
+  test('renders a <Button/> to open the QRCodeModal for a legacy Admin extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={legacyAdminExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+  })
+
+  test('renders a <Button/> to open the QRCodeModal for a legacy POS extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={legacyPosExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+  })
+
+  test('does not render a <Button/> to open the QRCodeModal for a legacy Post purchase extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={legacyPostPurchaseExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+  })
+
+  test('does not render a <Button/> to open the QRCodeModal for a legacy Checkout extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={legacyCheckoutExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+  })
+
+  test('does not render a <Button/> to open the QRCodeModal for a Checkout UI extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={checkoutUiExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+  })
+
+  test('does not render a <Button/> to open the QRCodeModal for an Admin UI extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={adminUiExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+  })
+
   test('Opens and closes the <QRCodeModal/> ', () => {
     const container = render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {state: defaultState})
 
     container.act(() => {
-      container.find(Button)?.trigger('onClick')
+      container.find(Button, {id: 'showQRCodeModalButton'})?.trigger('onClick')
     })
 
     expect(container).toContainReactComponent(QRCodeModal, {
       code: {
-        url: extension.development.root.url,
-        type: extension.surface,
-        title: extension.handle,
+        url: legacyAdminExtension.development.root.url,
+        type: legacyAdminExtension.surface,
+        title: legacyAdminExtension.handle,
       },
     })
 
