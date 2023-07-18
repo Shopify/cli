@@ -32,7 +32,6 @@ export const serializeCommerceObjectField = (field: SerializedField, type: FlowP
   const serializedField: ConfigField = {
     key: field.name,
     type: fieldType,
-    description: field.description,
   }
 
   if (type === 'flow_action_definition') {
