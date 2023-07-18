@@ -23,5 +23,33 @@ export async function getCartPathFromExtensions(
  * Returns the surface for UI extension from an extension point target
  */
 export function getExtensionPointTargetSurface(extensionPointTarget: string) {
-  return extensionPointTarget.toLowerCase().replace(/(::|\.).+$/, '')
+  const domain = extensionPointTarget.toLowerCase().replace(/(::|\.).+$/, '')
+
+  switch (domain) {
+    // Covers Checkout UI extensions and Post purchase UI extensions (future)
+    case 'purchase': {
+      const page = extensionPointTarget.split('.')[1]
+
+      if (page === 'post') {
+        return 'post_purchase'
+      }
+
+      // Checkout UI extensions
+      return page
+    }
+
+    // Covers Customer Accounts UI extensions (future)
+    case 'customer-account': {
+      return 'customer-accounts'
+    }
+
+    // Covers POS UI extensions (future)
+    case 'retail': {
+      return 'point_of_sale'
+    }
+
+    default:
+      // Covers Admin UI extensions
+      return domain
+  }
 }
