@@ -437,11 +437,13 @@ export async function fetchAppAndIdentifiers(
   reuseFromDev = true,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
   const app = options.app
+  let reuseDevCache = reuseFromDev
   let envIdentifiers = getAppIdentifiers({app})
   let partnersApp: OrganizationApp | undefined
 
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
+    reuseDevCache = false
     if (isCurrentAppSchema(app.configuration)) {
       const configuration = await link({directory: app.directory, commandConfig: options.commandConfig})
       app.configuration = configuration
@@ -455,7 +457,7 @@ export async function fetchAppAndIdentifiers(
     partnersApp = await appFromId(options.apiKey, token)
   } else if (envIdentifiers.app) {
     partnersApp = await appFromId(envIdentifiers.app, token)
-  } else if (reuseFromDev) {
+  } else if (reuseDevCache) {
     partnersApp = await fetchDevAppAndPrompt(app, token)
   }
 
