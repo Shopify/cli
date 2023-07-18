@@ -17,7 +17,7 @@ describe('DangerousConfirmationPrompt', () => {
       "?  Test question:
 
          Type yes to confirm, or press Escape to cancel.
-      >${'   '}
+      >  █
          ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
     `)
@@ -34,10 +34,10 @@ describe('DangerousConfirmationPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
 
-         Type \u001b[36myes\u001b[39m to confirm, or press Escape to cancel.
-      \u001b[31m>\u001b[39m  \u001b[31m\u001b[7m \u001b[27m\u001b[39m
-         \u001b[31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔\u001b[39m
-         \u001b[31mValue must be exactly \u001b[36myes\u001b[39m\u001b[31m\u001b[39m
+         Type [36myes[39m to confirm, or press Escape to cancel.
+      [31m>[39m  [31m[41m[31m█[39m[31m[49m[39m
+         [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         [31mValue must be exactly [36myes[39m[31m[39m
       "
     `)
     await sendInputAndWaitForChange(renderInstance, 'A')
@@ -45,8 +45,8 @@ describe('DangerousConfirmationPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
 
-         Type \u001b[36myes\u001b[39m to confirm, or press Escape to cancel.
-      [36m>[39m  [36mA[7m [27m[39m
+         Type [36myes[39m to confirm, or press Escape to cancel.
+      [36m>[39m  [36mA[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -82,9 +82,9 @@ describe('DangerousConfirmationPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
 
-         Type \u001b[36myes\u001b[39m to confirm, or press Escape to cancel.
+         Type [36myes[39m to confirm, or press Escape to cancel.
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
-         [36mBBBBBB[7m [27m[39m
+         [36mBBBBBB[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -99,7 +99,7 @@ describe('DangerousConfirmationPrompt', () => {
       "?  Test question?
 
          Type yes to confirm, or press Escape to cancel.
-      >${'   '}
+      >  █
          ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
       "
     `)

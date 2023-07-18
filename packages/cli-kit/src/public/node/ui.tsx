@@ -565,7 +565,7 @@ export interface RenderDangerousConfirmationPromptOptions extends Omit<Dangerous
  *
  *    Type nightly-app-2023-06-19 to confirm, or press Escape
  *    to cancel.
- * >   
+ * >  █
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */

@@ -1,7 +1,9 @@
 /* eslint-disable no-nested-ternary */
+import {shouldDisplayColors} from '../../../../public/node/output.js'
 import React, {useEffect, useState} from 'react'
 import {Text, useInput} from 'ink'
 import chalk from 'chalk'
+import figures from 'figures'
 import type {FunctionComponent} from 'react'
 
 interface TextInputProps {
@@ -45,19 +47,26 @@ const TextInput: FunctionComponent<TextInputProps> = ({
     return chalk.inverse(value[0]) + chalk.dim(value.slice(1))
   }
 
+  const cursorChar = figures.square
+  const defaultCursor = (
+    <Text color={color} backgroundColor={color}>
+      {cursorChar}
+    </Text>
+  )
+
   const renderedPlaceholder =
     defaultValue.length > 0
       ? renderPlaceholder(defaultValue)
       : placeholder.length > 0
       ? renderPlaceholder(placeholder)
-      : chalk.inverse(' ')
+      : defaultCursor
 
   // render cursor
   renderedValue = value
     .split('')
     .map((char, index) => {
       if (index === cursorOffset) {
-        return chalk.inverse(char)
+        return shouldDisplayColors() ? chalk.inverse(char) : cursorChar
       } else {
         return char
       }
@@ -65,7 +74,12 @@ const TextInput: FunctionComponent<TextInputProps> = ({
     .join('')
 
   if (cursorOffset === value.length) {
-    renderedValue += chalk.inverse(' ')
+    renderedValue = (
+      <Text>
+        {renderedValue}
+        {defaultCursor}
+      </Text>
+    )
   }
 
   useInput(

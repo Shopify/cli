@@ -28,7 +28,7 @@ describe('TextPrompt', () => {
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [31m>[39m  [31m[7m [27m[39m
+      [31m>[39m  [31m[41m[31m█[39m[31m[49m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mType an answer to the prompt.[39m
       "
@@ -37,7 +37,7 @@ describe('TextPrompt', () => {
     // color changes back to valid color
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [36m>[39m  [36mA[7m [27m[39m
+      [36m>[39m  [36mA[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -58,7 +58,7 @@ describe('TextPrompt', () => {
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [31m>[39m  [31mthis-test-includes-shopify[7m [27m[39m
+      [31m>[39m  [31mthis-test-includes-shopify[41m[31m█[39m[31m[49m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mApp name can't include the word shopify[39m
       "
@@ -143,7 +143,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
-         [36mBBBBBB[7m [27m[39m
+         [36mBBBBBB[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -156,7 +156,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, 'ABC')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [36m>[39m  [36m***[7m [27m[39m
+      [36m>[39m  [36m***[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -174,7 +174,7 @@ describe('TextPrompt', () => {
 
     expect(lastFrame()!).toMatchInlineSnapshot(`
       "?  Test question?
-      [36m>[39m  [36m[7m [27m[39m
+      [36m>[39m  [36m[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -219,7 +219,7 @@ describe('TextPrompt', () => {
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  How tall are you in cm?
-      [36m>[39m  [36m180[7m [27m[39m
+      [36m>[39m  [36m180[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          You are [36m1.8[39mm tall.
       "
@@ -244,7 +244,7 @@ describe('TextPrompt', () => {
 
     expect(renderInstance.lastFrame()!).toMatchInlineSnapshot(`
       "?  How tall are you?
-      [36m>[39m  [36muber[7m [27m[39m
+      [36m>[39m  [36muber[46m[36m█[39m[36m[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          You are [36mincredibly humongously savagely unnaturally monstrously pathetically [39m
          [36marrogantly uber[39m tall.
