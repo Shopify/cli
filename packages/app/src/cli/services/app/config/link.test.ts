@@ -56,7 +56,7 @@ describe('link', () => {
     })
   })
 
-  test.only('creates a new shopify.app.toml file when it does not exist', async () => {
+  test('creates a new shopify.app.toml file when it does not exist', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -71,7 +71,9 @@ describe('link', () => {
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -87,6 +89,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
@@ -145,7 +148,9 @@ use_legacy_install_flow = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `client_id = "12345"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
 name = "my app"
 application_url = "https://myapp.com"
 embedded = true
@@ -160,6 +165,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 `
       expect(content).toEqual(expectedContent)
@@ -202,7 +208,9 @@ scopes = "write_products"
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -218,6 +226,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
@@ -339,7 +348,9 @@ use_legacy_install_flow = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -355,6 +366,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
@@ -379,7 +391,9 @@ use_legacy_install_flow = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -395,6 +409,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
 `
       expect(content).toEqual(expectedContent)
