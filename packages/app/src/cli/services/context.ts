@@ -413,14 +413,18 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   return result
 }
 
-export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(
+  app: AppInterface,
+  token: string,
+  directory?: string,
+): Promise<OrganizationApp> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
   const scopes = isCurrentAppSchema(app.configuration)
     ? app.configuration?.access_scopes?.scopes
     : app.configuration?.scopes
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, {isLaunchable, scopes, directory})
   return partnersApp
 }
 
