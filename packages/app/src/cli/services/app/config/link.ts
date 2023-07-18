@@ -15,7 +15,7 @@ import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {fileExists, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -52,8 +52,7 @@ async function writeFile(configFilePath: string, configuration: AppConfiguration
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
-  writeFileSync(configFilePath, encodeToml(configuration))
-  const fileSplit = (await readFile(configFilePath)).split(/(\r\n|\r|\n)/)
+  const fileSplit = encodeToml(configuration).split(/(\r\n|\r|\n)/)
 
   fileSplit.unshift('\n')
   fileSplit.unshift(initialComment)
