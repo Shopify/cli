@@ -434,8 +434,14 @@ interface FileOptions {
 }
 
 interface GenerateRandomDirectoryOptions {
-  /** Suffix to include in the randomly generated directory name. */
-  suffix: string
+  /** Optional prefix to include in the randomly generated directory name. */
+  prefix?: string
+
+  /** Optional suffix to include in the randomly generated directory name. */
+  suffix?: string
+
+  /** Function to generate the random portion of the directory name. */
+  randomizer?: () => string
 
   /** Absolute path to the directory where the random directory will be created. */
   directory: string
@@ -452,8 +458,14 @@ interface GenerateRandomDirectoryOptions {
  * @returns It returns the name of the directory.
  */
 export async function generateRandomNameForSubdirectory(options: GenerateRandomDirectoryOptions): Promise<string> {
-  const generated = `${getRandomName(options.family ?? 'business')}-${options.suffix}`
-  const randomDirectoryPath = joinPath(options.directory, generated)
+  const {prefix, suffix, randomizer, directory, family} = options
+  const nameParts = [
+    ...(prefix ? [prefix] : []),
+    randomizer ? randomizer() : getRandomName(family ?? 'business'),
+    ...(suffix ? [suffix] : []),
+  ]
+  const generated = nameParts.join('-')
+  const randomDirectoryPath = joinPath(directory, generated)
   const isAppDirectoryTaken = await fileExists(randomDirectoryPath)
 
   if (isAppDirectoryTaken) {

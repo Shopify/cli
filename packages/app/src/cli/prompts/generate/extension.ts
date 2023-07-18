@@ -1,6 +1,7 @@
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
+import {hyphenate} from '@shopify/cli-kit/common/string'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -71,7 +72,9 @@ const generateExtensionPrompts = async (
   const extensionContent: GenerateExtensionContentOutput[] = []
   /* eslint-disable no-await-in-loop */
   for (const [index, templateType] of extensionTemplate.types.entries()) {
-    const name = (extensionTemplate.types.length === 1 && options.name) || (await promptName(options.directory))
+    const name =
+      (extensionTemplate.types.length === 1 && options.name) ||
+      (await promptName({directory: options.directory, extensionName: extensionTemplate.name}))
     const flavor = options.extensionFlavor ?? (await promptFlavor(templateType))
     extensionContent.push({index, name, flavor})
   }
@@ -80,10 +83,14 @@ const generateExtensionPrompts = async (
   return {extensionTemplate, extensionContent}
 }
 
-async function promptName(directory: string): Promise<string> {
+async function promptName({directory, extensionName}: {directory: string; extensionName: string}): Promise<string> {
   return renderTextPrompt({
     message: 'Extension name (internal only)',
-    defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory}),
+    defaultValue: await generateRandomNameForSubdirectory({
+      prefix: hyphenate(extensionName),
+      randomizer: () => Math.floor(Math.random() * 1000).toString(),
+      directory,
+    }),
   })
 }
 
