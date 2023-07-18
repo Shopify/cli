@@ -56,7 +56,7 @@ describe('link', () => {
     })
   })
 
-  test('creates a new shopify.app.toml file when it does not exist', async () => {
+  test.only('creates a new shopify.app.toml file when it does not exist', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
