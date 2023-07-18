@@ -14,6 +14,7 @@ interface TextInputProps {
   password?: boolean
   focus?: boolean
   placeholder?: string
+  noColor?: boolean
 }
 
 const TextInput: FunctionComponent<TextInputProps> = ({
@@ -21,7 +22,8 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   defaultValue = '',
   onChange,
   placeholder = '',
-  color = 'cyan',
+  noColor = !shouldDisplayColors(),
+  color = noColor ? undefined : 'cyan',
   password = false,
   focus = true,
 }) => {
@@ -48,11 +50,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   }
 
   const cursorChar = figures.square
-  const defaultCursor = (
-    <Text color={color} backgroundColor={color}>
-      {cursorChar}
-    </Text>
-  )
+  const defaultCursor = <Text backgroundColor={color}>{cursorChar}</Text>
 
   const renderedPlaceholder =
     defaultValue.length > 0
@@ -66,7 +64,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
     .split('')
     .map((char, index) => {
       if (index === cursorOffset) {
-        return shouldDisplayColors() ? chalk.inverse(char) : cursorChar
+        return noColor ? cursorChar : chalk.inverse(char)
       } else {
         return char
       }
