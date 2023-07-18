@@ -300,6 +300,29 @@ automatically_update_urls_on_dev = true
     await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Fix a schema error in/)
   })
 
+  test('throws an error if the extension type is invalid', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "extension"
+      type = "invalid_type"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type "invalid_type"/)
+  })
+
   test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
     // Given
     await writeConfig(appConfiguration, {
