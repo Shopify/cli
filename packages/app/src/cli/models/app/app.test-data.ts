@@ -382,6 +382,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_checkout_validation',
     name: 'Function - Cart and Checkout Validation',
+    defaultName: 'cart-checkout-validation',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
     types: [
@@ -402,6 +403,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_transform',
     name: 'Function - Cart transformer',
+    defaultName: 'cart-transformer',
     group: 'Discounts and checkout',
     supportLinks: [],
     types: [
@@ -427,6 +429,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'product_discounts',
     name: 'Function - Product discounts',
+    defaultName: 'product-discounts',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/apps/discounts'],
     types: [
@@ -452,6 +455,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'order_discounts',
     name: 'Function - Order discounts',
+    defaultName: 'order-discounts',
     group: 'Discounts and checkout',
     supportLinks: [],
     types: [

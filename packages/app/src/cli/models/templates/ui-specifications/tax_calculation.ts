@@ -6,6 +6,7 @@ import {ExtensionTemplate} from '../../app/template.js'
 const taxCalculationUIExtension: ExtensionTemplate = {
   identifier: 'tax_calculation',
   name: 'Tax Calculation',
+  defaultName: 'tax-calculation',
   group: 'Merchant admin',
   supportLinks: [],
   types: [

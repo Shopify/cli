@@ -7,6 +7,7 @@ import {uiFlavors} from '../common.js'
 const UIExtension: ExtensionTemplate = {
   identifier: 'ui_extension',
   name: 'UI Extension',
+  defaultName: 'ui-extension',
   group: 'Shopify private',
   supportLinks: [],
   types: [
