@@ -76,6 +76,8 @@ describe('resolveDeploymentMode', () => {
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
+      │  All apps will be automatically upgraded on Sept 5, 2023.                    │
+      │                                                                              │
       │  Reference                                                                   │
       │    • Simplified extension deployment [1]                                     │
       │                                                                              │
@@ -147,6 +149,8 @@ describe('resolveDeploymentMode', () => {
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
+      │  All apps will be automatically upgraded on Sept 5, 2023.                    │
+      │                                                                              │
       │  Reference                                                                   │
       │    • Simplified extension deployment [1]                                     │
       │                                                                              │
@@ -195,6 +199,8 @@ describe('resolveDeploymentMode', () => {
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
+      │                                                                              │
+      │  All apps will be automatically upgraded on Sept 5, 2023.                    │
       │                                                                              │
       │  Reference                                                                   │
       │    • Simplified extension deployment [1]                                     │

@@ -60,10 +60,12 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
         list: {
           items: [
             'Bundle all your extensions into an app version',
-            'Release all your extensions to users straight from the CLI',
+            'Release all your extensions to users straight from the CLI\n',
           ],
         },
       },
+      'All apps will be automatically upgraded on',
+      {bold: 'Sept 5, 2023.'},
     ],
     reference: [
       {
