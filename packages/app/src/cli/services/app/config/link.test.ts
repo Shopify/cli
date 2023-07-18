@@ -201,6 +201,48 @@ use_legacy_install_flow = true
     })
   })
 
+  test('does not render success banner if shouldRenderSuccess is false', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const initialContent = `scopes = ""
+      `
+      writeFileSync(filePath, initialContent)
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+
+      // When
+      await link(options, false)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `client_id = "api-key"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+use_legacy_install_flow = true
+`
+      expect(content).toEqual(expectedContent)
+      expect(renderSuccess).not.toHaveBeenCalled()
+    })
+  })
+
   test('fetches the app directly when an api key is provided', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given

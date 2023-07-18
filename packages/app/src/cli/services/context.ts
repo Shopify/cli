@@ -561,7 +561,7 @@ export async function getAppContext({
   const firstTimeSetup = previousCachedInfo === undefined
   const usingConfigAndResetting = previousCachedInfo?.configFile && reset
   if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting)) {
-    await link({directory, commandConfig})
+    await link({directory, commandConfig}, false)
   }
 
   let cachedInfo = getCachedAppInfo(directory)
