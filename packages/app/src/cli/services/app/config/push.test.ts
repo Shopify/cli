@@ -247,7 +247,7 @@ describe('pushConfig', () => {
   test('returns error when client id cannot be found', async () => {
     // Given
     const {configuration, configurationPath} = testApp({}, 'current')
-    const options: Options = {configuration, configurationPath}
+    const options: PushOptions = {configuration, configurationPath, force: true}
 
     vi.mocked(partnersRequest).mockResolvedValue({app: null})
 
@@ -283,7 +283,7 @@ describe('pushConfig', () => {
   test('returns error with field names when update mutation fails and userErrors includes field', async () => {
     // Given
     const {configuration, configurationPath} = testApp({}, 'current')
-    const options: Options = {configuration, configurationPath}
+    const options: PushOptions = {configuration, configurationPath, force: true}
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
