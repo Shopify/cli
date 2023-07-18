@@ -123,7 +123,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.outputPath = this.directory
 
     if (this.features.includes('esbuild')) {
-      this.outputPath = joinPath(this.directory, 'dist/main.js')
+      this.outputPath = joinPath(this.directory, 'dist', `${this.handle}.js`)
     }
 
     if (this.isFunctionExtension) {
@@ -255,7 +255,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
-    const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.handle}.js`)
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
