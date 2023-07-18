@@ -2,30 +2,58 @@ import {ConfigField, FlowExtensionTypes} from './types.js'
 import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export const validateNonCommerceObjectShape = (configField: ConfigField, type: FlowExtensionTypes) => {
-  if (!Object.keys(SUPPORTED_COMMERCE_OBJECTS).includes(configField.type)) {
-    if (!configField.key) {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['settings.fields.key'],
-          message: 'Key must be specified for non-commerce object fields',
-        },
-      ])
+function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
+  const errorMessage = `'${property}' property must be a string for 'field[${index}]' ${JSON.stringify(
+    configField,
+  )} of flow extension '${handle}'`
+
+  return {required_error: errorMessage, invalid_type_error: errorMessage}
+}
+
+const baseFieldSchema = zod
+  .object({
+    type: zod.string(),
+    description: zod.string().optional(),
+  })
+  .strict()
+
+export const validateFieldShape = (
+  configField: ConfigField,
+  type: FlowExtensionTypes,
+  extensionHandle: string,
+  index: number,
+): ConfigField => {
+  const isCommerceObjectField = Object.keys(SUPPORTED_COMMERCE_OBJECTS).includes(configField.type)
+
+  if (!isCommerceObjectField) {
+    if (type === 'flow_action') {
+      return baseFieldSchema
+        .extend({
+          key: zod.string(fieldValidationErrorMessage('key', configField, extensionHandle, index)),
+          name: zod.string(fieldValidationErrorMessage('name', configField, extensionHandle, index)),
+          required: zod.boolean().optional(),
+        })
+        .parse(configField)
     }
 
-    if (!configField.name && type === 'flow_action') {
-      throw new zod.ZodError([
-        {
-          code: zod.ZodIssueCode.custom,
-          path: ['settings.fields.name'],
-          message: 'Name must be specified for non-commerce object fields',
-        },
-      ])
+    return baseFieldSchema
+      .extend({
+        key: zod.string(fieldValidationErrorMessage('key', configField, extensionHandle, index)),
+      })
+      .parse(configField)
+  }
+
+  if (isCommerceObjectField) {
+    if (type === 'flow_action') {
+      return baseFieldSchema
+        .extend({
+          required: zod.boolean().optional(),
+        })
+        .parse(configField)
     }
   }
 
-  return true
+  return baseFieldSchema.parse(configField)
 }
 
 export const startsWithHttps = (url: string) => url.startsWith('https://')
@@ -62,6 +90,32 @@ export const validateCustomConfigurationPageConfig = (
           code: zod.ZodIssueCode.custom,
           path: ['extensions[0].validation_url'],
           message: 'To set a custom configuration page a `validation_url` must be specified.',
+        },
+      ])
+    }
+  }
+
+  return true
+}
+
+export const validateReturnTypeConfig = (returnTypeRef?: string, schema?: string) => {
+  if (returnTypeRef || schema) {
+    if (!returnTypeRef) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].return_type_ref'],
+          message: 'When uploading a schema a `return_type_ref` must be specified.',
+        },
+      ])
+    }
+
+    if (!schema) {
+      throw new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].schema'],
+          message: 'To set a return type a `schema` must be specified.',
         },
       ])
     }

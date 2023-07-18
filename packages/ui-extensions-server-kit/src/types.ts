@@ -91,7 +91,7 @@ export interface ExtensionPoint {
   resource: ResourceURL
   root: ResourceURL
   localization?: FlattenedLocalization | Localization | null
-  label?: string
+  name: string
 }
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
@@ -114,7 +114,8 @@ export interface ExtensionPayload {
   uuid: string
   version: string
   surface: Surface
-  title: string
+  name: string
+  handle: string
   extensionPoints: ExtensionPoints
   categories?: string[]
   capabilities?: {

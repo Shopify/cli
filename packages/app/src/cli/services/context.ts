@@ -418,8 +418,8 @@ export async function fetchOrCreateOrganizationApp(app: AppInterface, token: str
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
   const scopes = isCurrentAppSchema(app.configuration)
-    ? app.configuration.access_scopes?.scopes
-    : app.configuration.scopes
+    ? app.configuration?.access_scopes?.scopes
+    : app.configuration?.scopes
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
   return partnersApp
 }
@@ -619,7 +619,7 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
   if (!cachedInfo?.configFile && usingDifferentSettings) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
 
   const items = [
     `Org:          ${organization.businessName}`,

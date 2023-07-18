@@ -82,10 +82,11 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        * Before:
        * ```
        * {
+       *  name: 'en name'
        *  localization: {...},
        *  extensionPoints: [{
        *    target: 'admin.product.item.action'
-       *    label: 'en label'
+       *    name: 'en name'
        *    localization: {...}
        *  }],
        * }
@@ -211,10 +212,21 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         ? getFlattenedLocalization(extension.localization, this.options.locales)
         : this.uiExtensionsByUuid[extension.uuid]?.localization || extension.localization
 
-      this.uiExtensionsByUuid[extension.uuid] = {
+      const parsedTranslation: {[key: string]: string} =
+        localization && isFlattenedTranslations(localization) ? JSON.parse(localization.translations) : localization
+
+      const localizedExtension = {
         ...extension,
         localization,
-        extensionPoints: this._getLocalizedExtensionPoints(localization, extension.extensionPoints),
+        name:
+          parsedTranslation && extension.name.startsWith('t:')
+            ? this._getLocalizedName(parsedTranslation, extension.name)
+            : extension.name,
+      }
+
+      this.uiExtensionsByUuid[extension.uuid] = {
+        ...localizedExtension,
+        extensionPoints: this._getLocalizedExtensionPoints(localization, localizedExtension),
       }
 
       return this.uiExtensionsByUuid[extension.uuid]
@@ -223,29 +235,24 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   private _getLocalizedExtensionPoints(
     localization: FlattenedLocalization | Localization | null | undefined,
-    extensionPoints: ExtensionPoint[],
+    {extensionPoints, name}: ExtensionServer.UIExtension,
   ): ExtensionPoint[] {
     if (!localization || !isFlattenedTranslations(localization)) {
       return extensionPoints
     }
 
-    const parsedTranslation = JSON.parse(localization.translations)
-
     return extensionPoints?.map((extensionPoint) => {
       return {
         ...extensionPoint,
         localization,
-        label:
-          extensionPoint.label && extensionPoint.label.startsWith('t:')
-            ? this._getLocalizedLabel(parsedTranslation, extensionPoint.label)
-            : extensionPoint.label,
+        name,
       }
     })
   }
 
-  private _getLocalizedLabel(translations: {[x: string]: string}, label: string): string {
-    const translationKey = label.replace('t:', '')
-    return translations[translationKey] || label
+  private _getLocalizedName(translations: {[x: string]: string}, name: string): string {
+    const translationKey = name.replace('t:', '')
+    return translations[translationKey] || name
   }
 }
 

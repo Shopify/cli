@@ -48,7 +48,7 @@ describe('<ExtensionRow/>', () => {
       code: {
         url: extension.development.root.url,
         type: extension.surface,
-        title: extension.title,
+        title: extension.handle,
       },
     })
 

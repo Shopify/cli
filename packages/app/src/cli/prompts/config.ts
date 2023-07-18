@@ -9,6 +9,7 @@ import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import colors from '@shopify/cli-kit/node/colors'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -52,9 +53,7 @@ function buildTextPromptOptions(defaultValue: string): RenderTextPromptOptions {
     message: 'Configuration file name:',
     defaultValue,
     validate,
-    previewPrefix: () => 'shopify.app.',
-    previewValue: (value: string) => slugify(value),
-    previewSuffix: () => '.toml will be generated in your root directory\n',
+    preview: (value) => `shopify.app.${colors.cyan(slugify(value))}.toml will be generated in your root directory`,
   }
 }
 

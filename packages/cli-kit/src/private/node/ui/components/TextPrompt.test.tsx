@@ -4,6 +4,7 @@ import {unstyled} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import colors from '@shopify/cli-kit/node/colors'
 
 const ENTER = '\r'
 
@@ -209,9 +210,7 @@ describe('TextPrompt', () => {
       <TextPrompt
         onSubmit={() => {}}
         message="How tall are you in cm?"
-        previewPrefix={() => 'You are '}
-        previewValue={(value) => String(Number(value) / 100)}
-        previewSuffix={() => 'm tall.'}
+        preview={(value) => `You are ${colors.cyan(String(Number(value) / 100))}m tall.`}
       />,
     )
 
@@ -232,11 +231,11 @@ describe('TextPrompt', () => {
       <TextPrompt
         onSubmit={() => {}}
         message="How tall are you?"
-        previewPrefix={() => 'You are '}
-        previewValue={(value) =>
-          `incredibly humongously savagely unnaturally monstrously pathetically arrogantly ${value}`
+        preview={(value) =>
+          `You are ${colors.cyan(
+            `incredibly humongously savagely unnaturally monstrously pathetically arrogantly ${value}`,
+          )} tall.`
         }
-        previewSuffix={() => ' tall.'}
       />,
     )
 

@@ -115,6 +115,7 @@ use_legacy_install_flow = true
             scopes: 'write_products',
             webhooks: {api_version: '2023-04'},
             application_url: 'https://myapp.com',
+            embedded: true,
           },
         }),
       )

@@ -1,4 +1,4 @@
-import {unstyled, shouldDisplayColors} from '../../../../public/node/output.js'
+import {unstyled, shouldDisplayColors} from '../../../../../public/node/output.js'
 import {Text} from 'ink'
 import React, {FunctionComponent} from 'react'
 import {createRequire} from 'module'
@@ -7,8 +7,10 @@ const require = createRequire(import.meta.url)
 const gitDiff = require('git-diff')
 
 export interface GitDiffProps {
-  baselineContent: string
-  updatedContent: string
+  gitDiff: {
+    baselineContent: string
+    updatedContent: string
+  }
 }
 
 /**
@@ -19,7 +21,7 @@ export interface GitDiffProps {
  *   unchanged line
  * + added line
  */
-const GitDiff: FunctionComponent<GitDiffProps> = ({baselineContent, updatedContent}): JSX.Element => {
+const GitDiff: FunctionComponent<GitDiffProps> = ({gitDiff: {baselineContent, updatedContent}}): JSX.Element => {
   const rawDiffContents = gitDiff(baselineContent, updatedContent, {
     color: shouldDisplayColors(),
     // Show minimal context to accommodate small terminals.
