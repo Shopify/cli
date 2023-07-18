@@ -86,9 +86,7 @@ describe('selectConfigName', () => {
       expect(renderTextPrompt).toHaveBeenCalledWith({
         defaultValue: 'My app',
         message: 'Configuration file name:',
-        previewPrefix: expect.any(Function),
-        previewSuffix: expect.any(Function),
-        previewValue: expect.any(Function),
+        preview: expect.any(Function),
         validate: expect.any(Function),
       })
     })

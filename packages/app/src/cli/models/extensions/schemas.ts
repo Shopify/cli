@@ -14,10 +14,6 @@ export const CapabilitiesSchema = zod.object({
   api_access: zod.boolean().optional(),
 })
 
-export const TypeSchema = zod.object({
-  type: zod.string().default('ui_extension'),
-})
-
 export const ExtensionsArraySchema = zod.object({
   type: zod.string().optional(),
   extensions: zod.array(zod.any()).optional(),
@@ -26,7 +22,6 @@ export const ExtensionsArraySchema = zod.object({
 export const NewExtensionPointSchema = zod.object({
   target: zod.string(),
   module: zod.string(),
-  label: zod.string().optional(),
   metafields: zod.array(MetafieldSchema).optional(),
 })
 
@@ -77,14 +72,12 @@ export const BaseSchemaWithHandle = BaseSchema.extend({
   handle: HandleSchema,
 })
 
-export const UnifiedSchema = zod
-  .object({
-    name: zod.string(),
-    api_version: ApiVersionSchema.optional(),
-    extensions: zod.array(zod.any()),
-  })
-  // Include any other field not defined in the schema
-  .passthrough()
+export const UnifiedSchema = zod.object({
+  name: zod.string(),
+  api_version: ApiVersionSchema.optional(),
+  description: zod.string().optional(),
+  extensions: zod.array(zod.any()),
+})
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 

@@ -6,17 +6,11 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
   updateURLsPrompt,
-  tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationStore} from '../models/organization.js'
 import {testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {
-  renderAutocompletePrompt,
-  renderConfirmationPrompt,
-  renderSelectPrompt,
-  renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -212,7 +206,7 @@ describe('createAsNewAppPrompt', () => {
 describe('updateURLsPrompt', () => {
   test('asks about the URL update and shows 4 different options', async () => {
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await updateURLsPrompt('http://current-url', [
@@ -221,40 +215,15 @@ describe('updateURLsPrompt', () => {
     ])
 
     // Then
-    expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
+    expect(got).toEqual(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
       infoTable: {
         'Current app URL': ['http://current-url'],
         'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
       },
-      choices: [
-        {label: 'Always by default', value: 'always'},
-        {label: 'Yes, this time', value: 'yes'},
-        {label: 'No, not now', value: 'no'},
-        {label: `Never, don't ask again`, value: 'never'},
-      ],
-    })
-  })
-})
-
-describe('tunnelConfigurationPrompt', () => {
-  test('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
-
-    // When
-    const got = await tunnelConfigurationPrompt()
-
-    // Then
-    expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'How would you like your tunnel to work in the future?',
-      choices: [
-        {label: 'Always use it by default', value: 'always'},
-        {label: 'Use it now and ask me next time', value: 'yes'},
-        {label: 'Nevermind, cancel dev', value: 'cancel'},
-      ],
+      confirmationMessage: 'Yes, automatically update',
+      cancellationMessage: 'No, never',
     })
   })
 })

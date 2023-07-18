@@ -1,9 +1,17 @@
-import {getAppConfigurationShorthand, getAppConfigurationFileName, loadApp, loadDotEnv} from './loader.js'
+import {
+  getAppConfigurationShorthand,
+  getAppConfigurationFileName,
+  loadApp,
+  loadDotEnv,
+  parseConfigurationObject,
+} from './loader.js'
+import {AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {DEFAULT_CONFIG} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
+import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
   yarnLockfile,
@@ -13,6 +21,8 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -270,8 +280,16 @@ automatically_update_urls_on_dev = true
 
   test('throws an error if the extension configuration file is invalid', async () => {
     // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
     const blockConfiguration = `
       wrong = "my_extension"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -279,7 +297,56 @@ automatically_update_urls_on_dev = true
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Fix a schema error in/)
+  })
+
+  test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "my_extension-global"
+
+      [[extensions]]
+      name = "my_extension"
+      type = "checkout_post_purchase"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
+      /Missing handle for extension "my_extension"/,
+    )
+  })
+
+  test('throws an error if the extension configuration is missing both extensions and type', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "my_extension-global"
+      handle = "handle"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type/)
   })
 
   test('loads the app with web blocks', async () => {
@@ -427,7 +494,7 @@ automatically_update_urls_on_dev = true
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('custom_extension')
+    expect(app.allExtensions[0]!.localIdentifier).toBe('custom-extension')
   })
 
   test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -510,8 +577,8 @@ automatically_update_urls_on_dev = true
       name = "my_extension_1_flow"
       runtime_url = "https://example.com"
 
-      [settings]
-      [[settings.fields]]
+      [extensions.settings]
+      [[extensions.settings.fields]]
       key = "my_field"
       name = "My Field"
       description = "My Field Description"
@@ -535,7 +602,6 @@ automatically_update_urls_on_dev = true
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
-    expect(extensions[0]!.configuration.settings!.fields![0]!.key).toBe('my_field')
     expect(extensions[0]!.configuration.description).toBe('custom description')
 
     expect(extensions[1]!.configuration.name).toBe('my_extension_1_flow')
@@ -795,7 +861,9 @@ automatically_update_urls_on_dev = true
     })
   })
 
-  test(`updates metadata after loading a config as code application`, async () => {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test.skipIf(runningOnWindows)(`updates metadata after loading a config as code application`, async () => {
     const {webDirectory} = await writeConfig(linkedAppConfiguration, {
       workspaces: ['packages/*'],
       name: 'my_app',
@@ -1051,5 +1119,97 @@ describe('loadDotEnv', () => {
       expect(got).toBeDefined()
       expect(got!.variables.FOO).toEqual('bar')
     })
+  })
+})
+
+describe('parseConfigurationObject', () => {
+  test('throws an error if fields are missing in a current schema TOML file', async () => {
+    const configurationObject = {
+      ...DEFAULT_CONFIG,
+      embedded: undefined,
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'undefined',
+        path: ['embedded'],
+        message: 'Required',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('throws an error if fields are missing in a legacy schema TOML file', async () => {
+    const configurationObject = {
+      scopes: [],
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: ['scopes'],
+        message: 'Expected string, received array',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('throws an error if fields are missing in a frontend config web TOML file', async () => {
+    const configurationObject = {
+      type: 11,
+      commands: {dev: ''},
+      roles: 1,
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_union',
+        unionErrors: [
+          {
+            issues: [
+              {
+                code: 'invalid_type',
+                expected: 'array',
+                received: 'number',
+                path: ['roles'],
+                message: 'Expected array, received number',
+              },
+            ],
+            name: 'ZodError',
+          },
+          {
+            issues: [
+              {
+                expected: "'frontend' | 'backend' | 'background'",
+                received: 'number',
+                code: 'invalid_type',
+                path: ['type'],
+                message: "Expected 'frontend' | 'backend' | 'background', received number",
+              },
+            ],
+            name: 'ZodError',
+          },
+        ],
+        path: [],
+        message: 'Invalid input',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 })

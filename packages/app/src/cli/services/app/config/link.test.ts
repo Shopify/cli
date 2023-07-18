@@ -63,7 +63,7 @@ describe('link', () => {
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockRejectedValue('App not found')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -115,6 +115,7 @@ use_legacy_install_flow = true
             scopes: 'write_products',
             webhooks: {api_version: '2023-04'},
             application_url: 'https://myapp.com',
+            embedded: true,
           },
         }),
       )
@@ -266,6 +267,7 @@ name = "app1"
 api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
+extension_directories = [ ]
 
 [webhooks]
 api_version = "2023-07"

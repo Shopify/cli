@@ -3,7 +3,6 @@ import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from 
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
-import {zod} from '@shopify/cli-kit/node/schema'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -11,14 +10,27 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
+const validatePoints = (config: {extension_points?: unknown[]; targeting?: unknown[]}) => {
+  return config.extension_points !== undefined || config.targeting !== undefined
+}
+
+const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
+
 const UIExtensionSchema = BaseSchema.extend({
-  settings: zod
-    .object({
-      fields: zod.any().optional(),
-    })
-    .optional(),
-  extension_points: NewExtensionPointsSchema,
+  extension_points: NewExtensionPointsSchema.optional(),
+  targeting: NewExtensionPointsSchema.optional(),
 })
+  .refine((config) => validatePoints(config), missingExtensionPointsMessage)
+  .transform((config) => {
+    const extensionPoints = (config.targeting ?? config.extension_points ?? []).map((targeting) => {
+      return {
+        target: targeting.target,
+        module: targeting.module,
+        metafields: targeting.metafields ?? config.metafields ?? [],
+      }
+    })
+    return {...config, extension_points: extensionPoints}
+  })
 
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
@@ -80,6 +92,10 @@ async function validateUIExtensionPointConfig(
   const errors: string[] = []
   const uniqueTargets: string[] = []
   const duplicateTargets: string[] = []
+
+  if (!extensionPoints || extensionPoints.length === 0) {
+    return err(missingExtensionPointsMessage)
+  }
 
   for await (const {module, target} of extensionPoints) {
     const fullPath = joinPath(directory, module)

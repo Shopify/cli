@@ -247,7 +247,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
-    dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.1.0'})
+    dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.1.1'})
   }
   return dependencies
 }

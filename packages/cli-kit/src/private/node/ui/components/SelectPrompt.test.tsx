@@ -161,6 +161,45 @@ describe('SelectPrompt', async () => {
     `)
   })
 
+  test('supports a git diff', async () => {
+    const items = [
+      {label: 'first', value: 'first'},
+      {label: 'second', value: 'second'},
+      {label: 'third', value: 'third'},
+      {label: 'fourth', value: 'fourth'},
+    ]
+
+    const gitDiff = {
+      baselineContent: 'hello\n',
+      updatedContent: 'world\n',
+    }
+
+    const renderInstance = render(
+      <SelectPrompt
+        message="Associate your project with the org Castile Ventures?"
+        choices={items}
+        gitDiff={gitDiff}
+        onSubmit={() => {}}
+      />,
+    )
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
+      "?  Associate your project with the org Castile Ventures?
+
+         ┃  [36m  @@ -1 +1 @@[m
+         ┃  [31m- hello[m
+         ┃  [32m+ [m[32mworld[m
+
+      [36m>[39m  [36mfirst[39m
+         second
+         third
+         fourth
+
+         [2mPress ↑↓ arrows to select, enter to confirm.[22m
+      "
+    `)
+  })
+
   test('supports an info message', async () => {
     const items = [
       {label: 'first', value: 'first'},

@@ -1,20 +1,21 @@
 import {
-  AppConfigurationSchema,
   Web,
   WebConfigurationSchema,
   App,
   AppInterface,
   WebType,
-  AppConfiguration,
   isCurrentAppSchema,
   getAppScopesArray,
+  AppConfigurationInterface,
+  AppSchema,
+  LegacyAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {ExtensionsArraySchema, TypeSchema, UnifiedSchema} from '../extensions/schemas.js'
+import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {getAppInfo} from '../../services/local-storage.js'
+import {getCachedAppInfo} from '../../services/local-storage.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -27,8 +28,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
-import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -74,6 +74,20 @@ async function loadConfigurationFile(
   }
 }
 
+const isCurrentSchema = (schema: unknown) => {
+  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
+  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
+
+  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
+  for (const field in schema as {[key: string]: unknown}) {
+    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -97,8 +111,8 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport,
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
-  const parseResult = schema.safeParse(configurationObject)
 
+  const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
     return abortOrReport(
@@ -115,32 +129,6 @@ export function findSpecificationForType(specifications: ExtensionSpecification[
     (spec) =>
       spec.identifier === type || spec.externalIdentifier === type || spec.additionalIdentifiers?.includes(type),
   )
-}
-
-export async function findSpecificationForConfig(
-  specifications: ExtensionSpecification[],
-  configurationPath: string,
-  abortOrReport: AbortOrReport,
-) {
-  const fileContent = await readFile(configurationPath)
-  const obj = decodeToml(fileContent)
-  const {type} = TypeSchema.parse(obj)
-  const specification = findSpecificationForType(specifications, type)
-
-  if (!specification) {
-    const isShopifolk = await isShopify()
-    const shopifolkMessage = '\nYou might need to enable some beta flags on your Organization or App'
-    abortOrReport(
-      outputContent`Unknown extension type ${outputToken.yellow(type)} in ${outputToken.path(configurationPath)}. ${
-        isShopifolk ? shopifolkMessage : ''
-      }`,
-      undefined,
-      configurationPath,
-    )
-    return undefined
-  }
-
-  return specification
 }
 
 export class AppErrors {
@@ -227,8 +215,12 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {appDirectory, configurationPath, configuration, configurationLoadResultMetadata} =
-      await configurationLoader.loaded()
+    const {
+      directory: appDirectory,
+      configurationPath,
+      configuration,
+      configurationLoadResultMetadata,
+    } = await configurationLoader.loaded()
     const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
@@ -321,6 +313,7 @@ class AppLoader {
   ): Promise<ExtensionInstance | undefined> {
     const specification = findSpecificationForType(this.specifications, type)
     if (!specification) return
+
     const configuration = await parseConfigurationObject(
       specification.schema,
       configurationPath,
@@ -367,13 +360,33 @@ class AppLoader {
         // Parse all extensions by merging each extension config with the global unified configuration.
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
-          const config = {...configuration, ...extensionConfig}
-          return this.createExtensionInstance(config.type, config, configurationPath, directory)
+          const mergedConfig = {...configuration, ...extensionConfig}
+          const {extensions, ...restConfig} = mergedConfig
+          if (!restConfig.handle) {
+            // Handle is required for unified config extensions.
+            return this.abortOrReport(
+              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+                appDirectory,
+                configurationPath,
+              )}`,
+              undefined,
+              configurationPath,
+            )
+          }
+          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
         return Promise.all(extensionsInstancesPromises)
       } else if (type) {
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
+      } else {
+        return this.abortOrReport(
+          outputContent`Invalid extension type at "${outputToken.path(
+            relativePath(appDirectory, configurationPath),
+          )}". Please specify a type.`,
+          undefined,
+          configurationPath,
+        )
       }
     })
 
@@ -423,12 +436,6 @@ class AppLoader {
       return fallback
     }
   }
-}
-
-export interface AppConfigurationInterface {
-  appDirectory: string
-  configuration: AppConfiguration
-  configurationPath: string
 }
 
 /**
@@ -483,13 +490,18 @@ class AppConfigurationLoader {
   async loaded() {
     const appDirectory = await this.getAppDirectory()
     let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    this.configName = this.configName ?? getAppInfo(appDirectory)?.configFile
+    this.configName = this.configName ?? getCachedAppInfo(appDirectory)?.configFile
     if (this.configName === undefined) {
       configSource = 'default'
     }
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
-    const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
+
+    const file = await loadConfigurationFile(configurationPath, this.abort, decodeToml)
+
+    const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
+
+    const configuration = await parseConfigurationFile(appSchema, configurationPath, this.abort)
 
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
@@ -517,7 +529,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

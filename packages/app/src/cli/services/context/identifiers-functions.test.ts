@@ -255,7 +255,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     // Then
     expect(got).toEqual(
       ok({
-        FUNCTION_B: 'ID_B',
+        'function-b': 'ID_B',
       }),
     )
   })

@@ -3,7 +3,6 @@ import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher
 import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {testApp, testUIExtension, testFunctionExtension} from '../models/app/app.test-data.js'
-import {loadFSExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'node:stream'
@@ -32,7 +31,6 @@ describe('devDraftableExtensionTarget()', () => {
     const remoteExtensions = {} as any
     remoteExtensions[extension1.localIdentifier] = 'mock-registration-id-1'
     remoteExtensions[extension2.localIdentifier] = 'mock-registration-id-2'
-    const specifications = await loadFSExtensionsSpecifications()
 
     const process = devDraftableExtensionTarget({
       extensions,
@@ -41,7 +39,6 @@ describe('devDraftableExtensionTarget()', () => {
       token: 'mock-token',
       apiKey: 'mock-api-key',
       remoteExtensions,
-      specifications,
       unifiedDeployment: true,
     })
 
@@ -69,7 +66,6 @@ describe('devDraftableExtensionTarget()', () => {
         stdout,
         stderr,
         signal: abortController.signal,
-        specifications,
         unifiedDeployment: true,
       })
     })
@@ -87,7 +83,6 @@ describe('devDraftableExtensionTarget()', () => {
     const remoteExtensions = {} as any
     remoteExtensions[function1.localIdentifier] = 'mock-registration-id-1'
     remoteExtensions[function2.localIdentifier] = 'mock-registration-id-2'
-    const specifications = await loadFSExtensionsSpecifications()
 
     const process = devDraftableExtensionTarget({
       extensions,
@@ -96,7 +91,6 @@ describe('devDraftableExtensionTarget()', () => {
       token: 'mock-token',
       apiKey: 'mock-api-key',
       remoteExtensions,
-      specifications,
       unifiedDeployment: true,
     })
 
@@ -129,7 +123,6 @@ describe('devDraftableExtensionTarget()', () => {
         stdout,
         stderr,
         signal: abortController.signal,
-        specifications,
         unifiedDeployment: true,
       })
 

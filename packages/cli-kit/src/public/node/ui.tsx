@@ -28,12 +28,13 @@ import {
   ListToken,
   TokenItem,
 } from '../../private/node/ui/components/TokenizedText.js'
-import {SelectPrompt, SelectPromptProps, InfoMessage} from '../../private/node/ui/components/SelectPrompt.js'
+import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
+import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -46,12 +47,12 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * @example
- * 0000-00-00 00:00:00 │ backend  │ first backend message
- * 0000-00-00 00:00:00 │ backend  │ second backend message
- * 0000-00-00 00:00:00 │ backend  │ third backend message
- * 0000-00-00 00:00:00 │ frontend │ first frontend message
- * 0000-00-00 00:00:00 │ frontend │ second frontend message
- * 0000-00-00 00:00:00 │ frontend │ third frontend message
+ * 00:00:00 │ backend  │ first backend message
+ * 00:00:00 │ backend  │ second backend message
+ * 00:00:00 │ backend  │ third backend message
+ * 00:00:00 │ frontend │ first frontend message
+ * 00:00:00 │ frontend │ second frontend message
+ * 00:00:00 │ frontend │ third frontend message
  *
  * › Press p │ preview in your browser
  * › Press q │ quit.
@@ -604,4 +605,5 @@ This usually happens when running a command non-interactively, for example in a 
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, InfoMessage}
+export type InfoMessage = InfoMessageProps['message']
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken}

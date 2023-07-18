@@ -7,8 +7,9 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-const LegacyAppSchema = zod
+export const LegacyAppSchema = zod
   .object({
+    client_id: zod.number().optional(),
     name: zod.string().optional(),
     scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
@@ -16,12 +17,20 @@ const LegacyAppSchema = zod
   })
   .strict()
 
-const AppSchema = zod
+// adding http or https presence and absence of new lines to url validation
+const validateUrl = (zodType: zod.ZodString) => {
+  return zodType
+    .url()
+    .refine((value) => Boolean(value.match(/^(https?:\/\/)/)), {message: 'Invalid url'})
+    .refine((value) => !value.includes('\n'), {message: 'Invalid url'})
+}
+
+export const AppSchema = zod
   .object({
-    name: zod.string(),
-    api_contact_email: zod.string(),
+    name: zod.string().max(30),
+    api_contact_email: zod.string().email(),
     client_id: zod.string(),
-    application_url: zod.string(),
+    application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),
     access_scopes: zod
       .object({
@@ -31,22 +40,22 @@ const AppSchema = zod
       .optional(),
     auth: zod
       .object({
-        redirect_urls: zod.array(zod.string()),
+        redirect_urls: zod.array(validateUrl(zod.string())),
       })
       .optional(),
     webhooks: zod.object({
       api_version: zod.string(),
       privacy_compliance: zod
         .object({
-          customer_deletion_url: zod.string(),
-          customer_data_request_url: zod.string(),
-          shop_deletion_url: zod.string(),
+          customer_deletion_url: validateUrl(zod.string()).optional(),
+          customer_data_request_url: validateUrl(zod.string()).optional(),
+          shop_deletion_url: validateUrl(zod.string()).optional(),
         })
         .optional(),
     }),
     app_proxy: zod
       .object({
-        url: zod.string(),
+        url: validateUrl(zod.string()),
         subpath: zod.string(),
         prefix: zod.string(),
       })
@@ -58,7 +67,7 @@ const AppSchema = zod
       .optional(),
     app_preferences: zod
       .object({
-        url: zod.string(),
+        url: validateUrl(zod.string().max(255)),
       })
       .optional(),
     build: zod
@@ -72,7 +81,7 @@ const AppSchema = zod
   })
   .strict()
 
-export const AppConfigurationSchema = zod.union([AppSchema, LegacyAppSchema])
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
@@ -112,7 +121,7 @@ export function getAppScopesArray(config: AppConfiguration) {
 }
 
 export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
-  const config = 'configurationPath' in app ? app.configuration : app
+  const config: AppInterface | AppConfiguration = 'configurationPath' in app ? app.configuration : app
 
   if (isLegacyAppSchema(config)) return true
 
@@ -169,13 +178,16 @@ export interface Web {
   framework?: string
 }
 
-export interface AppInterface {
-  name: string
-  idEnvironmentVariableName: string
+export interface AppConfigurationInterface {
   directory: string
-  packageManager: PackageManager
   configuration: AppConfiguration
   configurationPath: string
+}
+
+export interface AppInterface extends AppConfigurationInterface {
+  name: string
+  idEnvironmentVariableName: string
+  packageManager: PackageManager
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -243,6 +255,13 @@ export class App implements AppInterface {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
+  }
+}
+
+export class EmptyApp extends App {
+  constructor() {
+    const configuration = {scopes: '', extension_directories: []}
+    super('', '', '', 'npm', configuration, '', {}, [], [], false)
   }
 }
 

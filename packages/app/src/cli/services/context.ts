@@ -12,7 +12,7 @@ import {
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
-import {CachedAppInfo, clearAppInfo, getAppInfo, setAppInfo} from './local-storage.js'
+import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -22,29 +22,17 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {
-  DevelopmentStorePreviewUpdateInput,
-  DevelopmentStorePreviewUpdateQuery,
-  DevelopmentStorePreviewUpdateSchema,
-} from '../api/graphql/development_preview.js'
+
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
-import {
-  outputContent,
-  outputToken,
-  formatPackageManagerCommand,
-  outputNewline,
-  outputCompleted,
-  outputWarn,
-} from '@shopify/cli-kit/node/output'
+import {outputContent, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {basename} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 
@@ -70,7 +58,6 @@ interface DevContextOutput {
   storeFqdn: string
   updateURLs: boolean | undefined
   configName?: string
-  deploymentMode: DeploymentMode
 }
 
 /**
@@ -100,7 +87,7 @@ export async function ensureGenerateContext(options: {
     return app.apiKey
   }
 
-  const {cachedInfo, remoteApp} = await getAppDevCachedContext(options)
+  const {cachedInfo, remoteApp} = await getAppContext(options)
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
@@ -116,7 +103,7 @@ export async function ensureGenerateContext(options: {
     const {organization, apps} = await fetchOrgAndApps(orgId, options.token)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.token)
-    setAppInfo({
+    setCachedAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -140,7 +127,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppDevCachedContext({...options, token})
+  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppContext({...options, token})
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
@@ -184,7 +171,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     }
     writeFileSync(configurationPath, encodeToml(newConfiguration))
   } else {
-    setAppInfo({
+    setCachedAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
       directory: options.directory,
@@ -200,9 +187,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     organization,
   })
 
-  await enableDeveloperPreview(selectedApp, token)
-  const deploymentMode = selectedApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  const result = buildOutput(selectedApp, selectedStore, deploymentMode, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
   await logMetadataForLoadedDevContext(result)
   return result
 }
@@ -225,12 +210,7 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
   }
 }
 
-function buildOutput(
-  app: OrganizationApp,
-  store: OrganizationStore,
-  deploymentMode: DeploymentMode,
-  cachedInfo?: CachedAppInfo,
-): DevContextOutput {
+function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -240,7 +220,6 @@ function buildOutput(
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
     configName: cachedInfo?.configFile,
-    deploymentMode,
   }
 }
 
@@ -283,7 +262,7 @@ interface DeployContextOutput {
  * undefined if there is no cached value or the user doesn't want to use it.
  */
 export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Promise<OrganizationApp | undefined> {
-  const devAppId = getAppInfo(app.directory)?.appId
+  const devAppId = getCachedAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
   const partnersResponse = await fetchAppFromApiKey(devAppId, token)
@@ -377,8 +356,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
   }
 
-  await disableDeveloperPreview(partnersApp, token)
-
   const result = {
     app: options.app,
     partnersApp: {
@@ -441,8 +418,8 @@ export async function fetchOrCreateOrganizationApp(app: AppInterface, token: str
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
   const scopes = isCurrentAppSchema(app.configuration)
-    ? app.configuration.access_scopes?.scopes
-    : app.configuration.scopes
+    ? app.configuration?.access_scopes?.scopes
+    : app.configuration?.scopes
   const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
   return partnersApp
 }
@@ -544,7 +521,7 @@ async function fetchDevDataFromOptions(
   return {app: selectedApp, store: selectedStore}
 }
 
-export interface AppDevCachedContext {
+export interface AppContext {
   configuration: AppConfiguration
   configurationPath: string
   cachedInfo?: CachedAppInfo
@@ -553,33 +530,37 @@ export interface AppDevCachedContext {
 
 /**
  * Retrieve app info from the cache or the current configuration.
+ *
  * @param reset - Whether to reset the cache or not.
  * @param directory - The directory containing the app.
  * @param token - The partners token.
  */
-async function getAppDevCachedContext({
+export async function getAppContext({
   reset,
   directory,
   token,
   configName,
   commandConfig,
+  promptLinkingApp = true,
 }: {
   reset: boolean
   directory: string
   token: string
   configName?: string
-  commandConfig: Config
-}): Promise<AppDevCachedContext> {
-  const previousCachedInfo = getAppInfo(directory)
+  commandConfig?: Config
+  promptLinkingApp?: boolean
+}): Promise<AppContext> {
+  const previousCachedInfo = getCachedAppInfo(directory)
 
-  if (reset) clearAppInfo(directory)
+  if (reset) clearCachedAppInfo(directory)
 
-  let cachedInfo = getAppInfo(directory)
-
-  if ((previousCachedInfo?.configFile && reset) || previousCachedInfo === undefined) {
+  const firstTimeSetup = previousCachedInfo === undefined
+  const usingConfigAndResetting = previousCachedInfo?.configFile && reset
+  if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting)) {
     await link({directory, commandConfig})
-    cachedInfo = getAppInfo(directory)
   }
+
+  let cachedInfo = getCachedAppInfo(directory)
 
   const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
@@ -638,7 +619,7 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
   if (!cachedInfo?.configFile && usingDifferentSettings) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
 
   const items = [
     `Org:          ${organization.businessName}`,
@@ -732,65 +713,9 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   }))
 }
 
-export async function enableDeveloperPreview(app: OrganizationApp, token: string) {
-  return developerPreviewUpdate(app, token, true)
-}
-
-export async function disableDeveloperPreview(app: OrganizationApp, token: string) {
-  return developerPreviewUpdate(app, token, false)
-}
-
-async function developerPreviewUpdate(app: OrganizationApp, token: string, enabled: boolean) {
-  if (!app.betas?.unifiedAppDeployment) return
-
-  const tasks = [
-    {
-      title: `${enabled ? 'Enabling' : 'Disabling'} developer preview...`,
-      task: async () => {
-        let result: DevelopmentStorePreviewUpdateSchema | undefined
-        let error: string | undefined
-        try {
-          const query = DevelopmentStorePreviewUpdateQuery
-          const variables: DevelopmentStorePreviewUpdateInput = {
-            input: {
-              apiKey: app.apiKey,
-              enabled,
-            },
-          }
-          result = await partnersRequest(query, token, variables)
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          error = err.message
-        }
-
-        if ((result && result.developmentStorePreviewUpdate.userErrors?.length > 0) || error) {
-          const previewURL = outputToken.link(
-            'Partner Dashboard',
-            await devPreviewURL({orgId: app.organizationId, appId: app.id}),
-          )
-          outputWarn(
-            outputContent`Unable to ${
-              enabled ? 'enable' : 'disable'
-            } development store preview for this app. You can change this setting in the ${previewURL}.'}`,
-          )
-        } else {
-          outputCompleted(`Development store preview ${enabled ? 'enabled' : 'disabled'}`)
-        }
-      },
-    },
-  ]
-  await renderTasks(tasks)
-  outputNewline()
-}
-
 async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(partnerId),
     api_key: env.apiKey,
   }))
-}
-
-async function devPreviewURL(options: {orgId: string; appId: string}) {
-  const fqdn = await partnersFqdn()
-  return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions`
 }

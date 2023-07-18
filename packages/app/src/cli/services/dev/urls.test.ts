@@ -11,7 +11,7 @@ import {
 import {testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
-import {setAppInfo} from '../local-storage.js'
+import {setCachedAppInfo} from '../local-storage.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -20,7 +20,7 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
@@ -160,49 +160,19 @@ describe('shouldOrPromptUpdateURLs', () => {
     expect(got).toEqual(false)
   })
 
-  test('returns true when the user selects always', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-    }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
-
-    // When
-    const got = await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(got).toEqual(true)
-  })
-
   test('returns true when the user selects yes', async () => {
     // Given
     const options = {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('yes')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
 
     // Then
     expect(got).toEqual(true)
-  })
-
-  test('returns false when the user selects never', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-    }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('never')
-
-    // When
-    const got = await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(got).toEqual(false)
   })
 
   test('returns false when the user selects no', async () => {
@@ -211,7 +181,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('no')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -226,13 +196,13 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     await shouldOrPromptUpdateURLs(options)
 
     // Then
-    expect(setAppInfo).toHaveBeenNthCalledWith(1, {
+    expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       directory: '/path',
       updateURLs: true,
     })
@@ -322,7 +292,7 @@ describe('generateFrontendURL', () => {
 
     // Then
     expect(got).toEqual({frontendUrl: 'https://4040-gitpod.url.fqdn.com', frontendPort: 4040, usingLocalhost: false})
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -339,7 +309,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -359,7 +329,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 4040,
       usingLocalhost: false,
     })
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 
@@ -378,7 +348,7 @@ describe('generateFrontendURL', () => {
       frontendPort: 1234,
       usingLocalhost: false,
     })
-    expect(setAppInfo).not.toBeCalled()
+    expect(setCachedAppInfo).not.toBeCalled()
     expect(renderSelectPrompt).not.toBeCalled()
   })
 

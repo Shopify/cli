@@ -307,20 +307,6 @@ export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn)
 }
 
 /**
- * Outputs a warning message to the user with some error styling.
- * Warning messages receive a special formatting to make them stand out in the console.
- * Note: Warning messages are sent through the standard output.
- *
- * @param content - The content to be output to the user.
- * @param logger - The logging function to use to output to the user.
- */
-export function outputWarnError(content: OutputMessage, logger: Logger = consoleLog): void {
-  if (isUnitTest()) collectLog('warn', content)
-  const message = `${colors.red('x')} ${stringifyMessage(content)}`
-  outputWhereAppropriate('warn', logger, message)
-}
-
-/**
  * Prints a new line in the terminal.
  */
 export function outputNewline(): void {

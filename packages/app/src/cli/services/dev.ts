@@ -15,9 +15,8 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
-import {buildFunctionExtension} from './build/extension.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
-import {setAppInfo} from './local-storage.js'
+import {setCachedAppInfo} from './local-storage.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -32,7 +31,6 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -90,7 +88,6 @@ async function dev(options: DevOptions) {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     configName,
-    deploymentMode,
   } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
@@ -230,7 +227,7 @@ async function dev(options: DevOptions) {
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
-      deploymentMode,
+      deploymentMode: unifiedDeployment ? 'unified' : 'legacy',
       token,
       envIdentifiers: prodEnvIdentifiers,
     })
@@ -243,7 +240,6 @@ async function dev(options: DevOptions) {
         token,
         extensions: draftableExtensions,
         remoteExtensions,
-        specifications,
         unifiedDeployment,
       }),
     )
@@ -265,7 +261,7 @@ async function dev(options: DevOptions) {
       ensureAuthenticatedStorefront(),
       themeExtensionArgs(extension, apiKey, token, {...options, ...optionsToOverwrite}),
     ])
-    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, deploymentMode === 'unified')
+    const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, unifiedDeployment)
     additionalProcesses.push(devExt)
   }
 
@@ -311,7 +307,7 @@ async function dev(options: DevOptions) {
 }
 
 function setPreviousAppId(directory: string, apiKey: string) {
-  setAppInfo({directory, previousAppId: apiKey})
+  setCachedAppInfo({directory, previousAppId: apiKey})
 }
 
 function isWebType(web: Web, type: WebType): boolean {
@@ -473,7 +469,6 @@ interface DevDraftableExtensionsOptions {
   remoteExtensions: {
     [key: string]: string
   }
-  specifications: ExtensionSpecification[]
   unifiedDeployment: boolean
 }
 
@@ -484,23 +479,18 @@ export function devDraftableExtensionTarget({
   apiKey,
   token,
   remoteExtensions,
-  specifications,
   unifiedDeployment,
 }: DevDraftableExtensionsOptions) {
   return {
     prefix: 'extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
       // Functions will only be passed to this target if unified deployments are enabled
-      const functions = extensions.filter((ext) => ext.isFunctionExtension)
+      // ESBuild will take care of triggering an initial build & upload for the extensions with ESBUILD feature.
+      // For the rest we need to manually upload an initial draft.
+      const initialDraftExtensions = extensions.filter((ext) => !ext.isESBuildExtension)
       await Promise.all(
-        functions.map(async (extension) => {
-          await buildFunctionExtension(extension, {
-            app,
-            stdout,
-            stderr,
-            useTasks: false,
-            signal,
-          })
+        initialDraftExtensions.map(async (extension) => {
+          await extension.build({app, stdout, stderr, useTasks: false, signal})
           const registrationId = remoteExtensions[extension.localIdentifier]
           if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
           await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
@@ -522,7 +512,6 @@ export function devDraftableExtensionTarget({
                 stdout,
                 stderr,
                 signal,
-                specifications,
                 unifiedDeployment,
               }),
             ]

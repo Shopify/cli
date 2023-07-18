@@ -23,6 +23,23 @@ export interface PushOptions {
   force: boolean
 }
 
+const FIELD_NAMES: {[key: string]: string} = {
+  title: 'name',
+  api_key: 'client_id',
+  partner_email: 'api_contact_email',
+  redirect_url_whitelist: 'auth > redirect_urls',
+  requested_access_scopes: 'access_scopes > scopes',
+  webhook_api_version: 'webhooks > api_version',
+  gdpr_webhooks: 'webhooks.privacy_compliance',
+  'gdpr_webhooks,customer_deletion_url': 'webhooks.privacy_compliance > customer_deletion_url',
+  'gdpr_webhooks,customer_data_request_url': 'webhooks.privacy_compliance > customer_data_request_url',
+  'gdpr_webhooks,shop_deletion_url': 'webhooks.privacy_compliance > shop_deletion_url',
+  proxy_sub_path: 'app_proxy > subpath',
+  proxy_sub_path_prefix: 'app_proxy > prefix',
+  proxy_url: 'app_proxy > url',
+  preferences_url: 'app_preferences > url',
+}
+
 export async function pushConfig(options: PushOptions) {
   const {configuration, configurationPath} = options
   if (isCurrentAppSchema(configuration)) {
@@ -42,7 +59,14 @@ export async function pushConfig(options: PushOptions) {
     const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
 
     if (result.appUpdate.userErrors.length > 0) {
-      const errors = result.appUpdate.userErrors.map((error) => error.message).join(', ')
+      const errors = result.appUpdate.userErrors
+        .map((error) => {
+          const [_, ...fieldPath] = error.field || []
+          const mappedName = FIELD_NAMES[fieldPath.join(',')] || fieldPath.join(', ')
+          const fieldName = mappedName ? `${mappedName}: ` : ''
+          return `${fieldName}${error.message}`
+        })
+        .join('\n')
       abort(errors)
     }
 
