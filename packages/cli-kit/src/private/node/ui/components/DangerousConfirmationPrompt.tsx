@@ -6,6 +6,7 @@ import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
+import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
@@ -33,13 +34,12 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   )
 
   const {oneThird, twoThirds} = useLayout()
-  const [answer, setAnswer] = useState<string>('')
+  const {promptState, setPromptState, answer, setAnswer} = usePrompt<string>({
+    initialAnswer: '',
+  })
   const {exit: unmountInk} = useApp()
-  const [submitted, setSubmitted] = useState(false)
-  const [cancelled, setCancelled] = useState(false)
   const [error, setError] = useState<TokenItem<InlineToken> | undefined>(undefined)
-  const shouldShowError = submitted && error
-  const color = shouldShowError ? 'red' : 'cyan'
+  const color = promptState === PromptState.Error ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -47,26 +47,27 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
     handleCtrlC(input, key)
 
     if (key.escape) {
-      setSubmitted(true)
-      setCancelled(true)
+      setPromptState(PromptState.Cancelled)
       setError(undefined)
       onSubmit(false)
       unmountInk()
     }
 
     if (key.return) {
-      setSubmitted(true)
       const error = validateAnswer(answer)
-      setError(error)
 
-      if (!error) {
+      if (error) {
+        setPromptState(PromptState.Error)
+        setError(error)
+      } else {
+        setPromptState(PromptState.Submitted)
         onSubmit(true)
         unmountInk()
       }
     }
   })
 
-  const completed = submitted && !error
+  const completed = promptState === PromptState.Submitted || promptState === PromptState.Cancelled
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} width={twoThirds}>
@@ -77,7 +78,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
       {completed ? (
-        <CompletedPrompt {...{cancelled}} />
+        <CompletedPrompt {...{cancelled: promptState === PromptState.Cancelled}} />
       ) : (
         <>
           <Box flexDirection="column" gap={1} marginTop={1} marginLeft={3}>
@@ -109,7 +110,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
                   value={answer}
                   onChange={(answer) => {
                     setAnswer(answer)
-                    setSubmitted(false)
+                    setPromptState(PromptState.Idle)
                   }}
                   defaultValue=""
                   color={color}
@@ -119,7 +120,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
             <Box marginLeft={3}>
               <Text color={color}>{underline}</Text>
             </Box>
-            {shouldShowError ? (
+            {promptState === PromptState.Error && error ? (
               <Box marginLeft={3}>
                 <Text color={color}>
                   <TokenizedText item={error} />
