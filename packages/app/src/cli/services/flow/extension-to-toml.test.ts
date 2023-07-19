@@ -21,8 +21,6 @@ describe('extension-to-toml', () => {
 
     // Then
     expect(got).toEqual(`name = "action title"
-type = "flow_action"
-description = "action description"
 
 [[extensions]]
 type = "flow_action"
@@ -35,12 +33,10 @@ validation_url = "https://validation.test.dev"
 
 [[settings.fields]]
 type = "customer_reference"
-description = ""
 required = true
 
 [[settings.fields]]
 type = "product_reference"
-description = ""
 required = true
 
 [[settings.fields]]
@@ -81,8 +77,6 @@ required = true
 
     // Then
     expect(got).toEqual(`name = "trigger title"
-type = "flow_trigger"
-description = "trigger description"
 
 [[extensions]]
 type = "flow_trigger"
@@ -91,7 +85,6 @@ description = "trigger description"
 
 [[settings.fields]]
 type = "customer_reference"
-description = ""
 
 [[settings.fields]]
 key = "number property"

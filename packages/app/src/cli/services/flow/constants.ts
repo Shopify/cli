@@ -23,15 +23,46 @@ export const ACTION_SUPPORTED_COMMERCE_OBJECTS = [
   SUPPORTED_COMMERCE_OBJECTS.abandonment_reference,
 ]
 
+const UI_TYPES = {
+  boolean: 'boolean',
+  email: 'email',
+  multiLineText: 'multi_line_text_field',
+  int: 'number_integer',
+  singleLineText: 'single_line_text_field',
+  url: 'url',
+  decimal: 'number_decimal',
+}
+
 // Mapping of metafield types to Flow's Partner's Dashboard UI types
+// Contains all types supported by actions and/or triggers
 // Only the `email` type was added since it doesn't exist as a metafield type
 // https://shopify.dev/docs/apps/custom-data/metafields/types
 export const uiTypesMap: [string, string][] = [
-  ['boolean', 'checkbox'],
-  ['email', 'email'],
-  ['multi_line_text_field', 'text-multi-line'],
-  ['number_integer', 'int'],
-  ['single_line_text_field', 'text-single-line'],
-  ['url', 'url'],
-  ['number_decimal', 'number'],
+  [UI_TYPES.boolean, 'checkbox'],
+  [UI_TYPES.email, 'email'],
+  [UI_TYPES.multiLineText, 'text-multi-line'],
+  [UI_TYPES.int, 'int'],
+  [UI_TYPES.singleLineText, 'text-single-line'],
+  [UI_TYPES.url, 'url'],
+  [UI_TYPES.decimal, 'number'],
 ]
+
+const supportedActionTypes: string[] = [
+  UI_TYPES.boolean,
+  UI_TYPES.email,
+  UI_TYPES.multiLineText,
+  UI_TYPES.int,
+  UI_TYPES.singleLineText,
+  UI_TYPES.url,
+  UI_TYPES.decimal,
+]
+const supportedTriggerTypes: string[] = [
+  UI_TYPES.boolean,
+  UI_TYPES.email,
+  UI_TYPES.singleLineText,
+  UI_TYPES.url,
+  UI_TYPES.decimal,
+]
+
+export const actionUiTypesMap = uiTypesMap.filter(([key]) => supportedActionTypes.includes(key))
+export const triggerUiTypesMap = uiTypesMap.filter(([key]) => supportedTriggerTypes.includes(key))

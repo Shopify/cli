@@ -7,7 +7,7 @@ describe('serializeConfigField', () => {
   test('should serialize a field for a flow action', () => {
     // given
     const field: ConfigField = {
-      type: 'single_line_text_field',
+      type: 'multi_line_text_field',
       key: 'my-field',
       name: 'My Field',
       description: 'This is my field',
@@ -21,7 +21,7 @@ describe('serializeConfigField', () => {
     expect(serializedField).toEqual({
       name: 'my-field',
       description: 'This is my field',
-      uiType: 'text-single-line',
+      uiType: 'text-multi-line',
       label: 'My Field',
       required: true,
     })
@@ -69,7 +69,8 @@ describe('serializeConfigField', () => {
   test('should throw an error if field type is not supported', () => {
     // given
     const invalidField: ConfigField = {
-      type: 'invalid-type',
+      // multi_line_text_field is invalid on triggers
+      type: 'multi_line_text_field',
       key: 'my-field',
       name: 'My Field',
       description: 'This is my field',
@@ -77,8 +78,8 @@ describe('serializeConfigField', () => {
     }
 
     // then
-    expect(() => serializeConfigField(invalidField, 'flow_action')).toThrowError(
-      new AbortError('Field type invalid-type is not supported'),
+    expect(() => serializeConfigField(invalidField, 'flow_trigger')).toThrowError(
+      new AbortError('Field type multi_line_text_field is not supported on Flow Triggers'),
     )
   })
 })

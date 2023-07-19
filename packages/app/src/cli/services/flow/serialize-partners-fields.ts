@@ -13,7 +13,7 @@ export const serializeConfigField = (field: SerializedField, type: FlowPartnersE
 
   const serializedField: ConfigField = {
     key: field.name,
-    description: field.description,
+    description: field.description ? field.description : undefined,
     type: fieldType,
   }
 
@@ -31,7 +31,6 @@ export const serializeCommerceObjectField = (field: SerializedField, type: FlowP
 
   const serializedField: ConfigField = {
     type: fieldType,
-    description: field.description,
   }
 
   if (type === 'flow_action_definition') {

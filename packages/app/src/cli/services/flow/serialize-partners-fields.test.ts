@@ -10,14 +10,12 @@ describe('serialize-fields', () => {
       {
         name: 'customer_id',
         label: 'Customer ID',
-        description: '',
         required: true,
         uiType: 'commerce-object-id',
       },
       {
         name: 'product_id',
         label: 'Product ID',
-        description: '',
         required: true,
         uiType: 'commerce-object-id',
       },
@@ -49,7 +47,6 @@ describe('serialize-fields', () => {
     // Given
     const fields: SerializedField[] = [
       {
-        description: '',
         name: 'customer_id',
         uiType: 'customer',
       },
