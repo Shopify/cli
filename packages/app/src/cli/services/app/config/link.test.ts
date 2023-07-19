@@ -92,7 +92,20 @@ use_legacy_install_flow = true
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'App "app1" connected to this codebase, file shopify.app.toml created',
+        headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.toml in your local project`],
+          ['To upload your config, run', {command: 'shopify app config push'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
       })
     })
   })
@@ -152,7 +165,20 @@ scopes = "write_products"
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'App "my app" connected to this codebase, file shopify.app.staging.toml created',
+        headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
+        body: 'Using shopify.app.staging.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.staging.toml in your local project`],
+          ['To upload your config, run', {command: 'shopify app config push'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
       })
     })
   })
@@ -196,7 +222,20 @@ use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'App "app1" connected to this codebase, file shopify.app.toml updated',
+        headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.toml in your local project`],
+          ['To upload your config, run', {command: 'shopify app config push'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
       })
     })
   })
