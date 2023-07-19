@@ -1042,6 +1042,149 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with a UI extension that has a full valid unified configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2023-07"
+
+      [[extensions]]
+      name = "My checkout extension"
+      handle = "checkout-ui"
+      type = "ui_extension"
+
+        [[extensions.metafields]]
+        namespace = "my-namespace"
+        key = "my-key"
+        [[extensions.metafields]]
+        namespace = "my-namespace"
+        key = "my-other-key"
+
+        [extensions.capabilities]
+        network_access = true
+        block_progress = true
+        api_access = true
+
+        [extensions.settings]
+          [[extensions.settings.fields]]
+          key = "field_key"
+          type = "boolean"
+          name = "field-name"
+          [[extensions.settings.fields]]
+          key = "field_key_2"
+          type = "number_integer"
+          name = "field-name-2"
+          validations = [ { name = "min", value = "5" }, { name = "max", value = "20" } ]
+
+        [[extensions.targeting]]
+        target = "purchase.checkout.block.render"
+        module = "./CheckoutDynamicRender.jsx"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'checkout-ui',
+    })
+
+    const checkoutUiDirectory = joinPath(tmpDir, 'extensions', 'checkout-ui')
+    await mkdir(checkoutUiDirectory)
+
+    const tempFilePath = joinPath(checkoutUiDirectory, 'CheckoutDynamicRender.jsx')
+    await writeFile(
+      tempFilePath,
+      `
+    import { extension, Banner } from "@shopify/ui-extensions/checkout";
+
+    export default extension("purchase.checkout.block.render", (root, { extension: { target } , i18n }) => {
+      root.appendChild(
+        root.createComponent(
+          Banner,
+          { title: "{{ name }}" },
+          i18n.translate('welcome', {target})
+        )
+      );
+    });
+    `,
+    )
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        api_version: '2023-07',
+        name: 'My checkout extension',
+        handle: 'checkout-ui',
+        type: 'ui_extension',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+          {
+            namespace: 'my-namespace',
+            key: 'my-other-key',
+          },
+        ],
+        capabilities: {
+          network_access: true,
+          block_progress: true,
+          api_access: true,
+        },
+        settings: {
+          fields: [
+            {
+              key: 'field_key',
+              type: 'boolean',
+              name: 'field-name',
+            },
+            {
+              key: 'field_key_2',
+              type: 'number_integer',
+              name: 'field-name-2',
+              validations: [
+                {
+                  name: 'min',
+                  value: '5',
+                },
+                {
+                  name: 'max',
+                  value: '20',
+                },
+              ],
+            },
+          ],
+        },
+        extension_points: [
+          {
+            metafields: [
+              {
+                key: 'my-key',
+                namespace: 'my-namespace',
+              },
+              {
+                key: 'my-other-key',
+                namespace: 'my-namespace',
+              },
+            ],
+            module: './CheckoutDynamicRender.jsx',
+            target: 'purchase.checkout.block.render',
+          },
+        ],
+        targeting: [
+          {
+            target: 'purchase.checkout.block.render',
+            module: './CheckoutDynamicRender.jsx',
+          },
+        ],
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
