@@ -1185,6 +1185,192 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with a Checkout Post Purchase extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "checkout_post_purchase"
+      name = "my-checkout-post-purchase"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key-2"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-checkout-post-purchase',
+    })
+
+    const checkoutUiDirectory = joinPath(tmpDir, 'extensions', 'my-checkout-post-purchase', 'src')
+    await mkdir(checkoutUiDirectory)
+
+    const tempFilePath = joinPath(checkoutUiDirectory, 'index.js')
+    await writeFile(tempFilePath, `/** content **/`)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'checkout_post_purchase',
+        name: 'my-checkout-post-purchase',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+          {
+            namespace: 'my-namespace',
+            key: 'my-key-2',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Customer Accounts UI extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "customer_accounts_ui_extension"
+      name = "my-customer-accounts-ui-extension"
+
+      categories = [ "returns" ]
+      authenticated_redirect_start_url = "https://example.com/start"
+      authenticated_redirect_redirect_urls = ["https://example.com/redirect"]
+
+      extension_points = [
+        'CustomerAccount::FullPage::RenderWithin',
+      ]
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-customer-accounts-ui-extension',
+    })
+
+    const checkoutUiDirectory = joinPath(tmpDir, 'extensions', 'my-customer-accounts-ui-extension', 'src')
+    await mkdir(checkoutUiDirectory)
+
+    const tempFilePath = joinPath(checkoutUiDirectory, 'index.js')
+    await writeFile(tempFilePath, `/** content **/`)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'customer_accounts_ui_extension',
+        name: 'my-customer-accounts-ui-extension',
+        extension_points: ['CustomerAccount::FullPage::RenderWithin'],
+        metafields: [],
+        categories: ['returns'],
+        authenticated_redirect_start_url: 'https://example.com/start',
+        authenticated_redirect_redirect_urls: ['https://example.com/redirect'],
+      })
+    }
+  })
+
+  test('loads the app with a POS UI extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "pos_ui_extension"
+      name = "my-pos-ui-extension"
+      description = "my-pos-ui-extension-description"
+
+      extension_points = [
+        'pos.home.tile.render',
+        'pos.home.modal.render'
+      ]
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-pos-ui-extension',
+    })
+
+    const checkoutUiDirectory = joinPath(tmpDir, 'extensions', 'my-pos-ui-extension', 'src')
+    await mkdir(checkoutUiDirectory)
+
+    const tempFilePath = joinPath(checkoutUiDirectory, 'index.js')
+    await writeFile(tempFilePath, `/** content **/`)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'pos_ui_extension',
+        name: 'my-pos-ui-extension',
+        description: 'my-pos-ui-extension-description',
+        extension_points: ['pos.home.tile.render', 'pos.home.modal.render'],
+      })
+    }
+  })
+
+  test('loads the app with a Tax Calculation extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "tax_calculation"
+      name = "my-tax-calculation"
+
+      production_api_base_url = "https://prod.example.com"
+      benchmark_api_base_url = "https://benchmark.example.com"
+      calculate_taxes_api_endpoint = "/calculate-taxes"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-tax-calculation',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'tax_calculation',
+        name: 'my-tax-calculation',
+        production_api_base_url: 'https://prod.example.com',
+        benchmark_api_base_url: 'https://benchmark.example.com',
+        calculate_taxes_api_endpoint: '/calculate-taxes',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+        ],
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
