@@ -29,8 +29,7 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "  @@ -1 +1 @@
-      - hello
+      "- hello
       + world"
     `)
   })
@@ -44,8 +43,7 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "  @@ -1,2 +1,2 @@
-      - hello
+      "- hello
         world
       + hello"
     `)
@@ -60,10 +58,9 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(lastFrame()).toMatchInlineSnapshot(`
-      "\u001b[36m  @@ -1,2 +1,2 @@\u001b[m
-      \u001b[31m- hello\u001b[m
-        world\u001b[m
-      \u001b[32m+ \u001b[m\u001b[32mhello\u001b[m"
+      "[31m- hello[m
+        world[m
+      [32m+ [m[32mhello[m"
     `)
   })
 
@@ -77,17 +74,15 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(lastFrame()!).toMatchInlineSnapshot(`
-      "  @@ -1,2 +1,2 @@
-      - hello
-        world
-      + hello"
-    `)
+        "- hello
+          world
+        + hello"
+      `)
   })
 
   test('ignores newline changes', async () => {
     const expectedDiff = `
-      "  @@ -1,2 +1,2 @@
-      - hello
+      "- hello
         world
       + hello"
     `
@@ -102,8 +97,6 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
-
-    const lastFrame2 = render(<GitDiff gitDiff={gitDiff} />).lastFrame
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
   })
@@ -137,8 +130,7 @@ qux`
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
-      "  @@ -1,3 +1,3 @@
-      - hello
+      "- hello
         world
       + hello
         lorem
@@ -146,6 +138,7 @@ qux`
         @@ -8,2 +8,2 @@ amet
         foo
       - bar
-      + qux"`)
+      + qux"
+    `)
   })
 })

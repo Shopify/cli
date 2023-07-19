@@ -198,7 +198,6 @@ describe('confirmPushChanges', () => {
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       const baselineContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 
@@ -225,8 +224,10 @@ use_legacy_install_flow = true
       expect(renderConfirmationPrompt).toHaveBeenCalledWith({
         message: ['Make the following changes to your remote configuration?'],
         gitDiff: {
-          baselineContent,
-          updatedContent,
+          baselineContent: `name = "app1"
+`,
+          updatedContent: `name = "app2"
+`,
         },
         defaultValue: true,
         confirmationMessage: 'Yes, confirm changes',
@@ -249,7 +250,6 @@ use_legacy_install_flow = true
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       const baselineContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 
@@ -289,30 +289,52 @@ use_legacy_install_flow = true
       }
       const app = testOrganizationApp() as App
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      const baselineContent = `client_id = "api-key"
-name = "app1"
-api_contact_email = "example@example.com"
-application_url = "https://example.com"
-embedded = true
-
-[webhooks]
-api_version = "2023-07"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[pos]
-embedded = false
-
-[access_scopes]
-scopes = "read_products"
-use_legacy_install_flow = true
-`
       const updatedContent = `client_id = "api-key"
-      api_contact_email = "example@example.com"
       name = "app1"
       application_url = "https://example.com"
       embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [auth]
+      redirect_urls = [ "https://example.com/callback1" ]
+
+      [pos]
+      embedded = false
+
+      [access_scopes]
+      scopes = "read_products"
+      use_legacy_install_flow = true
+      `
+      writeFileSync(configurationPath, updatedContent)
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
+
+  test('returns false when there are only changes in comments', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const options: PushOptions = {
+        configuration: testAppWithConfig().configuration,
+        configurationPath,
+        force: false,
+      }
+      const app = testOrganizationApp() as App
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      const updatedContent = `client_id = "api-key"
+      name = "app1"
+      application_url = "https://example.com"
+      embedded = true
+
+      # new comment!
 
       [webhooks]
       api_version = "2023-07"
