@@ -1422,6 +1422,93 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with a Legacy Checkout UI extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "checkout_ui_extension"
+      name = "my-checkout-extension"
+
+      extension_points = [
+        'Checkout::Dynamic::Render'
+      ]
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-other-key"
+
+      [capabilities]
+      network_access = true
+      block_progress = true
+      api_access = true
+
+      [settings]
+        [[settings.fields]]
+        key = "field_key"
+        type = "boolean"
+        name = "field-name"
+        [[settings.fields]]
+        key = "field_key_2"
+        type = "number_integer"
+        name = "field-name-2"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-checkout-extension',
+    })
+
+    await writeFile(joinPath(blockPath('my-checkout-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'checkout_ui_extension',
+        name: 'my-checkout-extension',
+        extension_points: ['Checkout::Dynamic::Render'],
+        capabilities: {
+          api_access: true,
+          block_progress: true,
+          network_access: true,
+        },
+        settings: {
+          fields: [
+            {
+              key: 'field_key',
+              name: 'field-name',
+              type: 'boolean',
+            },
+            {
+              key: 'field_key_2',
+              name: 'field-name-2',
+              type: 'number_integer',
+            },
+          ],
+        },
+        metafields: [
+          {
+            key: 'my-key',
+            namespace: 'my-namespace',
+          },
+          {
+            key: 'my-other-key',
+            namespace: 'my-namespace',
+          },
+        ],
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
