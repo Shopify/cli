@@ -6,8 +6,8 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, findPathUp, mkdir} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {hyphenate} from '@shopify/cli-kit/common/string'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {fileURLToPath} from 'url'
 
 export async function ensureDownloadedExtensionFlavorExists(
@@ -56,11 +56,7 @@ export async function renderDevPreviewWarning(
   const body = await buildDevPreviewWarning(remoteApp, localApp)
   if (!body) return
 
-  const headline = `Enable development preview`
-  renderWarning({
-    headline,
-    body,
-  })
+  outputInfo(`\n${body}\n`)
 }
 
 export async function buildDevPreviewWarning(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
@@ -71,11 +67,10 @@ export async function buildDevPreviewWarning(remoteApp: Partial<OrganizationApp>
   const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
   if (draftableExtensions.length === 0 && themeExtensions.length === 0) return
 
-  const dashboardLink = {
-    link: {
-      label: 'Partner Dashboard',
-      url: `https://${await partnersFqdn()}/${remoteApp.organizationId}/apps/${remoteApp.id}/extensions`,
-    },
-  }
-  return ['Make sure to enable Development Store Preview from the', dashboardLink, 'to preview your extensions.']
+  const link = outputToken.link(
+    'Partner Dashboard',
+    `https://${await partnersFqdn()}/${remoteApp.organizationId}/apps/${remoteApp.id}/extensions`,
+  )
+  return outputContent`To preview your extensions, make sure that development store preview is enabled in the ${link}.`
+    .value
 }
