@@ -1540,6 +1540,78 @@ automatically_update_urls_on_dev = true
       await expect(loadApp({directory: tmpDir, specifications})).resolves.toBeDefined()
     })
 
+    test('loads the app with an Admin Action extension that has a full valid configuration', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+
+      const blockConfiguration = `
+        api_version = "unstable"
+
+        [[extensions]]
+        name = "my-admin-action"
+        handle = "admin-action-handle"
+        type = "ui_extension"
+        [[extensions.targeting]]
+        module = "./src/ActionExtension.js"
+        target = "admin.product-details.action.render"
+
+        [[extensions.metafields]]
+        namespace = "my-namespace"
+        key = "my-key"
+        `
+      await writeBlockConfig({
+        blockConfiguration,
+        name: 'my-admin-action',
+      })
+
+      // Create a temporary ActionExtension.js file
+      const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-admin-action', 'src')
+      await mkdir(extensionDirectory)
+
+      const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+      await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+      // When
+      const app = await loadApp({directory: tmpDir, specifications})
+
+      // Then
+      expect(app.allExtensions).toHaveLength(1)
+      const extension = app.allExtensions[0]
+      expect(extension).not.toBeUndefined()
+      if (extension) {
+        expect(extension.configuration).toMatchObject({
+          api_version: 'unstable',
+          name: 'my-admin-action',
+          handle: 'admin-action-handle',
+          type: 'ui_extension',
+          metafields: [
+            {
+              namespace: 'my-namespace',
+              key: 'my-key',
+            },
+          ],
+          extension_points: [
+            {
+              metafields: [
+                {
+                  namespace: 'my-namespace',
+                  key: 'my-key',
+                },
+              ],
+              module: './src/ActionExtension.js',
+              target: 'admin.product-details.action.render',
+            },
+          ],
+          targeting: [
+            {
+              module: './src/ActionExtension.js',
+              target: 'admin.product-details.action.render',
+            },
+          ],
+        })
+      }
+    })
+
     test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
       // Given
       await writeConfig(appConfiguration)
