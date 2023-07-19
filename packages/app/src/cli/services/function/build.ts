@@ -109,14 +109,16 @@ export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>
     throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
   }
 
-  const esbuildOptions = getESBuildOptions(fun.directory, entryPoint, fun.entrySourceFilePath)
+  const esbuildOptions = {
+    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath),
+    entryPoints: [entryPoint],
+  }
   return esBuild(esbuildOptions)
 }
 
-function getESBuildOptions(directory: string, entryPoint: string, userFunction: string): Parameters<typeof esBuild>[0] {
+function getESBuildOptions(directory: string, userFunction: string): Parameters<typeof esBuild>[0] {
   const esbuildOptions: Parameters<typeof esBuild>[0] = {
     outfile: joinPath(directory, 'dist/function.js'),
-    entryPoints: [entryPoint],
     alias: {
       'user-function': userFunction,
     },
@@ -194,20 +196,12 @@ export class ExportJavyBuilder implements JavyBuilder {
     outputDebug(contents)
 
     const esbuildOptions: Parameters<typeof esBuild>[0] = {
-      outfile: joinPath(fun.directory, 'dist/function.js'),
+      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath),
       stdin: {
         contents,
         loader: 'ts',
         resolveDir: fun.directory,
       },
-      alias: {
-        'user-function': fun.entrySourceFilePath,
-      },
-      logLevel: 'silent',
-      bundle: true,
-      legalComments: 'none',
-      target: 'es2022',
-      format: 'esm',
     }
 
     return esBuild(esbuildOptions)
