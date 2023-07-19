@@ -14,12 +14,13 @@ import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../con
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
-import {clearCachedCommandInfo, getCachedCommandInfo} from '../../local-storage.js'
+import {getCachedCommandInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -28,7 +29,8 @@ export interface LinkOptions {
   configName?: string
 }
 
-export const LINK_COMMAND_ID = '5f2f02c6-15fd-4b7a-bde0-b033f86063c7 '
+// ensure there's a new id for each subsequent run
+export const LINK_COMMAND_ID = randomUUID()
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
@@ -60,8 +62,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       ],
     })
   }
-
-  clearCachedCommandInfo()
 
   return configuration
 }
