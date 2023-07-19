@@ -86,7 +86,7 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputPath: 'directory/path/1/dist/main.js',
+        outputPath: 'directory/path/1/dist/test-ui-extension.js',
         stdin: {
           contents: "import './src/index.js';",
           resolveDir: 'directory/path/1',
@@ -109,7 +109,7 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputPath: 'directory/path/2/dist/main.js',
+        outputPath: 'directory/path/2/dist/test-ui-extension.js',
         stdin: {
           contents: "import './src/index.js';",
           resolveDir: 'directory/path/2',
@@ -399,7 +399,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputPath: 'directory/path/1/dist/main.js',
+        outputPath: 'directory/path/1/dist/test-ui-extension.js',
         stdin: {
           contents: mockExtension.getBundleExtensionStdinContent(),
           resolveDir: 'directory/path/1',
