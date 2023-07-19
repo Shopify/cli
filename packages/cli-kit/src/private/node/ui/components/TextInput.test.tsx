@@ -18,14 +18,14 @@ describe('TextInput', () => {
     const {lastFrame} = render(<TextInput value="" onChange={() => {}} />)
 
     // inverted space escape sequence
-    expect(lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+    expect(lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
   })
 
   test('displays value with cursor', () => {
     const {lastFrame} = render(<TextInput value="Hello" onChange={() => {}} />)
 
     // inverted space escape sequence after Hello
-    expect(lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    expect(lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
   })
 
   test('displays placeholder', () => {
@@ -38,7 +38,7 @@ describe('TextInput', () => {
   test('moves the cursor with arrows', async () => {
     const renderInstance = render(<TextInput value="Hello" onChange={() => {}} />)
 
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
@@ -64,10 +64,22 @@ describe('TextInput', () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7mo[27m[39m"')
     await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
     // cursor can't go after the last character
     await sendInputAndWait(renderInstance, 100, ARROW_RIGHT)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
+  })
+
+  test('in noColor mode replaces the current character with █', async () => {
+    const renderInstance = render(<TextInput noColor value="Hello" onChange={() => {}} />)
+
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"Hello█"')
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"Hell█"')
+    await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"Hel█o"')
   })
 
   test('moves the cursor when deleting', async () => {
@@ -79,22 +91,22 @@ describe('TextInput', () => {
 
     const renderInstance = render(<StatefulTextInput />)
 
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, DELETE)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHell[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, DELETE)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHel[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, DELETE)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHe[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, DELETE)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, DELETE)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
     // cannot delete after the value has been cleared
     await sendInputAndWait(renderInstance, 100, DELETE)
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
   })
 
   test('accepts input', async () => {
@@ -108,9 +120,9 @@ describe('TextInput', () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'H')
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mH[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, 'ello')
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
   })
 
   test('onChange', async () => {
@@ -179,16 +191,16 @@ describe('TextInput', () => {
 
     await waitForChange(resetValue, renderInstance.lastFrame)
 
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, 'A')
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mA[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mA[46m█[49m[39m"')
     await sendInputAndWaitForChange(renderInstance, 'B')
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mAB[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mAB[46m█[49m[39m"')
   })
 
   test("masking the input if it's a password", async () => {
     const renderInstance = render(<TextInput onChange={() => {}} value="ABC" password />)
 
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m***[7m [27m[39m"')
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m***[46m█[49m[39m"')
   })
 })

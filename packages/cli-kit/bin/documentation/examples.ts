@@ -4,6 +4,7 @@ import {
   renderAutocompletePrompt,
   renderConcurrent,
   renderConfirmationPrompt,
+  renderDangerousConfirmationPrompt,
   renderError,
   renderFatalError,
   renderInfo,
@@ -403,6 +404,65 @@ export const examples: {[key in string]: Example} = {
       await waitFor(
         () => {},
         () => Boolean(stdout.lastFrame()?.includes('Delete the following themes from the store?')),
+      )
+
+      return stdout.lastFrame()!
+    },
+  },
+  renderDangerousConfirmationPrompt: {
+    type: 'prompt',
+    basic: async () => {
+      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+      const stdin = new Stdin()
+
+      const includes = [
+        [
+          'web-px',
+          {
+            subdued: `(new)`,
+          },
+        ],
+        'sub-ui-ext',
+        'theme-app-ext',
+        [
+          'paymentify',
+          {
+            subdued: `(from Partner Dashboard)`,
+          },
+        ],
+      ]
+      const removes = [
+        'prod-discount-fun'
+      ]
+
+      const options = {
+        message: `Release a new version of nightly-app-2023-06-19?`,
+        infoTable: [
+          {
+            header: 'Includes:',
+            items: includes,
+            bullet: '+',
+          },
+          {
+            header: 'Removes:',
+            items: removes,
+            bullet: '-',
+            helperText: 'This can permanently delete app user data.',
+          },
+        ],
+        confirmation: 'nightly-app-2023-06-19',
+        renderOptions: {
+          stdout: stdout as any,
+          stdin: stdin as any,
+          debug: true
+        },
+      }
+
+      renderDangerousConfirmationPrompt(options)
+
+      await waitFor(
+        () => {},
+        () => Boolean(stdout.lastFrame()?.includes('Release a new version of nightly-app-2023-06-19?')),
       )
 
       return stdout.lastFrame()!

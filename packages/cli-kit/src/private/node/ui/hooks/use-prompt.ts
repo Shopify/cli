@@ -5,6 +5,7 @@ export enum PromptState {
   Loading = 'loading',
   Submitted = 'submitted',
   Error = 'error',
+  Cancelled = 'cancelled',
 }
 
 interface UsePromptProps<T> {
