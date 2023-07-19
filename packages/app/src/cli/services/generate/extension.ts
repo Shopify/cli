@@ -115,7 +115,7 @@ async function extensionInit(options: ExtensionInitOptions) {
 async function themeExtensionInit({directory, url, type, name, extensionFlavor}: ExtensionInitOptions) {
   return inTemporaryDirectory(async (tmpDir) => {
     const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, handle: slugify(name), type})
+    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type})
   })
 }
 
