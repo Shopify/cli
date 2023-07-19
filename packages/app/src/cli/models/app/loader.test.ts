@@ -763,10 +763,9 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      description = "Your description"
-
       [[extensions]]
-      name = "my-flow-trigger"
+      name = "Auction bid placed"
+      description = "An auction bid has been placed"
       type = "flow_trigger"
       handle = "handle1"
 
@@ -777,7 +776,7 @@ automatically_update_urls_on_dev = true
 
         [[settings.fields]]
         type = "single_line_text_field"
-        key = "your-field-key"
+        key = "your_field_key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -793,8 +792,8 @@ automatically_update_urls_on_dev = true
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
-        description: 'Your description',
-        name: 'my-flow-trigger',
+        description: 'An auction bid has been placed',
+        name: 'Auction bid placed',
         type: 'flow_trigger',
         handle: 'handle1',
         settings: {
@@ -804,7 +803,7 @@ automatically_update_urls_on_dev = true
             },
             {
               type: 'single_line_text_field',
-              key: 'your-field-key',
+              key: 'your_field_key',
             },
           ],
         },
@@ -817,10 +816,9 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      description = "Your description"
-
       [[extensions]]
-      name = "my-flow-action"
+      name = "Place a bid"
+      description = "Place a bid on an auction"
       type = "flow_action"
       handle = "handle2"
       runtime_url = "https://url.com/api/execute"
@@ -838,7 +836,7 @@ automatically_update_urls_on_dev = true
 
         [[settings.fields]]
         type = "single_line_text_field"
-        key = "your-field-key"
+        key = "your_field_key"
         name = "Display name"
         description = "A description of my field"
         required = true
@@ -857,8 +855,8 @@ automatically_update_urls_on_dev = true
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
-        description: 'Your description',
-        name: 'my-flow-action',
+        description: 'Place a bid on an auction',
+        name: 'Place a bid',
         type: 'flow_action',
         handle: 'handle2',
         runtime_url: 'https://url.com/api/execute',
@@ -875,7 +873,7 @@ automatically_update_urls_on_dev = true
             },
             {
               type: 'single_line_text_field',
-              key: 'your-field-key',
+              key: 'your_field_key',
               name: 'Display name',
               description: 'A description of my field',
               required: true,
