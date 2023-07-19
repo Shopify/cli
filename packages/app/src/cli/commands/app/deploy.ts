@@ -7,6 +7,7 @@ import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
+import metadata from '../../metadata.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -67,6 +68,13 @@ export default class Deploy extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Deploy)
+
+    await metadata.addPublicMetadata(() => ({
+      cmd_deploy_flag_message_used: Boolean(flags.message),
+      cmd_deploy_flag_version_used: Boolean(flags.version),
+      cmd_deploy_flag_source_url_used: Boolean(flags['source-control-url']),
+    }))
+
     validateVersion(flags.version)
     validateMessage(flags.message)
 
