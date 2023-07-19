@@ -75,7 +75,6 @@ describe('link', () => {
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-extension_directories = [ ]
 
 [webhooks]
 api_version = "2023-07"
@@ -343,7 +342,6 @@ use_legacy_install_flow = true
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-extension_directories = [ ]
 
 [webhooks]
 api_version = "2023-07"
@@ -423,7 +421,6 @@ scopes = "read_products,write_orders"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-extension_directories = [ ]
 
 [webhooks]
 api_version = "2023-07"
