@@ -146,8 +146,7 @@ describe('build', async () => {
         app: testApp(),
       }
 
-      const outputFilePath = joinPath(tmpDir, 'dist/main.js')
-      extensionInstance.outputPath = outputFilePath
+      const outputFilePath = joinPath(tmpDir, `dist/${extensionInstance.outputFileName}`)
 
       // When
       await extensionInstance.build(options)
