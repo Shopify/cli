@@ -6,6 +6,7 @@ import {ExtensionTemplate} from '../app/template.js'
 const flowActionExtension: ExtensionTemplate = {
   identifier: 'flow_action',
   name: 'Flow Action',
+  defaultName: 'flow-action',
   group: 'Flow',
   supportLinks: [],
   types: [

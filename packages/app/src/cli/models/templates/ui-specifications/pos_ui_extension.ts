@@ -7,6 +7,7 @@ import {uiFlavors} from '../common.js'
 const posUIExtension: ExtensionTemplate = {
   identifier: 'pos_ui',
   name: 'POS UI',
+  defaultName: 'pos-ui',
   group: 'Point-of-Sale',
   supportLinks: [],
   types: [

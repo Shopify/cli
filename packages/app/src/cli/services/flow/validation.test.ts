@@ -1,9 +1,9 @@
-import {validateNonCommerceObjectShape, validateCustomConfigurationPageConfig} from './validation.js'
+import {validateFieldShape, validateCustomConfigurationPageConfig, validateReturnTypeConfig} from './validation.js'
 import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-describe('validateNonCommerceObjectShape', () => {
+describe('validateFieldShape', () => {
   test('should return true when non-commerce object field has valid shape', () => {
     // given
     const nonCommerceObjectField: ConfigField = {
@@ -14,28 +14,20 @@ describe('validateNonCommerceObjectShape', () => {
       required: true,
     }
 
-    // when
-    const result = validateNonCommerceObjectShape(nonCommerceObjectField, 'flow_action')
-
     // then
-    expect(result).toBe(true)
+    expect(() => validateFieldShape(nonCommerceObjectField, 'flow_action', 'handle', 0)).not.toThrow()
   })
 
   test('should return true when field is a commerce object', () => {
     // given
     const commerceObjectField: ConfigField = {
       type: 'product_reference',
-      key: 'my-field',
-      name: 'My Field',
       description: 'This is my field',
       required: true,
     }
 
-    // when
-    const result = validateNonCommerceObjectShape(commerceObjectField, 'flow_action')
-
     // then
-    expect(result).toBe(true)
+    expect(() => validateFieldShape(commerceObjectField, 'flow_action', 'handle', 0)).not.toThrow()
   })
 
   test('should throw an error if key is not specified for non-commerce object field', () => {
@@ -49,12 +41,16 @@ describe('validateNonCommerceObjectShape', () => {
     }
 
     // then
-    expect(() => validateNonCommerceObjectShape(invalidField, 'flow_action')).toThrowError(
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
       new zod.ZodError([
         {
-          code: zod.ZodIssueCode.custom,
-          path: ['settings.fields.key'],
-          message: 'Key must be specified for non-commerce object fields',
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'string',
+          received: 'undefined',
+          path: ['key'],
+          message: `'key' property must be a string for 'field[0]' ${JSON.stringify(
+            invalidField,
+          )} of flow extension 'handle'`,
         },
       ]),
     )
@@ -71,12 +67,59 @@ describe('validateNonCommerceObjectShape', () => {
     }
 
     // then
-    expect(() => validateNonCommerceObjectShape(invalidField, 'flow_action')).toThrowError(
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
       new zod.ZodError([
         {
-          code: zod.ZodIssueCode.custom,
-          path: ['settings.fields.name'],
-          message: 'Name must be specified for non-commerce object fields',
+          code: zod.ZodIssueCode.invalid_type,
+          expected: 'string',
+          received: 'undefined',
+          path: ['name'],
+          message: `'name' property must be a string for 'field[0]' ${JSON.stringify(
+            invalidField,
+          )} of flow extension 'handle'`,
+        },
+      ]),
+    )
+  })
+
+  test('should throw an error if key specified for a commerce object field', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'customer_reference',
+      key: 'foo',
+      description: 'This is my field',
+    }
+
+    // then
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.unrecognized_keys,
+          keys: ['key'],
+          path: [],
+          message: "Unrecognized key(s) in object: 'key'",
+        },
+      ]),
+    )
+  })
+
+  test('should throw an error if name a commerce object field in flow action', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'customer_reference',
+      name: 'A name for my field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => validateFieldShape(invalidField, 'flow_action', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.unrecognized_keys,
+          keys: ['name'],
+          path: [],
+          message: "Unrecognized key(s) in object: 'name'",
         },
       ]),
     )
@@ -162,6 +205,46 @@ describe('validateCustomConfigurationPageConfig', () => {
     const result = validateCustomConfigurationPageConfig(configPageUrl, configPagePreviewUrl, validationUrl)
 
     // then
+    expect(result).toBe(true)
+  })
+})
+
+describe('validateReturnTypeConfig', () => {
+  test('should return true when both returnTypeRef and schema are provided', () => {
+    const result = validateReturnTypeConfig('returnTypeRefValue', 'schemaValue')
+    expect(result).toBe(true)
+  })
+
+  test('should throw ZodError when returnTypeRef is missing', () => {
+    expect(() => {
+      validateReturnTypeConfig(undefined, 'schemaValue')
+    }).toThrow(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].return_type_ref'],
+          message: 'When uploading a schema a `return_type_ref` must be specified.',
+        },
+      ]),
+    )
+  })
+
+  test('should throw ZodError when schema is missing', () => {
+    expect(() => {
+      validateReturnTypeConfig('returnTypeRefValue', undefined)
+    }).toThrow(
+      new zod.ZodError([
+        {
+          code: zod.ZodIssueCode.custom,
+          path: ['extensions[0].schema'],
+          message: 'To set a return type a `schema` must be specified.',
+        },
+      ]),
+    )
+  })
+
+  test('should return true when neither returnTypeRef nor schema are provided', () => {
+    const result = validateReturnTypeConfig()
     expect(result).toBe(true)
   })
 })

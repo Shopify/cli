@@ -7,7 +7,6 @@ export const PushConfig = gql`
     $applicationUrl: Url
     $redirectUrlAllowlist: [Url]
     $requestedAccessScopes: [String!]
-    $contactEmail: String!
     $webhookApiVersion: String!
     $gdprWebhooks: GdprWebhooksInput
     $appProxy: AppProxyInput
@@ -19,7 +18,6 @@ export const PushConfig = gql`
       input: {
         title: $title
         apiKey: $apiKey
-        contactEmail: $contactEmail
         applicationUrl: $applicationUrl
         redirectUrlWhitelist: $redirectUrlAllowlist
         requestedAccessScopes: $requestedAccessScopes
@@ -58,7 +56,6 @@ export interface PushConfigVariables {
   redirectUrlAllowlist?: string[] | null
   requestedAccessScopes?: string[]
   webhookApiVersion?: string
-  contactEmail?: string
   gdprWebhooks?: GdprWebhooks
   appProxy?: AppProxy
   posEmbedded?: boolean

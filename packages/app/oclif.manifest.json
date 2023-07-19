@@ -482,10 +482,7 @@
           "description": "The name of the app version to release.",
           "hidden": false,
           "required": true,
-          "multiple": false,
-          "exclusive": [
-            "app-version-id"
-          ]
+          "multiple": false
         }
       },
       "args": {}

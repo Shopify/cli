@@ -25,7 +25,6 @@ export type OrganizationApp = MinimalOrganizationApp & {
   applicationUrl: string
   redirectUrlWhitelist: string[]
   requestedAccessScopes?: string[]
-  contactEmail?: string
   webhookApiVersion?: string
   embedded?: boolean
   posEmbedded?: boolean

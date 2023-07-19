@@ -415,14 +415,18 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   return result
 }
 
-export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(
+  app: AppInterface,
+  token: string,
+  directory?: string,
+): Promise<OrganizationApp> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
   const scopes = isCurrentAppSchema(app.configuration)
-    ? app.configuration.access_scopes?.scopes
-    : app.configuration.scopes
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
+    ? app.configuration?.access_scopes?.scopes
+    : app.configuration?.scopes
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, {isLaunchable, scopes, directory})
   return partnersApp
 }
 
@@ -569,7 +573,7 @@ export async function getAppContext({
   const firstTimeSetup = previousCachedInfo === undefined
   const usingConfigAndResetting = previousCachedInfo?.configFile && reset
   if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting)) {
-    await link({directory, commandConfig})
+    await link({directory, commandConfig}, false)
   }
 
   let cachedInfo = getCachedAppInfo(directory)
@@ -631,7 +635,7 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
   if (!cachedInfo?.configFile && usingDifferentSettings) return
 
   let updateURLs = 'Not yet configured'
-  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Always' : 'Never'
+  if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
 
   const items = [
     `Org:          ${organization.businessName}`,

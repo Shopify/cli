@@ -156,6 +156,12 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+const DEFAULT_SELECT_APP_OPTIONS = {
+  directory: undefined,
+  isLaunchable: true,
+  scopes: '',
+}
+
 const options = (app: AppInterface): DeployContextOptions => {
   return {
     app,
@@ -371,17 +377,12 @@ describe('ensureDevContext', async () => {
         directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          auth: {
-            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-          },
-          build: {
-            automatically_update_urls_on_dev: true,
-            dev_store_url: STORE1.shopDomain,
-          },
+          name: 'my app',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {api_version: '2023-04'},
+          application_url: 'https://myapp.com',
+          embedded: true,
         },
       })
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -436,7 +437,6 @@ describe('ensureDevContext', async () => {
       const expectedContent = `application_url = "https://myapp.com"
 client_id = "12345"
 name = "my app"
-api_contact_email = "wils@bahan-lee.com"
 embedded = true
 
 [webhooks]
@@ -668,7 +668,6 @@ dev_store_url = "domain1"
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
-          api_contact_email: 'wils@bahan-lee.com',
           webhooks: {api_version: '2023-04'},
           embedded: true,
         },
@@ -798,8 +797,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -850,8 +848,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -894,8 +891,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
   })
 })

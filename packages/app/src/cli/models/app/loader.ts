@@ -1,5 +1,4 @@
 import {
-  AppConfigurationSchema,
   Web,
   WebConfigurationSchema,
   App,
@@ -8,6 +7,8 @@ import {
   isCurrentAppSchema,
   getAppScopesArray,
   AppConfigurationInterface,
+  AppSchema,
+  LegacyAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -73,6 +74,20 @@ async function loadConfigurationFile(
   }
 }
 
+const isCurrentSchema = (schema: unknown) => {
+  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
+  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
+
+  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
+  for (const field in schema as {[key: string]: unknown}) {
+    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -96,6 +111,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport,
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
+
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
@@ -480,7 +496,12 @@ class AppConfigurationLoader {
     }
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
-    const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
+
+    const file = await loadConfigurationFile(configurationPath, this.abort, decodeToml)
+
+    const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
+
+    const configuration = await parseConfigurationFile(appSchema, configurationPath, this.abort)
 
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 

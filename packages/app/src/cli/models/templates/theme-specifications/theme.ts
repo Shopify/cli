@@ -6,6 +6,7 @@ import {ExtensionTemplate} from '../../app/template.js'
 const themeExtension: ExtensionTemplate = {
   identifier: 'theme_app_extension',
   name: 'Theme app extension',
+  defaultName: 'theme-extension',
   group: 'Online store',
   supportLinks: [],
   types: [
