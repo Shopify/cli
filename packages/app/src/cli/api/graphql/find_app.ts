@@ -23,7 +23,6 @@ export const FindAppQuery = gql`
       embedded
       posEmbedded
       preferencesUrl
-      contactEmail
       gdprWebhooks {
         customerDeletionUrl
         customerDataRequestUrl
@@ -56,7 +55,6 @@ export interface FindAppQuerySchema {
     applicationUrl: string
     redirectUrlWhitelist: string[]
     requestedAccessScopes?: string[]
-    contactEmail: string
     webhookApiVersion: string
     embedded: boolean
     posEmbedded?: boolean

@@ -7,6 +7,7 @@ import {uiFlavors} from '../common.js'
 const customerAccountsUIExtension: ExtensionTemplate = {
   identifier: 'customer_accounts_ui_extension',
   name: 'Customer Accounts',
+  defaultName: 'customer-accounts-ui',
   group: 'Shopify private',
   supportLinks: [],
   types: [

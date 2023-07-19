@@ -40,7 +40,7 @@ export async function selectRemoteSourcePrompt(
   return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === uuid)!
 }
 
-interface SourceSummary {
+export interface SourceSummary {
   question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
@@ -62,14 +62,15 @@ export async function deployConfirmationPrompt(
     dashboardOnly,
     deploymentMode,
   )
-  if (infoTable.length === 0) {
+  if (infoTable.length === 0 && deploymentMode === 'legacy') {
     infoTable = buildLegacyDeploymentInfoPrompt({identifiers, toCreate, onlyRemote, dashboardOnly})
   }
 
-  let confirmation = true
+  const canSkipConfirmation = infoTable.length === 0 && deploymentMode === 'legacy'
   const timeBeforeConfirmationMs = new Date().valueOf()
+  let confirmationResponse = true
 
-  if (infoTable.length > 0) {
+  if (!canSkipConfirmation) {
     const confirmationMessage = (() => {
       switch (deploymentMode) {
         case 'legacy':
@@ -81,7 +82,7 @@ export async function deployConfirmationPrompt(
       }
     })()
 
-    confirmation = await renderConfirmationPrompt({
+    confirmationResponse = await renderConfirmationPrompt({
       message: question,
       infoTable,
       confirmationMessage,
@@ -91,11 +92,11 @@ export async function deployConfirmationPrompt(
   const timeToConfirmOrCancelMs = new Date().valueOf() - timeBeforeConfirmationMs
 
   await metadata.addPublicMetadata(() => ({
-    cmd_deploy_confirm_cancelled: !confirmation,
+    cmd_deploy_confirm_cancelled: !confirmationResponse,
     cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
   }))
 
-  return confirmation
+  return confirmationResponse
 }
 
 function buildLegacyDeploymentInfoPrompt({
@@ -145,11 +146,10 @@ async function getUnifiedDeploymentInfoBreakdown(
 
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  if (!activeAppVersion.app.activeAppVersion) return null
-
-  const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
-    .map((remoteRegistration) => remoteRegistration.registrationUuid)
+  const nonDashboardRemoteRegistrations =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions
+      .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
+      .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
   let toCreateFinal: string[] = []
   const toUpdate: string[] = []
@@ -170,9 +170,10 @@ async function getUnifiedDeploymentInfoBreakdown(
     ...Object.values(localRegistration),
     ...dashboardOnly.map((source) => source.uuid),
   ]
-  const onlyRemote = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
-    .map((module) => module.registrationTitle)
+  const onlyRemote =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions
+      .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
+      .map((module) => module.registrationTitle) ?? []
 
   return {
     onlyRemote,

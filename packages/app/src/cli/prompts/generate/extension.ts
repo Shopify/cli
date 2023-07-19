@@ -1,9 +1,10 @@
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate, TemplateType} from '../../models/app/template.js'
-import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface GenerateExtensionPromptOptions {
   name?: string
@@ -71,7 +72,9 @@ const generateExtensionPrompts = async (
   const extensionContent: GenerateExtensionContentOutput[] = []
   /* eslint-disable no-await-in-loop */
   for (const [index, templateType] of extensionTemplate.types.entries()) {
-    const name = (extensionTemplate.types.length === 1 && options.name) || (await promptName(options.directory))
+    const name =
+      (extensionTemplate.types.length === 1 && options.name) ||
+      (await promptName(options.directory, extensionTemplate.defaultName))
     const flavor = options.extensionFlavor ?? (await promptFlavor(templateType))
     extensionContent.push({index, name, flavor})
   }
@@ -80,10 +83,15 @@ const generateExtensionPrompts = async (
   return {extensionTemplate, extensionContent}
 }
 
-async function promptName(directory: string): Promise<string> {
+async function promptName(directory: string, defaultName: string, number = 1): Promise<string> {
+  const name = number <= 1 ? defaultName : `${defaultName}-${number}`
+  const fullPath = joinPath(directory, name)
+  if (fileExistsSync(fullPath)) {
+    return promptName(directory, defaultName, number + 1)
+  }
   return renderTextPrompt({
     message: 'Extension name (internal only)',
-    defaultValue: await generateRandomNameForSubdirectory({suffix: 'ext', directory}),
+    defaultValue: name,
   })
 }
 

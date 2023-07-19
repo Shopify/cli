@@ -223,20 +223,12 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
   }
 }
 
-export interface DeployContextOptions {
-  app: AppInterface
-  apiKey?: string
-  reset: boolean
-  force: boolean
-  noRelease: boolean
-  commitReference?: string
-}
-
 export interface ReleaseContextOptions {
   app: AppInterface
   apiKey?: string
   reset: boolean
   force: boolean
+  commandConfig: Config
 }
 
 interface ReleaseContextOutput {
@@ -292,6 +284,16 @@ export async function ensureThemeExtensionDevContext(
   const registration = await createExtension(apiKey, extension.graphQLType, extension.localIdentifier, token)
 
   return registration
+}
+
+export interface DeployContextOptions {
+  app: AppInterface
+  apiKey?: string
+  reset: boolean
+  force: boolean
+  noRelease: boolean
+  commitReference?: string
+  commandConfig: Config
 }
 
 /**
@@ -413,14 +415,18 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   return result
 }
 
-export async function fetchOrCreateOrganizationApp(app: AppInterface, token: string): Promise<OrganizationApp> {
+export async function fetchOrCreateOrganizationApp(
+  app: AppInterface,
+  token: string,
+  directory?: string,
+): Promise<OrganizationApp> {
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
   const scopes = isCurrentAppSchema(app.configuration)
     ? app.configuration?.access_scopes?.scopes
     : app.configuration?.scopes
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, isLaunchable, scopes)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, {isLaunchable, scopes, directory})
   return partnersApp
 }
 
@@ -429,28 +435,38 @@ export async function fetchAppAndIdentifiers(
     app: AppInterface
     reset: boolean
     apiKey?: string
+    commandConfig: Config
   },
   token: string,
   reuseFromDev = true,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
-  let envIdentifiers = getAppIdentifiers({app: options.app})
+  const app = options.app
+  let reuseDevCache = reuseFromDev
+  let envIdentifiers = getAppIdentifiers({app})
   let partnersApp: OrganizationApp | undefined
 
-  if (isCurrentAppSchema(options.app.configuration)) {
-    const apiKey = options.apiKey ?? options.app.configuration.client_id
-    partnersApp = await appFromId(apiKey, token)
-  } else if (options.reset) {
+  if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
+    reuseDevCache = false
+    if (isCurrentAppSchema(app.configuration)) {
+      const configuration = await link({directory: app.directory, commandConfig: options.commandConfig})
+      app.configuration = configuration
+    }
+  }
+
+  if (isCurrentAppSchema(app.configuration)) {
+    const apiKey = options.apiKey ?? app.configuration.client_id
+    partnersApp = await appFromId(apiKey, token)
   } else if (options.apiKey) {
     partnersApp = await appFromId(options.apiKey, token)
   } else if (envIdentifiers.app) {
     partnersApp = await appFromId(envIdentifiers.app, token)
-  } else if (reuseFromDev) {
-    partnersApp = await fetchDevAppAndPrompt(options.app, token)
+  } else if (reuseDevCache) {
+    partnersApp = await fetchDevAppAndPrompt(app, token)
   }
 
   if (!partnersApp) {
-    partnersApp = await fetchOrCreateOrganizationApp(options.app, token)
+    partnersApp = await fetchOrCreateOrganizationApp(app, token)
   }
 
   return [partnersApp, envIdentifiers]
@@ -557,7 +573,7 @@ export async function getAppContext({
   const firstTimeSetup = previousCachedInfo === undefined
   const usingConfigAndResetting = previousCachedInfo?.configFile && reset
   if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting)) {
-    await link({directory, commandConfig})
+    await link({directory, commandConfig}, false)
   }
 
   let cachedInfo = getCachedAppInfo(directory)

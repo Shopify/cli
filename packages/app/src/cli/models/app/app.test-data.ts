@@ -14,7 +14,6 @@ export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
-  api_contact_email: 'wils@bahan-lee.com',
   webhooks: {
     api_version: '2023-04',
   },
@@ -94,7 +93,6 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     id: '1',
     title: 'app1',
     apiKey: 'api-key',
-    contactEmail: 'example@example.com',
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',
     grantedScopes: [],
@@ -382,6 +380,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_checkout_validation',
     name: 'Function - Cart and Checkout Validation',
+    defaultName: 'cart-checkout-validation',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
     types: [
@@ -402,6 +401,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_transform',
     name: 'Function - Cart transformer',
+    defaultName: 'cart-transformer',
     group: 'Discounts and checkout',
     supportLinks: [],
     types: [
@@ -427,6 +427,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'product_discounts',
     name: 'Function - Product discounts',
+    defaultName: 'product-discounts',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/apps/discounts'],
     types: [
@@ -452,6 +453,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'order_discounts',
     name: 'Function - Order discounts',
+    defaultName: 'order-discounts',
     group: 'Discounts and checkout',
     supportLinks: [],
     types: [

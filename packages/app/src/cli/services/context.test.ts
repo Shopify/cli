@@ -156,12 +156,19 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+const DEFAULT_SELECT_APP_OPTIONS = {
+  directory: undefined,
+  isLaunchable: true,
+  scopes: '',
+}
+
 const options = (app: AppInterface): DeployContextOptions => {
   return {
     app,
     reset: false,
     force: false,
     noRelease: false,
+    commandConfig: COMMAND_CONFIG,
   }
 }
 
@@ -371,7 +378,6 @@ describe('ensureDevContext', async () => {
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
           name: 'my app',
-          api_contact_email: 'example@example.com',
           client_id: '12345',
           scopes: 'write_products',
           webhooks: {api_version: '2023-04'},
@@ -431,7 +437,6 @@ describe('ensureDevContext', async () => {
       const expectedContent = `application_url = "https://myapp.com"
 client_id = "12345"
 name = "my app"
-api_contact_email = "wils@bahan-lee.com"
 embedded = true
 
 [webhooks]
@@ -663,7 +668,6 @@ dev_store_url = "domain1"
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
-          api_contact_email: 'wils@bahan-lee.com',
           webhooks: {api_version: '2023-04'},
           embedded: true,
         },
@@ -793,8 +797,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -845,8 +848,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -889,8 +891,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
   })
 })
@@ -909,6 +910,7 @@ describe('ensureReleaseContext', () => {
         apiKey: 'key1',
         reset: false,
         force: false,
+        commandConfig: COMMAND_CONFIG,
       }),
     ).rejects.toThrowError('')
   })
@@ -926,6 +928,7 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
+      commandConfig: COMMAND_CONFIG,
     })
 
     // Then

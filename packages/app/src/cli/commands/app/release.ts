@@ -35,7 +35,6 @@ export default class Release extends Command {
       hidden: false,
       description: 'The name of the app version to release.',
       env: 'SHOPIFY_FLAG_VERSION',
-      exclusive: ['app-version-id'],
       required: true,
     }),
   }
@@ -59,6 +58,7 @@ export default class Release extends Command {
       reset: flags.reset,
       force: flags.force,
       version: flags.version,
+      commandConfig: this.config,
     })
   }
 }

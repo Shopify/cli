@@ -6,6 +6,7 @@ import {ExtensionTemplate} from '../app/template.js'
 const flowTriggerExtension: ExtensionTemplate = {
   identifier: 'flow_trigger',
   name: 'Flow Trigger',
+  defaultName: 'flow-trigger',
   group: 'Flow',
   supportLinks: [],
   types: [
