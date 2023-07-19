@@ -7,6 +7,7 @@ type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_'
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_dev_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_deploy_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_release_'> &
   PickByPrefix<MonorailEventPublic, 'app_'> &
   PickByPrefix<MonorailEventPublic, 'env_'>
 

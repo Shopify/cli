@@ -92,6 +92,9 @@ export interface Schemas {
       cmd_deploy_flag_version_used?: Optional<boolean>
       cmd_deploy_flag_source_url_used?: Optional<boolean>
 
+      // Release related commands
+      cmd_release_confirm_cancelled?: Optional<boolean>
+
       // App setup
       app_extensions_any?: Optional<boolean>
       app_extensions_breakdown?: Optional<string>
