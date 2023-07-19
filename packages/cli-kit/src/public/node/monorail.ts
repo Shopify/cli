@@ -76,6 +76,7 @@ export interface Schemas {
       cmd_app_all_configs_clients?: Optional<string>
       cmd_app_linked_config_source?: Optional<string>
       cmd_app_linked_config_uses_cli_managed_urls?: Optional<boolean>
+      cmd_app_warning_api_key_deprecation_displayed?: Optional<boolean>
 
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>

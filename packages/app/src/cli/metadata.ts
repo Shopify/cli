@@ -20,6 +20,8 @@ const metadata = createRuntimeMetadataContainer<
     api_key: string
   } & CmdFieldsFromMonorail,
   CmdSensitiveFieldsFromMonorail
->()
+>({
+  cmd_app_warning_api_key_deprecation_displayed: false,
+})
 
 export default metadata

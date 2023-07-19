@@ -78,7 +78,9 @@ export default class Deploy extends Command {
     validateVersion(flags.version)
     validateMessage(flags.message)
 
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({

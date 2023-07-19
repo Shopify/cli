@@ -42,7 +42,9 @@ export default class Release extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Release)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({
