@@ -34,17 +34,13 @@ config_page_preview_url = "https://previewurl.test.dev"
 validation_url = "https://validation.test.dev"
 
 [[settings.fields]]
-key = "customer_id"
 type = "customer_reference"
 description = ""
-name = "Customer ID"
 required = true
 
 [[settings.fields]]
-key = "product_id"
 type = "product_reference"
 description = ""
-name = "Product ID"
 required = true
 
 [[settings.fields]]
@@ -94,7 +90,6 @@ handle = "trigger-ext"
 description = "trigger description"
 
 [[settings.fields]]
-key = "customer_id"
 type = "customer_reference"
 description = ""
 

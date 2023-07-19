@@ -45,7 +45,6 @@ describe('info', () => {
       // Given
       const testConfig = `
       name = "my app"
-      api_contact_email = "me@example.com"
       client_id = "12345"
       application_url = "https://example.com/lala"
       embedded = true
@@ -66,7 +65,6 @@ describe('info', () => {
           configurationPath: joinPath(tmp, 'shopify.app.toml'),
           configuration: {
             name: 'my app',
-            api_contact_email: 'me@example.com',
             client_id: '12345',
             application_url: 'https://example.com/lala',
             embedded: true,

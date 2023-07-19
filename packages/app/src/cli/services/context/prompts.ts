@@ -39,7 +39,7 @@ export async function selectRemoteSourcePrompt(
   return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === uuid)!
 }
 
-interface SourceSummary {
+export interface SourceSummary {
   question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
@@ -61,11 +61,11 @@ export async function deployConfirmationPrompt(
     dashboardOnly,
     deploymentMode,
   )
-  if (infoTable.length === 0) {
+  if (infoTable.length === 0 && deploymentMode === 'legacy') {
     infoTable = buildLegacyDeploymentInfoPrompt({identifiers, toCreate, onlyRemote, dashboardOnly})
   }
 
-  if (infoTable.length === 0) {
+  if (infoTable.length === 0 && deploymentMode === 'legacy') {
     return true
   }
 
@@ -130,13 +130,12 @@ async function buildUnifiedDeploymentInfoPrompt(
 
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  if (!activeAppVersion.app.activeAppVersion) return []
-
   const infoTable: InfoTableSection[] = []
 
-  const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
-    .map((remoteRegistration) => remoteRegistration.registrationUuid)
+  const nonDashboardRemoteRegistrations =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions
+      .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
+      .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
   let toCreateFinal: string[] = []
   const toUpdate: string[] = []
@@ -165,9 +164,10 @@ async function buildUnifiedDeploymentInfoPrompt(
     ...Object.values(localRegistration),
     ...dashboardOnly.map((source) => source.uuid),
   ]
-  const onlyRemote = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
-    .map((module) => module.registrationTitle)
+  const onlyRemote =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions
+      .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
+      .map((module) => module.registrationTitle) ?? []
   if (onlyRemote.length > 0) {
     const missingLocallySection: InfoTableSection = {
       header: 'Removes:',

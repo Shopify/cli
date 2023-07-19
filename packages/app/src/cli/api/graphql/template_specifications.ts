@@ -6,6 +6,7 @@ export const RemoteTemplateSpecificationsQuery = gql`
     templateSpecifications(version: $version, apiKey: $apiKey) {
       identifier
       name
+      defaultName
       group
       supportLinks
       types {

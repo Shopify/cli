@@ -129,7 +129,6 @@ describe('use', () => {
         config: {
           name: 'something',
           client_id: 'something',
-          api_contact_email: 'bob@bob.com',
           webhooks: {api_version: '2023-04'},
           application_url: 'https://example.com',
         },
@@ -166,7 +165,6 @@ describe('use', () => {
       const app = testAppWithConfig({
         config: {
           name: 'something',
-          api_contact_email: 'bob@bob.com',
           application_url: 'https://example.com',
           client_id: 'something',
           webhooks: {api_version: '2023-04'},

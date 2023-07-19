@@ -7,8 +7,9 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 
-const LegacyAppSchema = zod
+export const LegacyAppSchema = zod
   .object({
+    client_id: zod.number().optional(),
     name: zod.string().optional(),
     scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
@@ -24,10 +25,9 @@ const validateUrl = (zodType: zod.ZodString) => {
     .refine((value) => !value.includes('\n'), {message: 'Invalid url'})
 }
 
-const AppSchema = zod
+export const AppSchema = zod
   .object({
     name: zod.string().max(30),
-    api_contact_email: zod.string().email(),
     client_id: zod.string(),
     application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),
@@ -46,9 +46,9 @@ const AppSchema = zod
       api_version: zod.string(),
       privacy_compliance: zod
         .object({
-          customer_deletion_url: validateUrl(zod.string()),
-          customer_data_request_url: validateUrl(zod.string()),
-          shop_deletion_url: validateUrl(zod.string()),
+          customer_deletion_url: validateUrl(zod.string()).optional(),
+          customer_data_request_url: validateUrl(zod.string()).optional(),
+          shop_deletion_url: validateUrl(zod.string()).optional(),
         })
         .optional(),
     }),
@@ -80,7 +80,7 @@ const AppSchema = zod
   })
   .strict()
 
-export const AppConfigurationSchema = zod.union([AppSchema, LegacyAppSchema])
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
@@ -120,7 +120,7 @@ export function getAppScopesArray(config: AppConfiguration) {
 }
 
 export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
-  const config = 'configurationPath' in app ? app.configuration : app
+  const config: AppInterface | AppConfiguration = 'configurationPath' in app ? app.configuration : app
 
   if (isLegacyAppSchema(config)) return true
 

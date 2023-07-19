@@ -73,7 +73,6 @@ describe('link', () => {
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -110,11 +109,11 @@ use_legacy_install_flow = true
           configurationPath: 'shopify.app.development.toml',
           configuration: {
             name: 'my app',
-            api_contact_email: 'example@example.com',
             client_id: '12345',
             scopes: 'write_products',
             webhooks: {api_version: '2023-04'},
             application_url: 'https://myapp.com',
+            embedded: true,
           },
         }),
       )
@@ -135,7 +134,6 @@ use_legacy_install_flow = true
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `client_id = "12345"
 name = "my app"
-api_contact_email = "example@example.com"
 application_url = "https://myapp.com"
 embedded = true
 
@@ -180,7 +178,6 @@ scopes = "write_products"
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -201,6 +198,48 @@ use_legacy_install_flow = true
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'App "app1" connected to this codebase, file shopify.app.toml updated',
       })
+    })
+  })
+
+  test('does not render success banner if shouldRenderSuccess is false', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const initialContent = `scopes = ""
+      `
+      writeFileSync(filePath, initialContent)
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+
+      // When
+      await link(options, false)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `client_id = "api-key"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+use_legacy_install_flow = true
+`
+      expect(content).toEqual(expectedContent)
+      expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
 
@@ -263,7 +302,6 @@ use_legacy_install_flow = true
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -304,7 +342,6 @@ use_legacy_install_flow = true
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]

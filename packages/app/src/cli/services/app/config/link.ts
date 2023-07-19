@@ -28,9 +28,9 @@ export interface LinkOptions {
   configName?: string
 }
 
-export default async function link(options: LinkOptions): Promise<void> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<void> {
   const localApp = await loadAppConfigFromDefaultToml(options)
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey)
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
   const fileAlreadyExists = await fileExists(configFilePath)
@@ -41,11 +41,13 @@ export default async function link(options: LinkOptions): Promise<void> {
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
-  renderSuccess({
-    headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${
-      fileAlreadyExists ? 'updated' : 'created'
-    }`,
-  })
+  if (shouldRenderSuccess) {
+    renderSuccess({
+      headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${
+        fileAlreadyExists ? 'updated' : 'created'
+      }`,
+    })
+  }
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
@@ -64,10 +66,14 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
   }
 }
 
-async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined): Promise<OrganizationApp> {
+async function loadRemoteApp(
+  localApp: AppInterface,
+  apiKey: string | undefined,
+  directory?: string,
+): Promise<OrganizationApp> {
   const token = await ensureAuthenticatedPartners()
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, token)
+    return fetchOrCreateOrganizationApp(localApp, token, directory)
   }
   const app = await fetchAppFromApiKey(apiKey, token)
   if (!app) {
@@ -98,7 +104,6 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
-    api_contact_email: remoteApp.contactEmail!,
     application_url: remoteApp.applicationUrl,
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {

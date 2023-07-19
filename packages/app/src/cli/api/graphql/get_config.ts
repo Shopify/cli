@@ -11,7 +11,6 @@ export const GetConfig = gql`
       applicationUrl
       redirectUrlWhitelist
       preferencesUrl
-      contactEmail
       webhookApiVersion
       embedded
       posEmbedded
@@ -38,7 +37,6 @@ export interface App {
   grantedScopes: string[]
   applicationUrl: string
   redirectUrlWhitelist: string[]
-  contactEmail: string
   webhookApiVersion: string
   embedded: boolean
   posEmbedded?: boolean
