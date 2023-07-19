@@ -1509,6 +1509,36 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with a Product Subscription extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "product_subscription"
+      name = "my-product-subscription"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-product-subscription',
+    })
+
+    await writeFile(joinPath(blockPath('my-product-subscription'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'product_subscription',
+        name: 'my-product-subscription',
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
