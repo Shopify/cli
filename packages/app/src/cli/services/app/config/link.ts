@@ -14,7 +14,7 @@ import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../con
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
-import {clearCachedCommandInfo, getCachedCommandInfo, setCachedCommandInfo} from '../../local-storage.js'
+import {clearCachedCommandInfo, getCachedCommandInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -31,7 +31,6 @@ export interface LinkOptions {
 export const LINK_COMMAND_ID = '5f2f02c6-15fd-4b7a-bde0-b033f86063c7 '
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  setCachedCommandInfo(LINK_COMMAND_ID, {data: 'my data'})
   const localApp = await loadAppConfigFromDefaultToml(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
