@@ -4,7 +4,7 @@ import {describe, expect, test} from 'vitest'
 describe('validateVersion', () => {
   test('when version value meets all requirements should not throw any error', async () => {
     // Given
-    const version = 'AZaz09.-_/'
+    const version = 'AZaz09.-_'
 
     // When
     expect(() => validateVersion(version)).not.toThrow()
@@ -18,7 +18,7 @@ describe('validateVersion', () => {
 
   test('when version value violates unsupported characters requirements', async () => {
     // Given
-    const versionWithUnsupportedCharacters = 'AZa%&\n'
+    const versionWithUnsupportedCharacters = 'AZa%&\n/'
 
     // When
     expect(() => validateVersion(versionWithUnsupportedCharacters)).toThrowError(
