@@ -320,10 +320,10 @@ describe('jsExports', () => {
     expect(got).toEqual([])
   })
 
-  test('is empty when all target exports are undefined', async () => {
+  test('is empty when single target export is undefined', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
-    ourFunction.configuration.targeting = [{target: 'foo.bar'}, {target: 'foo.baz'}]
+    ourFunction.configuration.targeting = [{target: 'foo.bar'}]
 
     // When
     const got = jsExports(ourFunction)
@@ -347,15 +347,19 @@ describe('jsExports', () => {
     expect(got).toEqual(['foo-bar', 'foo-baz'])
   })
 
-  test('errors when mixing implicit and explicit exports', async () => {
+  test('errors when multiple targets present without explicit exports', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
-    ourFunction.configuration.targeting = [{target: 'foo.bar', export: 'foo-bar'}, {target: 'foo.baz'}]
+    ourFunction.configuration.targeting = [
+      {target: 'foo.bar', export: 'foo-bar'},
+      {target: 'foo.baz'},
+      {target: 'foo.biz'},
+    ]
 
     // When & Then
     expect(() => {
       jsExports(ourFunction)
-    }).toThrow(/Can't infer export name for 'foo.baz'/)
+    }).toThrow(/Can't infer export name for targets:\n- 'foo\.baz'\n- 'foo\.biz'/)
   })
 
   test('errors when exports are not kebab-case', async () => {
@@ -369,6 +373,6 @@ describe('jsExports', () => {
     // When & Then
     expect(() => {
       jsExports(ourFunction)
-    }).toThrow(/exports must be kebab-case/)
+    }).toThrow(/Invalid export names: 'fooBar', 'foo\*baz'[.\n]*The TOML's exports must be kebab-case/)
   })
 })

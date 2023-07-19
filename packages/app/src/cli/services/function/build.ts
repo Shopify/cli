@@ -248,24 +248,31 @@ export function ${identifier}() { return run(${alias}) }`
 
 export function jsExports(fun: ExtensionInstance<FunctionConfigType>) {
   const targets = fun.configuration.targeting || []
-  const withoutExport = targets.find((target) => !target.export)
-  const withExports = targets.filter((target) => Boolean(target.export))
+  const withoutExport = targets.filter((target) => !target.export)
+  const withExport = targets.filter((target) => Boolean(target.export))
 
-  if (withoutExport && withExports.length > 0) {
-    throw new Error(`Can't infer export name for '${withoutExport.target}'. All targets must have an export, or none.`)
+  if (targets.length > 1 && withoutExport.length > 0) {
+    throw new Error(`Can't infer export name for targets:
+${withoutExport.map(({target}) => `- '${target}'`).join('\n')}
+All targets must have an export when multiple targets are present.`)
   }
 
-  withExports.forEach((target) => {
-    const name = target.export!
-    if (!name.match(/^[a-z0-9-]+$/)) {
-      throw new Error(`Invalid export name: '${name}'.
+  const withInvalidExportName = withExport.filter((target) => !target.export!.match(/^[a-z0-9-]+$/))
+  if (withInvalidExportName.length > 0) {
+    const message = []
+    const invalidExportNames = withInvalidExportName.map((target) => `'${target.export!}'`)
+    message.push(`Invalid export names: ${invalidExportNames.join(', ')}.
 
 The TOML's exports must be kebab-case (lowercase, hyphen or numbers) to comply with WebAssembly's Component Model.
-camelCase JavaScript exports are automatically mapped to kebab-case Wasm exports.
 
-Suggestion: change the export name from '${name}' to '${hyphenate(name)}' in the TOML file.`)
-    }
-  })
+JavaScript exports with camelCase names are automatically mapped to kebab-case Wasm exports.\n`)
+    message.push('Suggested TOML changes:')
+    withInvalidExportName.forEach((target) => {
+      const name = target.export!
+      message.push(`- Change export for '${target.target}' to '${hyphenate(name)}'.`)
+    })
+    throw new Error(message.join('\n'))
+  }
 
-  return withExports.map((target) => target.export!)
+  return withExport.map((target) => target.export!)
 }
