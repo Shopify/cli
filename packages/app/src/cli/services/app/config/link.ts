@@ -43,6 +43,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   if (shouldRenderSuccess) {
     renderSuccess({
       headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+      body: `Using ${configFileName} as your default config.`,
       nextSteps: [
         [`Make updates to ${configFileName} in your local project`],
         ['To upload your config, run', {command: 'shopify app config push'}],

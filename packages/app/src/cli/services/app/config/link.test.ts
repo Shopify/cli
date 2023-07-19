@@ -93,6 +93,7 @@ use_legacy_install_flow = true
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
           ['To upload your config, run', {command: 'shopify app config push'}],
@@ -165,6 +166,7 @@ scopes = "write_products"
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
+        body: 'Using shopify.app.staging.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.staging.toml in your local project`],
           ['To upload your config, run', {command: 'shopify app config push'}],
@@ -221,6 +223,7 @@ use_legacy_install_flow = true
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
           ['To upload your config, run', {command: 'shopify app config push'}],
