@@ -584,12 +584,12 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      name = "my_extension_1"
       api_version = "2022-07"
       description = "global description"
 
       [[extensions]]
       type = "checkout_post_purchase"
+      name = "my_extension_1"
       handle = "checkout-ext"
       description = "custom description"
 
