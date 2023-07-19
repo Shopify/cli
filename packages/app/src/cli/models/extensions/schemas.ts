@@ -72,7 +72,6 @@ export const BaseSchemaWithHandle = BaseSchema.extend({
 })
 
 export const UnifiedSchema = zod.object({
-  name: zod.string().optional(),
   api_version: ApiVersionSchema.optional(),
   description: zod.string().optional(),
   extensions: zod.array(zod.any()),
