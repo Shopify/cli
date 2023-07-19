@@ -226,8 +226,8 @@ describe('createAsNewAppPrompt', () => {
     expect(got).toEqual(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message: 'Create this project as a new app on Shopify?',
-      confirmationMessage: 'Yes, create it as a new app',
-      cancellationMessage: 'No, connect it to an existing app',
+      confirmationMessage: 'Yes, create and link to a new app',
+      cancellationMessage: 'No, link it to an existing app',
     })
   })
 })
