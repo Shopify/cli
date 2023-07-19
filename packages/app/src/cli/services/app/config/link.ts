@@ -2,6 +2,7 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
+  AppSchema,
   EmptyApp,
   isCurrentAppSchema,
   isLegacyAppSchema,
@@ -17,9 +18,10 @@ import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -68,7 +70,8 @@ export async function writeAppConfigurationFile(configFilePath: string, configur
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
-  const fileSplit = encodeToml(configuration).split(/(\r\n|\r|\n)/)
+  const sorted = rewriteConfiguration(AppSchema, configuration, {}) as {[key: string]: string | boolean | object}
+  const fileSplit = encodeToml(sorted as JsonMapType).split(/(\r\n|\r|\n)/)
 
   fileSplit.unshift('\n')
   fileSplit.unshift(initialComment)
@@ -82,6 +85,31 @@ export async function writeAppConfigurationFile(configFilePath: string, configur
   const file = fileSplit.join('')
 
   writeFileSync(configFilePath, file)
+}
+
+const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown, result: unknown): unknown => {
+  if (schema === null || schema === undefined) return null
+  if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
+    return rewriteConfiguration(schema.unwrap(), config, result)
+  if (schema instanceof zod.ZodArray) {
+    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item, result))
+  }
+  if (schema instanceof zod.ZodObject) {
+    const entries = Object.entries(schema.shape)
+    const confObj = config as {[key: string]: unknown}
+    const resultObj = result as {[key: string]: unknown}
+    entries.forEach(([key, subSchema]) => {
+      if (confObj !== undefined && confObj[key] !== undefined) {
+        resultObj[key] = rewriteConfiguration(subSchema as T, confObj[key], {})
+        if (resultObj[key] instanceof Object && Object.keys(resultObj[key] as object).length === 0) {
+          delete resultObj[key]
+        }
+      }
+    })
+    return result
+  }
+  // return empty array
+  return config
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
