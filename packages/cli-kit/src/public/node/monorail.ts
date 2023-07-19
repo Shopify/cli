@@ -92,6 +92,9 @@ export interface Schemas {
       cmd_deploy_flag_message_used?: Optional<boolean>
       cmd_deploy_flag_version_used?: Optional<boolean>
       cmd_deploy_flag_source_url_used?: Optional<boolean>
+      cmd_deploy_confirm_new_registrations?: Optional<number>
+      cmd_deploy_confirm_updated_registrations?: Optional<number>
+      cmd_deploy_confirm_removed_registrations?: Optional<number>
 
       // Release related commands
       cmd_release_confirm_cancelled?: Optional<boolean>

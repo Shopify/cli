@@ -3,6 +3,7 @@ import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
+import metadata from '../../metadata.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -118,21 +119,24 @@ function buildLegacyDeploymentInfoPrompt({
   return infoTable
 }
 
-async function buildUnifiedDeploymentInfoPrompt(
+async function getUnifiedDeploymentInfoBreakdown(
   apiKey: string,
   token: string,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   deploymentMode: DeploymentMode,
-) {
-  if (deploymentMode === 'legacy') return []
+): Promise<{
+  toCreate: string[]
+  toUpdate: string[]
+  fromDashboard: string[]
+  onlyRemote: string[]
+} | null> {
+  if (deploymentMode === 'legacy') return null
 
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  if (!activeAppVersion.app.activeAppVersion) return []
-
-  const infoTable: InfoTableSection[] = []
+  if (!activeAppVersion.app.activeAppVersion) return null
 
   const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
     .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
@@ -152,14 +156,6 @@ async function buildUnifiedDeploymentInfoPrompt(
   }
 
   toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
-  const included = [
-    ...toCreateFinal.map((identifier) => [identifier, {subdued: '(new)'}]),
-    ...toUpdate,
-    ...dashboardOnlyFinal.map((source) => [source.title, {subdued: '(from Partner Dashboard)'}]),
-  ]
-  if (included.length > 0) {
-    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
-  }
 
   const localRegistrationAndDashboard = [
     ...Object.values(localRegistration),
@@ -168,6 +164,52 @@ async function buildUnifiedDeploymentInfoPrompt(
   const onlyRemote = activeAppVersion.app.activeAppVersion.appModuleVersions
     .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
     .map((module) => module.registrationTitle)
+
+  return {
+    onlyRemote,
+    toCreate: toCreateFinal.map((identifier) => identifier),
+    toUpdate,
+    fromDashboard: dashboardOnlyFinal.map((source) => source.title),
+  }
+}
+
+async function buildUnifiedDeploymentInfoPrompt(
+  apiKey: string,
+  token: string,
+  localRegistration: IdentifiersExtensions,
+  toCreate: LocalSource[],
+  dashboardOnly: RemoteSource[],
+  deploymentMode: DeploymentMode,
+) {
+  const breakdown = await getUnifiedDeploymentInfoBreakdown(
+    apiKey,
+    token,
+    localRegistration,
+    toCreate,
+    dashboardOnly,
+    deploymentMode,
+  )
+  if (breakdown === null) return []
+
+  const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = breakdown
+
+  await metadata.addPublicMetadata(() => ({
+    cmd_deploy_confirm_new_registrations: toCreateBreakdown.length,
+    cmd_deploy_confirm_updated_registrations: toUpdate.length,
+    cmd_deploy_confirm_removed_registrations: onlyRemote.length,
+  }))
+
+  const infoTable: InfoTableSection[] = []
+
+  const included = [
+    ...toCreateBreakdown.map((identifier) => [identifier, {subdued: '(new)'}]),
+    ...toUpdate,
+    ...fromDashboard.map((sourceTitle) => [sourceTitle, {subdued: '(from Partner Dashboard)'}]),
+  ]
+  if (included.length > 0) {
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
+  }
+
   if (onlyRemote.length > 0) {
     const missingLocallySection: InfoTableSection = {
       header: 'Removes:',
