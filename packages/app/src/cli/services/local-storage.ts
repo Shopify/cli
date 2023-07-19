@@ -92,6 +92,7 @@ function commandLocalStorage() {
 }
 
 export function setCachedCommandInfo(data: {[key: string]: unknown}): void {
+  // since we set the env var in our init hook, it will always be there
   const id = process.env.COMMAND_RUN_ID!
   const store = commandLocalStorage()
   const info = store.get(id)
@@ -103,6 +104,7 @@ export function setCachedCommandInfo(data: {[key: string]: unknown}): void {
 }
 
 export function getCachedCommandInfo() {
+  // since we set the env var in our init hook, it will always be there
   const id = process.env.COMMAND_RUN_ID!
   const store = commandLocalStorage()
   return store.get(id)
