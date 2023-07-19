@@ -758,6 +758,290 @@ automatically_update_urls_on_dev = true
     expect(myFunction.entrySourceFilePath).toContain(joinPath(blockPath('my-function'), 'src', 'index.js'))
   })
 
+  test('loads the app with a Flow trigger extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      description = "Your description"
+
+      [[extensions]]
+      name = "my-flow-trigger"
+      type = "flow_trigger"
+      handle = "handle1"
+
+      [settings]
+
+        [[settings.fields]]
+        type = "customer_reference"
+
+        [[settings.fields]]
+        type = "single_line_text_field"
+        key = "your-field-key"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-flow-trigger',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        description: 'Your description',
+        name: 'my-flow-trigger',
+        type: 'flow_trigger',
+        handle: 'handle1',
+        settings: {
+          fields: [
+            {
+              type: 'customer_reference',
+            },
+            {
+              type: 'single_line_text_field',
+              key: 'your-field-key',
+            },
+          ],
+        },
+      })
+    }
+  })
+
+  test('loads the app with a Flow action extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      description = "Your description"
+
+      [[extensions]]
+      name = "my-flow-action"
+      type = "flow_action"
+      handle = "handle2"
+      runtime_url = "https://url.com/api/execute"
+      schema = "./schema_patch.graphql"
+      return_type_ref = "Auction"
+      validation_url = "https://url.com/api/validate"
+      config_page_url = "https://url.com/config"
+      config_page_preview_url = "https://url.com/config/preview"
+
+      [settings]
+
+        [[settings.fields]]
+        type = "customer_reference"
+        required = true
+
+        [[settings.fields]]
+        type = "single_line_text_field"
+        key = "your-field-key"
+        name = "Display name"
+        description = "A description of my field"
+        required = true
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-flow-action',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        description: 'Your description',
+        name: 'my-flow-action',
+        type: 'flow_action',
+        handle: 'handle2',
+        runtime_url: 'https://url.com/api/execute',
+        schema: './schema_patch.graphql',
+        return_type_ref: 'Auction',
+        validation_url: 'https://url.com/api/validate',
+        config_page_url: 'https://url.com/config',
+        config_page_preview_url: 'https://url.com/config/preview',
+        settings: {
+          fields: [
+            {
+              type: 'customer_reference',
+              required: true,
+            },
+            {
+              type: 'single_line_text_field',
+              key: 'your-field-key',
+              name: 'Display name',
+              description: 'A description of my field',
+              required: true,
+            },
+          ],
+        },
+      })
+    }
+  })
+
+  test('loads the app with a Function extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      name = "My function"
+      type = "product_discounts"
+      api_version = "2023-01"
+
+      [build]
+      command = "cargo wasi build --release"
+      path = "target/wasm32-wasi/release/my-function.wasm"
+      watch = [ "src/**/*.rs" ]
+
+      [ui]
+      enable_create = false
+
+      [ui.paths]
+      create = "/"
+      details = "/"
+
+      [input.variables]
+      namespace = "my-app"
+      key = "my-input-variables"
+
+      [[targeting]]
+      target = "checkout.fetch"
+      input_query = "./input_query.graphql"
+      export = "fetch"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        name: 'My function',
+        type: 'product_discounts',
+        api_version: '2023-01',
+        build: {
+          command: 'cargo wasi build --release',
+          path: 'target/wasm32-wasi/release/my-function.wasm',
+          watch: ['src/**/*.rs'],
+        },
+        ui: {
+          enable_create: false,
+          paths: {
+            create: '/',
+            details: '/',
+          },
+        },
+        input: {
+          variables: {
+            namespace: 'my-app',
+            key: 'my-input-variables',
+          },
+        },
+        targeting: [
+          {
+            target: 'checkout.fetch',
+            input_query: './input_query.graphql',
+            export: 'fetch',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Function extension that has a full valid configuration with unified config', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2023-01"
+
+      [[extensions]]
+      name = "My function"
+      handle = "my-function"
+      type = "product_discounts"
+
+      [extensions.build]
+      command = "cargo wasi build --release"
+      path = "target/wasm32-wasi/release/my-function.wasm"
+      watch = [ "src/**/*.rs" ]
+
+      [extensions.ui]
+      enable_create = false
+
+      [extensions.ui.paths]
+      create = "/"
+      details = "/"
+
+      [extensions.input.variables]
+      namespace = "my-app"
+      key = "my-input-variables"
+
+      [[extensions.targeting]]
+      target = "checkout.fetch"
+      input_query = "./input_query.graphql"
+      export = "fetch"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        name: 'My function',
+        handle: 'my-function',
+        type: 'product_discounts',
+        api_version: '2023-01',
+        build: {
+          command: 'cargo wasi build --release',
+          path: 'target/wasm32-wasi/release/my-function.wasm',
+          watch: ['src/**/*.rs'],
+        },
+        ui: {
+          enable_create: false,
+          paths: {
+            create: '/',
+            details: '/',
+          },
+        },
+        input: {
+          variables: {
+            namespace: 'my-app',
+            key: 'my-input-variables',
+          },
+        },
+        targeting: [
+          {
+            target: 'checkout.fetch',
+            input_query: './input_query.graphql',
+            export: 'fetch',
+          },
+        ],
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
