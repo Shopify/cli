@@ -33,7 +33,6 @@ scopes = "read_products"
 `
   const linkedAppConfiguration = `
 name = "for-testing"
-api_contact_email = "me@example.com"
 client_id = "1234567890"
 application_url = "https://example.com/lala"
 embedded = true

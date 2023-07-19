@@ -126,7 +126,7 @@ describe('selectStore', () => {
     // Then
     expect(got).toEqual(STORE1)
     expect(renderAutocompletePrompt).not.toBeCalled()
-    expect(outputMock.output()).toMatch('Using your default dev store (store1) to preview your project')
+    expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
   })
 
   test('returns store if user selects one', async () => {

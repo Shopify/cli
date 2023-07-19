@@ -88,6 +88,8 @@ const PromptLayout = ({
   }, [wrapperHeight, promptAreaHeight, stdout, availableLines, inputFixedAreaHeight])
 
   const {isAborted} = useAbortSignal(abortSignal)
+  // Object.keys on an array returns the indices as strings
+  const showInfoTable = infoTable && Object.keys(infoTable).length > 0
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
@@ -100,7 +102,7 @@ const PromptLayout = ({
           {header}
         </Box>
 
-        {(infoTable || infoMessage || gitDiff) && state !== PromptState.Submitted ? (
+        {(showInfoTable || infoMessage || gitDiff) && state !== PromptState.Submitted ? (
           <Box
             marginTop={1}
             marginLeft={3}
@@ -114,7 +116,7 @@ const PromptLayout = ({
             gap={1}
           >
             {infoMessage ? <InfoMessage message={infoMessage} /> : null}
-            {infoTable ? <InfoTable table={infoTable} /> : null}
+            {showInfoTable ? <InfoTable table={infoTable} /> : null}
             {gitDiff ? <GitDiff gitDiff={gitDiff} /> : null}
           </Box>
         ) : null}

@@ -7,6 +7,7 @@ import {uiFlavors} from '../common.js'
 const checkoutUIExtension: ExtensionTemplate = {
   identifier: 'checkout_ui',
   name: 'Checkout UI',
+  defaultName: 'checkout-ui',
   group: 'Discounts and checkout',
   supportLinks: [],
   types: [

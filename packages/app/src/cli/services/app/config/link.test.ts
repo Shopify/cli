@@ -71,9 +71,10 @@ describe('link', () => {
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -88,6 +89,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
@@ -110,7 +112,6 @@ use_legacy_install_flow = true
           configurationPath: 'shopify.app.development.toml',
           configuration: {
             name: 'my app',
-            api_contact_email: 'example@example.com',
             client_id: '12345',
             scopes: 'write_products',
             webhooks: {api_version: '2023-04'},
@@ -134,9 +135,10 @@ use_legacy_install_flow = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `client_id = "12345"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
 name = "my app"
-api_contact_email = "example@example.com"
 application_url = "https://myapp.com"
 embedded = true
 
@@ -150,6 +152,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 `
       expect(content).toEqual(expectedContent)
@@ -179,9 +182,10 @@ scopes = "write_products"
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -196,6 +200,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
@@ -262,9 +267,10 @@ use_legacy_install_flow = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -279,6 +285,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 `
       expect(content).toEqual(expectedContent)
@@ -303,9 +310,10 @@ use_legacy_install_flow = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `client_id = "api-key"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "api-key"
 name = "app1"
-api_contact_email = "example@example.com"
 application_url = "https://example.com"
 embedded = true
 extension_directories = [ ]
@@ -320,6 +328,7 @@ redirect_urls = [ "https://example.com/callback1" ]
 embedded = false
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
 `
       expect(content).toEqual(expectedContent)

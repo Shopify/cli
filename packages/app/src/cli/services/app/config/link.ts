@@ -37,7 +37,7 @@ export default async function link(options: LinkOptions): Promise<void> {
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
-  writeFileSync(configFilePath, encodeToml(configuration))
+  await writeFile(configFilePath, configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
@@ -46,6 +46,28 @@ export default async function link(options: LinkOptions): Promise<void> {
       fileAlreadyExists ? 'updated' : 'created'
     }`,
   })
+}
+
+// toml does not support comments and there aren't currently any good/maintained libs for this,
+// so for now, we manually add comments
+async function writeFile(configFilePath: string, configuration: AppConfiguration) {
+  const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
+  const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
+
+  const fileSplit = encodeToml(configuration).split(/(\r\n|\r|\n)/)
+
+  fileSplit.unshift('\n')
+  fileSplit.unshift(initialComment)
+
+  fileSplit.forEach((line, index) => {
+    if (line === '[access_scopes]') {
+      fileSplit.splice(index + 1, 0, scopesComment)
+    }
+  })
+
+  const file = fileSplit.join('')
+
+  writeFileSync(configFilePath, file)
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
@@ -98,7 +120,6 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
-    api_contact_email: remoteApp.contactEmail!,
     application_url: remoteApp.applicationUrl,
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
