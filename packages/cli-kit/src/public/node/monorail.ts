@@ -95,6 +95,8 @@ export interface Schemas {
       cmd_deploy_confirm_new_registrations?: Optional<number>
       cmd_deploy_confirm_updated_registrations?: Optional<number>
       cmd_deploy_confirm_removed_registrations?: Optional<number>
+      cmd_deploy_confirm_cancelled?: Optional<boolean>
+      cmd_deploy_confirm_time_to_complete_ms?: Optional<number>
 
       // Release related commands
       cmd_release_confirm_cancelled?: Optional<boolean>

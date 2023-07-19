@@ -66,27 +66,36 @@ export async function deployConfirmationPrompt(
     infoTable = buildLegacyDeploymentInfoPrompt({identifiers, toCreate, onlyRemote, dashboardOnly})
   }
 
-  if (infoTable.length === 0) {
-    return true
+  let confirmation = true
+  const timeBeforeConfirmationMs = new Date().valueOf()
+
+  if (infoTable.length > 0) {
+    const confirmationMessage = (() => {
+      switch (deploymentMode) {
+        case 'legacy':
+          return 'Yes, deploy to push changes'
+        case 'unified':
+          return 'Yes, release this new version'
+        case 'unified-skip-release':
+          return 'Yes, create this new version'
+      }
+    })()
+
+    confirmation = await renderConfirmationPrompt({
+      message: question,
+      infoTable,
+      confirmationMessage,
+      cancellationMessage: 'No, cancel',
+    })
   }
+  const timeToConfirmOrCancelMs = new Date().valueOf() - timeBeforeConfirmationMs
 
-  const confirmationMessage = (() => {
-    switch (deploymentMode) {
-      case 'legacy':
-        return 'Yes, deploy to push changes'
-      case 'unified':
-        return 'Yes, release this new version'
-      case 'unified-skip-release':
-        return 'Yes, create this new version'
-    }
-  })()
+  await metadata.addPublicMetadata(() => ({
+    cmd_deploy_confirm_cancelled: !confirmation,
+    cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
+  }))
 
-  return renderConfirmationPrompt({
-    message: question,
-    infoTable,
-    confirmationMessage,
-    cancellationMessage: 'No, cancel',
-  })
+  return confirmation
 }
 
 function buildLegacyDeploymentInfoPrompt({
