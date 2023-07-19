@@ -8,7 +8,7 @@ export async function getTomls(apps: OrganizationAppsResponse, appDirectory?: st
     return {}
   }
 
-  const regex = /^shopify\.app(\.[-\w]+)?\.toml$/g
+  const regex = /^shopify\.app(\.[-\w]+)?\.toml$/
   const clientIds: {[key: string]: string} = {}
 
   readdirSync(appDirectory).forEach((file) => {
