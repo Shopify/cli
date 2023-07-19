@@ -5,6 +5,7 @@ import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
+import {getCachedCommandInfo} from '../../local-storage.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -24,6 +25,7 @@ vi.mock('../../../models/app/loader.js', async () => {
     loadApp: vi.fn(),
   }
 })
+vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('../../dev/fetch.js')
@@ -330,6 +332,47 @@ embedded = false
 
       // Then
       await expect(result).rejects.toThrow(/Invalid Client ID/)
+    })
+  })
+
+  test('skips config name question if re-linking to existing current app schema', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(loadApp).mockResolvedValue(
+        testApp({
+          configurationPath: 'shopify.app.foo.toml',
+          configuration: {
+            name: 'my app',
+            client_id: '12345',
+            scopes: 'write_products',
+            webhooks: {api_version: '2023-04'},
+            application_url: 'https://myapp.com',
+            embedded: true,
+          },
+        }),
+      )
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
+        testOrganizationApp({
+          apiKey: '12345',
+          applicationUrl: 'https://myapp.com',
+          title: 'my app',
+          requestedAccessScopes: ['write_products'],
+        }),
+      )
+      vi.mocked(getCachedCommandInfo).mockReturnValue({askConfigName: false, selectedToml: 'shopify.app.foo.toml'})
+
+      // When
+      await link(options)
+
+      expect(selectConfigName).not.toHaveBeenCalled()
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.foo.toml', directory: tmp})
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'App "my app" connected to this codebase, file shopify.app.foo.toml created',
+      })
     })
   })
 

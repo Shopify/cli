@@ -100,9 +100,9 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localApp?: AppInterface,
 ): Promise<string> {
-  const {askConfigName, selectedToml} = getCachedCommandInfo()
+  const cache = getCachedCommandInfo()
 
-  if (!askConfigName && selectedToml) return selectedToml as string
+  if (!cache?.askConfigName && cache?.selectedToml) return cache.selectedToml as string
 
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
