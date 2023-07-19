@@ -107,7 +107,7 @@ describe('selectApp', () => {
     })
   })
 
-  test('includes toml names when present', async () => {
+  test.only('includes toml names when present', async () => {
     vi.mocked(getTomls).mockResolvedValueOnce({
       [APP1.apiKey]: 'shopify.app.toml',
       [APP2.apiKey]: 'shopify.app.dev.toml',

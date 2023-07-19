@@ -27,7 +27,7 @@ export async function selectAppPrompt(
 ): Promise<string> {
   const tomls = await getTomls(apps, options?.directory)
 
-  setCachedCommandInfo({tomls})
+  if (tomls) setCachedCommandInfo({tomls})
 
   const toAnswer = (app: MinimalOrganizationApp) => {
     if (tomls[app?.apiKey]) {
