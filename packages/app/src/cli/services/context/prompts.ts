@@ -8,6 +8,7 @@ import {
   InfoTableSection,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
+  renderDangerousConfirmationPrompt,
   renderInfo,
 } from '@shopify/cli-kit/node/ui'
 
@@ -41,6 +42,7 @@ export async function selectRemoteSourcePrompt(
 }
 
 export interface SourceSummary {
+  appTitle: string | undefined
   question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
@@ -49,7 +51,7 @@ export interface SourceSummary {
 }
 
 export async function deployConfirmationPrompt(
-  {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
+  {appTitle, question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
   deploymentMode: DeploymentMode,
   apiKey: string,
   token: string,
@@ -71,24 +73,36 @@ export async function deployConfirmationPrompt(
   let confirmationResponse = true
 
   if (!canSkipConfirmation) {
-    const confirmationMessage = (() => {
-      switch (deploymentMode) {
-        case 'legacy':
-          return 'Yes, deploy to push changes'
-        case 'unified':
-          return 'Yes, release this new version'
-        case 'unified-skip-release':
-          return 'Yes, create this new version'
-      }
-    })()
+    const appExists = Boolean(appTitle)
+    const isDangerous = appExists && infoTable.some((section) => section.header.match(/Remove/))
 
-    confirmationResponse = await renderConfirmationPrompt({
-      message: question,
-      infoTable,
-      confirmationMessage,
-      cancellationMessage: 'No, cancel',
-    })
+    if (isDangerous) {
+      confirmationResponse = await renderDangerousConfirmationPrompt({
+        message: question,
+        infoTable,
+        confirmation: appTitle!,
+      })
+    } else {
+      const confirmationMessage = (() => {
+        switch (deploymentMode) {
+          case 'legacy':
+            return 'Yes, deploy to push changes'
+          case 'unified':
+            return 'Yes, release this new version'
+          case 'unified-skip-release':
+            return 'Yes, create this new version'
+        }
+      })()
+
+      confirmationResponse = await renderConfirmationPrompt({
+        message: question,
+        infoTable,
+        confirmationMessage,
+        cancellationMessage: 'No, cancel',
+      })
+    }
   }
+
   const timeToConfirmOrCancelMs = new Date().valueOf() - timeBeforeConfirmationMs
 
   await metadata.addPublicMetadata(() => ({
@@ -104,7 +118,7 @@ function buildLegacyDeploymentInfoPrompt({
   toCreate,
   onlyRemote,
   dashboardOnly,
-}: Omit<SourceSummary, 'question'>) {
+}: Omit<SourceSummary, 'appTitle' | 'question'>) {
   const infoTable: InfoTableSection[] = []
 
   const included = [

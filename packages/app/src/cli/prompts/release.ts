@@ -1,7 +1,7 @@
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import metadata from '../metadata.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function confirmReleasePrompt(
   appName: string,
@@ -26,12 +26,18 @@ export async function confirmReleasePrompt(
       bullet: '-',
     })
   }
-  const confirm = await renderConfirmationPrompt({
-    message: `Release this version of ${appName}?`,
-    infoTable,
-    confirmationMessage: 'Yes, release this version',
-    cancellationMessage: 'No, cancel',
-  })
+  let confirm: boolean
+  const message = `Release this version of ${appName}?`
+  if (versionsDiff.removed.length > 0) {
+    confirm = await renderDangerousConfirmationPrompt({message, infoTable, confirmation: appName})
+  } else {
+    confirm = await renderConfirmationPrompt({
+      message,
+      infoTable,
+      confirmationMessage: 'Yes, release this version',
+      cancellationMessage: 'No, cancel',
+    })
+  }
 
   await metadata.addPublicMetadata(() => ({
     cmd_release_confirm_cancelled: !confirm,

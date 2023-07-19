@@ -91,6 +91,7 @@ export async function ensureExtensionsIds(
 
     const confirmed = await deployConfirmationPrompt(
       {
+        appTitle: options.partnersApp?.title,
         question,
         identifiers: validMatches,
         toCreate: extensionsToCreate,

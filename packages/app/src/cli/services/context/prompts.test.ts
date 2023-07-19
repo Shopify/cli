@@ -300,6 +300,7 @@ function buildSourceSummary(options: BuildSourceSummaryOptions = {}): SourceSumm
   const {identifiers = {}, toCreate = [], onlyRemote = [], dashboardOnly = []} = options
 
   return {
+    appTitle: undefined,
     question: 'question',
     identifiers,
     toCreate,
