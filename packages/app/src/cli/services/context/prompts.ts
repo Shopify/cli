@@ -56,16 +56,15 @@ export async function deployConfirmationPrompt(
   apiKey: string,
   token: string,
 ): Promise<boolean> {
-  let infoTable: InfoTableSection[] = await buildUnifiedDeploymentInfoPrompt(
-    apiKey,
-    token,
-    identifiers,
-    toCreate,
-    dashboardOnly,
-    deploymentMode,
-  )
+  let {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
+    await buildUnifiedDeploymentInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly, deploymentMode)
   if (infoTable.length === 0 && deploymentMode === 'legacy') {
-    infoTable = buildLegacyDeploymentInfoPrompt({identifiers, toCreate, onlyRemote, dashboardOnly})
+    ;({infoTable, removesExtension} = buildLegacyDeploymentInfoPrompt({
+      identifiers,
+      toCreate,
+      onlyRemote,
+      dashboardOnly,
+    }))
   }
 
   const canSkipConfirmation = infoTable.length === 0 && deploymentMode === 'legacy'
@@ -74,7 +73,7 @@ export async function deployConfirmationPrompt(
 
   if (!canSkipConfirmation) {
     const appExists = Boolean(appTitle)
-    const isDangerous = appExists && infoTable.some((section) => section.header.match(/Remove/))
+    const isDangerous = appExists && removesExtension
 
     if (isDangerous) {
       confirmationResponse = await renderDangerousConfirmationPrompt({
@@ -131,7 +130,8 @@ function buildLegacyDeploymentInfoPrompt({
     infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
-  if (onlyRemote.length > 0) {
+  const removesExtension = onlyRemote.length > 0
+  if (removesExtension) {
     infoTable.push({
       header: 'Removes:',
       items: onlyRemote.map((source) => source.title),
@@ -140,7 +140,7 @@ function buildLegacyDeploymentInfoPrompt({
     })
   }
 
-  return infoTable
+  return {infoTable, removesExtension}
 }
 
 async function getUnifiedDeploymentInfoBreakdown(
@@ -213,7 +213,7 @@ async function buildUnifiedDeploymentInfoPrompt(
     dashboardOnly,
     deploymentMode,
   )
-  if (breakdown === null) return []
+  if (breakdown === null) return {infoTable: [], removesExtension: false}
 
   const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = breakdown
 
@@ -234,7 +234,8 @@ async function buildUnifiedDeploymentInfoPrompt(
     infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
-  if (onlyRemote.length > 0) {
+  const removesExtension = onlyRemote.length > 0
+  if (removesExtension) {
     const missingLocallySection: InfoTableSection = {
       header: 'Removes:',
       helperText: 'This can permanently delete app user data.',
@@ -245,7 +246,7 @@ async function buildUnifiedDeploymentInfoPrompt(
     infoTable.push(missingLocallySection)
   }
 
-  return infoTable
+  return {infoTable, removesExtension}
 }
 
 export async function extensionMigrationPrompt(
