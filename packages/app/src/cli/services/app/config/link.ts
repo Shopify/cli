@@ -1,4 +1,4 @@
-import {saveCurrentConfig} from './use.js'
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   AppConfiguration,
   AppInterface,
@@ -10,14 +10,19 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
+import {
+  InvalidApiKeyErrorMessage,
+  fetchOrCreateOrganizationApp,
+  fetchOrgsAppsAndStores,
+  selectOrg,
+} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
+import {createAsNewAppPrompt, selectAppPrompt} from '../../../prompts/dev.js'
+import {createApp} from '../../dev/select-app.js'
 import {Config} from '@oclif/core'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -28,38 +33,102 @@ export interface LinkOptions {
   configName?: string
 }
 
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const localApp = await loadAppConfigFromDefaultToml(options)
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
-  const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
-  const configFilePath = joinPath(options.directory, configFileName)
+async function transition({state, options}: {state: any; options: any}) {
+  await machine.states[state].render(options)
+}
 
-  const configuration = mergeAppConfiguration(localApp, remoteApp)
+const machine: any = {
+  initial: 'start',
+  states: {
+    start: {
+      render: async (options: any) => {
+        const localApp = await loadAppConfigFromDefaultToml(options)
+        const token = await ensureAuthenticatedPartners()
+        const orgId = await selectOrg(token)
+        const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
+        const createNewApp = await createAsNewAppPrompt()
 
-  await writeAppConfigurationFile(configFilePath, configuration)
+        await writeAppConfigurationFile(configFilePath, configuration)
+        const nextOptions = {...options, organization, apps, localApp}
 
-  await saveCurrentConfig({configFileName, directory: options.directory})
+        if (createNewApp) {
+          await transition({state: 'newApp', options: nextOptions})
+        } else {
+          await transition({state: 'existingApp', options: nextOptions})
+        }
+      },
+    },
+    newApp: {
+      render: async (options: any) => {
+        const token = await ensureAuthenticatedPartners()
+        const app = await createApp(options.organization, options.localApp.name, token, options)
 
-  if (shouldRenderSuccess) {
-    renderSuccess({
-      headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
-      body: `Using ${configFileName} as your default config.`,
-      nextSteps: [
-        [`Make updates to ${configFileName} in your local project`],
-        ['To upload your config, run', {command: 'shopify app config push'}],
-      ],
-      reference: [
-        {
-          link: {
-            label: 'App configuration',
-            url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
-          },
-        },
-      ],
-    })
-  }
+        const nextOptions = {...options, app}
 
-  return configuration
+        await transition({state: 'success', options: nextOptions})
+      },
+    },
+    existingApp: {
+      render: async (options: any) => {
+        const token = await ensureAuthenticatedPartners()
+        const selectedAppApiKey = await selectAppPrompt(options.apps, options.organization.id, options.token, {
+          directory: options?.directory,
+        })
+
+        const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
+
+        const nextOptions = {...options, fullSelectedApp}
+
+        await transition({state: 'success', options: nextOptions})
+      },
+    },
+    chooseConfigName: {
+      render: async () => {},
+    },
+    success: {
+      render: async () => {
+        console.log('success!')
+      },
+    },
+  },
+}
+
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<any> {
+  await transition({state: machine.initial, options})
+
+  return {data: 'foo'}
+
+  // const localApp = await loadAppConfigFromDefaultToml(options)
+  // const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
+  // const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
+  // const configFilePath = joinPath(options.directory, configFileName)
+
+  // const configuration = mergeAppConfiguration(localApp, remoteApp)
+
+  // writeFileSync(configFilePath, encodeToml(configuration))
+
+  // await saveCurrentConfig({configFileName, directory: options.directory})
+
+  // if (shouldRenderSuccess) {
+  //   renderSuccess({
+  //     headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+  //     body: `Using ${configFileName} as your default config.`,
+  //     nextSteps: [
+  //       [`Make updates to ${configFileName} in your local project`],
+  //       ['To upload your config, run', {command: 'shopify app config push'}],
+  //     ],
+  //     reference: [
+  //       {
+  //         link: {
+  //           label: 'App configuration',
+  //           url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+  //         },
+  //       },
+  //     ],
+  //   })
+  // }
+
+  // return configuration
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {

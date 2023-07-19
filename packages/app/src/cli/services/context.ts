@@ -471,7 +471,7 @@ export async function fetchAppAndIdentifiers(
   return [partnersApp, envIdentifiers]
 }
 
-async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
+export async function fetchOrgsAppsAndStores(orgId: string, token: string): Promise<FetchResponse> {
   let data = {} as FetchResponse
   const tasks = [
     {
@@ -610,7 +610,7 @@ export async function getAppContext({
  * @param token - Token to access partners API
  * @returns The selected organization ID
  */
-async function selectOrg(token: string): Promise<string> {
+export async function selectOrg(token: string): Promise<string> {
   const orgs = await fetchOrganizations(token)
   const org = await selectOrganizationPrompt(orgs)
   return org.id
