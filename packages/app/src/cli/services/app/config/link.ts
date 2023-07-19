@@ -13,11 +13,10 @@ import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.j
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
+import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -36,7 +35,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
-  writeFileSync(configFilePath, encodeToml(configuration))
+  await writeAppConfigurationFile(configFilePath, configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 

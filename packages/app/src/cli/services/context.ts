@@ -15,6 +15,7 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
+import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppConfiguration, AppInterface, isCurrentAppSchema, appIsLaunchable} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -31,8 +32,6 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {basename} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 
@@ -169,7 +168,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    writeFileSync(configurationPath, encodeToml(newConfiguration))
+    await writeAppConfigurationFile(configurationPath, newConfiguration)
   } else {
     setCachedAppInfo({
       appId: selectedApp.apiKey,

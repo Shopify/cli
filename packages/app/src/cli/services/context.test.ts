@@ -434,16 +434,19 @@ describe('ensureDevContext', async () => {
       // Then
       expect(selectStore).toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.dev.toml'))
-      const expectedContent = `application_url = "https://myapp.com"
-client_id = "12345"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
 name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
 embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 
 [webhooks]
 api_version = "2023-04"
-
-[access_scopes]
-scopes = "read_products"
 
 [build]
 dev_store_url = "domain1"
