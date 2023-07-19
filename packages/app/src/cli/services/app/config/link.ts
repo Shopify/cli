@@ -136,9 +136,9 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
 
   if (hasAnyPrivacyWebhook) {
     configuration.webhooks.privacy_compliance = {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl || '',
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl || '',
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl || '',
+      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
+      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
+      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
     }
   }
 

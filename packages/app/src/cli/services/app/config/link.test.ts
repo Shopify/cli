@@ -400,4 +400,64 @@ scopes = "read_products,write_orders"
       expect(content).toEqual(expectedContent)
     })
   })
+
+  test('unset privacy compliance urls are undefined', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...REMOTE_APP,
+        gdprWebhooks: {customerDataRequestUrl: 'https://example.com/customer-data'},
+      })
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `client_id = "api-key"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+extension_directories = [ ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [webhooks.privacy_compliance]
+  customer_data_request_url = "https://example.com/customer-data"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+use_legacy_install_flow = true
+`
+      expect(content).toEqual(expectedContent)
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.toml in your local project`],
+          ['To upload your config, run', {command: 'shopify app config push'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
+      })
+    })
+  })
 })
