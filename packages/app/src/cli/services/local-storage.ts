@@ -91,7 +91,8 @@ function commandLocalStorage() {
   return _commandLocalStorageInstance
 }
 
-export function setCachedCommandInfo(id: string, data: {[key: string]: unknown}): void {
+export function setCachedCommandInfo(data: {[key: string]: unknown}): void {
+  const id = process.env.COMMAND_RUN_ID!
   const store = commandLocalStorage()
   const info = store.get(id)
 
@@ -101,7 +102,8 @@ export function setCachedCommandInfo(id: string, data: {[key: string]: unknown})
   })
 }
 
-export function getCachedCommandInfo(id: string) {
+export function getCachedCommandInfo() {
+  const id = process.env.COMMAND_RUN_ID!
   const store = commandLocalStorage()
   return store.get(id)
 }

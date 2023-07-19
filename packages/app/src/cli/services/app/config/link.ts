@@ -20,7 +20,6 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -28,9 +27,6 @@ export interface LinkOptions {
   apiKey?: string
   configName?: string
 }
-
-// ensure there's a new id for each subsequent run
-export const LINK_COMMAND_ID = randomUUID()
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
@@ -104,7 +100,7 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localApp?: AppInterface,
 ): Promise<string> {
-  const {askConfigName, selectedToml} = getCachedCommandInfo(LINK_COMMAND_ID)
+  const {askConfigName, selectedToml} = getCachedCommandInfo()
 
   if (!askConfigName && selectedToml) return selectedToml as string
 

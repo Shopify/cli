@@ -3,7 +3,6 @@ import {Organization, OrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema} from '../../api/graphql/create_app.js'
 import {getCachedCommandInfo, setCachedCommandInfo} from '../local-storage.js'
-import {LINK_COMMAND_ID} from '../app/config/link.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -38,11 +37,10 @@ export async function selectOrCreateApp(
   } else {
     const selectedAppApiKey = await selectAppPrompt(apps, org.id, token, {directory: options?.directory})
 
-    const data = getCachedCommandInfo(LINK_COMMAND_ID)
+    const data = getCachedCommandInfo()
     const tomls = (data?.tomls as {[key: string]: unknown}) ?? {}
 
-    if (tomls[selectedAppApiKey])
-      setCachedCommandInfo(LINK_COMMAND_ID, {selectedToml: tomls[selectedAppApiKey], askConfigName: false})
+    if (tomls[selectedAppApiKey]) setCachedCommandInfo({selectedToml: tomls[selectedAppApiKey], askConfigName: false})
 
     const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
     return fullSelectedApp!
