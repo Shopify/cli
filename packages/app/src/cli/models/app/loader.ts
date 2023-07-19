@@ -364,7 +364,7 @@ class AppLoader {
           const {extensions, ...restConfig} = mergedConfig
           if (!restConfig.handle) {
             // Handle is required for unified config extensions.
-            return this.abortOrReport(
+            this.abortOrReport(
               outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
                 appDirectory,
                 configurationPath,
@@ -372,6 +372,7 @@ class AppLoader {
               undefined,
               configurationPath,
             )
+            restConfig.handle = 'unknown-handle'
           }
           return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
