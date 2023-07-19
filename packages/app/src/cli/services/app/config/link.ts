@@ -36,7 +36,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
-  await writeFile(configFilePath, configuration)
+  await writeAppConfigurationFile(configFilePath, configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
@@ -64,7 +64,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
 // toml does not support comments and there aren't currently any good/maintained libs for this,
 // so for now, we manually add comments
-async function writeFile(configFilePath: string, configuration: AppConfiguration) {
+export async function writeAppConfigurationFile(configFilePath: string, configuration: AppConfiguration) {
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
