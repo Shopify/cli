@@ -196,6 +196,12 @@ async function dev(options: DevOptions) {
   )
 
   const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
+  const deploymentMode = unifiedDeployment ? 'unified' : 'legacy'
+
+  await metadata.addPublicMetadata(() => ({
+    cmd_app_deployment_mode: deploymentMode,
+  }))
+
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
   const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
 
@@ -227,7 +233,7 @@ async function dev(options: DevOptions) {
       appId: apiKey,
       appName: remoteApp.title,
       force: true,
-      deploymentMode: unifiedDeployment ? 'unified' : 'legacy',
+      deploymentMode,
       token,
       envIdentifiers: prodEnvIdentifiers,
     })

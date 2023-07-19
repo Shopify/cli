@@ -7,6 +7,7 @@ import {InfoMessage, renderConfirmationPrompt, renderInfo, renderTasks, renderWa
 import figures from '@shopify/cli-kit/node/figures'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {BugError} from '@shopify/cli-kit/node/error'
+import metadata from '../../metadata.js'
 
 export type DeploymentMode = 'legacy' | 'unified' | 'unified-skip-release'
 
@@ -25,6 +26,9 @@ export async function resolveDeploymentMode(app: OrganizationApp, options: Deplo
     }
   }
 
+  await metadata.addPublicMetadata(() => ({
+    cmd_app_deployment_mode: deploymentMode
+  }))
   return deploymentMode
 }
 
