@@ -1,6 +1,8 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
+import {setCachedCommandInfo} from '../services/local-storage.js'
+import {LINK_COMMAND_ID} from '../services/app/config/link.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -25,6 +27,8 @@ export async function selectAppPrompt(
   },
 ): Promise<string> {
   const tomls = await getTomls(apps, options?.directory)
+
+  setCachedCommandInfo(LINK_COMMAND_ID, {tomls})
 
   const toAnswer = (app: MinimalOrganizationApp) => {
     if (tomls[app?.apiKey]) {
