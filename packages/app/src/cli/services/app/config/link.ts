@@ -15,7 +15,7 @@ import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -33,7 +33,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
-  const fileAlreadyExists = await fileExists(configFilePath)
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
@@ -43,9 +42,19 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   if (shouldRenderSuccess) {
     renderSuccess({
-      headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${
-        fileAlreadyExists ? 'updated' : 'created'
-      }`,
+      headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+      nextSteps: [
+        [`Make updates to ${configFileName} in your local project`],
+        ['To upload your config, run', {command: 'shopify app config push'}],
+      ],
+      reference: [
+        {
+          link: {
+            label: 'App configuration',
+            url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+          },
+        },
+      ],
     })
   }
 
