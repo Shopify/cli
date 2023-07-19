@@ -50,7 +50,7 @@ const flowExtensionB: ExtensionRegistration = {
 describe('import-flow-legacy-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
-    const config = new Config({root: '/tmp'})
+    const commandConfig = new Config({root: '/tmp'})
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
@@ -60,7 +60,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, config})
+      await importFlowExtensions({app, commandConfig})
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -78,7 +78,7 @@ describe('import-flow-legacy-extensions', () => {
 
   test('selecting All imports all extensions', async () => {
     // Given
-    const config = new Config({root: '/tmp'})
+    const commandConfig = new Config({root: '/tmp'})
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
@@ -88,7 +88,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, config})
+      await importFlowExtensions({app, commandConfig})
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -106,7 +106,7 @@ describe('import-flow-legacy-extensions', () => {
 
   test('Show message if there are not extensions to migrate', async () => {
     // Given
-    const config = new Config({root: '/tmp'})
+    const commandConfig = new Config({root: '/tmp'})
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([])
@@ -115,7 +115,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, config})
+      await importFlowExtensions({app, commandConfig})
 
       // Then
       expect(renderSelectPrompt).not.toHaveBeenCalled()
