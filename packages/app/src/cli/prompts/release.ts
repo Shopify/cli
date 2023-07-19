@@ -1,4 +1,5 @@
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
+import metadata from '../metadata.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -31,6 +32,10 @@ export async function confirmReleasePrompt(
     confirmationMessage: 'Yes, release this version',
     cancellationMessage: 'No, cancel',
   })
+
+  await metadata.addPublicMetadata(() => ({
+    cmd_release_confirm_cancelled: !confirm,
+  }))
 
   if (!confirm) {
     throw new AbortSilentError()
