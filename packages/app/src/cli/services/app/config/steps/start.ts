@@ -21,9 +21,9 @@ async function startBehavior(options: any) {
   const nextOptions = {...options, organization, apps, localApp}
 
   if (createNewApp) {
-    await transition({state: 'newApp', options: nextOptions})
+    await transition({step: 'newApp', options: nextOptions})
   } else {
-    await transition({state: 'existingApp', options: nextOptions})
+    await transition({step: 'existingApp', options: nextOptions})
   }
 }
 
