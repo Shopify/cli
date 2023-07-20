@@ -16,6 +16,7 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
+import use from '../../services/app/config/use.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -497,7 +498,18 @@ class AppConfigurationLoader {
   async loaded() {
     const appDirectory = await this.getAppDirectory()
     let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    this.configName = this.configName ?? getCachedAppInfo(appDirectory)?.configFile
+    const cachedCurrentConfigFile = getCachedAppInfo(appDirectory)?.configFile
+
+    if (!this.configName && cachedCurrentConfigFile) {
+      const configExists = await fileExists(joinPath(appDirectory, cachedCurrentConfigFile))
+      if (!configExists) {
+        const warningMessage = `Could not find config file ${cachedCurrentConfigFile}, please select a new config`
+        this.configName = await use({directory: appDirectory, warningMessage, shouldRenderSuccess: false})
+      }
+    }
+
+    this.configName = this.configName ?? cachedCurrentConfigFile
+
     if (this.configName === undefined) {
       configSource = 'default'
     }

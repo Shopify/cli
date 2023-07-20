@@ -11,6 +11,8 @@ import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
+import {getCachedAppInfo} from '../../services/local-storage.js'
+import use from '../../services/app/config/use.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -23,6 +25,11 @@ import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from 
 import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'path'
+
+vi.mock('../../services/local-storage.js')
+vi.mock('../../services/app/config/use.js')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -1661,6 +1668,20 @@ automatically_update_urls_on_dev = true
       project_type: 'node',
       env_package_manager_workspaces: true,
       ...configAsCodeLegacyMetadata(),
+    })
+  })
+
+  test.only('prompts to select new config if current config file does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+
+    await loadApp({directory: tmpDir, specifications})
+    expect(use).toHaveBeenCalledWith({
+      directory: resolve(tmpDir),
+      shouldRenderSuccess: false,
+      warningMessage: 'Could not find config file shopify.app.non-existent.toml, please select a new config',
     })
   })
 
