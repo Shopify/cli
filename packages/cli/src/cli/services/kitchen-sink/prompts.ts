@@ -3,6 +3,7 @@ import {
   renderConfirmationPrompt,
   renderSelectPrompt,
   renderTextPrompt,
+  renderDangerousConfirmationPrompt,
 } from '@shopify/cli-kit/node/ui'
 import figures from '@shopify/cli-kit/node/figures'
 
@@ -182,5 +183,28 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
     defaultValue: true,
     confirmationMessage: 'Yes, confirm changes',
     cancellationMessage: 'No, make changes later',
+  })
+
+  // renderTextPrompt with dangerous confirmation
+  await renderDangerousConfirmationPrompt({
+    message: 'Release this version of Mega App?',
+    infoTable: [
+      {
+        header: 'Includes',
+        items: [
+          'My subscription extension',
+          'Order discount function',
+          'Subscription cancelled trigger',
+          'Add subscription action',
+        ],
+        bullet: '+',
+      },
+      {
+        header: 'Removes',
+        items: ['product-discount-function', 'product-subscription-extension'],
+        bullet: '-',
+      },
+    ],
+    confirmation: 'Mega App',
   })
 }

@@ -273,19 +273,6 @@ module ShopifyCLI
         assert_empty(@syncer.pending_updates)
       end
 
-      def test_upload_theme
-        @syncer.start_threads
-
-        expected_size = @theme.theme_files.size
-
-        ShopifyCLI::AdminAPI.expects(:rest_request)
-          .times(expected_size + 1) # +1 for checksums
-          .returns([200, {}, {}])
-
-        @syncer.upload_theme!
-        assert_empty(@syncer)
-      end
-
       def test_download_theme
         @syncer.start_threads
         @theme.theme_files

@@ -117,7 +117,7 @@ module Extension
         serve_missing_information: "Missing shop or api_key.",
         tunnel_already_running: "A tunnel running on another port has been detected. Close the tunnel and try again.",
         preview_message: <<~PREVIEW_MESSAGE,
-          %s:
+          Enable your theme app extension:
           {{green:%s}}
 
           Setup your theme app extension in the host theme:
@@ -128,10 +128,27 @@ module Extension
         PREVIEW_MESSAGE
         preview_message_1p: <<~PREVIEW_MESSAGE,
           Access Shopify Organization:
-            {{green:%s}}
-
-          %s:
           {{green:%s}}
+
+          Enable your theme app extension:
+          {{green:%s}}
+
+          Setup your theme app extension in the host theme:
+          {{green:%s}}
+
+          Preview your theme app extension:
+          {{green:%s}}
+        PREVIEW_MESSAGE
+        preview_message_unified: <<~PREVIEW_MESSAGE,
+          Setup your theme app extension in the host theme:
+          {{green:%s}}
+
+          Preview your theme app extension:
+          {{green:%s}}
+        PREVIEW_MESSAGE
+        preview_message_1p_unified: <<~PREVIEW_MESSAGE,
+          Access Shopify Organization:
+            {{green:%s}}
 
           Setup your theme app extension in the host theme:
           {{green:%s}}

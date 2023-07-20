@@ -92,8 +92,8 @@ export async function pushConfig(options: PushOptions) {
     }
 
     renderSuccess({
-      headline: `Updated app configuration for ${configuration.name}`,
-      body: [`${configFileName} configuration is now live on Shopify.`],
+      headline: `Updated your app config for ${configuration.name}`,
+      body: [`Your ${configFileName} config is live for your app users.`],
     })
   }
 }

@@ -35,14 +35,15 @@ export default class Release extends Command {
       hidden: false,
       description: 'The name of the app version to release.',
       env: 'SHOPIFY_FLAG_VERSION',
-      exclusive: ['app-version-id'],
       required: true,
     }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Release)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({
@@ -57,6 +58,7 @@ export default class Release extends Command {
       reset: flags.reset,
       force: flags.force,
       version: flags.version,
+      commandConfig: this.config,
     })
   }
 }

@@ -156,12 +156,19 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+const DEFAULT_SELECT_APP_OPTIONS = {
+  directory: undefined,
+  isLaunchable: true,
+  scopes: '',
+}
+
 const options = (app: AppInterface): DeployContextOptions => {
   return {
     app,
     reset: false,
     force: false,
     noRelease: false,
+    commandConfig: COMMAND_CONFIG,
   }
 }
 
@@ -427,16 +434,19 @@ describe('ensureDevContext', async () => {
       // Then
       expect(selectStore).toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.dev.toml'))
-      const expectedContent = `application_url = "https://myapp.com"
-client_id = "12345"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
 name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
 embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 
 [webhooks]
 api_version = "2023-04"
-
-[access_scopes]
-scopes = "read_products"
 
 [build]
 dev_store_url = "domain1"
@@ -790,8 +800,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -842,8 +851,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -886,8 +894,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
   })
 })
@@ -906,6 +913,7 @@ describe('ensureReleaseContext', () => {
         apiKey: 'key1',
         reset: false,
         force: false,
+        commandConfig: COMMAND_CONFIG,
       }),
     ).rejects.toThrowError('')
   })
@@ -923,6 +931,7 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
+      commandConfig: COMMAND_CONFIG,
     })
 
     // Then

@@ -35,12 +35,10 @@ export function buildTomlObject(extension: ExtensionRegistration) {
   const defaultURL = extension.type === 'flow_action_definition' ? 'https://url.com/api/execute' : undefined
 
   const localExtensionRepresentation = {
-    name: config.title,
-    type: extension.type.replace('_definition', ''),
-    description: config.description,
     extensions: [
       {
         type: extension.type.replace('_definition', ''),
+        name: config.title,
         handle: slugify(extension.title),
         description: config.description,
         runtime_url: config.url ?? defaultURL,

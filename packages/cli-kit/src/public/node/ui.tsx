@@ -28,6 +28,10 @@ import {
   ListToken,
   TokenItem,
 } from '../../private/node/ui/components/TokenizedText.js'
+import {
+  DangerousConfirmationPrompt,
+  DangerousConfirmationPromptProps,
+} from '../../private/node/ui/components/DangerousConfirmationPrompt.js'
 import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
@@ -530,6 +534,53 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
+  })
+}
+
+export interface RenderDangerousConfirmationPromptOptions extends Omit<DangerousConfirmationPromptProps, 'onSubmit'> {
+  renderOptions?: RenderOptions
+}
+
+/**
+ * Renders a dangerous confirmation prompt to the console, forcing the user to
+ * type a confirmation string to proceed.
+ * @example
+ * ?  Release a new version of nightly-app-2023-06-19?
+ *
+ *    ┃  Includes:
+ *    ┃  + web-px (new)
+ *    ┃  + sub-ui-ext
+ *    ┃  + theme-app-ext
+ *    ┃  + paymentify (from Partner Dashboard)
+ *    ┃
+ *    ┃  Removes:
+ *    ┃  - prod-discount-fun
+ *    ┃
+ *    ┃  This can permanently delete app user data.
+ *
+ *    Type nightly-app-2023-06-19 to confirm, or press Escape
+ *    to cancel.
+ * >  █
+ *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+ *
+ */
+export async function renderDangerousConfirmationPrompt({
+  renderOptions,
+  ...props
+}: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
+
+  // eslint-disable-next-line max-params
+  return new Promise((resolve, reject) => {
+    render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })

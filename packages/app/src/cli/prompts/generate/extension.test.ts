@@ -26,7 +26,7 @@ describe('extension prompt', async () => {
     choices: buildChoices(allUITemplates),
   }
   const extensionNameQuestion = {
-    message: 'Extension name (internal only)',
+    message: 'Name your extension:',
     defaultValue: expect.stringMatching(/^\w+-\w+$/),
   }
 

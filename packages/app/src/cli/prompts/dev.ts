@@ -1,5 +1,6 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
+import {getTomls} from '../utilities/app/config/getTomls.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -15,8 +16,24 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function selectAppPrompt(apps: OrganizationAppsResponse, orgId: string, token: string): Promise<string> {
-  const toAnswer = (app: MinimalOrganizationApp) => ({label: app.title, value: app.apiKey})
+export async function selectAppPrompt(
+  apps: OrganizationAppsResponse,
+  orgId: string,
+  token: string,
+  options?: {
+    directory?: string
+  },
+): Promise<string> {
+  const tomls = await getTomls(apps, options?.directory)
+
+  const toAnswer = (app: MinimalOrganizationApp) => {
+    if (tomls[app?.apiKey]) {
+      return {label: `${app.title} (${tomls[app.apiKey]})`, value: app.apiKey}
+    }
+
+    return {label: app.title, value: app.apiKey}
+  }
+
   const appList = apps.nodes.map(toAnswer)
 
   return renderAutocompletePrompt({
@@ -80,8 +97,8 @@ export async function reloadStoreListPrompt(org: Organization): Promise<boolean>
 export async function createAsNewAppPrompt(): Promise<boolean> {
   return renderConfirmationPrompt({
     message: 'Create this project as a new app on Shopify?',
-    confirmationMessage: 'Yes, create it as a new app',
-    cancellationMessage: 'No, connect it to an existing app',
+    confirmationMessage: 'Yes, create and link to a new app',
+    cancellationMessage: 'No, link it to an existing app',
   })
 }
 

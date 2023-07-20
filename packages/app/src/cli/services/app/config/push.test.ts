@@ -52,8 +52,8 @@ describe('pushConfig', () => {
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my app',
-      body: ['shopify.app.toml configuration is now live on Shopify.'],
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
     })
   })
 
@@ -97,8 +97,8 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls.length).toEqual(2)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my app',
-      body: ['shopify.app.toml configuration is now live on Shopify.'],
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
     })
   })
 
@@ -144,8 +144,8 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[2]![2]!).toEqual({apiKey: '12345'})
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my app',
-      body: ['shopify.app.toml configuration is now live on Shopify.'],
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
     })
   })
 
@@ -188,8 +188,8 @@ describe('pushConfig', () => {
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my app',
-      body: ['shopify.app.toml configuration is now live on Shopify.'],
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
     })
   })
 
@@ -234,8 +234,8 @@ describe('pushConfig', () => {
     expect(vi.mocked(partnersRequest).mock.calls[2]![0]!).toContain('appRequestedAccessScopesClear')
     expect(vi.mocked(partnersRequest).mock.calls[2]![2]!).toEqual({apiKey: '12345'})
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my app',
-      body: ['shopify.app.toml configuration is now live on Shopify.'],
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
     })
   })
 
@@ -373,8 +373,8 @@ app_preferences > url: this url is blocked 6`)
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated app configuration for my app',
-      body: ['shopify.app.toml configuration is now live on Shopify.'],
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
     })
   })
 
