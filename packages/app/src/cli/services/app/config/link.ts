@@ -85,8 +85,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   return {data: 'foo'}
 
-  // const localApp = await loadAppConfigFromDefaultToml(options)
-  // const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   // const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   // const configFilePath = joinPath(options.directory, configFileName)
 
