@@ -1,3 +1,4 @@
+import chooseConfigName from '../steps/chooseConfigName.js'
 import existingApp from '../steps/existingApp.js'
 import newApp from '../steps/newApp.js'
 import start from '../steps/start.js'
@@ -19,6 +20,7 @@ export const machine: any = {
     ...start,
     ...newApp,
     ...existingApp,
+    ...chooseConfigName,
     ...success,
   },
 }
