@@ -14,6 +14,7 @@ import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../con
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
+import {getCachedCommandInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -99,6 +100,10 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localApp?: AppInterface,
 ): Promise<string> {
+  const cache = getCachedCommandInfo()
+
+  if (!cache?.askConfigName && cache?.selectedToml) return cache.selectedToml as string
+
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
