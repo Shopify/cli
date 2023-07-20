@@ -2,7 +2,6 @@ import {App, AppConfiguration, AppInterface, WebType} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
-import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
 import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -485,7 +484,6 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
 
 export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   themeExtension,
-  checkoutPostPurchaseExtension,
   checkoutUIExtension,
   UIExtensionTemplate,
 ]
