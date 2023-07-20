@@ -17,10 +17,10 @@ export async function newApp(options: any) {
 
   if (!options.localApp?.configuration || (options.localApp && isLegacyAppSchema(options.localApp.configuration))) {
     await transition({
-      state: 'writeFile',
+      step: 'writeFile',
       options: {...nextOptions, configFilePath: joinPath(options.directory, configurationFileNames.app)},
     })
   } else {
-    await transition({state: 'chooseConfigName', options: nextOptions})
+    await transition({step: 'chooseConfigName', options: nextOptions})
   }
 }

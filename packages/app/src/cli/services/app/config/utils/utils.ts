@@ -7,17 +7,17 @@ import writeFile from '../steps/writeFile.js'
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export async function transition({state, options}: {state: any; options: any}) {
-  return machine.states[state].render(options)
+export async function transition({step, options}: {step: any; options?: any}) {
+  return command.steps[step].render(options)
 }
 
 export async function startFlow(options: any) {
-  return transition({state: machine.initial, options})
+  return transition({step: command.initial, options})
 }
 
-export const machine: any = {
+export const command: any = {
   initial: 'start',
-  states: {
+  steps: {
     ...start,
     ...newApp,
     ...existingApp,

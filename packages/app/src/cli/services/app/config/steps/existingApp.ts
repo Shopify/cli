@@ -41,8 +41,8 @@ export async function existingApp(options: any) {
   }
 
   if (configName) {
-    await transition({state: 'writeFile', options: nextOptions})
+    await transition({step: 'writeFile', options: nextOptions})
   } else {
-    await transition({state: 'chooseConfigName', options: nextOptions})
+    await transition({step: 'chooseConfigName', options: nextOptions})
   }
 }

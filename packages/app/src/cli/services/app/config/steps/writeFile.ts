@@ -23,7 +23,7 @@ async function writeFile(options: any) {
 
   await saveCurrentConfig(opts)
 
-  await transition({state: 'success', options})
+  await transition({step: 'success', options})
 }
 
 export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
