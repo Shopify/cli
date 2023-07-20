@@ -128,7 +128,11 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
     task: async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-        await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, flavor: extensionFlavor?.value})
+        await recursiveLiquidTemplateCopy(templateDirectory, directory, {
+          name,
+          handle: slugify(name),
+          flavor: extensionFlavor?.value,
+        })
       })
 
       if (templateLanguage === 'javascript') {

@@ -58,7 +58,7 @@ To shape your extension you have the following collection of tools available:
 
     To change your extension type, be mindful that you have to change it in the following places:
     1. In your `script file`, where you declared the extension (will be either _render()_ or _extend()_), you'll have to change the declared Extension Point.
-    2. In your `settings TOML file` (shopify.ui.extension.toml) you'll have to change the `extension_points` declaration for your new desired type.
+    2. In your `settings TOML file` (shopify.extension.toml) you'll have to change the `extension_points` declaration for your new desired type.
 
 * **How do I let users customize my extension?**
 
