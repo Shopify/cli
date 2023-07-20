@@ -1,9 +1,10 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
+import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
 import {
   RenderTextPromptOptions,
   renderConfirmationPrompt,
@@ -75,17 +76,23 @@ export function validate(value: string): string | undefined {
 export async function confirmPushChanges(options: PushOptions, app: App) {
   if (options.force) return true
 
-  const {configuration} = options
+  const configuration = options.configuration as CurrentAppConfiguration
   const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
 
-  if (deepCompare(configuration, remoteConfiguration)) {
+  if (configuration.access_scopes) configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
+
+  const [updated, baseline] = deepDifference(
+    rewriteConfiguration(AppSchema, configuration) as object,
+    rewriteConfiguration(AppSchema, remoteConfiguration) as object,
+  )
+
+  if (deepCompare(updated, baseline)) {
     renderInfo({headline: 'No changes to update.'})
     return false
   }
 
-  const differences = deepDifference(configuration, remoteConfiguration)
-  const baselineContent = encodeToml(differences[1])
-  const updatedContent = encodeToml(differences[0])
+  const baselineContent = encodeToml(baseline)
+  const updatedContent = encodeToml(updated)
 
   return renderConfirmationPrompt({
     message: ['Make the following changes to your remote configuration?'],
