@@ -26,7 +26,10 @@ export async function fetchExtensionTemplates(
     token,
     {apiKey},
   )
-  const allTemplates = remoteTemplates.templateSpecifications.concat(localExtensionTemplates())
+  const remoteIDs = remoteTemplates.templateSpecifications.map((template) => template.identifier)
+  // Filter out local templates that are already available remotely
+  const lcoalTemplates = localExtensionTemplates().filter((template) => !remoteIDs.includes(template.identifier))
+  const allTemplates = remoteTemplates.templateSpecifications.concat(lcoalTemplates)
   return allTemplates.filter(
     (template) =>
       availableSpecifications.includes(template.identifier) ||
