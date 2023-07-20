@@ -100,7 +100,7 @@ interface UploadExtensionsBundleOptions {
   /** App version identifier */
   version?: string
 
-  /** The git reference url of the deployment */
+  /** The git reference url of the app version */
   commitReference?: string
 }
 
@@ -132,12 +132,12 @@ interface ErrorCustomSection extends AlertCustomSection {
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
 ): Promise<UploadExtensionsBundleOutput> {
-  const deploymentUUID = randomUUID()
+  const appVersionUUID = randomUUID()
   let signedURL
   let deployError
 
   if (options.bundlePath) {
-    signedURL = await getExtensionUploadURL(options.apiKey, deploymentUUID)
+    signedURL = await getExtensionUploadURL(options.apiKey, appVersionUUID)
 
     const form = formData()
     const buffer = readFileSync(options.bundlePath)
@@ -151,7 +151,7 @@ export async function uploadExtensionsBundle(
 
   const variables: AppDeployVariables = {
     apiKey: options.apiKey,
-    uuid: deploymentUUID,
+    uuid: appVersionUUID,
     skipPublish: !(options.deploymentMode === 'unified'),
     message: options.message,
     versionTag: options.version,
@@ -178,14 +178,14 @@ export async function uploadExtensionsBundle(
       },
     )
 
-    if (result.appDeploy.deployment) {
+    if (result.appDeploy.appVersion) {
       deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
     } else {
       throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
     }
   }
 
-  const validationErrors = result.appDeploy.deployment.appModuleVersions
+  const validationErrors = result.appDeploy.appVersion.appModuleVersions
     .filter((ver) => ver.validationErrors.length > 0)
     .map((ver) => {
       return {uuid: ver.registrationUuid, errors: ver.validationErrors}
@@ -193,9 +193,9 @@ export async function uploadExtensionsBundle(
 
   return {
     validationErrors,
-    versionTag: result.appDeploy.deployment.versionTag,
-    location: result.appDeploy.deployment.location,
-    message: result.appDeploy.deployment.message,
+    versionTag: result.appDeploy.appVersion.versionTag,
+    location: result.appDeploy.appVersion.location,
+    message: result.appDeploy.appVersion.message,
     deployError,
   }
 }
@@ -365,14 +365,14 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
 /**
  * It generates a URL to upload an app bundle.
  * @param apiKey - The application API key
- * @param deploymentUUID - The unique identifier of the deployment.
+ * @param appVersionUUID - The unique identifier of the app version.
  */
-export async function getExtensionUploadURL(apiKey: string, deploymentUUID: string) {
+export async function getExtensionUploadURL(apiKey: string, appVersionUUID: string) {
   const mutation = GenerateSignedUploadUrl
   const token = await ensureAuthenticatedPartners()
   const variables: GenerateSignedUploadUrlVariables = {
     apiKey,
-    deploymentUuid: deploymentUUID,
+    appVersionUuid: appVersionUUID,
     bundleFormat: 1,
   }
 

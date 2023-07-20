@@ -34,7 +34,7 @@ describe('versionDiffByVersion', () => {
       updated: [{registrationTitle: 'Extension 2', uuid: 'uuid2'}],
       removed: [{registrationTitle: 'Extension 3', uuid: 'uuid3'}],
     }
-    vi.mocked(partnersRequest).mockResolvedValueOnce({app: {deployment: versionDetails}})
+    vi.mocked(partnersRequest).mockResolvedValueOnce({app: {appVersion: versionDetails}})
     vi.mocked(partnersRequest).mockResolvedValueOnce({app: {versionsDiff}})
 
     // When
