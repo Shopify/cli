@@ -22,4 +22,6 @@ export async function success(options: any) {
       },
     ],
   })
+
+  return options
 }

@@ -13,5 +13,5 @@ export async function chooseConfigName(options: any) {
 
   const nextOptions = {...options, configFilePath, configFileName: configName}
 
-  await transition({state: 'success', options: nextOptions})
+  await transition({state: 'writeFile', options: nextOptions})
 }

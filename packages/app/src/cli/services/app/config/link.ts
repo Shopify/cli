@@ -10,7 +10,7 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<any> {
-  await startFlow(options)
+  const data = await startFlow(options)
 
-  return {data: 'foo'}
+  return {data}
 }

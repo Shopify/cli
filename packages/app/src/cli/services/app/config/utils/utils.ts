@@ -8,11 +8,11 @@ import writeFile from '../steps/writeFile.js'
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function transition({state, options}: {state: any; options: any}) {
-  await machine.states[state].render(options)
+  return machine.states[state].render(options)
 }
 
 export async function startFlow(options: any) {
-  await transition({state: machine.initial, options})
+  return transition({state: machine.initial, options})
 }
 
 export const machine: any = {
