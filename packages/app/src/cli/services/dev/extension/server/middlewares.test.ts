@@ -202,7 +202,7 @@ describe('getExtensionAssetMiddleware()', () => {
           extensions: [
             await testUIExtension({
               devUUID: '123abc',
-              outputPath: joinPath(tmpDir, 'dist', 'main.js'),
+              outputPath: joinPath(tmpDir, 'dist', 'test-ui-extension.js'),
             }),
           ],
         },
@@ -216,7 +216,7 @@ describe('getExtensionAssetMiddleware()', () => {
           context: {
             params: {
               extensionId: '456dev',
-              assetPath: 'main.js',
+              assetPath: 'test-ui-extension.js',
             },
           },
         }),
@@ -235,7 +235,7 @@ describe('getExtensionAssetMiddleware()', () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       const response = getMockResponse()
       const devUUID = '123abc'
-      const fileName = 'main.js'
+      const fileName = 'test-ui-extension.js'
       const outputPath = joinPath(tmpDir, devUUID, fileName)
       const options = {
         devOptions: {
@@ -243,6 +243,7 @@ describe('getExtensionAssetMiddleware()', () => {
             {
               devUUID,
               outputPath,
+              outputFileName: fileName,
             },
           ],
         },

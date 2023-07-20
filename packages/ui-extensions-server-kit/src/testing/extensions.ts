@@ -25,7 +25,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
     assets: {
       main: {
         name: 'main',
-        url: `https://secure-link.com/extensions/${uuid}/assets/main.js?lastUpdated=${lastUpdated}`,
+        url: `https://secure-link.com/extensions/${uuid}/assets/handle.js?lastUpdated=${lastUpdated}`,
         lastUpdated,
       },
       ...((obj.assets || {}) as any),

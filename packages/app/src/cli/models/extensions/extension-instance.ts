@@ -99,6 +99,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.appModuleFeatures(this.configuration)
   }
 
+  get outputFileName() {
+    return `${this.handle}.js`
+  }
+
   set usingExtensionsFramework(value: boolean) {
     this.useExtensionsFramework = value
   }
@@ -123,7 +127,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.outputPath = this.directory
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
-      this.outputPath = joinPath(this.directory, 'dist/main.js')
+      this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
     }
 
     if (this.isFunctionExtension) {
@@ -255,7 +259,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
-    const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory

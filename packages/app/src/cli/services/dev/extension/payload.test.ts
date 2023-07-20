@@ -13,7 +13,7 @@ describe('getUIExtensionPayload', () => {
   test('returns the right payload', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const outputPath = joinPath(tmpDir, 'main.js')
+      const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
       await touchFile(outputPath)
       const signal: any = vi.fn()
       const stdout: any = vi.fn()
@@ -73,7 +73,7 @@ describe('getUIExtensionPayload', () => {
           main: {
             lastUpdated: expect.any(Number),
             name: 'main',
-            url: 'http://tunnel-url.com/extensions/devUUID/assets/main.js',
+            url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
           },
         },
         capabilities: {
