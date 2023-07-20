@@ -52,9 +52,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
 /**
  * These fields are forbidden when creating a new ExtensionSpec
  * They belong to the ExtensionSpec interface, but the values are obtained from the API
- * and should not be set by the user locally
- *
- * WARNING: 'surface' should be included here but is not yet compatible with the extension server
+ * and should not be set by us locally
  */
 export type ForbiddenFields =
   | 'registrationLimit'
@@ -105,7 +103,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     externalIdentifier: `${spec.identifier}_external`,
     additionalIdentifiers: [],
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
-    surface: 'unknown',
+    surface: 'test-surface',
     partnersWebIdentifier: spec.identifier,
     singleEntryPath: true,
     gated: false,

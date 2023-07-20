@@ -97,7 +97,8 @@ describe('getUIExtensionPayload', () => {
         externalType: 'checkout_ui_extension_external',
         localization: null,
         metafields: null,
-        surface: 'checkout',
+        // as surfaces come from remote specs, we dont' have real values here
+        surface: 'test-surface',
         title: 'test-ui-extension',
         type: 'checkout_ui_extension',
         uuid: 'devUUID',
