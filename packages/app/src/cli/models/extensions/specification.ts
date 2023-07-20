@@ -56,7 +56,13 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
  *
  * WARNING: 'surface' should be included here but is not yet compatible with the extension server
  */
-export type ForbiddenFields = 'registrationLimit' | 'category' | 'externalIdentifier' | 'externalName' | 'name'
+export type ForbiddenFields =
+  | 'registrationLimit'
+  | 'category'
+  | 'externalIdentifier'
+  | 'externalName'
+  | 'name'
+  | 'surface'
 
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
