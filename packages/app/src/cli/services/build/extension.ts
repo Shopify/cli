@@ -2,6 +2,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildJSFunction} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {execThemeCheckCLI} from '@shopify/cli-kit/node/ruby'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -101,7 +102,7 @@ async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options
   if (extension.buildCommand) {
     return runCommand(extension.buildCommand, extension, options)
   } else {
-    return buildJSFunction(extension, options)
+    return buildJSFunction(extension as ExtensionInstance<FunctionConfigType>, options)
   }
 }
 
