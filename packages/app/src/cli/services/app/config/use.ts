@@ -23,11 +23,6 @@ export default async function use({
   shouldRenderSuccess = true,
   reset = false,
 }: UseOptions): Promise<string | undefined> {
-  if (warningMessage) {
-    renderWarning({
-      headline: warningMessage,
-    })
-  }
   if (reset) {
     clearCurrentConfigFile(directory)
     renderSuccess({
@@ -35,6 +30,10 @@ export default async function use({
       body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
     })
     return
+  }
+
+  if (warningMessage) {
+    renderWarning({headline: warningMessage})
   }
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()

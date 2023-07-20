@@ -1671,18 +1671,35 @@ automatically_update_urls_on_dev = true
     })
   })
 
-  test.only('prompts to select new config if current config file does not exist', async () => {
+  test('prompts to select new config if current config file is set but does not exist', async () => {
     // Given
     await writeConfig(linkedAppConfiguration)
     vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
     vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
+    // When
     await loadApp({directory: tmpDir, specifications})
+
+    // Then
     expect(use).toHaveBeenCalledWith({
       directory: resolve(tmpDir),
       shouldRenderSuccess: false,
       warningMessage: 'Could not find config file shopify.app.non-existent.toml, please select a new config',
     })
+  })
+
+  test('throws error if config file is passed in but does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+
+    // When
+    const result = loadApp({directory: tmpDir, specifications, configName: 'non-existent'})
+
+    // Then
+    await expect(result).rejects.toThrow(`Couldn't find shopify.app.non-existent.toml in ${tmpDir}.`)
+    expect(use).not.toHaveBeenCalled()
   })
 
   const runningOnWindows = platformAndArch().platform === 'windows'
