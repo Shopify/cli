@@ -17,7 +17,7 @@ export async function newApp(options: any) {
 
   if (!options.localApp?.configuration || (options.localApp && isLegacyAppSchema(options.localApp.configuration))) {
     await transition({
-      state: 'success',
+      state: 'writeFile',
       options: {...nextOptions, configFilePath: joinPath(options.directory, configurationFileNames.app)},
     })
   } else {

@@ -6,6 +6,7 @@ import {selectAppPrompt} from '../../../../prompts/dev.js'
 import {fetchAppFromApiKey} from '../../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../../local-storage.js'
 import {createStep, transition} from '../utils/utils.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export default createStep('existingApp', existingApp)
@@ -22,8 +23,6 @@ export async function existingApp(options: any) {
   const cache: any = getCachedCommandInfo()
   const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
 
-  const nextOptions = {...options, remoteApp: fullSelectedApp}
-
   if (cache?.tomls[selectedAppApiKey]) configName = cache?.tomls[selectedAppApiKey] as string
 
   if (options.configName) {
@@ -34,8 +33,15 @@ export async function existingApp(options: any) {
     configName = configurationFileNames.app
   }
 
+  const nextOptions = {
+    ...options,
+    remoteApp: fullSelectedApp,
+    configFileName: configName,
+    configFilePath: configName ? joinPath(options.directory, configName) : undefined,
+  }
+
   if (configName) {
-    await transition({state: 'success', options: nextOptions})
+    await transition({state: 'writeFile', options: nextOptions})
   } else {
     await transition({state: 'chooseConfigName', options: nextOptions})
   }

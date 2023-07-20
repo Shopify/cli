@@ -11,7 +11,7 @@ export async function chooseConfigName(options: any) {
   const fullName = `shopify.app.${configName}.toml`
   const configFilePath = joinPath(options.directory, fullName)
 
-  const nextOptions = {...options, configFilePath}
+  const nextOptions = {...options, configFilePath, configFileName: configName}
 
   await transition({state: 'success', options: nextOptions})
 }

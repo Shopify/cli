@@ -1,7 +1,7 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
 import {AppInterface} from '../models/app/app.js'
-import {mergeAppConfiguration} from '../services/app/config/link.js'
+import {mergeAppConfiguration} from '../services/app/config/steps/writeFile.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
 import {

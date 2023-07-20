@@ -3,6 +3,7 @@ import existingApp from '../steps/existingApp.js'
 import newApp from '../steps/newApp.js'
 import start from '../steps/start.js'
 import success from '../steps/success.js'
+import writeFile from '../steps/writeFile.js'
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -21,6 +22,7 @@ export const machine: any = {
     ...newApp,
     ...existingApp,
     ...chooseConfigName,
+    ...writeFile,
     ...success,
   },
 }
