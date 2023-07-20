@@ -9,6 +9,7 @@ import {
   getAppScopesArray,
 } from '../../../models/app/app.js'
 import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
+import {confirmPushChanges} from '../../../prompts/config.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -16,9 +17,10 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
 
-export interface Options {
+export interface PushOptions {
   configuration: AppConfiguration
   configurationPath: string
+  force: boolean
 }
 
 const FIELD_NAMES: {[key: string]: string} = {
@@ -37,7 +39,8 @@ const FIELD_NAMES: {[key: string]: string} = {
   preferences_url: 'app_preferences > url',
 }
 
-export async function pushConfig({configuration, configurationPath}: Options) {
+export async function pushConfig(options: PushOptions) {
+  const {configuration, configurationPath} = options
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
     const configFileName = basename(configurationPath)
@@ -46,8 +49,9 @@ export async function pushConfig({configuration, configurationPath}: Options) {
     const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
 
     if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
-
     const {app} = queryResult
+
+    if (!(await confirmPushChanges(options, app))) return
 
     const variables = getMutationVars(app, configuration)
 

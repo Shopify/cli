@@ -1,9 +1,16 @@
-import {selectConfigFile, selectConfigName, validate} from './config.js'
+import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from './config.js'
+import {PushOptions} from '../services/app/config/push.js'
+import {testOrganizationApp, testAppWithConfig, testApp} from '../models/app/app.test-data.js'
+import {App} from '../api/graphql/get_config.js'
+import {mergeAppConfiguration} from '../services/app/config/link.js'
+import {OrganizationApp} from '../models/organization.js'
+import {AppConfiguration} from '../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -162,5 +169,161 @@ describe('validate', () => {
 
     // Then
     expect(result).toEqual('The file name is too long.')
+  })
+})
+
+describe('confirmPushChanges', () => {
+  test('returns true when force is passed', async () => {
+    // Given
+    const options: PushOptions = {
+      configuration: testAppWithConfig().configuration,
+      configurationPath: 'shopify.app.toml',
+      force: true,
+    }
+    const app = testOrganizationApp() as App
+
+    // When
+    const result = await confirmPushChanges(options, app)
+
+    // Then
+    expect(result).toBeTruthy()
+  })
+
+  test('calls renderConfirmationPrompt with the expected params', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      const configuration = mergeAppConfiguration(testApp(), app as OrganizationApp)
+      configuration.name = 'app2'
+
+      const options: PushOptions = {
+        configuration,
+        configurationPath,
+        force: false,
+      }
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+        message: ['Make the following changes to your remote configuration?'],
+        gitDiff: {
+          baselineContent: `name = "app1"
+`,
+          updatedContent: `name = "app2"
+`,
+        },
+        defaultValue: true,
+        confirmationMessage: 'Yes, confirm changes',
+        cancellationMessage: 'No, cancel',
+      })
+      expect(result).toBeTruthy()
+    })
+  })
+
+  test('returns false when there are no changes', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const configuration = mergeAppConfiguration(testApp(), app as OrganizationApp)
+      const options: PushOptions = {
+        configuration,
+        configurationPath,
+        force: false,
+      }
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
+
+  test('returns false when there are only ordering changes', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      const updatedContent = `client_id = "api-key"
+      name = "app1"
+      application_url = "https://example.com"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [auth]
+      redirect_urls = [ "https://example.com/callback1" ]
+
+      [pos]
+      embedded = false
+
+      [access_scopes]
+      use_legacy_install_flow = true
+      scopes = "read_products"
+      `
+      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const options: PushOptions = {
+        configuration,
+        configurationPath,
+        force: false,
+      }
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
+
+  test('returns false when there are only changes in comments', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      const updatedContent = `client_id = "api-key"
+      name = "app1"
+      application_url = "https://example.com"
+      embedded = true
+
+      # new comment!
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [auth]
+      redirect_urls = [ "https://example.com/callback1" ]
+
+      [pos]
+      embedded = false
+
+      [access_scopes]
+      scopes = "read_products"
+      use_legacy_install_flow = true
+      `
+      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const options: PushOptions = {
+        configuration,
+        configurationPath,
+        force: false,
+      }
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
   })
 })

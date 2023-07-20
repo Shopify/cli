@@ -26,6 +26,7 @@ const GitDiff: FunctionComponent<GitDiffProps> = ({gitDiff: {baselineContent, up
     color: shouldDisplayColors(),
     // Show minimal context to accommodate small terminals.
     flags: '--unified=1 --inter-hunk-context=1',
+    noHeaders: true,
   })
   if (!rawDiffContents) {
     return <Text>No changes.</Text>

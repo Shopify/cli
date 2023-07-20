@@ -111,11 +111,11 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
+export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
-    application_url: remoteApp.applicationUrl,
+    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
       api_version: remoteApp.webhookApiVersion || '2023-07',
@@ -161,6 +161,10 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
 
   if (localApp.configuration?.web_directories) {
     configuration.web_directories = localApp.configuration.web_directories
+  }
+
+  if (isCurrentAppSchema(localApp.configuration) && localApp.configuration?.build) {
+    configuration.build = localApp.configuration.build
   }
 
   return configuration

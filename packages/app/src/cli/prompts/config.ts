@@ -1,7 +1,13 @@
 /* eslint-disable no-await-in-loop */
+import {PushOptions} from '../services/app/config/push.js'
+import {AppInterface} from '../models/app/app.js'
+import {mergeAppConfiguration} from '../services/app/config/link.js'
+import {OrganizationApp} from '../models/organization.js'
+import {App} from '../api/graphql/get_config.js'
 import {
   RenderTextPromptOptions,
   renderConfirmationPrompt,
+  renderInfo,
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
@@ -9,6 +15,8 @@ import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
+import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
@@ -62,4 +70,31 @@ export function validate(value: string): string | undefined {
   if (result.length === 0) return `The file name can't be empty.`
   // Max filename size for Windows/Mac including the prefix/postfix
   if (result.length > 238) return 'The file name is too long.'
+}
+
+export async function confirmPushChanges(options: PushOptions, app: App) {
+  if (options.force) return true
+
+  const {configuration} = options
+  const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
+
+  if (deepCompare(configuration, remoteConfiguration)) {
+    renderInfo({headline: 'No changes to update.'})
+    return false
+  }
+
+  const differences = deepDifference(configuration, remoteConfiguration)
+  const baselineContent = encodeToml(differences[1])
+  const updatedContent = encodeToml(differences[0])
+
+  return renderConfirmationPrompt({
+    message: ['Make the following changes to your remote configuration?'],
+    gitDiff: {
+      baselineContent,
+      updatedContent,
+    },
+    defaultValue: true,
+    confirmationMessage: 'Yes, confirm changes',
+    cancellationMessage: 'No, cancel',
+  })
 }
