@@ -3,14 +3,17 @@ import {
   SUPPORTED_COMMERCE_OBJECTS,
   ACTION_SUPPORTED_COMMERCE_OBJECTS,
   TRIGGER_SUPPORTED_COMMERCE_OBJECTS,
-  uiTypesMap,
+  actionUiTypesMap,
+  triggerUiTypesMap,
 } from './constants.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {capitalize} from '@shopify/cli-kit/common/string'
 
-const typesToUiTypes = new Map<string, string>(uiTypesMap)
+const actionTypesToUiTypes = new Map<string, string>(actionUiTypesMap)
+const triggerTypesToUiTypes = new Map<string, string>(triggerUiTypesMap)
 
 export const serializeConfigField = (field: ConfigField, type: FlowExtensionTypes) => {
+  const typesToUiTypes = type === 'flow_action' ? actionTypesToUiTypes : triggerTypesToUiTypes
   const uiType = typesToUiTypes.get(field.type)
 
   if (typeof field.key !== 'string') {
@@ -18,7 +21,9 @@ export const serializeConfigField = (field: ConfigField, type: FlowExtensionType
   }
 
   if (!uiType) {
-    throw new AbortError(`Field type ${field.type} is not supported`)
+    throw new AbortError(
+      `Field type ${field.type} is not supported on Flow ${type === 'flow_action' ? 'Actions' : 'Triggers'}`,
+    )
   }
 
   const serializedField: SerializedField = {

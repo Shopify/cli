@@ -59,8 +59,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
   const [error, setError] = useState<string | undefined>(undefined)
-  const shouldShowError = promptState === PromptState.Submitted && error
-  const color = shouldShowError ? 'red' : 'cyan'
+  const color = promptState === PromptState.Error ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -68,11 +67,13 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     handleCtrlC(input, key)
 
     if (key.return) {
-      setPromptState(PromptState.Submitted)
       const error = validateAnswer(answerOrDefault)
-      setError(error)
 
-      if (!error) {
+      if (error) {
+        setPromptState(PromptState.Error)
+        setError(error)
+      } else {
+        setPromptState(PromptState.Submitted)
         onSubmit(answerOrDefault)
         unmountInk()
       }
@@ -87,7 +88,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {promptState === PromptState.Submitted && !error ? (
+      {promptState === PromptState.Submitted ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -121,12 +122,12 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           <Box marginLeft={3}>
             <Text color={color}>{underline}</Text>
           </Box>
-          {shouldShowError ? (
+          {promptState === PromptState.Error ? (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>
             </Box>
           ) : null}
-          {!shouldShowError && preview ? (
+          {promptState !== PromptState.Error && preview ? (
             <Box marginLeft={3}>
               <TokenizedText item={preview(answerOrDefault)} />
             </Box>

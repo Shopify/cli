@@ -221,6 +221,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
     expect(got).toEqual(ok({}))
     expect(deployConfirmationPrompt).toHaveBeenCalledWith(
       {
+        appTitle: 'my-app',
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: {},
         onlyRemote: [],
@@ -285,6 +286,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
     expect(got).toEqual(ok({}))
     expect(deployConfirmationPrompt).toHaveBeenCalledWith(
       {
+        appTitle: 'my-app',
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: {},
         onlyRemote: [],
@@ -346,6 +348,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
       {
+        appTitle: 'my-app',
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: {
           FUNCTION_A: 'ID_A',

@@ -39,6 +39,7 @@ export async function ensureFunctionsIds(
   if (!options.force) {
     const confirmed = await deployConfirmationPrompt(
       {
+        appTitle: options.app.name,
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: validMatches,
         toCreate: functionsToCreate,

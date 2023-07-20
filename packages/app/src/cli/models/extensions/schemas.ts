@@ -32,18 +32,17 @@ export const ApiVersionSchema = zod.string()
 
 export type ApiVersionSchemaType = zod.infer<typeof ApiVersionSchema>
 
+export const FieldSchema = zod.object({
+  key: zod.string().optional(),
+  name: zod.string().optional(),
+  description: zod.string().optional(),
+  required: zod.boolean().optional(),
+  type: zod.string(),
+  validations: zod.array(zod.any()).optional(),
+})
+
 export const SettingsSchema = zod.object({
-  fields: zod
-    .array(
-      zod.object({
-        key: zod.string().optional(),
-        name: zod.string().optional(),
-        description: zod.string().optional(),
-        required: zod.boolean().optional(),
-        type: zod.string(),
-      }),
-    )
-    .optional(),
+  fields: zod.array(FieldSchema).optional(),
 })
 
 export const HandleSchema = zod
@@ -73,10 +72,10 @@ export const BaseSchemaWithHandle = BaseSchema.extend({
 })
 
 export const UnifiedSchema = zod.object({
-  name: zod.string(),
   api_version: ApiVersionSchema.optional(),
   description: zod.string().optional(),
   extensions: zod.array(zod.any()),
+  settings: SettingsSchema.optional(),
 })
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>

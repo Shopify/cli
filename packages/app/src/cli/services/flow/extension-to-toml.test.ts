@@ -20,12 +20,9 @@ describe('extension-to-toml', () => {
     const got = buildTomlObject(extension1)
 
     // Then
-    expect(got).toEqual(`name = "action title"
+    expect(got).toEqual(`[[extensions]]
 type = "flow_action"
-description = "action description"
-
-[[extensions]]
-type = "flow_action"
+name = "action title"
 handle = "flow-action-char"
 description = "action description"
 runtime_url = "https://google.es"
@@ -35,12 +32,10 @@ validation_url = "https://validation.test.dev"
 
 [[settings.fields]]
 type = "customer_reference"
-description = ""
 required = true
 
 [[settings.fields]]
 type = "product_reference"
-description = ""
 required = true
 
 [[settings.fields]]
@@ -80,18 +75,14 @@ required = true
     const got = buildTomlObject(extension2)
 
     // Then
-    expect(got).toEqual(`name = "trigger title"
+    expect(got).toEqual(`[[extensions]]
 type = "flow_trigger"
-description = "trigger description"
-
-[[extensions]]
-type = "flow_trigger"
+name = "trigger title"
 handle = "trigger-ext"
 description = "trigger description"
 
 [[settings.fields]]
 type = "customer_reference"
-description = ""
 
 [[settings.fields]]
 key = "number property"
