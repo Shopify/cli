@@ -2,13 +2,12 @@ import {App, AppConfiguration, AppInterface, WebType} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
-import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
+import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 
 export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
@@ -485,7 +484,6 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
 
 export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   themeExtension,
-  checkoutUIExtension,
-  UIExtensionTemplate,
   productSubscriptionUIExtension,
+  webPixelUIExtension,
 ]
