@@ -27,7 +27,7 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -632,7 +632,7 @@ interface ReusedValuesOptions {
 /**
  * Message shown to the user in case we are reusing a previous configuration
  */
-async function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
+function showReusedDevValues({organization, selectedApp, selectedStore, cachedInfo}: ReusedValuesOptions) {
   if (!cachedInfo) return
 
   const usingDifferentSettings =
@@ -642,39 +642,65 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
   let updateURLs = 'Not yet configured'
   if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
 
-  const items = [
-    `Org:          ${organization.businessName}`,
-    `App:          ${selectedApp.title}`,
-    `Dev store:    ${selectedStore.shopDomain}`,
-    `Update URLs:  ${updateURLs}`,
-  ]
+  renderCurrentlyUsedConfigInfo({
+    org: organization.businessName,
+    appName: cachedInfo.title!,
+    devStore: selectedStore.shopDomain,
+    updateURLs,
+    configFile: cachedInfo.configFile,
+    resetMessage: resetHelpMessage,
+  })
+}
+
+interface CurrentlyUsedConfigInfoOptions {
+  org: string
+  appName: string
+  devStore?: string
+  updateURLs?: string
+  configFile?: string
+  resetMessage?: (
+    | string
+    | {
+        command: string
+      }
+  )[]
+}
+
+export function renderCurrentlyUsedConfigInfo({
+  org,
+  appName,
+  devStore,
+  updateURLs,
+  configFile,
+  resetMessage,
+}: CurrentlyUsedConfigInfoOptions): void {
+  const items = [`Org:          ${org}`, `App:          ${appName}`]
+
+  if (devStore) {
+    items.push(`Dev store:    ${devStore}`)
+  }
+  if (updateURLs) {
+    items.push(`Update URLs:  ${updateURLs}`)
+  }
+
+  let body: TokenItem = [{list: {items}}]
+
+  if (resetMessage) {
+    body = [...body, '\n', ...resetMessage]
+  }
 
   renderInfo({
-    headline: reusedValuesTableTitle(configFileName),
-    body: [
-      {
-        list: {
-          items,
-        },
-      },
-      '\n',
-      ...resetHelpMessage,
-    ],
+    headline: configFile ? `Using ${getAppConfigurationFileName(configFile)}:` : 'Using these settings:',
+    body,
   })
 }
 
 export function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
-  renderInfo({
-    headline: reusedValuesTableTitle(cachedAppInfo.configFile),
-    body: [
-      {
-        list: {
-          items: [`Org:          ${org}`, `App:          ${cachedAppInfo.title}`],
-        },
-      },
-      '\n',
-      ...resetHelpMessage,
-    ],
+  renderCurrentlyUsedConfigInfo({
+    org,
+    appName: cachedAppInfo.title!,
+    configFile: cachedAppInfo.configFile,
+    resetMessage: resetHelpMessage,
   })
 }
 
@@ -695,10 +721,6 @@ export function showReusedDeployValues(
       ...resetHelpMessage,
     ],
   })
-}
-
-function reusedValuesTableTitle(configFileName: string | undefined) {
-  return configFileName ? `Using ${getAppConfigurationFileName(configFileName)}:` : 'Using these settings:'
 }
 
 /**
