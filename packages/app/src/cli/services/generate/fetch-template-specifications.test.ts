@@ -11,7 +11,7 @@ describe('fetchTemplateSpecifications', () => {
   test('returns the remote and local specs', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: testRemoteExtensionTemplates})
-    const enabledSpecifications = ['subscription_ui_extension', 'theme', 'function']
+    const enabledSpecifications = ['subscription_ui', 'theme', 'function']
 
     // When
     const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', 'apiKey', enabledSpecifications)
@@ -34,7 +34,7 @@ describe('fetchTemplateSpecifications', () => {
     // Given
     const remoteTemplates = [...testRemoteExtensionTemplates, productSubscriptionUIExtension]
     vi.mocked(partnersRequest).mockResolvedValue({templateSpecifications: remoteTemplates})
-    const enabledSpecifications = ['subscription_ui_extension', 'theme', 'function']
+    const enabledSpecifications = ['subscription_ui', 'theme', 'function']
 
     // When
     const got: ExtensionTemplate[] = await fetchExtensionTemplates('token', 'apiKey', enabledSpecifications)
