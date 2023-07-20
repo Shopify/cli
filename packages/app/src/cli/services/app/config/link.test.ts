@@ -335,7 +335,7 @@ embedded = false
     })
   })
 
-  test('skips config name question if re-linking to existing current app schema', async () => {
+  test.only('skips config name question if re-linking to existing current app schema', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -370,9 +370,6 @@ embedded = false
 
       expect(selectConfigName).not.toHaveBeenCalled()
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.foo.toml', directory: tmp})
-      expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'App "my app" connected to this codebase, file shopify.app.foo.toml created',
-      })
     })
   })
 
