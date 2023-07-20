@@ -18,10 +18,10 @@ export function validateVersion(version: string | undefined) {
     )
   }
 
-  const validChars = /^[a-zA-Z0-9.\-/_]+$/
+  const validChars = /^[a-zA-Z0-9.\-_]+$/
   if (!version.match(validChars)) {
     throw new AbortError(errorMessage, [
-      "A version name must consist only of letters, numbers, and special characters '.-_/'",
+      'Version name can only contain alphanumeric characters, periods, hyphens, and underscores',
     ])
   }
 }
