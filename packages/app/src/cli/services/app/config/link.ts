@@ -1,27 +1,14 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  AppConfiguration,
-  AppInterface,
-  EmptyApp,
-  isCurrentAppSchema,
-  isLegacyAppSchema,
-} from '../../../models/app/app.js'
+import {startFlow} from './utils/transition.js'
+import {AppConfiguration, AppInterface, isCurrentAppSchema, isLegacyAppSchema} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {
-  InvalidApiKeyErrorMessage,
-  fetchOrCreateOrganizationApp,
-  fetchOrgsAppsAndStores,
-  selectOrg,
-} from '../../context.js'
+import {getAppConfigurationFileName} from '../../../models/app/loader.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {createAsNewAppPrompt, selectAppPrompt} from '../../../prompts/dev.js'
-import {createApp} from '../../dev/select-app.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -94,7 +81,7 @@ const machine: any = {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<any> {
-  await transition({state: machine.initial, options})
+  await startFlow(options)
 
   return {data: 'foo'}
 
@@ -129,22 +116,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   // }
 
   // return configuration
-}
-
-async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
-  try {
-    const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
-    const app = await loadApp({
-      specifications,
-      directory: options.directory,
-      mode: 'report',
-      configName: configurationFileNames.app,
-    })
-    return app
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return new EmptyApp()
-  }
 }
 
 async function loadRemoteApp(
