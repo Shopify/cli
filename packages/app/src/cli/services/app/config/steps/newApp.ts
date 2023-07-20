@@ -1,6 +1,8 @@
 import {createApp} from '../../../dev/select-app.js'
-import {transition} from '../utils/transition.js'
+import {createStep, transition} from '../utils/utils.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+
+export default createStep('newApp', newApp)
 
 // eslint-disable-next-line eslint-comments/disable-enable-pair
 /* eslint-disable @typescript-eslint/no-explicit-any */

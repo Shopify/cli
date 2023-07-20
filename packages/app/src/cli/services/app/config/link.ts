@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {startFlow} from './utils/transition.js'
+import {startFlow} from './utils/utils.js'
 import {AppConfiguration, AppInterface, isCurrentAppSchema, isLegacyAppSchema} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'

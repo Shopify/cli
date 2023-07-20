@@ -4,12 +4,14 @@ import {EmptyApp} from '../../../../models/app/app.js'
 import {loadApp} from '../../../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../../../models/extensions/load-specifications.js'
 import {LinkOptions} from '../link.js'
-import {transition} from '../utils/transition.js'
+import {createStep, transition} from '../utils/utils.js'
 import {fetchOrgsAppsAndStores, selectOrg} from '../../../context.js'
 import {createAsNewAppPrompt} from '../../../../prompts/dev.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
-export async function start(options: any) {
+export default createStep('start', startBehavior)
+
+async function startBehavior(options: any) {
   const localApp = await loadAppConfigFromDefaultToml(options)
   const token = await ensureAuthenticatedPartners()
   const orgId = await selectOrg(token)

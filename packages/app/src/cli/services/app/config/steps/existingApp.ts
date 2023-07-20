@@ -1,8 +1,10 @@
 /* eslint-disable eslint-comments/disable-enable-pair */
 import {selectAppPrompt} from '../../../../prompts/dev.js'
 import {fetchAppFromApiKey} from '../../../dev/fetch.js'
-import {transition} from '../utils/transition.js'
+import {createStep, transition} from '../utils/utils.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+
+export default createStep('existingApp', existingApp)
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function existingApp(options: any) {
