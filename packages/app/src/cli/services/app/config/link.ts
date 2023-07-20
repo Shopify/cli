@@ -120,7 +120,7 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
-    application_url: remoteApp.applicationUrl,
+    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
       api_version: remoteApp.webhookApiVersion || '2023-07',
@@ -166,6 +166,10 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
 
   if (localApp.configuration?.web_directories) {
     configuration.web_directories = localApp.configuration.web_directories
+  }
+
+  if (isCurrentAppSchema(localApp.configuration) && localApp.configuration?.build) {
+    configuration.build = localApp.configuration.build
   }
 
   return configuration

@@ -11,11 +11,11 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
-import {fileExists, glob, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {decodeToml, encodeToml} from '@shopify/cli-kit/node/toml'
+import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 
@@ -75,17 +75,15 @@ export function validate(value: string): string | undefined {
 export async function confirmPushChanges(options: PushOptions, app: App) {
   if (options.force) return true
 
-  const {configuration, configurationPath} = options
-  const localConfigurationToml = await readFile(configurationPath)
-  const localConfiguration = decodeToml(localConfigurationToml)
+  const {configuration} = options
   const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
 
-  if (deepCompare(localConfiguration, remoteConfiguration)) {
+  if (deepCompare(configuration, remoteConfiguration)) {
     renderInfo({headline: 'No changes to update.'})
     return false
   }
 
-  const differences = deepDifference(localConfiguration, remoteConfiguration)
+  const differences = deepDifference(configuration, remoteConfiguration)
   const baselineContent = encodeToml(differences[1])
   const updatedContent = encodeToml(differences[0])
 
