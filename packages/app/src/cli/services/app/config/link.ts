@@ -7,7 +7,6 @@ import {getAppConfigurationFileName} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
-import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -18,66 +17,6 @@ export interface LinkOptions {
   directory: string
   apiKey?: string
   configName?: string
-}
-
-async function transition({state, options}: {state: any; options: any}) {
-  await machine.states[state].render(options)
-}
-
-const machine: any = {
-  initial: 'start',
-  states: {
-    start: {
-      render: async (options: any) => {
-        const localApp = await loadAppConfigFromDefaultToml(options)
-        const token = await ensureAuthenticatedPartners()
-        const orgId = await selectOrg(token)
-        const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
-        const createNewApp = await createAsNewAppPrompt()
-
-        await writeAppConfigurationFile(configFilePath, configuration)
-        const nextOptions = {...options, organization, apps, localApp}
-
-        if (createNewApp) {
-          await transition({state: 'newApp', options: nextOptions})
-        } else {
-          await transition({state: 'existingApp', options: nextOptions})
-        }
-      },
-    },
-    newApp: {
-      render: async (options: any) => {
-        const token = await ensureAuthenticatedPartners()
-        const app = await createApp(options.organization, options.localApp.name, token, options)
-
-        const nextOptions = {...options, app}
-
-        await transition({state: 'success', options: nextOptions})
-      },
-    },
-    existingApp: {
-      render: async (options: any) => {
-        const token = await ensureAuthenticatedPartners()
-        const selectedAppApiKey = await selectAppPrompt(options.apps, options.organization.id, options.token, {
-          directory: options?.directory,
-        })
-
-        const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
-
-        const nextOptions = {...options, fullSelectedApp}
-
-        await transition({state: 'success', options: nextOptions})
-      },
-    },
-    chooseConfigName: {
-      render: async () => {},
-    },
-    success: {
-      render: async () => {
-        console.log('success!')
-      },
-    },
-  },
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<any> {
