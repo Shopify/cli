@@ -17,6 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
+import {renderDevPreviewWarning} from './extensions/common.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -31,6 +32,7 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {OrganizationApp} from '../models/organization.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -222,10 +224,6 @@ async function dev(options: DevOptions) {
     proxyTargets.push(devExt)
   }
 
-  // Remove this once theme app extensions and functions are displayed
-  // by the dev console
-  outputExtensionsMessages(localApp)
-
   if (draftableExtensions.length > 0) {
     const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
       app: localApp,
@@ -270,6 +268,8 @@ async function dev(options: DevOptions) {
     const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, unifiedDeployment)
     additionalProcesses.push(devExt)
   }
+
+  await outputExtensionsMessage(remoteApp, localApp)
 
   if (sendUninstallWebhook) {
     additionalProcesses.push({
@@ -615,6 +615,17 @@ async function validateCustomPorts(webConfigs: Web[]) {
       }
     }),
   )
+}
+
+async function outputExtensionsMessage(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
+  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
+  if (unifiedDeployment) {
+    await renderDevPreviewWarning(remoteApp, localApp)
+  } else {
+    // Remove this once theme app extensions and functions are displayed
+    // by the dev console
+    outputExtensionsMessages(localApp)
+  }
 }
 
 export default dev
