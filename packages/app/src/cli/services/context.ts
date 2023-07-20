@@ -126,7 +126,11 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppContext({...options, token})
+  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppContext({
+    ...options,
+    token,
+    promptLinkingApp: !options.apiKey,
+  })
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(token))
 
@@ -159,7 +163,9 @@ export async function ensureDevContext(options: DevContextOptions, token: string
     }
   }
 
-  if (isCurrentAppSchema(configuration)) {
+  // We only update the cache or config if the current app is the right one
+  const rightApp = selectedApp.apiKey === cachedInfo?.appId
+  if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const newConfiguration: AppConfiguration = {
       ...configuration,
@@ -169,7 +175,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
       },
     }
     await writeAppConfigurationFile(configurationPath, newConfiguration)
-  } else {
+  } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
       title: selectedApp.title,
@@ -631,20 +637,20 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
 
   const usingDifferentSettings =
     selectedApp.apiKey !== cachedInfo?.appId || selectedStore.shopDomain !== cachedInfo.storeFqdn
-  if (!cachedInfo?.configFile && usingDifferentSettings) return
+  const configFileName = usingDifferentSettings ? undefined : cachedInfo.configFile
 
   let updateURLs = 'Not yet configured'
   if (cachedInfo.updateURLs !== undefined) updateURLs = cachedInfo.updateURLs ? 'Yes' : 'No'
 
   const items = [
     `Org:          ${organization.businessName}`,
-    `App:          ${cachedInfo.title}`,
-    `Dev store:    ${cachedInfo.storeFqdn}`,
+    `App:          ${selectedApp.title}`,
+    `Dev store:    ${selectedStore.shopDomain}`,
     `Update URLs:  ${updateURLs}`,
   ]
 
   renderInfo({
-    headline: reusedValuesTableTitle(cachedInfo),
+    headline: reusedValuesTableTitle(configFileName),
     body: [
       {
         list: {
@@ -659,7 +665,7 @@ async function showReusedDevValues({organization, selectedApp, selectedStore, ca
 
 export function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
   renderInfo({
-    headline: reusedValuesTableTitle(cachedAppInfo),
+    headline: reusedValuesTableTitle(cachedAppInfo.configFile),
     body: [
       {
         list: {
@@ -691,10 +697,8 @@ export function showReusedDeployValues(
   })
 }
 
-function reusedValuesTableTitle(cachedInfo: CachedAppInfo) {
-  return cachedInfo.configFile
-    ? `Using ${getAppConfigurationFileName(cachedInfo.configFile)}:`
-    : 'Using these settings:'
+function reusedValuesTableTitle(configFileName: string | undefined) {
+  return configFileName ? `Using ${getAppConfigurationFileName(configFileName)}:` : 'Using these settings:'
 }
 
 /**

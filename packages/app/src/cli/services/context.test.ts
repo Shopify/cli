@@ -585,7 +585,7 @@ dev_store_url = "domain1"
           list: {
             items: [
               'Org:          org1',
-              'App:          undefined',
+              'App:          app1',
               'Dev store:    domain1',
               'Update URLs:  Not yet configured',
             ],
