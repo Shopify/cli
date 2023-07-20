@@ -3,6 +3,7 @@ import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppS
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
+import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -14,8 +15,6 @@ import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -170,7 +169,7 @@ export async function updateURLs(
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
-    writeFileSync(localApp.configurationPath, encodeToml(localConfiguration))
+    await writeAppConfigurationFile(localApp.configurationPath, localConfiguration)
   }
 }
 
@@ -206,7 +205,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
-      writeFileSync(options.localApp.configurationPath, encodeToml(localConfiguration))
+      await writeAppConfigurationFile(options.localApp.configurationPath, localConfiguration)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

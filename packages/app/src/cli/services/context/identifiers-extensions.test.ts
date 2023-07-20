@@ -527,6 +527,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
       {
+        appTitle: 'app1',
         question: `Release a new version of ${PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.title}?`,
         identifiers: {
           EXTENSION_A: 'UUID_A',
@@ -565,6 +566,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     // Then
     expect(deployConfirmationPrompt).toBeCalledWith(
       {
+        appTitle: 'app1',
         question: 'Make the following changes to your extensions in Shopify Partners?',
         identifiers: {
           EXTENSION_A: 'UUID_A',

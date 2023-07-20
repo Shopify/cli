@@ -28,7 +28,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename, relativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {slugify} from '@shopify/cli-kit/common/string'
@@ -312,7 +312,13 @@ class AppLoader {
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
     const specification = findSpecificationForType(this.specifications, type)
-    if (!specification) return
+    if (!specification) {
+      return this.abortOrReport(
+        outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
+        undefined,
+        configurationPath,
+      )
+    }
 
     const configuration = await parseConfigurationObject(
       specification.schema,

@@ -47,15 +47,18 @@ export type SensitiveSchema<T> = T extends RuntimeMetadataManager<infer _TPublic
  * Creates a container for metadata collected at runtime.
  * The container provides async-safe functions for extracting the gathered metadata, and for setting it.
  *
+ * @param defaultPublicMetadata - Optional, default data for the container.
  * @returns A container for the metadata.
  */
 export function createRuntimeMetadataContainer<
   TPublic extends AnyJson,
   TSensitive extends AnyJson = {[key: string]: never},
->(): RuntimeMetadataManager<TPublic, TSensitive> {
+>(defaultPublicMetadata: Partial<TPublic> = {}): RuntimeMetadataManager<TPublic, TSensitive> {
   const raw: {sensitive: Partial<TSensitive>; public: Partial<TPublic>} = {
     sensitive: {},
-    public: {},
+    public: {
+      ...defaultPublicMetadata,
+    },
   }
   const addPublic = (data: Partial<TPublic>) => {
     Object.assign(raw.public, data)

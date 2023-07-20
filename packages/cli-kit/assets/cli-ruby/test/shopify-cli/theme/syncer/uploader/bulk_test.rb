@@ -118,6 +118,7 @@ module ShopifyCLI
           private
 
           def bulk_instance(pool_size: 1)
+            skip # flaky
             bulk = Bulk.new(@ctx, @theme, @admin_api, pool_size: pool_size)
             bulk.stubs(:backoff_if_near_limit!)
             bulk

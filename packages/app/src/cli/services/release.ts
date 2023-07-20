@@ -6,6 +6,7 @@ import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
@@ -22,6 +23,9 @@ interface ReleaseOptions {
 
   /** App version tag */
   version: string
+
+  /** Config from the Oclif command */
+  commandConfig: Config
 }
 
 export async function release(options: ReleaseOptions) {

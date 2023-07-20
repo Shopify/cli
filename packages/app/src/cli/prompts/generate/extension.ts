@@ -90,7 +90,7 @@ async function promptName(directory: string, defaultName: string, number = 1): P
     return promptName(directory, defaultName, number + 1)
   }
   return renderTextPrompt({
-    message: 'Extension name (internal only)',
+    message: 'Name your extension:',
     defaultValue: name,
   })
 }

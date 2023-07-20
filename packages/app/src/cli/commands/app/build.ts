@@ -35,7 +35,9 @@ export default class Build extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({

@@ -22,6 +22,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {Config} from '@oclif/core'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -48,6 +49,9 @@ interface DeployOptions {
 
   /** The git reference url of the deployment */
   commitReference?: string
+
+  /** The config from the Oclif command */
+  commandConfig: Config
 }
 
 interface TasksContext {

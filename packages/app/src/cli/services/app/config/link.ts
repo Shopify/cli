@@ -13,11 +13,10 @@ import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.j
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
+import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -28,26 +27,38 @@ export interface LinkOptions {
   configName?: string
 }
 
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<void> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
-  const fileAlreadyExists = await fileExists(configFilePath)
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
-  writeFileSync(configFilePath, encodeToml(configuration))
+  await writeAppConfigurationFile(configFilePath, configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
   if (shouldRenderSuccess) {
     renderSuccess({
-      headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${
-        fileAlreadyExists ? 'updated' : 'created'
-      }`,
+      headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+      body: `Using ${configFileName} as your default config.`,
+      nextSteps: [
+        [`Make updates to ${configFileName} in your local project`],
+        ['To upload your config, run', {command: 'shopify app config push'}],
+      ],
+      reference: [
+        {
+          link: {
+            label: 'App configuration',
+            url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+          },
+        },
+      ],
     })
   }
+
+  return configuration
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
@@ -124,9 +135,9 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
 
   if (hasAnyPrivacyWebhook) {
     configuration.webhooks.privacy_compliance = {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl || '',
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl || '',
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl || '',
+      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
+      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
+      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
     }
   }
 
