@@ -658,6 +658,7 @@ interface CurrentlyUsedConfigInfoOptions {
   devStore?: string
   updateURLs?: string
   configFile?: string
+  appDotEnv?: string
   resetMessage?: (
     | string
     | {
@@ -672,25 +673,21 @@ export function renderCurrentlyUsedConfigInfo({
   devStore,
   updateURLs,
   configFile,
+  appDotEnv,
   resetMessage,
 }: CurrentlyUsedConfigInfoOptions): void {
   const items = [`Org:          ${org}`, `App:          ${appName}`]
 
-  if (devStore) {
-    items.push(`Dev store:    ${devStore}`)
-  }
-  if (updateURLs) {
-    items.push(`Update URLs:  ${updateURLs}`)
-  }
+  if (devStore) items.push(`Dev store:    ${devStore}`)
+  if (updateURLs) items.push(`Update URLs:  ${updateURLs}`)
 
   let body: TokenItem = [{list: {items}}]
+  if (resetMessage) body = [...body, '\n', ...resetMessage]
 
-  if (resetMessage) {
-    body = [...body, '\n', ...resetMessage]
-  }
+  const fileName = (appDotEnv && basename(appDotEnv)) || (configFile && getAppConfigurationFileName(configFile))
 
   renderInfo({
-    headline: configFile ? `Using ${getAppConfigurationFileName(configFile)}:` : 'Using these settings:',
+    headline: configFile ? `Using ${fileName}:` : 'Using these settings:',
     body,
   })
 }
@@ -709,17 +706,12 @@ export function showReusedDeployValues(
   app: AppInterface,
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
 ) {
-  renderInfo({
-    headline: app.dotenv?.path ? `Using ${basename(app.dotenv.path)}:` : 'Using these settings:',
-    body: [
-      {
-        list: {
-          items: [`Org:          ${org}`, `App:          ${remoteApp.title}`],
-        },
-      },
-      '\n',
-      ...resetHelpMessage,
-    ],
+  renderCurrentlyUsedConfigInfo({
+    org,
+    appName: remoteApp.title,
+    appDotEnv: app.dotenv?.path,
+    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configurationPath) : undefined,
+    resetMessage: resetHelpMessage,
   })
 }
 
