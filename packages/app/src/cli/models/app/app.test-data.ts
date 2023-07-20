@@ -8,6 +8,7 @@ import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
+import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 
 export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
@@ -486,4 +487,5 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   themeExtension,
   checkoutUIExtension,
   UIExtensionTemplate,
+  productSubscriptionUIExtension,
 ]

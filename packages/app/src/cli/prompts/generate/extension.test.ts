@@ -87,14 +87,14 @@ describe('extension prompt', async () => {
     const answers = {extensionFlavor: 'react'}
     const options = {
       name: 'my-special-extension',
-      templateType: 'post_purchase_ui',
+      templateType: 'subscription_ui',
       directory: '/',
       app: testApp(),
       reset: false,
       extensionTemplates: allUITemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('post_purchase_ui', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('subscription_ui', allUITemplates)
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
