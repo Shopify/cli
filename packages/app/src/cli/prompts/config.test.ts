@@ -1,12 +1,16 @@
 import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from './config.js'
 import {PushOptions} from '../services/app/config/push.js'
-import {testOrganizationApp, testAppWithConfig} from '../models/app/app.test-data.js'
+import {testOrganizationApp, testAppWithConfig, testApp} from '../models/app/app.test-data.js'
 import {App} from '../api/graphql/get_config.js'
+import {mergeAppConfiguration} from '../services/app/config/link.js'
+import {OrganizationApp} from '../models/organization.js'
+import {AppConfiguration} from '../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -189,33 +193,16 @@ describe('confirmPushChanges', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      const configuration = mergeAppConfiguration(testApp(), app as OrganizationApp)
+      configuration.name = 'app2'
+
       const options: PushOptions = {
-        configuration: testAppWithConfig().configuration,
+        configuration,
         configurationPath,
         force: false,
       }
-      const app = testOrganizationApp() as App
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      const baselineContent = `client_id = "api-key"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[webhooks]
-api_version = "2023-07"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[pos]
-embedded = false
-
-[access_scopes]
-scopes = "read_products"
-use_legacy_install_flow = true
-`
-      const updatedContent = baselineContent.replace('app1', 'app2')
-      writeFileSync(configurationPath, updatedContent)
 
       // When
       const result = await confirmPushChanges(options, app)
@@ -241,33 +228,14 @@ use_legacy_install_flow = true
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const configuration = mergeAppConfiguration(testApp(), app as OrganizationApp)
       const options: PushOptions = {
-        configuration: testAppWithConfig().configuration,
+        configuration,
         configurationPath,
         force: false,
       }
-      const app = testOrganizationApp() as App
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      const baselineContent = `client_id = "api-key"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[webhooks]
-api_version = "2023-07"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[pos]
-embedded = false
-
-[access_scopes]
-scopes = "read_products"
-use_legacy_install_flow = true
-`
-      const updatedContent = baselineContent
-      writeFileSync(configurationPath, updatedContent)
 
       // When
       const result = await confirmPushChanges(options, app)
@@ -282,11 +250,6 @@ use_legacy_install_flow = true
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-      const options: PushOptions = {
-        configuration: testAppWithConfig().configuration,
-        configurationPath,
-        force: false,
-      }
       const app = testOrganizationApp() as App
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       const updatedContent = `client_id = "api-key"
@@ -304,11 +267,15 @@ use_legacy_install_flow = true
       embedded = false
 
       [access_scopes]
-      scopes = "read_products"
       use_legacy_install_flow = true
+      scopes = "read_products"
       `
-      writeFileSync(configurationPath, updatedContent)
-
+      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const options: PushOptions = {
+        configuration,
+        configurationPath,
+        force: false,
+      }
       // When
       const result = await confirmPushChanges(options, app)
 
@@ -322,11 +289,6 @@ use_legacy_install_flow = true
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-      const options: PushOptions = {
-        configuration: testAppWithConfig().configuration,
-        configurationPath,
-        force: false,
-      }
       const app = testOrganizationApp() as App
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       const updatedContent = `client_id = "api-key"
@@ -349,7 +311,12 @@ use_legacy_install_flow = true
       scopes = "read_products"
       use_legacy_install_flow = true
       `
-      writeFileSync(configurationPath, updatedContent)
+      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const options: PushOptions = {
+        configuration,
+        configurationPath,
+        force: false,
+      }
 
       // When
       const result = await confirmPushChanges(options, app)
