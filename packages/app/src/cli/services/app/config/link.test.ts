@@ -335,7 +335,7 @@ embedded = false
     })
   })
 
-  test.only('skips config name question if re-linking to existing current app schema', async () => {
+  test('skips config name question if re-linking to existing current app schema', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
