@@ -10,20 +10,19 @@ interface InitOptions {
 interface InitOutput {
   name: string
   template: string
-  // e.g. 'node', 'ruby', 'php'
+  // e.g. 'Remix'
   templateType: keyof typeof templateURLMap | 'custom'
 }
 
 // Eventually this list should be taken from a remote location
 // That way we don't have to update the CLI every time we add a template
 export const templateURLMap = {
-  node: 'https://github.com/Shopify/shopify-app-template-node',
-  php: 'https://github.com/Shopify/shopify-app-template-php',
-  ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
+  remix: 'https://github.com/Shopify/shopify-app-template-remix',
   none: 'https://github.com/Shopify/shopify-app-template-none',
 } as const
 
 const templateLabels: {[key: string]: string} = {
+  remix: 'Remix',
   none: 'none (build an app with extensions only)',
 }
 
@@ -33,7 +32,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
-    template: templateURLMap.node,
+    template: templateURLMap.remix,
   } as const
 
   let welcomed = false
