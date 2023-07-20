@@ -23,6 +23,7 @@ module.exports = {
           functionName === 'renderSelectPrompt' ||
           functionName === 'renderAutocompletePrompt' ||
           functionName === 'renderConfirmationPrompt' ||
+          functionName === 'renderDangerousConfirmationPrompt' ||
           functionName === 'renderTextPrompt'
         ) {
           const firstArgument = node.arguments[0]
