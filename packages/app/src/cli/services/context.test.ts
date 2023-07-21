@@ -368,6 +368,77 @@ describe('ensureDevContext', async () => {
     })
   })
 
+  test('returns context from client-id flag rather than config in cache', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+
+[webhooks]
+api_version = "2023-04"
+
+[build]
+dev_store_url = "domain1"
+`
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      writeFileSync(filePath, expectedContent)
+      vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+      vi.mocked(loadAppConfiguration).mockReset()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
+        configuration: testAppWithConfig({
+          config: {
+            name: APP1.apiKey,
+            client_id: APP1.apiKey,
+            build: {
+              automatically_update_urls_on_dev: true,
+              dev_store_url: STORE1.shopDomain,
+            },
+          },
+        }).configuration,
+      })
+      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1).mockResolvedValue(APP2)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      const got = await ensureDevContext(
+        {
+          directory: 'app_directory',
+          reset: false,
+          commandConfig: COMMAND_CONFIG,
+          apiKey: APP2.apiKey,
+        },
+        'token',
+      )
+
+      // Then
+      expect(got).toEqual({
+        remoteApp: {...APP2, apiSecret: 'secret2'},
+        storeFqdn: STORE1.shopDomain,
+        remoteAppUpdated: true,
+        updateURLs: true,
+        configName: CACHED1_WITH_CONFIG.configFile,
+      })
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
+
+      expect(metadata.getAllPublicMetadata()).toMatchObject({
+        api_key: APP2.apiKey,
+        partner_id: 1,
+      })
+
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
   test('loads the correct file when config flag is passed in', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -585,7 +656,7 @@ dev_store_url = "domain1"
           list: {
             items: [
               'Org:          org1',
-              'App:          undefined',
+              'App:          app1',
               'Dev store:    domain1',
               'Update URLs:  Not yet configured',
             ],

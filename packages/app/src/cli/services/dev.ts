@@ -148,6 +148,7 @@ async function dev(options: DevOptions) {
         cachedUpdateURLs,
         newApp: remoteApp.newApp,
         localApp,
+        apiKey,
       })
       if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
