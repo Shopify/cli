@@ -20,7 +20,6 @@ const WebPixelSchema = BaseSchema.extend({
 
 const spec = createExtensionSpecification({
   identifier: 'web_pixel_extension',
-  surface: 'unknown',
   dependency,
   partnersWebIdentifier: 'web_pixel',
   supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),

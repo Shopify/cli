@@ -63,7 +63,6 @@ const spec = createExtensionSpecification({
     'shipping_discounts',
     'fulfillment_constraints',
   ],
-  surface: 'admin',
   singleEntryPath: false,
   schema: FunctionExtensionSchema,
   supportedFlavors: defaultFunctionsFlavors,

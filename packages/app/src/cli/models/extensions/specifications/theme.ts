@@ -10,7 +10,6 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const spec = createExtensionSpecification({
   identifier: 'theme',
-  surface: 'admin',
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',

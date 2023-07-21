@@ -11,6 +11,9 @@ describe('getRedirectURL()', () => {
       devUUID: '123abc',
     })
 
+    // Overwrite the surface to be admin (we don't have real values in tests)
+    extension.specification.surface = 'admin'
+
     const options = {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
@@ -28,6 +31,9 @@ describe('getRedirectURL()', () => {
       configuration: {type: 'checkout_ui_extension', name: 'test', metafields: []},
     })
 
+    // Overwrite the surface to be checkout (we don't have real values in tests)
+    extension.specification.surface = 'checkout'
+
     const options = {
       storeFqdn: 'example.myshopify.com',
       url: 'https://localhost:8081',
@@ -43,6 +49,9 @@ describe('getRedirectURL()', () => {
     const extension = await testUIExtension({
       configuration: {type: 'customer_accounts_ui_extension', name: 'test', metafields: []},
     })
+
+    // Overwrite the surface to be customer_accounts (we don't have real values in tests)
+    extension.specification.surface = 'customer_accounts'
 
     const options = {
       storeFqdn: 'example.myshopify.com',
