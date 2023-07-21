@@ -222,7 +222,7 @@ export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewar
     if (!extension.hasExtensionPointTarget(requestedTarget)) {
       return sendError(response, {
         statusCode: 404,
-        statusMessage: `Extension with id ${extensionID} has not configured the "${requestedTarget}" extension point`,
+        statusMessage: `Extension with id ${extensionID} has not configured the "${requestedTarget}" extension target`,
       })
     }
 
@@ -230,7 +230,7 @@ export function getExtensionPointMiddleware({devOptions}: GetExtensionsMiddlewar
     if (!url) {
       return sendError(response, {
         statusCode: 404,
-        statusMessage: `Redirect url can't be constructed for extension with id ${extensionID} and extension point "${requestedTarget}"`,
+        statusMessage: `Redirect url can't be constructed for extension with id ${extensionID} and extension target "${requestedTarget}"`,
       })
     }
 
