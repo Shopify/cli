@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputUpdateURLsResult, renderDev} from './dev/output.js'
+import {outputUpdateURLsResult, renderDev} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -621,10 +621,6 @@ async function outputExtensionsMessage(remoteApp: Partial<OrganizationApp>, loca
   const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
   if (unifiedDeployment) {
     await renderDevPreviewWarning(remoteApp, localApp)
-  } else {
-    // Remove this once theme app extensions and functions are displayed
-    // by the dev console
-    outputExtensionsMessages(localApp)
   }
 }
 
