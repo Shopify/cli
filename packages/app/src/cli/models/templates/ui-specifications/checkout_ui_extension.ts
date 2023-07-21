@@ -9,6 +9,7 @@ const checkoutUIExtension: ExtensionTemplate = {
   name: 'Checkout UI',
   defaultName: 'checkout-ui',
   group: 'Discounts and checkout',
+  sortPriority: 1,
   supportLinks: [],
   types: [
     {

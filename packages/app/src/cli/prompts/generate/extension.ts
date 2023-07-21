@@ -29,17 +29,38 @@ export interface GenerateExtensionContentOutput {
 }
 
 export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
+  type ArrElement<TArrType> = TArrType extends ReadonlyArray<infer ElementType> ? ElementType : never
+
   const templateSpecChoices = [
     ...extensionTemplates.map((spec) => {
-      return {label: spec.name, value: spec.identifier, group: spec.group || 'Other'}
+      return {
+        label: spec.name,
+        value: spec.identifier,
+        group: spec.group || 'Other',
+        sortPriority: spec.sortPriority ?? Number.MAX_SAFE_INTEGER,
+      }
     }),
     ...unavailableExtensions.map((spec) => {
       const label = `${spec.name} (limit reached)`
-      return {label, value: spec.identifier, group: spec.group || 'Other', disabled: true}
+      return {
+        label,
+        value: spec.identifier,
+        group: spec.group || 'Other',
+        disabled: true,
+        sortPriority: spec.sortPriority ?? Number.MAX_SAFE_INTEGER,
+      }
     }),
   ]
 
-  return templateSpecChoices.sort((c1, c2) => c1.label.localeCompare(c2.label))
+  const compareChoices = (c1: ArrElement<typeof templateSpecChoices>, c2: ArrElement<typeof templateSpecChoices>) => {
+    if (c1.sortPriority === c2.sortPriority) {
+      return c1.label.localeCompare(c2.label)
+    } else {
+      return c1.sortPriority - c2.sortPriority
+    }
+  }
+
+  return templateSpecChoices.sort(compareChoices)
 }
 
 const generateExtensionPrompts = async (
