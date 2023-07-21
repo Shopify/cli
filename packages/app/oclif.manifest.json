@@ -1104,11 +1104,11 @@
           "hidden": false,
           "multiple": false
         },
-        "type": {
-          "name": "type",
+        "template": {
+          "name": "template",
           "type": "option",
           "char": "t",
-          "description": "Extension type",
+          "description": "Extension template",
           "hidden": false,
           "multiple": false
         },
@@ -1128,8 +1128,8 @@
           "hidden": true,
           "multiple": false
         },
-        "template": {
-          "name": "template",
+        "flavor": {
+          "name": "flavor",
           "type": "option",
           "description": "Choose a starting template for your extension, where applicable",
           "hidden": false,
@@ -1279,11 +1279,11 @@
           "hidden": false,
           "multiple": false
         },
-        "type": {
-          "name": "type",
+        "template": {
+          "name": "template",
           "type": "option",
           "char": "t",
-          "description": "Extension type",
+          "description": "Extension template",
           "hidden": false,
           "multiple": false
         },
@@ -1303,8 +1303,8 @@
           "hidden": true,
           "multiple": false
         },
-        "template": {
-          "name": "template",
+        "flavor": {
+          "name": "flavor",
           "type": "option",
           "description": "Choose a starting template for your extension, where applicable",
           "hidden": false,
