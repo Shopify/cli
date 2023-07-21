@@ -6,6 +6,7 @@ export const GetConfig = gql`
       id
       title
       apiKey
+      organizationId
       appType
       grantedScopes
       applicationUrl
@@ -33,6 +34,7 @@ export interface App {
   id: string
   title: string
   apiKey: string
+  organizationId: string
   appType: string
   grantedScopes: string[]
   applicationUrl: string
