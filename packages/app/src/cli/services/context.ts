@@ -32,8 +32,9 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
+import {glob} from '@shopify/cli-kit/node/fs'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -577,7 +578,10 @@ export async function getAppContext({
 
   const firstTimeSetup = previousCachedInfo === undefined
   const usingConfigAndResetting = previousCachedInfo?.configFile && reset
-  if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting)) {
+  const usingConfigWithNoTomls =
+    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+
+  if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
     await link({directory, commandConfig}, false)
   }
 
