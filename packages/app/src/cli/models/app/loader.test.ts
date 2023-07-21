@@ -22,7 +22,7 @@ import {
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
 // eslint-disable-next-line no-restricted-imports
@@ -1687,30 +1687,27 @@ automatically_update_urls_on_dev = true
 
   const runningOnWindows = platformAndArch().platform === 'windows'
 
-  test.skipIf(runningOnWindows)(
-    'prompts to select new config if current config file is set but does not exist',
-    async () => {
-      // Given
-      await writeConfig(linkedAppConfiguration)
-      vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
-      vi.mocked(use).mockResolvedValue('shopify.app.toml')
+  test('prompts to select new config if current config file is set but does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
-      // When
-      await loadApp({directory: tmpDir, specifications})
+    // When
+    await loadApp({directory: tmpDir, specifications})
 
-      // Then
-      expect(use).toHaveBeenCalledWith({
-        directory: resolve(tmpDir),
-        shouldRenderSuccess: false,
-        warningContent: {
-          headline: "Couldn't find shopify.app.non-existent.toml",
-          body: [
-            "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
-          ],
-        },
-      })
-    },
-  )
+    // Then
+    expect(use).toHaveBeenCalledWith({
+      directory: normalizePath(resolve(tmpDir)),
+      shouldRenderSuccess: false,
+      warningContent: {
+        headline: "Couldn't find shopify.app.non-existent.toml",
+        body: [
+          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+        ],
+      },
+    })
+  })
 
   test.skipIf(runningOnWindows)(`updates metadata after loading a config as code application`, async () => {
     const {webDirectory} = await writeConfig(linkedAppConfiguration, {
