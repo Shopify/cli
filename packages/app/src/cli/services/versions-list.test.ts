@@ -64,6 +64,23 @@ describe('versions-list', () => {
     expect(vi.mocked(fetchOrCreateOrganizationApp)).not.toHaveBeenCalled()
   })
 
+  test('use client_id from linked toml if no env ids or flags', async () => {
+    // Given
+    const app = await testApp({}, 'current')
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(partnersRequest).mockResolvedValueOnce(emptyResult)
+
+    // When
+    await versionList({app})
+
+    // Then
+    expect(vi.mocked(partnersRequest)).toHaveBeenCalledWith(expect.anything(), 'token', {
+      apiKey: app.configuration.client_id,
+    })
+    expect(vi.mocked(fetchOrCreateOrganizationApp)).not.toHaveBeenCalled()
+  })
+
   test('select app if no apiKey is provided and there isnt one cached', async () => {
     // Given
     const app = await testApp({})

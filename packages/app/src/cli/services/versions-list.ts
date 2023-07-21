@@ -1,6 +1,6 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
 import {AppVersionsQuery, AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -82,6 +82,7 @@ async function getAppApiKey(token: string, options: VersionListOptions): Promise
   if (options.apiKey) return options.apiKey
   const envIdentifiers = getAppIdentifiers({app: options.app})
   if (envIdentifiers.app) return envIdentifiers.app
+  if (isCurrentAppSchema(options.app.configuration)) return options.app.configuration.client_id
   const partnersApp = await fetchOrCreateOrganizationApp(options.app, token)
   return partnersApp.apiKey
 }
