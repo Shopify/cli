@@ -5,21 +5,21 @@ import {isCurrentAppSchema} from '../../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 
 export interface UseOptions {
   directory: string
   configName?: string
   reset?: boolean
-  warningMessage?: string
+  warningContent?: RenderAlertOptions
   shouldRenderSuccess?: boolean
 }
 
 export default async function use({
   directory,
   configName,
-  warningMessage,
+  warningContent,
   shouldRenderSuccess = true,
   reset = false,
 }: UseOptions): Promise<string | undefined> {
@@ -32,8 +32,8 @@ export default async function use({
     return
   }
 
-  if (warningMessage) {
-    renderWarning({headline: warningMessage})
+  if (warningContent) {
+    renderWarning(warningContent)
   }
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()

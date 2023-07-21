@@ -215,7 +215,7 @@ describe('use', () => {
       createConfigFile(directory, 'shopify.app.something.toml')
 
       // When
-      await use({directory, configName: 'something', warningMessage: "we're doomed. DOOMED."})
+      await use({directory, configName: 'something', warningContent: {headline: "we're doomed. DOOMED."}})
 
       // Then
       expect(renderWarning).toHaveBeenCalledWith({headline: "we're doomed. DOOMED."})

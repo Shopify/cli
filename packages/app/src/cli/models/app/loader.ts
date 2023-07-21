@@ -503,8 +503,13 @@ class AppConfigurationLoader {
     const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
 
     if (!this.configName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
-      const warningMessage = `Could not find config file ${cachedCurrentConfig}, please select a new config`
-      this.configName = await use({directory: appDirectory, warningMessage, shouldRenderSuccess: false})
+      const warningContent = {
+        headline: `Couldn't find ${cachedCurrentConfig}`,
+        body: [
+          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+        ],
+      }
+      this.configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
     }
 
     this.configName = this.configName ?? cachedCurrentConfig

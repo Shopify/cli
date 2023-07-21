@@ -1702,7 +1702,12 @@ automatically_update_urls_on_dev = true
       expect(use).toHaveBeenCalledWith({
         directory: resolve(tmpDir),
         shouldRenderSuccess: false,
-        warningMessage: 'Could not find config file shopify.app.non-existent.toml, please select a new config',
+        warningContent: {
+          headline: "Couldn't find shopify.app.non-existent.toml",
+          body: [
+            "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+          ],
+        },
       })
     },
   )
