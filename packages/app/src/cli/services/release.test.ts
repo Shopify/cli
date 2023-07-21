@@ -82,15 +82,6 @@ describe('release', () => {
         '\nmessage',
       ],
       headline: 'Version released to users.',
-      nextSteps: [
-        [
-          'Run',
-          {
-            command: 'yarn shopify app versions list',
-          },
-          'to see rollout progress.',
-        ],
-      ],
     })
   })
 

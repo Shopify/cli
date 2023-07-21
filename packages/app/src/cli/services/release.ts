@@ -5,7 +5,6 @@ import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/
 import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
 
 interface ReleaseOptions {
@@ -73,13 +72,6 @@ export async function release(options: ReleaseOptions) {
     renderSuccess({
       headline: 'Version released to users.',
       body: linkAndMessage,
-      nextSteps: [
-        [
-          'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
-          'to see rollout progress.',
-        ],
-      ],
     })
   }
 }
