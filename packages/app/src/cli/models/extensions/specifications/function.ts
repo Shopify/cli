@@ -119,7 +119,7 @@ const spec = createExtensionSpecification({
     const wasmExists = await fileExists(extension.outputPath)
     if (!wasmExists) {
       throw new AbortError(
-        outputContent`The function extension "${extension.name}" hasn't compiled the wasm in the expected path: ${extension.outputPath}`,
+        outputContent`The function extension "${extension.handle}" hasn't compiled the wasm in the expected path: ${extension.outputPath}`,
         `Make sure the build command outputs the wasm in the expected directory.`,
       )
     }
