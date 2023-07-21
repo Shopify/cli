@@ -24,12 +24,11 @@ export async function getCartPathFromExtensions(
  */
 export function getExtensionPointTargetSurface(extensionPointTarget: string) {
   const domain = extensionPointTarget.toLowerCase().replace(/(::|\.).+$/, '')
+  const page = extensionPointTarget.split('.')[1]
 
   switch (domain) {
     // Covers Checkout UI extensions and Post purchase UI extensions (future)
     case 'purchase': {
-      const page = extensionPointTarget.split('.')[1]
-
       if (page === 'post') {
         return 'post_purchase'
       }
@@ -40,6 +39,11 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
 
     // Covers Customer Accounts UI extensions (future)
     case 'customer-account': {
+      // These targets are rendered by Checkout
+      if (page === 'order-details') {
+        return 'checkout'
+      }
+
       return 'customer-accounts'
     }
 
