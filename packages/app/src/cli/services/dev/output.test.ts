@@ -1,4 +1,4 @@
-import {outputExtensionsMessages, outputUpdateURLsResult} from './output.js'
+import {outputUpdateURLsResult} from './output.js'
 import {
   testApp,
   testFunctionExtension,
@@ -93,6 +93,7 @@ describe('output', () => {
       expect(outputMock.output()).not.toMatch(`https://partners.shopify.com/`)
     })
   })
+})
 
 async function mockApp(newConfig = false): Promise<AppInterface> {
   const nodeDependencies: {[key: string]: string} = {}
