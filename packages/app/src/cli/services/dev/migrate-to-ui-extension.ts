@@ -9,6 +9,7 @@ import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 export function getUIExtensionsToMigrate(
   localSources: LocalSource[],
@@ -22,7 +23,7 @@ export function getUIExtensionsToMigrate(
     if (localSource.type === 'ui_extension') {
       const remoteSource = remoteSources.find((source) => {
         const matchesId = source.uuid === ids[localSource.localIdentifier]
-        const matchesTitle = source.title === localSource.handle
+        const matchesTitle = slugify(source.title) === slugify(localSource.configuration.name)
 
         return matchesId || matchesTitle
       })

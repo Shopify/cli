@@ -21,7 +21,7 @@ export interface MatchResult {
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === local.handle
+  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.configuration.name)
 }
 
 /**
