@@ -20,7 +20,6 @@ const spec = createExtensionSpecification({
       renderer_version: result?.version,
     }
   },
-  previewMessage: () => undefined,
 })
 
 export default spec

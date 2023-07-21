@@ -50,7 +50,6 @@ const spec = createExtensionSpecification({
     }
     return Promise.resolve()
   },
-  previewMessage: () => undefined,
 })
 
 export default spec
