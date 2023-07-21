@@ -45,7 +45,7 @@ export async function pushConfig(options: PushOptions) {
   const {configuration, configurationPath} = options
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
-    const configFileName = basename(configurationPath)
+    const configFileName = isCurrentAppSchema(configuration) ? basename(configurationPath) : undefined
 
     const queryVariables = {apiKey: configuration.client_id}
     const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)

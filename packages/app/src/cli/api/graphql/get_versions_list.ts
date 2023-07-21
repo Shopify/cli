@@ -5,6 +5,7 @@ export const AppVersionsQuery = gql`
     app(apiKey: $apiKey) {
       id
       organizationId
+      title
       appVersions {
         nodes {
           createdAt
@@ -29,6 +30,7 @@ export interface AppVersionsQuerySchema {
   app: {
     id: string
     organizationId: string
+    title: string
     appVersions: {
       nodes: {
         createdAt: string
