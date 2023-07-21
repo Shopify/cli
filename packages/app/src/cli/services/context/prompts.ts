@@ -73,7 +73,7 @@ export async function deployConfirmationPrompt(
 
   if (!canSkipConfirmation) {
     const appExists = Boolean(appTitle)
-    const isDangerous = appExists && removesExtension
+    const isDangerous = appExists && removesExtension && deploymentMode === 'unified'
 
     if (isDangerous) {
       confirmationResponse = await renderDangerousConfirmationPrompt({
