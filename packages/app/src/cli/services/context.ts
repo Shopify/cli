@@ -644,7 +644,7 @@ function showReusedDevValues({organization, selectedApp, selectedStore, cachedIn
 
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
-    appName: cachedInfo.title!,
+    appName: selectedApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
     configFile: cachedInfo.configFile,
