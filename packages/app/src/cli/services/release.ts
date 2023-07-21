@@ -40,7 +40,7 @@ export async function release(options: ReleaseOptions) {
 
   const variables: AppReleaseVariables = {
     apiKey,
-    deploymentId: versionDetails.id,
+    appVersionId: versionDetails.id,
   }
 
   const tasks = [

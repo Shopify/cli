@@ -31,7 +31,7 @@ describe('init', () => {
 
   test('when name is passed', async () => {
     const answers = {
-      template: 'https://github.com/Shopify/shopify-app-template-node',
+      template: 'https://github.com/Shopify/shopify-app-template-remix',
     }
     const options = {name: 'app', directory: '/'}
 
@@ -63,13 +63,11 @@ describe('init', () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
-        {label: 'node', value: 'node'},
-        {label: 'php', value: 'php'},
-        {label: 'ruby', value: 'ruby'},
+        {label: 'Remix', value: 'remix'},
         {label: 'none (build an app with extensions only)', value: 'none'},
       ],
       message: 'Which template would you like to use?',
-      defaultValue: 'node',
+      defaultValue: 'remix',
     })
     expect(got).toEqual({...options, ...answers, templateType: 'none'})
   })

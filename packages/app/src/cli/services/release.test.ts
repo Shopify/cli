@@ -69,7 +69,7 @@ describe('release', () => {
     // Then
     expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'api-token', {
       apiKey: 'app-id',
-      deploymentId: 1,
+      appVersionId: 1,
     })
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [

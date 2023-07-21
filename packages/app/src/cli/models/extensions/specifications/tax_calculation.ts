@@ -10,7 +10,6 @@ const TaxCalculationsSchema = BaseSchema.extend({
 
 const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
-  surface: 'admin',
   schema: TaxCalculationsSchema,
   singleEntryPath: false,
   appModuleFeatures: (_) => ['bundling'],

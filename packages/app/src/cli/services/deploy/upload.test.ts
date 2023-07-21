@@ -723,7 +723,7 @@ describe('uploadExtensionsBundle', () => {
         })
         .mockResolvedValueOnce({
           appDeploy: {
-            deployment: {
+            appVersion: {
               appModuleVersions: [],
             },
             id: '2',
@@ -772,7 +772,7 @@ describe('uploadExtensionsBundle', () => {
         })
         .mockResolvedValueOnce({
           appDeploy: {
-            deployment: {
+            appVersion: {
               appModuleVersions: [],
             },
             id: '2',
@@ -817,7 +817,7 @@ describe('uploadExtensionsBundle', () => {
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       appDeploy: {
-        deployment: {
+        appVersion: {
           appModuleVersions: [],
         },
         id: '2',
@@ -845,7 +845,7 @@ describe('uploadExtensionsBundle', () => {
     expect(partnersRequest).toHaveBeenCalledOnce()
   })
 
-  test("throws a specific error based on what is returned from partners when response doesn't include a deployment", async () => {
+  test("throws a specific error based on what is returned from partners when response doesn't include an app version", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
@@ -986,7 +986,7 @@ describe('uploadExtensionsBundle', () => {
     })
   })
 
-  test('return a deploy error message based on what is returned from partners when response includes a deployment', async () => {
+  test('return a deploy error message based on what is returned from partners when response includes an app version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
@@ -998,8 +998,8 @@ describe('uploadExtensionsBundle', () => {
         })
         .mockResolvedValueOnce({
           appDeploy: {
-            deployment: {
-              uuid: 'deployment-uuid',
+            appVersion: {
+              uuid: 'appVersion-uuid',
               id: 1,
               versionTag: 'versionTag',
               appModuleVersions: [

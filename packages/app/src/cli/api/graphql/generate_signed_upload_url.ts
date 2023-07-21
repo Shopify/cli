@@ -1,9 +1,9 @@
 import {gql} from 'graphql-request'
 
 export const GenerateSignedUploadUrl = gql`
-  mutation GenerateSignedUploadUrl($apiKey: String!, $deploymentUuid: String!, $bundleFormat: Int!) {
+  mutation GenerateSignedUploadUrl($apiKey: String!, $appVersionUuid: String!, $bundleFormat: Int!) {
     deploymentGenerateSignedUploadUrl(
-      input: {apiKey: $apiKey, deploymentUuid: $deploymentUuid, bundleFormat: $bundleFormat}
+      input: {apiKey: $apiKey, appVersionUuid: $appVersionUuid, bundleFormat: $bundleFormat}
     ) {
       signedUploadUrl
       userErrors {
@@ -16,7 +16,7 @@ export const GenerateSignedUploadUrl = gql`
 
 export interface GenerateSignedUploadUrlVariables {
   apiKey: string
-  deploymentUuid: string
+  appVersionUuid: string
   bundleFormat: number
 }
 
