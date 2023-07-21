@@ -2,7 +2,7 @@ name: shopify-cli-next
 
 up:
   - node:
-      version: v18.7.0
+      version: v18.16.1
       packages: []
   - ruby:
       version: 3.1.2
@@ -58,4 +58,3 @@ commands:
   spin:
     desc: 'Run commands in spin context'
     run: bin/spin
-

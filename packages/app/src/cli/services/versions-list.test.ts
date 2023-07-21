@@ -18,13 +18,13 @@ afterEach(() => {
 
 const emptyResult = {
   app: {
-    deployments: {nodes: [], pageInfo: {totalResults: 0}},
+    appVersions: {nodes: [], pageInfo: {totalResults: 0}},
     organizationId: 'orgId',
   },
 }
 
 describe('versions-list', () => {
-  test('show a message when there are no deployments', async () => {
+  test('show a message when there are no app versions', async () => {
     // Given
     const app = await testApp({})
     const outputMock = mockAndCaptureOutput()
@@ -88,14 +88,14 @@ describe('versions-list', () => {
     expect(vi.mocked(partnersRequest)).toHaveBeenCalledWith(expect.anything(), 'token', {apiKey: 'app-api-key'})
   })
 
-  test('render table when there are deployments', async () => {
+  test('render table when there are app versions', async () => {
     // Given
     const app = await testApp({})
     const mockOutput = mockAndCaptureOutput()
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       app: {
         id: 'appId',
-        deployments: {
+        appVersions: {
           nodes: [
             {
               message: 'message',

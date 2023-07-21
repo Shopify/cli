@@ -31,7 +31,7 @@ describe('extension prompt', async () => {
   }
 
   test('when name is not passed', async () => {
-    const answers = {name: 'ext', extensionType: 'ui_extension'}
+    const answers = {name: 'ext', extensionType: 'subscription_ui'}
     const options = {
       directory: '/',
       app: testApp(),
@@ -39,7 +39,7 @@ describe('extension prompt', async () => {
       extensionTemplates: allUITemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('ui_extension', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('subscription_ui', allUITemplates)
 
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce(answers.extensionType)
@@ -58,7 +58,7 @@ describe('extension prompt', async () => {
   })
 
   test('when name is passed', async () => {
-    const answers = {extensionType: 'ui_extension'}
+    const answers = {extensionType: 'subscription_ui'}
     const options = {
       name: 'my-special-extension',
       directory: '/',
@@ -67,7 +67,7 @@ describe('extension prompt', async () => {
       extensionTemplates: allUITemplates,
       unavailableExtensions: [],
     }
-    const extensionTemplate = findExtensionTemplate('ui_extension', allUITemplates)
+    const extensionTemplate = findExtensionTemplate('subscription_ui', allUITemplates)
 
     // Given
     vi.mocked(renderAutocompletePrompt).mockResolvedValueOnce(answers.extensionType)

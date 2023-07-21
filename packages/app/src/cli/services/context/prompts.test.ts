@@ -2,7 +2,7 @@ import {deployConfirmationPrompt, SourceSummary} from './prompts.js'
 import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {renderConfirmationPrompt, InfoTableSection} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderDangerousConfirmationPrompt, InfoTableSection} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -49,25 +49,57 @@ describe('deployConfirmationPrompt', () => {
     test('renders confirmation prompt with the comparison between source summary and active version', async () => {
       // Given
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
+      vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent({noDelete: true}))
 
       // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({
-          identifiers: {...identifier1, ...identifier2},
-          toCreate: [createdExtension],
-          onlyRemote: [remoteOnlyExtension],
-          dashboardOnly: [dashboardOnlyExtension],
-        }),
-        'unified',
-        'apiKey',
-        'token',
-      )
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
 
       // Then
       expect(response).toBe(true)
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
         unifiedRenderConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
+          infoTable: [
+            {
+              header: 'Includes:',
+              items: [
+                ['extension1', {subdued: '(new)'}],
+                ['id1', {subdued: '(new)'}],
+                'extension2',
+                ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+              ],
+              bullet: '+',
+            },
+          ],
+        }),
+      )
+    })
+
+    test('renders dangerous confirmation prompt with the comparison between source summary and active version when extensions will be deleted', async () => {
+      // Given
+      vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
+
+      // When
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+
+      // Then
+      expect(response).toBe(true)
+      expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
+        unifiedRenderDangerousConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
           infoTable: [
             {
               header: 'Includes:',
@@ -92,7 +124,7 @@ describe('deployConfirmationPrompt', () => {
 
     test('when current extension registration and active version include same dashboard extension we should show it only in the dashboard section', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
 
       const dashboardExtensionIncludedInActiveVersion = {
@@ -103,22 +135,19 @@ describe('deployConfirmationPrompt', () => {
       }
 
       // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({
-          identifiers: {...identifier1, ...identifier2},
-          toCreate: [createdExtension],
-          onlyRemote: [remoteOnlyExtension],
-          dashboardOnly: [dashboardOnlyExtension, dashboardExtensionIncludedInActiveVersion],
-        }),
-        'unified',
-        'apiKey',
-        'token',
-      )
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension, dashboardExtensionIncludedInActiveVersion],
+      })
+      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderConfirmationPromptContent({
+      expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
+        unifiedRenderDangerousConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
           infoTable: [
             {
               header: 'Includes:',
@@ -144,28 +173,25 @@ describe('deployConfirmationPrompt', () => {
 
     test('when current dashboard extension registration and non dashboard active version include same extension we should show as new, not dashboard', async () => {
       // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent())
       // Add dashboard extension to the current non dashboard registrations
       const dashboardIdentifier = {dashboard_title2: 'dashboard_uuid2'}
 
       // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({
-          identifiers: {...identifier1, ...identifier2, ...dashboardIdentifier},
-          toCreate: [createdExtension],
-          onlyRemote: [remoteOnlyExtension],
-          dashboardOnly: [dashboardOnlyExtension],
-        }),
-        'unified',
-        'apiKey',
-        'token',
-      )
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2, ...dashboardIdentifier},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderConfirmationPromptContent({
+      expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
+        unifiedRenderDangerousConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
           infoTable: [
             {
               header: 'Includes:',
@@ -271,10 +297,12 @@ describe('deployConfirmationPrompt', () => {
 
 const identifier1 = {extension1: 'uuid1'}
 const identifier2 = {extension2: 'uuid2'}
+const identifier3 = {extension3: 'uuid3'}
 const createdExtension = {
   localIdentifier: 'id1',
   graphQLType: 'type1',
   type: 'type1',
+  handle: 'handle1',
   configuration: {name: 'name1'},
 }
 const remoteOnlyExtension = {
@@ -300,7 +328,7 @@ function buildSourceSummary(options: BuildSourceSummaryOptions = {}): SourceSumm
   const {identifiers = {}, toCreate = [], onlyRemote = [], dashboardOnly = []} = options
 
   return {
-    appTitle: undefined,
+    appTitle: 'my-app',
     question: 'question',
     identifiers,
     toCreate,
@@ -335,51 +363,54 @@ function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deplo
   }
 }
 
-function activeVersionContent() {
+function activeVersionContent({noDelete = false} = {}) {
+  const appModuleVersionsToDelete = [
+    {
+      registrationId: 'id3',
+      registrationUuid: 'uuid3',
+      registrationTitle: 'title3',
+      type: 'type3',
+      specification: {
+        identifier: 'spec1',
+        name: 'specName1',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    },
+    {
+      registrationId: 'dashboard_id1',
+      registrationUuid: 'dashboard_uuid1',
+      registrationTitle: 'dashboard_title1',
+      type: 'admin-link',
+      specification: {
+        identifier: 'spec2',
+        name: 'specName2',
+        options: {
+          managementExperience: 'dashboard',
+        },
+      },
+    },
+  ]
+  const appModuleVersionsToUpdate = [
+    {
+      registrationId: 'id2',
+      registrationUuid: 'uuid2',
+      registrationTitle: 'extension2',
+      type: 'type2',
+      specification: {
+        identifier: 'spec3',
+        name: 'specName3',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    },
+  ]
   return {
     app: {
       activeAppVersion: {
-        appModuleVersions: [
-          {
-            registrationId: 'id3',
-            registrationUuid: 'uuid3',
-            registrationTitle: 'title3',
-            type: 'type3',
-            specification: {
-              identifier: 'spec1',
-              name: 'specName1',
-              options: {
-                managementExperience: 'cli',
-              },
-            },
-          },
-          {
-            registrationId: 'id2',
-            registrationUuid: 'uuid2',
-            registrationTitle: 'extension2',
-            type: 'type2',
-            specification: {
-              identifier: 'spec3',
-              name: 'specName3',
-              options: {
-                managementExperience: 'cli',
-              },
-            },
-          },
-          {
-            registrationId: 'dashboard_id1',
-            registrationUuid: 'dashboard_uuid1',
-            registrationTitle: 'dashboard_title1',
-            type: 'admin-link',
-            specification: {
-              identifier: 'spec2',
-              name: 'specName2',
-              options: {
-                managementExperience: 'dashboard',
-              },
-            },
-          },
-        ],
+        appModuleVersions: [...appModuleVersionsToUpdate, ...(noDelete ? [] : appModuleVersionsToDelete)],
       },
     },
   }
@@ -387,6 +418,17 @@ function activeVersionContent() {
 
 interface UnifiedRenderConfirmationPromptContentOptions {
   infoTable?: InfoTableSection[]
+  appTitle?: string
+}
+
+function unifiedRenderDangerousConfirmationPromptContent(options: UnifiedRenderConfirmationPromptContentOptions = {}) {
+  const {appTitle, infoTable} = options
+
+  return {
+    confirmation: appTitle,
+    infoTable,
+    message: 'question',
+  }
 }
 
 function unifiedRenderConfirmationPromptContent(options: UnifiedRenderConfirmationPromptContentOptions = {}) {

@@ -34,7 +34,6 @@ const UIExtensionSchema = BaseSchema.extend({
 
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
-  surface: 'all',
   dependency,
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,

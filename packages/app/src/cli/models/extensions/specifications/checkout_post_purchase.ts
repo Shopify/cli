@@ -6,7 +6,6 @@ const dependency = '@shopify/post-purchase-ui-extensions'
 
 const spec = createExtensionSpecification({
   identifier: 'checkout_post_purchase',
-  surface: 'post_purchase',
   dependency,
   partnersWebIdentifier: 'post_purchase',
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',

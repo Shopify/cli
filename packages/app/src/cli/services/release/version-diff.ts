@@ -10,7 +10,7 @@ export async function versionDiffByVersion(
   token: string,
 ): Promise<{
   versionsDiff: AppVersionsDiffSchema['app']['versionsDiff']
-  versionDetails: AppVersionByTagSchema['app']['deployment']
+  versionDetails: AppVersionByTagSchema['app']['appVersion']
 }> {
   const versionDetails = await versionDetailsByVersion(apiKey, version, token)
   const {
@@ -26,12 +26,12 @@ export async function versionDiffByVersion(
 async function versionDetailsByVersion(apiKey: string, version: string, token: string) {
   try {
     const {
-      app: {deployment},
+      app: {appVersion},
     }: AppVersionByTagSchema = await partnersRequest(AppVersionByTagQuery, token, {
       apiKey,
       versionTag: version,
     })
-    return deployment
+    return appVersion
   } catch (err) {
     renderError({
       headline: "Version couldn't be released.",
