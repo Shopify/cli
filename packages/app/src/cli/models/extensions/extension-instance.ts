@@ -180,7 +180,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   previewMessage(url: string, storeFqdn: string) {
-    const heading = outputToken.heading(`${this.name} (${this.humanName})`)
+    const heading = outputToken.heading(`${this.handle} (${this.humanName})`)
     let message = outputContent`Preview link: ${url}/extensions/${this.devUUID}`
 
     if (this.specification.previewMessage) {

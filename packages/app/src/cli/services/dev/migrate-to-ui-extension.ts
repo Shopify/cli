@@ -21,8 +21,8 @@ export function getUIExtensionsToMigrate(
   return localSources.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
     if (localSource.type === 'ui_extension') {
       const remoteSource = remoteSources.find((source) => {
-        const matchesId = source.uuid === ids[localSource.configuration.name]
-        const matchesTitle = source.title === localSource.configuration.name
+        const matchesId = source.uuid === ids[localSource.handle]
+        const matchesTitle = source.title === localSource.handle
 
         return matchesId || matchesTitle
       })

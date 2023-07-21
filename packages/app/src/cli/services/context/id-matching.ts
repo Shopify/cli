@@ -21,7 +21,7 @@ export interface MatchResult {
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.configuration.name)
+  return remote.type === local.graphQLType && slugify(remote.title) === local.handle
 }
 
 /**
@@ -34,7 +34,7 @@ function matchByNameAndType(
   remote: RemoteSource[],
   remoteIdField: 'id' | 'uuid',
 ): {matched: IdentifiersExtensions; pending: {local: LocalSource[]; remote: RemoteSource[]}} {
-  const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.configuration.name])
+  const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.handle])
   const uniqueRemote = uniqBy(remote, (elem) => [elem.type, elem.title])
   const validMatches: IdentifiersExtensions = {}
 

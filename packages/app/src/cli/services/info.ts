@@ -177,7 +177,7 @@ class AppInfo {
   extensionSubSection(extension: ExtensionInstance): string {
     const config = extension.configuration
     const details = [
-      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
+      [`📂 ${config.handle}`, relativePath(this.app.directory, extension.directory)],
       ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     if (config && config.metafields?.length) {
