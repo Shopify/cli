@@ -4,9 +4,7 @@ import {
 } from '../../api/graphql/template_specifications.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import themeExtension from '../../models/templates/theme-specifications/theme.js'
-import checkoutUIExtension from '../../models/templates/ui-specifications/checkout_ui_extension.js'
 import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
-import UIExtension from '../../models/templates/ui-specifications/ui_extension.js'
 import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -32,5 +30,5 @@ export async function fetchExtensionTemplates(
 }
 
 export function localExtensionTemplates(): ExtensionTemplate[] {
-  return [themeExtension, checkoutUIExtension, productSubscriptionUIExtension, UIExtension, webPixelUIExtension]
+  return [themeExtension, productSubscriptionUIExtension, webPixelUIExtension]
 }

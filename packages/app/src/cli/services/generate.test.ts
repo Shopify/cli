@@ -51,7 +51,7 @@ describe('generate', () => {
   const mockConfig = new Config({root: ''})
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
-    const outputInfo = await mockSuccessfulCommandExecution('checkout_ui')
+    const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
     await generate({directory: '/', reset: false, commandConfig: mockConfig})
@@ -152,14 +152,14 @@ describe('generate', () => {
 
   test('throws error if trying to generate with an unsupported flavor', async () => {
     // Given
-    await mockSuccessfulCommandExecution('checkout_ui')
+    await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
     const got = generate({
       directory: '/',
       reset: false,
       commandConfig: mockConfig,
-      type: 'checkout_ui',
+      type: 'subscription_ui',
       template: 'unknown',
     })
 
