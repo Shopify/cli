@@ -11,6 +11,8 @@ import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
+import {getCachedAppInfo} from '../../services/local-storage.js'
+import use from '../../services/app/config/use.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -20,9 +22,14 @@ import {
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'path'
+
+vi.mock('../../services/local-storage.js')
+vi.mock('../../services/app/config/use.js')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -1664,7 +1671,43 @@ automatically_update_urls_on_dev = true
     })
   })
 
+  test('throws error if config file is passed in but does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+
+    // When
+    const result = loadApp({directory: tmpDir, specifications, configName: 'non-existent'})
+
+    // Then
+    await expect(result).rejects.toThrow(`Couldn't find shopify.app.non-existent.toml in ${tmpDir}.`)
+    expect(use).not.toHaveBeenCalled()
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test('prompts to select new config if current config file is set but does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+
+    // When
+    await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(use).toHaveBeenCalledWith({
+      directory: normalizePath(resolve(tmpDir)),
+      shouldRenderSuccess: false,
+      warningContent: {
+        headline: "Couldn't find shopify.app.non-existent.toml",
+        body: [
+          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+        ],
+      },
+    })
+  })
 
   test.skipIf(runningOnWindows)(`updates metadata after loading a config as code application`, async () => {
     const {webDirectory} = await writeConfig(linkedAppConfiguration, {

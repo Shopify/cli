@@ -585,7 +585,7 @@ export async function getAppContext({
 
   const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
-    configName: configName || cachedInfo?.configFile,
+    configName,
   })
 
   let remoteApp

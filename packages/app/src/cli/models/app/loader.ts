@@ -16,8 +16,9 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
+import use from '../../services/app/config/use.js'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -497,7 +498,22 @@ class AppConfigurationLoader {
   async loaded() {
     const appDirectory = await this.getAppDirectory()
     let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    this.configName = this.configName ?? getCachedAppInfo(appDirectory)?.configFile
+
+    const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
+    const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
+
+    if (!this.configName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
+      const warningContent = {
+        headline: `Couldn't find ${cachedCurrentConfig}`,
+        body: [
+          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+        ],
+      }
+      this.configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
+    }
+
+    this.configName = this.configName ?? cachedCurrentConfig
+
     if (this.configName === undefined) {
       configSource = 'default'
     }
