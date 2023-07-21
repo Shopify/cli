@@ -5,7 +5,7 @@ import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const FlowTriggerSettingsSchema = FieldSchema.extend({
-  name: zod
+  key: zod
     .string()
     .regex(/^[a-zA-Z\s]*$/, {
       message: 'String must contain only alphabetic characters and spaces',
