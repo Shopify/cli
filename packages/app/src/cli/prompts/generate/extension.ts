@@ -89,7 +89,6 @@ async function promptName(directory: string, defaultName: string, number = 1): P
   const name = number <= 1 ? defaultName : `${defaultName}${separator}${number}`
   const fullPath = joinPath(directory, slugify(name))
 
-  console.log(separator, name, fullPath)
   if (fileExistsSync(fullPath)) {
     return promptName(directory, defaultName, number + 1)
   }
