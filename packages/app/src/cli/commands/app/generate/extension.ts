@@ -13,11 +13,11 @@ export default class AppGenerateExtension extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    type: Flags.string({
+    template: Flags.string({
       char: 't',
       hidden: false,
-      description: `Extension type`,
-      env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
+      description: `Extension template`,
+      env: 'SHOPIFY_FLAG_EXTENSION_TEMPLATE',
     }),
     name: Flags.string({
       char: 'n',
@@ -32,11 +32,11 @@ export default class AppGenerateExtension extends Command {
         'The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples',
       env: 'SHOPIFY_FLAG_CLONE_URL',
     }),
-    template: Flags.string({
+    flavor: Flags.string({
       hidden: false,
       description: 'Choose a starting template for your extension, where applicable',
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
-      env: 'SHOPIFY_FLAG_TEMPLATE',
+      env: 'SHOPIFY_FLAG_FLAVOR',
     }),
     reset: Flags.boolean({
       hidden: false,
@@ -82,11 +82,11 @@ export default class AppGenerateExtension extends Command {
       directory: flags.path,
       reset: flags.reset,
       apiKey,
-      type: flags.type,
       name: flags.name,
       cloneUrl: flags['clone-url'],
       template: flags.template,
       commandConfig: this.config,
+      flavor: flags.flavor,
     })
   }
 }
