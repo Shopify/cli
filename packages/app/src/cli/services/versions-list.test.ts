@@ -133,11 +133,11 @@ describe('versions-list', () => {
 
     // Then
     expect(mockOutput.info())
-      .toMatchInlineSnapshot(`"VERSION       STATUS           MESSAGE        DATE CREATED         CREATED BY
-────────────  ───────────────  ─────────────  ───────────────────  ───────────
-versionTag    ★ active (100%)  message        2021-01-01 00:00:00  createdBy
-versionTag 2  released         message 2      2021-01-01 00:00:00  createdBy 2
-versionTag 3  released         long messa...  2021-01-01 00:00:00  createdBy 3
+      .toMatchInlineSnapshot(`"VERSION       STATUS    MESSAGE        DATE CREATED         CREATED BY
+────────────  ────────  ─────────────  ───────────────────  ───────────
+versionTag    ★ active  message        2021-01-01 00:00:00  createdBy
+versionTag 2  released  message 2      2021-01-01 00:00:00  createdBy 2
+versionTag 3  released  long messa...  2021-01-01 00:00:00  createdBy 3
 
 View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com/orgId/apps/appId/versions )"`)
   })
