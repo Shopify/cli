@@ -79,7 +79,8 @@ export async function confirmPushChanges(options: PushOptions, app: App) {
   const configuration = options.configuration as CurrentAppConfiguration
   const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
 
-  if (configuration.access_scopes) configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
+  if (configuration.access_scopes?.scopes)
+    configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
 
   const [updated, baseline] = deepDifference(
     rewriteConfiguration(AppSchema, configuration) as object,
