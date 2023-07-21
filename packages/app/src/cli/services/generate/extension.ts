@@ -178,7 +178,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
 
   const tasks = [
     {
-      title: `Generating UI extension`,
+      title: `Generating extension`,
       task: async () => {
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
 
@@ -211,10 +211,13 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
               directory: app.directory,
             })
           }
-          await installNodeModules({
-            packageManager,
-            directory: app.directory,
-          })
+          // Only install dependencies if the extension is javascript
+          if (getTemplateLanguage(extensionFlavor?.value) === 'javascript') {
+            await installNodeModules({
+              packageManager,
+              directory: app.directory,
+            })
+          }
         } else {
           await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
           const extensionPackageJsonPath = joinPath(directory, 'package.json')

@@ -5,6 +5,7 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface GenerateExtensionPromptOptions {
   name?: string
@@ -84,8 +85,10 @@ const generateExtensionPrompts = async (
 }
 
 async function promptName(directory: string, defaultName: string, number = 1): Promise<string> {
-  const name = number <= 1 ? defaultName : `${defaultName}-${number}`
-  const fullPath = joinPath(directory, name)
+  const separator = defaultName.includes(' ') ? ' ' : '-'
+  const name = number <= 1 ? defaultName : `${defaultName}${separator}${number}`
+  const fullPath = joinPath(directory, slugify(name))
+
   if (fileExistsSync(fullPath)) {
     return promptName(directory, defaultName, number + 1)
   }
