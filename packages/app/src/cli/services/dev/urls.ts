@@ -160,7 +160,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && isCurrentAppSchema(localApp.configuration)) {
+  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
     const localConfiguration: AppConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
@@ -186,9 +186,11 @@ export interface ShouldOrPromptUpdateURLsOptions {
   cachedUpdateURLs?: boolean
   newApp?: boolean
   localApp?: AppInterface
+  apiKey: string
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
+  if (options.localApp && options.localApp.configuration.client_id !== options.apiKey) return true
   if (options.newApp || !terminalSupportsRawMode()) return true
   let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
 
