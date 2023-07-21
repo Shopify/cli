@@ -32,7 +32,6 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {OrganizationApp} from '../models/organization.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -270,7 +269,7 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  await outputExtensionsMessage(remoteApp, localApp)
+  await renderDevPreviewWarning(remoteApp, localApp)
 
   if (sendUninstallWebhook) {
     additionalProcesses.push({
@@ -616,13 +615,6 @@ async function validateCustomPorts(webConfigs: Web[]) {
       }
     }),
   )
-}
-
-async function outputExtensionsMessage(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
-  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
-  if (unifiedDeployment) {
-    await renderDevPreviewWarning(remoteApp, localApp)
-  }
 }
 
 export default dev
