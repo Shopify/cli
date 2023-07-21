@@ -502,7 +502,7 @@ describe('getExtensionPointMiddleware()', () => {
     })
   })
 
-  test('returns a 404 if requested extension point target is not configured', async () => {
+  test('returns a 404 if requested extension target is not configured', async () => {
     vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
     const extensionId = '123abc'
@@ -546,11 +546,11 @@ describe('getExtensionPointMiddleware()', () => {
 
     expect(utilities.sendError).toHaveBeenCalledWith(response, {
       statusCode: 404,
-      statusMessage: `Extension with id ${extensionId} has not configured the "${requestedExtensionPointTarget}" extension point`,
+      statusMessage: `Extension with id ${extensionId} has not configured the "${requestedExtensionPointTarget}" extension target`,
     })
   })
 
-  test('returns a 404 if requested extension point target is invalid and no redirect url can be constructed', async () => {
+  test('returns a 404 if requested extension target is invalid and no redirect url can be constructed', async () => {
     vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
     const extensionId = '123abc'
@@ -594,11 +594,11 @@ describe('getExtensionPointMiddleware()', () => {
 
     expect(utilities.sendError).toHaveBeenCalledWith(response, {
       statusCode: 404,
-      statusMessage: `Redirect url can't be constructed for extension with id ${extensionId} and extension point "${extensionPointTarget}"`,
+      statusMessage: `Redirect url can't be constructed for extension with id ${extensionId} and extension target "${extensionPointTarget}"`,
     })
   })
 
-  test('returns the redirect URL if the requested extension point target is configured', async () => {
+  test('returns the redirect URL if the requested extension target is configured', async () => {
     vi.spyOn(utilities, 'getRedirectUrl').mockReturnValue('http://www.mock.com/redirect/url')
 
     const extensionId = '123abc'
