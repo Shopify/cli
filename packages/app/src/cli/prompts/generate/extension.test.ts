@@ -4,7 +4,6 @@ import {testApp, testLocalExtensionTemplates, testRemoteExtensionTemplates} from
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import themeExtension from '../../models/templates/theme-specifications/theme.js'
-import checkoutUIExtension from '../../models/templates/ui-specifications/checkout_ui_extension.js'
 import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../../models/templates/ui-specifications/web_pixel_extension.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
@@ -217,27 +216,27 @@ describe('extension prompt', async () => {
 describe('build choices', async () => {
   test('when none of the extensions has sortPriority then choices should be sorted ok', async () => {
     // Given
-    const checkOut = {...checkoutUIExtension, sortPriority: undefined}
+    const theme = {...themeExtension, sortPriority: undefined}
     const productSubscription = {...productSubscriptionUIExtension, sortPriority: undefined}
     const webPixel = {...webPixelUIExtension, sortPriority: undefined}
-    const extensions = [checkOut, productSubscription, webPixel]
+    const extensions = [theme, productSubscription, webPixel]
 
     // When
     const got = buildChoices(extensions)
 
     // Then
     expect(got.length).equals(3)
-    expect(got[0]?.label).equals(checkOut.name)
-    expect(got[1]?.label).equals(productSubscription.name)
+    expect(got[0]?.label).equals(productSubscription.name)
+    expect(got[1]?.label).equals(themeExtension.name)
     expect(got[2]?.label).equals(webPixel.name)
   })
 
   test('when some of the extensions has sortPriority then choices should be sorted ok', async () => {
     // Given
-    const checkOut = {...checkoutUIExtension, sortPriority: undefined}
+    const theme = {...themeExtension, sortPriority: undefined}
     const productSubscription = {...productSubscriptionUIExtension, sortPriority: undefined}
     const webPixel = {...webPixelUIExtension, sortPriority: 1}
-    const extensions = [checkOut, productSubscription, webPixel]
+    const extensions = [theme, productSubscription, webPixel]
 
     // When
     const got = buildChoices(extensions)
@@ -245,16 +244,16 @@ describe('build choices', async () => {
     // Then
     expect(got.length).equals(3)
     expect(got[0]?.label).equals(webPixel.name)
-    expect(got[1]?.label).equals(checkOut.name)
-    expect(got[2]?.label).equals(productSubscription.name)
+    expect(got[1]?.label).equals(productSubscription.name)
+    expect(got[2]?.label).equals(theme.name)
   })
 
   test('when some of the extensions has the same sortPriority then choices should be sorted ok', async () => {
     // Given
-    const checkOut = {...checkoutUIExtension, sortPriority: undefined}
+    const theme = {...themeExtension, sortPriority: undefined}
     const productSubscription = {...productSubscriptionUIExtension, sortPriority: 1}
     const webPixel = {...webPixelUIExtension, sortPriority: 1}
-    const extensions = [checkOut, productSubscription, webPixel]
+    const extensions = [theme, productSubscription, webPixel]
 
     // When
     const got = buildChoices(extensions)
@@ -263,15 +262,15 @@ describe('build choices', async () => {
     expect(got.length).equals(3)
     expect(got[0]?.label).equals(productSubscription.name)
     expect(got[1]?.label).equals(webPixel.name)
-    expect(got[2]?.label).equals(checkOut.name)
+    expect(got[2]?.label).equals(theme.name)
   })
 
   test('when all the extensions has different sortPriority then choices should be sorted ok', async () => {
     // Given
-    const checkOut = {...checkoutUIExtension, sortPriority: 3}
+    const theme = {...themeExtension, sortPriority: 3}
     const productSubscription = {...productSubscriptionUIExtension, sortPriority: 2}
     const webPixel = {...webPixelUIExtension, sortPriority: 1}
-    const extensions = [checkOut, productSubscription, webPixel]
+    const extensions = [theme, productSubscription, webPixel]
 
     // When
     const got = buildChoices(extensions)
@@ -280,7 +279,7 @@ describe('build choices', async () => {
     expect(got.length).equals(3)
     expect(got[0]?.label).equals(webPixel.name)
     expect(got[1]?.label).equals(productSubscription.name)
-    expect(got[2]?.label).equals(checkOut.name)
+    expect(got[2]?.label).equals(theme.name)
   })
 })
 
