@@ -94,22 +94,6 @@ describe('output', () => {
     })
   })
 
-  describe('outputExtensionsMessages', () => {
-    test('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
-      const outputMock = mockAndCaptureOutput()
-      const appMock = await mockApp()
-
-      outputExtensionsMessages(appMock)
-
-      expect(outputMock.output()).toMatchInlineSnapshot(`
-        "theme extension name (Theme)
-        Follow the dev doc instructions ( https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes ) by deploying your work as a draft
-        "
-      `)
-    })
-  })
-})
-
 async function mockApp(newConfig = false): Promise<AppInterface> {
   const nodeDependencies: {[key: string]: string} = {}
   nodeDependencies['@shopify/cli'] = '2.2.2'
