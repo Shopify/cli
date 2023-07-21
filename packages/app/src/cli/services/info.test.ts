@@ -231,12 +231,13 @@ describe('info', () => {
     })
   })
 
-  test('returns errors alongside extensions when extensions have errors', async () => {
+  test.only('returns errors alongside extensions when extensions have errors', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const uiExtension1 = await testUIExtension({
         configuration: {
           name: 'Extension 1',
+          handle: 'handle-for-extension-1',
           type: 'ui_extension',
           metafields: [],
         },
@@ -292,7 +293,12 @@ describe('info', () => {
 
       // Then
       expect(result).toContain('Extensions with errors')
-      expect(result).toContain('📂 ui_extension')
+      // Doesn't use the type as part of the title
+      expect(result).not.toContain('📂 ui_extension')
+      // Shows explicit handle in title
+      expect(result).toContain('📂 handle-for-extension-1')
+      // Shows default handle derived from name when no handle is present
+      expect(result).toContain('📂 extension-2')
       expect(result).toContain('! Mock error with ui_extension')
       expect(result).toContain('! Mock error with checkout_ui_extension')
     })
