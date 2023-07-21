@@ -17,6 +17,7 @@ export default class AppImportFlowExtension extends Command {
       hidden: false,
       description: 'The Client ID of your app.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
   }
 

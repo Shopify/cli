@@ -18,11 +18,13 @@ export default class FetchSchema extends Command {
       name: 'API key',
       description: 'The API key to fetch the schema with.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID to fetch the schema with.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
     stdout: Flags.boolean({
       description: 'Output the schema to stdout instead of writing to a file.',

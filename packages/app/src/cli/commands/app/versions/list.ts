@@ -19,11 +19,13 @@ export default class VersionsList extends Command {
       hidden: true,
       description: "Application's API key to fetch versions for.",
       env: 'SHOPIFY_FLAG_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID to fetch versions for.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
   }
 
