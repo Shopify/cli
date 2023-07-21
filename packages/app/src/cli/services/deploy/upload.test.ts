@@ -1062,7 +1062,7 @@ describe('deploymentErrorsToCustomSections', () => {
         details: [
           {
             extension_id: 123,
-            extension_title: 'amortizable-marketplace-ext',
+            extension_title: 't:remote-title',
           },
         ],
       },
@@ -1073,7 +1073,7 @@ describe('deploymentErrorsToCustomSections', () => {
         details: [
           {
             extension_id: 123,
-            extension_title: 'amortizable-marketplace-ext',
+            extension_title: 't:remote-title',
           },
         ],
       },
@@ -1121,6 +1121,7 @@ describe('deploymentErrorsToCustomSections', () => {
     // Then
     expect(customSections).toEqual([
       {
+        // Uses name from identifiers and not from remote `extension_title`
         title: 'amortizable-marketplace-ext',
         body: [
           {
