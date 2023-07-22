@@ -21,7 +21,3 @@ export interface ExtensionTemplate {
   supportLinks: string[]
   types: TemplateType[]
 }
-
-export function getTypesExternalName(templates: ExtensionTemplate[]): string[] {
-  return templates.flatMap((template) => template.name)
-}

@@ -10,6 +10,8 @@ import {
 } from '../../../models/app/app.js'
 import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
+import {renderCurrentlyUsedConfigInfo} from '../../context.js'
+import {fetchOrgFromId} from '../../dev/fetch.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -43,13 +45,16 @@ export async function pushConfig(options: PushOptions) {
   const {configuration, configurationPath} = options
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
-    const configFileName = basename(configurationPath)
+    const configFileName = isCurrentAppSchema(configuration) ? basename(configurationPath) : undefined
 
     const queryVariables = {apiKey: configuration.client_id}
     const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
 
     if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
     const {app} = queryResult
+
+    const {businessName: org} = await fetchOrgFromId(app.organizationId, token)
+    renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
 
     if (!(await confirmPushChanges(options, app))) return
 

@@ -177,7 +177,7 @@ class AppInfo {
   extensionSubSection(extension: ExtensionInstance): string {
     const config = extension.configuration
     const details = [
-      [`📂 ${config.name}`, relativePath(this.app.directory, extension.directory)],
+      [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
       ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     if (config && config.metafields?.length) {
@@ -191,7 +191,7 @@ class AppInfo {
     const error = this.app.errors?.getError(extension.configurationPath)
     if (!error) return ''
     const details = [
-      [`📂 ${extension.configuration?.type}`, relativePath(this.app.directory, extension.directory)],
+      [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
       ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     const formattedError = this.formattedError(error)

@@ -768,6 +768,34 @@ dev_store_url = "domain1"
     // Then
     expect(link).toBeCalled()
   })
+
+  test('links app if no app configs exist & cache has a current config file defined', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configurationPath: filePath,
+        configuration: {
+          client_id: APP2.apiKey,
+          name: APP2.apiKey,
+          application_url: APP2.applicationUrl,
+          webhooks: {api_version: '2023-04'},
+          embedded: true,
+        },
+      })
+      vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+
+      // When
+      const got = await ensureDevContext({...INPUT}, 'token')
+
+      // Then
+      expect(link).toBeCalled()
+      expect(got.remoteApp).toEqual({...APP2, apiSecret: 'secret2'})
+      expect(got.configName).toEqual('shopify.app.toml')
+    })
+  })
 })
 
 describe('ensureDeployContext', () => {

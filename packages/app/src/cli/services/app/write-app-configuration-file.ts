@@ -26,7 +26,7 @@ export async function writeAppConfigurationFile(configFilePath: string, configur
   writeFileSync(configFilePath, file)
 }
 
-const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
+export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
   if (schema === null || schema === undefined) return null
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
     return rewriteConfiguration(schema.unwrap(), config)

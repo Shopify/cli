@@ -168,10 +168,6 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
     configuration.web_directories = localApp.configuration.web_directories
   }
 
-  if (isCurrentAppSchema(localApp.configuration) && localApp.configuration?.build) {
-    configuration.build = localApp.configuration.build
-  }
-
   return configuration
 }
 

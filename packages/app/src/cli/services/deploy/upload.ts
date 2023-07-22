@@ -227,7 +227,7 @@ export function deploymentErrorsToCustomSections(
 
   const customSections = [
     ...generalErrorsSection(nonExtensionErrors, {version: flags.version}),
-    ...cliErrorsSections(cliErrors),
+    ...cliErrorsSections(cliErrors, extensionIds),
     ...partnersErrorsSections(partnersErrors),
   ]
   return customSections
@@ -273,16 +273,20 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
   }
 }
 
-function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
+function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
   return errors.reduce((sections, error) => {
-    const field = error.field.join('.')
+    const field = error.field.join('.').replace('extension_points', 'extensions.targeting')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
 
-    const extensionIdentifier = error.details.find(
-      (detail) => typeof detail.extension_title !== 'undefined',
-    )?.extension_title
+    const remoteTitle = error.details.find((detail) => typeof detail.extension_title !== 'undefined')?.extension_title
+    const extensionIdentifier = error.details
+      .find((detail) => typeof detail.extension_id !== 'undefined')
+      ?.extension_id.toString()
 
-    const existingSection = sections.find((section) => section.title === extensionIdentifier)
+    const handle = Object.keys(identifiers).find((key) => identifiers[key] === extensionIdentifier)
+    const extensionName = handle ?? remoteTitle
+
+    const existingSection = sections.find((section) => section.title === extensionName)
 
     if (existingSection) {
       const sectionBody = existingSection.body as ListToken[]
@@ -303,7 +307,7 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
       }
     } else {
       sections.push({
-        title: extensionIdentifier,
+        title: extensionName,
         body: [
           {
             list: {

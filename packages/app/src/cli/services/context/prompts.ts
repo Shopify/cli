@@ -18,7 +18,7 @@ export async function matchConfirmationPrompt(
   type: 'extension' | 'function' = 'extension',
 ) {
   return renderConfirmationPrompt({
-    message: `Match ${local.configuration.name} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
+    message: `Match ${local.handle} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
     confirmationMessage: `Yes, match to existing ${type}`,
     cancellationMessage: `No, create as a new ${type}`,
   })
@@ -35,7 +35,7 @@ export async function selectRemoteSourcePrompt(
   }))
   remoteOptions.push({label: 'Create new extension', value: 'create'})
   const uuid = await renderAutocompletePrompt({
-    message: `How would you like to deploy your "${localSource.configuration.name}"?`,
+    message: `How would you like to deploy your "${localSource.handle}"?`,
     choices: remoteOptions,
   })
   return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === uuid)!
@@ -253,7 +253,7 @@ export async function extensionMigrationPrompt(
   toMigrate: LocalRemoteSource[],
   includeRemoteType = true,
 ): Promise<boolean> {
-  const migrationNames = toMigrate.map(({local}) => `"${local.configuration.name}"`).join(', ')
+  const migrationNames = toMigrate.map(({local}) => `"${local.handle}"`).join(', ')
   const allMigrationTypes = toMigrate.map(({remote}) => remote.type.toLocaleLowerCase())
   const uniqueMigrationTypes = allMigrationTypes
     .filter((type, i) => allMigrationTypes.indexOf(type) === i)

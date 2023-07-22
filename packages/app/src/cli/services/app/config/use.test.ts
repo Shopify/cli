@@ -6,7 +6,7 @@ import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {err, ok} from '@shopify/cli-kit/node/result'
 
 const LOCAL_APP = testApp()
@@ -115,7 +115,7 @@ describe('use', () => {
     })
   })
 
-  test('saves currentConfiguration with client_id and config name to localstorage', async () => {
+  test('saves currentConfiguration config name to localstorage', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       createConfigFile(tmp, 'shopify.app.staging.toml')
@@ -203,6 +203,40 @@ describe('use', () => {
 
       // Then
       await expect(result).rejects.toThrow(/Could not find any shopify\.app\.toml file in the directory./)
+    })
+  })
+
+  test('renders warning when warning message is specified', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      // Given
+      const {configurationPath, configuration} = testApp({}, 'current')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configurationPath, configuration})
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
+      createConfigFile(directory, 'shopify.app.something.toml')
+
+      // When
+      await use({directory, configName: 'something', warningContent: {headline: "we're doomed. DOOMED."}})
+
+      // Then
+      expect(renderWarning).toHaveBeenCalledWith({headline: "we're doomed. DOOMED."})
+      expect(setCachedAppInfo).toHaveBeenCalledWith({directory, configFile: 'shopify.app.something.toml'})
+    })
+  })
+
+  test('does not render success when shouldRenderSuccess is false', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      // Given
+      const {configurationPath, configuration} = testApp({}, 'current')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configurationPath, configuration})
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
+      createConfigFile(directory, 'shopify.app.something.toml')
+
+      // When
+      await use({directory, configName: 'something', shouldRenderSuccess: false})
+
+      // Then
+      expect(renderSuccess).not.toHaveBeenCalled()
+      expect(setCachedAppInfo).toHaveBeenCalledWith({directory, configFile: 'shopify.app.something.toml'})
     })
   })
 })

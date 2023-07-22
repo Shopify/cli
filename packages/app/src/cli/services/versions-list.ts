@@ -1,6 +1,7 @@
-import {fetchOrCreateOrganizationApp} from './context.js'
+import {fetchOrCreateOrganizationApp, renderCurrentlyUsedConfigInfo} from './context.js'
+import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuery, AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -9,6 +10,7 @@ import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {basename} from '@shopify/cli-kit/node/path'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type AppVersionLine = {
@@ -24,7 +26,11 @@ const TABLE_FORMATTING_CHARS = 12
 async function fetchAppVersions(
   token: string,
   apiKey: string,
-): Promise<{appVersions: AppVersionLine[]; totalResults: number; organizationId: string; appId: string}> {
+): Promise<{
+  appVersions: AppVersionLine[]
+  totalResults: number
+  app: AppVersionsQuerySchema['app']
+}> {
   const query = AppVersionsQuery
   const res: AppVersionsQuerySchema = await partnersRequest(query, token, {apiKey})
   if (!res.app) throw new AbortError(`Invalid API Key: ${apiKey}`)
@@ -73,8 +79,7 @@ async function fetchAppVersions(
   return {
     appVersions,
     totalResults: res.app.appVersions.pageInfo.totalResults,
-    organizationId: res.app.organizationId,
-    appId: res.app.id,
+    app: res.app,
   }
 }
 
@@ -82,6 +87,7 @@ async function getAppApiKey(token: string, options: VersionListOptions): Promise
   if (options.apiKey) return options.apiKey
   const envIdentifiers = getAppIdentifiers({app: options.app})
   if (envIdentifiers.app) return envIdentifiers.app
+  if (isCurrentAppSchema(options.app.configuration)) return options.app.configuration.client_id
   const partnersApp = await fetchOrCreateOrganizationApp(options.app, token)
   return partnersApp.apiKey
 }
@@ -94,7 +100,16 @@ interface VersionListOptions {
 export default async function versionList(options: VersionListOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await getAppApiKey(token, options)
-  const {appVersions, totalResults, organizationId, appId} = await fetchAppVersions(token, apiKey)
+  const {appVersions, totalResults, app} = await fetchAppVersions(token, apiKey)
+
+  const {id: appId, organizationId} = app
+
+  const {businessName: org} = await fetchOrgFromId(organizationId, token)
+  renderCurrentlyUsedConfigInfo({
+    org,
+    appName: app.title,
+    configFile: isCurrentAppSchema(options.app.configuration) ? basename(options.app.configurationPath) : undefined,
+  })
 
   if (appVersions.length === 0) {
     outputInfo('No app versions found for this app')

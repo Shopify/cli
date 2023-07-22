@@ -12,6 +12,7 @@ function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
     type: 'ui_extension',
     localIdentifier: 'my-extension',
+    handle: 'my-extension',
     configuration: {
       name: 'my-extension',
     },

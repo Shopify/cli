@@ -51,14 +51,20 @@
           "type": "option",
           "description": "Application's API key that will be exposed at build time.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "Application's Client ID that will be exposed at build time.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {}
@@ -213,14 +219,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "store": {
           "name": "store",
@@ -357,7 +369,10 @@
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {}
@@ -460,14 +475,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "reset": {
           "name": "reset",
@@ -1002,14 +1023,20 @@
           "type": "option",
           "description": "The API key to fetch the schema with.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID to fetch the schema with.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "stdout": {
           "name": "stdout",
@@ -1158,14 +1185,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {
@@ -1218,14 +1251,20 @@
           "type": "option",
           "description": "The API key to fetch the schema with.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID to fetch the schema with.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "stdout": {
           "name": "stdout",
@@ -1333,14 +1372,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {
@@ -1395,14 +1440,20 @@
           "type": "option",
           "description": "Application's API key to fetch versions for.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID to fetch versions for.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {

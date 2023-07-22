@@ -131,6 +131,10 @@ embedded = false
             webhooks: {api_version: '2023-04'},
             application_url: 'https://myapp.com',
             embedded: true,
+            build: {
+              automatically_update_urls_on_dev: true,
+              dev_store_url: 'my-store.myshopify.com',
+            },
           },
         }),
       )

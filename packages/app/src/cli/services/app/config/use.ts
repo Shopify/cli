@@ -5,16 +5,24 @@ import {isCurrentAppSchema} from '../../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 
 export interface UseOptions {
   directory: string
   configName?: string
   reset?: boolean
+  warningContent?: RenderAlertOptions
+  shouldRenderSuccess?: boolean
 }
 
-export default async function use({directory, configName, reset = false}: UseOptions): Promise<void> {
+export default async function use({
+  directory,
+  configName,
+  warningContent,
+  shouldRenderSuccess = true,
+  reset = false,
+}: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
     renderSuccess({
@@ -24,13 +32,21 @@ export default async function use({directory, configName, reset = false}: UseOpt
     return
   }
 
+  if (warningContent) {
+    renderWarning(warningContent)
+  }
+
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
   await saveCurrentConfig({configFileName, directory})
 
-  renderSuccess({
-    headline: `Using configuration file ${configFileName}`,
-  })
+  if (shouldRenderSuccess) {
+    renderSuccess({
+      headline: `Using configuration file ${configFileName}`,
+    })
+  }
+
+  return configFileName
 }
 
 interface SaveCurrentConfigOptions {

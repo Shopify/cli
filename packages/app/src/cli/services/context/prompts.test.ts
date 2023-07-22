@@ -302,6 +302,7 @@ const createdExtension = {
   localIdentifier: 'id1',
   graphQLType: 'type1',
   type: 'type1',
+  handle: 'handle1',
   configuration: {name: 'name1'},
 }
 const remoteOnlyExtension = {

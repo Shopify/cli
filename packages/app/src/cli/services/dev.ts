@@ -22,7 +22,14 @@ import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
 } from '../utilities/app/http-reverse-proxy.js'
-import {AppInterface, Web, WebType, isLegacyAppSchema} from '../models/app/app.js'
+import {
+  getAppScopesArray,
+  AppInterface,
+  Web,
+  WebType,
+  isLegacyAppSchema,
+  isCurrentAppSchema,
+} from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {loadApp} from '../models/app/loader.js'
@@ -50,6 +57,8 @@ import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {basename} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -98,6 +107,26 @@ async function dev(options: DevOptions) {
 
   if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
+  }
+
+  if (
+    isCurrentAppSchema(localApp.configuration) &&
+    !localApp.configuration.access_scopes?.use_legacy_install_flow &&
+    getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
+  ) {
+    const nextSteps = [['Run', {command: 'shopify app config push'}, 'to push your scopes to the Partner Dashboard']]
+
+    renderWarning({
+      headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
+      body: [
+        `Scopes in ${basename(localApp.configurationPath)}:`,
+        scopesMessage(getAppScopesArray(localApp.configuration)),
+        '\n',
+        'Scopes in Partner Dashboard:',
+        scopesMessage(remoteApp.requestedAccessScopes || []),
+      ],
+      nextSteps,
+    })
   }
 
   const frontendConfig = localApp.webs.find((web) => isWebType(web, WebType.Frontend))
@@ -615,6 +644,14 @@ async function validateCustomPorts(webConfigs: Web[]) {
       }
     }),
   )
+}
+
+function scopesMessage(scopes: string[]) {
+  return {
+    list: {
+      items: scopes.length === 0 ? ['No scopes'] : scopes,
+    },
+  }
 }
 
 export default dev
