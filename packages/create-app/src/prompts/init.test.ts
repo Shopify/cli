@@ -22,7 +22,7 @@ describe('init', () => {
       text: '\nWelcome. Let’s get started by naming your app project. You can change it later.',
     })
     expect(renderTextPrompt).toHaveBeenCalledWith({
-      message: 'Your app project name?',
+      message: 'Your project name?',
       defaultValue: expect.stringMatching(/^\w+-\w+-app$/),
       validate: expect.any(Function),
     })
@@ -63,10 +63,10 @@ describe('init', () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
-        {label: 'Remix', value: 'remix'},
-        {label: 'none (build an app with extensions only)', value: 'none'},
+        {label: 'Start with Remix (recommended)', value: 'remix'},
+        {label: 'Start by adding your first extension', value: 'none'},
       ],
-      message: 'Which template would you like to use?',
+      message: 'Get started building your app:',
       defaultValue: 'remix',
     })
     expect(got).toEqual({...options, ...answers, templateType: 'none'})
