@@ -8,6 +8,7 @@ export const RemoteTemplateSpecificationsQuery = gql`
       name
       defaultName
       group
+      sortPriority
       supportLinks
       types {
         url
