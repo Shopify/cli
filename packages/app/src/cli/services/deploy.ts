@@ -302,13 +302,6 @@ async function outputUnifiedCompletionMessage(
       : renderSuccess({
           headline: 'New version released to users.',
           body: linkAndMessage,
-          nextSteps: [
-            [
-              'Run',
-              {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
-              'to see rollout progress.',
-            ],
-          ],
         })
   }
 

@@ -39,10 +39,7 @@ async function fetchAppVersions(
     const message = appVersion.message ?? ''
     return {
       ...appVersion,
-      status:
-        appVersion.status === 'active'
-          ? colors.green(`★ ${appVersion.status} (${appVersion.distributionPercentage}%)`)
-          : appVersion.status,
+      status: appVersion.status === 'active' ? colors.green(`★ ${appVersion.status}`) : appVersion.status,
       createdBy: appVersion.createdBy?.displayName ?? '',
       createdAt: formatDate(new Date(appVersion.createdAt)),
       message,
