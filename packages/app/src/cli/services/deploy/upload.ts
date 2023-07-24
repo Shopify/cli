@@ -485,10 +485,35 @@ async function uploadFunctionExtension(
   const res: AppFunctionSetMutationSchema = await functionProxyRequest(options.apiKey, query, options.token, variables)
   const userErrors = res.data.functionSet.userErrors ?? []
   if (userErrors.length !== 0) {
-    const errorMessage = outputContent`The deployment of functions failed with the following errors:
-${outputToken.json(userErrors)}
-    `
-    throw new AbortError(errorMessage)
+    if (userErrors.filter((error) => error.tag === 'version_unsupported_error').length) {
+      const errorMessage = outputContent`Deployment failed due to a Function targeting an unsupported API.`
+      const tryMessage: TokenItem = {
+        subdued: `To fix this issue, update the API version for ${variables.apiType}.`,
+      }
+      const customSections: AlertCustomSection[] = [
+        {
+          body: {
+            list: {
+              title: 'Reference',
+              items: [
+                {
+                  link: {
+                    label: 'Api versioning',
+                    url: 'https://shopify.dev/docs/api/usage/versioning',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ]
+      throw new AbortError(errorMessage, tryMessage, [], customSections)
+    } else {
+      const errorMessage = outputContent`The deployment of functions failed with the following errors:
+      ${outputToken.json(userErrors)}
+          `
+      throw new AbortError(errorMessage)
+    }
   }
   return res.data.functionSet.function?.id as string
 }
