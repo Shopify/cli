@@ -28,6 +28,7 @@ const APP = {
   grantedScopes: [],
   applicationUrl: 'https://example.com',
   redirectUrlWhitelist: [],
+  apiSecretKeys: [],
 }
 
 beforeEach(() => {
@@ -153,7 +154,7 @@ describe('release', () => {
 async function testRelease(
   app: AppInterface,
   version: string,
-  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys'>,
+  partnersApp?: OrganizationApp,
   options?: {
     force?: boolean
   },
