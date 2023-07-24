@@ -2,10 +2,9 @@ import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
-import {handleCtrlC} from '../../ui.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import {Box, Text, useInput, useStdin} from 'ink'
+import {Box, Text, useStdin} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
@@ -99,17 +98,6 @@ function Tasks<TContext>({
       setState(TasksState.Failure)
     },
   })
-
-  useInput(
-    (input, key) => {
-      handleCtrlC(input, key)
-
-      if (key.return) {
-        return null
-      }
-    },
-    {isActive: Boolean(isRawModeSupported)},
-  )
 
   const {isAborted} = useAbortSignal(abortSignal)
 
