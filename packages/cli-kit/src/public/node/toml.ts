@@ -10,7 +10,8 @@ export type JsonMapType = JsonMap
  * @returns JSON object.
  */
 export function decodeToml(input: string): object {
-  return toml.parse(input)
+  const normalizedInput = input.replace(/\r\n$/g, '\n')
+  return toml.parse(normalizedInput)
 }
 
 /**
