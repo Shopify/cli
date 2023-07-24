@@ -1104,6 +1104,14 @@
           "hidden": false,
           "multiple": false
         },
+        "type": {
+          "name": "type",
+          "type": "option",
+          "char": "t",
+          "description": "Deprecated. Please use --template",
+          "hidden": false,
+          "multiple": false
+        },
         "template": {
           "name": "template",
           "type": "option",
@@ -1276,6 +1284,14 @@
           "type": "option",
           "char": "c",
           "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
+        },
+        "type": {
+          "name": "type",
+          "type": "option",
+          "char": "t",
+          "description": "Deprecated. Please use --template",
           "hidden": false,
           "multiple": false
         },
