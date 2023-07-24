@@ -269,6 +269,7 @@ async function launchDevProcesses({
   return renderDev({
     processes: processesForTaskRunner,
     previewUrl,
+    graphiqlUrl: '',
     app,
     abortController,
   })

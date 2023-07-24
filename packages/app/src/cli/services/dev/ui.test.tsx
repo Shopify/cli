@@ -133,6 +133,7 @@ describe('ui', () => {
 
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
+      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const app = {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
@@ -142,7 +143,7 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, app, abortController})
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
 
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
@@ -162,6 +163,7 @@ describe('ui', () => {
 
       const processes = [concurrentProcess]
       const previewUrl = 'https://lala.cloudflare.io/'
+      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
       const app = {
         canEnablePreviewMode: true,
         developmentStorePreviewEnabled: false,
@@ -172,7 +174,7 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, app, abortController})
+      renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 

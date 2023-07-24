@@ -70,6 +70,7 @@ describe('Dev', () => {
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -145,6 +146,7 @@ describe('Dev', () => {
         processes={[backendProcess, frontendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
       {stdin: new Stdin({isTTY: false})},
@@ -174,7 +176,7 @@ describe('Dev', () => {
   test('opens the previewUrl when p is pressed', async () => {
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     await waitForInputsToBeReady()
@@ -192,7 +194,7 @@ describe('Dev', () => {
 
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     const promise = renderInstance.waitUntilExit()
@@ -212,7 +214,7 @@ describe('Dev', () => {
 
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     const promise = renderInstance.waitUntilExit()
@@ -251,6 +253,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={abortController}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -314,6 +317,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={abortController}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -371,6 +375,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -418,6 +423,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={abortController}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -458,6 +464,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
         pollingTime={200}
       />,
@@ -518,6 +525,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={{
           ...testApp,
           canEnablePreviewMode: false,
@@ -570,6 +578,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
         pollingTime={200}
       />,
@@ -602,7 +611,7 @@ describe('Dev', () => {
     vi.mocked(developerPreviewUpdate).mockResolvedValueOnce(true)
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -661,6 +670,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -708,6 +718,7 @@ describe('Dev', () => {
         processes={[backendProcess]}
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
         app={testApp}
       />,
     )
@@ -740,7 +751,7 @@ describe('Dev', () => {
   test('enables preview mode at startup', async () => {
     // Given
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -772,7 +783,7 @@ describe('Dev', () => {
     vi.mocked(enableDeveloperPreview).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
@@ -799,7 +810,7 @@ describe('Dev', () => {
     vi.mocked(openURL).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
