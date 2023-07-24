@@ -70,7 +70,7 @@ program
       : new Set(options.extensions.split(","));
 
     const appName = options.name;
-    const template = options.template || "node";
+    const template = options.template || "remix";
     const appPath = path.join(homeDir, "Desktop", appName);
 
     switch (options.packageManager) {
