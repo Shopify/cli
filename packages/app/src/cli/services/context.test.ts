@@ -1041,8 +1041,9 @@ describe('ensureReleaseContext', () => {
       },
       command: 'release',
     })
+
     expect(got.app).toEqual(app)
-    expect(got.apiKey).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey)
+    expect(got.partnersApp).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
     expect(got.token).toEqual('token')
   })
 })

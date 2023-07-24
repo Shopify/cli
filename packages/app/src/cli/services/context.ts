@@ -238,9 +238,9 @@ export interface ReleaseContextOptions {
 }
 
 interface ReleaseContextOutput {
-  apiKey: string
   token: string
   app: AppInterface
+  partnersApp: OrganizationApp
 }
 
 interface DeployContextOutput {
@@ -414,6 +414,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   const result = {
     app: options.app,
     apiKey: partnersApp.apiKey,
+    partnersApp,
     token,
   }
 
@@ -753,6 +754,6 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
 async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(partnerId),
-    api_key: env.apiKey,
+    api_key: env.partnersApp.apiKey,
   }))
 }
