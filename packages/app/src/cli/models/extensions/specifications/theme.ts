@@ -19,13 +19,6 @@ const spec = createExtensionSpecification({
     if (useThemebundling()) return ['bundling', 'theme']
     return ['theme']
   },
-  previewMessage() {
-    const link = outputToken.link(
-      'dev doc instructions',
-      'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
-    )
-    return outputContent`Follow the ${link} by deploying your work as a draft`
-  },
   deployConfig: async () => {
     if (!useThemebundling()) return undefined
     return {theme_extension: {files: {}}}

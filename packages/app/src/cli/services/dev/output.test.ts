@@ -1,4 +1,4 @@
-import {outputExtensionsMessages, outputUpdateURLsResult} from './output.js'
+import {outputUpdateURLsResult} from './output.js'
 import {
   testApp,
   testFunctionExtension,
@@ -91,21 +91,6 @@ describe('output', () => {
       expect(outputMock.output()).toMatch(`\`npm run shopify app config push -- --config=staging\``)
       expect(outputMock.output()).toMatch(`• ${urls.redirectUrlWhitelist[0]}`)
       expect(outputMock.output()).not.toMatch(`https://partners.shopify.com/`)
-    })
-  })
-
-  describe('outputExtensionsMessages', () => {
-    test('logs the correct output extension message when the given app contains a customer-accounts-ui-extension', async () => {
-      const outputMock = mockAndCaptureOutput()
-      const appMock = await mockApp()
-
-      outputExtensionsMessages(appMock)
-
-      expect(outputMock.output()).toMatchInlineSnapshot(`
-        "theme extension name (Theme)
-        Follow the dev doc instructions ( https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes ) by deploying your work as a draft
-        "
-      `)
     })
   })
 })

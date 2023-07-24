@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputExtensionsMessages, outputUpdateURLsResult, renderDev} from './dev/output.js'
+import {outputUpdateURLsResult, renderDev} from './dev/output.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -39,7 +39,6 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {OrganizationApp} from '../models/organization.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -299,7 +298,7 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  await outputExtensionsMessage(remoteApp, localApp)
+  await renderDevPreviewWarning(remoteApp, localApp)
 
   if (sendUninstallWebhook) {
     additionalProcesses.push({
@@ -645,17 +644,6 @@ async function validateCustomPorts(webConfigs: Web[]) {
       }
     }),
   )
-}
-
-async function outputExtensionsMessage(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
-  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
-  if (unifiedDeployment) {
-    await renderDevPreviewWarning(remoteApp, localApp)
-  } else {
-    // Remove this once theme app extensions and functions are displayed
-    // by the dev console
-    outputExtensionsMessages(localApp)
-  }
 }
 
 function scopesMessage(scopes: string[]) {

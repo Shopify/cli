@@ -195,39 +195,6 @@ Please check the configuration in ${tomlPath}`),
     })
   })
 
-  describe('previewMessage()', async () => {
-    test('maps every target to a preview link', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        // Given
-        const uiExtension = await getTestUIExtension({
-          directory: tmpDir,
-          extensionPoints: [
-            {
-              target: 'EXTENSION::POINT::A',
-              module: './src/ExtensionPointA.js',
-            },
-            {
-              target: 'EXTENSION::POINT::B',
-              module: './src/ExtensionPointB.js',
-            },
-          ],
-        })
-
-        // When
-        const host = 'http://1234.cloudflare.io'
-        const previewMessage = await uiExtension.previewMessage(host, 'not_used')
-
-        // Then
-        expect(previewMessage!.value).toContain(
-          `EXTENSION::POINT::A preview link: ${host}/extensions/${uiExtension.devUUID}/EXTENSION::POINT::A`,
-        )
-        expect(previewMessage!.value).toContain(
-          `EXTENSION::POINT::B preview link: ${host}/extensions/${uiExtension.devUUID}/EXTENSION::POINT::B`,
-        )
-      })
-    })
-  })
-
   describe('deployConfig()', () => {
     test('returns the deploy config', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
