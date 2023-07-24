@@ -31,8 +31,8 @@ export interface GenerateOptions {
   reset: boolean
   commandConfig: Config
   apiKey?: string
-  type?: string
   template?: string
+  flavor?: string
   name?: string
   cloneUrl?: string
   configName?: string
@@ -53,7 +53,7 @@ async function generate(options: GenerateOptions) {
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
-  await saveAnalyticsMetadata(promptAnswers, options.type)
+  await saveAnalyticsMetadata(promptAnswers, options.template)
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
   const generatedExtensions = await generateExtensionTemplate(generateExtensionOptions)
@@ -67,15 +67,15 @@ async function buildPromptOptions(
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
-  const extensionTemplate = await handleTypeParameter(options.type, app, extensionTemplates, specifications)
-  validateExtensionFlavor(extensionTemplate, options.template)
+  const extensionTemplate = await handleTypeParameter(options.template, app, extensionTemplates, specifications)
+  validateExtensionFlavor(extensionTemplate, options.flavor)
 
   const {validTemplates, templatesOverlimit} = checkLimits(extensionTemplates, specifications, app)
 
   return {
     templateType: extensionTemplate?.identifier,
     name: options.name,
-    extensionFlavor: options.template as ExtensionFlavorValue,
+    extensionFlavor: options.flavor as ExtensionFlavorValue,
     directory: joinPath(options.directory, 'extensions'),
     app,
     extensionTemplates: validTemplates ?? [],
