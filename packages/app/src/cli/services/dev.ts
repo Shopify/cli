@@ -53,11 +53,11 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {keypress, renderWarning} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
@@ -127,6 +127,9 @@ async function dev(options: DevOptions) {
       ],
       nextSteps,
     })
+
+    outputInfo(`👉 Press any key to continue`)
+    await keypress()
   }
 
   const frontendConfig = localApp.webs.find((web) => isWebType(web, WebType.Frontend))
