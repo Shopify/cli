@@ -233,7 +233,7 @@ export interface ReleaseContextOptions {
 interface ReleaseContextOutput {
   token: string
   app: AppInterface
-  partnersApp: Omit<OrganizationApp, 'apiSecretKeys'>
+  partnersApp: OrganizationApp
 }
 
 interface DeployContextOutput {
@@ -407,17 +407,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   const result = {
     app: options.app,
     apiKey: partnersApp.apiKey,
-    partnersApp: {
-      id: partnersApp.id,
-      apiKey: partnersApp.apiKey,
-      title: partnersApp.title,
-      appType: partnersApp.appType,
-      organizationId: partnersApp.organizationId,
-      grantedScopes: partnersApp.grantedScopes,
-      betas: partnersApp.betas,
-      applicationUrl: partnersApp.applicationUrl,
-      redirectUrlWhitelist: partnersApp.redirectUrlWhitelist,
-    },
+    partnersApp,
     token,
   }
 

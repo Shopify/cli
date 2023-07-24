@@ -942,9 +942,9 @@ describe('ensureReleaseContext', () => {
       },
       command: 'release',
     })
-    const {apiSecretKeys, ...partnersAppWithoutSecretKeys} = APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA
+
     expect(got.app).toEqual(app)
-    expect(got.partnersApp).toEqual(partnersAppWithoutSecretKeys)
+    expect(got.partnersApp).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
     expect(got.token).toEqual('token')
   })
 })
