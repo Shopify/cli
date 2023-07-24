@@ -5,6 +5,7 @@ import generate from '../../../services/generate.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class AppGenerateExtension extends Command {
   static description = 'Scaffold an Extension.'
@@ -13,6 +14,12 @@ export default class AppGenerateExtension extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    type: Flags.string({
+      char: 't',
+      hidden: false,
+      description: `Deprecated. Please use --template`,
+      env: 'SHOPIFY_FLAG_EXTENSION_TYPE',
+    }),
     template: Flags.string({
       char: 't',
       hidden: false,
@@ -77,6 +84,14 @@ export default class AppGenerateExtension extends Command {
       cmd_scaffold_template_custom: flags['clone-url'] !== undefined,
       cmd_scaffold_type_owner: '@shopify/app',
     }))
+
+    if (flags.type) {
+      renderWarning({
+        headline: ['The flag --type has been deprecated in favor of --template.'],
+        body: ['Please use --template instead.'],
+      })
+      return
+    }
 
     await generate({
       directory: flags.path,
