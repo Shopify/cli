@@ -135,6 +135,9 @@ describe('deepDifference', () => {
         },
         same: 'same',
       },
+      sameList: [1, 2, 3],
+      diffList: [1, 2, 'diff1'],
+      listOfObjects: [{same: 'same'}, {diff: 'diff1'}],
     }
 
     const obj2 = {
@@ -162,6 +165,9 @@ describe('deepDifference', () => {
         },
         same: 'same',
       },
+      sameList: [1, 2, 3],
+      diffList: [1, 2, 'diff2'],
+      listOfObjects: [{same: 'same'}, {diff: 'diff2'}],
     }
 
     // When
@@ -184,6 +190,8 @@ describe('deepDifference', () => {
           },
           same: 'same',
         },
+        diffList: [1, 2, 'diff1'],
+        listOfObjects: [{same: 'same'}, {diff: 'diff1'}],
       },
       {
         key2: {subkey1: 2, nestedIdentical: 'same'},
@@ -199,6 +207,8 @@ describe('deepDifference', () => {
           },
           same: 'same',
         },
+        diffList: [1, 2, 'diff2'],
+        listOfObjects: [{same: 'same'}, {diff: 'diff2'}],
       },
     ])
   })
