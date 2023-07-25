@@ -265,9 +265,7 @@ async function dev(options: DevOptions) {
       envIdentifiers: prodEnvIdentifiers,
     })
 
-    if (localApp.usesLinkedConfig) {
-      await updateAppIdentifiers({app: localApp, identifiers, command: 'deploy'})
-    }
+    await updateAppIdentifiers({app: localApp, identifiers, command: 'deploy'})
 
     additionalProcesses.push(
       devDraftableExtensionTarget({

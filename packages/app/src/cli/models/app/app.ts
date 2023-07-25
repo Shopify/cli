@@ -190,7 +190,6 @@ export interface AppInterface extends AppConfigurationInterface {
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
-  usesLinkedConfig: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   errors?: AppErrors
@@ -212,7 +211,6 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
-  usesLinkedConfig: boolean
 
   // eslint-disable-next-line max-params
   constructor(
@@ -226,7 +224,6 @@ export class App implements AppInterface {
     webs: Web[],
     extensions: ExtensionInstance[],
     usesWorkspaces: boolean,
-    usesLinkedConfig: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -242,7 +239,6 @@ export class App implements AppInterface {
     this.allExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
-    this.usesLinkedConfig = usesLinkedConfig
   }
 
   async updateDependencies() {
@@ -264,7 +260,7 @@ export class App implements AppInterface {
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: []}
-    super('', '', '', 'npm', configuration, '', {}, [], [], false, false)
+    super('', '', '', 'npm', configuration, '', {}, [], [], false)
   }
 }
 
