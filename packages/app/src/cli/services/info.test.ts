@@ -244,6 +244,7 @@ describe('info', () => {
         configurationPath: 'extension/path/1',
       })
       const uiExtension2 = await testUIExtension({
+        directory: 'extension-2-directory',
         configuration: {
           name: 'Extension 2',
           type: 'checkout_ui_extension',
@@ -298,7 +299,7 @@ describe('info', () => {
       // Shows handle in title
       expect(result).toContain('📂 handle-for-extension-1')
       // Shows default handle derived from name when no handle is present
-      expect(result).toContain('📂 extension-2')
+      expect(result).toContain('📂 extension-2-directory')
       expect(result).toContain('! Mock error with ui_extension')
       expect(result).toContain('! Mock error with checkout_ui_extension')
     })

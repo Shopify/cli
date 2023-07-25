@@ -132,7 +132,7 @@ export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = 
   return extension
 }
 
-export async function testThemeExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+export async function testThemeExtensions(directory = './my-extension-directory'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'theme extension name',
     type: 'theme' as const,

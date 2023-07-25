@@ -311,7 +311,7 @@ describe('deploy', () => {
       {
         identifiers: {
           app: 'app-id',
-          extensions: {'test-function-extension': 'test-function-extension'},
+          extensions: {'my-function': 'my-function'},
           extensionIds: {},
         },
         token: 'api-token',

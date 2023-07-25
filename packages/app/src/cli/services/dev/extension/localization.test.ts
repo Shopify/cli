@@ -13,6 +13,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
   const extension = await testUIExtension({
     configuration: {
       name: 'mock-name',
+      handle: 'mock-handle',
       type: 'checkout_ui_extension',
       metafields: [],
       capabilities: {
@@ -143,7 +144,7 @@ describe('when there are locale files', () => {
 
       await testGetLocalization(tmpDir)
 
-      expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('mock-name'), undefined)
+      expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('mock-handle'), undefined)
       expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining(tmpDir), undefined)
     })
   })

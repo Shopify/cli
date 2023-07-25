@@ -25,7 +25,7 @@ describe('themeExtensionArgs', async () => {
     const args = await themeExtensionArgs(extension, apiKey, token, options)
 
     expect(args).toEqual([
-      './my-extension',
+      './my-extension-directory',
       '--api-key',
       'api_key_0000_1111_2222',
 
@@ -33,7 +33,7 @@ describe('themeExtensionArgs', async () => {
       '--extension-id',
       'extension ID',
       '--extension-title',
-      'theme-extension-name',
+      'my-extension-directory',
       '--extension-type',
       'THEME_APP_EXTENSION',
 
