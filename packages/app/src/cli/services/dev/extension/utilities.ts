@@ -33,6 +33,11 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
         return 'post_purchase'
       }
 
+      // The Thank You page is rendered as part of the checkout application
+      if (page === 'thank-you') {
+        return 'checkout'
+      }
+
       // Checkout UI extensions
       return page
     }

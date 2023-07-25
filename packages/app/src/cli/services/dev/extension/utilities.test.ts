@@ -11,9 +11,15 @@ describe('getExtensionPointTargetSurface()', () => {
     expect(getExtensionPointTargetSurface('Checkout::Dynamic::Render')).toBe('checkout')
   })
 
+  test('returns "checkout" for a UI extension targeting purchase.thank-you.*', async () => {
+    expect(getExtensionPointTargetSurface('purchase.thank-you.block.render')).toBe('checkout')
+    expect(getExtensionPointTargetSurface('purchase.thank-you.contact-information.render-after')).toBe('checkout')
+    expect(getExtensionPointTargetSurface('purchase.thank-you.cart-line-item.render-after')).toBe('checkout')
+    expect(getExtensionPointTargetSurface('purchase.thank-you.cart-line-list.render-after')).toBe('checkout')
+  })
+
   test('returns "checkout" for a UI extension targeting customer-account.order-status.*', async () => {
     expect(getExtensionPointTargetSurface('customer-account.order-status.block.render')).toBe('checkout')
-    expect(getExtensionPointTargetSurface('customer-account.order-status.timeline.render-after')).toBe('checkout')
     expect(getExtensionPointTargetSurface('customer-account.order-status.contact-information.render-after')).toBe(
       'checkout',
     )
