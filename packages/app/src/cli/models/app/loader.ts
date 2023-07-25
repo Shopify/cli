@@ -221,6 +221,7 @@ class AppLoader {
       configurationPath,
       configuration,
       configurationLoadResultMetadata,
+      usesLinkedConfig,
     } = await configurationLoader.loaded()
     const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
@@ -250,6 +251,7 @@ class AppLoader {
       webs,
       allExtensions,
       usesWorkspaces,
+      usesLinkedConfig,
       dotenv,
     )
 
@@ -547,12 +549,15 @@ class AppConfigurationLoader {
 
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
+    let usesLinkedConfig = false
+
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
       usesLinkedConfig: false,
       allClientIdsByConfigName,
     }
 
     if (isCurrentAppSchema(configuration)) {
+      usesLinkedConfig = true
       let gitTracked = false
       try {
         gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
@@ -571,7 +576,13 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {
+      directory: appDirectory,
+      configuration,
+      configurationPath,
+      configurationLoadResultMetadata,
+      usesLinkedConfig,
+    }
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
