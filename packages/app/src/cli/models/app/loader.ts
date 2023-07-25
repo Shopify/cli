@@ -402,17 +402,20 @@ class AppLoader {
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
 
     // Validate that all extensions have a unique handle.
+    const handles = new Set()
     allExtensions.forEach((extension) => {
-      const matchingExtensions = allExtensions.filter((ext) => ext.handle && ext.handle === extension.handle)
-      if (matchingExtensions.length > 1) {
+      if (extension.handle && handles.has(extension.handle)) {
+        const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
         const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
-        const handle = outputToken.yellow(extension.handle)
+        const handle = outputToken.cyan(extension.handle)
 
         this.abortOrReport(
           outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
           undefined,
           extension.configurationPath,
         )
+      } else if (extension.handle) {
+        handles.add(extension.handle)
       }
     })
 
