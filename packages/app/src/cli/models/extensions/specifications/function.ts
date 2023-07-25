@@ -62,6 +62,7 @@ const spec = createExtensionSpecification({
     'product_discounts',
     'shipping_discounts',
     'fulfillment_constraints',
+    'order_routing_location_rule',
   ],
   singleEntryPath: false,
   schema: FunctionExtensionSchema,
