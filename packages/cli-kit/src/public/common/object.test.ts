@@ -118,6 +118,23 @@ describe('deepDifference', () => {
       differentTopLevel: 'obj1',
       onlyInOneObject: 'only',
       inOneButOtherUndefined: 'is set',
+      deepIdentical: {
+        foo: {
+          bar: {
+            baz: 'deep',
+          },
+        },
+      },
+      deepDifferent: {
+        foo: {
+          bar: {
+            baz: 'obj1',
+            same: 'same',
+          },
+          same: 'same',
+        },
+        same: 'same',
+      },
     }
 
     const obj2 = {
@@ -128,6 +145,23 @@ describe('deepDifference', () => {
       },
       differentTopLevel: 'obj2',
       inOneButOtherUndefined: undefined,
+      deepIdentical: {
+        foo: {
+          bar: {
+            baz: 'deep',
+          },
+        },
+      },
+      deepDifferent: {
+        foo: {
+          bar: {
+            baz: 'obj2',
+            same: 'same',
+          },
+          same: 'same',
+        },
+        same: 'same',
+      },
     }
 
     // When
@@ -140,8 +174,32 @@ describe('deepDifference', () => {
         differentTopLevel: 'obj1',
         onlyInOneObject: 'only',
         inOneButOtherUndefined: 'is set',
+        deepDifferent: {
+          foo: {
+            bar: {
+              baz: 'obj1',
+              same: 'same',
+            },
+            same: 'same',
+          },
+          same: 'same',
+        },
       },
-      {key2: {subkey1: 2, nestedIdentical: 'same'}, differentTopLevel: 'obj2', inOneButOtherUndefined: undefined},
+      {
+        key2: {subkey1: 2, nestedIdentical: 'same'},
+        differentTopLevel: 'obj2',
+        inOneButOtherUndefined: undefined,
+        deepDifferent: {
+          foo: {
+            bar: {
+              baz: 'obj2',
+              same: 'same',
+            },
+            same: 'same',
+          },
+          same: 'same',
+        },
+      },
     ])
   })
 })
