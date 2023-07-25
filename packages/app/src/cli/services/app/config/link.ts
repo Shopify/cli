@@ -2,9 +2,12 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
+  CurrentAppConfiguration,
   EmptyApp,
   isCurrentAppSchema,
   isLegacyAppSchema,
+  getAppScopesArray,
+  AppSchema,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -13,13 +16,14 @@ import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.j
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
-import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
+import {writeAppConfigurationFile, rewriteConfiguration} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {deepDifference} from '@shopify/cli-kit/common/object'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -116,8 +120,11 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
-  const configuration: AppConfiguration = {
+export function mergeAppConfiguration(
+  localApp: Pick<AppInterface, 'configuration'>,
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>,
+): CurrentAppConfiguration {
+  const configuration: CurrentAppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
     application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
@@ -171,7 +178,7 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
   return configuration
 }
 
-const getAccessScopes = (localApp: AppInterface, remoteApp: OrganizationApp) => {
+const getAccessScopes = (localApp: Pick<AppInterface, 'configuration'>, remoteApp: OrganizationApp) => {
   // if we have upstream scopes, use them
   if (remoteApp.requestedAccessScopes) {
     return {
@@ -194,4 +201,32 @@ const getAccessScopes = (localApp: AppInterface, remoteApp: OrganizationApp) => 
       use_legacy_install_flow: true,
     }
   }
+}
+
+/**
+ * Gets the difference between the local and remote app configuration.
+ *
+ * Returns a pair of values, the first being the local configuration that is different from the remote configuration, and then vice versa.
+ *
+ * @param configuration - Current local app configuration.
+ * @param app - Remotely fetched app.
+ * @returns A tuple of the difference between the local and remote app configuration.
+ */
+export function getConfigDiffBetweenLocalAndRemote(
+  configuration: CurrentAppConfiguration,
+  app: Omit<OrganizationApp, 'apiSecretKeys'>,
+): [Partial<CurrentAppConfiguration>, Partial<CurrentAppConfiguration>] {
+  const remoteConfiguration = mergeAppConfiguration({configuration}, app)
+
+  if (configuration.access_scopes?.scopes)
+    configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
+
+  // always ignore any changes to the build field
+  const ignoreables: {[k in keyof CurrentAppConfiguration]?: undefined} = {
+    build: undefined,
+  }
+  return deepDifference(
+    {...rewriteConfiguration(AppSchema, configuration), ...ignoreables},
+    {...rewriteConfiguration(AppSchema, remoteConfiguration), ...ignoreables},
+  )
 }

@@ -1,10 +1,9 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
-import {AppInterface, AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
-import {mergeAppConfiguration} from '../services/app/config/link.js'
+import {getConfigDiffBetweenLocalAndRemote} from '../services/app/config/link.js'
+import {CurrentAppConfiguration} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
-import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
 import {
   RenderTextPromptOptions,
   renderConfirmationPrompt,
@@ -17,7 +16,7 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
+import {deepCompare} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
@@ -77,15 +76,8 @@ export async function confirmPushChanges(options: PushOptions, app: App) {
   if (options.force) return true
 
   const configuration = options.configuration as CurrentAppConfiguration
-  const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
 
-  if (configuration.access_scopes?.scopes)
-    configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
-
-  const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(AppSchema, configuration) as object), build: undefined},
-    {...(rewriteConfiguration(AppSchema, remoteConfiguration) as object), build: undefined},
-  )
+  const [updated, baseline] = getConfigDiffBetweenLocalAndRemote(configuration, app as OrganizationApp)
 
   if (deepCompare(updated, baseline)) {
     renderInfo({headline: 'No changes to update.'})
