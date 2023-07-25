@@ -26,12 +26,22 @@ export async function writeAppConfigurationFile(configFilePath: string, configur
   writeFileSync(configFilePath, file)
 }
 
-export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {
-  if (schema === null || schema === undefined) return null
+/**
+ * Rewrite a config object to have consistently ordered keys based on a given schema
+ *
+ * @param schema - Zod schema to base ordering upon
+ * @param config - Config object to rewrite
+ * @returns new, rewritten, config object
+ */
+export const rewriteConfiguration = <TSchema extends zod.ZodTypeAny, TConfig>(
+  schema: TSchema,
+  config: TConfig,
+): TConfig => {
+  if (schema === null || schema === undefined) return null as TConfig
   if (schema instanceof zod.ZodNullable || schema instanceof zod.ZodOptional)
     return rewriteConfiguration(schema.unwrap(), config)
   if (schema instanceof zod.ZodArray) {
-    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
+    return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item)) as TConfig
   }
   if (schema instanceof zod.ZodObject) {
     const entries = Object.entries(schema.shape)
@@ -39,14 +49,14 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
     let result: {[key: string]: unknown} = {}
     entries.forEach(([key, subSchema]) => {
       if (confObj !== undefined && confObj[key] !== undefined) {
-        let value = rewriteConfiguration(subSchema as T, confObj[key])
+        let value = rewriteConfiguration(subSchema as TSchema, confObj[key])
         if (value instanceof Object && Object.keys(value as object).length === 0) {
           value = undefined
         }
         result = {...result, [key]: value}
       }
     })
-    return result
+    return result as TConfig
   }
   return config
 }
