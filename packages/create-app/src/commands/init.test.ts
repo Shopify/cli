@@ -1,5 +1,5 @@
 import Init from './init.js'
-import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initPrompt, {visibleTemplates} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
@@ -32,6 +32,14 @@ describe('create app command', () => {
     expect(initService).toHaveBeenCalledOnce()
   })
 
+  test('executes correctly when using a non-visible template alias name', async () => {
+    // When
+    await Init.run(['--template', 'node'])
+
+    // Then
+    expect(initService).toHaveBeenCalledOnce()
+  })
+
   test('executes correctly when using a github url as a template alias name', async () => {
     // When
     await Init.run(['--template', 'https://github.com/myrepo'])
@@ -50,7 +58,7 @@ describe('create app command', () => {
     // Then
     const anyConfig = expect.any(Config)
     const expectedError = new AbortError(
-      outputContent`Only ${Object.keys(templateURLMap)
+      outputContent`Only ${visibleTemplates
         .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
         .join(', ')} template aliases are supported`,
     )
