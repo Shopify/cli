@@ -75,7 +75,7 @@ export function deepCompare(one: object, two: object): boolean {
  * @param two - The second object to be compared.
  * @returns Two objects containing the fields that are different, each one with the values of one object.
  */
-export function deepDifference(one: object, two: object): [object, object] {
+export function deepDifference<T1, T2>(one: T1, two: T2): [Partial<T1>, Partial<T2>] {
   const differenceWith = require('lodash/differenceWith.js')
   const fromPairs = require('lodash/fromPairs.js')
   const toPairs = require('lodash/toPairs.js')

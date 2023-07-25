@@ -109,24 +109,39 @@ describe('deepCompare', () => {
 describe('deepDifference', () => {
   test('returns the difference between two objects', () => {
     // Given
-    const obj1: object = {
+    const obj1 = {
       key1: 1,
       key2: {
         subkey1: 1,
+        nestedIdentical: 'same',
       },
+      differentTopLevel: 'obj1',
+      onlyInOneObject: 'only',
+      inOneButOtherUndefined: 'is set',
     }
 
-    const obj2: object = {
+    const obj2 = {
       key1: 1,
       key2: {
         subkey1: 2,
+        nestedIdentical: 'same',
       },
+      differentTopLevel: 'obj2',
+      inOneButOtherUndefined: undefined,
     }
 
     // When
     const result = deepDifference(obj1, obj2)
 
     // Then
-    expect(result).toEqual([{key2: {subkey1: 1}}, {key2: {subkey1: 2}}])
+    expect(result).toEqual([
+      {
+        key2: {subkey1: 1, nestedIdentical: 'same'},
+        differentTopLevel: 'obj1',
+        onlyInOneObject: 'only',
+        inOneButOtherUndefined: 'is set',
+      },
+      {key2: {subkey1: 2, nestedIdentical: 'same'}, differentTopLevel: 'obj2', inOneButOtherUndefined: undefined},
+    ])
   })
 })
