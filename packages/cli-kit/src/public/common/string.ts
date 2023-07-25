@@ -350,6 +350,7 @@ export function formatDate(date: Date): string {
 
 /**
  * Given a list of items, it returns a string with the items joined by commas and the last item joined by "and".
+ * All items are wrapped in double quotes.
  * For example: ["a", "b", "c"] returns "a", "b" and "c".
  *
  * @param items - List of items.
@@ -357,7 +358,7 @@ export function formatDate(date: Date): string {
  */
 export function joinWithAnd(items: string[]): string {
   if (items.length === 0) return ''
-  if (items.length === 1) return `${items[0]}`
+  if (items.length === 1) return `"${items[0]}"`
 
   return `${items
     .slice(0, -1)
