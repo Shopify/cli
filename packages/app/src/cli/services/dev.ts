@@ -265,7 +265,9 @@ async function dev(options: DevOptions) {
       envIdentifiers: prodEnvIdentifiers,
     })
 
-    await updateAppIdentifiers({app: localApp, identifiers, command: 'deploy'})
+    if (isCurrentAppSchema(localApp.configuration)) {
+      await updateAppIdentifiers({app: localApp, identifiers, command: 'deploy'})
+    }
 
     additionalProcesses.push(
       devDraftableExtensionTarget({
