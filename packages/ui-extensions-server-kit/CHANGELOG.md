@@ -1,5 +1,20 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.0.0
+
+### Major Changes
+
+- ec90885f4: Drop support for setting a translatable label at the extension point level.
+  The translatable merchant-facing string should be set at using the extension's name instead.
+
+### Minor Changes
+
+- b8e11a77d: @shopify/ui-extensions-server-kit enable subscribing to connection open/close events
+
+### Patch Changes
+
+- 8519a9701: Update helper for return the surface for each extension target to account for new target names
+
 ## 4.2.1
 
 ### Patch Changes
