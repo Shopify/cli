@@ -178,7 +178,10 @@ export function mergeAppConfiguration(
   return configuration
 }
 
-const getAccessScopes = (localApp: Pick<AppInterface, 'configuration'>, remoteApp: OrganizationApp) => {
+const getAccessScopes = (
+  localApp: Pick<AppInterface, 'configuration'>,
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>,
+) => {
   // if we have upstream scopes, use them
   if (remoteApp.requestedAccessScopes) {
     return {
