@@ -25,7 +25,7 @@ describe('getUIExtensionPayload', () => {
 
       const uiExtension = await testUIExtension({
         outputPath,
-        directory: tmpDir,
+        directory: 'test-directory',
         configuration: {
           name: 'test-ui-extension',
           type: 'checkout_ui_extension',
@@ -73,7 +73,7 @@ describe('getUIExtensionPayload', () => {
           main: {
             lastUpdated: expect.any(Number),
             name: 'main',
-            url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+            url: 'http://tunnel-url.com/extensions/devUUID/assets/test-directory.js',
           },
         },
         capabilities: {
@@ -99,6 +99,7 @@ describe('getUIExtensionPayload', () => {
         metafields: null,
         // as surfaces come from remote specs, we dont' have real values here
         surface: 'test-surface',
+        handle: 'test-directory',
         title: 'test-ui-extension',
         type: 'checkout_ui_extension',
         uuid: 'devUUID',
