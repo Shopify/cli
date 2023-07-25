@@ -83,3 +83,71 @@ export function deepDifference<T1, T2>(one: T1, two: T2): [Partial<T1>, Partial<
   const changes2 = differenceWith(toPairs(two), toPairs(one), deepCompare)
   return [fromPairs(changes), fromPairs(changes2)]
 }
+
+/**
+ * Flattens an object to an array of key paths with values.
+ *
+ * E.g. `{foo: {bar: 'baz'}} => [['foo.bar', 'baz']`.
+ *
+ * Results are returned in keypath order.
+ *
+ * @param input - Object to flatten.
+ * @returns An array of key paths with values.
+ */
+export function flattenObjectToKeyPathsWithValues<T>(input: T): [string, unknown][] {
+  // flattens an object so that all keys are in a single array
+  const output: [string, unknown][] = []
+  const stack: [string, T][] = [['', input]]
+  while (stack.length > 0) {
+    const [path, current] = stack.pop()!
+    // this includes arrays - key would be 0, 1, 2, etc.
+    if (typeof current === 'object' && current !== null) {
+      for (const [key, value] of Object.entries(current)) {
+        stack.push([`${path}.${key}`, value])
+      }
+    } else {
+      output.push([path, current])
+    }
+  }
+  return output
+    .map<[string, unknown]>(([key, value]) => [key.substring(1, key.length), value])
+    .sort(([keyA, _valueA], [keyB, _valueB]) => keyA.localeCompare(keyB))
+}
+
+/**
+ * Flattens two objects and compares them, returning an array of key paths with values that are different, as well as the respective values.
+ *
+ * E.g. `{foo: 1}, {foo: 2} => [['foo', 1, 2]]`.
+ *
+ * Results are returned in keypath order. As objects are flattened, comparison respects deep equality.
+ *
+ * @param one - First object to compare.
+ * @param two - Second object to compare.
+ * @returns List of keypaths that differ, alongside the values from each object.
+ */
+export function flattenAndCompareObjects<TOne, TTwo>(one: TOne, two: TTwo): [string, unknown, unknown][] {
+  const differenceWith = require('lodash/differenceWith.js')
+
+  // flatten to [['foo.bar', 'value]...]
+  const flattenedOne = flattenObjectToKeyPathsWithValues(one)
+  const flattenedTwo = flattenObjectToKeyPathsWithValues(two)
+
+  // grab the entries different in each flattened list, then convert back to a map
+  const inOneNotTwo = differenceWith(flattenedOne, flattenedTwo, deepCompare) as [string, unknown][]
+  const inOneNotTwoMap = Object.fromEntries(inOneNotTwo)
+
+  const inTwoNotOne = differenceWith(flattenedTwo, flattenedOne, deepCompare) as [string, unknown][]
+  const inTwoNotOneMap = Object.fromEntries(inTwoNotOne)
+
+  // build the result
+  const allKeys = new Set([...Object.keys(inOneNotTwoMap), ...Object.keys(inTwoNotOneMap)])
+  const result: [string, unknown, unknown][] = []
+  for (const key of allKeys) {
+    result.push([key, inOneNotTwoMap[key], inTwoNotOneMap[key]])
+  }
+
+  // output in consistent ordering
+  return result.sort(([keyA, _valueOneFromA, _valueTwoFromA], [keyB, _valueOneFromB, _valueTwoFromB]) =>
+    keyA.localeCompare(keyB),
+  )
+}

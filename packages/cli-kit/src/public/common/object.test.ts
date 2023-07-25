@@ -1,4 +1,12 @@
-import {deepCompare, deepDifference, deepMergeObjects, mapValues, pickBy} from './object.js'
+import {
+  deepCompare,
+  deepDifference,
+  deepMergeObjects,
+  flattenAndCompareObjects,
+  flattenObjectToKeyPathsWithValues,
+  mapValues,
+  pickBy,
+} from './object.js'
 import {describe, expect, test} from 'vitest'
 
 describe('deepMergeObjects', () => {
@@ -210,6 +218,70 @@ describe('deepDifference', () => {
         diffList: [1, 2, 'diff2'],
         listOfObjects: [{same: 'same'}, {diff: 'diff2'}],
       },
+    ])
+  })
+})
+
+describe('flattenObjectToKeyPathsWithValues', () => {
+  test('flattens an interesting object', () => {
+    // Given
+    const input = {
+      topLevel: 1,
+      nestedObject: {
+        inside: 2,
+      },
+      anArray: [0, 1, 2],
+      anArrayWithObject: [{foo: 'bar'}, {abc: 'xyz'}],
+    }
+
+    // When
+    const result = flattenObjectToKeyPathsWithValues(input)
+
+    // Then
+    expect(result).toEqual([
+      ['anArray.0', 0],
+      ['anArray.1', 1],
+      ['anArray.2', 2],
+      ['anArrayWithObject.0.foo', 'bar'],
+      ['anArrayWithObject.1.abc', 'xyz'],
+      ['nestedObject.inside', 2],
+      ['topLevel', 1],
+    ])
+  })
+})
+
+describe('flattenAndCompareObjects', () => {
+  test('shows differences between two objects', () => {
+    // Given
+    const one = {
+      inBoth: 'same',
+      different: 'one',
+      onlyInOne: 'one',
+      nested: {
+        same: 'same',
+        diff: 'one',
+      },
+      array: ['same', 'one', 'same'],
+    }
+    const two = {
+      inBoth: 'same',
+      different: 'two',
+      nested: {
+        same: 'same',
+        diff: 'two',
+      },
+      array: ['same', 'two', 'same'],
+    }
+
+    // When
+    const result = flattenAndCompareObjects(one, two)
+
+    // Then
+    expect(result).toEqual([
+      ['array.1', 'one', 'two'],
+      ['different', 'one', 'two'],
+      ['nested.diff', 'one', 'two'],
+      ['onlyInOne', 'one', undefined],
     ])
   })
 })
