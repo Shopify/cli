@@ -18,6 +18,7 @@ import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {renderDevPreviewWarning} from './extensions/common.js'
+import {getConfigDiffBetweenLocalAndRemote} from './app/config/link.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -29,6 +30,7 @@ import {
   WebType,
   isLegacyAppSchema,
   isCurrentAppSchema,
+  CurrentAppConfiguration,
 } from '../models/app/app.js'
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
@@ -39,6 +41,7 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {OrganizationApp} from '../models/organization.js'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -53,12 +56,13 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
+import {flattenAndCompareObjects} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -109,24 +113,8 @@ async function dev(options: DevOptions) {
     localApp = await installAppDependencies(localApp)
   }
 
-  if (
-    isCurrentAppSchema(localApp.configuration) &&
-    !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
-  ) {
-    const nextSteps = [['Run', {command: 'shopify app config push'}, 'to push your scopes to the Partner Dashboard']]
-
-    renderWarning({
-      headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
-      body: [
-        `Scopes in ${basename(localApp.configurationPath)}:`,
-        scopesMessage(getAppScopesArray(localApp.configuration)),
-        '\n',
-        'Scopes in Partner Dashboard:',
-        scopesMessage(remoteApp.requestedAccessScopes || []),
-      ],
-      nextSteps,
-    })
+  if (isCurrentAppSchema(localApp.configuration)) {
+    await checkAndWarnAboutPotentialUnpushedChanges(localApp.configuration, remoteApp, localApp.configurationPath)
   }
 
   const frontendConfig = localApp.webs.find((web) => isWebType(web, WebType.Frontend))
@@ -651,6 +639,43 @@ function scopesMessage(scopes: string[]) {
     list: {
       items: scopes.length === 0 ? ['No scopes'] : scopes,
     },
+  }
+}
+
+async function checkAndWarnAboutPotentialUnpushedChanges(
+  configuration: CurrentAppConfiguration,
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>,
+  configurationPath: string,
+) {
+  const [updated, baseline] = getConfigDiffBetweenLocalAndRemote(configuration, remoteApp)
+  const differencesByKey = flattenAndCompareObjects(updated, baseline)
+
+  if (differencesByKey.length > 0) {
+    outputDebug(`Differences between local and remote configuration: ${JSON.stringify(differencesByKey)}`)
+  }
+
+  const differingKeys = differencesByKey.map((diff) => diff[0])
+  await metadata.addPublicMetadata(() => ({
+    cmd_dev_unpushed_config: JSON.stringify(differingKeys),
+  }))
+
+  if (
+    !configuration.access_scopes?.use_legacy_install_flow &&
+    getAppScopesArray(configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
+  ) {
+    const nextSteps = [['Run', {command: 'shopify app config push'}, 'to push your scopes to the Partner Dashboard']]
+
+    renderWarning({
+      headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
+      body: [
+        `Scopes in ${basename(configurationPath)}:`,
+        scopesMessage(getAppScopesArray(configuration)),
+        '\n',
+        'Scopes in Partner Dashboard:',
+        scopesMessage(remoteApp.requestedAccessScopes || []),
+      ],
+      nextSteps,
+    })
   }
 }
 
