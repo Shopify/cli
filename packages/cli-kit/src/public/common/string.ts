@@ -347,3 +347,21 @@ export function formatDate(date: Date): string {
   const timeString = components[1]?.split('.')[0] ?? date.toTimeString()
   return `${dateString} ${timeString}`
 }
+
+/**
+ * Given a list of items, it returns a string with the items joined by commas and the last item joined by "and".
+ * All items are wrapped in double quotes.
+ * For example: ["a", "b", "c"] returns "a", "b" and "c".
+ *
+ * @param items - List of items.
+ * @returns The joined string.
+ */
+export function joinWithAnd(items: string[]): string {
+  if (items.length === 0) return ''
+  if (items.length === 1) return `"${items[0]}"`
+
+  return `${items
+    .slice(0, -1)
+    .map((item) => `"${item}"`)
+    .join(', ')} and "${items[items.length - 1]}"`
+}

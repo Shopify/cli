@@ -32,7 +32,7 @@ import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 
@@ -400,6 +400,25 @@ class AppLoader {
 
     const extensions = await Promise.all(extensionPromises)
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
+
+    // Validate that all extensions have a unique handle.
+    const handles = new Set()
+    allExtensions.forEach((extension) => {
+      if (extension.handle && handles.has(extension.handle)) {
+        const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
+        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
+        const handle = outputToken.cyan(extension.handle)
+
+        this.abortOrReport(
+          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
+          undefined,
+          extension.configurationPath,
+        )
+      } else if (extension.handle) {
+        handles.add(extension.handle)
+      }
+    })
+
     return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
   }
 
