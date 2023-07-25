@@ -34,7 +34,7 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
       }
 
       // Checkout UI extensions
-      return page
+      return 'checkout'
     }
 
     // Covers Customer Accounts UI extensions (future)
