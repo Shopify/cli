@@ -30,11 +30,23 @@ async function testBundlerAndFileWatcher() {
   const extension1 = await testUIExtension({
     devUUID: '1',
     directory: 'directory/path/1',
+    configuration: {
+      handle: 'my-handle',
+      name: 'test-ui-extension',
+      type: 'product_subscription',
+      metafields: [],
+    },
   })
 
   const extension2 = await testUIExtension({
     devUUID: '2',
     directory: 'directory/path/2',
+    configuration: {
+      handle: 'my-handle-2',
+      name: 'test-ui-extension',
+      type: 'product_subscription',
+      metafields: [],
+    },
   })
 
   const fileWatcherOptions = {
@@ -86,7 +98,7 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputPath: 'directory/path/1/dist/main.js',
+        outputPath: 'directory/path/1/dist/my-handle.js',
         stdin: {
           contents: "import './src/index.js';",
           resolveDir: 'directory/path/1',
@@ -109,7 +121,7 @@ describe('setupBundlerAndFileWatcher()', () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputPath: 'directory/path/2/dist/main.js',
+        outputPath: 'directory/path/2/dist/my-handle-2.js',
         stdin: {
           contents: "import './src/index.js';",
           resolveDir: 'directory/path/2',
@@ -363,6 +375,12 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
   const mockExtension = await testUIExtension({
     devUUID: '1',
     directory: 'directory/path/1',
+    configuration: {
+      handle: 'another-handle',
+      name: 'test-ui-extension',
+      type: 'product_subscription',
+      metafields: [],
+    },
   })
 
   const app = {
@@ -399,7 +417,7 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
       expect.objectContaining({
         minify: false,
-        outputPath: 'directory/path/1/dist/main.js',
+        outputPath: 'directory/path/1/dist/another-handle.js',
         stdin: {
           contents: mockExtension.getBundleExtensionStdinContent(),
           resolveDir: 'directory/path/1',

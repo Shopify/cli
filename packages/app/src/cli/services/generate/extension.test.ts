@@ -9,10 +9,10 @@ import {blocks, configurationFileNames} from '../../constants.js'
 import {loadApp} from '../../models/app/loader.js'
 import * as functionBuild from '../function/build.js'
 import {testRemoteExtensionTemplates} from '../../models/app/app.test-data.js'
-import checkoutPostPurchaseExtension from '../../models/templates/ui-specifications/checkout_post_purchase.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import productSubscriptionUIExtension from '../../models/templates/ui-specifications/product_subscription.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as output from '@shopify/cli-kit/node/output'
 import {
@@ -38,7 +38,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
 })
 
 describe('initialize a extension', async () => {
-  const allUITemplates = [checkoutPostPurchaseExtension]
+  const allUITemplates = [productSubscriptionUIExtension]
   const allFunctionTemplates = testRemoteExtensionTemplates
   const specifications = await loadFSExtensionsSpecifications()
 
@@ -46,7 +46,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       vi.spyOn(output, 'outputInfo').mockImplementation(() => {})
       const name = 'my-ext-1'
-      const specification = checkoutPostPurchaseExtension
+      const specification = productSubscriptionUIExtension
       const extensionFlavor = 'vanilla-js'
       const extensionDir = await createFromTemplate({
         name,
@@ -67,7 +67,7 @@ describe('initialize a extension', async () => {
     await withTemporaryApp(async (tmpDir) => {
       const name1 = 'my-ext-1'
       const name2 = 'my-ext-2'
-      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'post_purchase_ui')!
+      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'subscription_ui')!
       const extensionFlavor = 'vanilla-js'
       await createFromTemplate({
         name: name1,
@@ -94,7 +94,7 @@ describe('initialize a extension', async () => {
   test('errors when trying to re-generate an existing extension', async () => {
     await withTemporaryApp(async (tmpDir: string) => {
       const name = 'my-ext-1'
-      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'post_purchase_ui')!
+      const extensionTemplate = allUITemplates.find((spec) => spec.identifier === 'subscription_ui')!
       const extensionFlavor = 'vanilla-js'
       await createFromTemplate({
         name,
@@ -236,7 +236,7 @@ describe('initialize a extension', async () => {
         async () => 'path/to/custom/template',
       )
       const name = 'my-ext-1'
-      const specification = checkoutPostPurchaseExtension
+      const specification = productSubscriptionUIExtension
       specification.types[0]!.supportedFlavors[1]!.path = 'path/to/custom/template'
       const extensionFlavor = 'vanilla-js'
       const recursiveDirectoryCopySpy = vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockResolvedValue()

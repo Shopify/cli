@@ -17,11 +17,13 @@ export default class Dev extends Command {
       hidden: true,
       description: 'The API key of your app.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID of your app.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
     store: Flags.string({
       hidden: false,
@@ -93,7 +95,9 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({

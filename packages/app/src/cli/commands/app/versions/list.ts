@@ -19,11 +19,13 @@ export default class VersionsList extends Command {
       hidden: true,
       description: "Application's API key to fetch versions for.",
       env: 'SHOPIFY_FLAG_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID to fetch versions for.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
   }
 
@@ -33,7 +35,9 @@ export default class VersionsList extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(VersionsList)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})

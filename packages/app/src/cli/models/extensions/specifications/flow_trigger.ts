@@ -1,14 +1,30 @@
-import {BaseSchemaWithHandle} from '../schemas.js'
+import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {validateNonCommerceObjectShape} from '../../../services/flow/validation.js'
+import {validateFieldShape} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
+const FlowTriggerSettingsSchema = FieldSchema.extend({
+  key: zod
+    .string()
+    .regex(/^[a-zA-Z\s]*$/, {
+      message: 'String must contain only alphabetic characters and spaces',
+    })
+    .optional(),
+})
+
 export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_trigger'),
+  settings: zod
+    .object({
+      fields: zod.array(FlowTriggerSettingsSchema).optional(),
+    })
+    .optional(),
 }).refine((config) => {
   const fields = config.settings?.fields ?? []
-  const settingsFieldsAreValid = fields.every((field) => validateNonCommerceObjectShape(field, 'flow_trigger'))
+  const settingsFieldsAreValid = fields.every((field, index) =>
+    validateFieldShape(field, 'flow_trigger', config.handle, index),
+  )
   return settingsFieldsAreValid
 })
 

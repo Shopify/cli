@@ -6,20 +6,16 @@ import {
   selectOrganizationPrompt,
   selectStorePrompt,
   updateURLsPrompt,
-  tunnelConfigurationPrompt,
 } from './dev.js'
 import {Organization, OrganizationStore} from '../models/organization.js'
 import {testOrganizationApp} from '../models/app/app.test-data.js'
-import {describe, expect, vi, test} from 'vitest'
-import {
-  renderAutocompletePrompt,
-  renderConfirmationPrompt,
-  renderSelectPrompt,
-  renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+import {getTomls} from '../utilities/app/config/getTomls.js'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('../utilities/app/config/getTomls')
 
 const ORG1: Organization = {
   id: '1',
@@ -52,6 +48,10 @@ const STORE2: OrganizationStore = {
   transferDisabled: false,
   convertableToPartnerTest: false,
 }
+
+beforeEach(() => {
+  vi.mocked(getTomls).mockResolvedValue({})
+})
 
 describe('selectOrganization', () => {
   test('request org selection if passing more than 1 org', async () => {
@@ -106,6 +106,29 @@ describe('selectApp', () => {
       hasMorePages: true,
     })
   })
+
+  test('includes toml names when present', async () => {
+    vi.mocked(getTomls).mockResolvedValueOnce({
+      [APP1.apiKey]: 'shopify.app.toml',
+      [APP2.apiKey]: 'shopify.app.dev.toml',
+    })
+
+    const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: true}}
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
+
+    const got = await selectAppPrompt(apps, ORG1.id, 'token', {directory: '/'})
+
+    expect(got).toEqual(APP2.apiKey)
+    expect(renderAutocompletePrompt).toHaveBeenCalledWith({
+      message: 'Which existing app is this for?',
+      choices: [
+        {label: 'app1 (shopify.app.toml)', value: 'key1'},
+        {label: 'app2 (shopify.app.dev.toml)', value: 'key2'},
+      ],
+      search: expect.any(Function),
+      hasMorePages: true,
+    })
+  })
 })
 
 describe('selectStore', () => {
@@ -132,7 +155,7 @@ describe('selectStore', () => {
     // Then
     expect(got).toEqual(STORE1)
     expect(renderAutocompletePrompt).not.toBeCalled()
-    expect(outputMock.output()).toMatch('Using your default dev store (store1) to preview your project')
+    expect(outputMock.output()).toMatch('Using your default dev store, store1, to preview your project')
   })
 
   test('returns store if user selects one', async () => {
@@ -212,7 +235,7 @@ describe('createAsNewAppPrompt', () => {
 describe('updateURLsPrompt', () => {
   test('asks about the URL update and shows 4 different options', async () => {
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await updateURLsPrompt('http://current-url', [
@@ -221,40 +244,15 @@ describe('updateURLsPrompt', () => {
     ])
 
     // Then
-    expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
+    expect(got).toEqual(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
       message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
       infoTable: {
         'Current app URL': ['http://current-url'],
         'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],
       },
-      choices: [
-        {label: 'Always by default', value: 'always'},
-        {label: 'Yes, this time', value: 'yes'},
-        {label: 'No, not now', value: 'no'},
-        {label: `Never, don't ask again`, value: 'never'},
-      ],
-    })
-  })
-})
-
-describe('tunnelConfigurationPrompt', () => {
-  test('asks about the selected tunnel plugin configuration and shows 3 different options', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
-
-    // When
-    const got = await tunnelConfigurationPrompt()
-
-    // Then
-    expect(got).toEqual('always')
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'How would you like your tunnel to work in the future?',
-      choices: [
-        {label: 'Always use it by default', value: 'always'},
-        {label: 'Use it now and ask me next time', value: 'yes'},
-        {label: 'Nevermind, cancel dev', value: 'cancel'},
-      ],
+      confirmationMessage: 'Yes, automatically update',
+      cancellationMessage: 'No, never',
     })
   })
 })

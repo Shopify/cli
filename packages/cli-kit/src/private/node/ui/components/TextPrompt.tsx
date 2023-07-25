@@ -1,10 +1,11 @@
 import {TextInput} from './TextInput.js'
-import {TokenizedText} from './TokenizedText.js'
+import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
+import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
@@ -18,9 +19,7 @@ export interface TextPromptProps {
   allowEmpty?: boolean
   emptyDisplayedValue?: string
   abortSignal?: AbortSignal
-  previewPrefix?: (value: string) => string | undefined
-  previewValue?: (value: string) => string | undefined
-  previewSuffix?: (value: string) => string | undefined
+  preview?: (value: string) => TokenItem<InlineToken>
 }
 
 const TextPrompt: FunctionComponent<TextPromptProps> = ({
@@ -32,9 +31,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   allowEmpty = false,
   emptyDisplayedValue = '(empty)',
   abortSignal,
-  previewPrefix,
-  previewValue,
-  previewSuffix,
+  preview,
 }) => {
   if (password && defaultValue) {
     throw new Error("Can't use defaultValue with password")
@@ -54,15 +51,15 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   )
 
   const {oneThird} = useLayout()
-  const [answer, setAnswer] = useState<string>('')
+  const {promptState, setPromptState, answer, setAnswer} = usePrompt<string>({
+    initialAnswer: '',
+  })
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const displayEmptyValue = answerOrDefault === ''
   const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
   const {exit: unmountInk} = useApp()
-  const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | undefined>(undefined)
-  const shouldShowError = submitted && error
-  const color = shouldShowError ? 'red' : 'cyan'
+  const color = promptState === PromptState.Error ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -70,11 +67,13 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
     handleCtrlC(input, key)
 
     if (key.return) {
-      setSubmitted(true)
       const error = validateAnswer(answerOrDefault)
-      setError(error)
 
-      if (!error) {
+      if (error) {
+        setPromptState(PromptState.Error)
+        setError(error)
+      } else {
+        setPromptState(PromptState.Submitted)
         onSubmit(answerOrDefault)
         unmountInk()
       }
@@ -89,7 +88,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         </Box>
         <TokenizedText item={messageWithPunctuation(message)} />
       </Box>
-      {submitted && !error ? (
+      {promptState === PromptState.Submitted ? (
         <Box>
           <Box marginRight={2}>
             <Text color="cyan">{figures.tick}</Text>
@@ -112,7 +111,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
                 value={answer}
                 onChange={(answer) => {
                   setAnswer(answer)
-                  setSubmitted(false)
+                  setPromptState(PromptState.Idle)
                 }}
                 defaultValue={defaultValue}
                 color={color}
@@ -123,20 +122,18 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
           <Box marginLeft={3}>
             <Text color={color}>{underline}</Text>
           </Box>
-          {shouldShowError ? (
+          {promptState === PromptState.Error ? (
             <Box marginLeft={3}>
               <Text color={color}>{error}</Text>
             </Box>
           ) : null}
+          {promptState !== PromptState.Error && preview ? (
+            <Box marginLeft={3}>
+              <TokenizedText item={preview(answerOrDefault)} />
+            </Box>
+          ) : null}
         </Box>
       )}
-      {previewValue && !submitted ? (
-        <Box marginLeft={3}>
-          <Text>{previewPrefix ? previewPrefix(answerOrDefault) : null}</Text>
-          <Text color={color}>{previewValue(answerOrDefault)}</Text>
-          <Text>{previewSuffix ? previewSuffix(answerOrDefault) : null}</Text>
-        </Box>
-      ) : null}
     </Box>
   )
 }

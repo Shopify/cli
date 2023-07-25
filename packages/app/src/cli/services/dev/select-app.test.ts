@@ -71,7 +71,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, localApp.name, 'token', true, 'write_products')
+    const got = await createApp(ORG2, localApp.name, 'token', {scopes: 'write_products', isLaunchable: true})
     expect(got).toEqual(APP1)
 
     // Then
@@ -92,7 +92,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, LOCAL_APP.name, 'token', false)
+    const got = await createApp(ORG2, LOCAL_APP.name, 'token', {isLaunchable: false})
 
     // Then
     expect(got).toEqual(APP1)
@@ -126,7 +126,7 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, 'token')
+    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, 'token', {directory: undefined})
   })
 
   test('prompts user to create if chooses to create', async () => {

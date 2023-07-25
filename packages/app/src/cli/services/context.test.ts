@@ -29,7 +29,6 @@ import {testApp, testAppWithConfig, testOrganizationApp, testThemeExtensions} fr
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName, isWebType, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
-import {DevelopmentStorePreviewUpdateQuery} from '../api/graphql/development_preview.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -37,8 +36,6 @@ import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 
 vi.mock('./local-storage.js')
@@ -54,7 +51,6 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./deploy/mode.js')
-vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('./app/config/link.js')
 
 beforeEach(() => {
@@ -160,12 +156,19 @@ const FETCH_RESPONSE = {
   stores: [STORE1, STORE2],
 }
 
+const DEFAULT_SELECT_APP_OPTIONS = {
+  directory: undefined,
+  isLaunchable: true,
+  scopes: '',
+}
+
 const options = (app: AppInterface): DeployContextOptions => {
   return {
     app,
     reset: false,
     force: false,
     noRelease: false,
+    commandConfig: COMMAND_CONFIG,
   }
 }
 
@@ -183,7 +186,7 @@ beforeEach(async () => {
 describe('ensureGenerateContext', () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
         scopes: 'read_products',
@@ -222,7 +225,7 @@ describe('ensureGenerateContext', () => {
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -242,7 +245,7 @@ describe('ensureGenerateContext', () => {
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -263,7 +266,7 @@ describe('ensureGenerateContext', () => {
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: CACHED1_WITH_CONFIG.configFile!,
       configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     })
@@ -308,7 +311,7 @@ describe('ensureGenerateContext', () => {
 describe('ensureDevContext', async () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
-      appDirectory: '/app',
+      directory: '/app',
       configurationPath: '/app/shopify.app.toml',
       configuration: {
         scopes: 'read_products',
@@ -322,7 +325,7 @@ describe('ensureDevContext', async () => {
       vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
         configuration: testAppWithConfig({
           config: {
@@ -355,7 +358,6 @@ describe('ensureDevContext', async () => {
         remoteAppUpdated: true,
         updateURLs: true,
         configName: CACHED1_WITH_CONFIG.configFile,
-        deploymentMode: 'legacy',
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -366,26 +368,92 @@ describe('ensureDevContext', async () => {
     })
   })
 
+  test('returns context from client-id flag rather than config in cache', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+
+[webhooks]
+api_version = "2023-04"
+
+[build]
+dev_store_url = "domain1"
+`
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      writeFileSync(filePath, expectedContent)
+      vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
+      vi.mocked(loadAppConfiguration).mockReset()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
+        configuration: testAppWithConfig({
+          config: {
+            name: APP1.apiKey,
+            client_id: APP1.apiKey,
+            build: {
+              automatically_update_urls_on_dev: true,
+              dev_store_url: STORE1.shopDomain,
+            },
+          },
+        }).configuration,
+      })
+      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1).mockResolvedValue(APP2)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      const got = await ensureDevContext(
+        {
+          directory: 'app_directory',
+          reset: false,
+          commandConfig: COMMAND_CONFIG,
+          apiKey: APP2.apiKey,
+        },
+        'token',
+      )
+
+      // Then
+      expect(got).toEqual({
+        remoteApp: {...APP2, apiSecret: 'secret2'},
+        storeFqdn: STORE1.shopDomain,
+        remoteAppUpdated: true,
+        updateURLs: true,
+        configName: CACHED1_WITH_CONFIG.configFile,
+      })
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
+
+      expect(metadata.getAllPublicMetadata()).toMatchObject({
+        api_key: APP2.apiKey,
+        partner_id: 1,
+      })
+
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
   test('loads the correct file when config flag is passed in', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
-          client_id: APP2.apiKey,
-          name: APP2.title,
-          scopes: 'read_products',
-          application_url: 'https://my-apps-url.com',
-          auth: {
-            redirect_urls: ['https://my-apps-url.com/auth/shopify'],
-          },
-          build: {
-            automatically_update_urls_on_dev: true,
-            dev_store_url: STORE1.shopDomain,
-          },
+          name: 'my app',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {api_version: '2023-04'},
+          application_url: 'https://myapp.com',
+          embedded: true,
         },
       })
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
@@ -417,7 +485,7 @@ describe('ensureDevContext', async () => {
       writeFileSync(filePath, '')
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: testApp({}, 'current').configuration,
       })
@@ -437,17 +505,19 @@ describe('ensureDevContext', async () => {
       // Then
       expect(selectStore).toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.dev.toml'))
-      const expectedContent = `application_url = "https://myapp.com"
-client_id = "12345"
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
 name = "my app"
-api_contact_email = "wils@bahan-lee.com"
+client_id = "12345"
+application_url = "https://myapp.com"
 embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 
 [webhooks]
 api_version = "2023-04"
-
-[access_scopes]
-scopes = "read_products"
 
 [build]
 dev_store_url = "domain1"
@@ -462,7 +532,7 @@ dev_store_url = "domain1"
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: joinPath(tmp, 'shopify.app.toml'),
         configuration: testApp({}, 'current').configuration,
       })
@@ -520,7 +590,6 @@ dev_store_url = "domain1"
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP1.apiKey,
@@ -552,7 +621,6 @@ dev_store_url = "domain1"
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
       configName: CACHED1_WITH_CONFIG.configFile,
     })
   })
@@ -572,7 +640,6 @@ dev_store_url = "domain1"
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: false,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
     expect(fetchOrganizations).not.toBeCalled()
     expect(selectOrganizationPrompt).not.toBeCalled()
@@ -589,7 +656,7 @@ dev_store_url = "domain1"
           list: {
             items: [
               'Org:          org1',
-              'App:          undefined',
+              'App:          app1',
               'Dev store:    domain1',
               'Update URLs:  Not yet configured',
             ],
@@ -623,7 +690,6 @@ dev_store_url = "domain1"
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
       updateURLs: undefined,
-      deploymentMode: 'legacy',
     })
     expect(setCachedAppInfo).toHaveBeenNthCalledWith(1, {
       appId: APP2.apiKey,
@@ -670,13 +736,12 @@ dev_store_url = "domain1"
       vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
       vi.mocked(loadAppConfiguration).mockResolvedValue({
-        appDirectory: tmp,
+        directory: tmp,
         configurationPath: filePath,
         configuration: {
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
-          api_contact_email: 'wils@bahan-lee.com',
           webhooks: {api_version: '2023-04'},
           embedded: true,
         },
@@ -704,58 +769,32 @@ dev_store_url = "domain1"
     expect(link).toBeCalled()
   })
 
-  test('dev enables automatically the development store preview if the unified deployments beta is enabled', async () => {
-    // Given
-    vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-    vi.mocked(selectOrCreateApp).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: true}},
-    })
-    const mockOutput = mockAndCaptureOutput()
+  test('links app if no app configs exist & cache has a current config file defined', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configurationPath: filePath,
+        configuration: {
+          client_id: APP2.apiKey,
+          name: APP2.apiKey,
+          application_url: APP2.applicationUrl,
+          webhooks: {api_version: '2023-04'},
+          embedded: true,
+        },
+      })
+      vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
 
-    // When
-    const got = await ensureDevContext(INPUT, 'token')
+      // When
+      const got = await ensureDevContext({...INPUT}, 'token')
 
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
-      storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
-      updateURLs: undefined,
-      deploymentMode: 'unified',
+      // Then
+      expect(link).toBeCalled()
+      expect(got.remoteApp).toEqual({...APP2, apiSecret: 'secret2'})
+      expect(got.configName).toEqual('shopify.app.toml')
     })
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: true},
-    })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Development store preview enabled"')
-  })
-
-  test('display an error to enable dev preview if the beta is enabled in partners but an error is returned', async () => {
-    // Given
-    vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-    vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-    vi.mocked(selectOrCreateApp).mockResolvedValue(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error enabling'))
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDevContext(INPUT, 'token')
-
-    // Then
-    expect(got).toEqual({
-      remoteApp: {...APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, apiSecret: 'secret2'},
-      storeFqdn: STORE1.shopDomain,
-      remoteAppUpdated: true,
-      updateURLs: undefined,
-      deploymentMode: 'unified',
-    })
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: true},
-    })
-    expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to enable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
-    )
   })
 })
 
@@ -860,8 +899,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -912,8 +950,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
@@ -956,76 +993,7 @@ describe('ensureDeployContext', () => {
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
       'token',
-      true,
-      '',
-    )
-  })
-
-  test('deploy disables automatically the development store preview if the unified deployments beta is enabled', async () => {
-    // Given
-    const app = testApp()
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      developmentStorePreviewUpdate: {app: {developmentStorePreviewEnabled: false}},
-    })
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDeployContext(options(app))
-
-    // Then
-    expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
-    expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
-
-    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: false},
-    })
-    expect(mockOutput.completed()).toMatchInlineSnapshot('"Development store preview disabled"')
-  })
-
-  test('display an error to disable dev preview if the beta is enabled in partners but an error is returned', async () => {
-    // Given
-    const app = testApp()
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(partnersRequest).mockRejectedValue(new AbortError('error disabling'))
-    const mockOutput = mockAndCaptureOutput()
-
-    // When
-    const got = await ensureDeployContext(options(app))
-
-    // Then
-    expect(selectOrCreateApp).not.toHaveBeenCalled()
-    expect(got.partnersApp.id).toEqual(APP2.id)
-    expect(got.partnersApp.title).toEqual(APP2.title)
-    expect(got.partnersApp.appType).toEqual(APP2.appType)
-    expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
-
-    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
-    expect(partnersRequest).toHaveBeenCalledWith(DevelopmentStorePreviewUpdateQuery, 'token', {
-      input: {apiKey: 'key2', enabled: false},
-    })
-    expect(mockOutput.warn()).toMatchInlineSnapshot(
-      '"Unable to disable development store preview for this app. You can change this setting in the Partner Dashboard ( https://partners.shopify.com/1/apps/2/extensions ).\'}"',
+      DEFAULT_SELECT_APP_OPTIONS,
     )
   })
 })
@@ -1044,6 +1012,7 @@ describe('ensureReleaseContext', () => {
         apiKey: 'key1',
         reset: false,
         force: false,
+        commandConfig: COMMAND_CONFIG,
       }),
     ).rejects.toThrowError('')
   })
@@ -1061,6 +1030,7 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
+      commandConfig: COMMAND_CONFIG,
     })
 
     // Then
@@ -1071,8 +1041,9 @@ describe('ensureReleaseContext', () => {
       },
       command: 'release',
     })
+
     expect(got.app).toEqual(app)
-    expect(got.apiKey).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey)
+    expect(got.partnersApp).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
     expect(got.token).toEqual('token')
   })
 })

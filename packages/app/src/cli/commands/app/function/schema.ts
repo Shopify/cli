@@ -18,11 +18,13 @@ export default class FetchSchema extends Command {
       name: 'API key',
       description: 'The API key to fetch the schema with.',
       env: 'SHOPIFY_FLAG_APP_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: 'The Client ID to fetch the schema with.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
     stdout: Flags.boolean({
       description: 'Output the schema to stdout instead of writing to a file.',
@@ -34,7 +36,9 @@ export default class FetchSchema extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(FetchSchema)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await inFunctionContext({

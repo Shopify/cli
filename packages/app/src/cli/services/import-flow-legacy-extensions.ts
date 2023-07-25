@@ -14,7 +14,7 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 
 interface ImportFlowOptions {
   app: AppInterface
-  config: Config
+  commandConfig: Config
   apiKey?: string
 }
 

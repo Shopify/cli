@@ -2,6 +2,7 @@ import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompt
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {fetchAppFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema} from '../../api/graphql/create_app.js'
+import {getCachedCommandInfo, setCachedCommandInfo} from '../local-storage.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -20,8 +21,11 @@ export async function selectOrCreateApp(
   apps: OrganizationAppsResponse,
   org: Organization,
   token: string,
-  isLaunchable?: boolean,
-  scopes?: string,
+  options?: {
+    isLaunchable?: boolean
+    scopes?: string
+    directory?: string
+  },
 ): Promise<OrganizationApp> {
   let createNewApp = apps.nodes.length === 0
   if (!createNewApp) {
@@ -29,9 +33,15 @@ export async function selectOrCreateApp(
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    return createApp(org, localAppName, token, isLaunchable, scopes)
+    return createApp(org, localAppName, token, options)
   } else {
-    const selectedAppApiKey = await selectAppPrompt(apps, org.id, token)
+    const selectedAppApiKey = await selectAppPrompt(apps, org.id, token, {directory: options?.directory})
+
+    const data = getCachedCommandInfo()
+    const tomls = (data?.tomls as {[key: string]: unknown}) ?? {}
+
+    if (tomls[selectedAppApiKey]) setCachedCommandInfo({selectedToml: tomls[selectedAppApiKey], askConfigName: false})
+
     const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
     return fullSelectedApp!
   }
@@ -67,12 +77,15 @@ export async function createApp(
   org: Organization,
   appName: string,
   token: string,
-  isLaunchable?: boolean,
-  scopes?: string,
+  options?: {
+    isLaunchable?: boolean
+    scopes?: string
+    directory?: string
+  },
 ): Promise<OrganizationApp> {
   const name = await appNamePrompt(appName)
 
-  const variables = getAppVars(org, name, isLaunchable, scopes ?? '')
+  const variables = getAppVars(org, name, options?.isLaunchable, options?.scopes ?? '')
 
   const query = CreateAppQuery
   const result: CreateAppQuerySchema = await partnersRequest(query, token, variables)

@@ -28,12 +28,17 @@ import {
   ListToken,
   TokenItem,
 } from '../../private/node/ui/components/TokenizedText.js'
-import {SelectPrompt, SelectPromptProps, InfoMessage} from '../../private/node/ui/components/SelectPrompt.js'
+import {
+  DangerousConfirmationPrompt,
+  DangerousConfirmationPromptProps,
+} from '../../private/node/ui/components/DangerousConfirmationPrompt.js'
+import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
+import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -46,12 +51,12 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * @example
- * 0000-00-00 00:00:00 │ backend  │ first backend message
- * 0000-00-00 00:00:00 │ backend  │ second backend message
- * 0000-00-00 00:00:00 │ backend  │ third backend message
- * 0000-00-00 00:00:00 │ frontend │ first frontend message
- * 0000-00-00 00:00:00 │ frontend │ second frontend message
- * 0000-00-00 00:00:00 │ frontend │ third frontend message
+ * 00:00:00 │ backend  │ first backend message
+ * 00:00:00 │ backend  │ second backend message
+ * 00:00:00 │ backend  │ third backend message
+ * 00:00:00 │ frontend │ first frontend message
+ * 00:00:00 │ frontend │ second frontend message
+ * 00:00:00 │ frontend │ third frontend message
  *
  * › Press p │ preview in your browser
  * › Press q │ quit.
@@ -499,10 +504,7 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} />, {
-      ...renderOptions,
-      exitOnCtrlC: false,
-    })
+    render(<Tasks tasks={tasks} onComplete={resolve} />, renderOptions)
       .then(() => resetRecordedSleep())
       .catch(reject)
   })
@@ -529,6 +531,53 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   // eslint-disable-next-line max-params
   return new Promise((resolve, reject) => {
     render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
+      .catch(reject)
+      .finally(resetRecordedSleep)
+  })
+}
+
+export interface RenderDangerousConfirmationPromptOptions extends Omit<DangerousConfirmationPromptProps, 'onSubmit'> {
+  renderOptions?: RenderOptions
+}
+
+/**
+ * Renders a dangerous confirmation prompt to the console, forcing the user to
+ * type a confirmation string to proceed.
+ * @example
+ * ?  Release a new version of nightly-app-2023-06-19?
+ *
+ *    ┃  Includes:
+ *    ┃  + web-px (new)
+ *    ┃  + sub-ui-ext
+ *    ┃  + theme-app-ext
+ *    ┃  + paymentify (from Partner Dashboard)
+ *    ┃
+ *    ┃  Removes:
+ *    ┃  - prod-discount-fun
+ *    ┃
+ *    ┃  This can permanently delete app user data.
+ *
+ *    Type nightly-app-2023-06-19 to confirm, or press Escape
+ *    to cancel.
+ * >  █
+ *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
+ *
+ */
+export async function renderDangerousConfirmationPrompt({
+  renderOptions,
+  ...props
+}: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
+
+  // eslint-disable-next-line max-params
+  return new Promise((resolve, reject) => {
+    render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
@@ -604,4 +653,5 @@ This usually happens when running a command non-interactively, for example in a 
 }
 
 export type Key = InkKey
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, InfoMessage}
+export type InfoMessage = InfoMessageProps['message']
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken}

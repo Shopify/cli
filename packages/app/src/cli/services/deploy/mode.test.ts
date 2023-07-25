@@ -7,6 +7,7 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
@@ -40,6 +41,7 @@ const deploymentContext = (app: AppInterface, noRelease = false): DeployContextO
     noRelease,
     reset: false,
     force: false,
+    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   }
 }
 
@@ -73,6 +75,8 @@ describe('resolveDeploymentMode', () => {
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
+      │                                                                              │
+      │  All apps will be automatically upgraded on Sept 5, 2023.                    │
       │                                                                              │
       │  Reference                                                                   │
       │    • Simplified extension deployment [1]                                     │
@@ -145,6 +149,8 @@ describe('resolveDeploymentMode', () => {
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
       │                                                                              │
+      │  All apps will be automatically upgraded on Sept 5, 2023.                    │
+      │                                                                              │
       │  Reference                                                                   │
       │    • Simplified extension deployment [1]                                     │
       │                                                                              │
@@ -193,6 +199,8 @@ describe('resolveDeploymentMode', () => {
       │                                                                              │
       │    • Bundle all your extensions into an app version                          │
       │    • Release all your extensions to users straight from the CLI              │
+      │                                                                              │
+      │  All apps will be automatically upgraded on Sept 5, 2023.                    │
       │                                                                              │
       │  Reference                                                                   │
       │    • Simplified extension deployment [1]                                     │

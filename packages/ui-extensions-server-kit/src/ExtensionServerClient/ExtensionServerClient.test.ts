@@ -176,16 +176,18 @@ describe('ExtensionServerClient', () => {
           {
             uuid: '123',
             type: 'ui_extension',
+            name: 't:welcome',
             localization,
-            extensionPoints: [{localization, label: 't:welcome'}],
+            extensionPoints: [{localization}],
           },
           {
             uuid: '456',
             type: 'ui_extension',
+            name: 'Fixed name t:',
             localization: null,
-            extensionPoints: [{localization: null, label: 'Fixed label t:'}],
+            extensionPoints: [{localization: null, name: 'Fixed name t:'}],
           },
-          {uuid: '789', type: 'product_subscription'},
+          {uuid: '789', type: 'product_subscription', name: 'Extension 789'},
         ],
       }
 
@@ -199,21 +201,23 @@ describe('ExtensionServerClient', () => {
             {
               uuid: '123',
               type: 'ui_extension',
+              name: 'いらっしゃいませ!',
               localization: translatedLocalization,
               extensionPoints: [
                 {
                   localization: translatedLocalization,
-                  label: 'いらっしゃいませ!',
+                  name: 'いらっしゃいませ!',
                 },
               ],
             },
             {
               uuid: '456',
               type: 'ui_extension',
+              name: 'Fixed name t:',
               localization: null,
-              extensionPoints: [{localization: null, label: 'Fixed label t:'}],
+              extensionPoints: [{localization: null, name: 'Fixed name t:'}],
             },
-            {uuid: '789', type: 'product_subscription'},
+            {uuid: '789', type: 'product_subscription', name: 'Extension 789'},
           ],
         }),
       )
@@ -298,14 +302,16 @@ describe('ExtensionServerClient', () => {
           {
             uuid: '123',
             type: 'ui_extension',
+            name: 't:welcome',
             localization,
-            extensionPoints: [{localization, label: 't:welcome'}],
+            extensionPoints: [{localization}],
           },
           {
             uuid: '456',
             type: 'ui_extension',
+            name: 'Extension 456',
             localization: null,
-            extensionPoints: [{localization: null, label: 'Fixed label'}],
+            extensionPoints: [{localization: null}],
           },
           {uuid: '789', type: 'product_subscription'},
         ],
@@ -355,11 +361,18 @@ describe('ExtensionServerClient', () => {
           {
             uuid: '123',
             type: 'ui_extension',
+            name: 't:welcome',
             localization,
-            extensionPoints: [{localization, label: 't:welcome'}],
+            extensionPoints: [{localization}],
           },
-          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
-          {uuid: '789', type: 'product_subscription'},
+          {
+            uuid: '456',
+            type: 'ui_extension',
+            name: 'Extension 456',
+            localization: null,
+            extensionPoints: [{localization: null}],
+          },
+          {uuid: '789', name: 'Extension 789', type: 'product_subscription'},
         ],
       }
 
@@ -373,16 +386,18 @@ describe('ExtensionServerClient', () => {
             {
               uuid: '123',
               type: 'ui_extension',
+              name: 'いらっしゃいませ!',
               localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization, label: 'いらっしゃいませ!'}],
+              extensionPoints: [{localization: translatedLocalization, name: 'いらっしゃいませ!'}],
             },
             {
               uuid: '456',
               type: 'ui_extension',
+              name: 'Extension 456',
               localization: null,
               extensionPoints: [{localization: null}],
             },
-            {uuid: '789', type: 'product_subscription'},
+            {uuid: '789', type: 'product_subscription', name: 'Extension 789'},
           ],
         }),
       )
@@ -421,11 +436,18 @@ describe('ExtensionServerClient', () => {
           {
             uuid: '123',
             type: 'ui_extension',
+            name: 't:welcome',
             localization,
-            extensionPoints: [{localization, label: 't:welcome'}],
+            extensionPoints: [{localization}],
           },
-          {uuid: '456', type: 'ui_extension', localization: null, extensionPoints: [{localization: null}]},
-          {uuid: '789', type: 'product_subscription'},
+          {
+            uuid: '456',
+            type: 'ui_extension',
+            name: 'Extension 456',
+            localization: null,
+            extensionPoints: [{localization: null}],
+          },
+          {uuid: '789', type: 'product_subscription', name: 'Extension 789'},
         ],
       }
 
@@ -440,16 +462,18 @@ describe('ExtensionServerClient', () => {
             {
               uuid: '123',
               type: 'ui_extension',
+              name: 'いらっしゃいませ!',
               localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization, label: 'いらっしゃいませ!'}],
+              extensionPoints: [{localization: translatedLocalization, name: 'いらっしゃいませ!'}],
             },
             {
               uuid: '456',
               type: 'ui_extension',
+              name: 'Extension 456',
               localization: null,
               extensionPoints: [{localization: null}],
             },
-            {uuid: '789', type: 'product_subscription'},
+            {uuid: '789', type: 'product_subscription', name: 'Extension 789'},
           ],
         }),
       )
@@ -568,8 +592,9 @@ describe('ExtensionServerClient', () => {
           {
             uuid: '123',
             type: 'ui_extension',
+            name: 'いらっしゃいませ!',
             localization: {},
-            extensionPoints: [{localization: {}, label: 'いらっしゃいませ!'}],
+            extensionPoints: [{localization: {}, name: 'いらっしゃいませ!'}],
           },
         ],
       })

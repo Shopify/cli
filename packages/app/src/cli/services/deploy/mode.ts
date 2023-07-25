@@ -1,6 +1,7 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {DeployContextOptions} from '../context.js'
 import {SetBetaFlagQuery, SetBetaFlagSchema, SetBetaFlagVariables} from '../../api/graphql/set_beta_flag.js'
+import metadata from '../../metadata.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {formatPackageManagerCommand, outputCompleted, outputNewline} from '@shopify/cli-kit/node/output'
 import {InfoMessage, renderConfirmationPrompt, renderInfo, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -14,7 +15,9 @@ export async function resolveDeploymentMode(app: OrganizationApp, options: Deplo
   let deploymentMode: DeploymentMode = app.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
 
   if (deploymentMode === 'legacy') {
-    deploymentMode = (await upgradeDeploymentToUnified(app, options, token)) ? 'unified' : 'legacy'
+    const isUpgraded = await upgradeDeploymentToUnified(app, options, token)
+    // eslint-disable-next-line require-atomic-updates
+    deploymentMode = isUpgraded ? 'unified' : 'legacy'
   }
 
   if (deploymentMode === 'unified') {
@@ -25,6 +28,9 @@ export async function resolveDeploymentMode(app: OrganizationApp, options: Deplo
     }
   }
 
+  await metadata.addPublicMetadata(() => ({
+    cmd_app_deployment_mode: deploymentMode,
+  }))
   return deploymentMode
 }
 
@@ -54,10 +60,12 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
         list: {
           items: [
             'Bundle all your extensions into an app version',
-            'Release all your extensions to users straight from the CLI',
+            'Release all your extensions to users straight from the CLI\n',
           ],
         },
       },
+      'All apps will be automatically upgraded on',
+      {bold: 'Sept 5, 2023.'},
     ],
     reference: [
       {
@@ -71,7 +79,15 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
 }
 
 async function upgradeDeploymentToUnified(app: OrganizationApp, options: DeployContextOptions, token: string) {
-  if (!app.betas?.unifiedAppDeploymentOptIn || options.force) return false
+  let response: 'skipped' | 'confirmed' | 'cancelled' = 'skipped'
+
+  if (!app.betas?.unifiedAppDeploymentOptIn || options.force) {
+    await metadata.addPublicMetadata(() => ({
+      cmd_deploy_prompt_upgrade_to_unified_displayed: false,
+      cmd_deploy_prompt_upgrade_to_unified_response: response,
+    }))
+    return false
+  }
 
   displayDeployLegacyBanner(options.app.packageManager)
 
@@ -82,7 +98,7 @@ async function upgradeDeploymentToUnified(app: OrganizationApp, options: DeployC
     },
     body: "Once you upgrade this app, you can't go back to the old way of deploying extensions",
   }
-  const shouldUprade = await renderConfirmationPrompt({
+  const shouldUpgrade = await renderConfirmationPrompt({
     message: `Upgrade ${app.title} to use simplified deployment?`,
     confirmationMessage: `Yes, upgrade this app`,
     cancellationMessage: "No, don't upgrade",
@@ -90,7 +106,13 @@ async function upgradeDeploymentToUnified(app: OrganizationApp, options: DeployC
     infoMessage,
   })
 
-  if (!shouldUprade) {
+  response = shouldUpgrade ? 'confirmed' : 'cancelled'
+  await metadata.addPublicMetadata(() => ({
+    cmd_deploy_prompt_upgrade_to_unified_displayed: true,
+    cmd_deploy_prompt_upgrade_to_unified_response: response,
+  }))
+
+  if (!shouldUpgrade) {
     return false
   }
 

@@ -1,8 +1,9 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
+import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -14,8 +15,6 @@ import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -151,7 +150,7 @@ export async function updateURLs(
   urls: PartnersURLs,
   apiKey: string,
   token: string,
-  localApp?: AppInterface,
+  localApp?: AppConfigurationInterface,
 ): Promise<void> {
   const variables: UpdateURLsQueryVariables = {apiKey, ...urls}
   const query = UpdateURLsQuery
@@ -161,7 +160,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && isCurrentAppSchema(localApp.configuration)) {
+  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
     const localConfiguration: AppConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
@@ -170,7 +169,7 @@ export async function updateURLs(
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
-    writeFileSync(localApp.configurationPath, encodeToml(localConfiguration))
+    await writeAppConfigurationFile(localApp.configurationPath, localConfiguration)
   }
 }
 
@@ -187,44 +186,33 @@ export interface ShouldOrPromptUpdateURLsOptions {
   cachedUpdateURLs?: boolean
   newApp?: boolean
   localApp?: AppInterface
+  apiKey: string
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
+  if (options.localApp && options.localApp.configuration.client_id !== options.apiKey) return true
   if (options.newApp || !terminalSupportsRawMode()) return true
-  let shouldUpdate: boolean = options.cachedUpdateURLs === true
+  let shouldUpdateURLs: boolean = options.cachedUpdateURLs === true
+
   if (options.cachedUpdateURLs === undefined) {
-    const response = await updateURLsPrompt(
+    shouldUpdateURLs = await updateURLsPrompt(
       options.currentURLs.applicationUrl,
       options.currentURLs.redirectUrlWhitelist,
     )
-    let newUpdateURLs: boolean | undefined
-    /* eslint-disable no-fallthrough */
-    switch (response) {
-      case 'always':
-        newUpdateURLs = true
-      case 'yes':
-        shouldUpdate = true
-        break
-      case 'never':
-        newUpdateURLs = false
-      case 'no':
-        shouldUpdate = false
-    }
-    /* eslint-enable no-fallthrough */
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration) && newUpdateURLs !== undefined) {
+    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
       const localConfiguration: AppConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
-        automatically_update_urls_on_dev: newUpdateURLs,
+        automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
-      writeFileSync(options.localApp.configurationPath, encodeToml(localConfiguration))
+      await writeAppConfigurationFile(options.localApp.configurationPath, localConfiguration)
     } else {
-      setCachedAppInfo({directory: options.appDirectory, updateURLs: newUpdateURLs})
+      setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }
   }
-  return shouldUpdate
+  return shouldUpdateURLs
 }
 
 export function validatePartnersURLs(urls: PartnersURLs): void {

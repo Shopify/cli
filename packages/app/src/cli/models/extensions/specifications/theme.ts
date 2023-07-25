@@ -10,7 +10,6 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 const spec = createExtensionSpecification({
   identifier: 'theme',
-  surface: 'admin',
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
@@ -19,13 +18,6 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => {
     if (useThemebundling()) return ['bundling', 'theme']
     return ['theme']
-  },
-  previewMessage() {
-    const link = outputToken.link(
-      'dev doc instructions',
-      'https://shopify.dev/apps/online-store/theme-app-extensions/getting-started#step-3-test-your-changes',
-    )
-    return outputContent`Follow the ${link} by deploying your work as a draft`
   },
   deployConfig: async () => {
     if (!useThemebundling()) return undefined
@@ -49,7 +41,7 @@ const megabytes = kilobytes * 1024
 
 const BUNDLE_SIZE_LIMIT_MB = 10
 const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_MB * megabytes
-const LIQUID_SIZE_LIMIT_KB = 100
+const LIQUID_SIZE_LIMIT_KB = 500
 const LIQUID_SIZE_LIMIT = LIQUID_SIZE_LIMIT_KB * kilobytes
 
 const SUPPORTED_ASSET_EXTS = ['.jpg', '.jpeg', '.js', '.css', '.png', '.svg']

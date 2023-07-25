@@ -24,7 +24,7 @@ export async function getUIExtensionPayload(
     assets: {
       main: {
         name: 'main',
-        url: `${url}/assets/main.js`,
+        url: `${url}/assets/${extension.outputFileName}`,
         lastUpdated: (await fileLastUpdatedTimestamp(extension.outputPath)) ?? 0,
       },
     },
@@ -58,8 +58,9 @@ export async function getUIExtensionPayload(
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     version: renderer?.version,
-
     title: extension.configuration.name,
+    handle: extension.handle,
+    name: extension.configuration.name,
     apiVersion: extension.configuration.api_version,
     approvalScopes: options.grantedScopes,
   }

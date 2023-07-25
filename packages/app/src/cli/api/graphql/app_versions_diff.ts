@@ -3,7 +3,7 @@ import {gql} from 'graphql-request'
 export const AppVersionsDiffQuery = gql`
   query AppVersionsDiff($apiKey: String!, $versionId: ID!) {
     app(apiKey: $apiKey) {
-      versionsDiff(deploymentId: $versionId) {
+      versionsDiff(appVersionId: $versionId) {
         added {
           uuid
           registrationTitle

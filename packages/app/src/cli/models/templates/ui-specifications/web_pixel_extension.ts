@@ -5,7 +5,8 @@ import {ExtensionTemplate} from '../../app/template.js'
  */
 const webPixelUIExtension: ExtensionTemplate = {
   identifier: 'web_pixel',
-  name: 'Web Pixel',
+  name: 'Web pixel',
+  defaultName: 'web-pixel',
   group: 'Analytics',
   supportLinks: [],
   types: [

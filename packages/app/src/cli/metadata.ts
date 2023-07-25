@@ -6,6 +6,8 @@ type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_'
   PickByPrefix<MonorailEventPublic, 'cmd_shared_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_scaffold_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_dev_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_deploy_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_release_'> &
   PickByPrefix<MonorailEventPublic, 'app_'> &
   PickByPrefix<MonorailEventPublic, 'env_'>
 
@@ -19,6 +21,8 @@ const metadata = createRuntimeMetadataContainer<
     api_key: string
   } & CmdFieldsFromMonorail,
   CmdSensitiveFieldsFromMonorail
->()
+>({
+  cmd_app_warning_api_key_deprecation_displayed: false,
+})
 
 export default metadata

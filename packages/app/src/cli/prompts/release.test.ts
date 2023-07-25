@@ -1,6 +1,6 @@
 import {confirmReleasePrompt} from './release.js'
 import {describe, expect, vi, test} from 'vitest'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -22,8 +22,9 @@ describe('confirmReleasePrompt', () => {
       message: 'Release this version of test app?',
       infoTable: [
         {
-          header: 'Extensions',
+          header: 'Includes:',
           items: ['theme-app-ext', 'sub-ui-ext'],
+          bullet: '+',
         },
       ],
       confirmationMessage: 'Yes, release this version',
@@ -33,7 +34,7 @@ describe('confirmReleasePrompt', () => {
 
   test('shows removed extensions in the infoTable if the diff contains removed extensions', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
 
     // When / Then
     await expect(
@@ -44,24 +45,23 @@ describe('confirmReleasePrompt', () => {
       }),
     ).resolves
 
-    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+    expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith({
       message: 'Release this version of test app?',
       infoTable: [
         {
-          header: 'Removed',
-          color: 'red',
-          helperText: 'Will be removed for users when this version is released.',
+          header: 'Removes:',
+          helperText: 'This can permanently delete app user data.',
           items: ['sub-ui-ext'],
+          bullet: '-',
         },
       ],
-      confirmationMessage: 'Yes, release this version',
-      cancellationMessage: 'No, cancel',
+      confirmation: 'test app',
     })
   })
 
   test('throws a silent exception in case the user rejects the release prompt', async () => {
     // Given
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+    vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(false)
 
     // When/ Then
     await expect(

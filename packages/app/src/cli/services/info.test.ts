@@ -45,7 +45,6 @@ describe('info', () => {
       // Given
       const testConfig = `
       name = "my app"
-      api_contact_email = "me@example.com"
       client_id = "12345"
       application_url = "https://example.com/lala"
       embedded = true
@@ -66,7 +65,6 @@ describe('info', () => {
           configurationPath: joinPath(tmp, 'shopify.app.toml'),
           configuration: {
             name: 'my app',
-            api_contact_email: 'me@example.com',
             client_id: '12345',
             application_url: 'https://example.com/lala',
             embedded: true,
@@ -112,7 +110,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Client ID\s*123/)
       expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
       expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
-      expect(unstyled(result)).toMatch(/Update URLs\s*Always/)
+      expect(unstyled(result)).toMatch(/Update URLs\s*Yes/)
     })
   })
 
@@ -239,6 +237,7 @@ describe('info', () => {
       const uiExtension1 = await testUIExtension({
         configuration: {
           name: 'Extension 1',
+          handle: 'handle-for-extension-1',
           type: 'ui_extension',
           metafields: [],
         },
@@ -294,7 +293,12 @@ describe('info', () => {
 
       // Then
       expect(result).toContain('Extensions with errors')
-      expect(result).toContain('📂 ui_extension')
+      // Doesn't use the type as part of the title
+      expect(result).not.toContain('📂 ui_extension')
+      // Shows handle in title
+      expect(result).toContain('📂 handle-for-extension-1')
+      // Shows default handle derived from name when no handle is present
+      expect(result).toContain('📂 extension-2')
       expect(result).toContain('! Mock error with ui_extension')
       expect(result).toContain('! Mock error with checkout_ui_extension')
     })

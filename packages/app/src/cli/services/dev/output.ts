@@ -1,11 +1,9 @@
 import {PartnersURLs} from './urls.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {basename} from '@shopify/cli-kit/node/path'
 
@@ -53,10 +51,6 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export function outputExtensionsMessages(app: AppInterface) {
-  outputThemeExtensionsMessage(app.allExtensions.filter((ext) => ext.isThemeExtension))
-}
-
 export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string) {
   let options = renderConcurrentOptions
 
@@ -87,14 +81,6 @@ export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, prev
     }
   }
   return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
-}
-
-function outputThemeExtensionsMessage(extensions: ExtensionInstance[]) {
-  if (extensions.length === 0) return
-  for (const extension of extensions) {
-    const message = extension.previewMessage('', '')
-    if (message) outputInfo(message)
-  }
 }
 
 async function partnersURL(organizationId: string, appId: string) {

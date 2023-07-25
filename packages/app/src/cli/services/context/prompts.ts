@@ -3,10 +3,12 @@ import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
+import metadata from '../../metadata.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
+  renderDangerousConfirmationPrompt,
   renderInfo,
 } from '@shopify/cli-kit/node/ui'
 
@@ -16,7 +18,7 @@ export async function matchConfirmationPrompt(
   type: 'extension' | 'function' = 'extension',
 ) {
   return renderConfirmationPrompt({
-    message: `Match ${local.configuration.name} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
+    message: `Match ${local.handle} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
     confirmationMessage: `Yes, match to existing ${type}`,
     cancellationMessage: `No, create as a new ${type}`,
   })
@@ -33,13 +35,14 @@ export async function selectRemoteSourcePrompt(
   }))
   remoteOptions.push({label: 'Create new extension', value: 'create'})
   const uuid = await renderAutocompletePrompt({
-    message: `How would you like to deploy your "${localSource.configuration.name}"?`,
+    message: `How would you like to deploy your "${localSource.handle}"?`,
     choices: remoteOptions,
   })
   return remoteSourcesOfSameType.find((remote) => remote[remoteIdField] === uuid)!
 }
 
-interface SourceSummary {
+export interface SourceSummary {
+  appTitle: string | undefined
   question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
@@ -48,44 +51,65 @@ interface SourceSummary {
 }
 
 export async function deployConfirmationPrompt(
-  {question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
+  {appTitle, question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
   deploymentMode: DeploymentMode,
   apiKey: string,
   token: string,
 ): Promise<boolean> {
-  let infoTable: InfoTableSection[] = await buildUnifiedDeploymentInfoPrompt(
-    apiKey,
-    token,
-    identifiers,
-    toCreate,
-    dashboardOnly,
-    deploymentMode,
-  )
-  if (infoTable.length === 0) {
-    infoTable = buildLegacyDeploymentInfoPrompt({identifiers, toCreate, onlyRemote, dashboardOnly})
+  let {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
+    await buildUnifiedDeploymentInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly, deploymentMode)
+  if (infoTable.length === 0 && deploymentMode === 'legacy') {
+    ;({infoTable, removesExtension} = buildLegacyDeploymentInfoPrompt({
+      identifiers,
+      toCreate,
+      onlyRemote,
+      dashboardOnly,
+    }))
   }
 
-  if (infoTable.length === 0) {
-    return true
-  }
+  const canSkipConfirmation = infoTable.length === 0 && deploymentMode === 'legacy'
+  const timeBeforeConfirmationMs = new Date().valueOf()
+  let confirmationResponse = true
 
-  const confirmationMessage = (() => {
-    switch (deploymentMode) {
-      case 'legacy':
-        return 'Yes, deploy to push changes'
-      case 'unified':
-        return 'Yes, release this new version'
-      case 'unified-skip-release':
-        return 'Yes, create this new version'
+  if (!canSkipConfirmation) {
+    const appExists = Boolean(appTitle)
+    const isDangerous = appExists && removesExtension && deploymentMode === 'unified'
+
+    if (isDangerous) {
+      confirmationResponse = await renderDangerousConfirmationPrompt({
+        message: question,
+        infoTable,
+        confirmation: appTitle!,
+      })
+    } else {
+      const confirmationMessage = (() => {
+        switch (deploymentMode) {
+          case 'legacy':
+            return 'Yes, deploy to push changes'
+          case 'unified':
+            return 'Yes, release this new version'
+          case 'unified-skip-release':
+            return 'Yes, create this new version'
+        }
+      })()
+
+      confirmationResponse = await renderConfirmationPrompt({
+        message: question,
+        infoTable,
+        confirmationMessage,
+        cancellationMessage: 'No, cancel',
+      })
     }
-  })()
+  }
 
-  return renderConfirmationPrompt({
-    message: question,
-    infoTable,
-    confirmationMessage,
-    cancellationMessage: 'No, cancel',
-  })
+  const timeToConfirmOrCancelMs = new Date().valueOf() - timeBeforeConfirmationMs
+
+  await metadata.addPublicMetadata(() => ({
+    cmd_deploy_confirm_cancelled: !confirmationResponse,
+    cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
+  }))
+
+  return confirmationResponse
 }
 
 function buildLegacyDeploymentInfoPrompt({
@@ -93,49 +117,53 @@ function buildLegacyDeploymentInfoPrompt({
   toCreate,
   onlyRemote,
   dashboardOnly,
-}: Omit<SourceSummary, 'question'>) {
+}: Omit<SourceSummary, 'appTitle' | 'question'>) {
   const infoTable: InfoTableSection[] = []
 
-  if (toCreate.length > 0) {
-    infoTable.push({header: 'Add', items: toCreate.map((source) => source.localIdentifier)})
+  const included = [
+    ...toCreate.map((source) => [source.localIdentifier, {subdued: '(new)'}]),
+    ...Object.keys(identifiers),
+    ...dashboardOnly.map((source) => [source.title, {subdued: '(from Partner Dashboard)'}]),
+  ]
+
+  if (included.length > 0) {
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }
 
-  const toUpdate = Object.keys(identifiers)
-
-  if (toUpdate.length > 0) {
-    infoTable.push({header: 'Update', items: toUpdate})
+  const removesExtension = onlyRemote.length > 0
+  if (removesExtension) {
+    infoTable.push({
+      header: 'Removes:',
+      items: onlyRemote.map((source) => source.title),
+      bullet: '-',
+      helperText: 'This can permanently delete app user data.',
+    })
   }
 
-  if (dashboardOnly.length > 0) {
-    infoTable.push({header: 'Included from Partner dashboard', items: dashboardOnly.map((source) => source.title)})
-  }
-
-  if (onlyRemote.length > 0) {
-    infoTable.push({header: 'Missing locally', items: onlyRemote.map((source) => source.title)})
-  }
-
-  return infoTable
+  return {infoTable, removesExtension}
 }
 
-async function buildUnifiedDeploymentInfoPrompt(
+async function getUnifiedDeploymentInfoBreakdown(
   apiKey: string,
   token: string,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   deploymentMode: DeploymentMode,
-) {
-  if (deploymentMode === 'legacy') return []
+): Promise<{
+  toCreate: string[]
+  toUpdate: string[]
+  fromDashboard: string[]
+  onlyRemote: string[]
+} | null> {
+  if (deploymentMode === 'legacy') return null
 
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  if (!activeAppVersion.app.activeAppVersion) return []
-
-  const infoTable: InfoTableSection[] = []
-
-  const nonDashboardRemoteRegistrations = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
-    .map((remoteRegistration) => remoteRegistration.registrationUuid)
+  const nonDashboardRemoteRegistrations =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions
+      .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
+      .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
   let toCreateFinal: string[] = []
   const toUpdate: string[] = []
@@ -151,47 +179,81 @@ async function buildUnifiedDeploymentInfoPrompt(
   }
 
   toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
-  if (toCreateFinal.length > 0) {
-    infoTable.push({header: 'Add', items: toCreateFinal})
-  }
-
-  if (toUpdate.length > 0) {
-    infoTable.push({header: 'Update', items: toUpdate})
-  }
-
-  if (dashboardOnlyFinal.length > 0) {
-    infoTable.push({
-      header: 'Included from Partner dashboard',
-      items: dashboardOnlyFinal.map((source) => source.title),
-    })
-  }
 
   const localRegistrationAndDashboard = [
     ...Object.values(localRegistration),
     ...dashboardOnly.map((source) => source.uuid),
   ]
-  const onlyRemote = activeAppVersion.app.activeAppVersion.appModuleVersions
-    .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
-    .map((module) => module.registrationTitle)
-  if (onlyRemote.length > 0) {
+  const onlyRemote =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions
+      .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
+      .map((module) => module.registrationTitle) ?? []
+
+  return {
+    onlyRemote,
+    toCreate: toCreateFinal.map((identifier) => identifier),
+    toUpdate,
+    fromDashboard: dashboardOnlyFinal.map((source) => source.title),
+  }
+}
+
+async function buildUnifiedDeploymentInfoPrompt(
+  apiKey: string,
+  token: string,
+  localRegistration: IdentifiersExtensions,
+  toCreate: LocalSource[],
+  dashboardOnly: RemoteSource[],
+  deploymentMode: DeploymentMode,
+) {
+  const breakdown = await getUnifiedDeploymentInfoBreakdown(
+    apiKey,
+    token,
+    localRegistration,
+    toCreate,
+    dashboardOnly,
+    deploymentMode,
+  )
+  if (breakdown === null) return {infoTable: [], removesExtension: false}
+
+  const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = breakdown
+
+  await metadata.addPublicMetadata(() => ({
+    cmd_deploy_confirm_new_registrations: toCreateBreakdown.length,
+    cmd_deploy_confirm_updated_registrations: toUpdate.length,
+    cmd_deploy_confirm_removed_registrations: onlyRemote.length,
+  }))
+
+  const infoTable: InfoTableSection[] = []
+
+  const included = [
+    ...toCreateBreakdown.map((identifier) => [identifier, {subdued: '(new)'}]),
+    ...toUpdate,
+    ...fromDashboard.map((sourceTitle) => [sourceTitle, {subdued: '(from Partner Dashboard)'}]),
+  ]
+  if (included.length > 0) {
+    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
+  }
+
+  const removesExtension = onlyRemote.length > 0
+  if (removesExtension) {
     const missingLocallySection: InfoTableSection = {
-      header: 'Removed',
-      color: 'red',
-      helperText: 'Will be removed for users when this version is released.',
+      header: 'Removes:',
+      helperText: 'This can permanently delete app user data.',
       items: onlyRemote,
+      bullet: '-',
     }
 
     infoTable.push(missingLocallySection)
   }
 
-  return infoTable
+  return {infoTable, removesExtension}
 }
 
 export async function extensionMigrationPrompt(
   toMigrate: LocalRemoteSource[],
   includeRemoteType = true,
 ): Promise<boolean> {
-  const migrationNames = toMigrate.map(({local}) => `"${local.configuration.name}"`).join(', ')
+  const migrationNames = toMigrate.map(({local}) => `"${local.handle}"`).join(', ')
   const allMigrationTypes = toMigrate.map(({remote}) => remote.type.toLocaleLowerCase())
   const uniqueMigrationTypes = allMigrationTypes
     .filter((type, i) => allMigrationTypes.indexOf(type) === i)

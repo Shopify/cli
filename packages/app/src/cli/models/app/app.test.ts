@@ -15,7 +15,6 @@ const DEFAULT_APP = testApp()
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   name: 'app 1',
-  api_contact_email: 'ryan@shopify.com',
   client_id: '12345',
   webhooks: {
     api_version: '2023-04',

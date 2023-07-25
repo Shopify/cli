@@ -1,16 +1,14 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
-import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
+import {InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
-import {TokenizedText} from './TokenizedText.js'
-import {InfoMessage} from './SelectPrompt.js'
-import {messageWithPunctuation} from '../utilities.js'
+import {InfoMessageProps} from './Prompts/InfoMessage.js'
+import {GitDiffProps} from './Prompts/GitDiff.js'
+import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
-import useAbortSignal from '../hooks/use-abort-signal.js'
-import React, {ReactElement, useCallback, useLayoutEffect, useRef, useState} from 'react'
-import {Box, measureElement, Text, useApp, useStdout} from 'ink'
-import figures from 'figures'
-import ansiEscapes from 'ansi-escapes'
+import usePrompt, {PromptState} from '../hooks/use-prompt.js'
+import React, {ReactElement, useCallback, useRef, useState} from 'react'
+import {Box, useApp} from 'ink'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -20,25 +18,18 @@ export interface SearchResults<T> {
 }
 
 export interface AutocompletePromptProps<T> {
-  message: string
+  message: Message
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
   hasMorePages?: boolean
   search: (term: string) => Promise<SearchResults<T>>
   abortSignal?: AbortSignal
-  infoMessage?: InfoMessage
-}
-
-enum PromptState {
-  Idle = 'idle',
-  Loading = 'loading',
-  Submitted = 'submitted',
-  Error = 'error',
+  infoMessage?: InfoMessageProps['message']
+  gitDiff?: GitDiffProps['gitDiff']
 }
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
-const SELECT_INPUT_FOOTER_HEIGHT = 4
 
 // eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
@@ -50,19 +41,16 @@ function AutocompletePrompt<T>({
   hasMorePages: initialHasMorePages = false,
   abortSignal,
   infoMessage,
+  gitDiff,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
-  const [answer, setAnswer] = useState<SelectItem<T> | undefined>(choices[0])
   const {exit: unmountInk} = useApp()
-  const [promptState, setPromptState] = useState<PromptState>(PromptState.Idle)
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
-  const {stdout} = useStdout()
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
   const [hasMorePages, setHasMorePages] = useState(initialHasMorePages)
-  const [wrapperHeight, setWrapperHeight] = useState(0)
-  const [promptAreaHeight, setPromptAreaHeight] = useState(0)
-  const currentAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
-  const [availableLines, setAvailableLines] = useState(currentAvailableLines)
+  const {promptState, setPromptState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
+    initialAnswer: undefined,
+  })
 
   const paginatedSearch = useCallback(
     async (term: string) => {
@@ -72,50 +60,9 @@ function AutocompletePrompt<T>({
     [search],
   )
 
-  const wrapperRef = useCallback(
-    (node) => {
-      if (node !== null) {
-        const {height} = measureElement(node)
-        if (wrapperHeight !== height) {
-          setWrapperHeight(height)
-        }
-      }
-    },
-    [wrapperHeight],
-  )
-
-  const promptAreaRef = useCallback((node) => {
-    if (node !== null) {
-      const {height} = measureElement(node)
-      setPromptAreaHeight(height)
-    }
-  }, [])
-
-  useLayoutEffect(() => {
-    function onResize() {
-      const newAvailableLines = stdout.rows - promptAreaHeight - SELECT_INPUT_FOOTER_HEIGHT
-      if (newAvailableLines !== availableLines) {
-        setAvailableLines(newAvailableLines)
-      }
-    }
-
-    onResize()
-
-    stdout.on('resize', onResize)
-    return () => {
-      stdout.off('resize', onResize)
-    }
-  }, [wrapperHeight, promptAreaHeight, searchResults.length, stdout, availableLines])
-
-  const {isAborted} = useAbortSignal(abortSignal)
-
   const submitAnswer = useCallback(
     (answer: SelectItem<T>) => {
       if (promptState === PromptState.Idle) {
-        // -1 is for the last row with the terminal cursor
-        if (stdout && wrapperHeight >= stdout.rows - 1) {
-          stdout.write(ansiEscapes.clearTerminal)
-        }
         setAnswer(answer)
         setPromptState(PromptState.Submitted)
         setSearchTerm('')
@@ -123,7 +70,7 @@ function AutocompletePrompt<T>({
         onSubmit(answer.value)
       }
     },
-    [promptState, stdout, wrapperHeight, onSubmit, unmountInk],
+    [promptState, setAnswer, setPromptState, unmountInk, onSubmit],
   )
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
@@ -165,14 +112,16 @@ function AutocompletePrompt<T>({
     [initialHasMorePages, choices, paginatedSearch, searchResults],
   )
 
-  return isAborted ? null : (
-    <Box flexDirection="column" marginBottom={1} ref={wrapperRef}>
-      <Box ref={promptAreaRef}>
-        <Box marginRight={2}>
-          <Text>?</Text>
-        </Box>
-        <TokenizedText item={messageWithPunctuation(message)} />
-        {promptState !== PromptState.Submitted && canSearch ? (
+  return (
+    <PromptLayout
+      message={message}
+      state={promptState}
+      infoTable={infoTable}
+      infoMessage={infoMessage}
+      gitDiff={gitDiff}
+      abortSignal={abortSignal}
+      header={
+        promptState !== PromptState.Submitted && canSearch ? (
           <Box marginLeft={3}>
             <TextInput
               value={searchTerm}
@@ -190,64 +139,28 @@ function AutocompletePrompt<T>({
               placeholder="Type to search..."
             />
           </Box>
-        ) : null}
-      </Box>
-
-      {(infoTable || infoMessage) && promptState !== PromptState.Submitted ? (
-        <Box
-          marginTop={1}
-          marginLeft={3}
-          paddingLeft={2}
-          borderStyle="bold"
-          borderLeft
-          borderRight={false}
-          borderTop={false}
-          borderBottom={false}
-          flexDirection="column"
-          gap={1}
-        >
-          {infoMessage ? (
-            <Box flexDirection="column" gap={1}>
-              <Text color={infoMessage.title.color}>
-                <TokenizedText item={infoMessage.title.text} />
-              </Text>
-              <TokenizedText item={infoMessage.body} />
-            </Box>
-          ) : null}
-          {infoTable ? <InfoTable table={infoTable} /> : null}
-        </Box>
-      ) : null}
-
-      {promptState === PromptState.Submitted ? (
-        <Box>
-          <Box marginRight={2}>
-            <Text color="cyan">{figures.tick}</Text>
-          </Box>
-
-          <Text color="cyan">{answer!.label}</Text>
-        </Box>
-      ) : (
-        <Box marginTop={1}>
-          <SelectInput
-            items={searchResults}
-            initialItems={choices}
-            enableShortcuts={false}
-            emptyMessage="No results found."
-            highlightedTerm={searchTerm}
-            loading={promptState === PromptState.Loading}
-            errorMessage={
-              promptState === PromptState.Error
-                ? 'There has been an error while searching. Please try again later.'
-                : undefined
-            }
-            hasMorePages={hasMorePages}
-            morePagesMessage="Find what you're looking for by typing its name."
-            availableLines={availableLines}
-            onSubmit={submitAnswer}
-          />
-        </Box>
-      )}
-    </Box>
+        ) : null
+      }
+      submittedAnswerLabel={answer?.label}
+      input={
+        <SelectInput
+          items={searchResults}
+          initialItems={choices}
+          enableShortcuts={false}
+          emptyMessage="No results found."
+          highlightedTerm={searchTerm}
+          loading={promptState === PromptState.Loading}
+          errorMessage={
+            promptState === PromptState.Error
+              ? 'There has been an error while searching. Please try again later.'
+              : undefined
+          }
+          hasMorePages={hasMorePages}
+          morePagesMessage="Find what you're looking for by typing its name."
+          onSubmit={submitAnswer}
+        />
+      }
+    />
   )
 }
 

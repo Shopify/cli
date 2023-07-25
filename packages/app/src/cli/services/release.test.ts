@@ -10,6 +10,7 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {Config} from '@oclif/core'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
@@ -18,6 +19,17 @@ vi.mock('../prompts/release.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('../api/graphql/app_release.js')
 vi.mock('./release/version-diff.js')
+
+const APP = {
+  id: 'app-id',
+  title: 'app-title',
+  apiKey: 'api-key',
+  organizationId: 'org-id',
+  grantedScopes: [],
+  applicationUrl: 'https://example.com',
+  redirectUrlWhitelist: [],
+  apiSecretKeys: [],
+}
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -67,8 +79,8 @@ describe('release', () => {
 
     // Then
     expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'api-token', {
-      apiKey: 'app-id',
-      deploymentId: 1,
+      apiKey: APP.apiKey,
+      appVersionId: 1,
     })
     expect(renderSuccess).toHaveBeenCalledWith({
       body: [
@@ -81,15 +93,6 @@ describe('release', () => {
         '\nmessage',
       ],
       headline: 'Version released to users.',
-      nextSteps: [
-        [
-          'Run',
-          {
-            command: 'yarn shopify app versions list',
-          },
-          'to see rollout progress.',
-        ],
-      ],
     })
   })
 
@@ -142,7 +145,7 @@ describe('release', () => {
 async function testRelease(
   app: AppInterface,
   version: string,
-  partnersApp?: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
+  partnersApp?: OrganizationApp,
   options?: {
     force?: boolean
   },
@@ -151,7 +154,7 @@ async function testRelease(
   vi.mocked(ensureReleaseContext).mockResolvedValue({
     app,
     token: 'api-token',
-    apiKey: partnersApp?.id ?? 'app-id',
+    partnersApp: partnersApp ?? APP,
   })
 
   vi.mocked(versionDiffByVersion).mockResolvedValue({
@@ -164,5 +167,6 @@ async function testRelease(
     reset: false,
     force: Boolean(options?.force),
     version,
+    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   })
 }

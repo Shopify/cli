@@ -1,9 +1,19 @@
-import {getAppConfigurationShorthand, getAppConfigurationFileName, loadApp, loadDotEnv} from './loader.js'
+import {
+  getAppConfigurationShorthand,
+  getAppConfigurationFileName,
+  loadApp,
+  loadDotEnv,
+  parseConfigurationObject,
+} from './loader.js'
+import {AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {DEFAULT_CONFIG} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
-import {describe, expect, beforeEach, afterEach, beforeAll, test} from 'vitest'
+import {getCachedAppInfo} from '../../services/local-storage.js'
+import use from '../../services/app/config/use.js'
+import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
   yarnLockfile,
@@ -12,8 +22,14 @@ import {
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, cwd} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {outputContent} from '@shopify/cli-kit/node/output'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'path'
+
+vi.mock('../../services/local-storage.js')
+vi.mock('../../services/app/config/use.js')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -24,7 +40,6 @@ scopes = "read_products"
 `
   const linkedAppConfiguration = `
 name = "for-testing"
-api_contact_email = "me@example.com"
 client_id = "1234567890"
 application_url = "https://example.com/lala"
 embedded = true
@@ -271,8 +286,16 @@ automatically_update_urls_on_dev = true
 
   test('throws an error if the extension configuration file is invalid', async () => {
     // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
     const blockConfiguration = `
       wrong = "my_extension"
+      type = "checkout_post_purchase"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -280,7 +303,79 @@ automatically_update_urls_on_dev = true
     })
 
     // When
-    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Fix a schema error in/)
+  })
+
+  test('throws an error if the extension type is invalid', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "extension"
+      type = "invalid_type"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type "invalid_type"/)
+  })
+
+  test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "my_extension-global"
+
+      [[extensions]]
+      name = "my_extension"
+      type = "checkout_post_purchase"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
+      /Missing handle for extension "my_extension"/,
+    )
+  })
+
+  test('throws an error if the extension configuration is missing both extensions and type', async () => {
+    // Given
+    await writeConfig(appConfiguration, {
+      workspaces: ['web'],
+      name: 'my_app',
+      dependencies: {'empty-npm-package': '1.0.0'},
+      devDependencies: {},
+    })
+
+    const blockConfiguration = `
+      name = "my_extension-global"
+      handle = "handle"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(/Invalid extension type/)
   })
 
   test('loads the app with web blocks', async () => {
@@ -428,7 +523,7 @@ automatically_update_urls_on_dev = true
     // Then
     expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('custom_extension')
+    expect(app.allExtensions[0]!.localIdentifier).toBe('custom-extension')
   })
 
   test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -496,12 +591,12 @@ automatically_update_urls_on_dev = true
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      name = "my_extension_1"
       api_version = "2022-07"
       description = "global description"
 
       [[extensions]]
       type = "checkout_post_purchase"
+      name = "my_extension_1"
       handle = "checkout-ext"
       description = "custom description"
 
@@ -511,8 +606,8 @@ automatically_update_urls_on_dev = true
       name = "my_extension_1_flow"
       runtime_url = "https://example.com"
 
-      [settings]
-      [[settings.fields]]
+      [extensions.settings]
+      [[extensions.settings.fields]]
       key = "my_field"
       name = "My Field"
       description = "My Field Description"
@@ -536,7 +631,6 @@ automatically_update_urls_on_dev = true
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
-    expect(extensions[0]!.configuration.settings!.fields![0]!.key).toBe('my_field')
     expect(extensions[0]!.configuration.description).toBe('custom description')
 
     expect(extensions[1]!.configuration.name).toBe('my_extension_1_flow')
@@ -671,6 +765,787 @@ automatically_update_urls_on_dev = true
     expect(myFunction.entrySourceFilePath).toContain(joinPath(blockPath('my-function'), 'src', 'index.js'))
   })
 
+  test('loads the app with a Flow trigger extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      [[extensions]]
+      name = "Auction bid placed"
+      description = "An auction bid has been placed"
+      type = "flow_trigger"
+      handle = "handle1"
+
+      [settings]
+
+        [[settings.fields]]
+        type = "customer_reference"
+
+        [[settings.fields]]
+        type = "single_line_text_field"
+        key = "your field key"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-flow-trigger',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        description: 'An auction bid has been placed',
+        name: 'Auction bid placed',
+        type: 'flow_trigger',
+        handle: 'handle1',
+        settings: {
+          fields: [
+            {
+              type: 'customer_reference',
+            },
+            {
+              type: 'single_line_text_field',
+              key: 'your field key',
+            },
+          ],
+        },
+      })
+    }
+  })
+
+  test('loads the app with a Flow action extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      [[extensions]]
+      name = "Place a bid"
+      description = "Place a bid on an auction"
+      type = "flow_action"
+      handle = "handle2"
+      runtime_url = "https://url.com/api/execute"
+      schema = "./schema_patch.graphql"
+      return_type_ref = "Auction"
+      validation_url = "https://url.com/api/validate"
+      config_page_url = "https://url.com/config"
+      config_page_preview_url = "https://url.com/config/preview"
+
+      [settings]
+
+        [[settings.fields]]
+        type = "customer_reference"
+        required = true
+
+        [[settings.fields]]
+        type = "single_line_text_field"
+        key = "your_field_key"
+        name = "Display name"
+        description = "A description of my field"
+        required = true
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-flow-action',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        description: 'Place a bid on an auction',
+        name: 'Place a bid',
+        type: 'flow_action',
+        handle: 'handle2',
+        runtime_url: 'https://url.com/api/execute',
+        schema: './schema_patch.graphql',
+        return_type_ref: 'Auction',
+        validation_url: 'https://url.com/api/validate',
+        config_page_url: 'https://url.com/config',
+        config_page_preview_url: 'https://url.com/config/preview',
+        settings: {
+          fields: [
+            {
+              type: 'customer_reference',
+              required: true,
+            },
+            {
+              type: 'single_line_text_field',
+              key: 'your_field_key',
+              name: 'Display name',
+              description: 'A description of my field',
+              required: true,
+            },
+          ],
+        },
+      })
+    }
+  })
+
+  test('loads the app with a Function extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      name = "My function"
+      type = "product_discounts"
+      api_version = "2023-01"
+
+      [build]
+      command = "cargo wasi build --release"
+      path = "target/wasm32-wasi/release/my-function.wasm"
+      watch = [ "src/**/*.rs" ]
+
+      [ui]
+      enable_create = false
+
+      [ui.paths]
+      create = "/"
+      details = "/"
+
+      [input.variables]
+      namespace = "my-app"
+      key = "my-input-variables"
+
+      [[targeting]]
+      target = "checkout.fetch"
+      input_query = "./input_query.graphql"
+      export = "fetch"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        name: 'My function',
+        type: 'product_discounts',
+        api_version: '2023-01',
+        build: {
+          command: 'cargo wasi build --release',
+          path: 'target/wasm32-wasi/release/my-function.wasm',
+          watch: ['src/**/*.rs'],
+        },
+        ui: {
+          enable_create: false,
+          paths: {
+            create: '/',
+            details: '/',
+          },
+        },
+        input: {
+          variables: {
+            namespace: 'my-app',
+            key: 'my-input-variables',
+          },
+        },
+        targeting: [
+          {
+            target: 'checkout.fetch',
+            input_query: './input_query.graphql',
+            export: 'fetch',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Function extension that has a full valid configuration with unified config', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2023-01"
+
+      [[extensions]]
+      name = "My function"
+      handle = "my-function"
+      type = "product_discounts"
+
+      [extensions.build]
+      command = "cargo wasi build --release"
+      path = "target/wasm32-wasi/release/my-function.wasm"
+      watch = [ "src/**/*.rs" ]
+
+      [extensions.ui]
+      enable_create = false
+
+      [extensions.ui.paths]
+      create = "/"
+      details = "/"
+
+      [extensions.input.variables]
+      namespace = "my-app"
+      key = "my-input-variables"
+
+      [[extensions.targeting]]
+      target = "checkout.fetch"
+      input_query = "./input_query.graphql"
+      export = "fetch"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-function',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        name: 'My function',
+        handle: 'my-function',
+        type: 'product_discounts',
+        api_version: '2023-01',
+        build: {
+          command: 'cargo wasi build --release',
+          path: 'target/wasm32-wasi/release/my-function.wasm',
+          watch: ['src/**/*.rs'],
+        },
+        ui: {
+          enable_create: false,
+          paths: {
+            create: '/',
+            details: '/',
+          },
+        },
+        input: {
+          variables: {
+            namespace: 'my-app',
+            key: 'my-input-variables',
+          },
+        },
+        targeting: [
+          {
+            target: 'checkout.fetch',
+            input_query: './input_query.graphql',
+            export: 'fetch',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a UI extension that has a full valid unified configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2023-07"
+
+      [[extensions]]
+      name = "My checkout extension"
+      handle = "checkout-ui"
+      type = "ui_extension"
+
+        [[extensions.metafields]]
+        namespace = "my-namespace"
+        key = "my-key"
+        [[extensions.metafields]]
+        namespace = "my-namespace"
+        key = "my-other-key"
+
+        [extensions.capabilities]
+        network_access = true
+        block_progress = true
+        api_access = true
+
+        [extensions.settings]
+          [[extensions.settings.fields]]
+          key = "field_key"
+          type = "boolean"
+          name = "field-name"
+          [[extensions.settings.fields]]
+          key = "field_key_2"
+          type = "number_integer"
+          name = "field-name-2"
+          validations = [ { name = "min", value = "5" }, { name = "max", value = "20" } ]
+
+        [[extensions.targeting]]
+        target = "purchase.checkout.block.render"
+        module = "./CheckoutDynamicRender.jsx"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'checkout-ui',
+    })
+
+    await writeFile(
+      joinPath(blockPath('checkout-ui'), 'CheckoutDynamicRender.jsx'),
+      `
+    import { extension, Banner } from "@shopify/ui-extensions/checkout";
+
+    export default extension("purchase.checkout.block.render", (root, { extension: { target } , i18n }) => {
+      root.appendChild(
+        root.createComponent(
+          Banner,
+          { title: "{{ name }}" },
+          i18n.translate('welcome', {target})
+        )
+      );
+    });
+    `,
+    )
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        api_version: '2023-07',
+        name: 'My checkout extension',
+        handle: 'checkout-ui',
+        type: 'ui_extension',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+          {
+            namespace: 'my-namespace',
+            key: 'my-other-key',
+          },
+        ],
+        capabilities: {
+          network_access: true,
+          block_progress: true,
+          api_access: true,
+        },
+        settings: {
+          fields: [
+            {
+              key: 'field_key',
+              type: 'boolean',
+              name: 'field-name',
+            },
+            {
+              key: 'field_key_2',
+              type: 'number_integer',
+              name: 'field-name-2',
+              validations: [
+                {
+                  name: 'min',
+                  value: '5',
+                },
+                {
+                  name: 'max',
+                  value: '20',
+                },
+              ],
+            },
+          ],
+        },
+        extension_points: [
+          {
+            metafields: [
+              {
+                key: 'my-key',
+                namespace: 'my-namespace',
+              },
+              {
+                key: 'my-other-key',
+                namespace: 'my-namespace',
+              },
+            ],
+            module: './CheckoutDynamicRender.jsx',
+            target: 'purchase.checkout.block.render',
+          },
+        ],
+        targeting: [
+          {
+            target: 'purchase.checkout.block.render',
+            module: './CheckoutDynamicRender.jsx',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Checkout Post Purchase extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "checkout_post_purchase"
+      name = "my-checkout-post-purchase"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key-2"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-checkout-post-purchase',
+    })
+
+    await writeFile(joinPath(blockPath('my-checkout-post-purchase'), 'index.js'), '/** content **/')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'checkout_post_purchase',
+        name: 'my-checkout-post-purchase',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+          {
+            namespace: 'my-namespace',
+            key: 'my-key-2',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Customer Accounts UI extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "customer_accounts_ui_extension"
+      name = "my-customer-accounts-ui-extension"
+
+      categories = [ "returns" ]
+      authenticated_redirect_start_url = "https://example.com/start"
+      authenticated_redirect_redirect_urls = ["https://example.com/redirect"]
+
+      extension_points = [
+        'CustomerAccount::FullPage::RenderWithin',
+      ]
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-customer-accounts-ui-extension',
+    })
+
+    await writeFile(joinPath(blockPath('my-customer-accounts-ui-extension'), 'index.js'), '/** content **/')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'customer_accounts_ui_extension',
+        name: 'my-customer-accounts-ui-extension',
+        extension_points: ['CustomerAccount::FullPage::RenderWithin'],
+        metafields: [],
+        categories: ['returns'],
+        authenticated_redirect_start_url: 'https://example.com/start',
+        authenticated_redirect_redirect_urls: ['https://example.com/redirect'],
+      })
+    }
+  })
+
+  test('loads the app with a POS UI extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "pos_ui_extension"
+      name = "my-pos-ui-extension"
+      description = "my-pos-ui-extension-description"
+
+      extension_points = [
+        'pos.home.tile.render',
+        'pos.home.modal.render'
+      ]
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-pos-ui-extension',
+    })
+
+    const checkoutUiDirectory = joinPath(tmpDir, 'extensions', 'my-pos-ui-extension', 'src')
+    await mkdir(checkoutUiDirectory)
+
+    const tempFilePath = joinPath(checkoutUiDirectory, 'index.js')
+    await writeFile(tempFilePath, `/** content **/`)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'pos_ui_extension',
+        name: 'my-pos-ui-extension',
+        description: 'my-pos-ui-extension-description',
+        extension_points: ['pos.home.tile.render', 'pos.home.modal.render'],
+      })
+    }
+  })
+
+  test('loads the app with a Tax Calculation extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "tax_calculation"
+      name = "my-tax-calculation"
+
+      production_api_base_url = "https://prod.example.com"
+      benchmark_api_base_url = "https://benchmark.example.com"
+      calculate_taxes_api_endpoint = "/calculate-taxes"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-tax-calculation',
+    })
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'tax_calculation',
+        name: 'my-tax-calculation',
+        production_api_base_url: 'https://prod.example.com',
+        benchmark_api_base_url: 'https://benchmark.example.com',
+        calculate_taxes_api_endpoint: '/calculate-taxes',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Web Pixel extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "web_pixel_extension"
+      name = "pixel"
+      runtime_context = "strict"
+
+      [settings]
+      type = "object"
+
+      [settings.fields.first]
+      name = "first"
+      description = "description"
+      type = "single_line_text_field"
+      validations = [{ choices = ["a", "b", "c"] }]
+
+      [settings.fields.second]
+      name = "second"
+      description = "description"
+      type = "single_line_text_field"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'pixel',
+    })
+    await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'web_pixel_extension',
+        name: 'pixel',
+        runtime_context: 'strict',
+        settings: {
+          type: 'object',
+          fields: {
+            first: {
+              description: 'description',
+              name: 'first',
+              type: 'single_line_text_field',
+              validations: [
+                {
+                  choices: ['a', 'b', 'c'],
+                },
+              ],
+            },
+            second: {
+              description: 'description',
+              name: 'second',
+              type: 'single_line_text_field',
+            },
+          },
+        },
+      })
+    }
+  })
+
+  test('loads the app with a Legacy Checkout UI extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "checkout_ui_extension"
+      name = "my-checkout-extension"
+
+      extension_points = [
+        'Checkout::Dynamic::Render'
+      ]
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+
+      [[metafields]]
+      namespace = "my-namespace"
+      key = "my-other-key"
+
+      [capabilities]
+      network_access = true
+      block_progress = true
+      api_access = true
+
+      [settings]
+        [[settings.fields]]
+        key = "field_key"
+        type = "boolean"
+        name = "field-name"
+        [[settings.fields]]
+        key = "field_key_2"
+        type = "number_integer"
+        name = "field-name-2"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-checkout-extension',
+    })
+
+    await writeFile(joinPath(blockPath('my-checkout-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'checkout_ui_extension',
+        name: 'my-checkout-extension',
+        extension_points: ['Checkout::Dynamic::Render'],
+        capabilities: {
+          api_access: true,
+          block_progress: true,
+          network_access: true,
+        },
+        settings: {
+          fields: [
+            {
+              key: 'field_key',
+              name: 'field-name',
+              type: 'boolean',
+            },
+            {
+              key: 'field_key_2',
+              name: 'field-name-2',
+              type: 'number_integer',
+            },
+          ],
+        },
+        metafields: [
+          {
+            key: 'my-key',
+            namespace: 'my-namespace',
+          },
+          {
+            key: 'my-other-key',
+            namespace: 'my-namespace',
+          },
+        ],
+      })
+    }
+  })
+
+  test('loads the app with a Product Subscription extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "product_subscription"
+      name = "my-product-subscription"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-product-subscription',
+    })
+
+    await writeFile(joinPath(blockPath('my-product-subscription'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'product_subscription',
+        name: 'my-product-subscription',
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -796,7 +1671,43 @@ automatically_update_urls_on_dev = true
     })
   })
 
+  test('throws error if config file is passed in but does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+
+    // When
+    const result = loadApp({directory: tmpDir, specifications, configName: 'non-existent'})
+
+    // Then
+    await expect(result).rejects.toThrow(`Couldn't find shopify.app.non-existent.toml in ${tmpDir}.`)
+    expect(use).not.toHaveBeenCalled()
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test('prompts to select new config if current config file is set but does not exist', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+
+    // When
+    await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(use).toHaveBeenCalledWith({
+      directory: normalizePath(resolve(tmpDir)),
+      shouldRenderSuccess: false,
+      warningContent: {
+        headline: "Couldn't find shopify.app.non-existent.toml",
+        body: [
+          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+        ],
+      },
+    })
+  })
 
   test.skipIf(runningOnWindows)(`updates metadata after loading a config as code application`, async () => {
     const {webDirectory} = await writeConfig(linkedAppConfiguration, {
@@ -838,6 +1749,78 @@ automatically_update_urls_on_dev = true
 
       // When
       await expect(loadApp({directory: tmpDir, specifications})).resolves.toBeDefined()
+    })
+
+    test('loads the app with an Admin Action extension that has a full valid configuration', async () => {
+      // Given
+      await writeConfig(appConfiguration)
+
+      const blockConfiguration = `
+        api_version = "unstable"
+
+        [[extensions]]
+        name = "my-admin-action"
+        handle = "admin-action-handle"
+        type = "ui_extension"
+        [[extensions.targeting]]
+        module = "./src/ActionExtension.js"
+        target = "admin.product-details.action.render"
+
+        [[extensions.metafields]]
+        namespace = "my-namespace"
+        key = "my-key"
+        `
+      await writeBlockConfig({
+        blockConfiguration,
+        name: 'my-admin-action',
+      })
+
+      // Create a temporary ActionExtension.js file
+      const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-admin-action', 'src')
+      await mkdir(extensionDirectory)
+
+      const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+      await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+      // When
+      const app = await loadApp({directory: tmpDir, specifications})
+
+      // Then
+      expect(app.allExtensions).toHaveLength(1)
+      const extension = app.allExtensions[0]
+      expect(extension).not.toBeUndefined()
+      if (extension) {
+        expect(extension.configuration).toMatchObject({
+          api_version: 'unstable',
+          name: 'my-admin-action',
+          handle: 'admin-action-handle',
+          type: 'ui_extension',
+          metafields: [
+            {
+              namespace: 'my-namespace',
+              key: 'my-key',
+            },
+          ],
+          extension_points: [
+            {
+              metafields: [
+                {
+                  namespace: 'my-namespace',
+                  key: 'my-key',
+                },
+              ],
+              module: './src/ActionExtension.js',
+              target: 'admin.product-details.action.render',
+            },
+          ],
+          targeting: [
+            {
+              module: './src/ActionExtension.js',
+              target: 'admin.product-details.action.render',
+            },
+          ],
+        })
+      }
     })
 
     test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
@@ -1054,5 +2037,97 @@ describe('loadDotEnv', () => {
       expect(got).toBeDefined()
       expect(got!.variables.FOO).toEqual('bar')
     })
+  })
+})
+
+describe('parseConfigurationObject', () => {
+  test('throws an error if fields are missing in a current schema TOML file', async () => {
+    const configurationObject = {
+      ...DEFAULT_CONFIG,
+      embedded: undefined,
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'boolean',
+        received: 'undefined',
+        path: ['embedded'],
+        message: 'Required',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('throws an error if fields are missing in a legacy schema TOML file', async () => {
+    const configurationObject = {
+      scopes: [],
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'string',
+        received: 'array',
+        path: ['scopes'],
+        message: 'Expected string, received array',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('throws an error if fields are missing in a frontend config web TOML file', async () => {
+    const configurationObject = {
+      type: 11,
+      commands: {dev: ''},
+      roles: 1,
+    }
+
+    const errorObject = [
+      {
+        code: 'invalid_union',
+        unionErrors: [
+          {
+            issues: [
+              {
+                code: 'invalid_type',
+                expected: 'array',
+                received: 'number',
+                path: ['roles'],
+                message: 'Expected array, received number',
+              },
+            ],
+            name: 'ZodError',
+          },
+          {
+            issues: [
+              {
+                expected: "'frontend' | 'backend' | 'background'",
+                received: 'number',
+                code: 'invalid_type',
+                path: ['type'],
+                message: "Expected 'frontend' | 'backend' | 'background', received number",
+              },
+            ],
+            name: 'ZodError',
+          },
+        ],
+        path: [],
+        message: 'Invalid input',
+      },
+    ]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
+    const abortOrReport = vi.fn()
+    await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
+
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 })

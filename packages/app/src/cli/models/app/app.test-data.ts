@@ -2,19 +2,17 @@ import {App, AppConfiguration, AppInterface, WebType} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
-import checkoutPostPurchaseExtension from '../templates/ui-specifications/checkout_post_purchase.js'
-import checkoutUIExtension from '../templates/ui-specifications/checkout_ui_extension.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import UIExtensionTemplate from '../templates/ui-specifications/ui_extension.js'
 import {OrganizationApp} from '../organization.js'
+import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
+import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 
 export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
-  api_contact_email: 'wils@bahan-lee.com',
   webhooks: {
     api_version: '2023-04',
   },
@@ -80,13 +78,13 @@ export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConf
 }
 
 export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterface {
-  const app = options?.app || testApp({}, 'current')
+  const app = testApp(options?.app, 'current')
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
   }
 
-  return app as AppInterface
+  return app
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {
@@ -94,7 +92,6 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     id: '1',
     title: 'app1',
     apiKey: 'api-key',
-    contactEmail: 'example@example.com',
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',
     grantedScopes: [],
@@ -382,6 +379,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_checkout_validation',
     name: 'Function - Cart and Checkout Validation',
+    defaultName: 'cart-checkout-validation',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/api/functions/reference/cart-checkout-validation'],
     types: [
@@ -402,6 +400,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'cart_transform',
     name: 'Function - Cart transformer',
+    defaultName: 'cart-transformer',
     group: 'Discounts and checkout',
     supportLinks: [],
     types: [
@@ -427,6 +426,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'product_discounts',
     name: 'Function - Product discounts',
+    defaultName: 'product-discounts',
     group: 'Discounts and checkout',
     supportLinks: ['https://shopify.dev/docs/apps/discounts'],
     types: [
@@ -452,6 +452,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   {
     identifier: 'order_discounts',
     name: 'Function - Order discounts',
+    defaultName: 'order-discounts',
     group: 'Discounts and checkout',
     supportLinks: [],
     types: [
@@ -483,7 +484,6 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
 
 export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   themeExtension,
-  checkoutPostPurchaseExtension,
-  checkoutUIExtension,
-  UIExtensionTemplate,
+  productSubscriptionUIExtension,
+  webPixelUIExtension,
 ]

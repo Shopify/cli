@@ -3,6 +3,7 @@ import Command from '../../../utilities/app-command.js'
 import {loadAppConfiguration} from '../../../models/app/loader.js'
 import {pushConfig} from '../../../services/app/config/push.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {Flags} from '@oclif/core'
 
 export default class ConfigPush extends Command {
   static description = 'Push your app configuration to the Partner Dashboard.'
@@ -10,6 +11,13 @@ export default class ConfigPush extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Push configuration without asking for confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      char: 'f',
+      default: false,
+    }),
   }
 
   public async run(): Promise<void> {
@@ -19,6 +27,6 @@ export default class ConfigPush extends Command {
       directory: flags.path,
     })
 
-    await pushConfig({configuration, configurationPath})
+    await pushConfig({configuration, configurationPath, force: flags.force})
   }
 }

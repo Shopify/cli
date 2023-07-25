@@ -17,6 +17,7 @@ export default class AppImportFlowExtension extends Command {
       hidden: false,
       description: 'The Client ID of your app.',
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
   }
 
@@ -25,6 +26,6 @@ export default class AppImportFlowExtension extends Command {
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
-    await importFlowExtensions({app, config: this.config, apiKey: flags['client-id']})
+    await importFlowExtensions({app, commandConfig: this.config, apiKey: flags['client-id']})
   }
 }

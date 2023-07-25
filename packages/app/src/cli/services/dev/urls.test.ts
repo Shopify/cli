@@ -8,10 +8,11 @@ import {
   validatePartnersURLs,
   FrontendURLOptions,
 } from './urls.js'
-import {testApp} from '../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, testApp} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
+import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -20,10 +21,11 @@ import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
+vi.mock('../app/write-app-configuration-file.js')
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/session')
@@ -121,6 +123,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       newApp: true,
+      apiKey: 'api-key',
     }
 
     // When
@@ -136,6 +139,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       cachedUpdateURLs: true,
+      apiKey: 'api-key',
     }
 
     // When
@@ -151,6 +155,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       cachedUpdateURLs: false,
+      apiKey: 'api-key',
     }
 
     // When
@@ -158,21 +163,6 @@ describe('shouldOrPromptUpdateURLs', () => {
 
     // Then
     expect(got).toEqual(false)
-  })
-
-  test('returns true when the user selects always', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-    }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
-
-    // When
-    const got = await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(got).toEqual(true)
   })
 
   test('returns true when the user selects yes', async () => {
@@ -180,8 +170,9 @@ describe('shouldOrPromptUpdateURLs', () => {
     const options = {
       currentURLs,
       appDirectory: '/path',
+      apiKey: 'api-key',
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('yes')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -190,28 +181,14 @@ describe('shouldOrPromptUpdateURLs', () => {
     expect(got).toEqual(true)
   })
 
-  test('returns false when the user selects never', async () => {
-    // Given
-    const options = {
-      currentURLs,
-      appDirectory: '/path',
-    }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('never')
-
-    // When
-    const got = await shouldOrPromptUpdateURLs(options)
-
-    // Then
-    expect(got).toEqual(false)
-  })
-
   test('returns false when the user selects no', async () => {
     // Given
     const options = {
       currentURLs,
       appDirectory: '/path',
+      apiKey: 'api-key',
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('no')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
     // When
     const got = await shouldOrPromptUpdateURLs(options)
@@ -225,8 +202,9 @@ describe('shouldOrPromptUpdateURLs', () => {
     const options = {
       currentURLs,
       appDirectory: '/path',
+      apiKey: 'api-key',
     }
-    vi.mocked(renderSelectPrompt).mockResolvedValue('always')
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
     await shouldOrPromptUpdateURLs(options)
@@ -236,6 +214,45 @@ describe('shouldOrPromptUpdateURLs', () => {
       directory: '/path',
       updateURLs: true,
     })
+  })
+
+  test('does not update config file or cache if current config client does not match remote', async () => {
+    // Given
+    const options = {
+      currentURLs,
+      appDirectory: '/path',
+      apiKey: 'api-key',
+      localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}, 'current'),
+    }
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+    // When
+    const result = await shouldOrPromptUpdateURLs(options)
+
+    // Then
+    expect(result).toBe(true)
+    expect(setCachedAppInfo).not.toHaveBeenCalled()
+    expect(writeAppConfigurationFile).not.toHaveBeenCalled()
+  })
+
+  test('updates the config file if current config client matches remote', async () => {
+    // Given
+    const localApp = testApp({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}}, 'current')
+    const options = {
+      currentURLs,
+      appDirectory: '/path',
+      apiKey: 'api-key',
+      localApp,
+    }
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+    // When
+    const result = await shouldOrPromptUpdateURLs(options)
+
+    // Then
+    expect(result).toBe(true)
+    expect(setCachedAppInfo).not.toHaveBeenCalled()
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configurationPath, localApp.configuration)
   })
 })
 

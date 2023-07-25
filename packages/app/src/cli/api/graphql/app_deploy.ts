@@ -23,7 +23,7 @@ export const AppDeploy = gql`
         commitReference: $commitReference
       }
     ) {
-      deployment {
+      appVersion {
         uuid
         id
         message
@@ -72,7 +72,7 @@ interface ErrorDetail {
 
 export interface AppDeploySchema {
   appDeploy: {
-    deployment: {
+    appVersion: {
       uuid: string
       id: number
       versionTag: string

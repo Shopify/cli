@@ -34,7 +34,7 @@ function matchByNameAndType(
   remote: RemoteSource[],
   remoteIdField: 'id' | 'uuid',
 ): {matched: IdentifiersExtensions; pending: {local: LocalSource[]; remote: RemoteSource[]}} {
-  const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.configuration.name])
+  const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.handle])
   const uniqueRemote = uniqBy(remote, (elem) => [elem.type, elem.title])
   const validMatches: IdentifiersExtensions = {}
 

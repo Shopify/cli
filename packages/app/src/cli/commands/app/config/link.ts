@@ -24,7 +24,6 @@ export default class ConfigLink extends Command {
       commandConfig: this.config,
       directory: flags.path,
       apiKey: flags['client-id'],
-      configName: flags.config,
     }
     await link(options)
   }

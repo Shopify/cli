@@ -128,7 +128,11 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
     task: async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
-        await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, flavor: extensionFlavor?.value})
+        await recursiveLiquidTemplateCopy(templateDirectory, directory, {
+          name,
+          handle: slugify(name),
+          flavor: extensionFlavor?.value,
+        })
       })
 
       if (templateLanguage === 'javascript') {
@@ -174,7 +178,7 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
 
   const tasks = [
     {
-      title: `Generating UI extension`,
+      title: `Generating extension`,
       task: async () => {
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value ?? 'vanilla-js')
 
@@ -207,10 +211,13 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
               directory: app.directory,
             })
           }
-          await installNodeModules({
-            packageManager,
-            directory: app.directory,
-          })
+          // Only install dependencies if the extension is javascript
+          if (getTemplateLanguage(extensionFlavor?.value) === 'javascript') {
+            await installNodeModules({
+              packageManager,
+              directory: app.directory,
+            })
+          }
         } else {
           await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
           const extensionPackageJsonPath = joinPath(directory, 'package.json')
@@ -247,7 +254,7 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
-    dependencies.push({name: '@shopify/shopify_function', version: '0.0.3'}, {name: 'javy', version: '0.1.0'})
+    dependencies.push({name: '@shopify/shopify_function', version: '0.1.0'}, {name: 'javy', version: '0.1.1'})
   }
   return dependencies
 }

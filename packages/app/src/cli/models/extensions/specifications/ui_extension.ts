@@ -34,7 +34,6 @@ const UIExtensionSchema = BaseSchema.extend({
 
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
-  surface: 'all',
   dependency,
   partnersWebIdentifier: 'ui_extension',
   singleEntryPath: false,
@@ -49,12 +48,6 @@ const spec = createExtensionSpecification({
   },
   validate: async (config, directory) => {
     return validateUIExtensionPointConfig(directory, config.extension_points)
-  },
-  previewMessage(host, uuid, config, storeFqdn) {
-    const links = config.extension_points.map(
-      ({target}) => `${target} preview link: ${host}/extensions/${uuid}/${target}`,
-    )
-    return outputContent`${links.join('\n')}`
   },
   deployConfig: async (config, directory) => {
     return {

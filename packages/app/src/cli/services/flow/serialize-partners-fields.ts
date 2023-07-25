@@ -13,7 +13,7 @@ export const serializeConfigField = (field: SerializedField, type: FlowPartnersE
 
   const serializedField: ConfigField = {
     key: field.name,
-    description: field.description,
+    description: field.description ? field.description : undefined,
     type: fieldType,
   }
 
@@ -30,13 +30,10 @@ export const serializeCommerceObjectField = (field: SerializedField, type: FlowP
   const fieldType = isAction ? `${field.name.replace('_id', '')}_reference` : `${field.uiType}_reference`
 
   const serializedField: ConfigField = {
-    key: field.name,
     type: fieldType,
-    description: field.description,
   }
 
   if (type === 'flow_action_definition') {
-    serializedField.name = field.label
     serializedField.required = field.required
   }
 

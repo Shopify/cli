@@ -24,16 +24,13 @@ describe('create app command', () => {
     expect(initService).toHaveBeenCalledOnce()
   })
 
-  test.each(['node', 'php', 'ruby'])(
-    'executes correctly when using %s as a template alias name',
-    async (alias: string) => {
-      // When
-      await Init.run(['--template', alias])
+  test.each(['remix'])('executes correctly when using %s as a template alias name', async (alias: string) => {
+    // When
+    await Init.run(['--template', alias])
 
-      // Then
-      expect(initService).toHaveBeenCalledOnce()
-    },
-  )
+    // Then
+    expect(initService).toHaveBeenCalledOnce()
+  })
 
   test('executes correctly when using a github url as a template alias name', async () => {
     // When

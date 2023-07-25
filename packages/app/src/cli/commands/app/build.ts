@@ -25,17 +25,21 @@ export default class Build extends Command {
       hidden: true,
       description: "Application's API key that will be exposed at build time.",
       env: 'SHOPIFY_FLAG_API_KEY',
+      exclusive: ['config'],
     }),
     'client-id': Flags.string({
       hidden: false,
       description: "Application's Client ID that will be exposed at build time.",
       env: 'SHOPIFY_FLAG_CLIENT_ID',
+      exclusive: ['config'],
     }),
   }
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Build)
-    if (flags['api-key']) showApiKeyDeprecationWarning()
+    if (flags['api-key']) {
+      await showApiKeyDeprecationWarning()
+    }
     const apiKey = flags['client-id'] || flags['api-key']
 
     await addPublicMetadata(() => ({

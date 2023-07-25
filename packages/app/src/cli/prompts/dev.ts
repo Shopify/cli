@@ -1,11 +1,8 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
 import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
-import {
-  renderAutocompletePrompt,
-  renderConfirmationPrompt,
-  renderSelectPrompt,
-  renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
+import {getTomls} from '../utilities/app/config/getTomls.js'
+import {setCachedCommandInfo} from '../services/local-storage.js'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
@@ -20,8 +17,26 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   return organizations.find((org) => org.id === id)!
 }
 
-export async function selectAppPrompt(apps: OrganizationAppsResponse, orgId: string, token: string): Promise<string> {
-  const toAnswer = (app: MinimalOrganizationApp) => ({label: app.title, value: app.apiKey})
+export async function selectAppPrompt(
+  apps: OrganizationAppsResponse,
+  orgId: string,
+  token: string,
+  options?: {
+    directory?: string
+  },
+): Promise<string> {
+  const tomls = await getTomls(apps, options?.directory)
+
+  if (tomls) setCachedCommandInfo({tomls})
+
+  const toAnswer = (app: MinimalOrganizationApp) => {
+    if (tomls[app?.apiKey]) {
+      return {label: `${app.title} (${tomls[app.apiKey]})`, value: app.apiKey}
+    }
+
+    return {label: app.title, value: app.apiKey}
+  }
+
   const appList = apps.nodes.map(toAnswer)
 
   return renderAutocompletePrompt({
@@ -44,7 +59,7 @@ export async function selectAppPrompt(apps: OrganizationAppsResponse, orgId: str
 export async function selectStorePrompt(stores: OrganizationStore[]): Promise<OrganizationStore | undefined> {
   if (stores.length === 0) return undefined
   if (stores.length === 1) {
-    outputCompleted(`Using your default dev store (${stores[0]!.shopName}) to preview your project.`)
+    outputCompleted(`Using your default dev store, ${stores[0]!.shopName}, to preview your project.`)
     return stores[0]
   }
   const storeList = stores.map((store) => ({label: store.shopName, value: store.shopId}))
@@ -98,29 +113,14 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
   })
 }
 
-export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<string> {
-  return renderSelectPrompt({
+export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
+  return renderConfirmationPrompt({
     message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
-    choices: [
-      {label: 'Always by default', value: 'always'},
-      {label: 'Yes, this time', value: 'yes'},
-      {label: 'No, not now', value: 'no'},
-      {label: `Never, don't ask again`, value: 'never'},
-    ],
+    confirmationMessage: 'Yes, automatically update',
+    cancellationMessage: 'No, never',
     infoTable: {
       'Current app URL': [currentAppUrl],
       'Current redirect URLs': currentRedirectUrls,
     },
-  })
-}
-
-export async function tunnelConfigurationPrompt(): Promise<'always' | 'yes' | 'cancel'> {
-  return renderSelectPrompt({
-    message: 'How would you like your tunnel to work in the future?',
-    choices: [
-      {label: 'Always use it by default', value: 'always'},
-      {label: 'Use it now and ask me next time', value: 'yes'},
-      {label: 'Nevermind, cancel dev', value: 'cancel'},
-    ],
   })
 }

@@ -5,7 +5,7 @@ import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/
 import {confirmReleasePrompt} from '../prompts/release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
@@ -22,21 +22,24 @@ interface ReleaseOptions {
 
   /** App version tag */
   version: string
+
+  /** Config from the Oclif command */
+  commandConfig: Config
 }
 
 export async function release(options: ReleaseOptions) {
-  const {token, apiKey, app} = await ensureReleaseContext(options)
+  const {token, app, partnersApp} = await ensureReleaseContext(options)
 
-  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, options.version, token)
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(partnersApp.apiKey, options.version, token)
 
-  await confirmReleasePrompt(app.name, versionsDiff)
+  await confirmReleasePrompt(partnersApp.title, versionsDiff)
   interface Context {
     appRelease: AppReleaseSchema
   }
 
   const variables: AppReleaseVariables = {
-    apiKey,
-    deploymentId: versionDetails.id,
+    apiKey: partnersApp.apiKey,
+    appVersionId: versionDetails.id,
   }
 
   const tasks = [
@@ -69,13 +72,6 @@ export async function release(options: ReleaseOptions) {
     renderSuccess({
       headline: 'Version released to users.',
       body: linkAndMessage,
-      nextSteps: [
-        [
-          'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
-          'to see rollout progress.',
-        ],
-      ],
     })
   }
 }

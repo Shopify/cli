@@ -51,14 +51,20 @@
           "type": "option",
           "description": "Application's API key that will be exposed at build time.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "Application's Client ID that will be exposed at build time.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {}
@@ -106,21 +112,30 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "reset": {
           "name": "reset",
           "type": "boolean",
           "description": "Reset all your settings.",
           "hidden": false,
-          "allowNo": false
+          "allowNo": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "force": {
           "name": "force",
@@ -204,14 +219,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "store": {
           "name": "store",
@@ -348,7 +369,10 @@
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {}
@@ -451,14 +475,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "reset": {
           "name": "reset",
@@ -473,10 +503,7 @@
           "description": "The name of the app version to release.",
           "hidden": false,
           "required": true,
-          "multiple": false,
-          "exclusive": [
-            "app-version-id"
-          ]
+          "multiple": false
         }
       },
       "args": {}
@@ -504,19 +531,40 @@
           "hidden": false,
           "allowNo": false
         },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
+        },
         "api-key": {
           "name": "api-key",
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "app-url": {
           "name": "app-url",
@@ -693,6 +741,14 @@
           "description": "The name of the app configuration.",
           "hidden": false,
           "multiple": false
+        },
+        "force": {
+          "name": "force",
+          "type": "boolean",
+          "char": "f",
+          "description": "Push configuration without asking for confirmation.",
+          "hidden": false,
+          "allowNo": false
         }
       },
       "args": {}
@@ -967,14 +1023,20 @@
           "type": "option",
           "description": "The API key to fetch the schema with.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID to fetch the schema with.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "stdout": {
           "name": "stdout",
@@ -1073,7 +1135,15 @@
           "name": "type",
           "type": "option",
           "char": "t",
-          "description": "Extension type",
+          "description": "Deprecated. Please use --template",
+          "hidden": false,
+          "multiple": false
+        },
+        "template": {
+          "name": "template",
+          "type": "option",
+          "char": "t",
+          "description": "Extension template",
           "hidden": false,
           "multiple": false
         },
@@ -1093,8 +1163,8 @@
           "hidden": true,
           "multiple": false
         },
-        "template": {
-          "name": "template",
+        "flavor": {
+          "name": "flavor",
           "type": "option",
           "description": "Choose a starting template for your extension, where applicable",
           "hidden": false,
@@ -1123,14 +1193,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {
@@ -1183,14 +1259,20 @@
           "type": "option",
           "description": "The API key to fetch the schema with.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID to fetch the schema with.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "stdout": {
           "name": "stdout",
@@ -1248,7 +1330,15 @@
           "name": "type",
           "type": "option",
           "char": "t",
-          "description": "Extension type",
+          "description": "Deprecated. Please use --template",
+          "hidden": false,
+          "multiple": false
+        },
+        "template": {
+          "name": "template",
+          "type": "option",
+          "char": "t",
+          "description": "Extension template",
           "hidden": false,
           "multiple": false
         },
@@ -1268,8 +1358,8 @@
           "hidden": true,
           "multiple": false
         },
-        "template": {
-          "name": "template",
+        "flavor": {
+          "name": "flavor",
           "type": "option",
           "description": "Choose a starting template for your extension, where applicable",
           "hidden": false,
@@ -1298,14 +1388,20 @@
           "type": "option",
           "description": "The API key of your app.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID of your app.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {
@@ -1360,14 +1456,20 @@
           "type": "option",
           "description": "Application's API key to fetch versions for.",
           "hidden": true,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         },
         "client-id": {
           "name": "client-id",
           "type": "option",
           "description": "The Client ID to fetch versions for.",
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
         }
       },
       "args": {

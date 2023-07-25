@@ -7,7 +7,6 @@ const dependency = '@shopify/retail-ui-extensions'
 
 const spec = createExtensionSpecification({
   identifier: 'pos_ui_extension',
-  surface: 'pos',
   dependency,
   partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseSchema,
@@ -21,7 +20,6 @@ const spec = createExtensionSpecification({
       renderer_version: result?.version,
     }
   },
-  previewMessage: () => undefined,
 })
 
 export default spec

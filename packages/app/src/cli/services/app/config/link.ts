@@ -1,5 +1,11 @@
 import {saveCurrentConfig} from './use.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema, isLegacyAppSchema} from '../../../models/app/app.js'
+import {
+  AppConfiguration,
+  AppInterface,
+  EmptyApp,
+  isCurrentAppSchema,
+  isLegacyAppSchema,
+} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
@@ -7,11 +13,11 @@ import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.j
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
+import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
+import {getCachedCommandInfo} from '../../local-storage.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {fileExists, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -22,24 +28,38 @@ export interface LinkOptions {
   configName?: string
 }
 
-export default async function link(options: LinkOptions): Promise<void> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey)
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
-  const fileAlreadyExists = await fileExists(configFilePath)
 
   const configuration = mergeAppConfiguration(localApp, remoteApp)
 
-  writeFileSync(configFilePath, encodeToml(configuration))
+  await writeAppConfigurationFile(configFilePath, configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
-  renderSuccess({
-    headline: `App "${remoteApp.title}" connected to this codebase, file ${configFileName} ${
-      fileAlreadyExists ? 'updated' : 'created'
-    }`,
-  })
+  if (shouldRenderSuccess) {
+    renderSuccess({
+      headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+      body: `Using ${configFileName} as your default config.`,
+      nextSteps: [
+        [`Make updates to ${configFileName} in your local project`],
+        ['To upload your config, run', {command: 'shopify app config push'}],
+      ],
+      reference: [
+        {
+          link: {
+            label: 'App configuration',
+            url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+          },
+        },
+      ],
+    })
+  }
+
+  return configuration
 }
 
 async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
@@ -54,14 +74,18 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {name: ''} as AppInterface
+    return new EmptyApp()
   }
 }
 
-async function loadRemoteApp(localApp: AppInterface, apiKey: string | undefined): Promise<OrganizationApp> {
+async function loadRemoteApp(
+  localApp: AppInterface,
+  apiKey: string | undefined,
+  directory?: string,
+): Promise<OrganizationApp> {
   const token = await ensureAuthenticatedPartners()
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, token)
+    return fetchOrCreateOrganizationApp(localApp, token, directory)
   }
   const app = await fetchAppFromApiKey(apiKey, token)
   if (!app) {
@@ -76,6 +100,10 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localApp?: AppInterface,
 ): Promise<string> {
+  const cache = getCachedCommandInfo()
+
+  if (!cache?.askConfigName && cache?.selectedToml) return cache.selectedToml as string
+
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
@@ -88,12 +116,11 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
+export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
   const configuration: AppConfiguration = {
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
-    api_contact_email: remoteApp.contactEmail!,
-    application_url: remoteApp.applicationUrl,
+    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
       api_version: remoteApp.webhookApiVersion || '2023-07',
@@ -113,9 +140,9 @@ function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationAp
 
   if (hasAnyPrivacyWebhook) {
     configuration.webhooks.privacy_compliance = {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl || '',
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl || '',
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl || '',
+      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
+      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
+      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
     }
   }
 

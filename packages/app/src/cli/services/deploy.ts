@@ -22,6 +22,7 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
+import {Config} from '@oclif/core'
 import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -46,8 +47,11 @@ interface DeployOptions {
   /** App version identifier */
   version?: string
 
-  /** The git reference url of the deployment */
+  /** The git reference url of the app version */
   commitReference?: string
+
+  /** The config from the Oclif command */
+  commandConfig: Config
 }
 
 interface TasksContext {
@@ -298,13 +302,6 @@ async function outputUnifiedCompletionMessage(
       : renderSuccess({
           headline: 'New version released to users.',
           body: linkAndMessage,
-          nextSteps: [
-            [
-              'Run',
-              {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
-              'to see rollout progress.',
-            ],
-          ],
         })
   }
 

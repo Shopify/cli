@@ -4,6 +4,7 @@ import {unstyled} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
+import colors from '@shopify/cli-kit/node/colors'
 
 const ENTER = '\r'
 
@@ -27,7 +28,7 @@ describe('TextPrompt', () => {
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [31m>[39m  [31m[7m [27m[39m
+      [31m>[39m  [31m[41m█[49m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mType an answer to the prompt.[39m
       "
@@ -36,7 +37,7 @@ describe('TextPrompt', () => {
     // color changes back to valid color
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [36m>[39m  [36mA[7m [27m[39m
+      [36m>[39m  [36mA[46m█[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -57,7 +58,7 @@ describe('TextPrompt', () => {
     // testing with styles because the color changes to red
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [31m>[39m  [31mthis-test-includes-shopify[7m [27m[39m
+      [31m>[39m  [31mthis-test-includes-shopify[41m█[49m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
          [31mApp name can't include the word shopify[39m
       "
@@ -142,7 +143,7 @@ describe('TextPrompt', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
       [36m>[39m  [36mAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA[39m
-         [36mBBBBBB[7m [27m[39m
+         [36mBBBBBB[46m█[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -155,7 +156,7 @@ describe('TextPrompt', () => {
     await sendInputAndWaitForChange(renderInstance, 'ABC')
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Test question:
-      [36m>[39m  [36m***[7m [27m[39m
+      [36m>[39m  [36m***[46m█[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -173,7 +174,7 @@ describe('TextPrompt', () => {
 
     expect(lastFrame()!).toMatchInlineSnapshot(`
       "?  Test question?
-      [36m>[39m  [36m[7m [27m[39m
+      [36m>[39m  [36m[46m█[49m[39m
          [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
       "
     `)
@@ -209,20 +210,44 @@ describe('TextPrompt', () => {
       <TextPrompt
         onSubmit={() => {}}
         message="How tall are you in cm?"
-        previewPrefix={() => 'You are '}
-        previewValue={(value) => String(Number(value) / 100)}
-        previewSuffix={() => 'm tall.'}
+        preview={(value) => `You are ${colors.cyan(String(Number(value) / 100))}m tall.`}
       />,
     )
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, '180')
 
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  How tall are you in cm?
-      >  180 
-         ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
-         You are 1.8m tall.
+      [36m>[39m  [36m180[46m█[49m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         You are [36m1.8[39mm tall.
+      "
+    `)
+  })
+
+  test('the preview footer wraps when the value is very long', async () => {
+    const renderInstance = render(
+      <TextPrompt
+        onSubmit={() => {}}
+        message="How tall are you?"
+        preview={(value) =>
+          `You are ${colors.cyan(
+            `incredibly humongously savagely unnaturally monstrously pathetically arrogantly ${value}`,
+          )} tall.`
+        }
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, 'uber')
+
+    expect(renderInstance.lastFrame()!).toMatchInlineSnapshot(`
+      "?  How tall are you?
+      [36m>[39m  [36muber[46m█[49m[39m
+         [36m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
+         You are [36mincredibly humongously savagely unnaturally monstrously pathetically [39m
+         [36marrogantly uber[39m tall.
       "
     `)
   })

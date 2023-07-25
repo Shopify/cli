@@ -15,7 +15,6 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
@@ -99,6 +98,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.appModuleFeatures(this.configuration)
   }
 
+  get outputFileName() {
+    return `${this.handle}.js`
+  }
+
   set usingExtensionsFramework(value: boolean) {
     this.useExtensionsFramework = value
   }
@@ -122,8 +125,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.useExtensionsFramework = false
     this.outputPath = this.directory
 
-    if (this.features.includes('esbuild')) {
-      this.outputPath = joinPath(this.directory, 'dist/main.js')
+    if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
+      this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
     }
 
     if (this.isFunctionExtension) {
@@ -173,19 +176,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
-  }
-
-  previewMessage(url: string, storeFqdn: string) {
-    const heading = outputToken.heading(`${this.name} (${this.humanName})`)
-    let message = outputContent`Preview link: ${url}/extensions/${this.devUUID}`
-
-    if (this.specification.previewMessage) {
-      const customMessage = this.specification.previewMessage(url, this.devUUID, this.configuration, storeFqdn)
-      if (!customMessage) return
-      message = customMessage
-    }
-
-    return outputContent`${heading}\n${message.value}\n`
   }
 
   // UI Specific properties
@@ -255,7 +245,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
     const extensionId = identifiers.extensions[this.localIdentifier]!
-    const outputFile = this.isThemeExtension ? '' : 'dist/main.js'
+    const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory

@@ -55,3 +55,31 @@ export function mapValues<T extends object, TResult>(
   const lodashMapValues = require('lodash/mapValues.js')
   return lodashMapValues(source, callback)
 }
+
+/**
+ * Deeply compares two objects and returns true if they are equal.
+ *
+ * @param one - The first object to be compared.
+ * @param two - The second object to be compared.
+ * @returns True if the objects are equal, false otherwise.
+ */
+export function deepCompare(one: object, two: object): boolean {
+  const lodashIsEqual = require('lodash/isEqual.js')
+  return lodashIsEqual(one, two)
+}
+
+/**
+ * Return the difference between two nested objects.
+ *
+ * @param one - The first object to be compared.
+ * @param two - The second object to be compared.
+ * @returns Two objects containing the fields that are different, each one with the values of one object.
+ */
+export function deepDifference(one: object, two: object): [object, object] {
+  const differenceWith = require('lodash/differenceWith.js')
+  const fromPairs = require('lodash/fromPairs.js')
+  const toPairs = require('lodash/toPairs.js')
+  const changes = differenceWith(toPairs(one), toPairs(two), deepCompare)
+  const changes2 = differenceWith(toPairs(two), toPairs(one), deepCompare)
+  return [fromPairs(changes), fromPairs(changes2)]
+}

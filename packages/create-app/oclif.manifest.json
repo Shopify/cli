@@ -43,7 +43,7 @@
         "template": {
           "name": "template",
           "type": "option",
-          "description": "The app template. Accepts one of the following:\n       - <node|php|ruby|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
+          "description": "The app template. Accepts one of the following:\n       - <remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
           "multiple": false
         },
         "package-manager": {

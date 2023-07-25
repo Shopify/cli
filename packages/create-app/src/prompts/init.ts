@@ -10,22 +10,22 @@ interface InitOptions {
 interface InitOutput {
   name: string
   template: string
-  // e.g. 'node', 'ruby', 'php'
+  // e.g. 'Remix'
   templateType: keyof typeof templateURLMap | 'custom'
 }
 
 // Eventually this list should be taken from a remote location
 // That way we don't have to update the CLI every time we add a template
 export const templateURLMap = {
-  node: 'https://github.com/Shopify/shopify-app-template-node',
-  php: 'https://github.com/Shopify/shopify-app-template-php',
-  ruby: 'https://github.com/Shopify/shopify-app-template-ruby',
+  remix: 'https://github.com/Shopify/shopify-app-template-remix',
   none: 'https://github.com/Shopify/shopify-app-template-none',
 } as const
 
-const templateLabels: {[key: string]: string} = {
-  none: 'none (build an app with extensions only)',
-}
+const templateLabels = {
+  remix: 'Start with Remix (recommended)',
+  none: 'Start by adding your first extension',
+} as const
+const templateOptionsInOrder = ['remix', 'none'] as const
 
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let name = options.name
@@ -33,7 +33,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
-    template: templateURLMap.node,
+    template: templateURLMap.remix,
   } as const
 
   let welcomed = false
@@ -42,7 +42,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
     welcomed = true
     name = await renderTextPrompt({
-      message: 'Your app project name?',
+      message: 'Your project name?',
       defaultValue: defaults.name,
       validate: (value) => {
         if (value.length === 0) {
@@ -64,13 +64,13 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
       welcomed = true
     }
     template = await renderSelectPrompt({
-      choices: Object.keys(templateURLMap).map((key) => {
+      choices: templateOptionsInOrder.map((key) => {
         return {
           label: templateLabels[key] || key,
           value: key,
         }
       }),
-      message: 'Which template would you like to use?',
+      message: 'Get started building your app:',
       defaultValue: Object.keys(templateURLMap).find(
         (key) => templateURLMap[key as keyof typeof templateURLMap] === defaults.template,
       ),

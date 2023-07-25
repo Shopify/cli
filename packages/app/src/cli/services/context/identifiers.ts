@@ -32,6 +32,7 @@ export interface LocalSource {
   localIdentifier: string
   graphQLType: string
   type: string
+  handle: string
   configuration: {name: string}
 }
 

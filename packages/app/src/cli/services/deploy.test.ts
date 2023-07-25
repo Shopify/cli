@@ -18,6 +18,7 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 
 const versionTag = 'unique-version-tag'
 
@@ -308,7 +309,11 @@ describe('deploy', () => {
         }),
       ],
       {
-        identifiers: {app: 'app-id', extensions: {'my-function': 'my-function'}, extensionIds: {}},
+        identifiers: {
+          app: 'app-id',
+          extensions: {'test-function-extension': 'test-function-extension'},
+          extensionIds: {},
+        },
         token: 'api-token',
       },
     )
@@ -509,13 +514,6 @@ describe('deploy', () => {
         },
         '',
       ],
-      nextSteps: [
-        [
-          'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'shopify app versions list')},
-          'to see rollout progress.',
-        ],
-      ],
     })
   })
 
@@ -685,5 +683,6 @@ async function testDeployBundle({
     message: options?.message,
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
+    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   })
 }

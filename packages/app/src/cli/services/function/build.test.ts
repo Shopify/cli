@@ -1,4 +1,4 @@
-import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy} from './build.js'
+import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy, ExportJavyBuilder, jsExports} from './build.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -121,7 +121,7 @@ describe('bundleExtension', () => {
 })
 
 describe('runJavy', () => {
-  test('runs javy to compile JS into WASM', async () => {
+  test('runs javy to compile JS into Wasm', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
 
@@ -193,5 +193,186 @@ describe('runFunctionRunner', () => {
         stdout: 'inherit',
       },
     )
+  })
+})
+
+describe('ExportJavyBuilder', () => {
+  const exports = ['foo-bar', 'foo-baz']
+  const builder = new ExportJavyBuilder(exports)
+
+  describe('bundle', () => {
+    test('bundles extension with esbuild', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const ourFunction = await testFunctionExtension({dir: tmpDir})
+        ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
+
+        // When
+        const got = builder.bundle(ourFunction, {stdout, stderr, signal})
+
+        // Then
+        await expect(got).resolves.toBeUndefined()
+        expect(esBuild).toHaveBeenCalledWith({
+          outfile: joinPath(tmpDir, 'dist/function.js'),
+          stdin: {
+            contents: builder.entrypointContents,
+            loader: 'ts',
+            resolveDir: tmpDir,
+          },
+          alias: {
+            'user-function': joinPath(tmpDir, 'src/index.ts'),
+          },
+          logLevel: 'silent',
+          bundle: true,
+          legalComments: 'none',
+          target: 'es2022',
+          format: 'esm',
+        })
+      })
+    })
+
+    test('errors if user function not found', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const ourFunction = await testFunctionExtension({dir: tmpDir})
+
+        // When
+        const got = builder.bundle(ourFunction, {stdout, stderr, signal})
+
+        // Then
+        await expect(got).rejects.toThrow(/Could not find your function entry point./)
+      })
+    })
+  })
+
+  describe('compile', () => {
+    test('runs javy with wit', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const ourFunction = await testFunctionExtension()
+
+        // When
+        const got = builder.compile(ourFunction, {stdout, stderr, signal})
+
+        // Then
+        await expect(got).resolves.toBeUndefined()
+        expect(exec).toHaveBeenCalledWith(
+          'npm',
+          [
+            'exec',
+            '--',
+            'javy',
+            'compile',
+            '-d',
+            '-o',
+            joinPath(ourFunction.directory, 'dist/index.wasm'),
+            'dist/function.js',
+            '--wit',
+            expect.stringContaining('javy-world.wit'),
+            '-n',
+            'shopify-function',
+          ],
+          {
+            cwd: ourFunction.directory,
+            stderr: 'inherit',
+            stdout: 'inherit',
+            signal,
+          },
+        )
+      })
+    })
+  })
+
+  test('wit', () => {
+    // When
+    const got = builder.wit
+
+    // Then
+    expect(got).toContain('package function:impl')
+    expect(got).toContain('world shopify-function')
+    expect(got).toContain('export %foo-bar: func()')
+    expect(got).toContain('export %foo-baz: func()')
+  })
+
+  test('entrypointContents', () => {
+    // When
+    const got = builder.entrypointContents
+
+    // Then
+    expect(got).toContain('import run from "@shopify/shopify_function/run"')
+    expect(got).toContain('import { fooBar as runFooBar } from "user-function"')
+    expect(got).toContain('export function fooBar() { return run(runFooBar) }')
+    expect(got).toContain('import { fooBaz as runFooBaz } from "user-function"')
+    expect(got).toContain('export function fooBaz() { return run(runFooBaz) }')
+  })
+})
+
+describe('jsExports', () => {
+  test('is empty when function does not have targets', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = undefined
+
+    // When
+    const got = jsExports(ourFunction)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  test('is empty when single target export is undefined', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [{target: 'foo.bar'}]
+
+    // When
+    const got = jsExports(ourFunction)
+
+    // Then
+    expect(got).toEqual([])
+  })
+
+  test('returns the exports when all target exports are defined', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [
+      {target: 'foo.bar', export: 'foo-bar'},
+      {target: 'foo.baz', export: 'foo-baz'},
+    ]
+
+    // When
+    const got = jsExports(ourFunction)
+
+    // Then
+    expect(got).toEqual(['foo-bar', 'foo-baz'])
+  })
+
+  test('errors when multiple targets present without explicit exports', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [
+      {target: 'foo.bar', export: 'foo-bar'},
+      {target: 'foo.baz'},
+      {target: 'foo.biz'},
+    ]
+
+    // When & Then
+    expect(() => {
+      jsExports(ourFunction)
+    }).toThrow(/Can't infer export name for targets:\n- 'foo\.baz'\n- 'foo\.biz'/)
+  })
+
+  test('errors when exports are not kebab-case', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    ourFunction.configuration.targeting = [
+      {target: 'foo.bar', export: 'fooBar'},
+      {target: 'foo.baz', export: 'foo*baz'},
+    ]
+
+    // When & Then
+    expect(() => {
+      jsExports(ourFunction)
+    }).toThrow(/Invalid export names: 'fooBar', 'foo\*baz'[.\n]*The TOML's exports must be kebab-case/)
   })
 })

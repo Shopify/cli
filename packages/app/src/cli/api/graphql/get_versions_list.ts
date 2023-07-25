@@ -1,11 +1,12 @@
 import {gql} from 'graphql-request'
 
-export const AppDeploymentsQuery = gql`
-  query AppDeploymentsQuery($apiKey: String!) {
+export const AppVersionsQuery = gql`
+  query AppVersionsQuery($apiKey: String!) {
     app(apiKey: $apiKey) {
       id
       organizationId
-      deployments {
+      title
+      appVersions {
         nodes {
           createdAt
           distributionPercentage
@@ -25,11 +26,12 @@ export const AppDeploymentsQuery = gql`
   }
 `
 
-export interface AppDeploymentsQuerySchema {
+export interface AppVersionsQuerySchema {
   app: {
     id: string
     organizationId: string
-    deployments: {
+    title: string
+    appVersions: {
       nodes: {
         createdAt: string
         distributionPercentage: number

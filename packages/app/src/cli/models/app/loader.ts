@@ -1,13 +1,14 @@
 import {
-  AppConfigurationSchema,
   Web,
   WebConfigurationSchema,
   App,
   AppInterface,
   WebType,
-  AppConfiguration,
   isCurrentAppSchema,
   getAppScopesArray,
+  AppConfigurationInterface,
+  AppSchema,
+  LegacyAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -15,8 +16,9 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
+import use from '../../services/app/config/use.js'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {fileExists, readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
@@ -27,7 +29,7 @@ import {
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
 import {joinWithAnd, slugify} from '@shopify/cli-kit/common/string'
@@ -73,6 +75,20 @@ async function loadConfigurationFile(
   }
 }
 
+const isCurrentSchema = (schema: unknown) => {
+  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
+  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
+
+  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
+  for (const field in schema as {[key: string]: unknown}) {
+    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
+      return true
+    }
+  }
+
+  return false
+}
+
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -96,6 +112,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport,
 ): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
+
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
     const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
@@ -199,8 +216,12 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {appDirectory, configurationPath, configuration, configurationLoadResultMetadata} =
-      await configurationLoader.loaded()
+    const {
+      directory: appDirectory,
+      configurationPath,
+      configuration,
+      configurationLoadResultMetadata,
+    } = await configurationLoader.loaded()
     const dotenv = await loadDotEnv(appDirectory, configurationPath)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
@@ -292,7 +313,13 @@ class AppLoader {
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
     const specification = findSpecificationForType(this.specifications, type)
-    if (!specification) return
+    if (!specification) {
+      return this.abortOrReport(
+        outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
+        undefined,
+        configurationPath,
+      )
+    }
 
     const configuration = await parseConfigurationObject(
       specification.schema,
@@ -344,11 +371,15 @@ class AppLoader {
           const {extensions, ...restConfig} = mergedConfig
           if (!restConfig.handle) {
             // Handle is required for unified config extensions.
-            return this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${configurationPath}`,
+            this.abortOrReport(
+              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+                appDirectory,
+                configurationPath,
+              )}`,
               undefined,
               configurationPath,
             )
+            restConfig.handle = 'unknown-handle'
           }
           return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
@@ -356,6 +387,14 @@ class AppLoader {
       } else if (type) {
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
+      } else {
+        return this.abortOrReport(
+          outputContent`Invalid extension type at "${outputToken.path(
+            relativePath(appDirectory, configurationPath),
+          )}". Please specify a type.`,
+          undefined,
+          configurationPath,
+        )
       }
     })
 
@@ -423,12 +462,6 @@ class AppLoader {
   }
 }
 
-export interface AppConfigurationInterface {
-  appDirectory: string
-  configuration: AppConfiguration
-  configurationPath: string
-}
-
 /**
  * Parse the app configuration file from the given directory.
  * If the app configuration does not match any known schemas, it will throw an error.
@@ -481,13 +514,33 @@ class AppConfigurationLoader {
   async loaded() {
     const appDirectory = await this.getAppDirectory()
     let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-    this.configName = this.configName ?? getCachedAppInfo(appDirectory)?.configFile
+
+    const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
+    const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
+
+    if (!this.configName && cachedCurrentConfigPath && !fileExistsSync(cachedCurrentConfigPath)) {
+      const warningContent = {
+        headline: `Couldn't find ${cachedCurrentConfig}`,
+        body: [
+          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+        ],
+      }
+      this.configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
+    }
+
+    this.configName = this.configName ?? cachedCurrentConfig
+
     if (this.configName === undefined) {
       configSource = 'default'
     }
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
-    const configuration = await parseConfigurationFile(AppConfigurationSchema, configurationPath, this.abort)
+
+    const file = await loadConfigurationFile(configurationPath, this.abort, decodeToml)
+
+    const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
+
+    const configuration = await parseConfigurationFile(appSchema, configurationPath, this.abort)
 
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
@@ -515,7 +568,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

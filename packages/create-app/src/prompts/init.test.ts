@@ -22,7 +22,7 @@ describe('init', () => {
       text: '\nWelcome. Let’s get started by naming your app project. You can change it later.',
     })
     expect(renderTextPrompt).toHaveBeenCalledWith({
-      message: 'Your app project name?',
+      message: 'Your project name?',
       defaultValue: expect.stringMatching(/^\w+-\w+-app$/),
       validate: expect.any(Function),
     })
@@ -31,7 +31,7 @@ describe('init', () => {
 
   test('when name is passed', async () => {
     const answers = {
-      template: 'https://github.com/Shopify/shopify-app-template-node',
+      template: 'https://github.com/Shopify/shopify-app-template-remix',
     }
     const options = {name: 'app', directory: '/'}
 
@@ -63,13 +63,11 @@ describe('init', () => {
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
-        {label: 'node', value: 'node'},
-        {label: 'php', value: 'php'},
-        {label: 'ruby', value: 'ruby'},
-        {label: 'none (build an app with extensions only)', value: 'none'},
+        {label: 'Start with Remix (recommended)', value: 'remix'},
+        {label: 'Start by adding your first extension', value: 'none'},
       ],
-      message: 'Which template would you like to use?',
-      defaultValue: 'node',
+      message: 'Get started building your app:',
+      defaultValue: 'remix',
     })
     expect(got).toEqual({...options, ...answers, templateType: 'none'})
   })

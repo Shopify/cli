@@ -6,12 +6,12 @@ export const GetConfig = gql`
       id
       title
       apiKey
+      organizationId
       appType
       grantedScopes
       applicationUrl
       redirectUrlWhitelist
       preferencesUrl
-      contactEmail
       webhookApiVersion
       embedded
       posEmbedded
@@ -34,11 +34,11 @@ export interface App {
   id: string
   title: string
   apiKey: string
+  organizationId: string
   appType: string
   grantedScopes: string[]
   applicationUrl: string
   redirectUrlWhitelist: string[]
-  contactEmail: string
   webhookApiVersion: string
   embedded: boolean
   posEmbedded?: boolean

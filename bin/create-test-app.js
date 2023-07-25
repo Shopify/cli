@@ -70,7 +70,7 @@ program
       : new Set(options.extensions.split(","));
 
     const appName = options.name;
-    const template = options.template || "node";
+    const template = options.template || "remix";
     const appPath = path.join(homeDir, "Desktop", appName);
 
     switch (options.packageManager) {
@@ -237,9 +237,9 @@ program
     if (extensions.has("ui")) {
       log("Generating UI extension...");
       await generateExtension([
-        "--type=subscription_ui",
+        "--template=subscription_ui",
         "--name=sub-ui-ext",
-        "--template=vanilla-js",
+        "--flavor=vanilla-js",
       ]);
       await appDev();
     }
@@ -250,7 +250,7 @@ program
 
       log("Generating Theme App extension...");
       await generateExtension([
-        "--type=theme_app_extension",
+        "--template=theme_app_extension",
         "--name=theme-app-ext",
       ]);
       await appDev();
@@ -260,9 +260,9 @@ program
       log("Generating JS function...");
       const functionDir = path.join(appPath, "extensions", "prod-discount-fun");
       await generateExtension([
-        "--type=product_discounts",
+        "--template=product_discounts",
         "--name=prod-discount-fun",
-        "--template=typescript",
+        "--flavor=typescript",
       ]);
       await appExec(nodePackageManager, ["run", "build"], { cwd: functionDir });
       const previewProcess = execa(nodePackageManager, ["run", "preview"], {
