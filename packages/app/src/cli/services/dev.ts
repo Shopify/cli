@@ -33,7 +33,7 @@ import {
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {loadApp} from '../models/app/loader.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {getAppIdentifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
@@ -254,7 +254,7 @@ async function dev(options: DevOptions) {
   }
 
   if (draftableExtensions.length > 0) {
-    const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
+    const identifiers = await ensureDeploymentIdsPresence({
       app: localApp,
       partnersApp: remoteApp,
       appId: apiKey,
@@ -265,6 +265,8 @@ async function dev(options: DevOptions) {
       envIdentifiers: prodEnvIdentifiers,
     })
 
+    await updateAppIdentifiers({app: localApp, identifiers, command: 'deploy'})
+
     additionalProcesses.push(
       devDraftableExtensionTarget({
         app: localApp,
@@ -272,7 +274,7 @@ async function dev(options: DevOptions) {
         url: proxyUrl,
         token,
         extensions: draftableExtensions,
-        remoteExtensions,
+        remoteExtensions: identifiers.extensionIds,
         unifiedDeployment,
       }),
     )
