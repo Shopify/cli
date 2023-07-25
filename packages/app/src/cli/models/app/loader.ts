@@ -552,7 +552,7 @@ class AppConfigurationLoader {
     let usesLinkedConfig = false
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
-      usesLinkedConfig,
+      usesLinkedConfig: false,
       allClientIdsByConfigName,
     }
 
@@ -568,7 +568,7 @@ class AppConfigurationLoader {
 
       configurationLoadResultMetadata = {
         ...configurationLoadResultMetadata,
-        usesLinkedConfig,
+        usesLinkedConfig: true,
         name: configurationFileName,
         gitTracked,
         source: configSource,

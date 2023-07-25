@@ -50,7 +50,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     ],
     app.allExtensions ?? [],
     app.usesWorkspaces ?? false,
-    app.usesLinkedConfig ?? false,
     app.dotenv,
     app.errors,
   )
