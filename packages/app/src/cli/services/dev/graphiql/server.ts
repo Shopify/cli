@@ -121,15 +121,19 @@ export function setupGraphiQLServer({
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
     if (!session) {
-      return beginAuth(req, res)
+      return res.json({errors: [{message: 'Not authenticated'}]})
     }
 
     const client = new shopify.clients.Graphql({
       session,
       apiVersion: LATEST_API_VERSION,
     })
-    const {body} = await client.query({data: req.body})
-    res.json(body)
+    try {
+      const {body} = await client.query({data: req.body})
+      res.json(body)
+    } catch (error) {
+      res.status(500).json({errors: [error]})
+    }
   })
   return app.listen(port, () => stdout.write('GraphiQL server started'))
 }
