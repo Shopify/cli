@@ -1,5 +1,32 @@
 # @shopify/theme
 
+## 3.48.0
+
+### Minor Changes
+
+- 9a942421c: Introduce the `shopify theme update run` command
+
+### Patch Changes
+
+- Updated dependencies [91e7a1fd8]
+- Updated dependencies [598812ca0]
+- Updated dependencies [a156c8b7b]
+- Updated dependencies [f32c66bf6]
+- Updated dependencies [cf52851b7]
+- Updated dependencies [2afacc5e1]
+- Updated dependencies [48f5934d7]
+- Updated dependencies [0705bc30f]
+- Updated dependencies [9311df3a7]
+- Updated dependencies [6a1b88228]
+- Updated dependencies [934c53968]
+- Updated dependencies [f0adf0651]
+- Updated dependencies [64f0d4821]
+- Updated dependencies [029b49795]
+- Updated dependencies [7d512e1b0]
+- Updated dependencies [a17e43672]
+- Updated dependencies [2a1cfc206]
+  - @shopify/cli-kit@3.48.0
+
 ## 3.47.0
 
 ### Minor Changes

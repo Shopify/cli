@@ -1,5 +1,30 @@
 # @shopify/cli-kit
 
+## 3.48.0
+
+### Minor Changes
+
+- 91e7a1fd8: output: pass logLevel to Logger
+- 598812ca0: Introduces a dangerous confirmation prompt which requires a specific string input. This is used to grab the user's intention about a particularly dangerous operation.
+- 934c53968: Add scrollbar to prompts
+- a17e43672: Implement Unified Deployments
+
+### Patch Changes
+
+- a156c8b7b: Display infoTables with a single column and custom bullets
+- f32c66bf6: Display dev preview warn message running dev command
+- cf52851b7: Remove automatic key generation for select prompt choices
+- 2afacc5e1: Dev preview is not automatically enabled/disabled when running the commands dev and deploy
+- 48f5934d7: Remove limit of 25 items per select prompt
+- 0705bc30f: Remove dates from dev and deploy logs
+- 9311df3a7: Fix log line wrapping so line sections don't wrap
+- 6a1b88228: Improve error message on non-tty when prompting for a key press
+- f0adf0651: Improve Cloudflare errors
+- 64f0d4821: Show a warning when passing a flag witn npm without the -- separator
+- 029b49795: Keep showing the footer when running dev with extension only apps
+- 7d512e1b0: Fix image_url on data attributes
+- 2a1cfc206: The status of registered, but unreleased, CLI-managed extensions in the deploy confirmation prompt are based on their relation to the active app version (or a blank slate if there's no active version)
+
 ## 3.47.0
 
 ### Minor Changes

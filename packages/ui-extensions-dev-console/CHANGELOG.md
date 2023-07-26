@@ -1,5 +1,15 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.48.0
+
+### Patch Changes
+
+- 8519a9701: Update helper for return the surface for each extension target to account for new target names
+- Updated dependencies [8519a9701]
+- Updated dependencies [b8e11a77d]
+- Updated dependencies [ec90885f4]
+  - @shopify/ui-extensions-server-kit@5.0.0
+
 ## 3.47.0
 
 ### Patch Changes
