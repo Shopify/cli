@@ -5,6 +5,7 @@ import {
   DependencyType,
   getPackageManager,
   PackageJson,
+  usesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
@@ -150,6 +151,8 @@ async function installJsonDependencies(
       return {name: pkg, version: 'latest'}
     })
 
+  const appUsesWorkspaces = await usesWorkspaces(directory)
+
   if (packagesToUpdate.length > 0) {
     await addNPMDependencies(packagesToUpdate, {
       packageManager: await getPackageManager(directory),
@@ -157,6 +160,7 @@ async function installJsonDependencies(
       directory,
       stdout: process.stdout,
       stderr: process.stderr,
+      addToRootDirectory: appUsesWorkspaces,
     })
   }
 }
