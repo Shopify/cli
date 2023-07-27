@@ -486,9 +486,9 @@ async function uploadFunctionExtension(
   const userErrors = res.data.functionSet.userErrors ?? []
   if (userErrors.length !== 0) {
     if (userErrors.find((error) => error.tag === 'version_unsupported_error')) {
-      const errorMessage = outputContent`Deployment failed due to a Function targeting an unsupported API.`
+      const errorMessage = outputContent`Deployment failed due to an outdated API version`
       const tryMessage: TokenItem = {
-        subdued: `To fix this issue, update the API version for ${variables.apiType}.`,
+        subdued: `Deployment failed because one or more Functions (${variables.apiType}) is targeting an unsupported API version (${variables.apiVersion}).`,
       }
       const customSections: AlertCustomSection[] = [
         {
