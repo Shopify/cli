@@ -144,7 +144,7 @@ describe('uploadFunctionExtensions', () => {
 
       // When
       await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        /Deployment failed due to a Function targeting an unsupported API./,
+        /Deployment failed due to an outdated API version/,
       )
 
       // Then
