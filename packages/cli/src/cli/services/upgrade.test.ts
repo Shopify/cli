@@ -186,6 +186,7 @@ describe('upgrade local CLI', () => {
           directory: normalizePath(tmpDir),
           stdout: process.stdout,
           stderr: process.stderr,
+          addToRootDirectory: false,
         },
       )
       expect(outputMock.success()).toMatchInlineSnapshot(`
