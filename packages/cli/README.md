@@ -38,6 +38,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
+* [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
@@ -861,6 +862,29 @@ FLAGS
 
 DESCRIPTION
   Validate the theme.
+```
+
+## `shopify theme console`
+
+Shopify Liquid REPL (read-eval-print loop) tool
+
+```
+USAGE
+  $ shopify theme console [--no-color] [--verbose] [-s <value>] [--password <value>] [-e <value>] [--url <value>]
+    [--port <value>]
+
+FLAGS
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  --no-color                 Disable color output.
+  --password=<value>         Password generated from the Theme Access app.
+  --port=<value>             [default: 9293] Local port to serve authentication service.
+  --url=<value>              [default: /] The url to be used as context
+  --verbose                  Increase the verbosity of the logs.
+
+DESCRIPTION
+  Shopify Liquid REPL (read-eval-print loop) tool
 ```
 
 ## `shopify theme delete`

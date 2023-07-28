@@ -4,6 +4,8 @@ module ShopifyCLI
   module Theme
     class Repl
       class AuthMiddleware
+        PASSWORD_PAGE_PATH = "/password"
+
         def initialize(app, proxy, repl, &stop_dev_server)
           @app = app
           @proxy = proxy
@@ -13,11 +15,16 @@ module ShopifyCLI
 
         def call(env)
           @env = env
+          @env["PATH_INFO"] = PASSWORD_PAGE_PATH if redirect_to_password?(@env)
 
-          return @app.call(env) unless authenticated?
+          return @app.call(@env) if password_page?(@env)
 
           authenticate!
-          shutdown
+
+          # The authentication server only shuts down when the root page is
+          # loaded, preventing favicons or other assets on the /password page
+          # from shutting down the server.
+          shutdown if index_page?(@env)
 
           [
             200,
@@ -35,6 +42,14 @@ module ShopifyCLI
 
         private
 
+        def redirect_to_password?(env)
+          return false if defined?(@redirect_to_password)
+
+          code, _body, _resp = @proxy.call({ **env, "PATH_INFO" => "/" })
+
+          @redirect_to_password = code == "302"
+        end
+
         def storefront_session
           cookie["storefront_digest"]&.first
         end
@@ -43,12 +58,16 @@ module ShopifyCLI
           @proxy.secure_session_id
         end
 
-        def authenticated?
-          storefront_session && secure_session
-        end
-
         def authenticate!
           @repl.authenticate(storefront_session, secure_session)
+        end
+
+        def password_page?(env)
+          env["PATH_INFO"]&.start_with?(PASSWORD_PAGE_PATH)
+        end
+
+        def index_page?(env)
+          env["PATH_INFO"] == "/"
         end
 
         def shutdown
@@ -66,6 +85,8 @@ module ShopifyCLI
 
         def cookie
           CGI::Cookie.parse(@env["HTTP_COOKIE"])
+        rescue StandardError
+          []
         end
       end
     end

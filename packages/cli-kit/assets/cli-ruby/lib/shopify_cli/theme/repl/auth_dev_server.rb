@@ -38,11 +38,21 @@ module ShopifyCLI
             method: "PUT",
             body: JSON.generate({
               assets: [
-                { key: "sections/announcement-bar.liquid", value: "" },
-                { key: "config/settings_schema.json", value: "[]" },
                 { key: "config/settings_data.json", value: "{}" },
-                { key: "layout/theme.liquid", value: "{{ content_for_header }}{{ content_for_layout }}" },
+                { key: "config/settings_schema.json", value: "[]" },
+                { key: "snippets/eval.liquid", value: "" },
                 { key: "layout/password.liquid", value: "{{ content_for_header }}{{ content_for_layout }}" },
+                { key: "layout/theme.liquid", value: "{{ content_for_header }}{{ content_for_layout }}" },
+                { key: "sections/announcement-bar.liquid", value: "" },
+                {
+                  key: "templates/index.json",
+                  value: {
+                    sections: {
+                      a: { type: "announcement-bar", settings: {} },
+                    },
+                    order: ["a"],
+                  }.to_json,
+                },
               ],
             }),
           )
@@ -67,6 +77,11 @@ module ShopifyCLI
 
         def proxy
           @proxy ||= Proxy.new(ctx, theme, param_builder)
+        end
+
+        def start_server
+          ctx.open_browser_url!(address)
+          super
         end
 
         def frame_title; end

@@ -14,7 +14,7 @@ module ShopifyCLI
 
           Environment.stubs(:store).returns("store.myshopify.com")
 
-          @api = Api.new(ctx, repl)
+          @api = Api.new(ctx, "/", repl)
           @api.stubs(:liquid_template).returns("<liquid_template>")
         end
 
@@ -24,7 +24,8 @@ module ShopifyCLI
               body: {
                 "_method" => "GET",
                 "replace_templates" => {
-                  "sections/announcement-bar.liquid" => "\n\n{{ 123 }}\n\n<liquid_template>",
+                  "snippets/eval.liquid" => "\n{{ 123 }}\n",
+                  "sections/announcement-bar.liquid" => "\n{% render 'eval' %}<liquid_template>",
                 },
               },
               headers: {
@@ -45,11 +46,14 @@ module ShopifyCLI
         def test_request_when_not_logged_in_with_theme_access
           Environment.stubs(:theme_access_password?).returns(true)
 
-          stub_request(:post, "https://theme-kit-access.shopifyapps.com/cli/sfr?_fd=0&pb=0&section_id=announcement-bar")
+          stub_request(:post, "https://theme-kit-access.shopifyapps.com/cli/sfr/?_fd=0&pb=0&section_id=announcement-bar")
             .with(
               body: {
                 "_method" => "GET",
-                "replace_templates" => { "sections/announcement-bar.liquid" => "\n\n{{ 456 }}\n\n<liquid_template>" },
+                "replace_templates" => {
+                  "snippets/eval.liquid" => "\n{{ 456 }}\n",
+                  "sections/announcement-bar.liquid" => "\n{% render 'eval' %}<liquid_template>",
+                },
               },
               headers: {
                 "Content-Type" => "application/x-www-form-urlencoded",
