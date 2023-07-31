@@ -125,6 +125,22 @@ interface ErrorCustomSection extends AlertCustomSection {
   body: ErrorSectionBody
 }
 
+const API_VERSION_REFERENCE_SECTION = {
+  body: {
+    list: {
+      title: 'Reference',
+      items: [
+        {
+          link: {
+            label: 'API versioning',
+            url: 'https://shopify.dev/docs/api/usage/versioning',
+          },
+        },
+      ],
+    },
+  },
+}
+
 /**
  * Uploads a bundle.
  * @param options - The upload options
@@ -181,7 +197,14 @@ export async function uploadExtensionsBundle(
     if (result.appDeploy.appVersion) {
       deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
     } else {
-      throw new AbortError({bold: "Version couldn't be created."}, null, [], customSections)
+      throw new AbortError(
+        {bold: 'Deployment failed due to a Function targetting an unsupported API.'},
+        {
+          subdued: 'To fix this, update the extension to target a supported version.',
+        },
+        [],
+        [...customSections, API_VERSION_REFERENCE_SECTION],
+      )
     }
   }
 
@@ -490,23 +513,7 @@ async function uploadFunctionExtension(
       const tryMessage: TokenItem = {
         subdued: `Deployment failed because one or more Functions (${variables.apiType}) is targeting an unsupported API version (${variables.apiVersion}).`,
       }
-      const customSections: AlertCustomSection[] = [
-        {
-          body: {
-            list: {
-              title: 'Reference',
-              items: [
-                {
-                  link: {
-                    label: 'API versioning',
-                    url: 'https://shopify.dev/docs/api/usage/versioning',
-                  },
-                },
-              ],
-            },
-          },
-        },
-      ]
+      const customSections: AlertCustomSection[] = [API_VERSION_REFERENCE_SECTION]
       throw new AbortError(errorMessage, tryMessage, [], customSections)
     } else {
       const errorMessage = outputContent`The deployment of functions failed with the following errors:${outputToken.json(
