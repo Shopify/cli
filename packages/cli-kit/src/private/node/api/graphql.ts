@@ -11,10 +11,18 @@ export function debugLogRequestInfo<T>(
 ) {
   outputDebug(outputContent`Sending ${outputToken.json(api)} GraphQL request:
   ${outputToken.raw(query.toString().trim())}
-${variables ? `\nWith variables:\n${JSON.stringify(variables, null, 2)}\n` : ''}
+${variables ? `\nWith variables:\n${sanitizeVariables(variables)}\n` : ''}
 With request headers:
 ${sanitizedHeadersOutput(headers)}
 `)
+}
+
+function sanitizeVariables(variables: Variables): string {
+  const result: Variables = {...variables}
+  if ('apiKey' in result) {
+    result.apiKey = '[redacted]'
+  }
+  return JSON.stringify(result, null, 2)
 }
 
 export function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
