@@ -2,6 +2,21 @@ import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {gql} from 'graphql-request'
+// eslint-disable-next-line import/no-extraneous-dependencies
+import Bottleneck from 'bottleneck'
+
+// API Rate limiter for partners API (Limit is 10 requests per second)
+// You start with a reservoir of 10 tokens. You can use the 10 tokens immediately.
+// After that, you get 5 token every 500ms, up to a maximum of 10 tokens in the reservoir.
+// Jobs are scheduled every 50ms.
+const limiter = new Bottleneck({
+  // reservoir: 25,
+  // reservoirIncreaseAmount: 25,
+  // reservoirIncreaseInterval: 1500,
+  // reservoirIncreaseMaximum: 25,
+
+  minTime: 100,
+})
 
 /**
  * Executes a GraphQL query against the Partners API.
@@ -15,14 +30,18 @@ export async function partnersRequest<T>(query: string, token: string, variables
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
-  return graphqlRequest({
-    query,
-    api,
-    url,
-    token,
-    variables,
-    responseOptions: {onResponse: handleDeprecations},
-  })
+  const result = limiter.schedule<T>(() =>
+    graphqlRequest({
+      query,
+      api,
+      url,
+      token,
+      variables,
+      responseOptions: {onResponse: handleDeprecations},
+    }),
+  )
+
+  return result
 }
 
 interface ProxyResponse {
