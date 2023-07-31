@@ -6,17 +6,8 @@ import {gql} from 'graphql-request'
 import Bottleneck from 'bottleneck'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
-// You start with a reservoir of 10 tokens. You can use the 10 tokens immediately.
-// After that, you get 5 token every 500ms, up to a maximum of 10 tokens in the reservoir.
-// Jobs are scheduled every 50ms.
-const limiter = new Bottleneck({
-  // reservoir: 25,
-  // reservoirIncreaseAmount: 25,
-  // reservoirIncreaseInterval: 1500,
-  // reservoirIncreaseMaximum: 25,
-
-  minTime: 100,
-})
+// Jobs are launched every 100ms
+const limiter = new Bottleneck({minTime: 100})
 
 /**
  * Executes a GraphQL query against the Partners API.
