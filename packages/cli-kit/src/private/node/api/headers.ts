@@ -29,7 +29,7 @@ export class GraphQLClientError extends RequestClientError {
  */
 export function sanitizedHeadersOutput(headers: {[key: string]: string}): string {
   const sanitized: {[key: string]: string} = {}
-  const keywords = ['token', 'authorization']
+  const keywords = ['token', 'authorization', 'subject_token']
   Object.keys(headers).forEach((header) => {
     if (keywords.find((keyword) => header.toLocaleLowerCase().includes(keyword)) === undefined) {
       sanitized[header] = headers[header]!
