@@ -100,7 +100,7 @@
     "@oclif/plugin-plugins": "2.4.7",
     "@shopify/cli-kit": "3.48.0",
     "@shopify/plugin-did-you-mean": "3.48.0",
-    "zod-to-json-schema": "3.21.3"
+    "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
     "@shopify/app": "3.48.0",
