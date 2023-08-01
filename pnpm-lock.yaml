@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -107,8 +107,8 @@ importers:
         specifier: 16.4.2
         version: 16.4.2
       oclif:
-        specifier: 3.9.1
-        version: 3.9.1
+        specifier: 3.11.0
+        version: 3.11.0
       octokit-plugin-create-pull-request:
         specifier: ^3.12.2
         version: 3.13.1
@@ -3744,6 +3744,17 @@ packages:
       - debug
     dev: true
 
+  /@oclif/color@1.0.10:
+    resolution: {integrity: sha512-INWEDAL3SzzR3pIhkrqk22HV6JravLUeRZXAIpoQqIeLReauaibCVcNTzOlt0z0S8YrqRhksc54ZxZC4Oa8xBw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      ansi-styles: 4.3.0
+      chalk: 4.1.2
+      strip-ansi: 6.0.1
+      supports-color: 8.1.1
+      tslib: 2.6.0
+    dev: true
+
   /@oclif/color@1.0.5:
     resolution: {integrity: sha512-CeUDnzGOt3G7k6KJolTueTMYfJnU/zc6MouwF3sgL+7lnrwTiLaLwQ384EVFtUaIlRHNA0WifGh6FHKc8jqw2g==}
     engines: {node: '>=12.0.0'}
@@ -3753,6 +3764,7 @@ packages:
       strip-ansi: 6.0.1
       supports-color: 8.1.1
       tslib: 2.6.0
+    dev: false
 
   /@oclif/core@2.1.4:
     resolution: {integrity: sha512-8rPS/gsjLgWp//nraRs5/yf7EkueFHBLRTMUli3yTu88XrQ2czbXIP2HsF2rxmtCqUUfXUTllHfr8OzqBs0Dcw==}
@@ -3800,15 +3812,22 @@ packages:
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
+    dev: false
 
-  /@oclif/plugin-not-found@2.3.23:
-    resolution: {integrity: sha512-UZM8aolxXvqwH8WcmJxRNASDWgMoSQm/pgCdkc1AGCRevYc8+LBSO+U6nLWq+Dx8H/dn9RyIv5oiUIOGkKDlZA==}
+  /@oclif/plugin-help@5.2.15:
+    resolution: {integrity: sha512-q3gC4kIRlTilA8sG/9Eq2BEW2wo2KWV0ZbQ+8i3uQCvrgY4qoCIp5JTfsbbKR5XWaqPDdZPWhWuS1Rveu5V4FA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/color': 1.0.5
+      '@oclif/core': 2.1.4
+    dev: true
+
+  /@oclif/plugin-not-found@2.3.34:
+    resolution: {integrity: sha512-uXUpw6o2e0aqnNn+XkGL7LbL+Th2rBD1JGtFbb6anmvUvz2skiGz0o23BYmrQW8tvU92ajPOykfClKD75ptZcw==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      '@oclif/color': 1.0.10
       '@oclif/core': 2.1.4
       fast-levenshtein: 3.0.0
-      lodash: 4.17.21
     dev: true
 
   /@oclif/plugin-plugins@2.4.7:
@@ -3830,8 +3849,8 @@ packages:
       - supports-color
     dev: false
 
-  /@oclif/plugin-warn-if-update-available@2.0.37:
-    resolution: {integrity: sha512-rfDNvplwgiwV+QSV4JU96ypmWgNJ6Hk5FEAEAKzqF0v0J8AHwZGpwwYO/MCZSkbc7bfYpkqLx/sxjpMO6j6PmQ==}
+  /@oclif/plugin-warn-if-update-available@2.0.46:
+    resolution: {integrity: sha512-TyOvPHzl1e8lLeRF8A9nhte+H9LR0arWqu+MYhNxzislx7SbG4M5yRhoH5F1MmwGxgJBbWHZVsmLjZm4S9cEog==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.1.4
@@ -3840,7 +3859,7 @@ packages:
       fs-extra: 9.1.0
       http-call: 5.3.0
       lodash: 4.17.21
-      semver: 7.5.3
+      semver: 7.5.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -10611,15 +10630,15 @@ packages:
       define-properties: 1.2.0
       es-abstract: 1.21.2
 
-  /oclif@3.9.1:
-    resolution: {integrity: sha512-gJ8gJrohFY8qEeVBOw7wgAFdwPt2CTTkEFXDTkfUeXap6URIy6ngP7g/E1A2zFt2I0wH/qQHwcfuTpfBbj1+Uw==}
+  /oclif@3.11.0:
+    resolution: {integrity: sha512-72/ewMfqCDPlhx5Ceo3NYDqmL//jE8jK4pEHtK6Ad+o1yP2uIw0EUvL3aXcwp58GMygmIYSjcXEKKKmWQTvG+w==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
       '@oclif/core': 2.1.4
-      '@oclif/plugin-help': 5.2.11
-      '@oclif/plugin-not-found': 2.3.23
-      '@oclif/plugin-warn-if-update-available': 2.0.37
+      '@oclif/plugin-help': 5.2.15
+      '@oclif/plugin-not-found': 2.3.34
+      '@oclif/plugin-warn-if-update-available': 2.0.46
       aws-sdk: 2.1383.0
       concurrently: 7.6.0
       debug: 4.3.4(supports-color@8.1.1)
@@ -11924,6 +11943,14 @@ packages:
     hasBin: true
     dependencies:
       lru-cache: 6.0.0
+
+  /semver@7.5.4:
+    resolution: {integrity: sha512-1bCSESV6Pv+i21Hvpxp3Dx+pSD8lIPt8uVjRrxAUt/nbswYc+tK6Y2btiULjd4+fnq15PX+nqQDC7Oft7WkwcA==}
+    engines: {node: '>=10'}
+    hasBin: true
+    dependencies:
+      lru-cache: 6.0.0
+    dev: true
 
   /send@0.18.0:
     resolution: {integrity: sha512-qqWzuOjSFOuqPjFe4NOsMLafToQQwBSOEpS+FwEt3A2V3vKubTquT3vmLTQpFgMXp8AlFWFuP1qKaJZOtPpVXg==}
@@ -14004,7 +14031,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.46.0
     peerDependencies:
       eslint: ^8.44.0
     dependencies:
