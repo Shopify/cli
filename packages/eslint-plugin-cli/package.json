@@ -19,7 +19,7 @@
     "@shopify/eslint-plugin": "42.1.0",
     "@typescript-eslint/eslint-plugin": "5.60.1",
     "@typescript-eslint/parser": "5.60.1",
-    "eslint-config-prettier": "8.8.0",
+    "eslint-config-prettier": "8.9.0",
     "eslint-plugin-import": "2.27.5",
     "eslint-plugin-jsdoc": "39.9.1",
     "eslint-plugin-jsx-a11y": "6.7.1",
