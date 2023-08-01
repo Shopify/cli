@@ -198,7 +198,7 @@ export async function uploadExtensionsBundle(
       deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
     } else {
       throw new AbortError(
-        {bold: 'Deployment failed due to a Function targetting an unsupported API.'},
+        {bold: 'Deployment failed due to a Function targeting an unsupported API.'},
         {
           subdued: 'To fix this, update the extension to target a supported version.',
         },
