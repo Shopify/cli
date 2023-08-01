@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -98,8 +98,8 @@ importers:
         specifier: ^2.12.6
         version: 2.12.6(graphql@15.8.0)
       liquidjs:
-        specifier: ^10.8.3
-        version: 10.8.3
+        specifier: ^10.8.4
+        version: 10.8.4
       node-fetch:
         specifier: ^3.3.1
         version: 3.3.1
@@ -385,8 +385,8 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       liquidjs:
-        specifier: 10.8.3
-        version: 10.8.3
+        specifier: 10.8.4
+        version: 10.8.4
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -9523,8 +9523,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /liquidjs@10.8.3:
-    resolution: {integrity: sha512-LqHLYtH3vrkT3LyfOhPU0FJX5KPO4aB6SzGa4HRI29yz8pS0ZxqIe/fWtic8qiust1+qrHI92J67tdt92V4WOA==}
+  /liquidjs@10.8.4:
+    resolution: {integrity: sha512-HSpYAFBVWxhwWsTKPBJgPm3bnwwIzAZjy17XhX7uJCKJ8H6A1YstZSFmPqMmWfSuJOg43RSx+qWVSA1Fu3+B2w==}
     engines: {node: '>=14'}
     hasBin: true
     dependencies:
@@ -14004,7 +14004,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.46.0
     peerDependencies:
       eslint: ^8.44.0
     dependencies:
