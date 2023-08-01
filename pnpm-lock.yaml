@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -14,8 +14,8 @@ importers:
   .:
     devDependencies:
       '@apollo/client':
-        specifier: ^3.7.16
-        version: 3.7.16(graphql@15.8.0)(react@17.0.2)
+        specifier: ^3.7.17
+        version: 3.7.17(graphql@15.8.0)(react@17.0.2)
       '@babel/core':
         specifier: ^7.22.5
         version: 7.22.5
@@ -910,8 +910,8 @@ packages:
       js-yaml: 4.1.0
     dev: true
 
-  /@apollo/client@3.7.16(graphql@15.8.0)(react@17.0.2):
-    resolution: {integrity: sha512-rdhoc7baSD7ZzcjavEpYN8gZJle1KhjEKj4SJeMgBpcnO4as7oXUVU4LtFpotzZdFlo57qaLrNzfvppSTsKvZQ==}
+  /@apollo/client@3.7.17(graphql@15.8.0)(react@17.0.2):
+    resolution: {integrity: sha512-0EErSHEtKPNl5wgWikHJbKFAzJ/k11O0WO2QyqZSHpdxdAnw7UWHY4YiLbHCFG7lhrD+NTQ3Z/H9Jn4rcikoJA==}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0
       graphql-ws: ^5.5.5
@@ -14004,7 +14004,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.46.0
     peerDependencies:
       eslint: ^8.44.0
     dependencies:
