@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -188,8 +188,8 @@ importers:
         specifier: 1.18.1
         version: 1.18.1
       javy-cli:
-        specifier: 0.1.7
-        version: 0.1.7
+        specifier: 0.1.8
+        version: 0.1.8
       serve-static:
         specifier: 1.15.0
         version: 1.15.0
@@ -9208,8 +9208,8 @@ packages:
       filelist: 1.0.4
       minimatch: 3.1.2
 
-  /javy-cli@0.1.7:
-    resolution: {integrity: sha512-d+6qd7npo5yKQ03+oEB5V2uRakghGScHQ/mDbDV4P9TqIcsFk6IeKmCvAVzaNojs6LGgPmEBMS3orG/Y9s+UUA==}
+  /javy-cli@0.1.8:
+    resolution: {integrity: sha512-6CEmAB9/NtdbUh33u5tww9RTiJ/CqqH7+iPgKb5FprIm9NOwaETVIAuN9gDN3zXZb9ePb/wVQw73icBY9EuFOg==}
     hasBin: true
     dependencies:
       cachedir: 2.3.0
@@ -14004,7 +14004,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.46.0
     peerDependencies:
       eslint: ^8.44.0
     dependencies:
