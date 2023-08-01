@@ -28,17 +28,17 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  const {token, apiKey, app} = await ensureReleaseContext(options)
+  const {token, app, partnersApp} = await ensureReleaseContext(options)
 
-  const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, options.version, token)
+  const {versionsDiff, versionDetails} = await versionDiffByVersion(partnersApp.apiKey, options.version, token)
 
-  await confirmReleasePrompt(app.name, versionsDiff)
+  await confirmReleasePrompt(partnersApp.title, versionsDiff)
   interface Context {
     appRelease: AppReleaseSchema
   }
 
   const variables: AppReleaseVariables = {
-    apiKey,
+    apiKey: partnersApp.apiKey,
     appVersionId: versionDetails.id,
   }
 

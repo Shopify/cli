@@ -1,6 +1,7 @@
 import {dirname} from './path.js'
 import {createFileWriteStream, fileExistsSync, mkdirSync, unlinkFileSync} from './fs.js'
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
+import {sanitizeURL} from '../../private/node/api/urls.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
 import {debugLogResponseInfo} from '../../private/node/api.js'
 import FormData from 'form-data'
@@ -45,6 +46,7 @@ export async function fetch(url: RequestInfo, init?: RequestInit): Response {
  * @returns A promise that resolves with the response.
  */
 export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Response {
+  const sanitizedUrl = sanitizeURL(url.toString())
   const options: RequestInit = {
     ...(init ?? {}),
     headers: {
@@ -53,7 +55,7 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Respon
     },
   }
 
-  outputDebug(outputContent`Sending ${options.method ?? 'GET'} request to URL ${url.toString()}
+  outputDebug(outputContent`Sending ${options.method ?? 'GET'} request to URL ${sanitizedUrl}
 With request headers:
 ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
 `)
@@ -68,7 +70,8 @@ ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})
  * @returns - A promise that resolves with the local path.
  */
 export function downloadFile(url: string, to: string): Promise<string> {
-  outputDebug(`Downloading ${url} to ${to}`)
+  const sanitizedUrl = sanitizeURL(url)
+  outputDebug(`Downloading ${sanitizedUrl} to ${to}`)
 
   return new Promise<string>((resolve, reject) => {
     if (!fileExistsSync(dirname(to))) {

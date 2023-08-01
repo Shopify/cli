@@ -346,4 +346,29 @@ api_version = "unstable"
       expect(result).toBeFalsy()
     })
   })
+
+  test('returns false when there are no changes to app config but there are changes to [build]', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const configuration = mergeAppConfiguration(testApp(), app as OrganizationApp)
+      const options: PushOptions = {
+        configuration: {
+          ...configuration,
+          build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
+        },
+        configurationPath,
+        force: false,
+      }
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
 })

@@ -1,5 +1,62 @@
 # @shopify/app
 
+## 3.48.0
+
+### Minor Changes
+
+- b6ee5f3d8: Support building JS Function with multiple export targets
+- 6e0d87220: Remove ngrok plugin
+- 0a42ba962: minor updates to some extension names and template groupings for a better `shopify app generate extension` developer experience
+- edabd59a6: Add DangerousConfirmationPrompt component to call developer attention to dangerous yes/no decisions
+- a17e43672: Implement Unified Deployments
+- fea8981d2: Added support for configuring a sidekick HMR server in web frontend app TOML files
+
+### Patch Changes
+
+- 8519a9701: Update helper for return the surface for each extension target to account for new target names
+- 78869c4e6: Only assign a single port when frontend and backend are the same web
+- ffc9ced68: Update APIs to use "app version" terminology instead of "deployment" terminology
+- a156c8b7b: Display infoTables with a single column and custom bullets
+- b184203d2: Modified app unified deployment opt-in banner display logic based on beta flag
+- f32c66bf6: Display dev preview warn message running dev command
+- 144acba38: Update app version name validation to prohibit forward slashes
+- 2afacc5e1: Dev preview is not automatically enabled/disabled when running the commands dev and deploy
+- e50e3c6d4: Remove distribution percentage info from versions list
+- 3125555ca: Added automatic upgrade date to deployment availability banner
+- 1088e8202: Rename extension templates toml file to shopify.extension.toml
+- c22d49b6d: Update 404 error message for the Extensions Dev Server to refer to extension targets
+- ec90885f4: Drop support for setting a translatable label at the extension point level.
+  The translatable merchant-facing string should be set at using the extension's name instead.
+- 90b8636a9: Allow continuing with extension creation when dev doesn't want to match extensions on deploy/dev
+- a8dce9e56: Add new command to import flow extensions
+- f0adf0651: Improve Cloudflare errors
+- 029b49795: Keep showing the footer when running dev with extension only apps
+- 6c71745e2: Fix subscription ui extension using pnpm
+- 7c5b453b7: Adapt group and extensions names and sorting displayed with the extensions prompt
+- d0756ec77: Rename customer-account.order-details targets to order-status
+- 2a1cfc206: The status of registered, but unreleased, CLI-managed extensions in the deploy confirmation prompt are based on their relation to the active app version (or a blank slate if there's no active version)
+- e65c18d83: Fix deploy for tax calculation extensions
+- Updated dependencies [91e7a1fd8]
+- Updated dependencies [598812ca0]
+- Updated dependencies [a156c8b7b]
+- Updated dependencies [f32c66bf6]
+- Updated dependencies [cf52851b7]
+- Updated dependencies [2afacc5e1]
+- Updated dependencies [48f5934d7]
+- Updated dependencies [0705bc30f]
+- Updated dependencies [6e0d87220]
+- Updated dependencies [9311df3a7]
+- Updated dependencies [6a1b88228]
+- Updated dependencies [934c53968]
+- Updated dependencies [f0adf0651]
+- Updated dependencies [64f0d4821]
+- Updated dependencies [029b49795]
+- Updated dependencies [7d512e1b0]
+- Updated dependencies [a17e43672]
+- Updated dependencies [2a1cfc206]
+  - @shopify/cli-kit@3.48.0
+  - @shopify/plugin-cloudflare@3.48.0
+
 ## 3.47.0
 
 ### Minor Changes

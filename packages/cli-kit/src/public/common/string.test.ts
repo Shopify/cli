@@ -1,4 +1,4 @@
-import {formatDate, getRandomName, linesToColumns, pluralize, tryParseInt} from './string.js'
+import {formatDate, getRandomName, joinWithAnd, linesToColumns, pluralize, tryParseInt} from './string.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getRandomName', () => {
@@ -95,5 +95,40 @@ describe('formatDate', () => {
 
     // Then
     expect(str).toBe('2020-01-01 00:00:00')
+  })
+})
+
+describe('joinWithAnd', () => {
+  test('joins one string', () => {
+    // Given
+    const strings = ['one']
+
+    // When
+    const str = joinWithAnd(strings)
+
+    // Then
+    expect(str).toBe('"one"')
+  })
+
+  test('joins two strings with and', () => {
+    // Given
+    const strings = ['one', 'two']
+
+    // When
+    const str = joinWithAnd(strings)
+
+    // Then
+    expect(str).toBe('"one" and "two"')
+  })
+
+  test('joins three strings with and', () => {
+    // Given
+    const strings = ['one', 'two', 'three']
+
+    // When
+    const str = joinWithAnd(strings)
+
+    // Then
+    expect(str).toBe('"one", "two" and "three"')
   })
 })

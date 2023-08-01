@@ -1,4 +1,5 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
+import {sanitizeURL} from './api/urls.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
@@ -43,7 +44,7 @@ export async function debugLogResponseInfo<T extends {headers: Headers; status: 
     }
   } finally {
     const t1 = performance.now()
-    outputDebug(`Request to ${url} completed in ${Math.round(t1 - t0)} ms
+    outputDebug(`Request to ${sanitizeURL(url)} completed in ${Math.round(t1 - t0)} ms
 With response headers:
 ${sanitizedHeadersOutput(responseHeaders)}
     `)
