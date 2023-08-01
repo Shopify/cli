@@ -28,7 +28,7 @@ When(
         packageManager,
         '--local',
         '--template',
-        'https://github.com/Shopify/shopify-app-template-node#richard/frontend-via-submodules-toml-updates',
+        'https://github.com/Shopify/shopify-app-template-remix',
       ],
       {env: {...process.env, ...this.temporaryEnv, FORCE_COLOR: '0'}},
     )
