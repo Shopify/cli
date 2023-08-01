@@ -27,11 +27,13 @@ export async function outputUpdateURLsResult(
     if (isCurrentAppSchema(localApp.configuration)) {
       const fileName = basename(localApp.configurationPath)
       const configName = getAppConfigurationShorthand(fileName)
+      const pushCommandSuffix = configName ? `-- --config=${configName}` : ''
+
       renderInfo({
         body: [
           `To update URLs manually, add the following URLs to ${fileName} under auth > redirect_urls and run\n`,
           {
-            command: `npm run shopify app config push -- --config=${configName}`,
+            command: `npm run shopify app config push ${pushCommandSuffix}`,
           },
           '\n\n',
           {list: {items: urls.redirectUrlWhitelist}},
