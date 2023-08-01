@@ -73,7 +73,7 @@
     "typescript": "5.0.4",
     "@nx/workspace": "16.4.2",
     "@nx/js": "16.4.2",
-    "@nx/eslint-plugin": "16.4.2"
+    "@nx/eslint-plugin": "16.4.3"
   },
   "workspaces": {
     "packages": [
