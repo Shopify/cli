@@ -47,7 +47,7 @@
     "commander": "^9.4.0",
     "cross-env": "^7.0.3",
     "esbuild": "0.18.11",
-    "eslint": "^8.44.0",
+    "eslint": "^8.46.0",
     "execa": "^5.1.1",
     "fast-glob": "^3.3.0",
     "find-up": "^6.3.0",
