@@ -33,13 +33,19 @@ describe('output', () => {
       await outputUpdateURLsResult(true, urls, remoteApp, localApp)
 
       // Then
-      expect(outputMock.output()).toMatch(`For your convenience, we've given your app a default URL:`)
-      expect(outputMock.output()).toMatch(`${urls.applicationUrl}.`)
-      expect(outputMock.output()).toMatch(`You can update your app's URL anytime in the Partners Dashboard [1] But`)
-      expect(outputMock.output()).toMatch(`once your app is live, updating its URL will disrupt user access.`)
-      expect(outputMock.output()).toMatch(
-        `[1] https://partners.shopify.com/${remoteApp.organizationId}/apps/${remoteApp.id}/edit`,
-      )
+      expect(outputMock.output()).toMatchInlineSnapshot(`
+        "╭─ info ───────────────────────────────────────────────────────────────────────╮
+        │                                                                              │
+        │  For your convenience, we've given your app a default URL:                   │
+        │  https://lala.cloudflare.io/.                                                │
+        │                                                                              │
+        │  You can update your app's URL anytime in the Partners Dashboard [1] But     │
+        │  once your app is live, updating its URL will disrupt user access.           │
+        │                                                                              │
+        ╰──────────────────────────────────────────────────────────────────────────────╯
+        [1] https://partners.shopify.com/1/apps/1/edit
+        "
+      `)
     })
 
     test('shows nothing when urls were updated', async () => {
@@ -67,12 +73,19 @@ describe('output', () => {
       await outputUpdateURLsResult(false, urls, remoteApp, localApp)
 
       // Then
-      expect(outputMock.output()).toMatch(`To make URL updates manually, you can add the following URLs as redirects`)
-      expect(outputMock.output()).toMatch(`in your Partners Dashboard [1]:`)
-      expect(outputMock.output()).toMatch(`• ${urls.redirectUrlWhitelist[0]}`)
-      expect(outputMock.output()).toMatch(
-        `[1] https://partners.shopify.com/${remoteApp.organizationId}/apps/${remoteApp.id}/edit`,
-      )
+      expect(outputMock.output()).toMatchInlineSnapshot(`
+        "╭─ info ───────────────────────────────────────────────────────────────────────╮
+        │                                                                              │
+        │  To make URL updates manually, you can add the following URLs as redirects   │
+        │  in your Partners Dashboard [1]:                                             │
+        │                                                                              │
+        │                                                                              │
+        │    • https://lala.cloudflare.io/auth/callback                                │
+        │                                                                              │
+        ╰──────────────────────────────────────────────────────────────────────────────╯
+        [1] https://partners.shopify.com/1/apps/1/edit
+        "
+      `)
     })
 
     test('shows how to update app urls with config push when app is not brand new, urls were updated and app uses new config', async () => {
@@ -86,11 +99,19 @@ describe('output', () => {
       await outputUpdateURLsResult(false, urls, remoteApp, localApp)
 
       // Then
-      expect(outputMock.output()).toMatch(`To update URLs manually, add the following URLs to`)
-      expect(outputMock.output()).toMatch(`shopify.app.staging.toml under auth > redirect_urls and run`)
-      expect(outputMock.output()).toMatch(`\`npm run shopify app config push -- --config=staging\``)
-      expect(outputMock.output()).toMatch(`• ${urls.redirectUrlWhitelist[0]}`)
-      expect(outputMock.output()).not.toMatch(`https://partners.shopify.com/`)
+      expect(outputMock.output()).toMatchInlineSnapshot(`
+        "╭─ info ───────────────────────────────────────────────────────────────────────╮
+        │                                                                              │
+        │  To update URLs manually, add the following URLs to                          │
+        │  shopify.app.staging.toml under auth > redirect_urls and run                 │
+        │   \`yarn shopify app config push --config=staging\`                            │
+        │                                                                              │
+        │                                                                              │
+        │    • https://lala.cloudflare.io/auth/callback                                │
+        │                                                                              │
+        ╰──────────────────────────────────────────────────────────────────────────────╯
+        "
+      `)
     })
   })
 })
