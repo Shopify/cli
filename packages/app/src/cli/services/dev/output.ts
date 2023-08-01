@@ -6,6 +6,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {basename} from '@shopify/cli-kit/node/path'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -27,13 +28,17 @@ export async function outputUpdateURLsResult(
     if (isCurrentAppSchema(localApp.configuration)) {
       const fileName = basename(localApp.configurationPath)
       const configName = getAppConfigurationShorthand(fileName)
-      const pushCommandSuffix = configName ? `-- --config=${configName}` : ''
+      const pushCommandArgs = configName ? [`--config=${configName}`] : []
 
       renderInfo({
         body: [
           `To update URLs manually, add the following URLs to ${fileName} under auth > redirect_urls and run\n`,
           {
-            command: `npm run shopify app config push ${pushCommandSuffix}`,
+            command: formatPackageManagerCommand(
+              localApp.packageManager,
+              `shopify app config push`,
+              ...pushCommandArgs,
+            ),
           },
           '\n\n',
           {list: {items: urls.redirectUrlWhitelist}},
