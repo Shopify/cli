@@ -15,7 +15,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["dist"],
+      "outputs": ["{workspaceRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
