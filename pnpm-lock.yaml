@@ -182,8 +182,8 @@ importers:
         specifier: 5.2.0
         version: 5.2.0(graphql@16.4.0)
       h3:
-        specifier: 0.7.21
-        version: 0.7.21
+        specifier: 0.8.6
+        version: 0.8.6
       http-proxy:
         specifier: 1.18.1
         version: 1.18.1
@@ -8713,12 +8713,12 @@ packages:
     engines: {node: '>=8.0.0'}
     dev: true
 
-  /h3@0.7.21:
-    resolution: {integrity: sha512-F/qdr3JKh8zBLiZyiprH5kuzG6vjoTK3nFnIYFUIQPLsw755GI5JezAFc3HJxbgYlzawcGeJlmsw4xu2t/0n/Q==}
+  /h3@0.8.6:
+    resolution: {integrity: sha512-CSWNOKa3QGo67rFU2PhbFTp0uPJtilNji2Z0pMiSRQt3+OkIW0u3E1WMJqIycLqaTgb9JyFqH/S4mcTyyGtvyQ==}
     dependencies:
       cookie-es: 0.5.0
       destr: 1.2.2
-      radix3: 0.1.2
+      radix3: 0.2.1
       ufo: 0.8.6
     dev: false
 
@@ -11691,8 +11691,8 @@ packages:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
 
-  /radix3@0.1.2:
-    resolution: {integrity: sha512-Mpfd/OuX0zoJ6ojLD/RTOHvJPg6e6PjINtmYzV87kIXc5iUtDz34i7gg4SV4XjqRJTmSiYO/g9i/mKWGf4z8wg==}
+  /radix3@0.2.1:
+    resolution: {integrity: sha512-FnhArTl5Tq7dodiLeSPKrDUyCQuJqEncP8cKdyy399g8F/cz7GH6FmzA3Rkosu2IZMkpswFFwXfb2ERSiL06pg==}
     dev: false
 
   /range-parser@1.2.1:
