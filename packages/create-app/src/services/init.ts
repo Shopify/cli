@@ -78,13 +78,10 @@ async function init(options: InitOptions) {
           switch (packageManager) {
             case 'npm':
             case 'yarn':
-              packageJSON.workspaces = ['web', 'web/frontend', 'extensions/*']
+              packageJSON.workspaces = ['extensions/*']
               break
             case 'pnpm':
-              await writeFile(
-                joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'),
-                `packages:\n  - 'web'\n  - 'web/frontend'\n  - 'extensions/*'\n`,
-              )
+              await writeFile(joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'), `packages:\n  - 'extensions/*'\n`)
               // Ensure that the installation of dependencies doesn't fail when using
               // pnpm due to missing peerDependencies.
               await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
