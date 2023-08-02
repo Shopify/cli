@@ -1,4 +1,4 @@
-import {ensureDevContext} from './context.js'
+import {disableDeveloperPreview, ensureDevContext} from './context.js'
 import {
   generateFrontendURL,
   generatePartnersURLs,
@@ -17,7 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
-import {renderDevPreviewWarning} from './extensions/common.js'
+import {canEnablePreviewMode} from './extensions/common.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -43,7 +43,7 @@ import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
@@ -53,12 +53,13 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -101,6 +102,7 @@ async function dev(options: DevOptions) {
   } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
+  const developmentStorePreviewEnabled = remoteApp.developmentStorePreviewEnabled
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
   let localApp = await loadApp({directory: options.directory, specifications, configName})
@@ -303,8 +305,6 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  await renderDevPreviewWarning(remoteApp, localApp)
-
   if (sendUninstallWebhook) {
     additionalProcesses.push({
       prefix: 'webhooks',
@@ -329,12 +329,23 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
+  const abortController = configureDevAbortController(apiKey, token, tunnelClient)
+
+  const app = {
+    canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
+    developmentStorePreviewEnabled,
+    apiKey,
+    token,
+  }
+
   if (proxyTargets.length === 0) {
     await renderDev(
       {
         processes: additionalProcesses,
+        abortController,
       },
       previewUrl,
+      app,
     )
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
@@ -342,8 +353,23 @@ async function dev(options: DevOptions) {
       portNumber: proxyPort,
       proxyTargets,
       additionalProcesses,
+      app,
+      abortController,
     })
   }
+}
+
+function configureDevAbortController(apiKey: string, token: string, tunnelClient: TunnelClient | undefined) {
+  const abortController = new AbortController()
+  abortController.signal.addEventListener('abort', async () => {
+    setTimeout(() => {
+      treeKill('SIGINT')
+    }, 2000)
+    outputDebug('\n\nInitiating graceful shutdown ...')
+    await disableDeveloperPreview({apiKey, token})
+    tunnelClient?.stopTunnel()
+  })
+  return abortController
 }
 
 function setPreviousAppId(directory: string, apiKey: string) {
