@@ -52,7 +52,7 @@ node bin/create-test-app.js -e ui
 After you've installed Parallels and virtualized the Windows environment, you need to install the following software:
 
 - [Git](https://git-scm.com/download/win)
-- [Node](https://nodejs.org/en/download/)
+- [Node](https://nodejs.org/en/download/) (remember to also install chocolatey)
 - [Ruby](https://rubyinstaller.org/downloads/) (needed for themes, Ruby+DevKit 3.0.x is recommended)
 - [PNPM](https://pnpm.io/installation)
   - You will need to enable [long paths](https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=powershell) support on windows:
