@@ -5,8 +5,12 @@ import {gql} from 'graphql-request'
 import Bottleneck from 'bottleneck'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
-// Jobs are launched every 100ms
-const limiter = new Bottleneck({minTime: 100})
+// Jobs are launched every 150ms to add an extra 50ms margin per request.
+// Only 10 requests can be executed concurrently.
+const limiter = new Bottleneck({
+  minTime: 150,
+  maxConcurrent: 10,
+})
 
 /**
  * Executes a GraphQL query against the Partners API.
