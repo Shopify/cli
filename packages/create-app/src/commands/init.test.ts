@@ -1,5 +1,5 @@
 import Init from './init.js'
-import initPrompt, {visibleTemplates} from '../prompts/init.js'
+import * as initPrompt from '../prompts/init.js'
 import initService from '../services/init.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import {errorHandler} from '@shopify/cli-kit/node/error-handler'
@@ -7,12 +7,11 @@ import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-vi.mock('../prompts/init')
 vi.mock('../services/init')
 vi.mock('@shopify/cli-kit/node/error-handler')
 
 beforeEach(() => {
-  vi.mocked(initPrompt).mockResolvedValue({name: 'name', template: 'http://test.es', templateType: 'custom'})
+  vi.spyOn(initPrompt, 'default').mockResolvedValue({name: 'name', template: 'http://test.es', templateType: 'custom'})
 })
 
 describe('create app command', () => {
@@ -58,7 +57,7 @@ describe('create app command', () => {
     // Then
     const anyConfig = expect.any(Config)
     const expectedError = new AbortError(
-      outputContent`Only ${visibleTemplates
+      outputContent`Only ${initPrompt.visibleTemplates
         .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
         .join(', ')} template aliases are supported`,
     )

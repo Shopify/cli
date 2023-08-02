@@ -23,9 +23,9 @@ export const templateURLMap = {
   php: {url: 'https://github.com/Shopify/shopify-app-template-php', visible: false},
   ruby: {url: 'https://github.com/Shopify/shopify-app-template-ruby', visible: false},
 } as const
-export const visibleTemplates = Object.keys(templateURLMap).filter(
-  (key) => templateURLMap[key as keyof typeof templateURLMap].visible,
-)
+
+export const allTemplates = Object.keys(templateURLMap)
+export const visibleTemplates = allTemplates.filter((key) => templateURLMap[key as keyof typeof templateURLMap].visible)
 
 const templateLabels = {
   remix: 'Start with Remix (recommended)',
@@ -77,7 +77,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
         }
       }),
       message: 'Get started building your app:',
-      defaultValue: Object.keys(templateURLMap).find(
+      defaultValue: allTemplates.find(
         (key) => templateURLMap[key as keyof typeof templateURLMap].url === defaults.template,
       ),
     })
