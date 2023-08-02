@@ -58,21 +58,27 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   const packageJson = (await findUpAndReadPackageJson(projectDir)).content
   const packageJsonDependencies = packageJson.dependencies || {}
   const packageJsonDevDependencies = packageJson.devDependencies || {}
+  const allDependencies = {...packageJsonDependencies, ...packageJsonDevDependencies}
 
-  let resolvedVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[await cliDependency()]!
-  if (resolvedVersion.slice(0, 1).match(/[\^~]/)) resolvedVersion = currentVersion
-  const newestVersion = await checkForNewVersion(await cliDependency(), resolvedVersion)
+  let resolvedCLIVersion = allDependencies[await cliDependency()]!
+  const resolvedAppVersion = allDependencies['@shopify/app']?.replace(/[\^~]/, '')
 
-  if (!newestVersion) {
-    outputWontInstallMessage(resolvedVersion)
+  if (resolvedCLIVersion.slice(0, 1).match(/[\^~]/)) resolvedCLIVersion = currentVersion
+  const newestCLIVersion = await checkForNewVersion(await cliDependency(), resolvedCLIVersion)
+  const newestAppVersion = resolvedAppVersion ? await checkForNewVersion('@shopify/app', resolvedAppVersion) : undefined
+
+  if (newestCLIVersion) {
+    outputUpgradeMessage(resolvedCLIVersion, newestCLIVersion)
+  } else if (resolvedAppVersion && newestAppVersion) {
+    outputUpgradeMessage(resolvedAppVersion, newestAppVersion)
+  } else {
+    outputWontInstallMessage(resolvedCLIVersion)
     return
   }
 
-  outputUpgradeMessage(resolvedVersion, newestVersion)
-
   await installJsonDependencies('prod', packageJsonDependencies, projectDir)
   await installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
-  return newestVersion
+  return newestCLIVersion
 }
 
 async function upgradeGlobalShopify(
