@@ -6,8 +6,6 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, findPathUp, mkdir} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {hyphenate} from '@shopify/cli-kit/common/string'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {fileURLToPath} from 'url'
 
 export async function ensureDownloadedExtensionFlavorExists(
@@ -49,28 +47,13 @@ export async function ensureExtensionDirectoryExists({name, app}: {name: string;
   return extensionDirectory
 }
 
-export async function renderDevPreviewWarning(
-  remoteApp: Partial<OrganizationApp>,
-  localApp: AppInterface,
-): Promise<void> {
-  const body = await buildDevPreviewWarning(remoteApp, localApp)
-  if (!body) return
-
-  outputInfo(`\n${body}\n`)
-}
-
-export async function buildDevPreviewWarning(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
-  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
-  if (!unifiedDeployment) return
-
-  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
+export function canEnablePreviewMode(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
   const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
-  if (draftableExtensions.length === 0 && themeExtensions.length === 0) return
+  if (themeExtensions.length > 0) return true
 
-  const link = outputToken.link(
-    'Partner Dashboard',
-    `https://${await partnersFqdn()}/${remoteApp.organizationId}/apps/${remoteApp.id}/extensions`,
-  )
-  return outputContent`To preview your extensions, make sure that development store preview is enabled in the ${link}.`
-    .value
+  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
+  if (unifiedDeployment && draftableExtensions.length > 0) return true
+
+  return false
 }
