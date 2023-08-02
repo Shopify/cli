@@ -19,6 +19,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
+  appProxy?: {proxyUrl: string; proxySubPath: string; proxySubPathPrefix: string}
 }
 
 export interface FrontendURLOptions {
@@ -122,7 +123,11 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
   })
 }
 
-export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {
+export function generatePartnersURLs(
+  baseURL: string,
+  authCallbackPath?: string | string[],
+  proxyFields?: {url: string; subpath: string; prefix: string},
+): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
@@ -140,9 +145,14 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
     ]
   }
 
+  const appProxy = proxyFields
+    ? {appProxy: {proxyUrl: baseURL, proxySubPath: proxyFields.subpath, proxySubPathPrefix: proxyFields.prefix}}
+    : {}
+
   return {
     applicationUrl: baseURL,
     redirectUrlWhitelist,
+    ...appProxy,
   }
 }
 
@@ -169,6 +179,11 @@ export async function updateURLs(
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
+
+    if (localConfiguration.app_proxy) {
+      localConfiguration.app_proxy = {...localConfiguration.app_proxy, url: urls.applicationUrl}
+    }
+
     await writeAppConfigurationFile(localApp.configurationPath, localConfiguration)
   }
 }
