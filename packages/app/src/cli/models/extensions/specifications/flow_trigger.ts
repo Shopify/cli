@@ -1,17 +1,18 @@
 import {loadSchemaPatchFromPath} from './flow_action.js'
 import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {validateFieldShape} from '../../../services/flow/validation.js'
+import {validateCustomFields, validateFieldShape} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const FlowTriggerSettingsSchema = FieldSchema.extend({
+export const FlowTriggerSettingsSchema = FieldSchema.extend({
   key: zod
     .string()
     .regex(/^[a-zA-Z\s]*$/, {
       message: 'String must contain only alphabetic characters and spaces',
     })
     .optional(),
+  return_type_ref: zod.string().optional(),
 })
 
 export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
@@ -27,7 +28,8 @@ export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   const settingsFieldsAreValid = fields.every((field, index) =>
     validateFieldShape(field, 'flow_trigger', config.handle, index),
   )
-  return settingsFieldsAreValid
+  const customFieldsAreValid = validateCustomFields(fields)
+  return settingsFieldsAreValid && customFieldsAreValid
 })
 
 /**

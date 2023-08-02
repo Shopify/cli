@@ -1,5 +1,6 @@
 import {ConfigField, FlowExtensionTypes} from './types.js'
 import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
+import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/flow_trigger.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
@@ -34,17 +35,13 @@ export const validateFieldShape = (
           required: zod.boolean().optional(),
         })
         .parse(configField)
+    } else {
+      return FlowTriggerSettingsSchema.parse(configField)
     }
-
-    return baseFieldSchema
-      .extend({
-        key: zod.string(fieldValidationErrorMessage('key', configField, extensionHandle, index)),
-      })
-      .parse(configField)
   }
 
   if (isCommerceObjectField) {
-    if (type === 'flow_action') {
+    if (type === 'flow_action' || type === 'flow_trigger') {
       return baseFieldSchema
         .extend({
           required: zod.boolean().optional(),
@@ -54,6 +51,15 @@ export const validateFieldShape = (
   }
 
   return baseFieldSchema.parse(configField)
+}
+
+export const validateCustomFields = (customFields: ConfigField[]) => {
+  return customFields.every((field) => {
+    if (field.type === 'schema_type_reference') {
+      return 'return_type_ref' in field
+    }
+    return true
+  })
 }
 
 export const startsWithHttps = (url: string) => url.startsWith('https://')

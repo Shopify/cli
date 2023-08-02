@@ -4,6 +4,7 @@ export interface ConfigField {
   key?: string
   name?: string
   description?: string
+  return_type_ref?: string
 }
 
 export interface SerializedField {
