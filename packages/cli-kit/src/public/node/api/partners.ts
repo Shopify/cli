@@ -2,7 +2,6 @@ import {graphqlRequest, GraphQLVariables, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {gql} from 'graphql-request'
-// eslint-disable-next-line import/no-extraneous-dependencies
 import Bottleneck from 'bottleneck'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
