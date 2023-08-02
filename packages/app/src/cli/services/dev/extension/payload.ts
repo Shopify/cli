@@ -19,7 +19,7 @@ export async function getUIExtensionPayload(
   const url = `${options.url}/extensions/${extension.devUUID}`
   const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
-  const renderer = await getUIExtensionRendererVersion(extension, options.app)
+  const renderer = await getUIExtensionRendererVersion(extension)
   const defaultConfig = {
     assets: {
       main: {
