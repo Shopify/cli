@@ -1,73 +1,72 @@
 {
-    "name": "ui-extensions-server-kit",
-    "root": "packages/ui-extensions-server-kit",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "sourceRoot": "packages/ui-extensions-server-kit/src",
-    "projectType": "library",
-    "implicitDependencies": ["ui-extensions-test-utils"],
-    "tags": ["scope:feature", "scope:ui-extensions"],
-    "targets": {
-      "clean": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm rimraf dist/",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "build:code": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm vite build --config vite.config.ts",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "build:types": {
-        "executor": "nx:run-commands",
-        "dependsOn": ["^build"],
-        "options": {
-          "command": "pnpm tsc --emitDeclarationOnly",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "build": {
-        "executor": "nx:run-commands",
-        "dependsOn": ["build:code", "build:types"],
-        "outputs": ["dist"],
-        "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
-        "options": {
-          "command": "cd .",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "lint": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm eslint src",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "lint:fix": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm eslint src --fix",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "test": {
-        "executor": "nx:run-commands",
-        "dependsOn": ["^build"],
-        "options": {
-          "command": "pnpm vitest run",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
-      },
-      "test:watch": {
-        "executor": "nx:run-commands",
-        "dependsOn": ["^build"],
-        "options": {
-          "command": "pnpm vitest watch",
-          "cwd": "packages/ui-extensions-server-kit"
-        }
+  "name": "ui-extensions-server-kit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui-extensions-server-kit/src",
+  "projectType": "library",
+  "implicitDependencies": ["ui-extensions-test-utils"],
+  "tags": ["scope:feature", "scope:ui-extensions"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "build:code": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm vite build --config vite.config.ts",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "build:types": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "pnpm tsc --emitDeclarationOnly",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build:code", "build:types"],
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/testing.*", "{projectRoot}/index.*"],
+      "options": {
+        "command": "cd .",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src --fix",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "pnpm vitest run",
+        "cwd": "packages/ui-extensions-server-kit"
+      }
+    },
+    "test:watch": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["^build"],
+      "options": {
+        "command": "pnpm vitest watch",
+        "cwd": "packages/ui-extensions-server-kit"
       }
     }
+  }
 }

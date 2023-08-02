@@ -1,6 +1,6 @@
 {
   "name": "features",
-  "root": "packages/features",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/features",
   "projectType": "library",
   "implicitDependencies": ["create-app", "cli"],
