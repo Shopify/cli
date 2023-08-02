@@ -44,7 +44,7 @@
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "2.8.11",
     "@shopify/cli-kit": "3.48.0",
-    "@shopify/function-runner": "4.1.0",
+    "@shopify/function-runner": "4.1.1",
     "@shopify/plugin-cloudflare": "3.48.0",
     "abort-controller": "3.0.0",
     "chokidar": "3.5.3",

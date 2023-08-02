@@ -161,8 +161,8 @@ importers:
         specifier: 3.48.0
         version: link:../cli-kit
       '@shopify/function-runner':
-        specifier: 4.1.0
-        version: 4.1.0
+        specifier: 4.1.1
+        version: 4.1.1
       '@shopify/plugin-cloudflare':
         specifier: 3.48.0
         version: link:../plugin-cloudflare
@@ -4332,8 +4332,8 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
-  /@shopify/function-runner@4.1.0:
-    resolution: {integrity: sha512-tzKqYRqWJFVICd+IRCldFEncLJky7sMdBcoKZNppo1S01dhe8+nkpNW1tC6QbAKlNbWBO0iFQoeKeFJ882V+uA==}
+  /@shopify/function-runner@4.1.1:
+    resolution: {integrity: sha512-NXRh8W9xb8JFitNeQcYjvJc6Jx7qta2UBsPs+Kw2M2bZhB7JdOOR0pIeFrFBi3GHpPN3aOflL/g4w7oRWWWDjg==}
     hasBin: true
     dependencies:
       cachedir: 2.3.0
