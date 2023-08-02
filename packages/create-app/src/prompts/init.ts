@@ -17,9 +17,15 @@ interface InitOutput {
 // Eventually this list should be taken from a remote location
 // That way we don't have to update the CLI every time we add a template
 export const templateURLMap = {
-  remix: 'https://github.com/Shopify/shopify-app-template-remix',
-  none: 'https://github.com/Shopify/shopify-app-template-none',
+  remix: {url: 'https://github.com/Shopify/shopify-app-template-remix', visible: true},
+  none: {url: 'https://github.com/Shopify/shopify-app-template-none', visible: true},
+  node: {url: 'https://github.com/Shopify/shopify-app-template-node', visible: false},
+  php: {url: 'https://github.com/Shopify/shopify-app-template-php', visible: false},
+  ruby: {url: 'https://github.com/Shopify/shopify-app-template-ruby', visible: false},
 } as const
+
+export const allTemplates = Object.keys(templateURLMap)
+export const visibleTemplates = allTemplates.filter((key) => templateURLMap[key as keyof typeof templateURLMap].visible)
 
 const templateLabels = {
   remix: 'Start with Remix (recommended)',
@@ -33,7 +39,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
-    template: templateURLMap.remix,
+    template: templateURLMap.remix.url,
   } as const
 
   let welcomed = false
@@ -71,8 +77,8 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
         }
       }),
       message: 'Get started building your app:',
-      defaultValue: Object.keys(templateURLMap).find(
-        (key) => templateURLMap[key as keyof typeof templateURLMap] === defaults.template,
+      defaultValue: allTemplates.find(
+        (key) => templateURLMap[key as keyof typeof templateURLMap].url === defaults.template,
       ),
     })
   }
@@ -85,8 +91,8 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     templateType: templateIsPredefined ? (template as keyof typeof templateURLMap) : 'custom',
   }
 
-  const templateURL = templateURLMap[answers.template as keyof typeof templateURLMap]
-  answers.template = templateURL || answers.template || defaults.template
+  const selectedTemplate = templateURLMap[answers.template as keyof typeof templateURLMap]
+  answers.template = selectedTemplate?.url || answers.template || defaults.template
 
   return answers
 }

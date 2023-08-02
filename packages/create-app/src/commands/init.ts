@@ -1,4 +1,4 @@
-import initPrompt, {templateURLMap} from '../prompts/init.js'
+import initPrompt, {allTemplates, visibleTemplates} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -29,7 +29,7 @@ export default class Init extends Command {
     }),
     template: Flags.string({
       description: `The app template. Accepts one of the following:
-       - <${Object.keys(templateURLMap).join('|')}>
+       - <${visibleTemplates.join('|')}>
        - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]`,
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
@@ -83,9 +83,9 @@ export default class Init extends Command {
         'Only GitHub repository references are supported, ' +
           'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
       )
-    if (!url && !Object.keys(templateURLMap).includes(template))
+    if (!url && !allTemplates.includes(template))
       throw new AbortError(
-        outputContent`Only ${Object.keys(templateURLMap)
+        outputContent`Only ${visibleTemplates
           .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
           .join(', ')} template aliases are supported`,
       )
