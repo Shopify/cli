@@ -2,11 +2,12 @@ import {PartnersURLs} from './urls.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
+import {developerPreviewUpdate} from '../context.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {basename} from '@shopify/cli-kit/node/path'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -58,22 +59,55 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, previewUrl: string) {
+export function renderDev(
+  renderConcurrentOptions: RenderConcurrentOptions,
+  previewUrl: string,
+  app: {
+    developmentStorePreviewEnabled?: boolean
+    apiKey: string
+    token: string
+  },
+) {
   let options = renderConcurrentOptions
+
+  const {developmentStorePreviewEnabled, apiKey, token} = app
+
+  const shortcuts = []
+  if (developmentStorePreviewEnabled) {
+    shortcuts.push(buildDevPreviewShortcut(developmentStorePreviewEnabled))
+  }
+
+  const subTitle = `Preview URL: ${previewUrl}`
 
   if (previewUrl) {
     options = {
       ...options,
-      onInput: (input, _key, exit) => {
+      onInput: async (input, _key, exit, footerContext) => {
         if (input === 'p' && previewUrl) {
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
-          openURL(previewUrl)
+          await openURL(previewUrl)
         } else if (input === 'q') {
           exit()
+        } else if (input === 'd' || input === 'e') {
+          const currentShortcutAction = footerContext.footer?.shortcuts.find(
+            (shortcut) => shortcut.key === 'd' || shortcut.key === 'e',
+          )
+          if (!currentShortcutAction || currentShortcutAction.key !== input) return
+          const currentShortcutEnableOrDisable = currentShortcutAction.key === 'e'
+          const newShortcutAction = buildDevPreviewShortcut(currentShortcutEnableOrDisable)
+          if (await developerPreviewUpdate(apiKey, token, currentShortcutEnableOrDisable)) {
+            footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
+            footerContext.updateSubTitle(subTitle)
+          } else {
+            const newSubTitle = outputContent`${subTitle}\n\n${outputToken.errorText(
+              'There was an error turning on developer preview mode',
+            )}`.value
+            footerContext.updateSubTitle(newSubTitle)
+          }
         }
       },
       footer: {
         shortcuts: [
+          ...shortcuts,
           {
             key: 'p',
             action: 'preview in your browser',
@@ -83,11 +117,18 @@ export function renderDev(renderConcurrentOptions: RenderConcurrentOptions, prev
             action: 'quit',
           },
         ],
-        subTitle: `Preview URL: ${previewUrl}`,
+        subTitle,
       },
     }
   }
   return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
+}
+
+function buildDevPreviewShortcut(enabled: boolean) {
+  return {
+    key: enabled ? 'd' : 'e',
+    action: outputContent`dev preview mode: ${enabled ? outputToken.green('on') : outputToken.errorText('off')}`.value,
+  }
 }
 
 async function partnersURL(organizationId: string, appId: string) {

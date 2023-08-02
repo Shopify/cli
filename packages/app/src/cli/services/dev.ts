@@ -17,7 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
-import {renderDevPreviewWarning} from './extensions/common.js'
+import {isPreviewModeEnabled} from './extensions/common.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -101,6 +101,7 @@ async function dev(options: DevOptions) {
   } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
+  const developmentStorePreviewEnabled = remoteApp.developmentStorePreviewEnabled
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
   let localApp = await loadApp({directory: options.directory, specifications, configName})
@@ -303,8 +304,6 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  await renderDevPreviewWarning(remoteApp, localApp)
-
   if (sendUninstallWebhook) {
     additionalProcesses.push({
       prefix: 'webhooks',
@@ -329,12 +328,21 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
+  const enabledPreviewMode = isPreviewModeEnabled(remoteApp, localApp) ? developmentStorePreviewEnabled : undefined
+
+  const app = {
+    developmentStorePreviewEnabled: enabledPreviewMode ?? false,
+    apiKey,
+    token,
+  }
+
   if (proxyTargets.length === 0) {
     await renderDev(
       {
         processes: additionalProcesses,
       },
       previewUrl,
+      app,
     )
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
@@ -342,6 +350,7 @@ async function dev(options: DevOptions) {
       portNumber: proxyPort,
       proxyTargets,
       additionalProcesses,
+      app,
     })
   }
 }

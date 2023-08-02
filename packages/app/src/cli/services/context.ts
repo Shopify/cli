@@ -31,6 +31,11 @@ import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '..
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
+import {
+  DevelopmentStorePreviewUpdateInput,
+  DevelopmentStorePreviewUpdateQuery,
+  DevelopmentStorePreviewUpdateSchema,
+} from '../api/graphql/development_preview.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
@@ -41,6 +46,7 @@ import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 import {glob} from '@shopify/cli-kit/node/fs'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -757,6 +763,29 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
     partner_id: tryParseInt(env.partnersApp.organizationId),
     api_key: env.identifiers.app,
   }))
+}
+
+export async function developerPreviewUpdate(apiKey: string, token: string, enabled: boolean) {
+  // We'd launch this after unified app deployment becomes mandatory
+  // if (!app.betas?.unifiedAppDeployment) return
+
+  let result: DevelopmentStorePreviewUpdateSchema | undefined
+  try {
+    const query = DevelopmentStorePreviewUpdateQuery
+    const variables: DevelopmentStorePreviewUpdateInput = {
+      input: {
+        apiKey,
+        enabled,
+      },
+    }
+
+    result = await partnersRequest(query, token, variables)
+    return result?.developmentStorePreviewUpdate?.userErrors.length === 0
+
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error: unknown) {
+    return false
+  }
 }
 
 async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {

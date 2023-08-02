@@ -33,6 +33,7 @@ export const FindAppQuery = gql`
         subPathPrefix
         url
       }
+      developmentStorePreviewEnabled
     }
   }
 `
@@ -69,5 +70,6 @@ export interface FindAppQuerySchema {
       subPathPrefix: string
       url: string
     }
+    developmentStorePreviewEnabled: boolean
   }
 }

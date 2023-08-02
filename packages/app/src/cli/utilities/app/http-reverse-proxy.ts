@@ -44,6 +44,11 @@ interface Options {
   portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
+  app: {
+    developmentStorePreviewEnabled?: boolean
+    apiKey: string
+    token: string
+  }
 }
 
 /**
@@ -60,6 +65,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   portNumber,
   proxyTargets,
   additionalProcesses,
+  app,
 }: Options): Promise<void> {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
@@ -132,7 +138,7 @@ ${outputToken.json(JSON.stringify(rules))}
     abortSignal: abortController.signal,
   }
 
-  await Promise.all([renderDev(renderConcurrentOptions, previewUrl), server.listen(portNumber)])
+  await Promise.all([renderDev(renderConcurrentOptions, previewUrl, app), server.listen(portNumber)])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage, websocket = false) {

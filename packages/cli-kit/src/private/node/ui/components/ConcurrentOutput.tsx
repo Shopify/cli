@@ -12,6 +12,11 @@ import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
+export interface Footer {
+  shortcuts: Shortcut[]
+  subTitle?: string
+}
+
 interface Shortcut {
   key: string
   action: string
@@ -20,11 +25,17 @@ export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortSignal: AbortSignal
   showTimestamps?: boolean
-  onInput?: (input: string, key: Key, exit: () => void) => void
-  footer?: {
-    shortcuts: Shortcut[]
-    subTitle?: string
-  }
+  onInput?: (
+    input: string,
+    key: Key,
+    exit: () => void,
+    footerContext: {
+      footer?: Footer
+      updateShortcut: (prevShortcut: Shortcut, newShortcut: Shortcut) => void
+      updateSubTitle: (subTitle: string) => void
+    },
+  ) => Promise<void>
+  footer?: Footer
   // If set, the component is not automatically unmounted once the processes have all finished
   keepRunningAfterProcessesResolve?: boolean
 }
@@ -33,12 +44,10 @@ interface Chunk {
   prefix: string
   lines: string[]
 }
-
 enum ConcurrentOutputState {
   Running = 'running',
   Stopped = 'stopped',
 }
-
 function addLeadingZero(number: number) {
   if (number < 10) {
     return `0${number}`
@@ -46,17 +55,13 @@ function addLeadingZero(number: number) {
     return number.toString()
   }
 }
-
 function currentTime() {
   const currentDateTime = new Date()
-
   const hours = addLeadingZero(currentDateTime.getHours())
   const minutes = addLeadingZero(currentDateTime.getMinutes())
   const seconds = addLeadingZero(currentDateTime.getSeconds())
-
   return `${hours}:${minutes}:${seconds}`
 }
-
 /**
  * Renders output from concurrent processes to the terminal.
  * Output will be divided in a three column layout
@@ -103,6 +108,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
   const {isRawModeSupported} = useStdin()
   const [state, setState] = useState<ConcurrentOutputState>(ConcurrentOutputState.Running)
+  const [footerContent, setFooterContent] = useState<Footer | undefined>(footer)
   const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
   const lineColor = useCallback(
     (index: number) => {
@@ -111,14 +117,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
     [concurrentColors],
   )
-
   const writableStream = useCallback(
     (process: OutputProcess, index: number) => {
       return new Writable({
         write(chunk, _encoding, next) {
           const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
           addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
-
           setProcessOutput((previousProcessOutput) => [
             ...previousProcessOutput,
             {
@@ -127,33 +131,52 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
               lines,
             },
           ])
-
           next()
         },
       })
     },
     [footer, lineColor],
   )
-
   const {isAborted} = useAbortSignal(abortSignal)
   const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
-
   useInput(
     (input, key) => {
       handleCtrlC(input, key)
 
-      onInput!(input, key, () => treeKill('SIGINT'))
+      const updateShortcut = (prevShortcut: Shortcut, newShortcut: Shortcut) => {
+        if (!footerContent) return
+        const newFooterContent = {...footerContent}
+
+        newFooterContent.shortcuts.map((short) => {
+          if (short.key === prevShortcut.key) {
+            short.action = newShortcut.action
+            short.key = newShortcut.key
+          }
+        })
+        setFooterContent(newFooterContent)
+      }
+
+      const updateSubTitle = (subTitle: string) => {
+        if (!footerContent) return
+
+        setFooterContent({...footerContent, subTitle})
+      }
+
+      const triggerOnInput = async () => {
+        await onInput!(input, key, () => treeKill('SIGINT'), {footer: footerContent, updateShortcut, updateSubTitle})
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      triggerOnInput()
     },
     {isActive: typeof onInput !== 'undefined' && useShortcuts},
   )
-
   useEffect(() => {
     ;(() => {
       return Promise.all(
         processes.map(async (process, index) => {
           const stdout = writableStream(process, index)
           const stderr = writableStream(process, index)
-
           await process.action(stdout, stderr, abortSignal)
         }),
       )
@@ -169,9 +192,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         unmountInk(error)
       })
   }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
-
   const {lineVertical} = figures
-
   return (
     <>
       <Static items={processOutput}>
@@ -187,7 +208,6 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
                         {currentTime()} {lineVertical}{' '}
                       </Text>
                     ) : null}
-
                     <Text>
                       {chunk.prefix}
                       {prefixBuffer} {lineVertical} {line}
@@ -199,7 +219,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           )
         }}
       </Static>
-      {footer ? (
+      {footerContent ? (
         <Box
           marginY={1}
           paddingTop={1}
@@ -213,16 +233,16 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         >
           {useShortcuts ? (
             <Box flexDirection="column">
-              {footer.shortcuts.map((shortcut, index) => (
+              {footerContent.shortcuts.map((shortcut, index) => (
                 <Text key={index}>
                   {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
                 </Text>
               ))}
             </Box>
           ) : null}
-          {footer.subTitle ? (
+          {footerContent.subTitle ? (
             <Box marginTop={useShortcuts ? 1 : 0}>
-              <Text>{footer.subTitle}</Text>
+              <Text>{footerContent.subTitle}</Text>
             </Box>
           ) : null}
         </Box>
@@ -230,5 +250,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </>
   )
 }
-
 export {ConcurrentOutput}
