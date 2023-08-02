@@ -34,7 +34,7 @@
     "n-gram": "2.0.2"
   },
   "devDependencies": {
-    "vite": "^4.4.8",
+    "vite": "^4.3.9",
     "vitest": "^0.34.1"
   },
   "engines": {

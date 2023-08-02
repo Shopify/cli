@@ -67,7 +67,7 @@
     "graphql": "^16.0.0",
     "graphql-tag": "^2.12.6",
     "@vitest/coverage-istanbul": "^0.34.1",
-    "vite": "^4.4.8",
+    "vite": "^4.3.9",
     "vitest": "^0.34.1"
   },
   "engines": {
