@@ -37,7 +37,7 @@ export const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
 /**
  * Loads the schema from the partner defined file.
  */
-const loadSchemaPatchFromPath = async (extensionPath: string, patchPath: string | undefined) => {
+export const loadSchemaPatchFromPath = async (extensionPath: string, patchPath: string | undefined) => {
   if (!patchPath) {
     return ''
   }
@@ -56,7 +56,7 @@ const loadSchemaPatchFromPath = async (extensionPath: string, patchPath: string 
 /**
  * Extension specification with all properties and methods needed to load a Flow Action.
  */
-const flowActionSpecification = createExtensionSpecification({
+export const flowActionSpecification = createExtensionSpecification({
   identifier: 'flow_action',
   schema: FlowActionExtensionSchema,
   // Flow doesn't have anything to bundle but we need to set this to true to
@@ -79,5 +79,3 @@ const flowActionSpecification = createExtensionSpecification({
     }
   },
 })
-
-export default flowActionSpecification
