@@ -1,4 +1,4 @@
-import {loadSchemaPatchFromPath} from './flow_action.js'
+import {loadSchemaPatchFromPath} from '../../../services/flow/utils.js'
 import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {validateCustomFields, validateFieldShape} from '../../../services/flow/validation.js'
