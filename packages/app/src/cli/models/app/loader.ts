@@ -424,7 +424,7 @@ class AppLoader {
 
   async findEntryPath(directory: string, specification: ExtensionSpecification) {
     let entryPath
-    if (specification.singleEntryPath) {
+    if (specification.appModuleFeatures().includes('single_js_entry_path')) {
       entryPath = (
         await Promise.all(
           ['index']

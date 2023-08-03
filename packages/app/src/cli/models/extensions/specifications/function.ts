@@ -64,7 +64,6 @@ const spec = createExtensionSpecification({
     'fulfillment_constraints',
     'order_routing_location_rule',
   ],
-  singleEntryPath: false,
   schema: FunctionExtensionSchema,
   supportedFlavors: defaultFunctionsFlavors,
   partnersWebIdentifier: 'function',

@@ -36,12 +36,11 @@ const spec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   partnersWebIdentifier: 'ui_extension',
-  singleEntryPath: false,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
     const needsCart =
-      config.extension_points?.find((extensionPoint) => {
+      config?.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic

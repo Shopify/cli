@@ -9,7 +9,7 @@ const spec = createExtensionSpecification({
   partnersWebIdentifier: 'post_purchase',
   helpURL: 'https://shopify.dev/docs/apps/checkout/post-purchase',
   schema: BaseSchema,
-  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields}
   },

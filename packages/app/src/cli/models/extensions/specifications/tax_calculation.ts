@@ -11,7 +11,6 @@ const TaxCalculationsSchema = BaseSchema.extend({
 const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   schema: TaxCalculationsSchema,
-  singleEntryPath: false,
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, _) => {
     return {

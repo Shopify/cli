@@ -6,7 +6,14 @@ import {ExtensionFlavor} from '../app/template.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 
-export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'bundling' | 'cart_url' | 'esbuild'
+export type ExtensionFeature =
+  | 'ui_preview'
+  | 'function'
+  | 'theme'
+  | 'bundling'
+  | 'cart_url'
+  | 'esbuild'
+  | 'single_js_entry_path'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -19,7 +26,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   additionalIdentifiers: string[]
   partnersWebIdentifier: string
   surface: string
-  singleEntryPath: boolean
   registrationLimit: number
   supportedFlavors: ExtensionFlavor[]
   gated: boolean
@@ -39,7 +45,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   shouldFetchCartUrl?(config: TConfiguration): boolean
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
-  appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
+  appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
 }
 
 /**
@@ -61,7 +67,7 @@ export type ForbiddenFields =
 export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType>
   extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
   identifier: string
-  appModuleFeatures: (config: TConfiguration) => ExtensionFeature[]
+  appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
 }
 
 /**
@@ -97,7 +103,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'test-surface',
     partnersWebIdentifier: spec.identifier,
-    singleEntryPath: true,
     gated: false,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
