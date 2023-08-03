@@ -56,7 +56,7 @@ export const loadSchemaPatchFromPath = async (extensionPath: string, patchPath: 
 /**
  * Extension specification with all properties and methods needed to load a Flow Action.
  */
-export const flowActionSpecification = createExtensionSpecification({
+const flowActionSpecification = createExtensionSpecification({
   identifier: 'flow_action',
   schema: FlowActionExtensionSchema,
   // Flow doesn't have anything to bundle but we need to set this to true to
@@ -79,3 +79,5 @@ export const flowActionSpecification = createExtensionSpecification({
     }
   },
 })
+
+export default flowActionSpecification
