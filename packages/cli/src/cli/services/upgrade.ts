@@ -79,7 +79,7 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
 
   await installJsonDependencies('prod', packageJsonDependencies, projectDir)
   await installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
-  return newestCLIVersion
+  return newestCLIVersion ?? newestAppVersion
 }
 
 async function upgradeGlobalShopify(
