@@ -9,7 +9,6 @@ const spec = createExtensionSpecification({
   identifier: 'product_subscription',
   dependency,
   graphQLType: 'subscription_management',
-  partnersWebIdentifier: 'product_subscription',
   schema: BaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (_, directory) => {

@@ -17,7 +17,6 @@ const CheckoutSchema = BaseSchema.extend({
 const spec = createExtensionSpecification({
   identifier: 'checkout_ui_extension',
   dependency,
-  partnersWebIdentifier: 'checkout_ui_extension',
   schema: CheckoutSchema,
   appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, directory) => {

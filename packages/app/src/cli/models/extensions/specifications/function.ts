@@ -66,8 +66,6 @@ const spec = createExtensionSpecification({
   ],
   schema: FunctionExtensionSchema,
   supportedFlavors: defaultFunctionsFlavors,
-  partnersWebIdentifier: 'function',
-  graphQLType: 'function',
   appModuleFeatures: (_) => ['function'],
   deployConfig: async (config, directory, apiKey, moduleId) => {
     let inputQuery: string | undefined

@@ -35,7 +35,6 @@ const UIExtensionSchema = BaseSchema.extend({
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
-  partnersWebIdentifier: 'ui_extension',
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
