@@ -5,7 +5,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export const LegacyAppSchema = zod
   .object({
@@ -273,44 +273,20 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * @param app - App object containing the extension.
  * @returns The version if the dependency exists.
  */
-export async function getUIExtensionRendererVersion(
-  extension: ExtensionInstance,
-  app: AppInterface,
-): Promise<RendererVersionResult> {
+export async function getUIExtensionRendererVersion(extension: ExtensionInstance): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
-  return getDependencyVersion(rendererDependency, app.directory)
+  return getDependencyVersion(rendererDependency, extension.directory)
 }
 
 export async function getDependencyVersion(dependency: string, directory: string): Promise<RendererVersionResult> {
-  const isReact = dependency.includes('-react')
-  let cwd = directory
-  /**
-   * PNPM creates a symlink to a global cache where dependencies are hoisted. Therefore
-   * we need to first look up the *-react package and use that as a working directory from
-   * where to look up the non-react package.
-   */
-  if (isReact) {
-    const dependencyName = dependency.split('/')
-    const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
-    const reactPackageJsonPath = await findPathUp(pattern, {
-      type: 'file',
-      cwd: directory,
-      allowSymlinks: true,
-    })
-    if (!reactPackageJsonPath) {
-      return 'not_found'
-    }
-    cwd = await fileRealPath(dirname(reactPackageJsonPath))
-  }
-
-  // Split the dependency name to avoid using "/" in windows
+  // Split the dependency name to avoid using "/" in windows. Only look for non react dependencies.
   const dependencyName = dependency.replace('-react', '').split('/')
   const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
 
   let packagePath = await findPathUp(pattern, {
-    cwd,
+    cwd: directory,
     type: 'file',
     allowSymlinks: true,
   })
