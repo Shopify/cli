@@ -180,8 +180,12 @@ export async function updateURLs(
       },
     }
 
-    if (localConfiguration.app_proxy) {
-      localConfiguration.app_proxy = {...localConfiguration.app_proxy, url: urls.applicationUrl}
+    if (urls.appProxy) {
+      localConfiguration.app_proxy = {
+        url: urls.appProxy.proxyUrl,
+        subpath: urls.appProxy.proxySubPath,
+        prefix: urls.appProxy.proxySubPathPrefix,
+      }
     }
 
     await writeAppConfigurationFile(localApp.configurationPath, localConfiguration)
@@ -192,7 +196,7 @@ export async function getURLs(apiKey: string, token: string): Promise<PartnersUR
   const variables: GetURLsQueryVariables = {apiKey}
   const query = GetURLsQuery
   const result: GetURLsQuerySchema = await partnersRequest(query, token, variables)
-  return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
+  return result.app
 }
 
 export interface ShouldOrPromptUpdateURLsOptions {
@@ -241,6 +245,10 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
         'Valid format: "https://example.com/callback1,https://example.com/callback2"',
       )
   })
+
+  if (urls.appProxy?.proxyUrl && !isValidURL(urls.appProxy.proxyUrl)) {
+    throw new AbortError(`Invalid app proxy URL: ${urls.appProxy.proxyUrl}`, 'Valid format: "https://example.com"')
+  }
 }
 
 export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelClient> {
