@@ -19,6 +19,7 @@ const spec = createExtensionSpecification({
       benchmark_api_base_url: config.benchmark_api_base_url,
       calculate_taxes_api_endpoint: config.calculate_taxes_api_endpoint,
       metafields: config.metafields,
+      api_version: config.api_version,
     }
   },
 })
