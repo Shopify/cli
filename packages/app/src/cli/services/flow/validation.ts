@@ -53,16 +53,9 @@ export const validateFieldShape = (
   return baseFieldSchema.parse(configField)
 }
 
-export const validateCustomFields = (customFields: ConfigField[]) => {
-  return customFields.every((field) => {
-    if (field.type === 'schema_type_reference') {
-      return 'return_type_ref' in field
-    }
-    return true
-  })
-}
-
 export const startsWithHttps = (url: string) => url.startsWith('https://')
+
+export const isSchemaTypeReference = (type: string) => type.startsWith('schema.')
 
 export const validateCustomConfigurationPageConfig = (
   configPageUrl?: string,

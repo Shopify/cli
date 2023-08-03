@@ -1,7 +1,7 @@
 import {loadSchemaPatchFromPath} from '../../../services/flow/utils.js'
 import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {validateCustomFields, validateFieldShape} from '../../../services/flow/validation.js'
+import {isSchemaTypeReference, validateFieldShape} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -12,10 +12,9 @@ export const FlowTriggerSettingsSchema = FieldSchema.extend({
       message: 'String must contain only alphabetic characters and spaces',
     })
     .optional(),
-  return_type_ref: zod.string().optional(),
 })
 
-export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
+const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_trigger'),
   schema: zod.string().optional(),
   settings: zod
@@ -28,7 +27,13 @@ export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   const settingsFieldsAreValid = fields.every((field, index) =>
     validateFieldShape(field, 'flow_trigger', config.handle, index),
   )
-  const customFieldsAreValid = validateCustomFields(fields)
+  const customFieldsAreValid = fields.every((field) => {
+    if (isSchemaTypeReference(field.type)) {
+      return 'schema' in config
+    }
+    return true
+  })
+
   return settingsFieldsAreValid && customFieldsAreValid
 })
 
