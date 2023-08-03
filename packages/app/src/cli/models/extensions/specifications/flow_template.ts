@@ -18,11 +18,11 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
         description: zod.string(),
         categories: zod.array(zod.string()),
         require_app: zod.boolean(),
-        listed: zod.boolean(),
+        discoverable: zod.boolean(),
         enabled: zod.boolean(),
       }),
     )
-    // technically we'll be able to support more than one template per extension but restricting to one for now
+    // It's able to support more than one template per extension but restricting to one for now
     .min(1)
     .max(1),
 })
@@ -42,7 +42,7 @@ const spec = createExtensionSpecification({
             description: template.description,
             categories: template.categories,
             require_app: template.require_app,
-            listed: template.listed,
+            discoverable: template.discoverable,
             enabled: template.enabled,
             definition: await loadWorkflow(extensionPath, template.key),
             localization: await loadLocalesConfig(joinPath(extensionPath, template.key), template.key),
