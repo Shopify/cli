@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.48.1
+
+### Patch Changes
+
+- 43283fb23: Add a rate-limiter dependency for partner API queries
+- 1a25e339e: Sanitize user tokens in verbose mode
+- 614c4b20e: Fix pnpm shopify upgrade for workspaces
+
 ## 3.48.0
 
 ### Minor Changes
