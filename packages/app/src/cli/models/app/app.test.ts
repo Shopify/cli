@@ -96,14 +96,13 @@ describe('getUIExtensionRendererVersion', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'admin-ui-extensions', '2.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'product_subscription'})
+      const extension = await testUIExtension({type: 'product_subscription', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/admin-ui-extensions')
       expect(got?.version).toEqual('2.4.5')
@@ -114,14 +113,13 @@ describe('getUIExtensionRendererVersion', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'checkout-ui-extensions', '1.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'checkout_ui_extension'})
+      const extension = await testUIExtension({type: 'checkout_ui_extension', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/checkout-ui-extensions')
       expect(got?.version).toEqual('1.4.5')
@@ -132,14 +130,13 @@ describe('getUIExtensionRendererVersion', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'post-purchase-ui-extensions', '3.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'checkout_post_purchase'})
+      const extension = await testUIExtension({type: 'checkout_post_purchase', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/post-purchase-ui-extensions')
       expect(got?.version).toEqual('3.4.5')
@@ -149,15 +146,14 @@ describe('getUIExtensionRendererVersion', () => {
   test('returns the version of the dependency package for web_pixel', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await createPackageJson(tmpDir, '@shopify/web-pixels-extension', '3.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'web_pixel_extension'})
+      await createPackageJson(tmpDir, 'web-pixels-extension', '3.4.5')
+      const extension = await testUIExtension({type: 'web_pixel_extension', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/web-pixels-extension')
       expect(got?.version).toEqual('3.4.5')
@@ -166,11 +162,10 @@ describe('getUIExtensionRendererVersion', () => {
 
   test('returns not_found if there is no renderer package', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      DEFAULT_APP.directory = tmpDir
       const extension = await testUIExtension({type: 'product_subscription'})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
       expect(got).toEqual('not_found')
