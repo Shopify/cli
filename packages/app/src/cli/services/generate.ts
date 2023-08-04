@@ -41,6 +41,7 @@ export interface GenerateOptions {
 async function generate(options: GenerateOptions) {
   const token = await ensureAuthenticatedPartners()
   const apiKey = await ensureGenerateContext({...options, token})
+  // fetch from partner api
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   const app: AppInterface = await loadApp({
     directory: options.directory,
@@ -48,6 +49,7 @@ async function generate(options: GenerateOptions) {
     specifications,
   })
   const availableSpecifications = specifications.map((spec) => spec.identifier)
+  // fetch all possible extension specification from partner api
   const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
 
   const promptOptions = await buildPromptOptions(extensionTemplates, specifications, app, options)
@@ -56,6 +58,9 @@ async function generate(options: GenerateOptions) {
   await saveAnalyticsMetadata(promptAnswers, options.template)
 
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options)
+  // create a folder for the extension
+  // download template from https://github.com/Shopify/extensions-templates
+  // copy template to the folder....
   const generatedExtensions = await generateExtensionTemplate(generateExtensionOptions)
 
   renderSuccessMessages(generatedExtensions, app.packageManager)

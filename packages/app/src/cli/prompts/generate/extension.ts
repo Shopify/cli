@@ -81,7 +81,10 @@ const generateExtensionPrompts = async (
     if (extensionTemplates.length === 0) {
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
-
+    // choose what kinds of extensions to create
+    // - difference between:
+// - https://github.com/Shopify/cli-run-as-service
+// - https://github.com/Shopify/cli
     // eslint-disable-next-line require-atomic-updates
     templateType = await renderAutocompletePrompt({
       message: 'Type of extension?',
@@ -94,6 +97,7 @@ const generateExtensionPrompts = async (
   const extensionContent: GenerateExtensionContentOutput[] = []
   /* eslint-disable no-await-in-loop */
   for (const [index, templateType] of extensionTemplate.types.entries()) {
+    // name prompt and flavor prompt
     const name =
       (extensionTemplate.types.length === 1 && options.name) ||
       (await promptName(options.directory, extensionTemplate.defaultName))

@@ -83,6 +83,10 @@ export async function generateExtensionTemplate(
         directory,
         url,
         app: options.app,
+        //
+        // [supported_flavors, url, type] are from this app/operations/apps/templates/types.rb file in partners
+        // if it is from this file app/operations/apps/templates/ui_extension.rb, type will be ui_extension
+        // if it is from this file app/operations/apps/templates/extension.rb, type will be the legacy type, like customer_accounts_ui_extension
         type: spec.type,
         name: extensionName,
         extensionFlavor,
@@ -103,6 +107,7 @@ async function extensionInit(options: ExtensionInitOptions) {
         await functionExtensionInit(options)
         break
       default:
+        // this is for ui_extension
         await uiExtensionInit(options)
         break
     }
@@ -184,6 +189,8 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
 
         await inTemporaryDirectory(async (tmpDir) => {
           const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
+          // replace [name, handle, flavor] in the template files
+          // https://github.com/Shopify/extensions-templates/tree/main/checkout-extension
           await recursiveLiquidTemplateCopy(templateDirectory, directory, {
             srcFileExtension,
             name,
