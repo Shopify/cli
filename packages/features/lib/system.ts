@@ -1,7 +1,6 @@
 import {isDebug} from './environment'
 import colors from 'ansi-colors'
-
-const execa = require('execa')
+import {execa} from 'execa'
 
 interface ExecOptions {
   cwd?: string

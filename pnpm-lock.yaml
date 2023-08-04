@@ -80,8 +80,8 @@ importers:
         specifier: ^8.46.0
         version: 8.46.0
       execa:
-        specifier: ^5.1.1
-        version: 5.1.1
+        specifier: ^7.2.0
+        version: 7.2.0
       fast-glob:
         specifier: ^3.3.1
         version: 3.3.1
@@ -331,8 +331,8 @@ importers:
         specifier: 6.18.0
         version: 6.18.0
       execa:
-        specifier: 6.0.0
-        version: 6.0.0
+        specifier: 7.2.0
+        version: 7.2.0
       fast-glob:
         specifier: 3.3.1
         version: 3.3.1
@@ -573,8 +573,8 @@ importers:
         specifier: 0.2.8
         version: 0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.1)
       execa:
-        specifier: 5.1.1
-        version: 5.1.1
+        specifier: 7.2.0
+        version: 7.2.0
     devDependencies:
       eslint:
         specifier: ^8.46.0
@@ -613,8 +613,8 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3
       execa:
-        specifier: ^5.1.1
-        version: 5.1.1
+        specifier: ^7.2.0
+        version: 7.2.0
       fs-extra:
         specifier: ^9.1.0
         version: 9.1.0
@@ -860,8 +860,8 @@ importers:
         specifier: ^1.10.0
         version: 1.10.0
       execa:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: ^7.2.0
+        version: 7.2.0
       fast-glob:
         specifier: ^3.3.1
         version: 3.3.1
@@ -7685,14 +7685,15 @@ packages:
       onetime: 5.1.2
       signal-exit: 3.0.7
       strip-final-newline: 2.0.0
+    dev: true
 
-  /execa@6.0.0:
-    resolution: {integrity: sha512-m4wU9j4Z9nXXoqT8RSfl28JSwmMNLFF69OON8H/lL3NeU0tNpGz313bcOfYoBBHokB0dC2tMl3VUcKgHELhL2Q==}
-    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+  /execa@7.2.0:
+    resolution: {integrity: sha512-UduyVP7TLB5IcAQl+OzLyLcS/l32W/GLg+AhHJ+ow40FOk2U3SAllPwR44v4vmdFwIWqpdwxxpQbF1n5ta9seA==}
+    engines: {node: ^14.18.0 || ^16.14.0 || >=18.0.0}
     dependencies:
       cross-spawn: 7.0.3
       get-stream: 6.0.1
-      human-signals: 3.0.1
+      human-signals: 4.3.1
       is-stream: 3.0.0
       merge-stream: 2.0.0
       npm-run-path: 5.1.0
@@ -8584,10 +8585,11 @@ packages:
   /human-signals@2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
     engines: {node: '>=10.17.0'}
+    dev: true
 
-  /human-signals@3.0.1:
-    resolution: {integrity: sha512-rQLskxnM/5OCldHo+wNXbpVgDn5A17CUoKX+7Sokwaknlq7CdSnphy0W39GU8dw59XiCXmFXDg4fRuckQRKewQ==}
-    engines: {node: '>=12.20.0'}
+  /human-signals@4.3.1:
+    resolution: {integrity: sha512-nZXjEF2nbo7lIw3mgYjItAfgQXog3OjJogSbKa2CQIIvSGWcKgeJnQlNXip6NglNzYH45nSRiEVimMvYL8DDqQ==}
+    engines: {node: '>=14.18.0'}
 
   /humanize-ms@1.2.1:
     resolution: {integrity: sha512-Fl70vYtsAFb/C06PTS9dZBo7ihau+Tu/DNCk/OyHhea07S+aeMWpFFkUaXRa8fI+ScZbEI8dfSxwY7gxZ9SAVQ==}
@@ -12351,6 +12353,7 @@ packages:
   /strip-final-newline@2.0.0:
     resolution: {integrity: sha512-BrpvfNAE3dcvq7ll3xVumzjKjZQ5tI1sEUIKr3Uoks0XUl45St3FlatVqef9prk4jRDzhW6WZg+3bk93y6pLjA==}
     engines: {node: '>=6'}
+    dev: true
 
   /strip-final-newline@3.0.0:
     resolution: {integrity: sha512-dOESqjYr96iWYylGObzd39EuNTa5VJxyvVAEm5Jnh7KGo75V43Hk1odPQkNDyXNmUR6k+gEiDVXnjB8HJ3crXw==}
@@ -13868,7 +13871,7 @@ packages:
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unused-imports: 2.0.0(@typescript-eslint/eslint-plugin@5.62.0)(eslint@8.46.0)
       eslint-plugin-vitest: 0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.1)
-      execa: 5.1.1
+      execa: 7.2.0
     transitivePeerDependencies:
       - eslint-import-resolver-node
       - eslint-import-resolver-typescript
