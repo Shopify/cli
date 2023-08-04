@@ -1,5 +1,15 @@
 # @shopify/create-app
 
+## 3.48.1
+
+### Patch Changes
+
+- d215d8f10: Allow using template aliases that are not displayed as options in the prompt when creating apps
+- Updated dependencies [43283fb23]
+- Updated dependencies [1a25e339e]
+- Updated dependencies [614c4b20e]
+  - @shopify/cli-kit@3.48.1
+
 ## 3.48.0
 
 ### Minor Changes
