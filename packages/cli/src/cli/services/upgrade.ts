@@ -5,6 +5,7 @@ import {
   DependencyType,
   getPackageManager,
   PackageJson,
+  usesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
@@ -58,21 +59,27 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   const packageJson = (await findUpAndReadPackageJson(projectDir)).content
   const packageJsonDependencies = packageJson.dependencies || {}
   const packageJsonDevDependencies = packageJson.devDependencies || {}
+  const allDependencies = {...packageJsonDependencies, ...packageJsonDevDependencies}
 
-  let resolvedVersion: string = {...packageJsonDependencies, ...packageJsonDevDependencies}[await cliDependency()]!
-  if (resolvedVersion.slice(0, 1).match(/[\^~]/)) resolvedVersion = currentVersion
-  const newestVersion = await checkForNewVersion(await cliDependency(), resolvedVersion)
+  let resolvedCLIVersion = allDependencies[await cliDependency()]!
+  const resolvedAppVersion = allDependencies['@shopify/app']?.replace(/[\^~]/, '')
 
-  if (!newestVersion) {
-    outputWontInstallMessage(resolvedVersion)
+  if (resolvedCLIVersion.slice(0, 1).match(/[\^~]/)) resolvedCLIVersion = currentVersion
+  const newestCLIVersion = await checkForNewVersion(await cliDependency(), resolvedCLIVersion)
+  const newestAppVersion = resolvedAppVersion ? await checkForNewVersion('@shopify/app', resolvedAppVersion) : undefined
+
+  if (newestCLIVersion) {
+    outputUpgradeMessage(resolvedCLIVersion, newestCLIVersion)
+  } else if (resolvedAppVersion && newestAppVersion) {
+    outputUpgradeMessage(resolvedAppVersion, newestAppVersion)
+  } else {
+    outputWontInstallMessage(resolvedCLIVersion)
     return
   }
 
-  outputUpgradeMessage(resolvedVersion, newestVersion)
-
   await installJsonDependencies('prod', packageJsonDependencies, projectDir)
   await installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
-  return newestVersion
+  return newestCLIVersion ?? newestAppVersion
 }
 
 async function upgradeGlobalShopify(
@@ -144,6 +151,8 @@ async function installJsonDependencies(
       return {name: pkg, version: 'latest'}
     })
 
+  const appUsesWorkspaces = await usesWorkspaces(directory)
+
   if (packagesToUpdate.length > 0) {
     await addNPMDependencies(packagesToUpdate, {
       packageManager: await getPackageManager(directory),
@@ -151,6 +160,7 @@ async function installJsonDependencies(
       directory,
       stdout: process.stdout,
       stderr: process.stderr,
+      addToRootDirectory: appUsesWorkspaces,
     })
   }
 }

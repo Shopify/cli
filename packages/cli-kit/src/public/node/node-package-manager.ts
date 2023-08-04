@@ -338,6 +338,9 @@ interface AddNPMDependenciesIfNeededOptions {
 
   /** Abort signal to stop the process */
   signal?: AbortSignal
+
+  /** Whether to add the dependencies to the root package.json or to the package.json of the directory */
+  addToRootDirectory?: boolean
 }
 
 /**
@@ -421,7 +424,10 @@ export async function addNPMDependencies(
       await installDependencies(options, argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type))
       break
     case 'pnpm':
-      await installDependencies(options, argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type))
+      await installDependencies(
+        options,
+        argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type, Boolean(options.addToRootDirectory)),
+      )
       break
   }
 }
@@ -503,9 +509,19 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithPNPM(
+  dependencies: string[],
+  type: DependencyType,
+  addAtRoot: boolean,
+): string[] {
   let command = ['add']
+
+  if (addAtRoot) {
+    command.push('-w')
+  }
+
   command = command.concat(dependencies)
+
   switch (type) {
     case 'dev':
       command.push('--save-dev')

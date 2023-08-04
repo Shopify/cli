@@ -118,8 +118,9 @@ describe('upgrade local CLI', () => {
         ),
         touchFile(joinPath(tmpDir, 'shopify.app.toml')),
       ])
+
       const outputMock = mockAndCaptureOutput()
-      vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(currentCliVersion)
+      vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValueOnce(currentCliVersion)
       const addNPMDependenciesMock = vi
         .spyOn(nodePackageManager as any, 'addNPMDependencies')
         .mockResolvedValue(undefined)
@@ -142,6 +143,51 @@ describe('upgrade local CLI', () => {
           directory: normalizePath(tmpDir),
           stdout: process.stdout,
           stderr: process.stderr,
+          addToRootDirectory: false,
+        },
+      )
+      expect(outputMock.success()).toMatchInlineSnapshot(`
+        "Upgraded Shopify CLI to version ${currentCliVersion}"
+      `)
+    })
+  })
+
+  test('upgrades locally if CLI is on latest version but APP isnt', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      await Promise.all([
+        writeFile(
+          joinPath(tmpDir, 'package.json'),
+          JSON.stringify({dependencies: {'@shopify/cli': currentCliVersion, '@shopify/app': oldCliVersion}}),
+        ),
+        touchFile(joinPath(tmpDir, 'shopify.app.toml')),
+      ])
+      const outputMock = mockAndCaptureOutput()
+      const checkMock = vi.spyOn(nodePackageManager as any, 'checkForNewVersion')
+      checkMock.mockResolvedValueOnce(undefined).mockResolvedValueOnce(currentCliVersion)
+      const addNPMDependenciesMock = vi
+        .spyOn(nodePackageManager as any, 'addNPMDependencies')
+        .mockResolvedValue(undefined)
+
+      // When
+      await upgradeService.upgrade(tmpDir, oldCliVersion, {env: {}})
+
+      // Then
+      expect(outputMock.info()).toMatchInlineSnapshot(`
+        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
+      `)
+      expect(addNPMDependenciesMock).toHaveBeenCalledWith(
+        [
+          {name: '@shopify/cli', version: 'latest'},
+          {name: '@shopify/app', version: 'latest'},
+        ],
+        {
+          packageManager: 'npm',
+          type: 'prod',
+          directory: normalizePath(tmpDir),
+          stdout: process.stdout,
+          stderr: process.stderr,
+          addToRootDirectory: false,
         },
       )
       expect(outputMock.success()).toMatchInlineSnapshot(`
