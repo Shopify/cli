@@ -38,7 +38,7 @@ import {
 } from '../api/graphql/development_preview.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {TokenItem, renderError, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -384,6 +384,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
  *
  * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
  * If there is no API key (or is invalid), show prompts to select an org and app.
+ * If the app doesn't have the simplified deployments beta enabled, throw an error.
  * Finally, the info is updated in the env file.
  *
  * @param options - Current dev context options
@@ -393,11 +394,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
   const identifiers: Identifiers = envIdentifiers as Identifiers
-
-  const deploymentMode: DeploymentMode = partnersApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  if (deploymentMode === 'legacy') {
-    throw new AbortSilentError()
-  }
+  checkDeploymentsBeta('release', partnersApp)
 
   // eslint-disable-next-line no-param-reassign
   options = {
@@ -413,6 +410,42 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
 
   await logMetadataForLoadedReleaseContext(result, partnersApp.organizationId)
   return result
+}
+
+interface VersionListContextOptions {
+  app: AppInterface
+  apiKey?: string
+  reset: false
+  commandConfig: Config
+}
+
+interface VersionsListContextOutput {
+  token: string
+  partnersApp: OrganizationApp
+}
+
+/**
+ * Make sure there is a valid context to execute `versions list`
+ * That means we have a valid session, organization and app with the simplified deployments beta enabled.
+ *
+ * If there is an API key via flag, configuration or env file, we check if it is valid. Otherwise, throw an error.
+ * If there is no API key (or is invalid), show prompts to select an org and app.
+ * If the app doesn't have the simplified deployments beta enabled, throw an error.
+ *
+ * @param options - Current dev context options
+ * @returns The partners token and app
+ */
+export async function ensureVersionsListContext(
+  options: VersionListContextOptions,
+): Promise<VersionsListContextOutput> {
+  const token = await ensureAuthenticatedPartners()
+  const [partnersApp] = await fetchAppAndIdentifiers(options, token)
+  checkDeploymentsBeta('versions list', partnersApp)
+
+  return {
+    token,
+    partnersApp,
+  }
 }
 
 export async function fetchOrCreateOrganizationApp(
@@ -786,4 +819,22 @@ async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, par
     partner_id: tryParseInt(partnerId),
     api_key: env.partnersApp.apiKey,
   }))
+}
+
+function checkDeploymentsBeta(command: string, partnersApp: OrganizationApp) {
+  const deploymentMode: DeploymentMode = partnersApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
+  if (deploymentMode === 'legacy') {
+    renderError({
+      headline: `The \`app ${command}\` command is only available for apps that have upgraded to use simplified deployment.`,
+      reference: [
+        {
+          link: {
+            label: 'Simplified extension deployment',
+            url: 'https://shopify.dev/docs/apps/deployment/extension',
+          },
+        },
+      ],
+    })
+    throw new AbortSilentError()
+  }
 }

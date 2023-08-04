@@ -1,16 +1,15 @@
-import {fetchOrCreateOrganizationApp, renderCurrentlyUsedConfigInfo} from './context.js'
+import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuery, AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
+import {Config} from '@oclif/core'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type AppVersionLine = {
@@ -80,31 +79,23 @@ async function fetchAppVersions(
   }
 }
 
-async function getAppApiKey(token: string, options: VersionListOptions): Promise<string> {
-  if (options.apiKey) return options.apiKey
-  const envIdentifiers = getAppIdentifiers({app: options.app})
-  if (envIdentifiers.app) return envIdentifiers.app
-  if (isCurrentAppSchema(options.app.configuration)) return options.app.configuration.client_id
-  const partnersApp = await fetchOrCreateOrganizationApp(options.app, token)
-  return partnersApp.apiKey
-}
-
 interface VersionListOptions {
   app: AppInterface
   apiKey?: string
+  reset: false
+  commandConfig: Config
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const token = await ensureAuthenticatedPartners()
-  const apiKey = await getAppApiKey(token, options)
-  const {appVersions, totalResults, app} = await fetchAppVersions(token, apiKey)
+  const {token, partnersApp} = await ensureVersionsListContext(options)
+  const {id: appId, organizationId, title, apiKey} = partnersApp
 
-  const {id: appId, organizationId} = app
+  const {appVersions, totalResults} = await fetchAppVersions(token, apiKey)
 
   const {businessName: org} = await fetchOrgFromId(organizationId, token)
   renderCurrentlyUsedConfigInfo({
     org,
-    appName: app.title,
+    appName: title,
     configFile: isCurrentAppSchema(options.app.configuration) ? basename(options.app.configuration.path) : undefined,
   })
 
