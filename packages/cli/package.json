@@ -97,7 +97,7 @@
     "@oclif/core": "2.11.7",
     "@oclif/plugin-commands": "2.2.21",
     "@oclif/plugin-help": "5.2.15",
-    "@oclif/plugin-plugins": "2.4.7",
+    "@oclif/plugin-plugins": "3.1.8",
     "@shopify/cli-kit": "3.48.0",
     "@shopify/plugin-did-you-mean": "3.48.0",
     "zod-to-json-schema": "3.21.4"
