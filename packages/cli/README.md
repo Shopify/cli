@@ -1,18 +1,3 @@
-
-# Usage
-<!-- usage -->
-```sh-session
-$ npm install -g @shopify/cli
-$ shopify COMMAND
-running command...
-$ shopify (--version)
-@shopify/cli/3.48.0 darwin-arm64 node-v18.7.0
-$ shopify --help [COMMAND]
-USAGE
-  $ shopify COMMAND
-...
-```
-<!-- usagestop -->
 # Commands
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
@@ -1258,9 +1243,3 @@ DESCRIPTION
   Trigger delivery of a sample webhook topic payload to a designated address.
 ```
 <!-- commandsstop -->
-# Table of contents
-<!-- toc -->
-* [Usage](#usage)
-* [Commands](#commands)
-* [Table of contents](#table-of-contents)
-<!-- tocstop -->
