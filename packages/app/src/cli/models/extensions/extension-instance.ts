@@ -149,7 +149,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
       return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
     }
-
+    // what is this.specification.deployConfig?
     return (
       // module id param is not necessary for non-Function extensions
       this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined) ??

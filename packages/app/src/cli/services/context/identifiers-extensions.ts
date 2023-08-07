@@ -82,6 +82,7 @@ export async function ensureExtensionsIds(
       switch (options.deploymentMode) {
         case 'legacy':
           return 'Make the following changes to your extensions in Shopify Partners?'
+        // deploymentMode is unified when the first time deploy an app
         case 'unified':
           return `Release a new version of ${options.partnersApp?.title}?`
         case 'unified-skip-release':

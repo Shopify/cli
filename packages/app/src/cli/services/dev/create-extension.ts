@@ -33,6 +33,7 @@ export async function createExtension(
     apiKey,
     type: graphQLType,
     title: name,
+    // ??? what is JSON doing
     config: JSON.stringify({}),
     context: null,
   }
