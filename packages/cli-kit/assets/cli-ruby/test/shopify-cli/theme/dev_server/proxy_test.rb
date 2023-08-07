@@ -409,6 +409,14 @@ module ShopifyCLI
             .to_return(status: 200, body: <<-PROXY_RESPONSE)
               <html>
                 <body>
+                  <style>
+                    @font-face {
+                      font-family: "My Cool Font";
+                      src: url("https://dev-theme-server-store.myshopify.com/cdn/shop/t/6/assets/my-cool-font.woff2?v=32980254144382797261691268313") format("woff2"),
+                           url("https://dev-theme-server-store.myshopify.com/cdn/shop/t/6/assets/my-cool-font.woff?v=177194758756042663431691268313") format("woff");
+                    }
+                  </style>
+
                   <h1>My dev-theme-server-store.myshopify.com store!</h1>
 
                   <a data-base-url="http://dev-theme-server-store.myshopify.com/link">1</a>
@@ -429,6 +437,14 @@ module ShopifyCLI
           assert_equal(<<-EXPECTED_RESPONSE, response.body)
               <html>
                 <body>
+                  <style>
+                    @font-face {
+                      font-family: "My Cool Font";
+                      src: url("http://127.0.0.1:9292/cdn/shop/t/6/assets/my-cool-font.woff2?v=32980254144382797261691268313") format("woff2"),
+                           url("http://127.0.0.1:9292/cdn/shop/t/6/assets/my-cool-font.woff?v=177194758756042663431691268313") format("woff");
+                    }
+                  </style>
+
                   <h1>My dev-theme-server-store.myshopify.com store!</h1>
 
                   <a data-base-url="http://127.0.0.1:9292/link">1</a>

@@ -103,9 +103,9 @@ module ShopifyCLI
           return [""] unless body
 
           # Patch custom font asset urls
-          body = body.gsub(%r{(
-            url\((["']))?(http:|https:)?//#{shop}(/.*?\.(woff2?|eot|ttf))(\?[^'"\)]*)?(\2\))?\s*
-          }) do |_|
+          body = body.gsub(
+            %r{(url\((["']))?(http:|https:)?//#{shop}(/.*?\.(woff2?|eot|ttf))(\?[^'"\)]*)?(\2\))?\s*}
+          ) do |_|
             match = Regexp.last_match
             "#{match[1]}http://#{host(env)}#{match[4]}#{match[6]}#{match[7]} "
           end
