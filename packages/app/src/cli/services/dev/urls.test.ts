@@ -8,7 +8,7 @@ import {
   validatePartnersURLs,
   FrontendURLOptions,
 } from './urls.js'
-import {DEFAULT_CONFIG, testApp} from '../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, testApp, testAppWithConfig} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
@@ -79,6 +79,46 @@ describe('updateURLs', () => {
     expect(partnersRequest).toHaveBeenCalledWith(UpdateURLsQuery, 'token', expectedVariables)
   })
 
+  test('when config as code is enabled, the configuration is updated as well', async () => {
+    // Given
+    const appWithConfig = testAppWithConfig()
+    const apiKey = appWithConfig.configuration.client_id as string
+
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
+    const urls = {
+      applicationUrl: 'https://example.com',
+      redirectUrlWhitelist: [
+        'https://example.com/auth/callback',
+        'https://example.com/auth/shopify/callback',
+        'https://example.com/api/auth/callback',
+      ],
+    }
+
+    // When
+    await updateURLs(urls, apiKey, 'token', appWithConfig)
+
+    // Then
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(appWithConfig.configurationPath, {
+      access_scopes: {
+        scopes: 'read_products',
+      },
+      application_url: 'https://example.com',
+      auth: {
+        redirect_urls: [
+          'https://example.com/auth/callback',
+          'https://example.com/auth/shopify/callback',
+          'https://example.com/api/auth/callback',
+        ],
+      },
+      client_id: '12345',
+      embedded: true,
+      name: 'my app',
+      webhooks: {
+        api_version: '2023-04',
+      },
+    })
+  })
+
   test('throws an error if requests has a user error', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: [{message: 'Boom!'}]}})
@@ -92,6 +132,85 @@ describe('updateURLs', () => {
 
     // Then
     await expect(got).rejects.toThrow(new AbortError(`Boom!`))
+  })
+
+  test('includes app proxy fields if passed in', async () => {
+    // Given
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
+    const urls = {
+      applicationUrl: 'https://example.com',
+      redirectUrlWhitelist: [
+        'https://example.com/auth/callback',
+        'https://example.com/auth/shopify/callback',
+        'https://example.com/api/auth/callback',
+      ],
+      appProxy: {
+        proxyUrl: 'https://example.com',
+        proxySubPath: 'subpath',
+        proxySubPathPrefix: 'prefix',
+      },
+    }
+
+    const expectedVariables = {
+      apiKey: 'apiKey',
+      ...urls,
+    }
+
+    // When
+    await updateURLs(urls, 'apiKey', 'token')
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(UpdateURLsQuery, 'token', expectedVariables)
+  })
+
+  test('also updates app proxy url when config as code is enabled', async () => {
+    // Given
+    const appWithConfig = testAppWithConfig()
+    const apiKey = appWithConfig.configuration.client_id as string
+
+    vi.mocked(partnersRequest).mockResolvedValueOnce({appUpdate: {userErrors: []}})
+    const urls = {
+      applicationUrl: 'https://example.com',
+      redirectUrlWhitelist: [
+        'https://example.com/auth/callback',
+        'https://example.com/auth/shopify/callback',
+        'https://example.com/api/auth/callback',
+      ],
+      appProxy: {
+        proxyUrl: 'https://example.com',
+        proxySubPath: 'subpath',
+        proxySubPathPrefix: 'prefix',
+      },
+    }
+
+    // When
+    await updateURLs(urls, apiKey, 'token', appWithConfig)
+
+    // Then
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(appWithConfig.configurationPath, {
+      access_scopes: {
+        scopes: 'read_products',
+      },
+      application_url: 'https://example.com',
+      auth: {
+        redirect_urls: [
+          'https://example.com/auth/callback',
+          'https://example.com/auth/shopify/callback',
+          'https://example.com/api/auth/callback',
+        ],
+      },
+      app_proxy: {
+        url: 'https://example.com',
+        subpath: 'subpath',
+        prefix: 'prefix',
+      },
+      client_id: '12345',
+      embedded: true,
+      name: 'my app',
+      webhooks: {
+        api_version: '2023-04',
+      },
+    })
   })
 })
 
@@ -451,6 +570,26 @@ describe('generatePartnersURLs', () => {
       redirectUrlWhitelist: [`${applicationUrl}${overridePath[0]}`, `${applicationUrl}${overridePath[1]}`],
     })
   })
+
+  test('Returns app proxy section when receiving proxy fields', () => {
+    const applicationUrl = 'http://my-base-url'
+
+    const got = generatePartnersURLs(applicationUrl, [], {url: applicationUrl, subpath: 'subpath', prefix: 'prefix'})
+
+    expect(got).toMatchObject({
+      applicationUrl,
+      redirectUrlWhitelist: [
+        `${applicationUrl}/auth/callback`,
+        `${applicationUrl}/auth/shopify/callback`,
+        `${applicationUrl}/api/auth/callback`,
+      ],
+      appProxy: {
+        proxyUrl: applicationUrl,
+        proxySubPath: 'subpath',
+        proxySubPathPrefix: 'prefix',
+      },
+    })
+  })
 })
 
 describe('validatePartnersURLs', () => {
@@ -458,7 +597,11 @@ describe('validatePartnersURLs', () => {
     // Given
     const applicationUrl = 'http://example.com'
     const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
-    const urls: PartnersURLs = {applicationUrl, redirectUrlWhitelist}
+    const urls: PartnersURLs = {
+      applicationUrl,
+      redirectUrlWhitelist,
+      appProxy: {proxyUrl: applicationUrl, proxySubPath: '', proxySubPathPrefix: ''},
+    }
 
     // When/Then
     validatePartnersURLs(urls)
@@ -482,5 +625,19 @@ describe('validatePartnersURLs', () => {
 
     // When/Then
     expect(() => validatePartnersURLs(urls)).toThrow(/Invalid redirection URLs/)
+  })
+
+  test('it raises an error when the app proxy URL is not valid', () => {
+    // Given
+    const applicationUrl = 'http://example.com'
+    const redirectUrlWhitelist = ['http://example.com/callback1', 'http://example.com/callback2']
+    const urls: PartnersURLs = {
+      applicationUrl,
+      redirectUrlWhitelist,
+      appProxy: {proxyUrl: 'wrong', proxySubPath: '', proxySubPathPrefix: ''},
+    }
+
+    // When/Then
+    expect(() => validatePartnersURLs(urls)).toThrow(/Invalid app proxy URL/)
   })
 })

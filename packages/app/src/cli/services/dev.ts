@@ -169,6 +169,7 @@ async function dev(options: DevOptions) {
       const newURLs = generatePartnersURLs(
         exposedUrl,
         localApp.webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs,

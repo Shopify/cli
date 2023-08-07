@@ -19,6 +19,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
+  appProxy?: {proxyUrl: string; proxySubPath: string; proxySubPathPrefix: string}
 }
 
 export interface FrontendURLOptions {
@@ -122,7 +123,11 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
   })
 }
 
-export function generatePartnersURLs(baseURL: string, authCallbackPath?: string | string[]): PartnersURLs {
+export function generatePartnersURLs(
+  baseURL: string,
+  authCallbackPath?: string | string[],
+  proxyFields?: {url: string; subpath: string; prefix: string},
+): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
     const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
@@ -140,9 +145,14 @@ export function generatePartnersURLs(baseURL: string, authCallbackPath?: string 
     ]
   }
 
+  const appProxy = proxyFields
+    ? {appProxy: {proxyUrl: baseURL, proxySubPath: proxyFields.subpath, proxySubPathPrefix: proxyFields.prefix}}
+    : {}
+
   return {
     applicationUrl: baseURL,
     redirectUrlWhitelist,
+    ...appProxy,
   }
 }
 
@@ -169,6 +179,15 @@ export async function updateURLs(
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
+
+    if (urls.appProxy) {
+      localConfiguration.app_proxy = {
+        url: urls.appProxy.proxyUrl,
+        subpath: urls.appProxy.proxySubPath,
+        prefix: urls.appProxy.proxySubPathPrefix,
+      }
+    }
+
     await writeAppConfigurationFile(localApp.configurationPath, localConfiguration)
   }
 }
@@ -177,7 +196,7 @@ export async function getURLs(apiKey: string, token: string): Promise<PartnersUR
   const variables: GetURLsQueryVariables = {apiKey}
   const query = GetURLsQuery
   const result: GetURLsQuerySchema = await partnersRequest(query, token, variables)
-  return {applicationUrl: result.app.applicationUrl, redirectUrlWhitelist: result.app.redirectUrlWhitelist}
+  return result.app
 }
 
 export interface ShouldOrPromptUpdateURLsOptions {
@@ -226,6 +245,10 @@ export function validatePartnersURLs(urls: PartnersURLs): void {
         'Valid format: "https://example.com/callback1,https://example.com/callback2"',
       )
   })
+
+  if (urls.appProxy?.proxyUrl && !isValidURL(urls.appProxy.proxyUrl)) {
+    throw new AbortError(`Invalid app proxy URL: ${urls.appProxy.proxyUrl}`, 'Valid format: "https://example.com"')
+  }
 }
 
 export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelClient> {
