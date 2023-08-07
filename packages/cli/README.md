@@ -1193,7 +1193,7 @@ USAGE
   $ shopify upgrade [--path <value>]
 
 FLAGS
-  --path=<value>  [default: /Users/matteodepalo/src/github.com/Shopify/cli] The path to your project directory.
+  --path=<value>  [default: .] The path to your project directory.
 
 DESCRIPTION
   Upgrade the Shopify CLI.
