@@ -195,8 +195,20 @@ export async function updateURLs(
 export async function getURLs(apiKey: string, token: string): Promise<PartnersURLs> {
   const variables: GetURLsQueryVariables = {apiKey}
   const query = GetURLsQuery
-  const result: GetURLsQuerySchema = await partnersRequest(query, token, variables)
-  return result.app
+  const response: GetURLsQuerySchema = await partnersRequest(query, token, variables)
+  const appProxy = response.app.appProxy
+  const result: PartnersURLs = {
+    applicationUrl: response.app.applicationUrl,
+    redirectUrlWhitelist: response.app.redirectUrlWhitelist,
+  }
+  if (appProxy) {
+    result.appProxy = {
+      proxyUrl: appProxy.url,
+      proxySubPath: appProxy.subPath,
+      proxySubPathPrefix: appProxy.subPathPrefix,
+    }
+  }
+  return result
 }
 
 export interface ShouldOrPromptUpdateURLsOptions {
