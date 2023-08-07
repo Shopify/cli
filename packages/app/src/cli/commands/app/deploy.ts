@@ -9,6 +9,7 @@ import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.j
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import {Flags} from '@oclif/core'
+import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -67,6 +68,14 @@ export default class Deploy extends Command {
       description: 'URL associated with the new app version.',
       env: 'SHOPIFY_FLAG_SOURCE_CONTROL_URL',
     }),
+  }
+
+  requiredInNonTTYFlags() {
+    return {
+      force: true as const,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      'client-id': (flags: FlagOutput) => !flags.config && !flags['api-key'],
+    }
   }
 
   async run(): Promise<void> {

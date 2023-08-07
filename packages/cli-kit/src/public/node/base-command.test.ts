@@ -5,8 +5,16 @@ import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {describe, expect, test} from 'vitest'
+import {terminalSupportsRawMode} from './system.js'
+import {unstyled} from './output.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
+
+vi.mock('./system.js')
+
+beforeEach(() => {
+  vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+})
 
 let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
@@ -31,6 +39,9 @@ class MockCommand extends Command {
     }),
     password: Flags.string({}),
     environment: Flags.string({}),
+    nonTTYRequiredFlag: Flags.string({}),
+    nonTTYFunctionDependentRequiredFlag: Flags.string({}),
+    nonTTYFunctionDependentNonRequiredFlag: Flags.string({}),
   }
   /* eslint-enable @shopify/cli/command-flags-with-env */
 
@@ -45,6 +56,16 @@ class MockCommand extends Command {
 
   environmentsFilename(): string {
     return 'shopify.environments.toml'
+  }
+}
+
+class MockCommandWithRequiredFlagInNonTTY extends MockCommand {
+  requiredInNonTTYFlags() {
+    return {
+      nonTTYRequiredFlag: true as const,
+      nonTTYFunctionDependentRequiredFlag: (_flags: unknown) => true,
+      nonTTYFunctionDependentNonRequiredFlag: (_flags: unknown) => false,
+    }
   }
 }
 
@@ -264,6 +285,52 @@ describe('applying environments', async () => {
 
       // Then
       expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
+    },
+  )
+
+  runTestInTmpDir('throws when a non-TTY required argument is missing', async (tmpDir: string) => {
+    // Given
+    vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+
+    // When
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
+    // Then
+    expect(unstyled(testError?.message!)).toMatch('Flag not specified:\n\nnonTTYRequiredFlag')
+  })
+
+  runTestInTmpDir(
+    'throws when a non-TTY required argument, required by a function, is missing',
+    async (tmpDir: string) => {
+      // Given
+      vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+
+      // When
+      await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir, '--nonTTYRequiredFlag', 'stringy'])
+
+      // Then
+      expect(unstyled(testError?.message!)).toMatch('Flag not specified:\n\nnonTTYFunctionDependentRequiredFlag')
+    },
+  )
+
+  runTestInTmpDir(
+    'does not throw when a non-TTY required argument, required by a function that returns false, is missing',
+    async (tmpDir: string) => {
+      // Given
+      vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+
+      // When
+      await MockCommandWithRequiredFlagInNonTTY.run([
+        '--path',
+        tmpDir,
+        '--nonTTYRequiredFlag',
+        'stringy',
+        '--nonTTYFunctionDependentRequiredFlag',
+        '1',
+      ])
+
+      // Then
+      expect(testError).toBeUndefined()
     },
   )
 

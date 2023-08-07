@@ -5,6 +5,7 @@ import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {renderInfo, renderWarning} from './ui.js'
 import {outputContent, outputInfo, outputToken} from './output.js'
+import {terminalSupportsRawMode} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {JsonMap} from '../../private/common/json.js'
@@ -80,7 +81,33 @@ abstract class BaseCommand extends Command {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
-    return {...result, ...{argv: result.argv as string[]}}
+    const toReturn = {...result, ...{argv: result.argv as string[]}}
+    if (result?.flags && !terminalSupportsRawMode()) {
+      for (const [name, implementer] of Object.entries(this.requiredInNonTTYFlags())) {
+        if (result.flags[name] === undefined) {
+          const errorMessage = outputContent`Flag not specified:
+
+${outputToken.cyan(name)}
+
+This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`
+          const tryMessage =
+            'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.'
+          switch (implementer) {
+            case true:
+              throw new AbortError(errorMessage, tryMessage)
+            default:
+              if (implementer(result.flags)) {
+                throw new AbortError(errorMessage, tryMessage)
+              }
+          }
+        }
+      }
+    }
+    return toReturn
+  }
+
+  protected requiredInNonTTYFlags(): {[name: string]: true | ((flags: FlagOutput) => boolean)} {
+    return {}
   }
 
   protected async resultWithEnvironment<
