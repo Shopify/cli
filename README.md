@@ -9,6 +9,8 @@ With the Shopify command line interface (Shopify CLI 3.0), you can:
 - initialize, build, dev, and deploy Shopify apps, extensions, functions and themes
 - build custom storefronts and manage their hosting
 
+Learn more in the [commands docs](./packages/cli/README.md#commands).
+
 <p>&nbsp;</p>
 
 ### Before you begin ###
@@ -32,7 +34,7 @@ Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started
 
 ## Developing themes with Shopify CLI
 
-To work with themes, the CLI needs to be installed globally with: 
+To work with themes, the CLI needs to be installed globally with:
 
 - `npm install -g @shopify/cli @shopify/theme`
 

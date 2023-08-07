@@ -16,7 +16,7 @@
           "description": "The path to your project directory.",
           "hidden": false,
           "multiple": false,
-          "default": "."
+          "default": "/Users/matteodepalo/src/github.com/Shopify/cli"
         }
       },
       "args": {}
@@ -91,7 +91,7 @@
           "description": "The directory for generating the demo file.",
           "hidden": false,
           "multiple": false,
-          "default": "."
+          "default": "/Users/matteodepalo/src/github.com/Shopify/cli"
         },
         "file": {
           "name": "file",
@@ -120,7 +120,7 @@
           "description": "The path to the design file.",
           "hidden": false,
           "multiple": false,
-          "default": "."
+          "default": "/Users/matteodepalo/src/github.com/Shopify/cli"
         }
       },
       "args": {}

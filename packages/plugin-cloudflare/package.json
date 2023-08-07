@@ -60,7 +60,6 @@
   },
   "engine-strict": true,
   "oclif": {
-    "commands": "dist/commands",
     "hooks": {
       "tunnel_start": "dist/tunnel",
       "tunnel_provider": "dist/provider"
