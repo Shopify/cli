@@ -125,6 +125,27 @@ jobs:
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
+  oclif-readme:
+    name: "[PR] Check OCLIF readme"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 18.12.0
+      - name: Build
+        run: pnpm build
+      - name: Refresh readme
+        run: pnpm refresh-readme
+      - name: Check if there are changes
+        run: 'test -z "$(git status --porcelain "packages/cli/README.md" )" || { echo -e "Run pnpm refresh-readme before pushing new commands or flags. Diff here:\n\n$(git diff)" ; exit 1; }'
+
   oclif-manifests:
     name: "[PR] Check OCLIF manifests"
     runs-on: ubuntu-latest
