@@ -3,10 +3,10 @@ import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupBundlerAndFileWatcher} from './extension/bundler.js'
 import {setupHTTPServer} from './extension/server.js'
 import {ExtensionsPayloadStore, getExtensionsPayloadStoreRawPayload} from './extension/payload/store.js'
-import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {
@@ -35,14 +35,24 @@ export interface ExtensionDevOptions {
   extensions: ExtensionInstance[]
 
   /**
-   * The app that contains the extension.
-   */
-  app: AppInterface
-
-  /**
    * The ID of the app that contains the extension.
    */
   id?: string
+
+  /**
+   * The name of the app containing the extensions.
+   */
+  appName: string
+
+  /**
+   * Location of the app code.
+   */
+  appDirectory: string
+
+  /**
+   * File based environment variables for the app
+   */
+  appDotEnvFile?: DotEnvFile
 
   /**
    * The app identifier

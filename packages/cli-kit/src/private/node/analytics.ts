@@ -52,7 +52,7 @@ interface EnvironmentData {
   env_web_ide: string | undefined
   env_device_id: string
   env_cloud: string
-  env_package_manager: string
+  env_package_manager?: string
 }
 
 export async function getEnvironmentData(config: Interfaces.Config): Promise<EnvironmentData> {
@@ -63,6 +63,13 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
 
   const {platform, arch} = platformAndArch()
 
+  let packageManager
+  try {
+    packageManager = await getPackageManager(cwd())
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // ignore errors loading the package manager
+  }
   return {
     uname: `${platform} ${arch}`,
     env_ci: ciplatform.isCI,
@@ -73,7 +80,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_web_ide: cloudEnvironment().editor ? cloudEnvironment().platform : undefined,
     env_device_id: hashString(await macAddress()),
     env_cloud: cloudEnvironment().platform,
-    env_package_manager: await getPackageManager(cwd()),
+    env_package_manager: packageManager,
   }
 }
 

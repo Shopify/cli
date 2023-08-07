@@ -22,7 +22,6 @@ export interface PartnersURLs {
 }
 
 export interface FrontendURLOptions {
-  app: AppInterface
   noTunnel: boolean
   tunnelUrl?: string
   commandConfig: Config

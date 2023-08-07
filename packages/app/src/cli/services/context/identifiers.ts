@@ -9,6 +9,8 @@ import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
+export type PartnersAppForIdentifierMatching = MinimalOrganizationApp & Pick<OrganizationApp, 'betas'>
+
 export interface EnsureDeploymentIdsPresenceOptions {
   app: AppInterface
   token: string
@@ -17,7 +19,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   envIdentifiers: Partial<Identifiers>
   force: boolean
   deploymentMode: DeploymentMode
-  partnersApp?: MinimalOrganizationApp & Pick<OrganizationApp, 'betas'>
+  partnersApp?: PartnersAppForIdentifierMatching
 }
 
 export interface RemoteSource {

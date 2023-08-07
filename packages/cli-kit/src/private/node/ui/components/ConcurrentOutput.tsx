@@ -200,7 +200,16 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         }}
       </Static>
       {footer ? (
-        <Box marginY={1} flexDirection="column" flexGrow={1}>
+        <Box
+          marginY={1}
+          flexDirection="column"
+          flexGrow={1}
+          borderStyle="single"
+          borderBottom={false}
+          borderLeft={false}
+          borderRight={false}
+          borderTop
+        >
           {useShortcuts ? (
             <Box flexDirection="column">
               {footer.shortcuts.map((shortcut, index) => (

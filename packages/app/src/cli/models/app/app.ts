@@ -270,17 +270,17 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
  * @param uiExtensionType - UI extension whose renderer version will be obtained.
- * @param app - App object containing the extension.
+ * @param appDirectory - location of the app code.
  * @returns The version if the dependency exists.
  */
 export async function getUIExtensionRendererVersion(
   extension: ExtensionInstance,
-  app: AppInterface,
+  appDirectory: string,
 ): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
-  return getDependencyVersion(rendererDependency, app.directory)
+  return getDependencyVersion(rendererDependency, appDirectory)
 }
 
 export async function getDependencyVersion(dependency: string, directory: string): Promise<RendererVersionResult> {
