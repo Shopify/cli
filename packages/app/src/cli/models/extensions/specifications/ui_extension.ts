@@ -60,13 +60,6 @@ const spec = createExtensionSpecification({
   getBundleExtensionStdinContent: (config) => {
     return config.extension_points.map(({module}) => `import '${module}';`).join('\n')
   },
-  shouldFetchCartUrl: (config) => {
-    return (
-      config.extension_points.find((extensionPoint) => {
-        return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
-      }) !== undefined
-    )
-  },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
       config.extension_points.find((extensionPoint) => {

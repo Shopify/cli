@@ -188,7 +188,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   shouldFetchCartUrl(): boolean {
-    return this.specification.shouldFetchCartUrl?.(this.configuration) || false
+    return this.features.includes('cart_url')
   }
 
   hasExtensionPointTarget(target: string): boolean {
