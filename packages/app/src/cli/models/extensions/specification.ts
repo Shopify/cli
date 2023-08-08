@@ -27,7 +27,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   surface: string
   registrationLimit: number
   gated: boolean
-  helpURL?: string
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
@@ -76,7 +75,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  * externalIdentifier: string // identifier used externally (default: same as "identifier")
  * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
  * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
- * helpURL?: string // url to the help page for the extension, shown after generating the extension
  * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
  * graphQLType?: string // GraphQL type of the extension (default: same as "identifier")
  * schema?: ZodSchemaType<TConfiguration> // schema used to validate the extension's configuration (default: BaseUIExtensionSchema)
