@@ -22,9 +22,7 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
         enabled: zod.boolean(),
       }),
     )
-    // It's able to support more than one template per extension but restricting to one for now
-    .min(1)
-    .max(1),
+    .min(1),
 })
 
 const spec = createExtensionSpecification({
