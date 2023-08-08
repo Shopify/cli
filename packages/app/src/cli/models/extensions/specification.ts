@@ -1,8 +1,7 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {blocks, defaultExtensionFlavors} from '../../constants.js'
+import {blocks} from '../../constants.js'
 
-import {ExtensionFlavor} from '../app/template.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 
@@ -27,7 +26,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   partnersWebIdentifier: string
   surface: string
   registrationLimit: number
-  supportedFlavors: ExtensionFlavor[]
   gated: boolean
   helpURL?: string
   dependency?: string
@@ -78,7 +76,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  * externalIdentifier: string // identifier used externally (default: same as "identifier")
  * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
  * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
- * supportedFlavors: {name: string; value: string}[] // list of supported flavors (default: 'javascript', 'typescript', 'typescript-react', 'javascript-react')
  * helpURL?: string // url to the help page for the extension, shown after generating the extension
  * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
  * graphQLType?: string // GraphQL type of the extension (default: same as "identifier")
@@ -104,7 +101,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     gated: false,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    supportedFlavors: defaultExtensionFlavors,
   }
   return {...defaults, ...spec}
 }

@@ -13,7 +13,6 @@ const spec = createExtensionSpecification({
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
-  supportedFlavors: [],
   appModuleFeatures: (_) => {
     if (useThemebundling()) return ['bundling', 'theme']
     return ['theme']
