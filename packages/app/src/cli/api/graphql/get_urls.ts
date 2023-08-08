@@ -5,10 +5,10 @@ export const GetURLsQuery = gql`
     app(apiKey: $apiKey) {
       applicationUrl
       redirectUrlWhitelist
-      appProxy: {
-        proxyUrl
-        proxySubPath
-        proxySubPathPrefix
+      appProxy {
+        url
+        subPath
+        subPathPrefix
       }
     }
   }
@@ -22,10 +22,10 @@ export interface GetURLsQuerySchema {
   app: {
     applicationUrl: string
     redirectUrlWhitelist: string[]
-    appProxy: {
-      proxyUrl: string
-      proxySubPath: string
-      proxySubPathPrefix: string
+    appProxy?: {
+      url: string
+      subPath: string
+      subPathPrefix: string
     }
   }
 }
