@@ -41,6 +41,10 @@ export const serializeConfigField = (field: ConfigField, type: FlowExtensionType
     serializedField.required = field.required
   }
 
+  if (typeIsSchemaTypeReference) {
+    serializedField.typeRefName = field.type.replace('schema.', '')
+  }
+
   return serializedField
 }
 
