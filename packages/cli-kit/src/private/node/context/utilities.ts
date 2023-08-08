@@ -34,6 +34,7 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
     case 'github':
       return {
         actor: envs.GITHUB_ACTOR,
+        attempt: envs.GITHUB_RUN_ATTEMPT,
         branch: envs.GITHUB_REF_NAME,
         build: envs.GITHUB_RUN_ID,
         commitMessage: envs.GITHUB_COMMIT_MESSAGE,
@@ -58,6 +59,7 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
 
 export interface Metadata {
   actor?: string
+  attempt?: string
   branch?: string
   build?: string
   commitMessage?: string
