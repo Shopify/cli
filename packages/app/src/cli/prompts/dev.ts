@@ -25,7 +25,7 @@ export async function selectAppPrompt(
     directory?: string
   },
 ): Promise<string> {
-  const tomls = await getTomls(apps, options?.directory)
+  const tomls = await getTomls(options?.directory)
 
   if (tomls) setCachedCommandInfo({tomls})
 
