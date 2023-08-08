@@ -26,7 +26,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   partnersWebIdentifier: string
   surface: string
   registrationLimit: number
-  gated: boolean
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
@@ -96,7 +95,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'test-surface',
     partnersWebIdentifier: spec.identifier,
-    gated: false,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
   }
