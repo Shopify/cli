@@ -159,7 +159,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   validate() {
     if (!this.specification.validate) return Promise.resolve(ok(undefined))
-    return this.specification.validate(this.configuration, this.directory)
+    return this.specification.validate(this.configuration, this.directory, this.configurationPath)
   }
 
   preDeployValidation(): Promise<void> {

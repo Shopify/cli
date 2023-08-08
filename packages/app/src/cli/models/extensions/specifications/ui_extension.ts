@@ -1,7 +1,6 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -44,8 +43,8 @@ const spec = createExtensionSpecification({
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
-  validate: async (config, directory) => {
-    return validateUIExtensionPointConfig(directory, config.extension_points)
+  validate: async (config, directory, configPath) => {
+    return validateUIExtensionPointConfig(directory, config.extension_points, configPath)
   },
   deployConfig: async (config, directory) => {
     return {
@@ -72,6 +71,7 @@ const spec = createExtensionSpecification({
 async function validateUIExtensionPointConfig(
   directory: string,
   extensionPoints: NewExtensionPointSchemaType[],
+  configPath: string,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
   const uniqueTargets: string[] = []
@@ -106,9 +106,7 @@ Please check the module path for ${target}`.value,
   }
 
   if (errors.length) {
-    const tomlPath = joinPath(directory, configurationFileNames.extension.ui)
-
-    errors.push(`Please check the configuration in ${tomlPath}`)
+    errors.push(`Please check the configuration in ${configPath}`)
     return err(errors.join('\n\n'))
   }
   return ok({})

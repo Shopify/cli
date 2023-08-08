@@ -4,11 +4,6 @@ export const environmentVariableNames = {
 
 export const configurationFileNames = {
   app: 'shopify.app.toml',
-  extension: {
-    ui: 'shopify.ui.extension.toml',
-    theme: 'shopify.theme.extension.toml',
-    function: 'shopify.function.extension.toml',
-  },
   web: 'shopify.web.toml',
   appEnvironments: 'shopify.environments.toml',
 } as const
@@ -25,21 +20,10 @@ export const versions = {
 export const blocks = {
   extensions: {
     directoryName: 'extensions',
-    configurationName: configurationFileNames.extension,
     defaultRegistrationLimit: 1,
-  },
-  functions: {
-    defaultUrl: 'https://github.com/Shopify/function-examples',
-    defaultRegistrationLimit: 50,
   },
   web: {
     directoryName: 'web',
     configurationName: configurationFileNames.web,
-  },
-} as const
-
-export const templates = {
-  specification: {
-    remoteVersion: '1',
   },
 } as const

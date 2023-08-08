@@ -38,7 +38,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     apiKey: string,
     moduleId?: string,
   ) => Promise<{[key: string]: unknown} | undefined>
-  validate?: (config: TConfiguration, directory: string) => Promise<Result<unknown, string>>
+  validate?: (config: TConfiguration, directory: string, configurationPath: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
