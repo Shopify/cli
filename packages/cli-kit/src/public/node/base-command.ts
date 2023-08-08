@@ -89,7 +89,12 @@ abstract class BaseCommand extends Command {
     return {}
   }
 
-  protected async resultWithEnvironment<
+  protected environmentsFilename(): string | undefined {
+    // To be re-implemented if needed
+    return undefined
+  }
+
+  private async resultWithEnvironment<
     TFlags extends FlagOutput & {path?: string; verbose?: boolean},
     TGlobalFlags extends FlagOutput,
     TArgs extends ArgOutput,
@@ -129,11 +134,6 @@ abstract class BaseCommand extends Command {
     )
 
     return result
-  }
-
-  protected environmentsFilename(): string | undefined {
-    // To be re-implemented if needed
-    return undefined
   }
 
   private validateNonTTYFlags(flags: FlagOutput): void {
