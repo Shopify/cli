@@ -9,7 +9,6 @@ import fs from 'fs'
 
 const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_template'),
-  name: zod.string(),
   templates: zod
     .array(
       zod.object({
