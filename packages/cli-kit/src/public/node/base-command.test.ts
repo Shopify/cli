@@ -296,7 +296,7 @@ describe('applying environments', async () => {
     await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
 
     // Then
-    expect(unstyled(testError?.message!)).toMatch('Flag not specified:\n\nnonTTYRequiredFlag')
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\nnonTTYRequiredFlag')
   })
 
   runTestInTmpDir(
@@ -309,7 +309,7 @@ describe('applying environments', async () => {
       await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir, '--nonTTYRequiredFlag', 'stringy'])
 
       // Then
-      expect(unstyled(testError?.message!)).toMatch('Flag not specified:\n\nnonTTYFunctionDependentRequiredFlag')
+      expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\nnonTTYFunctionDependentRequiredFlag')
     },
   )
 
