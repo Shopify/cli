@@ -71,7 +71,6 @@ describe('use', () => {
       const appWithoutClientID = testApp()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: appWithoutClientID.configurationPath,
         configuration: appWithoutClientID.configuration,
       })
 
@@ -135,7 +134,6 @@ describe('use', () => {
       })
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: app.configurationPath,
         configuration: app.configuration,
       })
 
@@ -172,7 +170,6 @@ describe('use', () => {
       })
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: app.configurationPath,
         configuration: app.configuration,
       })
 
@@ -209,8 +206,8 @@ describe('use', () => {
   test('renders warning when warning message is specified', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
-      const {configurationPath, configuration} = testApp({}, 'current')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configurationPath, configuration})
+      const {configuration} = testApp({}, 'current')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
 
@@ -226,8 +223,8 @@ describe('use', () => {
   test('does not render success when shouldRenderSuccess is false', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
-      const {configurationPath, configuration} = testApp({}, 'current')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configurationPath, configuration})
+      const {configuration} = testApp({}, 'current')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
 

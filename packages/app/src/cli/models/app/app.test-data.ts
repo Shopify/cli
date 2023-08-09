@@ -10,6 +10,7 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 
 export const DEFAULT_CONFIG = {
+  path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
@@ -25,7 +26,7 @@ export const DEFAULT_CONFIG = {
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
   const getConfig = () => {
     if (schemaType === 'legacy') {
-      return {scopes: '', extension_directories: []}
+      return {scopes: '', extension_directories: [], path: ''}
     } else {
       return DEFAULT_CONFIG
     }
@@ -37,7 +38,6 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     app.directory ?? '/tmp/project',
     app.packageManager ?? 'yarn',
     app.configuration ?? getConfig(),
-    app.configurationPath ?? '/tmp/project/shopify.app.toml',
     app.nodeDependencies ?? {},
     app.webs ?? [
       {
@@ -69,6 +69,7 @@ interface TestAppWithConfigOptions {
 
 export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
   const configuration: AppConfiguration = {
+    path: '',
     scopes: '',
     name: 'name',
     extension_directories: [],

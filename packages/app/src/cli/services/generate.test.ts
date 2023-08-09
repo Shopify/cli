@@ -3,7 +3,7 @@ import {ensureGenerateContext} from './context.js'
 import {generateExtensionTemplate} from './generate/extension.js'
 import {loadApp} from '../models/app/loader.js'
 import {
-  testApp,
+  testAppWithConfig,
   testFunctionExtension,
   testLocalExtensionTemplates,
   testRemoteSpecifications,
@@ -170,11 +170,13 @@ describe('generate', () => {
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
   const appRoot = '/'
-  const app = testApp({
-    directory: appRoot,
-    configurationPath: joinPath(appRoot, 'shopify.app.toml'),
-    extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
-    allExtensions: existingExtensions,
+  const app = testAppWithConfig({
+    app: {
+      directory: appRoot,
+      extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
+      allExtensions: existingExtensions,
+    },
+    config: {path: joinPath(appRoot, 'shopify.app.toml')},
   })
 
   const allExtensionTemplates = testRemoteExtensionTemplates.concat(testLocalExtensionTemplates)

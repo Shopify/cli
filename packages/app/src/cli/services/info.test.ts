@@ -62,8 +62,8 @@ describe('info', () => {
         app: testApp({
           name: 'my app',
           directory: tmp,
-          configurationPath: joinPath(tmp, 'shopify.app.toml'),
           configuration: {
+            path: joinPath(tmp, 'shopify.app.toml'),
             name: 'my app',
             client_id: '12345',
             application_url: 'https://example.com/lala',
@@ -324,8 +324,8 @@ function mockApp({
   return testApp({
     name: 'my app',
     directory,
-    configurationPath: joinPath(directory, 'shopify.app.toml'),
     configuration: {
+      path: joinPath(directory, 'shopify.app.toml'),
       scopes: 'my-scope',
       extension_directories: ['extensions/*'],
     },

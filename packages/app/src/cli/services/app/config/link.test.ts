@@ -123,8 +123,8 @@ embedded = false
       }
       vi.mocked(loadApp).mockResolvedValue(
         testApp({
-          configurationPath: 'shopify.app.development.toml',
           configuration: {
+            path: 'shopify.app.development.toml',
             name: 'my app',
             client_id: '12345',
             scopes: 'write_products',
@@ -348,8 +348,8 @@ embedded = false
       }
       vi.mocked(loadApp).mockResolvedValue(
         testApp({
-          configurationPath: 'shopify.app.foo.toml',
           configuration: {
+            path: 'shopify.app.foo.toml',
             name: 'my app',
             client_id: '12345',
             scopes: 'write_products',

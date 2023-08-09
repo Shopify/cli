@@ -2091,7 +2091,9 @@ describe('parseConfigurationObject', () => {
     ]
     const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
     const abortOrReport = vi.fn()
-    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
+
+    const {path, ...toParse} = configurationObject
+    await parseConfigurationObject(AppSchema, 'tmp', toParse, abortOrReport)
 
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })

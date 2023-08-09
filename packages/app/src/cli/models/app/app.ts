@@ -87,7 +87,8 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  * @param item - the item to validate
  */
 export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
-  return isType(LegacyAppSchema, item)
+  const {path, ...rest} = item
+  return isType(LegacyAppSchema, rest)
 }
 
 /**
@@ -95,7 +96,8 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  * @param item - the item to validate
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  return isType(AppSchema, item)
+  const {path, ...rest} = item
+  return isType(AppSchema, rest)
 }
 
 /**
@@ -119,11 +121,8 @@ export function getAppScopesArray(config: AppConfiguration) {
   return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
 }
 
-export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
-  const config: AppInterface | AppConfiguration = 'configurationPath' in app ? app.configuration : app
-
+export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
-
   return Boolean(config.access_scopes?.use_legacy_install_flow)
 }
 
@@ -164,9 +163,9 @@ export const WebConfigurationSchema = zod.union([
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema>
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema>
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string}
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
@@ -180,7 +179,6 @@ export interface Web {
 export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
-  configurationPath: string
 }
 
 export interface AppInterface extends AppConfigurationInterface {
@@ -204,7 +202,6 @@ export class App implements AppInterface {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
-  configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -219,7 +216,6 @@ export class App implements AppInterface {
     directory: string,
     packageManager: PackageManager,
     configuration: AppConfiguration,
-    configurationPath: string,
     nodeDependencies: {[key: string]: string},
     webs: Web[],
     extensions: ExtensionInstance[],
@@ -232,7 +228,6 @@ export class App implements AppInterface {
     this.directory = directory
     this.packageManager = packageManager
     this.configuration = configuration
-    this.configurationPath = configurationPath
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
@@ -259,8 +254,8 @@ export class App implements AppInterface {
 
 export class EmptyApp extends App {
   constructor() {
-    const configuration = {scopes: '', extension_directories: []}
-    super('', '', '', 'npm', configuration, '', {}, [], [], false)
+    const configuration = {scopes: '', extension_directories: [], path: ''}
+    super('', '', '', 'npm', configuration, {}, [], [], false)
   }
 }
 

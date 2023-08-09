@@ -8,8 +8,8 @@ import {
 } from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {afterEach, describe, expect, test} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -123,17 +123,18 @@ async function mockApp(newConfig = false): Promise<AppInterface> {
   const functionExtension = await testFunctionExtension()
   const themeExtension = await testThemeExtensions()
   const uiExtension = await testUIExtension()
-
   const configurationPath = joinPath('/', newConfig ? 'shopify.app.staging.toml' : 'shopify.app.toml')
 
-  return testApp(
+  const result = testApp(
     {
       name: 'my-super-customer-accounts-app',
       directory: '/',
-      configurationPath,
       nodeDependencies,
       allExtensions: [functionExtension, themeExtension, uiExtension],
     },
     newConfig ? 'current' : 'legacy',
   )
+  result.configuration.path = configurationPath
+
+  return result
 }

@@ -31,7 +31,6 @@ describe('pushConfig', () => {
     const app = testApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -82,7 +81,6 @@ describe('pushConfig', () => {
     app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -127,7 +125,6 @@ describe('pushConfig', () => {
     app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -174,7 +171,6 @@ describe('pushConfig', () => {
 
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -218,7 +214,6 @@ describe('pushConfig', () => {
 
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -260,8 +255,8 @@ describe('pushConfig', () => {
 
   test('returns error when client id cannot be found', async () => {
     // Given
-    const {configuration, configurationPath} = testApp({}, 'current')
-    const options: PushOptions = {configuration, configurationPath, force: true}
+    const {configuration} = testApp({}, 'current')
+    const options: PushOptions = {configuration, force: true}
 
     vi.mocked(partnersRequest).mockResolvedValue({app: null})
 
@@ -276,7 +271,6 @@ describe('pushConfig', () => {
     const app = testApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -296,8 +290,8 @@ describe('pushConfig', () => {
 
   test('returns error with field names when update mutation fails and userErrors includes field', async () => {
     // Given
-    const {configuration, configurationPath} = testApp({}, 'current')
-    const options: PushOptions = {configuration, configurationPath, force: true}
+    const {configuration} = testApp({}, 'current')
+    const options: PushOptions = {configuration, force: true}
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
@@ -354,7 +348,6 @@ app_preferences > url: this url is blocked 6`)
 
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: true,
     }
 
@@ -401,7 +394,6 @@ app_preferences > url: this url is blocked 6`)
     const app = testApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
-      configurationPath: app.configurationPath,
       force: false,
     }
     vi.mocked(confirmPushChanges).mockReset()

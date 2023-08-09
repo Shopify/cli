@@ -34,7 +34,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
 
-  const configuration = mergeAppConfiguration(localApp, remoteApp)
+  const configuration = mergeAppConfiguration(configFilePath, localApp, remoteApp)
 
   await writeAppConfigurationFile(configFilePath, configuration)
 
@@ -116,8 +116,13 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
+export function mergeAppConfiguration(
+  configPath: string,
+  localApp: AppInterface,
+  remoteApp: OrganizationApp,
+): AppConfiguration {
   const configuration: AppConfiguration = {
+    path: configPath,
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
     application_url: remoteApp.applicationUrl.replace(/\/$/, ''),

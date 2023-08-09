@@ -105,7 +105,7 @@ export default async function versionList(options: VersionListOptions) {
   renderCurrentlyUsedConfigInfo({
     org,
     appName: app.title,
-    configFile: isCurrentAppSchema(options.app.configuration) ? basename(options.app.configurationPath) : undefined,
+    configFile: isCurrentAppSchema(options.app.configuration) ? basename(options.app.configuration.path) : undefined,
   })
 
   if (appVersions.length === 0) {

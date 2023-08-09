@@ -133,7 +133,7 @@ export async function ensureGenerateContext(options: {
  * @returns The selected org, app and dev store
  */
 export async function ensureDevContext(options: DevContextOptions, token: string): Promise<DevContextOutput> {
-  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppContext({
+  const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,
     token,
     promptLinkingApp: !options.apiKey,
@@ -181,7 +181,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    await writeAppConfigurationFile(configurationPath, newConfiguration)
+    await writeAppConfigurationFile(configuration.path, newConfiguration)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -554,7 +554,6 @@ async function fetchDevDataFromOptions(
 
 export interface AppContext {
   configuration: AppConfiguration
-  configurationPath: string
   cachedInfo?: CachedAppInfo
   remoteApp?: OrganizationApp
 }
@@ -596,7 +595,7 @@ export async function getAppContext({
 
   let cachedInfo = getCachedAppInfo(directory)
 
-  const {configuration, configurationPath} = await loadAppConfiguration({
+  const {configuration} = await loadAppConfiguration({
     directory,
     configName,
   })
@@ -607,7 +606,7 @@ export async function getAppContext({
     cachedInfo = {
       ...cachedInfo,
       directory,
-      configFile: basename(configurationPath),
+      configFile: basename(configuration.path),
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
@@ -618,7 +617,6 @@ export async function getAppContext({
 
   return {
     configuration,
-    configurationPath,
     cachedInfo,
     remoteApp,
   }
@@ -723,7 +721,7 @@ export function showReusedDeployValues(
     org,
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configurationPath) : undefined,
+    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
   })
 }
