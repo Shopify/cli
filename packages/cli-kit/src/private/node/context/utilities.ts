@@ -34,11 +34,13 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
     case 'github':
       return {
         actor: envs.GITHUB_ACTOR,
+        attempt: envs.GITHUB_RUN_ATTEMPT,
         branch: envs.GITHUB_REF_NAME,
         build: envs.GITHUB_RUN_ID,
         commitMessage: envs.GITHUB_COMMIT_MESSAGE,
         commitSha: envs.GITHUB_SHA,
         run: envs.GITHUB_RUN_ID,
+        runNumber: envs.GITHUB_RUN_NUMBER,
         url: `${envs.GITHUB_SERVER_URL}${envs.GITHUB_REPOSITORY}/actions/runs/${envs.GITHUB_RUN_ID}`,
       }
     case 'gitlab':
@@ -58,10 +60,12 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
 
 export interface Metadata {
   actor?: string
+  attempt?: string
   branch?: string
   build?: string
   commitMessage?: string
   commitSha?: string
   run?: string
+  runNumber?: string
   url?: string
 }

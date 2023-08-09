@@ -304,7 +304,9 @@ describe('ciPlatform', () => {
       GITHUB_ACTION: '1',
       GITHUB_ACTOR: 'github_actor',
       GITHUB_REF_NAME: 'main',
+      GITHUB_RUN_ATTEMPT: '1',
       GITHUB_RUN_ID: '456',
+      GITHUB_RUN_NUMBER: '789',
       GITHUB_COMMIT_MESSAGE: 'Test commit message',
       GITHUB_SHA: 'abcdef',
       GITHUB_SERVER_URL: 'https://github.com',
@@ -320,11 +322,13 @@ describe('ciPlatform', () => {
       name: 'github',
       metadata: {
         actor: 'github_actor',
+        attempt: '1',
         branch: 'main',
         build: '456',
         commitMessage: 'Test commit message',
         commitSha: 'abcdef',
         run: '456',
+        runNumber: '789',
         url: 'https://github.com/user/repo/actions/runs/456',
       },
     })
