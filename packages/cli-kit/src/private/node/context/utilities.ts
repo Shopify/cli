@@ -40,6 +40,7 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
         commitMessage: envs.GITHUB_COMMIT_MESSAGE,
         commitSha: envs.GITHUB_SHA,
         run: envs.GITHUB_RUN_ID,
+        runNumber: envs.GITHUB_RUN_NUMBER,
         url: `${envs.GITHUB_SERVER_URL}${envs.GITHUB_REPOSITORY}/actions/runs/${envs.GITHUB_RUN_ID}`,
       }
     case 'gitlab':
@@ -65,5 +66,6 @@ export interface Metadata {
   commitMessage?: string
   commitSha?: string
   run?: string
+  runNumber?: string
   url?: string
 }
