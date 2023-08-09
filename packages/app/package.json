@@ -41,6 +41,8 @@
     ]
   },
   "dependencies": {
+    "@babel/core": "7.21.0",
+    "@babel/preset-env": "7.20.2",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "2.8.11",
     "@shopify/cli-kit": "3.48.0",
@@ -54,12 +56,15 @@
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
     "javy-cli": "0.1.8",
+    "jscodeshift": "0.14.0",
+    "live-plugin-manager": "0.17.1",
     "serve-static": "1.15.0",
     "ws": "8.13.0"
   },
   "devDependencies": {
     "@types/diff": "^5.0.3",
     "@types/http-proxy": "^1.17.11",
+    "@types/jscodeshift": "^0.11.6",
     "@types/lodash-es": "^4.17.8",
     "@types/node": "14.18.54",
     "@types/serve-static": "^1.15.2",

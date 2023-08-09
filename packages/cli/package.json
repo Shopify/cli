@@ -157,6 +157,9 @@
       "app:function": {
         "description": "Manage Shopify Functions."
       },
+      "app:polaris": {
+        "description": "Manage UI using Polaris."
+      },
       "auth": {
         "description": "Auth operations."
       },

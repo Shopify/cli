@@ -14,6 +14,7 @@
  app generate schema               @shopify/app                 
  app import-flow-legacy-extensions @shopify/app                 
  app info                          @shopify/app                 
+ app polaris transform             @shopify/app                 
  app release                       @shopify/app                 
  app update-url                    @shopify/app                 
  app versions list                 @shopify/app                 

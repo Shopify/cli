@@ -16,6 +16,7 @@
 * [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
+* [`shopify app polaris transform`](#shopify-app-polaris-transform)
 * [`shopify app release`](#shopify-app-release)
 * [`shopify app update-url`](#shopify-app-update-url)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
@@ -395,6 +396,31 @@ FLAGS
 
 DESCRIPTION
   Print basic information about your app and extensions.
+```
+
+## `shopify app polaris transform`
+
+Update your Polaris app using code transformations.
+
+```
+USAGE
+  $ shopify app polaris transform [--no-color] [--verbose] [--path <value>] [-c <value>] [--include <value>] [-t <value>]
+    [-d] [--print] [-f] [--transform-options <value>]
+
+FLAGS
+  -c, --config=<value>         The name of the app configuration.
+  -d, --dry-run                Do a dry-run, no code will be edited
+  -f, --force                  Bypass Git safety checks and forcibly run transform
+  -t, --transform=<value>      The name of the transform to apply
+  --include=<value>            Files, directory, or glob path to transform
+  --no-color                   Disable color output.
+  --path=<value>               [default: .] The path to your app directory.
+  --print                      Print the changed output for comparison
+  --transform-options=<value>  [default: {}] Options to pass to the transform
+  --verbose                    Increase the verbosity of the logs.
+
+DESCRIPTION
+  Update your Polaris app using code transformations.
 ```
 
 ## `shopify app release`

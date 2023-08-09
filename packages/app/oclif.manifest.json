@@ -1284,6 +1284,100 @@
       },
       "args": {}
     },
+    "app:polaris:transform": {
+      "id": "app:polaris:transform",
+      "description": "Update your Polaris app using code transformations.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "no-color": {
+          "name": "no-color",
+          "type": "boolean",
+          "description": "Disable color output.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
+        },
+        "include": {
+          "name": "include",
+          "type": "option",
+          "description": "Files, directory, or glob path to transform",
+          "hidden": false,
+          "multiple": false
+        },
+        "package": {
+          "name": "package",
+          "type": "option",
+          "description": "The package which the transform is related",
+          "hidden": true,
+          "multiple": false
+        },
+        "transform": {
+          "name": "transform",
+          "type": "option",
+          "char": "t",
+          "description": "The name of the transform to apply",
+          "hidden": false,
+          "multiple": false
+        },
+        "dry-run": {
+          "name": "dry-run",
+          "type": "boolean",
+          "char": "d",
+          "description": "Do a dry-run, no code will be edited",
+          "hidden": false,
+          "allowNo": false
+        },
+        "print": {
+          "name": "print",
+          "type": "boolean",
+          "description": "Print the changed output for comparison",
+          "hidden": false,
+          "allowNo": false
+        },
+        "force": {
+          "name": "force",
+          "type": "boolean",
+          "char": "f",
+          "description": "Bypass Git safety checks and forcibly run transform",
+          "hidden": false,
+          "allowNo": false
+        },
+        "transform-options": {
+          "name": "transform-options",
+          "type": "option",
+          "description": "Options to pass to the transform",
+          "hidden": false,
+          "multiple": false,
+          "default": "{}"
+        }
+      },
+      "args": {}
+    },
     "app:scaffold:extension": {
       "id": "app:scaffold:extension",
       "description": "Scaffold an Extension.",
