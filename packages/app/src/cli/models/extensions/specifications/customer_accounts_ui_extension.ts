@@ -27,7 +27,7 @@ const CustomerAccountsSchema = BaseSchema.extend({
     })
     .optional(),
 })
-
+// create extension while deploying
 const spec = createExtensionSpecification({
   identifier: 'customer_accounts_ui_extension',
   dependency,
