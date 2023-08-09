@@ -34,7 +34,6 @@ export const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
 const flowTriggerSpecification = createExtensionSpecification({
   identifier: 'flow_trigger',
   schema: FlowTriggerExtensionSchema,
-  singleEntryPath: false,
   // Flow doesn't have anything to bundle but we need to set this to true to
   // ensure that the extension configuration is uploaded after registration in
   // https://github.com/Shopify/cli/blob/73ac91c0f40be0a57d1b18cb34254b12d3a071af/packages/app/src/cli/services/deploy.ts#L107

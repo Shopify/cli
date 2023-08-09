@@ -1,4 +1,3 @@
-import {configurationFileNames} from '../../../constants.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadFSExtensionsSpecifications} from '../load-specifications.js'
@@ -15,7 +14,7 @@ describe('ui_extension', async () => {
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
-    const configurationPath = joinPath(directory, configurationFileNames.extension.ui)
+    const configurationPath = joinPath(directory, 'shopify.extension.toml')
     const allSpecs = await loadFSExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
     const configuration = {
@@ -148,13 +147,12 @@ describe('ui_extension', async () => {
 
         // Then
         const notFoundPath = joinPath(tmpDir, './ExtensionPointA.js')
-        const tomlPath = joinPath(tmpDir, configurationFileNames.extension.ui)
 
         expect(result).toEqual(
           err(`Couldn't find ${notFoundPath}
 Please check the module path for EXTENSION::POINT::A
 
-Please check the configuration in ${tomlPath}`),
+Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
     })
@@ -183,13 +181,11 @@ Please check the configuration in ${tomlPath}`),
         const result = await uiExtension.validate()
 
         // Then
-        const tomlPath = joinPath(tmpDir, configurationFileNames.extension.ui)
-
         expect(result).toEqual(
           err(`Duplicate targets found: EXTENSION::POINT::A
 Extension point targets must be unique
 
-Please check the configuration in ${tomlPath}`),
+Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
     })

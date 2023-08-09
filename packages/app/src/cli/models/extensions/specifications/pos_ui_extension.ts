@@ -8,9 +8,8 @@ const dependency = '@shopify/retail-ui-extensions'
 const spec = createExtensionSpecification({
   identifier: 'pos_ui_extension',
   dependency,
-  partnersWebIdentifier: 'pos_ui_extension',
   schema: BaseSchema,
-  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)
