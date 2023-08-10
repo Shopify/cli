@@ -1,5 +1,4 @@
 import {createExtensionSpecification} from '../specification.js'
-import {defaultExtensionFlavors} from '../../../constants.js'
 import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -22,9 +21,8 @@ const spec = createExtensionSpecification({
   identifier: 'web_pixel_extension',
   dependency,
   partnersWebIdentifier: 'web_pixel',
-  supportedFlavors: defaultExtensionFlavors.filter((flavor) => !flavor.value.includes('react')),
   schema: WebPixelSchema,
-  appModuleFeatures: (_) => ['bundling', 'esbuild'],
+  appModuleFeatures: (_) => ['bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtime_context,

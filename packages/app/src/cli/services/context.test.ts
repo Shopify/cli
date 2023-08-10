@@ -159,7 +159,7 @@ const FETCH_RESPONSE = {
 const DEFAULT_SELECT_APP_OPTIONS = {
   directory: undefined,
   isLaunchable: true,
-  scopes: '',
+  scopesArray: [],
 }
 
 const options = (app: AppInterface): DeployContextOptions => {

@@ -17,7 +17,13 @@ import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppConfiguration, AppInterface, isCurrentAppSchema, appIsLaunchable} from '../models/app/app.js'
+import {
+  AppConfiguration,
+  AppInterface,
+  isCurrentAppSchema,
+  appIsLaunchable,
+  getAppScopesArray,
+} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -430,10 +436,12 @@ export async function fetchOrCreateOrganizationApp(
   const orgId = await selectOrg(token)
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, token)
   const isLaunchable = appIsLaunchable(app)
-  const scopes = isCurrentAppSchema(app.configuration)
-    ? app.configuration?.access_scopes?.scopes
-    : app.configuration?.scopes
-  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, {isLaunchable, scopes, directory})
+  const scopesArray = getAppScopesArray(app.configuration)
+  const partnersApp = await selectOrCreateApp(app.name, apps, organization, token, {
+    isLaunchable,
+    scopesArray,
+    directory,
+  })
   return partnersApp
 }
 

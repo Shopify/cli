@@ -19,6 +19,11 @@
         "build"
       ]
     },
+    "refresh-readme": {
+      "dependsOn": [
+        "build"
+      ]
+    },
     "lint": {},
     "lint:fix": {
       "dependsOn": [

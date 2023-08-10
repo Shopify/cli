@@ -25,8 +25,9 @@
     "build:affected": "nx affected --target=build",
     "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js",
-    "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && bin/update-cli-kit-version.js && pnpm docs:generate",
-    "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache"
+    "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
+    "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
+    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",

@@ -3,7 +3,7 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateSchema,
 } from '../../api/graphql/update_draft.js'
-import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
+import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -11,7 +11,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
 import {relativizePath} from '@shopify/cli-kit/node/path'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -86,8 +85,7 @@ export async function updateExtensionConfig({
     throw new AbortError(errorMessage)
   }
 
-  const fileContent = await readFile(extension.configurationPath)
-  let configObject = decodeToml(fileContent)
+  let configObject = await loadConfigurationFile(extension.configurationPath)
   const {extensions} = ExtensionsArraySchema.parse(configObject)
 
   if (extensions) {

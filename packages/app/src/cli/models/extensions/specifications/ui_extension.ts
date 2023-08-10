@@ -1,7 +1,6 @@
 import {ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {configurationFileNames} from '../../../constants.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -35,19 +34,17 @@ const UIExtensionSchema = BaseSchema.extend({
 const spec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
-  partnersWebIdentifier: 'ui_extension',
-  singleEntryPath: false,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
     const needsCart =
-      config.extension_points?.find((extensionPoint) => {
+      config?.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
-  validate: async (config, directory) => {
-    return validateUIExtensionPointConfig(directory, config.extension_points)
+  validate: async (config, directory, configPath) => {
+    return validateUIExtensionPointConfig(directory, config.extension_points, configPath)
   },
   deployConfig: async (config, directory) => {
     return {
@@ -62,13 +59,6 @@ const spec = createExtensionSpecification({
   getBundleExtensionStdinContent: (config) => {
     return config.extension_points.map(({module}) => `import '${module}';`).join('\n')
   },
-  shouldFetchCartUrl: (config) => {
-    return (
-      config.extension_points.find((extensionPoint) => {
-        return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'
-      }) !== undefined
-    )
-  },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
       config.extension_points.find((extensionPoint) => {
@@ -81,6 +71,7 @@ const spec = createExtensionSpecification({
 async function validateUIExtensionPointConfig(
   directory: string,
   extensionPoints: NewExtensionPointSchemaType[],
+  configPath: string,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
   const uniqueTargets: string[] = []
@@ -115,9 +106,7 @@ Please check the module path for ${target}`.value,
   }
 
   if (errors.length) {
-    const tomlPath = joinPath(directory, configurationFileNames.extension.ui)
-
-    errors.push(`Please check the configuration in ${tomlPath}`)
+    errors.push(`Please check the configuration in ${configPath}`)
     return err(errors.join('\n\n'))
   }
   return ok({})

@@ -31,9 +31,8 @@ const CustomerAccountsSchema = BaseSchema.extend({
 const spec = createExtensionSpecification({
   identifier: 'customer_accounts_ui_extension',
   dependency,
-  partnersWebIdentifier: 'customer_accounts_ui_extension',
   schema: CustomerAccountsSchema,
-  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild'],
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extension_points,

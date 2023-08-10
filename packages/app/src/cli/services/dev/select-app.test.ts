@@ -71,7 +71,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, localApp.name, 'token', {scopes: 'write_products', isLaunchable: true})
+    const got = await createApp(ORG2, localApp.name, 'token', {scopesArray: ['write_products'], isLaunchable: true})
     expect(got).toEqual(APP1)
 
     // Then

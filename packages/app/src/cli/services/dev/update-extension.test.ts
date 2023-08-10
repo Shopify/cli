@@ -10,7 +10,14 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('../../models/app/loader.js')
+vi.mock('../../models/app/loader.js', async () => {
+  const actual: any = await vi.importActual('../../models/app/loader.js')
+  return {
+    ...actual,
+    parseConfigurationFile: vi.fn(),
+    parseConfigurationObject: vi.fn(),
+  }
+})
 
 const token = 'mock-token'
 const apiKey = 'mock-api-key'
