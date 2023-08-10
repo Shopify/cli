@@ -141,31 +141,37 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const {isAborted} = useAbortSignal(abortSignal)
   const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
 
-  const updateShortcut = (prevShortcut: Shortcut, newShortcut: Shortcut) => {
-    if (!footerContent) return
-    const newFooterContent = {...footerContent}
+  const updateShortcut = useCallback(
+    (prevShortcut: Shortcut, newShortcut: Shortcut) => {
+      if (!footerContent) return
+      const newFooterContent = {...footerContent}
 
-    newFooterContent.shortcuts.map((short) => {
-      if (short.key === prevShortcut.key) {
-        short.action = newShortcut.action
-        short.key = newShortcut.key
-        short.metadata = newShortcut.metadata
-      }
-    })
-    setFooterContent(newFooterContent)
-  }
+      newFooterContent.shortcuts.map((short) => {
+        if (short.key === prevShortcut.key) {
+          short.action = newShortcut.action
+          short.key = newShortcut.key
+          short.metadata = newShortcut.metadata
+        }
+      })
+      setFooterContent(newFooterContent)
+    },
+    [footerContent],
+  )
 
-  const updateSubTitle = (subTitle: string) => {
-    if (!footerContent) return
+  const updateSubTitle = useCallback(
+    (subTitle: string) => {
+      if (!footerContent) return
 
-    setFooterContent({...footerContent, subTitle})
-  }
+      setFooterContent({...footerContent, subTitle})
+    },
+    [footerContent],
+  )
 
-  const runShortcutSyncs = () => {
-    footer?.shortcuts?.forEach((shortcut) => {
+  const runShortcutSyncs = useCallback(() => {
+    footerContent?.shortcuts?.forEach((shortcut) => {
       if (shortcut.syncer) shortcut.syncer({footer: footerContent, updateShortcut, updateSubTitle})
     })
-  }
+  }, [])
 
   useInput(
     (input, key) => {
@@ -180,8 +186,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
     {isActive: typeof onInput !== 'undefined' && useShortcuts},
   )
+
   useEffect(() => {
     runShortcutSyncs()
+  }, [runShortcutSyncs])
+
+  useEffect(() => {
     ;(() => {
       return Promise.all(
         processes.map(async (process, index) => {

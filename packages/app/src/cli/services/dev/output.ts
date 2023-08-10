@@ -153,8 +153,7 @@ function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 10
       const onPoll = async () => {
         const app = await fetchAppFromApiKey(apiKey, token)
         const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
-        if (!currentShortcutAction || currentShortcutAction.metadata?.status === app?.developmentStorePreviewEnabled)
-          return
+        if (!currentShortcutAction) return
         const newShortcutAction = buildDevPreviewShortcut(app?.developmentStorePreviewEnabled ?? false, apiKey, token)
         footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
       }
