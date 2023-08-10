@@ -73,7 +73,8 @@ export function renderDev(
   const {developmentStorePreviewEnabled, apiKey, token} = app
 
   const shortcuts = []
-  if (developmentStorePreviewEnabled) {
+  const enabledStorePreviewShortcut = developmentStorePreviewEnabled !== undefined
+  if (enabledStorePreviewShortcut) {
     shortcuts.push(buildDevPreviewShortcut(developmentStorePreviewEnabled))
   }
 
@@ -87,14 +88,12 @@ export function renderDev(
           await openURL(previewUrl)
         } else if (input === 'q') {
           exit()
-        } else if (input === 'd' || input === 'e') {
-          const currentShortcutAction = footerContext.footer?.shortcuts.find(
-            (shortcut) => shortcut.key === 'd' || shortcut.key === 'e',
-          )
-          if (!currentShortcutAction || currentShortcutAction.key !== input) return
-          const currentShortcutEnableOrDisable = currentShortcutAction.key === 'e'
-          const newShortcutAction = buildDevPreviewShortcut(currentShortcutEnableOrDisable)
-          if (await developerPreviewUpdate(apiKey, token, currentShortcutEnableOrDisable)) {
+        } else if (input === 'd' && enabledStorePreviewShortcut) {
+          const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
+          if (!currentShortcutAction) return
+          const newStatus = !currentShortcutAction.metadata?.status
+          const newShortcutAction = buildDevPreviewShortcut(newStatus)
+          if (await developerPreviewUpdate(apiKey, token, newStatus)) {
             footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
             footerContext.updateSubTitle(subTitle)
           } else {
@@ -124,10 +123,14 @@ export function renderDev(
   return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
 }
 
-function buildDevPreviewShortcut(enabled: boolean) {
+function buildDevPreviewShortcut(status: boolean) {
+  const outputStatus = status ? outputToken.green('on') : outputToken.errorText('off')
   return {
-    key: enabled ? 'd' : 'e',
-    action: outputContent`dev preview mode: ${enabled ? outputToken.green('on') : outputToken.errorText('off')}`.value,
+    key: 'd',
+    action: outputContent`development store preview: ${outputStatus}`.value,
+    metadata: {
+      status,
+    },
   }
 }
 

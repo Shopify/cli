@@ -20,6 +20,9 @@ export interface Footer {
 interface Shortcut {
   key: string
   action: string
+  metadata?: {
+    [key: string]: unknown
+  }
 }
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
@@ -151,6 +154,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           if (short.key === prevShortcut.key) {
             short.action = newShortcut.action
             short.key = newShortcut.key
+            short.metadata = newShortcut.metadata
           }
         })
         setFooterContent(newFooterContent)

@@ -780,7 +780,8 @@ export async function developerPreviewUpdate(apiKey: string, token: string, enab
     }
 
     result = await partnersRequest(query, token, variables)
-    return result?.developmentStorePreviewUpdate?.userErrors.length === 0
+    const userErrors = result?.developmentStorePreviewUpdate?.userErrors
+    return !userErrors || userErrors.length === 0
 
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error: unknown) {
