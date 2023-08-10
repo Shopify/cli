@@ -766,9 +766,6 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
 }
 
 export async function developerPreviewUpdate(apiKey: string, token: string, enabled: boolean) {
-  // We'd launch this after unified app deployment becomes mandatory
-  // if (!app.betas?.unifiedAppDeployment) return
-
   let result: DevelopmentStorePreviewUpdateSchema | undefined
   try {
     const query = DevelopmentStorePreviewUpdateQuery

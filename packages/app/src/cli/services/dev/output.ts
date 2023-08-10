@@ -60,7 +60,7 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export function renderDev(
+export async function renderDev(
   renderConcurrentOptions: RenderConcurrentOptions,
   previewUrl: string,
   app: {
@@ -76,7 +76,11 @@ export function renderDev(
   const shortcuts = []
   const enabledStorePreviewShortcut = developmentStorePreviewEnabled !== undefined
   if (enabledStorePreviewShortcut) {
-    shortcuts.push(buildDevPreviewShortcut(developmentStorePreviewEnabled, apiKey, token))
+    // Enable dev preview on app dev start
+    await developerPreviewUpdate(apiKey, token, true)
+    buildDevPreviewShortcut(true, apiKey, token)
+
+    shortcuts.push(buildDevPreviewShortcut(true, apiKey, token))
   }
 
   const subTitle = `Preview URL: ${previewUrl}`
