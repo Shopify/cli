@@ -41,13 +41,11 @@ export const validateFieldShape = (
   }
 
   if (isCommerceObjectField) {
-    if (type === 'flow_action' || type === 'flow_trigger') {
-      return baseFieldSchema
-        .extend({
-          required: zod.boolean().optional(),
-        })
-        .parse(configField)
-    }
+    return baseFieldSchema
+      .extend({
+        required: zod.boolean().optional(),
+      })
+      .parse(configField)
   }
 
   return baseFieldSchema.parse(configField)
