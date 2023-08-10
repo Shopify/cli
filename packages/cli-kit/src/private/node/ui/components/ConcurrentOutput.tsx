@@ -17,9 +17,16 @@ export interface Footer {
   subTitle?: string
 }
 
+export interface FooterContext {
+  footer?: Footer
+  updateShortcut: (prevShortcut: Shortcut, newShortcut: Shortcut) => void
+  updateSubTitle: (subTitle: string) => void
+}
+
 interface Shortcut {
   key: string
   action: string
+  syncer?: (footerContext: FooterContext) => void
   metadata?: {
     [key: string]: unknown
   }
@@ -28,16 +35,7 @@ export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortSignal: AbortSignal
   showTimestamps?: boolean
-  onInput?: (
-    input: string,
-    key: Key,
-    exit: () => void,
-    footerContext: {
-      footer?: Footer
-      updateShortcut: (prevShortcut: Shortcut, newShortcut: Shortcut) => void
-      updateSubTitle: (subTitle: string) => void
-    },
-  ) => Promise<void>
+  onInput?: (input: string, key: Key, exit: () => void, footerContext: FooterContext) => Promise<void>
   footer?: Footer
   // If set, the component is not automatically unmounted once the processes have all finished
   keepRunningAfterProcessesResolve?: boolean
@@ -142,29 +140,36 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   )
   const {isAborted} = useAbortSignal(abortSignal)
   const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
+
+  const updateShortcut = (prevShortcut: Shortcut, newShortcut: Shortcut) => {
+    if (!footerContent) return
+    const newFooterContent = {...footerContent}
+
+    newFooterContent.shortcuts.map((short) => {
+      if (short.key === prevShortcut.key) {
+        short.action = newShortcut.action
+        short.key = newShortcut.key
+        short.metadata = newShortcut.metadata
+      }
+    })
+    setFooterContent(newFooterContent)
+  }
+
+  const updateSubTitle = (subTitle: string) => {
+    if (!footerContent) return
+
+    setFooterContent({...footerContent, subTitle})
+  }
+
+  const runShortcutSyncs = () => {
+    footer?.shortcuts?.forEach((shortcut) => {
+      if (shortcut.syncer) shortcut.syncer({footer: footerContent, updateShortcut, updateSubTitle})
+    })
+  }
+
   useInput(
     (input, key) => {
       handleCtrlC(input, key)
-
-      const updateShortcut = (prevShortcut: Shortcut, newShortcut: Shortcut) => {
-        if (!footerContent) return
-        const newFooterContent = {...footerContent}
-
-        newFooterContent.shortcuts.map((short) => {
-          if (short.key === prevShortcut.key) {
-            short.action = newShortcut.action
-            short.key = newShortcut.key
-            short.metadata = newShortcut.metadata
-          }
-        })
-        setFooterContent(newFooterContent)
-      }
-
-      const updateSubTitle = (subTitle: string) => {
-        if (!footerContent) return
-
-        setFooterContent({...footerContent, subTitle})
-      }
 
       const triggerOnInput = async () => {
         await onInput!(input, key, () => treeKill('SIGINT'), {footer: footerContent, updateShortcut, updateSubTitle})
@@ -176,6 +181,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     {isActive: typeof onInput !== 'undefined' && useShortcuts},
   )
   useEffect(() => {
+    runShortcutSyncs()
     ;(() => {
       return Promise.all(
         processes.map(async (process, index) => {
@@ -195,7 +201,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         setState(ConcurrentOutputState.Stopped)
         unmountInk(error)
       })
-  }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
+  }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve, footer])
   const {lineVertical} = figures
   return (
     <>

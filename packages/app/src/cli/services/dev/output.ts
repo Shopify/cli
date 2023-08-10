@@ -1,10 +1,11 @@
 import {PartnersURLs} from './urls.js'
+import {fetchAppFromApiKey} from './fetch.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
 import {developerPreviewUpdate} from '../context.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
+import {FooterContext, renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {basename} from '@shopify/cli-kit/node/path'
 import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -75,7 +76,7 @@ export function renderDev(
   const shortcuts = []
   const enabledStorePreviewShortcut = developmentStorePreviewEnabled !== undefined
   if (enabledStorePreviewShortcut) {
-    shortcuts.push(buildDevPreviewShortcut(developmentStorePreviewEnabled))
+    shortcuts.push(buildDevPreviewShortcut(developmentStorePreviewEnabled, apiKey, token))
   }
 
   const subTitle = `Preview URL: ${previewUrl}`
@@ -92,7 +93,7 @@ export function renderDev(
           const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
           if (!currentShortcutAction) return
           const newStatus = !currentShortcutAction.metadata?.status
-          const newShortcutAction = buildDevPreviewShortcut(newStatus)
+          const newShortcutAction = buildDevPreviewShortcut(newStatus, apiKey, token)
           if (await developerPreviewUpdate(apiKey, token, newStatus)) {
             footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
             footerContext.updateSubTitle(subTitle)
@@ -123,7 +124,7 @@ export function renderDev(
   return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
 }
 
-function buildDevPreviewShortcut(status: boolean) {
+function buildDevPreviewShortcut(status: boolean, apiKey: string, token: string) {
   const outputStatus = status ? outputToken.green('on') : outputToken.errorText('off')
   return {
     key: 'd',
@@ -131,6 +132,7 @@ function buildDevPreviewShortcut(status: boolean) {
     metadata: {
       status,
     },
+    syncer: buildPollForDevPreviewMode(apiKey, token),
   }
 }
 
@@ -140,5 +142,29 @@ async function partnersURL(organizationId: string, appId: string) {
       label: 'Partners Dashboard',
       url: `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
     },
+  }
+}
+
+function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 10) {
+  return (footerContext: FooterContext) => {
+    const currentIntervalInSeconds = interval
+
+    return new Promise<void>((_resolve, _reject) => {
+      const onPoll = async () => {
+        const app = await fetchAppFromApiKey(apiKey, token)
+        const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
+        if (!currentShortcutAction || currentShortcutAction.metadata?.status === app?.developmentStorePreviewEnabled)
+          return
+        const newShortcutAction = buildDevPreviewShortcut(app?.developmentStorePreviewEnabled ?? false, apiKey, token)
+        footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
+      }
+
+      const startPolling = () => {
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
+        setInterval(onPoll, currentIntervalInSeconds * 1000)
+      }
+
+      startPolling()
+    })
   }
 }

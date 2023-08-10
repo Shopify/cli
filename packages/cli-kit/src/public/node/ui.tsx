@@ -48,6 +48,12 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
   renderOptions?: RenderOptions
 }
 
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
+  renderOptions?: RenderOptions
+}
+
+export {FooterContext} from '../../private/node/ui/components/ConcurrentOutput.js'
+
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
  * @example
