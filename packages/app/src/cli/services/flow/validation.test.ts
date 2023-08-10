@@ -4,7 +4,7 @@ import {describe, expect, test} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('validateFieldShape', () => {
-  test('should return true when non-commerce object field has valid shape', () => {
+  test('should return true when non-commerce object field has valid shape and is flow action', () => {
     // given
     const nonCommerceObjectField: ConfigField = {
       type: 'multi_line_text_field',
@@ -18,7 +18,21 @@ describe('validateFieldShape', () => {
     expect(() => validateFieldShape(nonCommerceObjectField, 'flow_action', 'handle', 0)).not.toThrow()
   })
 
-  test('should return true when field is a commerce object', () => {
+  test('should return true when non-commerce object field has valid shape and is flow trigger', () => {
+    // given
+    const nonCommerceObjectField: ConfigField = {
+      type: 'multi_line_text_field',
+      key: 'my field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => validateFieldShape(nonCommerceObjectField, 'flow_trigger', 'handle', 0)).not.toThrow()
+  })
+
+  test('should return true when field is a commerce object and is flow action', () => {
     // given
     const commerceObjectField: ConfigField = {
       type: 'product_reference',
@@ -28,6 +42,18 @@ describe('validateFieldShape', () => {
 
     // then
     expect(() => validateFieldShape(commerceObjectField, 'flow_action', 'handle', 0)).not.toThrow()
+  })
+
+  test('should return true when field is a commerce object and is flow trigger', () => {
+    // given
+    const commerceObjectField: ConfigField = {
+      type: 'product_reference',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => validateFieldShape(commerceObjectField, 'flow_trigger', 'handle', 0)).not.toThrow()
   })
 
   test('should throw an error if key is not specified for non-commerce object field', () => {
@@ -77,6 +103,28 @@ describe('validateFieldShape', () => {
           message: `'name' property must be a string for 'field[0]' ${JSON.stringify(
             invalidField,
           )} of flow extension 'handle'`,
+        },
+      ]),
+    )
+  })
+
+  test('should throw an error if key non alpha or space chars for non-commerce object field in flow trigger', () => {
+    // given
+    const invalidField: ConfigField = {
+      type: 'string',
+      key: 'my-field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // then
+    expect(() => validateFieldShape(invalidField, 'flow_trigger', 'handle', 0)).toThrowError(
+      new zod.ZodError([
+        {
+          validation: 'regex',
+          code: 'invalid_string',
+          message: 'String must contain only alphabetic characters and spaces',
+          path: ['key'],
         },
       ]),
     )
