@@ -1,4 +1,4 @@
-import {loadSchemaPatchFromPath} from '../../../services/flow/utils.js'
+import {loadSchemaFromPath} from '../../../services/flow/utils.js'
 import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {isSchemaTypeReference, validateFieldShape} from '../../../services/flow/validation.js'
@@ -54,7 +54,7 @@ const flowTriggerSpecification = createExtensionSpecification({
       handle: config.handle,
       description: config.description,
       fields: serializeFields('flow_trigger', config.settings?.fields),
-      schema_patch: await loadSchemaPatchFromPath(extensionPath, config.schema),
+      schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
     }
   },
 })

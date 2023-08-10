@@ -7,7 +7,7 @@ import {
   validateReturnTypeConfig,
 } from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
-import {loadSchemaPatchFromPath} from '../../../services/flow/utils.js'
+import {loadSchemaFromPath} from '../../../services/flow/utils.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
@@ -54,7 +54,7 @@ const flowActionSpecification = createExtensionSpecification({
       validation_url: config.validation_url,
       custom_configuration_page_url: config.config_page_url,
       custom_configuration_page_preview_url: config.config_page_preview_url,
-      schema_patch: await loadSchemaPatchFromPath(extensionPath, config.schema),
+      schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
       return_type_ref: config.return_type_ref,
     }
   },
