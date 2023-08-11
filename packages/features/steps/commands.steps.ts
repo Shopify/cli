@@ -1,4 +1,3 @@
-import {executables} from '../lib/constants.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as fs from 'fs/promises'
 import {strict as assert} from 'assert'
@@ -22,7 +21,6 @@ the diff below and figure out what is broken.
 
 When(/I list the available commands/, async function () {
   const commandFlags = ['commands', '--no-header', '--columns=Command,Plugin']
-  console.log(executables.cli, ...commandFlags)
   this.commandResult = (await this.execCLI(commandFlags)).stdout
 })
 
