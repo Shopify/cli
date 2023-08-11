@@ -1,8 +1,8 @@
-import {isDebug} from './environment'
+import {isDebug} from './environment.js'
 import colors from 'ansi-colors'
-import {execa} from 'execa'
+import {ExecaChildProcess, execa} from 'execa'
 
-interface ExecOptions {
+export interface ExecOptions {
   cwd?: string
   env?: NodeJS.ProcessEnv
 }
@@ -15,7 +15,7 @@ interface ExecOptions {
  * @param command - The command to be executed.
  * @returns A promise that resolves or rejects when the command execution finishes.
  */
-export function exec(command: string, args: string[] = [], options?: ExecOptions) {
+export function exec(command: string, args: string[] = [], options?: ExecOptions): ExecaChildProcess<string> {
   if (isDebug) {
     console.log(colors.gray(`Running: ${command} ${args.join(' ')}`))
   }
@@ -28,12 +28,12 @@ export function exec(command: string, args: string[] = [], options?: ExecOptions
   }
   const shortCommand = command.split('/').slice(-1).pop() || ''
   const commandProcess = execa(command, args, _options)
-  commandProcess.stdout.on('data', (data: string) => {
+  commandProcess.stdout?.on('data', (data: string) => {
     if (isDebug) {
       console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
     }
   })
-  commandProcess.stderr.on('data', (data: string) => {
+  commandProcess.stderr?.on('data', (data: string) => {
     if (isDebug) {
       console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
     }

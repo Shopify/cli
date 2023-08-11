@@ -1,7 +1,11 @@
-import {exec} from '../lib/system'
+import {exec} from '../lib/system.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as path from 'pathe'
 import {strict as assert} from 'assert'
+import {fileURLToPath} from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 When(/I look at the github actions we use/, async function () {
   const {stdout} = await exec('grep', ['-Roh', 'uses: \\S*', '.'], {cwd: path.join(__dirname, '../../../.github')})

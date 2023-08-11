@@ -1,5 +1,5 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
+import {executables} from '../lib/constants.js'
+import {exec} from '../lib/system.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as path from 'pathe'
 import fs from 'fs-extra'
@@ -30,9 +30,9 @@ When(
         '--template',
         'https://github.com/Shopify/shopify-app-template-remix',
       ],
-      {env: {...process.env, ...this.temporaryEnv, FORCE_COLOR: '0'}},
+      {env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: '', FORCE_COLOR: '0'}},
     )
-    const hyphenatedAppName = stdout.match(/([\w-]+) is ready for you to build!/)[1]
+    const hyphenatedAppName = stdout?.match(/([\w-]+) is ready for you to build!/)?.[1] ?? appName
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
   },
 )
@@ -41,18 +41,14 @@ Then(
   /I have an app named (.+) generated from the template with (.+) as package manager/,
   {},
   async function (appName: string, packageManager: string) {
-    const {stdout} = await exec(executables.cli, ['app', 'info', '--path', this.appDirectory, '--json'], {
-      env: {...process.env, ...this.temporaryEnv},
-    })
+    const {stdout} = await this.execCLI(['app', 'info', '--path', this.appDirectory, '--json'])
     const results = JSON.parse(stdout)
     assert.equal(results.packageManager, packageManager)
   },
 )
 
 Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
-  await exec('node', [executables.cli, 'app', 'build', '--path', this.appDirectory], {
-    env: {...process.env, ...this.temporaryEnv},
-  })
+  await this.execCLI(['app', 'build', '--path', this.appDirectory])
 })
 
 Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {

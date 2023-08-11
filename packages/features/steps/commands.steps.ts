@@ -1,5 +1,4 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
+import {executables} from '../lib/constants.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as fs from 'fs/promises'
 import {strict as assert} from 'assert'
@@ -23,9 +22,8 @@ the diff below and figure out what is broken.
 
 When(/I list the available commands/, async function () {
   const commandFlags = ['commands', '--no-header', '--columns=Command,Plugin']
-  this.commandResult = (
-    await exec('node', [executables.cli, ...commandFlags], {env: {...process.env, ...this.temporaryEnv}})
-  ).stdout
+  console.log(executables.cli, ...commandFlags)
+  this.commandResult = (await this.execCLI(commandFlags)).stdout
 })
 
 Then(/I see all commands matching the snapshot/, async function () {

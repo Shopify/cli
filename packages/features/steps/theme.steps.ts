@@ -1,12 +1,10 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
 import {Then} from '@cucumber/cucumber'
 import * as path from 'pathe'
 import fs from 'fs'
 import {strict as assert} from 'assert'
 
 Then(/I see Theme's help menu/, {timeout: 60 * 1000}, async function () {
-  await exec('node', [executables.cli, 'theme', 'help-old'], {env: {...process.env, ...this.temporaryEnv}})
+  await this.execCLI(['theme', 'help-old'])
 })
 
 Then(/I have Ruby CLI installed as a vendor dependency/, {}, async function () {
