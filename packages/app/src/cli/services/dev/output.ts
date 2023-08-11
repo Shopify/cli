@@ -8,7 +8,8 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {FooterContext, renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {basename} from '@shopify/cli-kit/node/path'
-import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand, outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -166,8 +167,8 @@ async function partnersURL(organizationId: string, appId: string) {
   }
 }
 
-function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 10) {
-  return (footerContext: FooterContext) => {
+function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 5) {
+  return (footerContext: FooterContext, abortController: AbortController) => {
     const currentIntervalInSeconds = interval
 
     return new Promise<void>((_resolve, _reject) => {
@@ -185,10 +186,15 @@ function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 10
 
       const startPolling = () => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        setInterval(onPoll, currentIntervalInSeconds * 1000)
+        return setInterval(onPoll, currentIntervalInSeconds * 1000)
       }
 
-      startPolling()
+      const pollId = startPolling()
+
+      abortController.signal.addEventListener('abort', async () => {
+        outputDebug('Stopping poll for dev preview mode...')
+        clearInterval(pollId)
+      })
     })
   }
 }

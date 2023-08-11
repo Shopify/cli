@@ -51,7 +51,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -133,7 +133,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -185,7 +185,7 @@ describe('ConcurrentOutput', () => {
       <ConcurrentOutput
         processes={[neverEndingProcess]}
         onInput={(input, key) => onInput(input, key)}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
       />,
     )
 
@@ -216,7 +216,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={abortController.signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -269,7 +269,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -316,7 +316,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -363,7 +363,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {

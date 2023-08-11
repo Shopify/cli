@@ -26,7 +26,7 @@ export interface FooterContext {
 interface Shortcut {
   key: string
   action: string
-  syncer?: (footerContext: FooterContext) => void
+  syncer?: (footerContext: FooterContext, abortController: AbortController) => void
   state?: {
     [key: string]: unknown
   }
@@ -165,7 +165,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
   const runShortcutSyncs = () => {
     footerContent?.shortcuts?.forEach((shortcut) => {
-      if (shortcut.syncer) shortcut.syncer({footer: footerContent, updateShortcut, updateSubTitle})
+      if (shortcut.syncer) shortcut.syncer({footer: footerContent, updateShortcut, updateSubTitle}, abortController)
     })
   }
 

@@ -53,7 +53,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -329,15 +329,7 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
-  const abortController = new AbortController()
-  abortController.signal.addEventListener('abort', async () => {
-    setInterval(() => {
-      treeKill('SIGINT')
-    }, 2000)
-    outputInfo('\n\nInitiating graceful shutdown ...')
-    await disableDeveloperPreview({apiKey, token})
-    tunnelClient?.stopTunnel()
-  })
+  const abortController = configureDevAbortController(apiKey, token, tunnelClient)
 
   const app = {
     canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
@@ -365,6 +357,19 @@ async function dev(options: DevOptions) {
       abortController,
     })
   }
+}
+
+function configureDevAbortController(apiKey: string, token: string, tunnelClient: TunnelClient | undefined) {
+  const abortController = new AbortController()
+  abortController.signal.addEventListener('abort', async () => {
+    setTimeout(() => {
+      treeKill('SIGINT')
+    }, 2000)
+    outputDebug('\n\nInitiating graceful shutdown ...')
+    await disableDeveloperPreview({apiKey, token})
+    tunnelClient?.stopTunnel()
+  })
+  return abortController
 }
 
 function setPreviousAppId(directory: string, apiKey: string) {
