@@ -1,28 +1,22 @@
-const {platform} = require('os')
+import {platform} from 'os'
 
-const isCI = process.env.NODE_ENV === 'ci'
 const featureToRun = process.env.FEATURE
 
-const common = [
-  '--publish-quiet',
-  '--require-module ts-node/register',
-  '--require world/**/*.ts',
-  '--require steps/**/*.ts',
-  '--require lib/**/*.ts',
-  '--format @cucumber/pretty-formatter',
-  '--parallel 3',
-]
+const result = {
+  publishQuiet: true,
+  import: ['world/**/*.ts', 'steps/**/*.ts', 'lib/**/*.ts'],
+  format: ['@cucumber/pretty-formatter'],
+  parallel: 3,
+}
 
 if (platform() === 'win32') {
-  common.push(`--tags "not @skip_windows"`)
+  result.tags = 'not @skip_windows'
 }
 
 if (featureToRun) {
-  common.push(featureToRun)
+  result.paths = [featureToRun]
 } else {
-  common.push('features/**/*.feature')
+  result.paths = ['features/**/*.feature']
 }
 
-module.exports = {
-  default: common.join(' '),
-}
+export default result

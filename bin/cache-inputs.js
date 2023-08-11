@@ -10,9 +10,9 @@ import {dirname, join} from 'pathe'
 import {createRequire} from 'module'
 import {fileURLToPath} from 'url'
 import crypto from "crypto"
+import {execa} from 'execa'
 
 const require = createRequire(import.meta.url)
-const execa = require('execa')
 const {readFile} = require('fs-extra')
 
 // Paths

@@ -1,13 +1,26 @@
-import {executables} from '../lib/constants'
-import {exec} from '../lib/system'
+import {executables} from '../lib/constants.js'
+import {exec} from '../lib/system.js'
 import * as path from 'pathe'
 import {When, Then} from '@cucumber/cucumber'
 import fs from 'fs-extra'
 import {strict as assert} from 'assert'
 
+interface AppInfo {
+  extensions: {
+    [category: string]: Extension[]
+  }
+  allExtensions: Extension[]
+}
+
+interface Extension {
+  configuration: ExtensionConfiguration
+  directory: string
+  entrySourceFilePath: string
+}
+
 interface ExtensionConfiguration {
   name: string
-  extensionType: string
+  type: string
 }
 
 When(
@@ -42,8 +55,8 @@ Then(
   /I have a (.+) extension named (.+) of type ([^\s]+) and flavor (.+)$/,
   {},
   async function (category: string, appName: string, extensionType: string, flavor: string) {
-    const appInfo = await this.appInfo()
-    const extension = appInfo.extensions[category].find((extension: {configuration: ExtensionConfiguration}) => {
+    const appInfo: AppInfo = await this.appInfo()
+    const extension = appInfo.extensions[category]?.find((extension: {configuration: ExtensionConfiguration}) => {
       return extension.configuration.name === appName
     })
     if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
@@ -76,8 +89,8 @@ Then(
   /I have a (.+) extension named (.+) of type ([^\s]+)$/,
   {},
   async function (category: string, appName: string, extensionType: string) {
-    const appInfo = await this.appInfo()
-    const extension = appInfo.extensions[category].find((extension: {configuration: ExtensionConfiguration}) => {
+    const appInfo: AppInfo = await this.appInfo()
+    const extension = appInfo.extensions[category]?.find((extension: {configuration: ExtensionConfiguration}) => {
       return extension.configuration.name === appName
     })
     if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
@@ -89,8 +102,8 @@ Then(
   /I do not have a (.+) extension named (.+) of type ([^\s]+)/,
   {},
   async function (category: string, appName: string, extensionType: string) {
-    const appInfo = await this.appInfo()
-    const extension = appInfo.extensions[category].find((extension: {configuration: ExtensionConfiguration}) => {
+    const appInfo: AppInfo = await this.appInfo()
+    const extension = appInfo.extensions[category]?.find((extension: {configuration: ExtensionConfiguration}) => {
       return extension.configuration.name === appName
     })
     assert.equal(extension, undefined)
@@ -98,7 +111,7 @@ Then(
 )
 
 Then(/The extension named (.+) contains the theme extension directories/, {}, async function (appName: string) {
-  const appInfo = await this.appInfo()
+  const appInfo: AppInfo = await this.appInfo()
   const extension = appInfo.allExtensions.find((extension: {configuration: ExtensionConfiguration}) => {
     return extension.configuration.name === appName
   })

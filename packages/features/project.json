@@ -10,7 +10,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "command": "pnpm cucumber-js -p default -c cucumber.js",
+        "command": "pnpm cucumber-esm",
         "cwd": "packages/features"
       }
     },
