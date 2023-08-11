@@ -2,7 +2,7 @@
 const path = require('pathe')
 const file = require('fs')
 
-const errors = ['Abort', 'AbortSilent', 'Bug', 'BugSilent']
+const errors = ['AbortError', 'AbortSilentError', 'BugError', 'BugSilentError']
 
 module.exports = {
   meta: {

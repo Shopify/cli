@@ -6,15 +6,6 @@ import {outputDebug, outputContent, outputToken} from '../../public/node/output.
 import {parse, stringify} from 'envfile'
 
 /**
- * Error that's thrown when the .env is not found.
- * @param path - Path to the .env file.
- * @returns An abort error.
- */
-export const DotEnvNotFoundError = (path: string): AbortError => {
-  return new AbortError(`The environment file at ${path} does not exist.`)
-}
-
-/**
  * This interface represents a .env file.
  */
 export interface DotEnvFile {
@@ -36,7 +27,7 @@ export interface DotEnvFile {
 export async function readAndParseDotEnv(path: string): Promise<DotEnvFile> {
   outputDebug(outputContent`Reading the .env file at ${outputToken.path(path)}`)
   if (!(await fileExists(path))) {
-    throw DotEnvNotFoundError(path)
+    throw new AbortError(`The environment file at ${path} does not exist.`)
   }
   const content = await readFile(path)
   return {

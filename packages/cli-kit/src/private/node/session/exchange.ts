@@ -173,6 +173,7 @@ function tokenRequestErrorHandler(error: string) {
     // This means the token is invalid. We clear the session and throw an error to let the caller know.
     return new InvalidRequestError()
   }
+  // eslint-disable-next-line @shopify/cli/no-error-factory-functions
   return new AbortError(error)
 }
 

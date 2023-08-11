@@ -89,7 +89,7 @@ describe('fetchOrganizations', async () => {
     const got = fetchOrganizations('token')
 
     // Then
-    await expect(got).rejects.toThrow(NoOrgError())
+    await expect(got).rejects.toThrow(new NoOrgError())
     expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 })
@@ -115,7 +115,7 @@ describe('fetchApp', async () => {
     const got = () => fetchOrgAndApps(ORG1.id, 'token')
 
     // Then
-    await expect(got).rejects.toThrowError(NoOrgError())
+    await expect(got).rejects.toThrowError(new NoOrgError())
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
@@ -188,7 +188,7 @@ describe('NoOrgError', () => {
   test('renders correctly', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = NoOrgError('3')
+    const subject = new NoOrgError('3')
 
     // When
     renderFatalError(subject)
