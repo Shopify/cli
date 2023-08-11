@@ -4,7 +4,6 @@ import {
   installNodeModules,
   getDependencies,
   getPackageName,
-  PackageJsonNotFoundError,
   checkForNewVersion,
   readAndParsePackageJson,
   findUpAndReadPackageJson,
@@ -16,10 +15,11 @@ import {
   installNPMDependenciesRecursively,
   addNPMDependencies,
   DependencyVersion,
+  PackageJsonNotFoundError,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
-import {normalizePath as pathNormalize, joinPath, dirname} from './path.js'
+import {joinPath, dirname, normalizePath} from './path.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect} from 'vitest'
 
@@ -282,7 +282,9 @@ describe('getDependencies', () => {
       const packageJsonPath = joinPath(tmpDir, 'package.json')
 
       // When
-      await expect(getDependencies(packageJsonPath)).rejects.toEqual(PackageJsonNotFoundError(pathNormalize(tmpDir)))
+      await expect(getDependencies(packageJsonPath)).rejects.toEqual(
+        new PackageJsonNotFoundError(normalizePath(tmpDir)),
+      )
     })
   })
 })
@@ -590,7 +592,7 @@ describe('findUpAndReadPackageJson', () => {
 
       // When/Then
       await expect(() => findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
-        FindUpAndReadPackageJsonNotFoundError(subDirectory),
+        new FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
     })
   })
@@ -603,7 +605,7 @@ describe('addResolutionOrOverride', () => {
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
-      await expect(result).rejects.toThrow(FindUpAndReadPackageJsonNotFoundError(tmpDir))
+      await expect(result).rejects.toThrow(new FindUpAndReadPackageJsonNotFoundError(tmpDir))
     })
   })
 
@@ -783,7 +785,7 @@ describe('getPackageManager', () => {
 
       // When/Then
       await expect(() => getPackageManager(subDirectory)).rejects.toThrowError(
-        FindUpAndReadPackageJsonNotFoundError(subDirectory),
+        new FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
     })
   })

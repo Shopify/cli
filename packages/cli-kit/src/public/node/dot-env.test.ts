@@ -1,4 +1,4 @@
-import {DotEnvNotFoundError, patchEnvFile, readAndParseDotEnv, writeDotEnv} from './dot-env.js'
+import {patchEnvFile, readAndParseDotEnv, writeDotEnv} from './dot-env.js'
 import {inTemporaryDirectory, writeFile, readFile} from './fs.js'
 import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
@@ -9,7 +9,7 @@ describe('readAndParseDotEnv', () => {
     const dotEnvPath = '/invalid/path/.env'
     await expect(async () => {
       await readAndParseDotEnv(dotEnvPath)
-    }).rejects.toEqual(DotEnvNotFoundError(dotEnvPath))
+    }).rejects.toThrow(/The environment file at .* does not exist./)
   })
 
   test('returns the file if it exists and the format is valid', async () => {
