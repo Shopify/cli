@@ -55,6 +55,8 @@ module ShopifyCLI
 
         def cookie_sections
           CGI::Cookie.parse(cookie)["hot_reload_files"].join.split(",") || []
+        rescue StandardError
+          []
         end
 
         def core?(path)
