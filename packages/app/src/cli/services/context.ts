@@ -765,7 +765,19 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   }))
 }
 
-export async function developerPreviewUpdate(apiKey: string, token: string, enabled: boolean) {
+export async function enableDeveloperPreview({apiKey, token}: {apiKey: string; token: string}) {
+  return developerPreviewUpdate({apiKey, token, enabled: true})
+}
+
+export async function developerPreviewUpdate({
+  apiKey,
+  token,
+  enabled,
+}: {
+  apiKey: string
+  token: string
+  enabled: boolean
+}) {
   let result: DevelopmentStorePreviewUpdateSchema | undefined
   try {
     const query = DevelopmentStorePreviewUpdateQuery

@@ -17,7 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
-import {isPreviewModeEnabled} from './extensions/common.js'
+import {canEnablePreviewMode} from './extensions/common.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -328,10 +328,9 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
-  const enabledPreviewMode = isPreviewModeEnabled(remoteApp, localApp) ? developmentStorePreviewEnabled : undefined
-
   const app = {
-    developmentStorePreviewEnabled: enabledPreviewMode ?? false,
+    canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
+    developmentStorePreviewEnabled,
     apiKey,
     token,
   }

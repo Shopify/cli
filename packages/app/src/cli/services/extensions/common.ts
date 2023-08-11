@@ -47,7 +47,7 @@ export async function ensureExtensionDirectoryExists({name, app}: {name: string;
   return extensionDirectory
 }
 
-export function isPreviewModeEnabled(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
+export function canEnablePreviewMode(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
   const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
   if (!unifiedDeployment) return false
 

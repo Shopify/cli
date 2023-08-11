@@ -48,6 +48,7 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
       ],
       additionalProcesses: [],
       app: {
+        canEnablePreviewMode: false,
         developmentStorePreviewEnabled: false,
         apiKey: '',
         token: '',

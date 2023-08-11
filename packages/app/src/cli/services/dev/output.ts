@@ -3,7 +3,7 @@ import {fetchAppFromApiKey} from './fetch.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
-import {developerPreviewUpdate} from '../context.js'
+import {developerPreviewUpdate, enableDeveloperPreview} from '../context.js'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {FooterContext, renderConcurrent, RenderConcurrentOptions, renderInfo} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
@@ -64,6 +64,7 @@ export async function renderDev(
   renderConcurrentOptions: RenderConcurrentOptions,
   previewUrl: string,
   app: {
+    canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
     apiKey: string
     token: string
@@ -71,16 +72,18 @@ export async function renderDev(
 ) {
   let options = renderConcurrentOptions
 
-  const {developmentStorePreviewEnabled, apiKey, token} = app
+  const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
 
   const shortcuts = []
-  const enabledStorePreviewShortcut = developmentStorePreviewEnabled !== undefined
-  if (enabledStorePreviewShortcut) {
+  if (canEnablePreviewMode) {
     // Enable dev preview on app dev start
-    await developerPreviewUpdate(apiKey, token, true)
-    buildDevPreviewShortcut(true, apiKey, token)
+    const enablingDevPreviewSucceeds = await enableDeveloperPreview({apiKey, token})
 
-    shortcuts.push(buildDevPreviewShortcut(true, apiKey, token))
+    const devPreviewStatus = enablingDevPreviewSucceeds ? true : developmentStorePreviewEnabled
+
+    buildDevPreviewShortcut({devPreviewStatus, apiKey, token})
+
+    shortcuts.push(buildDevPreviewShortcut({devPreviewStatus, apiKey, token}))
   }
 
   const subTitle = `Preview URL: ${previewUrl}`
@@ -88,17 +91,23 @@ export async function renderDev(
   if (previewUrl) {
     options = {
       ...options,
-      onInput: async (input, _key, exit, footerContext) => {
+      onInputAsync: async (input, _key, exit, footerContext) => {
         if (input === 'p' && previewUrl) {
           await openURL(previewUrl)
         } else if (input === 'q') {
           exit()
-        } else if (input === 'd' && enabledStorePreviewShortcut) {
+        } else if (input === 'd' && canEnablePreviewMode) {
+          if (!footerContext) return
           const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
           if (!currentShortcutAction) return
-          const newStatus = !currentShortcutAction.metadata?.status
-          const newShortcutAction = buildDevPreviewShortcut(newStatus, apiKey, token)
-          if (await developerPreviewUpdate(apiKey, token, newStatus)) {
+          const newDevPreviewStatus = !currentShortcutAction.state?.devPreviewStatus
+          const newShortcutAction = buildDevPreviewShortcut({devPreviewStatus: newDevPreviewStatus, apiKey, token})
+          const developerPreviewUpdateValue = await developerPreviewUpdate({
+            apiKey,
+            token,
+            enabled: newDevPreviewStatus,
+          })
+          if (developerPreviewUpdateValue) {
             footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
             footerContext.updateSubTitle(subTitle)
           } else {
@@ -128,13 +137,21 @@ export async function renderDev(
   return renderConcurrent({...options, keepRunningAfterProcessesResolve: true})
 }
 
-function buildDevPreviewShortcut(status: boolean, apiKey: string, token: string) {
-  const outputStatus = status ? outputToken.green('on') : outputToken.errorText('off')
+function buildDevPreviewShortcut({
+  devPreviewStatus,
+  apiKey,
+  token,
+}: {
+  devPreviewStatus?: boolean
+  apiKey: string
+  token: string
+}) {
+  const outputStatus = devPreviewStatus ? outputToken.green('on') : outputToken.errorText('off')
   return {
     key: 'd',
     action: outputContent`development store preview: ${outputStatus}`.value,
-    metadata: {
-      status,
+    state: {
+      devPreviewStatus,
     },
     syncer: buildPollForDevPreviewMode(apiKey, token),
   }
@@ -158,7 +175,11 @@ function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 10
         const app = await fetchAppFromApiKey(apiKey, token)
         const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
         if (!currentShortcutAction) return
-        const newShortcutAction = buildDevPreviewShortcut(app?.developmentStorePreviewEnabled ?? false, apiKey, token)
+        const newShortcutAction = buildDevPreviewShortcut({
+          devPreviewStatus: app?.developmentStorePreviewEnabled ?? false,
+          apiKey,
+          token,
+        })
         footerContext.updateShortcut(currentShortcutAction, newShortcutAction)
       }
 

@@ -27,7 +27,7 @@ interface Shortcut {
   key: string
   action: string
   syncer?: (footerContext: FooterContext) => void
-  metadata?: {
+  state?: {
     [key: string]: unknown
   }
 }
@@ -35,7 +35,8 @@ export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortSignal: AbortSignal
   showTimestamps?: boolean
-  onInput?: (input: string, key: Key, exit: () => void, footerContext: FooterContext) => Promise<void>
+  onInput?: (input: string, key: Key, exit: () => void) => void
+  onInputAsync?: (input: string, key: Key, exit: () => void, footerContext: FooterContext) => Promise<void>
   footer?: Footer
   // If set, the component is not automatically unmounted once the processes have all finished
   keepRunningAfterProcessesResolve?: boolean
@@ -101,6 +102,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   abortSignal,
   showTimestamps = true,
   onInput,
+  onInputAsync,
   footer,
   keepRunningAfterProcessesResolve,
 }) => {
@@ -141,55 +143,57 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const {isAborted} = useAbortSignal(abortSignal)
   const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
 
-  const updateShortcut = useCallback(
-    (prevShortcut: Shortcut, newShortcut: Shortcut) => {
-      if (!footerContent) return
-      const newFooterContent = {...footerContent}
+  const updateShortcut = (prevShortcut: Shortcut, newShortcut: Shortcut) => {
+    if (!footerContent) return
+    const newFooterContent = {...footerContent}
 
-      newFooterContent.shortcuts.map((short) => {
-        if (short.key === prevShortcut.key) {
-          short.action = newShortcut.action
-          short.key = newShortcut.key
-          short.metadata = newShortcut.metadata
-        }
-      })
-      setFooterContent(newFooterContent)
-    },
-    [footerContent],
-  )
+    newFooterContent.shortcuts.map((short) => {
+      if (short.key === prevShortcut.key) {
+        short.action = newShortcut.action
+        short.key = newShortcut.key
+        short.state = newShortcut.state
+      }
+    })
+    setFooterContent(newFooterContent)
+  }
 
-  const updateSubTitle = useCallback(
-    (subTitle: string) => {
-      if (!footerContent) return
+  const updateSubTitle = (subTitle: string) => {
+    if (!footerContent) return
 
-      setFooterContent({...footerContent, subTitle})
-    },
-    [footerContent],
-  )
+    setFooterContent({...footerContent, subTitle})
+  }
 
-  const runShortcutSyncs = useCallback(() => {
+  const runShortcutSyncs = () => {
     footerContent?.shortcuts?.forEach((shortcut) => {
       if (shortcut.syncer) shortcut.syncer({footer: footerContent, updateShortcut, updateSubTitle})
     })
-  }, [])
+  }
 
   useInput(
     (input, key) => {
       handleCtrlC(input, key)
 
       const triggerOnInput = async () => {
-        await onInput!(input, key, () => treeKill('SIGINT'), {footer: footerContent, updateShortcut, updateSubTitle})
+        if (onInput) {
+          onInput(input, key, () => treeKill('SIGINT'))
+        } else if (onInputAsync) {
+          await onInputAsync(input, key, () => treeKill('SIGINT'), {
+            footer: footerContent,
+            updateShortcut,
+            updateSubTitle,
+          })
+        }
       }
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       triggerOnInput()
     },
-    {isActive: typeof onInput !== 'undefined' && useShortcuts},
+    {isActive: (typeof onInput !== 'undefined' || typeof onInputAsync !== 'undefined') && useShortcuts},
   )
 
   useEffect(() => {
     runShortcutSyncs()
-  }, [runShortcutSyncs])
+  }, [])
 
   useEffect(() => {
     ;(() => {

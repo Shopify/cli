@@ -45,6 +45,7 @@ interface Options {
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
   app: {
+    canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
     apiKey: string
     token: string
