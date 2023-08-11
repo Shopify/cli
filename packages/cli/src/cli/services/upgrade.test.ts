@@ -85,6 +85,26 @@ describe('upgrade global CLI', () => {
 })
 
 describe('upgrade local CLI', () => {
+  test('throws an error if a valid app config file is missing', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      await Promise.all([
+        writeFile(
+          joinPath(tmpDir, 'package.json'),
+          JSON.stringify({dependencies: {'@shopify/cli': currentCliVersion, '@shopify/app': currentCliVersion}}),
+        ),
+        touchFile(joinPath(tmpDir, 'shopify.wrongapp.toml')),
+      ])
+      const outputMock = mockAndCaptureOutput()
+      vi.spyOn(nodePackageManager as any, 'checkForNewVersion').mockResolvedValue(undefined)
+
+      // When // Then
+      await expect(upgrade(tmpDir, currentCliVersion, {env: {npm_config_user_agent: 'npm'}})).rejects.toBeInstanceOf(
+        AbortError,
+      )
+    })
+  })
+
   test('does not upgrade locally if the latest version is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -160,7 +180,7 @@ describe('upgrade local CLI', () => {
           joinPath(tmpDir, 'package.json'),
           JSON.stringify({dependencies: {'@shopify/cli': currentCliVersion, '@shopify/app': oldCliVersion}}),
         ),
-        touchFile(joinPath(tmpDir, 'shopify.app.toml')),
+        touchFile(joinPath(tmpDir, 'shopify.app.nondefault.toml')),
       ])
       const outputMock = mockAndCaptureOutput()
       const checkMock = vi.spyOn(nodePackageManager as any, 'checkForNewVersion')
