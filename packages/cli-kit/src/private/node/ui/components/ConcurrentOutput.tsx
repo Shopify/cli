@@ -177,13 +177,9 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
       const triggerOnInput = async () => {
         if (onInput) {
-          onInput(input, key, () => treeKill('SIGINT'))
+          onInput(input, key, exit)
         } else if (onInputAsync) {
-          await onInputAsync(input, key, () => treeKill('SIGINT'), {
-            footer: footerContent,
-            updateShortcut,
-            updateSubTitle,
-          })
+          await onInputAsync(input, key, exit, {footer: footerContent, updateShortcut, updateSubTitle})
         }
       }
 
