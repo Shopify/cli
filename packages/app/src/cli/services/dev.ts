@@ -1,4 +1,4 @@
-import {ensureDevContext} from './context.js'
+import {disableDeveloperPreview, ensureDevContext} from './context.js'
 import {
   generateFrontendURL,
   generatePartnersURLs,
@@ -43,7 +43,7 @@ import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
@@ -53,12 +53,13 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -328,6 +329,16 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
+  const abortController = new AbortController()
+  abortController.signal.addEventListener('abort', async () => {
+    setInterval(() => {
+      treeKill('SIGINT')
+    }, 2000)
+    outputInfo('\n\nInitiating graceful shutdown ...')
+    await disableDeveloperPreview({apiKey, token})
+    tunnelClient?.stopTunnel()
+  })
+
   const app = {
     canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
     developmentStorePreviewEnabled,
@@ -339,6 +350,7 @@ async function dev(options: DevOptions) {
     await renderDev(
       {
         processes: additionalProcesses,
+        abortController,
       },
       previewUrl,
       app,
@@ -350,6 +362,7 @@ async function dev(options: DevOptions) {
       proxyTargets,
       additionalProcesses,
       app,
+      abortController,
     })
   }
 }

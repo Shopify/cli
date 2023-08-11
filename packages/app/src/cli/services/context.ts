@@ -769,6 +769,10 @@ export async function enableDeveloperPreview({apiKey, token}: {apiKey: string; t
   return developerPreviewUpdate({apiKey, token, enabled: true})
 }
 
+export async function disableDeveloperPreview({apiKey, token}: {apiKey: string; token: string}) {
+  await developerPreviewUpdate({apiKey, token, enabled: false})
+}
+
 export async function developerPreviewUpdate({
   apiKey,
   token,

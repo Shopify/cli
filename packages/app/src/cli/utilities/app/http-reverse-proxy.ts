@@ -50,6 +50,7 @@ interface Options {
     apiKey: string
     token: string
   }
+  abortController?: AbortController
 }
 
 /**
@@ -67,6 +68,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   proxyTargets,
   additionalProcesses,
   app,
+  abortController,
 }: Options): Promise<void> {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
@@ -129,14 +131,16 @@ ${outputToken.json(JSON.stringify(rules))}
     socket.destroy()
   })
 
-  const abortController = new AbortController()
-  abortController.signal.addEventListener('abort', () => {
+  const controller = abortController ?? new AbortController()
+
+  controller.signal.addEventListener('abort', () => {
+    outputDebug('Closing reverse HTTP proxy')
     server.close()
   })
 
   const renderConcurrentOptions: RenderConcurrentOptions = {
     processes: [...processes, ...additionalProcesses],
-    abortSignal: abortController.signal,
+    abortController: controller,
   }
 
   await Promise.all([renderDev(renderConcurrentOptions, previewUrl, app), server.listen(portNumber)])

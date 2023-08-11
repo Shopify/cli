@@ -1,8 +1,8 @@
 import {OutputProcess} from '../../../../public/node/output.js'
-import {AbortSignal} from '../../../../public/node/abort.js'
+import {AbortController} from '../../../../public/node/abort.js'
+import {treeKill} from '../../../../public/node/tree-kill.js'
 import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
-import {treeKill} from '../../tree-kill.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, Key, Static, Text, useInput, TextProps, useStdin, useApp} from 'ink'
@@ -33,7 +33,7 @@ interface Shortcut {
 }
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
-  abortSignal: AbortSignal
+  abortController: AbortController
   showTimestamps?: boolean
   onInput?: (input: string, key: Key, exit: () => void) => void
   onInputAsync?: (input: string, key: Key, exit: () => void, footerContext: FooterContext) => Promise<void>
@@ -99,7 +99,7 @@ function currentTime() {
  */
 const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
-  abortSignal,
+  abortController,
   showTimestamps = true,
   onInput,
   onInputAsync,
@@ -140,7 +140,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
     [footer, lineColor],
   )
-  const {isAborted} = useAbortSignal(abortSignal)
+  const {isAborted} = useAbortSignal(abortController.signal)
   const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
 
   const updateShortcut = (prevShortcut: Shortcut, newShortcut: Shortcut) => {
@@ -171,7 +171,9 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
   useInput(
     (input, key) => {
-      handleCtrlC(input, key)
+      const exit = abortController ? () => abortController.abort() : () => treeKill('SIGINT')
+
+      handleCtrlC(input, key, exit)
 
       const triggerOnInput = async () => {
         if (onInput) {
@@ -201,7 +203,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         processes.map(async (process, index) => {
           const stdout = writableStream(process, index)
           const stderr = writableStream(process, index)
-          await process.action(stdout, stderr, abortSignal)
+          await process.action(stdout, stderr, abortController.signal)
         }),
       )
     })()
@@ -215,7 +217,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         setState(ConcurrentOutputState.Stopped)
         unmountInk(error)
       })
-  }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve, footer])
+  }, [abortController, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve, footer])
   const {lineVertical} = figures
   return (
     <>
@@ -243,7 +245,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           )
         }}
       </Static>
-      {footerContent ? (
+      {footerContent && !isAborted ? (
         <Box
           marginY={1}
           paddingTop={1}
