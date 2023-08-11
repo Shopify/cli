@@ -8,8 +8,8 @@ import {
   usesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
-import {dirname, moduleDirectory} from '@shopify/cli-kit/node/path'
-import {findPathUp} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {findPathUp, glob} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputSuccess, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 
@@ -48,7 +48,12 @@ export async function upgrade(
 }
 
 async function getProjectDir(directory: string): Promise<string | undefined> {
-  const configFile = await findPathUp(['shopify.app.toml', 'hydrogen.config.js', 'hydrogen.config.ts'], {
+  const configFiles = ['shopify.app{,.*}.toml', 'hydrogen.config.js', 'hydrogen.config.ts']
+  const existsConfigFile = async (directory: string) => {
+    const configPaths = await glob(configFiles.map((file) => joinPath(directory, file)))
+    return configPaths.length > 0 ? configPaths[0] : undefined
+  }
+  const configFile = await findPathUp(existsConfigFile, {
     cwd: directory,
     type: 'file',
   })
