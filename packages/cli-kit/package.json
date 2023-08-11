@@ -187,8 +187,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "resolutions": {
-    "@types/react": "18.2.0"
-  }
+  "engine-strict": true
 }
