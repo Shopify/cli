@@ -18,11 +18,11 @@ When implementing business logic that interacts with the OS, for example doing I
 
 ### Manual testing
 
-Please don't assume that a successful working workflow in the OS in which it was developed will yield success in other OSs. **We strongly recommend manually testing the workflow in other OSs**. If you don't have a computer with a given OS, here are some recommendations to virtualize the environment:
+Please don't assume that a successful working workflow in the OS in which it was developed will yield success in other OSs. **We strongly recommend manually testing the workflow in other OSs**.
 
-#### Linux ([Parallels](https://www.parallels.com/pd/general/))
+#### Linux
 
-Create a new Ubuntu 22 virtual machine, then:
+After installing Ubuntu 22 then run:
 
 - `sudo apt-get update && sudo apt-get -y upgrade`
 - `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
@@ -47,9 +47,9 @@ Now you can test creating an app and installing in your dev store:
 node bin/create-test-app.js -e ui
 ```
 
-#### Windows ([Parallels](https://www.parallels.com/pd/general/))
+#### Windows
 
-After you've installed Parallels and virtualized the Windows environment, you need to install the following software:
+After you've installed Windows, you need to install the following software:
 
 - [Git](https://git-scm.com/download/win)
 - [Node](https://nodejs.org/en/download/) (remember to also install chocolatey)
