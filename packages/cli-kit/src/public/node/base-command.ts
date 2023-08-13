@@ -81,17 +81,29 @@ abstract class BaseCommand extends Command {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
-    this.validateNonTTYFlags(result.flags)
     return {...result, ...{argv: result.argv as string[]}}
-  }
-
-  protected requiredInNonTTYFlags(): {[name: string]: true | ((flags: FlagOutput) => boolean)} {
-    return {}
   }
 
   protected environmentsFilename(): string | undefined {
     // To be re-implemented if needed
     return undefined
+  }
+
+  protected failMissingNonTTYFlags(flags: FlagOutput, requiredFlags: string[]): void {
+    if (terminalSupportsRawMode()) return
+
+    requiredFlags.forEach((name: string) => {
+      if (!(name in flags)) {
+        throw new AbortError(
+          outputContent`Flag not specified:
+
+${outputToken.cyan(name)}
+
+This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`,
+          'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
+        )
+      }
+    })
   }
 
   private async resultWithEnvironment<
@@ -134,30 +146,6 @@ abstract class BaseCommand extends Command {
     )
 
     return result
-  }
-
-  private validateNonTTYFlags(flags: FlagOutput): void {
-    if (terminalSupportsRawMode()) return
-
-    for (const [name, implementer] of Object.entries(this.requiredInNonTTYFlags())) {
-      if (flags[name] === undefined) {
-        const errorMessage = outputContent`Flag not specified:
-
-${outputToken.cyan(name)}
-
-This flag is required in non-interactive terminal environments, such as a CI environment, or when piping input from another process.`
-        const tryMessage =
-          'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.'
-        switch (implementer) {
-          case true:
-            throw new AbortError(errorMessage, tryMessage)
-          default:
-            if (implementer(flags)) {
-              throw new AbortError(errorMessage, tryMessage)
-            }
-        }
-      }
-    }
   }
 }
 

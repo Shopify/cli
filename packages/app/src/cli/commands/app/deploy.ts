@@ -9,7 +9,6 @@ import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.j
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import {Flags} from '@oclif/core'
-import {FlagOutput} from '@oclif/core/lib/interfaces/parser.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -43,7 +42,6 @@ export default class Deploy extends Command {
       description: 'Deploy without asking for confirmation.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
-      default: false,
     }),
     'no-release': Flags.boolean({
       hidden: false,
@@ -70,14 +68,6 @@ export default class Deploy extends Command {
     }),
   }
 
-  requiredInNonTTYFlags() {
-    return {
-      force: true as const,
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      'client-id': (flags: FlagOutput) => !flags.config && !flags['api-key'],
-    }
-  }
-
   async run(): Promise<void> {
     const {flags} = await this.parse(Deploy)
 
@@ -101,6 +91,11 @@ export default class Deploy extends Command {
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+
+    const requiredNonTTYFlags = ['force']
+    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
+
     await deploy({
       app,
       apiKey,
