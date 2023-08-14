@@ -64,7 +64,7 @@
     "@types/node": "14.18.54",
     "@types/serve-static": "^1.15.2",
     "@types/ws": "^8.5.5",
-    "graphql": "^16.0.0",
+    "graphql": "^16.4.0",
     "graphql-tag": "^2.12.6",
     "@vitest/coverage-istanbul": "^0.34.1",
     "vite": "^4.4.8",
