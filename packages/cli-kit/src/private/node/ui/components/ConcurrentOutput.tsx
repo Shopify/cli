@@ -213,7 +213,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         setState(ConcurrentOutputState.Stopped)
         unmountInk(error)
       })
-  }, [abortController, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve, footer])
+  }, [abortController, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
   const {lineVertical} = figures
   return (
     <>
