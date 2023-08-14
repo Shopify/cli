@@ -3,6 +3,7 @@ require "project_types/extension/loaders/project"
 require "project_types/extension/loaders/specification_handler"
 require "shopify_cli/partners_api"
 require "shopify_cli/thread_pool/job"
+require "shopify_cli/theme/notifier"
 
 module ShopifyCLI
   module Theme
@@ -17,7 +18,7 @@ module ShopifyCLI
           USER_ERRORS_FIELD = "userErrors"
           ERROR_FILE_REGEX = /\[([^\]\[]*)\]/
 
-          def initialize(ctx, syncer:, extension:, project:, specification_handler:)
+          def initialize(ctx, syncer:, extension:, project:, specification_handler:, notify: nil)
             super(POLL_FREQUENCY)
 
             @ctx = ctx
@@ -25,6 +26,7 @@ module ShopifyCLI
             @project = project
             @specification_handler = specification_handler
 
+            @notifier = ShopifyCLI::Theme::Notifier.new(ctx, path: notify)
             @syncer = syncer
             @syncer_mutex = Mutex.new
 
@@ -59,6 +61,10 @@ module ShopifyCLI
               print_items({}.freeze)
               ::Extension::Tasks::Converters::VersionConverter.from_hash(@ctx, response.dig(VERSION_FIELD))
             end
+
+            files = @syncer.pending_files.map(&:relative_path)
+            # Notify changes after the sync is complete
+            @notifier.notify_updates(files)
 
             @syncer_mutex.synchronize do
               @syncer.pending_operations.clear
