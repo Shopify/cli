@@ -17,6 +17,7 @@ require_relative "syncer/operation"
 require_relative "syncer/standard_reporter"
 require_relative "syncer/unsupported_script_warning"
 require_relative "syncer/uploader"
+require_relative "notifier"
 
 module ShopifyCLI
   module Theme
@@ -38,7 +39,8 @@ module ShopifyCLI
 
       def_delegators :@error_reporter, :has_any_error?
 
-      def initialize(ctx, theme:, include_filter: nil, ignore_filter: nil, overwrite_json: true, stable: false)
+      def initialize(ctx, theme:, include_filter: nil, ignore_filter: nil, overwrite_json: true, stable: false,
+        notify: nil)
         @ctx = ctx
         @theme = theme
         @include_filter = include_filter
@@ -46,6 +48,7 @@ module ShopifyCLI
         @overwrite_json = overwrite_json
         @error_reporter = ErrorReporter.new(ctx)
         @standard_reporter = StandardReporter.new(ctx)
+        @notifier = Notifier.new(ctx, path: notify)
         @reporters = [@error_reporter, @standard_reporter]
 
         # Queue of `Operation`s waiting to be picked up from a thread for processing.
@@ -298,6 +301,8 @@ module ShopifyCLI
         handle_operation_error(operation, error)
       ensure
         @pending.delete(operation)
+        # Notify changes after the operation performs
+        @notifier.notify_updates([operation.file_path])
       end
 
       def update(file)
