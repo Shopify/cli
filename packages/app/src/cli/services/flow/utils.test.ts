@@ -18,16 +18,14 @@ describe('loadSchemaFromPath', () => {
     const extensionPath = '/home/spin/src/github.com/Shopify/cli/packages/app/src/cli/services/flow'
     const patchPath = './*.graphql'
 
-    await expect(loadSchemaFromPath(extensionPath, patchPath)).rejects.toThrow(
-      'Multiple files found for schema patch path',
-    )
+    await expect(loadSchemaFromPath(extensionPath, patchPath)).rejects.toThrow('Multiple files found for schema path')
   })
 
   test('loading schema from invalid file path should throw no file found error', async () => {
     const extensionPath = '/home/spin/src/github.com/Shopify/cli/packages/app/src/cli/services/flow'
     const patchPath = './invalid-schema-patch.graphql'
 
-    await expect(loadSchemaFromPath(extensionPath, patchPath)).rejects.toThrow('No file found for schema patch path')
+    await expect(loadSchemaFromPath(extensionPath, patchPath)).rejects.toThrow('No file found for schema path')
   })
 
   test('loading schema with no path patch should return empty string', async () => {
