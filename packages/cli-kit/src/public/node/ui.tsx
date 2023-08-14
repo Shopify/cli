@@ -74,7 +74,7 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
     return render(<ConcurrentOutput {...props} abortController={abortController} />, {
       ...renderOptions,
-      exitOnCtrlC: typeof props.onInput === 'undefined',
+      exitOnCtrlC: typeof props.onInput === 'undefined' && typeof props.onInputAsync === 'undefined',
     })
   } else {
     return Promise.all(
