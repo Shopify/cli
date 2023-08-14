@@ -216,7 +216,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortController={new AbortController()}
+        abortController={abortController}
         footer={{
           shortcuts: [
             {
@@ -241,10 +241,6 @@ describe('ConcurrentOutput', () => {
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      Preview URL: https://shopify.com
       "
     `)
 
