@@ -98,8 +98,8 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, 'token', appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(appWithConfig.configuration.path, {
-      path: '/tmp/project/shopify.app.toml',
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith({
+      path: appWithConfig.configuration.path,
       access_scopes: {
         scopes: 'read_products',
       },
@@ -188,8 +188,8 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, 'token', appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(appWithConfig.configuration.path, {
-      path: '/tmp/project/shopify.app.toml',
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith({
+      path: appWithConfig.configuration.path,
       access_scopes: {
         scopes: 'read_products',
       },
@@ -373,7 +373,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration.path, localApp.configuration)
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration)
   })
 })
 

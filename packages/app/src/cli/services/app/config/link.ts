@@ -36,7 +36,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   const configuration = mergeAppConfiguration(configFilePath, localApp, remoteApp)
 
-  await writeAppConfigurationFile(configFilePath, configuration)
+  await writeAppConfigurationFile(configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 

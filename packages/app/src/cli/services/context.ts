@@ -181,7 +181,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    await writeAppConfigurationFile(configuration.path, newConfiguration)
+    await writeAppConfigurationFile(newConfiguration)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
