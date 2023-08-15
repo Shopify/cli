@@ -60,6 +60,8 @@ export {FooterContext} from '../../private/node/ui/components/ConcurrentOutput.j
  * 00:00:00 │ frontend │ second frontend message
  * 00:00:00 │ frontend │ third frontend message
  *
+ * ────────────────────────────────────────────────────────────
+ *
  * › Press p │ preview in your browser
  * › Press q │ quit.
  *
