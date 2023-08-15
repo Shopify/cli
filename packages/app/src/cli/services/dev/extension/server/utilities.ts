@@ -14,6 +14,8 @@ export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionD
 
     return rawUrl.toString()
   } else if (extension.surface === 'customer_accounts') {
+    // redirect to customer account page after clicking the extension link on cli
+    // example: https://development-store-1.account.shopify.customer-accounts-ui-extension-dev-kvep.hao-li.us.spin.dev/extensions-development?origin=https%3A%2F%2Fcli.customer-accounts-ui-extension-dev-kvep.hao-li.us.spin.dev%2Fextensions&extensionId=dev-d23f10a1-26f9-4d19-a348-f1f8b46cd8ab
     const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
     const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
     const origin = `${options.url}/extensions`
