@@ -136,7 +136,7 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   extra: string[] = [],
 ) {
-  const args = ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
+  const args = ['exec', '--', 'javy', 'compile', 'dist/function.js', '-d', '-o', fun.outputPath, ...extra];
 
   return exec('npm', args, {
     cwd: fun.directory,
