@@ -1,6 +1,6 @@
 import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from './config.js'
 import {PushOptions} from '../services/app/config/push.js'
-import {testOrganizationApp, testAppWithConfig, testApp} from '../models/app/app.test-data.js'
+import {testOrganizationApp, testAppWithConfig, DEFAULT_CONFIG} from '../models/app/app.test-data.js'
 import {App} from '../api/graphql/get_config.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -197,8 +197,7 @@ describe('confirmPushChanges', () => {
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
       const configuration = mergeAppConfiguration(
-        configurationPath,
-        testApp({}, 'current'),
+        {...DEFAULT_CONFIG, path: configurationPath},
         app as OrganizationApp,
       ) as CurrentAppConfiguration
 
@@ -248,7 +247,7 @@ api_version = "unstable"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
-      const configuration = mergeAppConfiguration(configurationPath, testApp(), app as OrganizationApp)
+      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
       const options: PushOptions = {
         configuration,
         force: false,
@@ -348,7 +347,7 @@ api_version = "unstable"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
-      const configuration = mergeAppConfiguration(configurationPath, testApp(), app as OrganizationApp)
+      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
       const options: PushOptions = {
         configuration: {
           ...configuration,
