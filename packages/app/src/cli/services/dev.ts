@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputUpdateURLsResult, renderDev} from './dev/output.js'
+import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -345,14 +345,12 @@ async function dev(options: DevOptions) {
   }
 
   if (proxyTargets.length === 0) {
-    await renderDev(
-      {
-        processes: additionalProcesses,
-        abortController,
-      },
+    await renderDev({
+      processes: additionalProcesses,
       previewUrl,
       app,
-    )
+      abortController,
+    })
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
       previewUrl,

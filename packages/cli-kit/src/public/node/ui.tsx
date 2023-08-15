@@ -15,7 +15,7 @@ import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
-import {render, renderOnce} from '../../private/node/ui.js'
+import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
@@ -44,11 +44,9 @@ import {Key as InkKey, RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
-export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortController'> {
+export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
   renderOptions?: RenderOptions
 }
-
-export {FooterContext} from '../../private/node/ui/components/ConcurrentOutput.js'
 
 /**
  * Renders output from concurrent processes to the terminal with {@link ConcurrentOutput}.
@@ -69,17 +67,14 @@ export {FooterContext} from '../../private/node/ui/components/ConcurrentOutput.j
  *
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
-  const abortController = props.abortController ?? new AbortController()
+  const abortSignal = props.abortSignal ?? new AbortController().signal
 
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...props} abortController={abortController} />, {
-      ...renderOptions,
-      exitOnCtrlC: typeof props.onInput === 'undefined' && typeof props.onInputAsync === 'undefined',
-    })
+    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
   } else {
     return Promise.all(
       props.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
+        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
       }),
     )
   }
@@ -658,4 +653,4 @@ This usually happens when running a command non-interactively, for example in a 
 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}

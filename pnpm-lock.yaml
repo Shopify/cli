@@ -1,4 +1,4 @@
-lockfileVersion: '6.0'
+lockfileVersion: '6.1'
 
 settings:
   autoInstallPeers: true
@@ -187,9 +187,15 @@ importers:
       http-proxy:
         specifier: 1.18.1
         version: 1.18.1
+      ink:
+        specifier: 4.3.1
+        version: 4.3.1(@types/react@17.0.2)(react@18.2.0)
       javy-cli:
         specifier: 0.1.8
         version: 0.1.8
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
       serve-static:
         specifier: 1.15.0
         version: 1.15.0
@@ -209,6 +215,9 @@ importers:
       '@types/node':
         specifier: 14.18.54
         version: 14.18.54
+      '@types/react':
+        specifier: 17.0.2
+        version: 17.0.2
       '@types/serve-static':
         specifier: ^1.15.2
         version: 1.15.2
@@ -373,8 +382,8 @@ importers:
         specifier: 5.2.0
         version: 5.2.0(graphql@16.4.0)
       ink:
-        specifier: 4.2.0
-        version: 4.2.0(@types/react@17.0.2)(react@18.2.0)
+        specifier: 4.3.1
+        version: 4.3.1(@types/react@17.0.2)(react@18.2.0)
       is-interactive:
         specifier: 2.0.0
         version: 2.0.0
@@ -896,6 +905,14 @@ packages:
     dependencies:
       tunnel: 0.0.6
     dev: true
+
+  /@alcalzone/ansi-tokenize@0.1.2:
+    resolution: {integrity: sha512-/9Wcb0XV6jhvbn0UsL0CPBYKRWjSN0Er2vrrhFDNy0IMIvZ7pWBLwOZbFKTlyYCr1Q+UBXb1hWM4czT2FOfT+A==}
+    engines: {node: '>=14.13.1'}
+    dependencies:
+      ansi-styles: 6.2.1
+      is-fullwidth-code-point: 4.0.0
+    dev: false
 
   /@ampproject/remapping@2.2.1:
     resolution: {integrity: sha512-lFMjJTrFL3j7L9yBxwYfCq2k6qqwHyzuUl/XBnif78PWTJYyL/dfowQHWE3sp6U6ZzqWiiIZnpTMO96zhkjwtg==}
@@ -8458,8 +8475,8 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /ink@4.2.0(@types/react@17.0.2)(react@18.2.0):
-    resolution: {integrity: sha512-q7SeFAEFMyKxTblyVI+CsxHzfiMMP9JUDG0cRmOKEAmJiYrtrDW1YYTv129RXqfn7fMKcVc4h/LbAJvqvZIuEQ==}
+  /ink@4.3.1(@types/react@17.0.2)(react@18.2.0):
+    resolution: {integrity: sha512-XlH5AiZRLIC4cF+eMgZLsB/feHCDT7lUtHXK4pe8ULGrC6mNosrYidzJr8CRY0P+hK7UmZ1rLO+ufdox53+NQg==}
     engines: {node: '>=14.16'}
     peerDependencies:
       '@types/react': '>=18.0.0'
@@ -8471,6 +8488,7 @@ packages:
       react-devtools-core:
         optional: true
     dependencies:
+      '@alcalzone/ansi-tokenize': 0.1.2
       '@types/react': 17.0.2
       ansi-escapes: 6.2.0
       auto-bind: 5.0.1
