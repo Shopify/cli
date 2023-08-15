@@ -36,8 +36,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   localIdentifier: string
   idEnvironmentVariableName: string
   directory: string
-  configuration: TConfiguration
-  configurationPath: string
+  configuration: TConfiguration & {path: string}
   outputPath: string
   handle: string
   specification: ExtensionSpecification
@@ -113,8 +112,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
-    this.configuration = options.configuration
-    this.configurationPath = options.configurationPath
+    this.configuration = {...options.configuration, path: options.configurationPath}
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
@@ -159,7 +157,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   validate() {
     if (!this.specification.validate) return Promise.resolve(ok(undefined))
-    return this.specification.validate(this.configuration, this.directory, this.configurationPath)
+    return this.specification.validate(this.configuration, this.directory)
   }
 
   preDeployValidation(): Promise<void> {

@@ -300,7 +300,6 @@ describe('deploy', () => {
       [
         expect.objectContaining({
           configuration: functionExtension.configuration,
-          configurationPath: functionExtension.configurationPath,
           directory: functionExtension.directory,
           entrySourceFilePath: functionExtension.entrySourceFilePath,
           idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,

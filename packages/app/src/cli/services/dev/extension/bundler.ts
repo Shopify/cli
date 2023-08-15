@@ -188,8 +188,8 @@ export async function setupConfigWatcher({
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
-  const configWatcher = chokidar.watch(extension.configurationPath).on('change', (_event, _path) => {
-    outputInfo(`Config file at path ${extension.configurationPath} changed`, stdout)
+  const configWatcher = chokidar.watch(extension.configuration.path).on('change', (_event, _path) => {
+    outputInfo(`Config file at path ${extension.configuration.path} changed`, stdout)
     updateExtensionConfig({
       extension,
       token,

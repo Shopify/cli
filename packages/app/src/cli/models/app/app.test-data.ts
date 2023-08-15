@@ -8,6 +8,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
+import {BaseConfigType} from '../extensions/schemas.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -102,7 +103,11 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = {}): Promise<ExtensionInstance> {
+export async function testUIExtension(
+  uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {
+    configuration?: Partial<BaseConfigType> & {path?: string}
+  } = {},
+): Promise<ExtensionInstance> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'
 
   const configuration = uiExtension?.configuration ?? {
@@ -115,14 +120,14 @@ export async function testUIExtension(uiExtension: Partial<ExtensionInstance> = 
       api_access: false,
     },
   }
-  const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
+  const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
-    configuration,
+    configuration: configuration as BaseConfigType,
     configurationPath,
     entryPath,
     directory,

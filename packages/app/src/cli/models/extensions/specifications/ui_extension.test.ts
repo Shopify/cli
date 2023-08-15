@@ -152,7 +152,7 @@ describe('ui_extension', async () => {
           err(`Couldn't find ${notFoundPath}
 Please check the module path for EXTENSION::POINT::A
 
-Please check the configuration in ${uiExtension.configurationPath}`),
+Please check the configuration in ${uiExtension.configuration.path}`),
         )
       })
     })
@@ -185,7 +185,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
           err(`Duplicate targets found: EXTENSION::POINT::A
 Extension point targets must be unique
 
-Please check the configuration in ${uiExtension.configurationPath}`),
+Please check the configuration in ${uiExtension.configuration.path}`),
         )
       })
     })

@@ -406,7 +406,7 @@ class AppLoader {
         this.abortOrReport(
           outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
           undefined,
-          extension.configurationPath,
+          extension.configuration.path,
         )
       } else if (extension.handle) {
         handles.add(extension.handle)

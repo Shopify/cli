@@ -112,7 +112,6 @@ vi.mock('../dev/migrate-to-ui-extension')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
-    configurationPath: '',
     directory: 'EXTENSION_A',
     type: 'checkout_post_purchase',
     configuration: {
@@ -125,7 +124,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_A_2 = await testUIExtension({
-    configurationPath: '',
     directory: 'EXTENSION_A_2',
     type: 'checkout_post_purchase',
     configuration: {
@@ -139,7 +137,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_B = await testUIExtension({
-    configurationPath: '',
     directory: 'EXTENSION_B',
     type: 'checkout_post_purchase',
     configuration: {

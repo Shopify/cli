@@ -76,7 +76,6 @@ vi.mock('./identifiers-functions')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_A',
     configuration: {
       name: 'EXTENSION A',
@@ -89,7 +88,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_A_2 = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_A_2',
     configuration: {
       name: 'EXTENSION A 2',
