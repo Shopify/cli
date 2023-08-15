@@ -1,0 +1,31 @@
+import {createExtensionSpecification} from '../specification.js'
+import {BaseSchema} from '../schemas.js'
+import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
+import {zod} from '@shopify/cli-kit/node/schema'
+
+const CheckoutSchema = BaseSchema.extend({
+  extension_points: zod.array(zod.string()).optional(),
+  settings: zod
+    .object({
+      fields: zod.any().optional(),
+    })
+    .optional(),
+})
+
+const spec = createExtensionSpecification({
+  identifier: 'webhooks',
+  schema: CheckoutSchema,
+  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'cart_url', 'esbuild', 'single_js_entry_path'],
+  deployConfig: async (config, directory) => {
+    return {
+      extension_points: config.extension_points,
+      capabilities: config.capabilities,
+      metafields: config.metafields,
+      name: config.name,
+      settings: config.settings,
+      localization: await loadLocalesConfig(directory, 'checkout_ui'),
+    }
+  },
+})
+
+export default spec
