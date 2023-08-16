@@ -9,19 +9,13 @@ import fs from 'fs'
 
 const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_template'),
-  templates: zod
-    .array(
-      zod.object({
-        key: zod.string(),
-        name: zod.string(),
-        description: zod.string(),
-        categories: zod.array(zod.string()),
-        require_app: zod.boolean(),
-        discoverable: zod.boolean(),
-        enabled: zod.boolean(),
-      }),
-    )
-    .min(1),
+  template: zod.object({
+    categories: zod.array(zod.string()),
+    module: zod.string(),
+    require_app: zod.boolean(),
+    discoverable: zod.boolean(),
+    enabled: zod.boolean(),
+  }),
 })
 
 const spec = createExtensionSpecification({
@@ -30,30 +24,25 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, extensionPath) => {
     return {
-      templates: await Promise.all(
-        config.templates.map(async (template) => {
-          return {
-            key: template.key,
-            name: template.name,
-            description: template.description,
-            categories: template.categories,
-            require_app: template.require_app,
-            discoverable: template.discoverable,
-            enabled: template.enabled,
-            definition: await loadWorkflow(extensionPath, template.key),
-            localization: await loadLocalesConfig(joinPath(extensionPath, template.key), template.key),
-          }
-        }),
-      ),
+      template_handle: config.handle,
+      handle: config.handle,
+      name: config.name,
+      description: config.description,
+      categories: config.template.categories,
+      require_app: config.template.require_app,
+      discoverable: config.template.discoverable,
+      enabled: config.template.enabled,
+      definition: await loadWorkflow(extensionPath, config.template.module),
+      localization: await loadLocalesConfig(extensionPath, config.name),
     }
   },
 })
 
-async function loadWorkflow(path: string, key: string) {
-  const flowFilePaths = await glob(joinPath(path, key, `${key}.flow`))
+async function loadWorkflow(path: string, workflowPath: string) {
+  const flowFilePaths = await glob(joinPath(path, workflowPath))
   const flowFilePath = flowFilePaths[0]
   if (!flowFilePath) {
-    throw new AbortError(`Missing ${key}.flow file in ${joinPath(path, key)}`)
+    throw new AbortError(`Missing flow file with the path ${joinPath(path, workflowPath)}`)
   }
   return fs.readFileSync(flowFilePath, 'base64')
 }
