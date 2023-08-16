@@ -36,7 +36,7 @@ import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
-import {outputContent, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
@@ -322,25 +322,6 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
-
-  if (!partnersApp.betas?.unifiedAppDeploymentOptIn && !partnersApp.betas?.unifiedAppDeployment) {
-    renderInfo({
-      headline: [
-        'Stay tuned for changes to',
-        {command: formatPackageManagerCommand(options.app.packageManager, 'deploy')},
-        {char: '.'},
-      ],
-      body: "Soon, you'll be able to release all your extensions at the same time, directly from Shopify CLI.",
-      reference: [
-        {
-          link: {
-            url: 'https://shopify.dev/docs/apps/deployment/simplified-deployment',
-            label: 'Simplified extension deployment',
-          },
-        },
-      ],
-    })
-  }
 
   const org = await fetchOrgFromId(partnersApp.organizationId, token)
   showReusedDeployValues(org.businessName, options.app, partnersApp)

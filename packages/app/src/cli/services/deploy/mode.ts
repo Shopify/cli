@@ -81,7 +81,7 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
 async function upgradeDeploymentToUnified(app: OrganizationApp, options: DeployContextOptions, token: string) {
   let response: 'skipped' | 'confirmed' | 'cancelled' = 'skipped'
 
-  if (!app.betas?.unifiedAppDeploymentOptIn || options.force) {
+  if (options.force) {
     await metadata.addPublicMetadata(() => ({
       cmd_deploy_prompt_upgrade_to_unified_displayed: false,
       cmd_deploy_prompt_upgrade_to_unified_response: response,
