@@ -20,6 +20,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -47,7 +48,10 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       body: `Using ${configFileName} as your default config.`,
       nextSteps: [
         [`Make updates to ${configFileName} in your local project`],
-        ['To upload your config, run', {command: 'shopify app config push'}],
+        [
+          'To upload your config, run',
+          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+        ],
       ],
       reference: [
         {

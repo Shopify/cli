@@ -53,7 +53,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -116,7 +116,13 @@ async function dev(options: DevOptions) {
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
     getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
   ) {
-    const nextSteps = [['Run', {command: 'shopify app config push'}, 'to push your scopes to the Partner Dashboard']]
+    const nextSteps = [
+      [
+        'Run',
+        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+        'to push your scopes to the Partner Dashboard',
+      ],
+    ]
 
     renderWarning({
       headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
