@@ -65,8 +65,7 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
   return testApp({
     name: 'my-app',
     directory: '/app',
-    configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
+    configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
     allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
@@ -113,7 +112,6 @@ vi.mock('../dev/migrate-to-ui-extension')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
-    configurationPath: '',
     directory: 'EXTENSION_A',
     type: 'checkout_post_purchase',
     configuration: {
@@ -126,7 +124,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_A_2 = await testUIExtension({
-    configurationPath: '',
     directory: 'EXTENSION_A_2',
     type: 'checkout_post_purchase',
     configuration: {
@@ -140,7 +137,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_B = await testUIExtension({
-    configurationPath: '',
     directory: 'EXTENSION_B',
     type: 'checkout_post_purchase',
     configuration: {

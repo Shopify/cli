@@ -97,7 +97,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
     throw new AbortError(errorMessage)
   },
   decode: (input: string) => object = decodeToml,
-): Promise<zod.TypeOf<TSchema>> {
+): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
@@ -112,7 +112,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema>> {
+): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -124,7 +124,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
       filepath,
     )
   }
-  return parseResult.data
+  return {...parseResult.data, path: filepath}
 }
 
 export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
@@ -218,13 +218,8 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {
-      directory: appDirectory,
-      configurationPath,
-      configuration,
-      configurationLoadResultMetadata,
-    } = await configurationLoader.loaded()
-    const dotenv = await loadDotEnv(appDirectory, configurationPath)
+    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
+    const dotenv = await loadDotEnv(appDirectory, configuration.path)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
       appDirectory,
@@ -247,7 +242,6 @@ class AppLoader {
       appDirectory,
       packageManager,
       configuration,
-      configurationPath,
       nodeDependencies,
       webs,
       allExtensions,
@@ -412,7 +406,7 @@ class AppLoader {
         this.abortOrReport(
           outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
           undefined,
-          extension.configurationPath,
+          extension.configuration.path,
         )
       } else if (extension.handle) {
         handles.add(extension.handle)
@@ -507,7 +501,6 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
-  private configurationPath = ''
 
   constructor({directory, configName}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
@@ -571,7 +564,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

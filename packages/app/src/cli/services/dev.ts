@@ -119,7 +119,7 @@ async function dev(options: DevOptions) {
     renderWarning({
       headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
       body: [
-        `Scopes in ${basename(localApp.configurationPath)}:`,
+        `Scopes in ${basename(localApp.configuration.path)}:`,
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',

@@ -1,5 +1,5 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
-import {testApp, testUIExtension} from './app.test-data.js'
+import {testApp, testAppWithConfig, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -40,10 +40,14 @@ describe('updateAppIdentifiers', () => {
     await inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const uiExtension = await testUIExtension()
-      const app = testApp({
-        directory: tmpDir,
-        allExtensions: [uiExtension],
-        configurationPath: joinPath(tmpDir, 'shopify.app.staging.toml'),
+      const app = testAppWithConfig({
+        app: {
+          directory: tmpDir,
+          allExtensions: [uiExtension],
+        },
+        config: {
+          path: joinPath(tmpDir, 'shopify.app.staging.toml'),
+        },
       })
 
       // When

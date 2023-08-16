@@ -85,19 +85,19 @@ export async function updateExtensionConfig({
     throw new AbortError(errorMessage)
   }
 
-  let configObject = await loadConfigurationFile(extension.configurationPath)
+  let configObject = await loadConfigurationFile(extension.configuration.path)
   const {extensions} = ExtensionsArraySchema.parse(configObject)
 
   if (extensions) {
     // If the config has an array, find our extension using the handle.
-    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, abort)
+    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configuration.path, abort)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
     if (!extensionConfig) {
       abort(
         `ERROR: Invalid handle
   - Expected handle: "${extension.handle}"
-  - Configuration file path: ${relativizePath(extension.configurationPath)}.
+  - Configuration file path: ${relativizePath(extension.configuration.path)}.
   - Handles are immutable, you can't change them once they are set.`,
       )
     }
@@ -107,7 +107,7 @@ export async function updateExtensionConfig({
 
   const newConfig = await parseConfigurationObject(
     extension.specification.schema,
-    extension.configurationPath,
+    extension.configuration.path,
     configObject,
     abort,
   )

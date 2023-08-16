@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
-import {AppInterface, AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
+import {AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
@@ -77,7 +77,7 @@ export async function confirmPushChanges(options: PushOptions, app: App) {
   if (options.force) return true
 
   const configuration = options.configuration as CurrentAppConfiguration
-  const remoteConfiguration = mergeAppConfiguration({configuration} as AppInterface, app as OrganizationApp)
+  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
 
   if (configuration.access_scopes?.scopes)
     configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')

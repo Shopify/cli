@@ -188,7 +188,7 @@ export async function updateURLs(
       }
     }
 
-    await writeAppConfigurationFile(localApp.configurationPath, localConfiguration)
+    await writeAppConfigurationFile(localConfiguration)
   }
 }
 
@@ -238,7 +238,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
-      await writeAppConfigurationFile(options.localApp.configurationPath, localConfiguration)
+      await writeAppConfigurationFile(localConfiguration)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

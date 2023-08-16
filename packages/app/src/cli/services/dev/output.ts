@@ -26,7 +26,7 @@ export async function outputUpdateURLsResult(
     })
   } else if (!updated) {
     if (isCurrentAppSchema(localApp.configuration)) {
-      const fileName = basename(localApp.configurationPath)
+      const fileName = basename(localApp.configuration.path)
       const configName = getAppConfigurationShorthand(fileName)
       const pushCommandArgs = configName ? [`--config=${configName}`] : []
 
