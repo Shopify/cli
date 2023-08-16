@@ -42,6 +42,6 @@ export default class VersionsList extends Command {
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
-    await versionList({app, apiKey})
+    await versionList({app, apiKey, reset: false, commandConfig: this.config})
   }
 }
