@@ -38,6 +38,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
     subPathPrefix: string
     url: string
   }
+  developmentStorePreviewEnabled?: boolean
 }
 
 export interface OrganizationStore {

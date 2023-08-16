@@ -22,6 +22,10 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
+  public static analyticsStopCommand(): string | undefined {
+    return undefined
+  }
+
   async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
     errorHandler(error, this.config)
   }

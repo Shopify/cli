@@ -62,7 +62,7 @@ export async function exec(command: string, args: string[], options?: ExecOption
   options?.signal?.addEventListener('abort', () => {
     const pid = commandProcess.pid
     if (pid) {
-      outputDebug(`Abort signal received, killing process ${pid}`)
+      outputDebug(`Killing process ${options.cwd} ${command} ${args.join(' ')} ${pid}...`)
       aborted = true
       treeKill(pid, (err) => {
         if (err) outputDebug(`Failed to kill process ${pid}: ${err}`)
