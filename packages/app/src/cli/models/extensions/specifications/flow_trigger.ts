@@ -1,7 +1,7 @@
 import {loadSchemaFromPath} from '../../../services/flow/utils.js'
 import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {isSchemaTypeReference, validateFieldShape} from '../../../services/flow/validation.js'
+import {validateFieldShape, validateTriggerSchemaPresence} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -27,14 +27,9 @@ const FlowTriggerExtensionSchema = BaseSchemaWithHandle.extend({
   const settingsFieldsAreValid = fields.every((field, index) =>
     validateFieldShape(field, 'flow_trigger', config.handle, index),
   )
-  const customFieldsAreValid = fields.every((field) => {
-    if (isSchemaTypeReference(field.type)) {
-      return 'schema' in config
-    }
-    return true
-  })
+  const schemaPresenceIsValid = validateTriggerSchemaPresence(fields, config.schema)
 
-  return settingsFieldsAreValid && customFieldsAreValid
+  return settingsFieldsAreValid && schemaPresenceIsValid
 })
 
 /**

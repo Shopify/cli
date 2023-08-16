@@ -95,6 +95,20 @@ export const validateCustomConfigurationPageConfig = (
   return true
 }
 
+export const validateTriggerSchemaPresence = (fields: ConfigField[], schema?: string) => {
+  if (fields.some((field) => isSchemaTypeReference(field.type)) && !schema) {
+    throw new zod.ZodError([
+      {
+        code: zod.ZodIssueCode.custom,
+        path: ['extensions[0].schema'],
+        message: 'To reference schema types a `schema` must be specified.',
+      },
+    ])
+  }
+
+  return true
+}
+
 export const validateReturnTypeConfig = (returnTypeRef?: string, schema?: string) => {
   if (returnTypeRef || schema) {
     if (!returnTypeRef) {
