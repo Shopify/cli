@@ -51,7 +51,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -78,6 +78,8 @@ describe('ConcurrentOutput', () => {
       00:00:00 │ frontend │ first frontend message
       00:00:00 │ frontend │ second frontend message
       00:00:00 │ frontend │ third frontend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press p │ preview in your browser
       › Press q │ quit
@@ -131,7 +133,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess, frontendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -160,6 +162,8 @@ describe('ConcurrentOutput', () => {
       00:00:00 │ frontend │ second frontend message
       00:00:00 │ frontend │ third frontend message
 
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
       Preview URL: https://shopify.com
       "
     `)
@@ -181,7 +185,7 @@ describe('ConcurrentOutput', () => {
       <ConcurrentOutput
         processes={[neverEndingProcess]}
         onInput={(input, key) => onInput(input, key)}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
       />,
     )
 
@@ -212,7 +216,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={abortController.signal}
+        abortController={abortController}
         footer={{
           shortcuts: [
             {
@@ -237,8 +241,6 @@ describe('ConcurrentOutput', () => {
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
-
-      Preview URL: https://shopify.com
       "
     `)
 
@@ -263,7 +265,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -287,6 +289,8 @@ describe('ConcurrentOutput', () => {
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
 
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
       Preview URL: https://shopify.com
       "
     `)
@@ -308,7 +312,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -332,6 +336,8 @@ describe('ConcurrentOutput', () => {
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
 
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
       Preview URL: https://shopify.com
       "
     `)
@@ -353,7 +359,7 @@ describe('ConcurrentOutput', () => {
     const renderInstance = render(
       <ConcurrentOutput
         processes={[backendProcess]}
-        abortSignal={new AbortController().signal}
+        abortController={new AbortController()}
         footer={{
           shortcuts: [
             {
@@ -378,6 +384,8 @@ describe('ConcurrentOutput', () => {
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press p │ preview in your browser
       › Press q │ quit
