@@ -1,5 +1,13 @@
 # @shopify/cli-kit
 
+## 3.48.2
+
+### Patch Changes
+
+- baa73ff38: - Enable dev preview mode on startup.
+  - Add dev log footer shortcut to toggle dev preview mode on/off.
+  - Disabke dev preview mode when exit
+
 ## 3.48.1
 
 ### Patch Changes
