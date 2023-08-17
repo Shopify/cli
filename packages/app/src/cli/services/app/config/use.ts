@@ -7,6 +7,8 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface UseOptions {
   directory: string
@@ -25,9 +27,14 @@ export default async function use({
 }: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
+    const packageManager = await getPackageManager(directory)
     renderSuccess({
       headline: 'Cleared current configuration.',
-      body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
+      body: [
+        'In order to set a new current configuration, please run',
+        {command: formatPackageManagerCommand(packageManager, 'shopify app config use CONFIG_NAME')},
+        {char: '.'},
+      ],
     })
     return
   }

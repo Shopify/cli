@@ -25,6 +25,7 @@ describe('use', () => {
         configName: 'invalid',
         reset: true,
       }
+      writeFileSync(joinPath(tmp, 'package.json'), '{}')
 
       // When
       await use(options)
@@ -36,7 +37,11 @@ describe('use', () => {
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Cleared current configuration.',
-        body: ['In order to set a new current configuration, please run `shopify app config use CONFIG_NAME`.'],
+        body: [
+          'In order to set a new current configuration, please run',
+          {command: 'npm run shopify app config use CONFIG_NAME'},
+          {char: '.'},
+        ],
       })
     })
   })
