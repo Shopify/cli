@@ -105,7 +105,7 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
       <ConcurrentOutput
         processes={processes}
         abortSignal={abortController.signal}
-        keepRunningAfterProcessesResolve={false}
+        keepRunningAfterProcessesResolve={true}
       />
       <Box
         marginY={1}

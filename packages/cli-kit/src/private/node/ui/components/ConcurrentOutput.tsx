@@ -75,7 +75,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
   abortSignal,
   showTimestamps = true,
-  keepRunningAfterProcessesResolve = true,
+  keepRunningAfterProcessesResolve = false,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
@@ -120,7 +120,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
       )
     })()
       .then(() => {
-        if (keepRunningAfterProcessesResolve) {
+        if (!keepRunningAfterProcessesResolve) {
           unmountInk()
         }
       })
