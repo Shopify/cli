@@ -6,11 +6,15 @@ const spec = createExtensionSpecification({
   identifier: 'webhooks',
   schema: BaseSchema.extend({
     http: zod.any(),
+    pub_sub: zod.any(),
+    event_bridge: zod.any(),
   }),
   appModuleFeatures: (_) => [],
   deployConfig: async (config) => {
     return {
-      http: [],
+      http: config.http || [],
+      pub_sub: config.pub_sub || [],
+      event_bridge: config.event_bridge || [],
     }
   },
 })
