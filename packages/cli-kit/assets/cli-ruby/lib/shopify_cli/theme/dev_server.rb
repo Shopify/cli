@@ -23,7 +23,6 @@ require_relative "development_theme"
 require_relative "ignore_filter"
 require_relative "include_filter"
 require_relative "syncer"
-require_relative "notifier"
 
 module ShopifyCLI
   module Theme
@@ -208,12 +207,8 @@ module ShopifyCLI
           ignore_filter: ignore_filter,
           overwrite_json: !editor_sync || @overwrite_json,
           stable: stable,
-          notify: notify,
+          notify: notify
         )
-      end
-
-      def notifier
-        @notifier ||= Notifier.new(ctx, path: notify)
       end
 
       def watcher

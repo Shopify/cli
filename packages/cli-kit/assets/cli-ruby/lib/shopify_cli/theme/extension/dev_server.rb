@@ -32,7 +32,7 @@ module ShopifyCLI
 
         class << self
           def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:,
-            notify: nil)
+            notify:)
             instance.project = project
             instance.specification_handler = specification_handler
             instance.generate_tmp_theme = generate_tmp_theme
@@ -66,7 +66,7 @@ module ShopifyCLI
             project: project,
             specification_handler: specification_handler,
             ignore_filter: ignore_filter,
-            notify: notify,
+            notify: notify
           )
         end
 

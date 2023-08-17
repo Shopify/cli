@@ -18,7 +18,7 @@ module ShopifyCLI
           USER_ERRORS_FIELD = "userErrors"
           ERROR_FILE_REGEX = /\[([^\]\[]*)\]/
 
-          def initialize(ctx, syncer:, extension:, project:, specification_handler:, notify: nil)
+          def initialize(ctx, syncer:, extension:, project:, specification_handler:, notify:)
             super(POLL_FREQUENCY)
 
             @ctx = ctx
