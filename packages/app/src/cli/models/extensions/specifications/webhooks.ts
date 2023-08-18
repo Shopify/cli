@@ -15,6 +15,7 @@ const spec = createExtensionSpecification({
       http: config.http || [],
       pub_sub: config.pub_sub || [],
       event_bridge: config.event_bridge || [],
+      handle: config.handle,
     }
   },
 })
