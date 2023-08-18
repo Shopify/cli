@@ -263,7 +263,7 @@ describe('Dev', () => {
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
   })
 
-  test.only('when a process throwns an error it calls abort on the abortController', async () => {
+  test('when a process throwns an error it calls abort on the abortController', async () => {
     const abortController = new AbortController()
     const abort = vi.spyOn(abortController, 'abort')
 
