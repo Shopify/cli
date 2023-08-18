@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.48.3
+
+### Patch Changes
+
+- 87c354449: Enable draft pushing for UI extensions when using unified deploys
+  - @shopify/cli-kit@3.48.3
+  - @shopify/plugin-cloudflare@3.48.3
+
 ## 3.48.2
 
 ### Patch Changes
