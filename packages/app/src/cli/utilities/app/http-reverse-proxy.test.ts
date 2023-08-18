@@ -1,10 +1,9 @@
 import {runConcurrentHTTPProcessesAndPathForwardTraffic} from './http-reverse-proxy.js'
+import {renderDev} from '../../services/dev/ui.js'
 import httpProxy from 'http-proxy'
 import {describe, expect, test, vi} from 'vitest'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 
-vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('http-proxy', () => {
   return {
@@ -23,6 +22,7 @@ vi.mock('http', () => {
     },
   }
 })
+vi.mock('../../services/dev/ui')
 
 describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
   test('proxies to all the targets using the HTTP Proxy', async () => {
@@ -58,11 +58,11 @@ describe('runConcurrentHTTPProcessesAndPathForwardTraffic', () => {
     // Then
     expect(httpProxy.createProxy).toHaveBeenCalled()
 
-    const concurrentCalls = vi.mocked(renderConcurrent).mock.calls
-    expect(concurrentCalls.length).toEqual(1)
-    const concurrentProcesses = concurrentCalls[0]?.[0]?.processes ?? []
-    expect(concurrentProcesses[0]?.prefix).toEqual('extensions')
-    expect(concurrentProcesses[1]?.prefix).toEqual('web')
+    const renderDevCalls = vi.mocked(renderDev).mock.calls
+    expect(renderDevCalls.length).toEqual(1)
+    const processes = renderDevCalls[0]?.[0]?.processes ?? []
+    expect(processes[0]?.prefix).toEqual('extensions')
+    expect(processes[1]?.prefix).toEqual('web')
     expect(server.close).not.toHaveBeenCalled()
   })
 })
