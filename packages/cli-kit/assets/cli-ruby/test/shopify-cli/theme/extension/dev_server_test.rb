@@ -7,6 +7,17 @@ module ShopifyCLI
   module Theme
     module Extension
       class DevServerTest < Minitest::Test
+        def setup
+          super
+          @app_id = "app_0000"
+          @api_key = "api_key_1234"
+          @location = "http://location:1234"
+          @registration_id = "registration_id_5678"
+          @theme_editor_url = "https://test.myshopify.io/editor"
+          @server_host = "127.0.0.1"
+          @server_port = 9292
+        end
+
         def test_middleware_stack
           server = dev_server
           server.stubs(:theme).returns(stub)
@@ -24,10 +35,7 @@ module ShopifyCLI
         end
 
         def test_theme_when_theme_does_not_exist
-          HostTheme
-            .expects(:find_by_identifier)
-            .with(ctx, identifier: theme.id)
-            .returns(nil)
+          mock_theme_by_identifier(identifier: theme.id, result: nil)
 
           error = assert_raises(CLI::Kit::Abort) do
             dev_server(identifier: theme.id).send(:theme)
@@ -37,19 +45,60 @@ module ShopifyCLI
         end
 
         def test_theme_with_valid_theme_id
-          HostTheme
-            .expects(:find_by_identifier)
-            .with(ctx, identifier: theme.id)
-            .returns(theme)
+          mock_theme_by_identifier(identifier: theme.id, result: theme)
 
           dev_server(identifier: theme.id).send(:theme)
         end
 
+        def test_instructions_when_shopifyfolk_and_unified_deployments
+          mock_theme_extension_registrations(response: theme_extension_registrations_response)
+          mock_theme_by_identifier(identifier: theme.name, result: theme)
+          Shopifolk.stubs(:acting_as_shopify_organization?).returns(true)
+          Environment.stubs(:unified_deployment?).returns(true)
+
+          ctx
+            .expects(:message)
+            .with("serve.preview_message_1p_unified", "http://location/9082/impersonate", @theme_editor_url, "http://#{@server_host}:#{@server_port}")
+
+          dev_server(identifier: theme.name).send(:preview_message)
+        end
+
+        def test_instructions_when_shopifyfolk_and_non_unified_deployments
+          mock_theme_extension_registrations(response: theme_extension_registrations_response)
+          mock_theme_by_identifier(identifier: theme.name, result: theme)
+          Shopifolk.stubs(:acting_as_shopify_organization?).returns(true)
+
+          ctx
+            .expects(:message)
+            .with("serve.preview_message_1p", "http://location/9082/impersonate", @location, @theme_editor_url, "http://#{@server_host}:#{@server_port}")
+
+          dev_server(identifier: theme.name).send(:preview_message)
+        end
+
+        def test_instructions_when_non_shopifyfolk_and_unified_deployments
+          mock_theme_by_identifier(identifier: theme.name, result: theme)
+          Environment.stubs(:unified_deployment?).returns(true)
+
+          ctx
+            .expects(:message)
+            .with("serve.preview_message_unified", @theme_editor_url, "http://#{@server_host}:#{@server_port}")
+
+          dev_server(identifier: theme.name).send(:preview_message)
+        end
+
+        def test_instructions_when_non_shopifyfolk_and_non_unified_deployments
+          mock_theme_extension_registrations(response: theme_extension_registrations_response)
+          mock_theme_by_identifier(identifier: theme.name, result: theme)
+
+          ctx
+            .expects(:message)
+            .with("serve.preview_message", @location, @theme_editor_url, "http://#{@server_host}:#{@server_port}")
+
+          dev_server(identifier: theme.name).send(:preview_message)
+        end
+
         def test_theme_with_valid_theme_name
-          HostTheme
-            .expects(:find_by_identifier)
-            .with(ctx, identifier: theme.name)
-            .returns(theme)
+          mock_theme_by_identifier(identifier: theme.name, result: theme)
 
           dev_server(identifier: theme.name).send(:theme)
         end
@@ -65,71 +114,23 @@ module ShopifyCLI
         end
 
         def test_extension_when_it_is_created
-          app_id = "app_0000"
-          location = "http://location:1234"
-          registration_id = "registration_id_5678"
-
-          ShopifyCLI::PartnersAPI
-            .expects(:query)
-            .with(
-              ctx,
-              "get_extension_registrations",
-              api_key: "api_key_1234",
-              type: "theme_app_extension",
-            )
-            .returns({
-              "data" => {
-                "app" => {
-                  "id" => app_id,
-                  "title" => "mock",
-                  "apiKey" => "00000000000",
-                  "apiSecretKeys" => [{ "secret" => "00000000000" }],
-                  "appType" => "public",
-                  "extensionRegistrations" => [
-                    {
-                      "id" => registration_id,
-                      "type" => "THEME_APP_EXTENSION",
-                      "uuid" => "dac9b229-a4dc-4569-8d1b-d36102db719f",
-                      "title" => "theme-app-extension",
-                      "draftVersion" => {
-                        "registrationId" => registration_id,
-                        "context" => nil,
-                        "lastUserInteractionAt" => "1992-01-02T12:00:00-00:00",
-                        "location" => location,
-                        "validationErrors" => [],
-                        "id" => "00000000000",
-                        "uuid" => "0000-1111-2222-3333",
-                        "versionTag" => "0.0.0",
-                      },
-                    },
-                  ],
-                },
-              },
-            })
+          mock_theme_extension_registrations(response: theme_extension_registrations_response)
 
           extension1 = dev_server.send(:extension)
           extension2 = dev_server.send(:extension)
 
           assert_same(extension1, extension2)
-          assert_equal(app_id, extension1.app_id)
-          assert_equal(location, extension1.location)
-          assert_equal(registration_id, extension1.registration_id)
+          assert_equal(@app_id, extension1.app_id)
+          assert_equal(@location, extension1.location)
+          assert_equal(@registration_id, extension1.registration_id)
         end
 
         def test_extension_when_it_is_not_created
-          ShopifyCLI::PartnersAPI
-            .expects(:query)
-            .with(
-              ctx,
-              "get_extension_registrations",
-              api_key: "api_key_1234",
-              type: "theme_app_extension",
-            )
-            .returns({
-              "data" => {
-                "error" => "error message",
-              },
-            })
+          mock_theme_extension_registrations(response: {
+            "data" => {
+              "error" => "error message",
+            },
+          })
 
           extension1 = dev_server.send(:extension)
           extension2 = dev_server.send(:extension)
@@ -147,18 +148,18 @@ module ShopifyCLI
         private
 
         def dev_server(identifier: nil)
-          host, port, poll, editor_sync, overwrite_json, open_browser, stable, mode, ignores, includes, notify = nil
+          poll, editor_sync, overwrite_json, open_browser, stable, mode, ignores, includes, notify = nil
           server = Extension::DevServer.instance
-          server.setup(ctx, root, host, identifier, port, poll, editor_sync, overwrite_json, open_browser,
-            stable, mode, ignores, includes, notify)
+          server.setup(ctx, root, @server_host, identifier, @server_port, poll, editor_sync, overwrite_json,
+            open_browser, stable, mode, ignores, includes, notify)
           server.project = project
           server.specification_handler = specification_handler
           server
         end
 
         def project
-          app = stub(api_key: "api_key_1234")
-          stub(app: app, registration_id: "registration_id_5678")
+          app = stub(api_key: @api_key)
+          stub(app: app, registration_id: @registration_id)
         end
 
         def specification_handler
@@ -190,10 +191,61 @@ module ShopifyCLI
             id: 1234,
             name: "HostTheme Test",
             shop: "test.myshopify.io",
-            editor_url: "https://test.myshopify.io/editor",
+            editor_url: @theme_editor_url,
             preview_url: "https://test.myshopify.io/preview",
             live?: false,
           )
+        end
+
+        def mock_theme_by_identifier(identifier:, result: nil)
+          HostTheme
+            .expects(:find_by_identifier)
+            .with(ctx, identifier: identifier)
+            .returns(result)
+        end
+
+        def mock_theme_extension_registrations(response:)
+          ShopifyCLI::PartnersAPI
+            .expects(:query)
+            .with(
+              ctx,
+              "get_extension_registrations",
+              api_key: @api_key,
+              type: "theme_app_extension",
+            )
+            .returns(response)
+        end
+
+        def theme_extension_registrations_response
+          {
+            "data" => {
+              "app" => {
+                "id" => @app_id,
+                "title" => "mock",
+                "apiKey" => "00000000000",
+                "apiSecretKeys" => [{ "secret" => "00000000000" }],
+                "appType" => "public",
+                "extensionRegistrations" => [
+                  {
+                    "id" => @registration_id,
+                    "type" => "THEME_APP_EXTENSION",
+                    "uuid" => "dac9b229-a4dc-4569-8d1b-d36102db719f",
+                    "title" => "theme-app-extension",
+                    "draftVersion" => {
+                      "registrationId" => @registration_id,
+                      "context" => nil,
+                      "lastUserInteractionAt" => "1992-01-02T12:00:00-00:00",
+                      "location" => @location,
+                      "validationErrors" => [],
+                      "id" => "00000000000",
+                      "uuid" => "0000-1111-2222-3333",
+                      "versionTag" => "0.0.0",
+                    },
+                  },
+                ],
+              },
+            },
+          }
         end
       end
     end

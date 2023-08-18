@@ -159,7 +159,7 @@ module ShopifyCLI
 
         def preview_message
           if Shopifolk.acting_as_shopify_organization?
-            parsed_uri = URI.parse(extension.preview_message)
+            parsed_uri = URI.parse(extension.location)
             shopify_org_url = "#{parsed_uri.scheme}://#{parsed_uri.host}/9082/impersonate"
             if ShopifyCLI::Environment.unified_deployment?
               ctx.message("serve.preview_message_1p_unified", shopify_org_url, theme.editor_url, address)
