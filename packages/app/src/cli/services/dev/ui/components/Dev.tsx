@@ -51,22 +51,32 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
     const pollDevPreviewMode = async () => {
       const app = await fetchAppFromApiKey(apiKey, token)
       setDevPreviewEnabled(app?.developmentStorePreviewEnabled ?? false)
+      setError('')
     }
 
     const enablePreviewMode = async () => {
       // Enable dev preview on app dev start
       const enablingDevPreviewSucceeds = await enableDeveloperPreview({apiKey, token})
       setDevPreviewEnabled(enablingDevPreviewSucceeds ? true : Boolean(developmentStorePreviewEnabled))
+      setError('')
     }
 
     if (canEnablePreviewMode) {
       enablePreviewMode().catch(() => {
-        setError(`There was an error turning on developer preview mode`)
+        setError('There was an error turning on developer preview mode. Try enabling it manually by pressing d.')
       })
 
       const startPolling = () => {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        return setInterval(() => pollDevPreviewMode().catch(onError), 5000)
+        return setInterval(
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
+          () =>
+            pollDevPreviewMode().catch(() => {
+              setError(
+                'There was an error trying to fetch the latest value of developer preview mode, trying again in 5 seconds.',
+              )
+            }),
+          5000,
+        )
       }
 
       pollingInterval.current = startPolling()
