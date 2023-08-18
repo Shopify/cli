@@ -60,7 +60,9 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
     }
 
     if (canEnablePreviewMode) {
-      enablePreviewMode().catch(onError)
+      enablePreviewMode().catch(() => {
+        setError(`There was an error turning on developer preview mode`)
+      })
 
       const startPolling = () => {
         // eslint-disable-next-line @typescript-eslint/no-misused-promises
