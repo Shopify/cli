@@ -135,7 +135,7 @@ describe('ConcurrentOutput', () => {
 
     const renderPromise = renderInstance.waitUntilExit()
 
-    await expect(renderPromise).resolves.toBeUndefined()
+    await renderPromise
     expect(renderPromise.isFulfilled()).toBe(true)
   })
 

@@ -1,6 +1,6 @@
-import {developerPreviewUpdate, enableDeveloperPreview} from '../../../context.js'
+import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
 import {fetchAppFromApiKey} from '../../fetch.js'
-import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
@@ -9,6 +9,8 @@ import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
 export interface DevProps {
@@ -21,16 +23,33 @@ export interface DevProps {
     apiKey: string
     token: string
   }
+  tunnelClient?: TunnelClient
+  pollingTime?: number
 }
 
-const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, app}) => {
+const Dev: FunctionComponent<DevProps> = ({
+  abortController,
+  processes,
+  previewUrl,
+  app,
+  tunnelClient,
+  pollingTime = 5000,
+}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
-  const {isAborted} = useAbortSignal(abortController.signal, () => {
-    outputDebug('Stopping poll for dev preview mode...')
+  const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
+
+  const {isAborted} = useAbortSignal(abortController.signal, async () => {
+    setStatusMessage('Gracefully shutting down dev ...')
+    setTimeout(() => {
+      treeKill('SIGINT')
+    }, 2000)
     clearInterval(pollingInterval.current)
+    await disableDeveloperPreview({apiKey, token})
+    tunnelClient?.stopTunnel()
   })
+
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(Boolean(developmentStorePreviewEnabled))
   const [error, setError] = useState<string | undefined>(undefined)
 
@@ -38,13 +57,10 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
     return processes.map((process) => {
       return {
         ...process,
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          try {
-            await process.action(stdout, stderr, signal)
-            // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch (error) {
+        action: (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+          return process.action(stdout, stderr, signal).catch(() => {
             abortController.abort()
-          }
+          })
         },
       }
     })
@@ -68,7 +84,9 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
           setError('')
         })
         .catch(() => {
-          setError('There was an error turning on developer preview mode. Try enabling it manually by pressing d.')
+          setError(
+            'There was an error turning on developer preview mode automatically. Try enabling it manually by pressing d.',
+          )
         })
 
       const startPolling = () => {
@@ -84,7 +102,7 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
                   'There was an error trying to fetch the latest value of developer preview mode, trying again in 5 seconds.',
                 )
               }),
-          5000,
+          pollingTime,
         )
       }
 
@@ -94,9 +112,11 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
 
   useInput(
     (input, key) => {
-      handleCtrlC(input, key, abortController.abort)
+      handleCtrlC(input, key, () => abortController.abort())
 
       const onInput = async () => {
+        setError('')
+
         if (input === 'p' && previewUrl) {
           await openURL(previewUrl)
         } else if (input === 'q') {
@@ -111,18 +131,14 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
           if (developerPreviewUpdateSucceded) {
             setDevPreviewEnabled(newDevPreviewEnabled)
           } else {
-            setError(`There was an error turning ${newDevPreviewEnabled ? 'on' : 'off'} developer preview mode`)
+            setError(`There was an error turning ${newDevPreviewEnabled ? 'on' : 'off'} developer preview mode.`)
           }
         }
       }
 
-      onInput()
-        .then(() => {
-          setError('')
-        })
-        .catch(() => {
-          setError('There was an error trying to handle your input.')
-        })
+      onInput().catch(() => {
+        setError('There was an error trying to handle your input.')
+      })
     },
     {isActive: canUseShortcuts},
   )
@@ -164,7 +180,7 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
             </Box>
           ) : null}
           <Box marginTop={canUseShortcuts ? 1 : 0}>
-            <Text>Preview URL: {previewUrl}</Text>
+            <Text>{statusMessage}</Text>
           </Box>
           {error ? <Text color="red">{error}</Text> : null}
         </Box>

@@ -60,7 +60,9 @@ export async function outputUpdateURLsResult(
 }
 
 export async function renderDev({processes, previewUrl, app, abortController}: DevProps) {
-  return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} />)
+  return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} />, {
+    exitOnCtrlC: false,
+  })
 }
 
 async function partnersURL(organizationId: string, appId: string) {

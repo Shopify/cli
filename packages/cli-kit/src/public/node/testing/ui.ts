@@ -1,1 +1,7 @@
-export {getLastFrameAfterUnmount, render, Stdin, waitForInputsToBeReady} from '../../../private/node/testing/ui.js'
+export {
+  getLastFrameAfterUnmount,
+  render,
+  Stdin,
+  waitForInputsToBeReady,
+  waitForContent,
+} from '../../../private/node/testing/ui.js'
