@@ -125,7 +125,9 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         }
       })
       .catch((error) => {
-        unmountInk(error)
+        if (!keepRunningAfterProcessesResolve) {
+          unmountInk(error)
+        }
       })
   }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
 

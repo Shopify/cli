@@ -3,12 +3,13 @@ import {fetchAppFromApiKey} from '../../fetch.js'
 import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
-import React, {FunctionComponent, useEffect, useRef, useState} from 'react'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-import {Box, Text, useApp, useInput, useStdin} from 'ink'
+import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
+import {Writable} from 'stream'
 
 export interface DevProps {
   processes: OutputProcess[]
@@ -22,59 +23,67 @@ export interface DevProps {
   }
 }
 
-enum DevState {
-  Running = 'running',
-  Stopped = 'stopped',
-}
-
 const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, app}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
-  const {isRawModeSupported} = useStdin()
-  const [state, setState] = useState<DevState>(DevState.Running)
+  const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const {isAborted} = useAbortSignal(abortController.signal, () => {
     outputDebug('Stopping poll for dev preview mode...')
     clearInterval(pollingInterval.current)
-    setState(DevState.Stopped)
   })
-  const useShortcuts = isRawModeSupported && state === DevState.Running && !isAborted
-  const {exit: unmountInk} = useApp()
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(Boolean(developmentStorePreviewEnabled))
   const [error, setError] = useState<string | undefined>(undefined)
 
-  const onError = (error: Error | undefined) => {
-    setState(DevState.Stopped)
-    unmountInk(error)
-  }
+  const errorHandledProcesses = useMemo(() => {
+    return processes.map((process) => {
+      return {
+        ...process,
+        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+          try {
+            await process.action(stdout, stderr, signal)
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch (error) {
+            abortController.abort()
+          }
+        },
+      }
+    })
+  }, [processes, abortController])
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
       const app = await fetchAppFromApiKey(apiKey, token)
       setDevPreviewEnabled(app?.developmentStorePreviewEnabled ?? false)
-      setError('')
     }
 
     const enablePreviewMode = async () => {
       // Enable dev preview on app dev start
       const enablingDevPreviewSucceeds = await enableDeveloperPreview({apiKey, token})
       setDevPreviewEnabled(enablingDevPreviewSucceeds ? true : Boolean(developmentStorePreviewEnabled))
-      setError('')
     }
 
     if (canEnablePreviewMode) {
-      enablePreviewMode().catch(() => {
-        setError('There was an error turning on developer preview mode. Try enabling it manually by pressing d.')
-      })
+      enablePreviewMode()
+        .then(() => {
+          setError('')
+        })
+        .catch(() => {
+          setError('There was an error turning on developer preview mode. Try enabling it manually by pressing d.')
+        })
 
       const startPolling = () => {
         return setInterval(
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           () =>
-            pollDevPreviewMode().catch(() => {
-              setError(
-                'There was an error trying to fetch the latest value of developer preview mode, trying again in 5 seconds.',
-              )
-            }),
+            pollDevPreviewMode()
+              .then(() => {
+                setError('')
+              })
+              .catch(() => {
+                setError(
+                  'There was an error trying to fetch the latest value of developer preview mode, trying again in 5 seconds.',
+                )
+              }),
           5000,
         )
       }
@@ -107,50 +116,59 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
         }
       }
 
-      onInput().catch(onError)
+      onInput()
+        .then(() => {
+          setError('')
+        })
+        .catch(() => {
+          setError('There was an error trying to handle your input.')
+        })
     },
-    {isActive: useShortcuts},
+    {isActive: canUseShortcuts},
   )
 
   return (
     <>
       <ConcurrentOutput
-        processes={processes}
+        processes={errorHandledProcesses}
         abortSignal={abortController.signal}
         keepRunningAfterProcessesResolve={true}
       />
-      <Box
-        marginY={1}
-        paddingTop={1}
-        flexDirection="column"
-        flexGrow={1}
-        borderStyle="single"
-        borderBottom={false}
-        borderLeft={false}
-        borderRight={false}
-        borderTop
-      >
-        {useShortcuts ? (
-          <Box flexDirection="column">
-            {canEnablePreviewMode ? (
+      {/* eslint-disable-next-line no-negated-condition */}
+      {!isAborted ? (
+        <Box
+          marginY={1}
+          paddingTop={1}
+          flexDirection="column"
+          flexGrow={1}
+          borderStyle="single"
+          borderBottom={false}
+          borderLeft={false}
+          borderRight={false}
+          borderTop
+        >
+          {canUseShortcuts ? (
+            <Box flexDirection="column">
+              {canEnablePreviewMode ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} development store preview:{' '}
+                  {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
+                </Text>
+              ) : null}
               <Text>
-                {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} development store preview:{' '}
-                {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
+                {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
               </Text>
-            ) : null}
-            <Text>
-              {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-            </Text>
-            <Text>
-              {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
-            </Text>
+              <Text>
+                {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
+              </Text>
+            </Box>
+          ) : null}
+          <Box marginTop={canUseShortcuts ? 1 : 0}>
+            <Text>Preview URL: {previewUrl}</Text>
           </Box>
-        ) : null}
-        <Box marginTop={useShortcuts ? 1 : 0}>
-          <Text>Preview URL: {previewUrl}</Text>
+          {error ? <Text color="red">{error}</Text> : null}
         </Box>
-        {error ? <Text color="red">{error}</Text> : null}
-      </Box>
+      ) : null}
     </>
   )
 }
