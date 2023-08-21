@@ -78,7 +78,7 @@ describe('Dev', () => {
     await frontendPromise
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
       "00:00:00 │ backend  │ first backend message
       00:00:00 │ backend  │ second backend message
       00:00:00 │ backend  │ third backend message
@@ -136,7 +136,7 @@ describe('Dev', () => {
     await backendPromise
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -206,7 +206,7 @@ describe('Dev', () => {
     await frontendPromise
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
       "00:00:00 │ backend  │ first backend message
       00:00:00 │ backend  │ second backend message
       00:00:00 │ backend  │ third backend message
@@ -308,7 +308,7 @@ describe('Dev', () => {
 
     abortController.abort()
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -361,7 +361,7 @@ describe('Dev', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -434,7 +434,7 @@ describe('Dev', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 500))
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -480,7 +480,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'Failed to fetch the latest status')
 
-    expect(getLastFrameAfterUnmount(renderInstance)!.replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()!.replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
       "[33m00:00:00 │ backend │ first backend message[39m
       [33m00:00:00 │ backend │ second backend message[39m
       [33m00:00:00 │ backend │ third backend message[39m
@@ -505,7 +505,7 @@ describe('Dev', () => {
       <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
     )
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -527,7 +527,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'off')
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -567,7 +567,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'Failed to turn off development store preview.')
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -620,7 +620,7 @@ describe('Dev', () => {
 
     await backendPromise
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -637,7 +637,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'off')
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
@@ -669,7 +669,7 @@ describe('Dev', () => {
       />,
     )
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -683,7 +683,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'on')
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -714,7 +714,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
 
-    expect(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(renderInstance.lastFrame()!.replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -736,7 +736,7 @@ describe('Dev', () => {
       <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
     )
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -753,7 +753,7 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'Failed to handle your input.')
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
