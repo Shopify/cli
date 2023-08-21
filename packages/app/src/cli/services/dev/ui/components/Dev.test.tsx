@@ -319,7 +319,7 @@ describe('Dev', () => {
       › Press p │ preview in your browser
       › Press q │ quit
 
-      Gracefully shutting down dev ...
+      Shutting down dev ...
       "
     `)
 
@@ -478,7 +478,7 @@ describe('Dev', () => {
       />,
     )
 
-    await waitForContent(renderInstance, 'There was an error trying to fetch the latest value')
+    await waitForContent(renderInstance, 'Failed to fetch the latest status')
 
     expect(getLastFrameAfterUnmount(renderInstance)!.replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
       "[33m00:00:00 │ backend │ first backend message[39m
@@ -492,8 +492,7 @@ describe('Dev', () => {
       › Press [1mq[22m │ quit
 
       Preview URL: https://shopify.com
-      [31mThere was an error trying to fetch the latest value of developer preview mode, trying again in 5 [39m
-      [31mseconds.[39m
+      [31mFailed to fetch the latest status of the development store preview, trying again in 5 seconds.[39m
       "
     `)
   })
@@ -566,7 +565,7 @@ describe('Dev', () => {
     await waitForInputsToBeReady()
     renderInstance.stdin.write('d')
 
-    await waitForContent(renderInstance, 'There was an error turning off developer preview mode.')
+    await waitForContent(renderInstance, 'Failed to turn off development store preview.')
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -580,7 +579,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      There was an error turning off developer preview mode.
+      Failed to turn off development store preview.
       "
     `)
   })
@@ -713,7 +712,7 @@ describe('Dev', () => {
       />,
     )
 
-    await waitForContent(renderInstance, 'There was an error turning on developer preview mode automatically')
+    await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
 
     expect(getLastFrameAfterUnmount(renderInstance)!.replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
@@ -724,8 +723,8 @@ describe('Dev', () => {
       › Press [0mq[00m │ quit
 
       Preview URL: https://shopify.com
-      [00mThere was an error turning on developer preview mode automatically. Try enabling it manually by [00m
-      [00mpressing d.[00m
+      [00mFailed to turn on development store preview automatically. Try turning it on manually by pressing [00m
+      [00m\`d\`.[00m
       "
     `)
   })
@@ -752,7 +751,7 @@ describe('Dev', () => {
     await waitForInputsToBeReady()
     renderInstance.stdin.write('d')
 
-    await waitForContent(renderInstance, 'There was an error trying to handle your input.')
+    await waitForContent(renderInstance, 'Failed to handle your input.')
 
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
@@ -763,7 +762,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      There was an error trying to handle your input.
+      Failed to handle your input.
       "
     `)
   })

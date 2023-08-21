@@ -41,7 +41,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
 
   const {isAborted} = useAbortSignal(abortController.signal, async () => {
-    setStatusMessage('Gracefully shutting down dev ...')
+    setStatusMessage('Shutting down dev ...')
     setTimeout(() => {
       treeKill('SIGINT')
     }, 2000)
@@ -85,7 +85,7 @@ const Dev: FunctionComponent<DevProps> = ({
         })
         .catch(() => {
           setError(
-            'There was an error turning on developer preview mode automatically. Try enabling it manually by pressing d.',
+            'Failed to turn on development store preview automatically. Try turning it on manually by pressing `d`.',
           )
         })
 
@@ -99,7 +99,7 @@ const Dev: FunctionComponent<DevProps> = ({
               })
               .catch(() => {
                 setError(
-                  'There was an error trying to fetch the latest value of developer preview mode, trying again in 5 seconds.',
+                  'Failed to fetch the latest status of the development store preview, trying again in 5 seconds.',
                 )
               }),
           pollingTime,
@@ -131,13 +131,13 @@ const Dev: FunctionComponent<DevProps> = ({
           if (developerPreviewUpdateSucceded) {
             setDevPreviewEnabled(newDevPreviewEnabled)
           } else {
-            setError(`There was an error turning ${newDevPreviewEnabled ? 'on' : 'off'} developer preview mode.`)
+            setError(`Failed to turn ${newDevPreviewEnabled ? 'on' : 'off'} development store preview.`)
           }
         }
       }
 
       onInput().catch(() => {
-        setError('There was an error trying to handle your input.')
+        setError('Failed to handle your input.')
       })
     },
     {isActive: canUseShortcuts},
