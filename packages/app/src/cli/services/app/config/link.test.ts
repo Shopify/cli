@@ -458,6 +458,50 @@ embedded = false
     })
   })
 
+  test('uses local scopes if present and remote one is empty', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      LOCAL_APP.configuration = {...LOCAL_APP.configuration, scopes: 'write_products'}
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
+        ...REMOTE_APP,
+        requestedAccessScopes: [],
+      })
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "app1"
+client_id = "api-key"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
   test('unset privacy compliance urls are undefined', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
