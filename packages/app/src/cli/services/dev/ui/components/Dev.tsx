@@ -85,7 +85,7 @@ const Dev: FunctionComponent<DevProps> = ({
         })
         .catch(() => {
           setError(
-            'Failed to turn on development store preview automatically. Try turning it on manually by pressing `d`.',
+            'Failed to turn on development store preview automatically.\nTry turning it on manually by pressing `d`.',
           )
         })
 

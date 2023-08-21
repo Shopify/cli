@@ -480,19 +480,19 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'Failed to fetch the latest status')
 
-    expect(renderInstance.lastFrame()!.replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
-      "[33m00:00:00 │ backend │ first backend message[39m
-      [33m00:00:00 │ backend │ second backend message[39m
-      [33m00:00:00 │ backend │ third backend message[39m
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press [1md[22m │ development store preview: [32m✔ on[39m
-      › Press [1mp[22m │ preview in your browser
-      › Press [1mq[22m │ quit
+      › Press d │ development store preview: ✔ on
+      › Press p │ preview in your browser
+      › Press q │ quit
 
       Preview URL: https://shopify.com
-      [31mFailed to fetch the latest status of the development store preview, trying again in 5 seconds.[39m
+      Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
   })
@@ -714,17 +714,17 @@ describe('Dev', () => {
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
 
-    expect(renderInstance.lastFrame()!.replace(/\d/g, '0')).toMatchInlineSnapshot(`
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press [0md[00m │ development store preview: [00m✖ off[00m
-      › Press [0mp[00m │ preview in your browser
-      › Press [0mq[00m │ quit
+      › Press d │ development store preview: ✖ off
+      › Press p │ preview in your browser
+      › Press q │ quit
 
       Preview URL: https://shopify.com
-      [00mFailed to turn on development store preview automatically. Try turning it on manually by pressing [00m
-      [00m\`d\`.[00m
+      Failed to turn on development store preview automatically.
+      Try turning it on manually by pressing \`d\`.
       "
     `)
   })
