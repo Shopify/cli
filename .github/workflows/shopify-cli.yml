@@ -116,6 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
@@ -133,6 +134,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
@@ -154,6 +156,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
@@ -175,6 +178,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
@@ -201,7 +205,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          repository: ${{ github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
