@@ -11,6 +11,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 export interface DevProps {
@@ -43,6 +44,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const {isAborted} = useAbortSignal(abortController.signal, async () => {
     setStatusMessage('Shutting down dev ...')
     setTimeout(() => {
+      if (isUnitTest()) return
       treeKill('SIGINT')
     }, 2000)
     clearInterval(pollingInterval.current)

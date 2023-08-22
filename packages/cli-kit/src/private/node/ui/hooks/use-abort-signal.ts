@@ -10,11 +10,12 @@ export default function useAbortSignal(abortSignal?: AbortSignal, onAbort: () =>
 
   useLayoutEffect(() => {
     abortSignal?.addEventListener('abort', () => {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises, promise/catch-or-return
-      onAbort().then(() => {
-        setIsAborted(true)
-        unmountInk()
-      })
+      onAbort()
+        .then(() => {
+          setIsAborted(true)
+          unmountInk()
+        })
+        .catch(() => {})
     })
   }, [])
 
