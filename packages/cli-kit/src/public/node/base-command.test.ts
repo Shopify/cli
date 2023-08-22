@@ -5,8 +5,16 @@ import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {describe, expect, test} from 'vitest'
+import {terminalSupportsRawMode} from './system.js'
+import {unstyled} from './output.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
+
+vi.mock('./system.js')
+
+beforeEach(() => {
+  vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+})
 
 let testResult: {[flag: string]: unknown} = {}
 let testError: Error | undefined
@@ -31,6 +39,7 @@ class MockCommand extends Command {
     }),
     password: Flags.string({}),
     environment: Flags.string({}),
+    nonTTYRequiredFlag: Flags.string({}),
   }
   /* eslint-enable @shopify/cli/command-flags-with-env */
 
@@ -45,6 +54,13 @@ class MockCommand extends Command {
 
   environmentsFilename(): string {
     return 'shopify.environments.toml'
+  }
+}
+
+class MockCommandWithRequiredFlagInNonTTY extends MockCommand {
+  async run(): Promise<void> {
+    const {flags} = await this.parse(MockCommandWithRequiredFlagInNonTTY)
+    this.failMissingNonTTYFlags(flags, ['nonTTYRequiredFlag'])
   }
 }
 
@@ -266,6 +282,28 @@ describe('applying environments', async () => {
       expect(testError?.message).toMatch('--someBoolean=true cannot also be provided when using --someExclusiveString')
     },
   )
+
+  runTestInTmpDir('does not throw in TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
+    // Given
+    vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+
+    // When
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
+    // Then
+    expect(testError).toBeUndefined()
+  })
+
+  runTestInTmpDir('throws in non-TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
+    // Given
+    vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+
+    // When
+    await MockCommandWithRequiredFlagInNonTTY.run(['--path', tmpDir])
+
+    // Then
+    expect(unstyled(testError!.message)).toMatch('Flag not specified:\n\nnonTTYRequiredFlag')
+  })
 
   runTestInTmpDir('reports environment settings that do not match defaults', async (tmpDir: string) => {
     // Given
