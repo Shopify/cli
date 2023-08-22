@@ -102,10 +102,21 @@ module ShopifyCLI
         def patch_body(env, body)
           return [""] unless body
 
-          body.gsub(%r{(data-base-url=(["']))(http:|https:)?//#{shop}(.*?)(\2)}) do |_|
+          # Patch custom font asset urls
+          body = body.gsub(
+            %r{(url\((["']))?(http:|https:)?//#{shop}(/.*?\.(woff2?|eot|ttf))(\?[^'"\)]*)?(\2\))?\s*}
+          ) do |_|
+            match = Regexp.last_match
+            "#{match[1]}http://#{host(env)}#{match[4]}#{match[6]}#{match[7]} "
+          end
+
+          # Patch data-base-url attributes
+          body = body.gsub(%r{(data-base-url=(["']))(http:|https:)?//#{shop}(.*?)(\2)}) do |_|
             match = Regexp.last_match
             "#{match[1]}http://#{host(env)}#{match[4]}#{match[5]}"
           end
+
+          body
         end
 
         def host(env)
