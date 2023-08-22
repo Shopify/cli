@@ -1,0 +1,9 @@
+type TestType1 {
+  testField11: String
+  testField12: Int!
+}
+
+type TestType2 {
+  testField21: [String]!
+  testField22: TestType1
+}
