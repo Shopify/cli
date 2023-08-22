@@ -57,16 +57,21 @@
     "serve-static": "1.15.0",
     "ws": "8.13.0"
   },
+  "peerDependencies": {
+    "ink": ">=4.2.0",
+    "react": ">=18.2.0"
+  },
   "devDependencies": {
     "@types/diff": "^5.0.3",
     "@types/http-proxy": "^1.17.11",
     "@types/lodash-es": "^4.17.8",
     "@types/node": "14.18.54",
+    "@types/react": "18.2.0",
     "@types/serve-static": "^1.15.2",
     "@types/ws": "^8.5.5",
+    "@vitest/coverage-istanbul": "^0.34.1",
     "graphql": "^16.4.0",
     "graphql-tag": "^2.12.6",
-    "@vitest/coverage-istanbul": "^0.34.1",
     "vite": "^4.4.8",
     "vitest": "^0.34.1"
   },

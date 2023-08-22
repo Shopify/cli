@@ -1,4 +1,4 @@
-import {outputUpdateURLsResult} from './output.js'
+import {outputUpdateURLsResult} from './ui.js'
 import {
   testApp,
   testFunctionExtension,

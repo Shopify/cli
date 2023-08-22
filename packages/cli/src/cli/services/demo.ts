@@ -243,17 +243,6 @@ const renderConcurrentPropertiesSchema = zod.object({
       ),
     }),
   ),
-  footer: zod
-    .object({
-      shortcuts: zod.array(
-        zod.object({
-          key: zod.string(),
-          action: zod.string(),
-        }),
-      ),
-      subTitle: zod.string().optional(),
-    })
-    .optional(),
 })
 type RenderConcurrentProperties = zod.infer<typeof renderConcurrentPropertiesSchema>
 const renderConcurrentStepSchema = abstractDemoStepSchema.extend({
@@ -399,7 +388,7 @@ function taskbarExecutor(steps: {title: string; duration: number}[]) {
   }
 }
 
-function concurrentExecutor({processes, footer}: RenderConcurrentProperties) {
+function concurrentExecutor({processes}: RenderConcurrentProperties) {
   return async () => {
     const concurrentProcesses = processes.map(({prefix, steps}) => {
       return {
@@ -415,6 +404,6 @@ function concurrentExecutor({processes, footer}: RenderConcurrentProperties) {
         },
       }
     })
-    await renderConcurrent({processes: concurrentProcesses, footer})
+    await renderConcurrent({processes: concurrentProcesses})
   }
 }

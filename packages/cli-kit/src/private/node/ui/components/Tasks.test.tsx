@@ -421,6 +421,9 @@ describe('Tasks', () => {
 
     abortController.abort()
 
+    // wait for the onAbort promise to resolve
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)

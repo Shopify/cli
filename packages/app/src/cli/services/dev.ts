@@ -1,4 +1,4 @@
-import {disableDeveloperPreview, ensureDevContext} from './context.js'
+import {ensureDevContext} from './context.js'
 import {
   generateFrontendURL,
   generatePartnersURLs,
@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputUpdateURLsResult, renderDev} from './dev/output.js'
+import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -53,13 +53,12 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
 const MANIFEST_VERSION = '3'
@@ -335,7 +334,7 @@ async function dev(options: DevOptions) {
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
-  const abortController = configureDevAbortController(apiKey, token, tunnelClient)
+  const abortController = new AbortController()
 
   const app = {
     canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
@@ -345,14 +344,13 @@ async function dev(options: DevOptions) {
   }
 
   if (proxyTargets.length === 0) {
-    await renderDev(
-      {
-        processes: additionalProcesses,
-        abortController,
-      },
+    await renderDev({
+      processes: additionalProcesses,
       previewUrl,
       app,
-    )
+      abortController,
+      tunnelClient,
+    })
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
       previewUrl,
@@ -361,21 +359,9 @@ async function dev(options: DevOptions) {
       additionalProcesses,
       app,
       abortController,
+      tunnelClient,
     })
   }
-}
-
-function configureDevAbortController(apiKey: string, token: string, tunnelClient: TunnelClient | undefined) {
-  const abortController = new AbortController()
-  abortController.signal.addEventListener('abort', async () => {
-    setTimeout(() => {
-      treeKill('SIGINT')
-    }, 2000)
-    outputDebug('\n\nInitiating graceful shutdown ...')
-    await disableDeveloperPreview({apiKey, token})
-    tunnelClient?.stopTunnel()
-  })
-  return abortController
 }
 
 function setPreviousAppId(directory: string, apiKey: string) {

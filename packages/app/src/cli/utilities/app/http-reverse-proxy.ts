@@ -1,8 +1,8 @@
-import {renderDev} from '../../services/dev/output.js'
-import {RenderConcurrentOptions} from '@shopify/cli-kit/node/ui'
+import {renderDev} from '../../services/dev/ui.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -51,6 +51,7 @@ interface Options {
     token: string
   }
   abortController?: AbortController
+  tunnelClient?: TunnelClient
 }
 
 /**
@@ -69,6 +70,7 @@ export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
   additionalProcesses,
   app,
   abortController,
+  tunnelClient,
 }: Options): Promise<void> {
   // Lazy-importing it because it's CJS and we don't want it
   // to block the loading of the ESM module graph.
@@ -138,12 +140,16 @@ ${outputToken.json(JSON.stringify(rules))}
     server.close()
   })
 
-  const renderConcurrentOptions: RenderConcurrentOptions = {
-    processes: [...processes, ...additionalProcesses],
-    abortController: controller,
-  }
-
-  await Promise.all([renderDev(renderConcurrentOptions, previewUrl, app), server.listen(portNumber)])
+  await Promise.all([
+    renderDev({
+      processes: [...processes, ...additionalProcesses],
+      abortController: controller,
+      previewUrl,
+      app,
+      tunnelClient,
+    }),
+    server.listen(portNumber),
+  ])
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage, websocket = false) {
