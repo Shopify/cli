@@ -4,7 +4,7 @@ import * as readline from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
-import execa from "execa"
+import {execa} from "execa"
 import path from "path"
 import os from "os"
 import fs from "fs"
@@ -124,6 +124,9 @@ program
 
     log(`Checking your theme...`)
     await shopifyExec(["theme", "check"])
+
+    log(`Packaging your theme...`)
+    await shopifyExec(["theme", "package"])
 
     log(`Serving your theme on store ${options.store}...`)
     const devProcess = shopifyExec(["theme", "dev", "--store", options.store])
