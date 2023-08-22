@@ -4,7 +4,7 @@ import * as readline from 'node:readline/promises'
 import { stdin as input, stdout as output } from 'node:process'
 import { createRequire } from "module"
 import { fileURLToPath } from "url"
-import {execa} from "execa"
+import { execa } from "execa"
 import path from "path"
 import os from "os"
 import fs from "fs"
