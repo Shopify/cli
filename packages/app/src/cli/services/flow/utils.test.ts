@@ -4,7 +4,7 @@ import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('loadSchemaFromPath', () => {
-  test('loading schema from valid file path should return the file content', async () => {
+  test('loading schema from valid file path should return file contents', async () => {
     const extensionPath = __dirname.concat('/fixtures')
     const patchPath = './valid-schema-patch.graphql'
 
@@ -14,7 +14,7 @@ describe('loadSchemaFromPath', () => {
     expect(actualSchemaPatch).toEqual(expectedSchemaPatch)
   })
 
-  test('loading schema from folder directory should throw an multiple files error', async () => {
+  test('loading schema from folder directory should throw multiple files error', async () => {
     const extensionPath = __dirname.concat('/fixtures')
     const patchPath = '*.graphql'
 
@@ -28,7 +28,7 @@ describe('loadSchemaFromPath', () => {
     await expect(loadSchemaFromPath(extensionPath, patchPath)).rejects.toThrow('No file found for schema path')
   })
 
-  test('loading schema with no path patch should return empty string', async () => {
+  test('loading schema with empty path string should return empty string', async () => {
     const extensionPath = __dirname.concat('/fixtures')
     const patchPath = ''
 
