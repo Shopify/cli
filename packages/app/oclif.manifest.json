@@ -968,6 +968,13 @@
           "hidden": false,
           "multiple": false
         },
+        "input": {
+          "name": "input",
+          "type": "option",
+          "char": "i",
+          "description": "The input JSON to pass to the function.",
+          "multiple": false
+        },
         "json": {
           "name": "json",
           "type": "boolean",

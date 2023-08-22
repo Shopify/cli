@@ -257,10 +257,11 @@ Run a Function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-j]
+  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-i <value>] [-j]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
+  -i, --input=<value>   The input JSON to pass to the function.
   -j, --json            Log the run result as a JSON object.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your function directory.

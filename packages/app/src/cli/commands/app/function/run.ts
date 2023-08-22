@@ -12,6 +12,11 @@ export default class FunctionRun extends Command {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    input: Flags.string({
+      char: 'i',
+      description: 'The input JSON to pass to the function.',
+      env: 'SHOPIFY_FLAG_INPUT',
+    }),
     json: Flags.boolean({
       char: 'j',
       hidden: false,
@@ -27,7 +32,7 @@ export default class FunctionRun extends Command {
       path: flags.path,
       configName: flags.config,
       callback: async (_app, ourFunction) => {
-        await runFunctionRunner(ourFunction, {json: flags.json})
+        await runFunctionRunner(ourFunction, {input: flags.input, json: flags.json})
       },
     })
   }
