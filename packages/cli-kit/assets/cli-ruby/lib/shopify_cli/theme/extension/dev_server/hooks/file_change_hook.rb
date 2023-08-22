@@ -9,14 +9,13 @@ module ShopifyCLI
           class FileChangeHook
             include ShopifyCLI::Theme::Extension::IgnoreHelper
 
-            attr_reader :ctx, :extension, :syncer, :streams, :notifier, :ignore_filter
+            attr_reader :ctx, :extension, :syncer, :streams, :ignore_filter
 
-            def initialize(ctx, extension:, syncer:, notifier:, ignore_filter: nil)
+            def initialize(ctx, extension:, syncer:, ignore_filter: nil)
               @ctx = ctx
               @extension = extension
               @syncer = syncer
               @ignore_filter = ignore_filter
-              @notifier = notifier
             end
 
             def call(modified, added, removed, streams: nil)
@@ -32,8 +31,6 @@ module ShopifyCLI
 
               hot_reload(modified) unless modified.empty?
               reload_page(added, removed) unless (added + removed).empty?
-
-              notifier.notify_updates(modified + added + removed) unless (modified + added + removed).empty?
             end
 
             private
