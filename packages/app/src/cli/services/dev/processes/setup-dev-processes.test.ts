@@ -1,4 +1,4 @@
-import {DevConfig, ProxyServerProcess, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
+import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
@@ -213,6 +213,12 @@ describe('setup-dev-processes', () => {
         webhooksPath: '/webhooks',
       },
     })
+
+    // Check the ports & rule mapping
+    const webPort = (res.processes[0] as WebProcess).options.port
+    const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
+    const previewExtensionPort = (res.processes[1] as PreviewableExtensionProcess).options.port
+
     expect(res.processes[5]).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
@@ -220,23 +226,12 @@ describe('setup-dev-processes', () => {
       options: {
         port: 444,
         rules: {
-          '/extensions': expect.stringMatching(/http:\/\/localhost:\d+/),
-          '/ping': expect.stringMatching(/http:\/\/localhost:\d+/),
-          default: expect.stringMatching(/http:\/\/localhost:\d+/),
-          websocket: expect.stringMatching(/http:\/\/localhost:\d+/),
+          '/extensions': `http://localhost:${previewExtensionPort}`,
+          '/ping': `http://localhost:${hmrPort}`,
+          default: `http://localhost:${webPort}`,
+          websocket: `http://localhost:${hmrPort}`,
         },
       },
-    })
-
-    // Check the ports & rule mapping
-    const webPort = (res.processes[0] as WebProcess).options.port
-    const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
-    const previewExtensionPort = (res.processes[1] as PreviewableExtensionProcess).options.port
-    expect((res.processes[5] as ProxyServerProcess).options.rules).toEqual({
-      '/extensions': `http://localhost:${previewExtensionPort}`,
-      '/ping': `http://localhost:${hmrPort}`,
-      default: `http://localhost:${webPort}`,
-      websocket: `http://localhost:${hmrPort}`,
     })
   })
 })

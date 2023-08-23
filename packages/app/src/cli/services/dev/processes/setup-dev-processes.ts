@@ -125,7 +125,7 @@ export async function setupDevProcesses({
   // Add http server proxy & configure ports, for processes that need it
   const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort)
 
-  // Decide on the approrpiate preview URL for a session with these processes
+  // Decide on the appropriate preview URL for a session with these processes
   const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
   let previewUrl
   if (anyPreviewableExtensions.length > 0) {

@@ -159,8 +159,8 @@ async function createProcessDefinitionsForProxies(proxyTargets: ReverseHTTPProxy
       },
     }
   }
-  const proxyProcessDefintions = proxyTargets.map(createProxyProcessDefinition)
-  const processDefinitions = await Promise.all(proxyProcessDefintions)
+  const proxyProcessDefinitions = proxyTargets.map(createProxyProcessDefinition)
+  const processDefinitions = await Promise.all(proxyProcessDefinitions)
   return {rules, processDefinitions}
 }
 

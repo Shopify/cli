@@ -42,14 +42,7 @@ export async function setupWebProcesses({
     const isFrontend = isWebType(web, WebType.Frontend)
     const hostname = isFrontend ? frontendUrl : exposedUrl
 
-    let port
-    if (isFrontend || usingLocalhost) {
-      port = frontendPort
-    } else if (isWebType(web, WebType.Backend)) {
-      port = backendPort
-    } else {
-      port = await getAvailableTCPPort()
-    }
+    const port = await getWebProcessPort({web, frontendPort, backendPort, usingLocalhost})
 
     const hmrServerOptions =
       hmrServerPort && web.configuration.roles.includes(WebType.Frontend)
@@ -80,4 +73,29 @@ export async function setupWebProcesses({
     } as WebProcess
   })
   return Promise.all(webProcessSetups)
+}
+
+async function getWebProcessPort({
+  web,
+  frontendPort,
+  backendPort,
+  usingLocalhost,
+}: {
+  web: Web
+  frontendPort: number
+  backendPort: number
+  usingLocalhost: boolean
+}): Promise<number | undefined> {
+  const isFrontend = isWebType(web, WebType.Frontend)
+  if (isFrontend && !usingLocalhost) {
+    return
+  }
+
+  if (isFrontend) {
+    return frontendPort
+  } else if (isWebType(web, WebType.Backend)) {
+    return backendPort
+  } else {
+    return getAvailableTCPPort()
+  }
 }
