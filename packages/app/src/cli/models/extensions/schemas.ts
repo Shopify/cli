@@ -70,6 +70,7 @@ export const BaseSchema = zod.object({
   capabilities: CapabilitiesSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional().default([]),
   settings: SettingsSchema.optional(),
+  build_directory: zod.string().optional(),
 })
 
 export const BaseSchemaWithHandle = BaseSchema.extend({
