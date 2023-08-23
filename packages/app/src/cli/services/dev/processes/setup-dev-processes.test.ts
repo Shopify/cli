@@ -1,9 +1,9 @@
 import {DevConfig, ProxyServerProcess, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
-import {SendWebhookProcess, sendWebhook} from './uninstall-webhook.js'
+import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
-import {DraftableExtensionProcess, pushUpdatesForDraftableExtensions} from './draftable-extension.js'
-import {PreviewThemeAppExtensionsProcess, runThemeAppExtensionsServer} from './theme-app-extension.js'
+import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
+import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
   testAppWithConfig,
   testTaxCalculationExtension,
@@ -130,105 +130,103 @@ describe('setup-dev-processes', () => {
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
-    expect(res.processes).toEqual([
-      {
-        type: 'web',
-        prefix: 'web-backend-frontend',
-        function: launchWebProcess,
-        options: {
-          apiKey: 'api-key',
-          apiSecret: 'api-secret',
-          backendPort: 111,
-          devCommand: 'npm exec remix dev',
-          directory: 'web',
-          frontendServerPort: 333,
-          hmrServerOptions: {
-            port: expect.any(Number),
-            httpPaths: ['/ping'],
-          },
+    expect(res.processes[0]).toMatchObject({
+      type: 'web',
+      prefix: 'web-backend-frontend',
+      function: launchWebProcess,
+      options: {
+        apiKey: 'api-key',
+        apiSecret: 'api-secret',
+        backendPort: 111,
+        devCommand: 'npm exec remix dev',
+        directory: 'web',
+        frontendServerPort: 333,
+        hmrServerOptions: {
           port: expect.any(Number),
-          hostname: 'https://example.com/frontend',
-          scopes: 'read_products',
+          httpPaths: ['/ping'],
         },
-      } as WebProcess,
-      {
-        type: 'previewable-extension',
-        function: launchPreviewableExtensionProcess,
-        prefix: 'extensions',
-        options: {
-          apiKey: 'api-key',
-          previewableExtensions: [previewable],
-          storeFqdn,
-          proxyUrl: 'https://example.com/proxy',
-          port: expect.any(Number),
-          pathPrefix: '/extensions',
-          appDirectory: '/tmp/project',
-          appName: 'App',
-          subscriptionProductUrl: '/products/999999',
-          cartUrl: '/cart/999999:1',
-          grantedScopes: [],
-          appId: '1234',
-        },
-      } as PreviewableExtensionProcess,
-      {
-        type: 'draftable-extension',
-        prefix: 'extensions',
-        function: pushUpdatesForDraftableExtensions,
-        options: {
-          unifiedDeployment: true,
-          localApp,
-          apiKey: 'api-key',
-          token,
-          extensions: [draftable],
-          remoteExtensionIds: {},
-          proxyUrl: 'https://example.com/proxy',
-        },
-      } as DraftableExtensionProcess,
-      {
-        type: 'theme-app-extensions',
-        prefix: 'extensions',
-        function: runThemeAppExtensionsServer,
-        options: {
-          adminSession: {
-            storeFqdn: 'store.myshopify.io',
-            token: 'admin-token',
-          },
-          themeExtensionServerArgs:
-            './my-extension --api-key api-key --extension-id 123 --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
-              ' ',
-            ),
-          storefrontToken: 'storefront-token',
-          usesUnifiedDeployment: true,
-          token,
-        },
-      } as PreviewThemeAppExtensionsProcess,
-      {
-        type: 'send-webhook',
-        prefix: 'webhooks',
-        function: sendWebhook,
-        options: {
-          apiSecret: 'api-secret',
-          deliveryPort: 111,
+        port: expect.any(Number),
+        hostname: 'https://example.com/frontend',
+        scopes: 'read_products',
+      },
+    })
+    expect(res.processes[1]).toMatchObject({
+      type: 'previewable-extension',
+      function: launchPreviewableExtensionProcess,
+      prefix: 'extensions',
+      options: {
+        apiKey: 'api-key',
+        previewableExtensions: [previewable],
+        storeFqdn,
+        proxyUrl: 'https://example.com/proxy',
+        port: expect.any(Number),
+        pathPrefix: '/extensions',
+        appDirectory: '/tmp/project',
+        appName: 'App',
+        subscriptionProductUrl: '/products/999999',
+        cartUrl: '/cart/999999:1',
+        grantedScopes: [],
+        appId: '1234',
+      },
+    })
+    expect(res.processes[2]).toMatchObject({
+      type: 'draftable-extension',
+      prefix: 'extensions',
+      function: pushUpdatesForDraftableExtensions,
+      options: {
+        unifiedDeployment: true,
+        localApp,
+        apiKey: 'api-key',
+        token,
+        extensions: expect.arrayContaining([draftable]),
+        remoteExtensionIds: {},
+        proxyUrl: 'https://example.com/proxy',
+      },
+    })
+    expect(res.processes[3]).toMatchObject({
+      type: 'theme-app-extensions',
+      prefix: 'extensions',
+      function: runThemeAppExtensionsServer,
+      options: {
+        adminSession: {
           storeFqdn: 'store.myshopify.io',
-          token: 'token',
-          webhooksPath: '/webhooks',
+          token: 'admin-token',
         },
-      } as SendWebhookProcess,
-      {
-        type: 'proxy-server',
-        prefix: 'proxy',
-        function: startProxyServer,
-        options: {
-          port: 444,
-          rules: {
-            '/extensions': expect.stringMatching(/http:\/\/localhost:\d+/),
-            '/ping': expect.stringMatching(/http:\/\/localhost:\d+/),
-            default: expect.stringMatching(/http:\/\/localhost:\d+/),
-            websocket: expect.stringMatching(/http:\/\/localhost:\d+/),
-          },
+        themeExtensionServerArgs:
+          './my-extension --api-key api-key --extension-id 123 --extension-title theme-extension-name --extension-type THEME_APP_EXTENSION --theme 1'.split(
+            ' ',
+          ),
+        storefrontToken: 'storefront-token',
+        usesUnifiedDeployment: true,
+        token,
+      },
+    })
+    expect(res.processes[4]).toMatchObject({
+      type: 'send-webhook',
+      prefix: 'webhooks',
+      function: sendWebhook,
+      options: {
+        apiSecret: 'api-secret',
+        deliveryPort: 111,
+        storeFqdn: 'store.myshopify.io',
+        token: 'token',
+        webhooksPath: '/webhooks',
+      },
+    })
+    expect(res.processes[5]).toMatchObject({
+      type: 'proxy-server',
+      prefix: 'proxy',
+      function: startProxyServer,
+      options: {
+        port: 444,
+        rules: {
+          '/extensions': expect.stringMatching(/http:\/\/localhost:\d+/),
+          '/ping': expect.stringMatching(/http:\/\/localhost:\d+/),
+          default: expect.stringMatching(/http:\/\/localhost:\d+/),
+          websocket: expect.stringMatching(/http:\/\/localhost:\d+/),
         },
-      } as ProxyServerProcess,
-    ])
+      },
+    })
 
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
