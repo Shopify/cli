@@ -29,19 +29,15 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export async function dev(commandOptions: DevOptions) {
   renderWarning({body: 'Running in new dev mode!'})
   const config = await prepareForDev(commandOptions)
-
   await actionsBeforeSettingUpDevProcesses(config)
-
   const {processes, previewUrl} = await setupDevProcesses(config)
-
-  await actionsBeforeLaunchingDev(config)
-
-  await runDevProcesses({processes, previewUrl, config})
+  await actionsBeforeLaunchingDevProcesses(config)
+  await launchDevProcesses({processes, previewUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -121,7 +117,13 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
     getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
   ) {
-    const nextSteps = [['Run', {command: 'shopify app config push'}, 'to push your scopes to the Partner Dashboard']]
+    const nextSteps = [
+      [
+        'Run',
+        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+        'to push your scopes to the Partner Dashboard',
+      ],
+    ]
 
     renderWarning({
       headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
@@ -137,7 +139,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
   }
 }
 
-async function actionsBeforeLaunchingDev(config: DevConfig) {
+async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
   setPreviousAppId(config.commandOptions.directory, config.remoteApp.apiKey)
 
   await logMetadataForDev({
@@ -156,11 +158,10 @@ function getDevUUIDsForAllExtensions(localApp: AppInterface, apiKey: string) {
   const envExtensionsIds = prodEnvIdentifiers.extensions || {}
   const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
 
-  const allExtensionsWithDevUUIDs = localApp.allExtensions.map((ext) => {
+  return localApp.allExtensions.map((ext) => {
     ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID
     return ext
   })
-  return allExtensionsWithDevUUIDs
 }
 
 async function handleUpdatingOfPartnerUrls(
@@ -177,14 +178,15 @@ async function handleUpdatingOfPartnerUrls(
   token: string,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
-  let partnerUrlsUpdated = false
+  let shouldUpdateURLs = false
   if (frontendConfig || backendConfig) {
     if (commandSpecifiedToUpdate) {
       const newURLs = generatePartnersURLs(
         network.exposedUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
       )
-      partnerUrlsUpdated = await shouldOrPromptUpdateURLs({
+      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
         appDirectory: localApp.directory,
         cachedUpdateURLs,
@@ -192,11 +194,11 @@ async function handleUpdatingOfPartnerUrls(
         localApp,
         apiKey,
       })
-      if (partnerUrlsUpdated) await updateURLs(newURLs, apiKey, token, localApp)
-      await outputUpdateURLsResult(partnerUrlsUpdated, newURLs, remoteApp, localApp)
+      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
+      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
   }
-  return partnerUrlsUpdated
+  return shouldUpdateURLs
 }
 
 async function setupNetworkingOptions(
@@ -246,7 +248,7 @@ async function setupNetworkingOptions(
   }
 }
 
-async function runDevProcesses({
+async function launchDevProcesses({
   processes,
   previewUrl,
   config,

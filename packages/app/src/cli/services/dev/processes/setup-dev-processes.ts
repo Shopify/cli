@@ -4,7 +4,7 @@ import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {AppInterface, isLegacyAppSchema} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -68,20 +68,18 @@ export async function setupDevProcesses({
 
   // setup the processes
   const processes = [
-    ...(await setupWebProcesses(
-      localApp.webs,
-      network.frontendUrl,
-      network.exposedUrl,
-      network.frontendPort,
-      network.backendPort,
-      network.usingLocalhost,
+    ...(await setupWebProcesses({
+      webs: localApp.webs,
+      frontendUrl: network.frontendUrl,
+      exposedUrl: network.exposedUrl,
+      frontendPort: network.frontendPort,
+      backendPort: network.backendPort,
+      usingLocalhost: network.usingLocalhost,
       apiKey,
       apiSecret,
-      network.frontendServerPort,
-      isLegacyAppSchema(localApp.configuration)
-        ? localApp.configuration.scopes
-        : localApp.configuration.access_scopes?.scopes,
-    )),
+      frontendServerPort: network.frontendServerPort,
+      scopes: getAppScopes(localApp.configuration),
+    })),
     await setupPreviewableExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,

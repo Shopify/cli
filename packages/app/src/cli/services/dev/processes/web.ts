@@ -10,18 +10,29 @@ export interface WebProcess extends BaseProcess<LaunchWebOptions> {
   type: 'web'
 }
 
-export async function setupWebProcesses(
-  webs: Web[],
-  frontendUrl: string,
-  exposedUrl: string,
-  frontendPort: number,
-  backendPort: number,
-  usingLocalhost: boolean,
-  apiKey: string,
-  apiSecret: string,
-  frontendServerPort?: number,
-  scopes?: string,
-): Promise<WebProcess[]> {
+export async function setupWebProcesses({
+  webs,
+  frontendUrl,
+  exposedUrl,
+  frontendPort,
+  backendPort,
+  usingLocalhost,
+  apiKey,
+  apiSecret,
+  frontendServerPort,
+  scopes,
+}: {
+  webs: Web[]
+  frontendUrl: string
+  exposedUrl: string
+  frontendPort: number
+  backendPort: number
+  usingLocalhost: boolean
+  apiKey: string
+  apiSecret: string
+  frontendServerPort: number | undefined
+  scopes: string
+}): Promise<WebProcess[]> {
   const {frontendConfig} = frontAndBackendConfig(webs)
 
   const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
@@ -32,14 +43,12 @@ export async function setupWebProcesses(
     const hostname = isFrontend ? frontendUrl : exposedUrl
 
     let port
-    if (!(isFrontend && !usingLocalhost)) {
-      if (isFrontend) {
-        port = frontendPort
-      } else if (isWebType(web, WebType.Backend)) {
-        port = backendPort
-      } else {
-        port = await getAvailableTCPPort()
-      }
+    if (isFrontend || usingLocalhost) {
+      port = frontendPort
+    } else if (isWebType(web, WebType.Backend)) {
+      port = backendPort
+    } else {
+      port = await getAvailableTCPPort()
     }
 
     const hmrServerOptions =
