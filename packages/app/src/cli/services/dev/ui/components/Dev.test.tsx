@@ -13,7 +13,6 @@ import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -276,9 +275,6 @@ describe('Dev', () => {
   test('abortController can be used to exit from outside and should preserve static output', async () => {
     // Given
     const abortController = new AbortController()
-    const tunnelClient = {
-      stopTunnel: vi.fn(),
-    } as unknown as TunnelClient
 
     const backendProcess = {
       prefix: 'backend',
@@ -300,7 +296,6 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         app={testApp}
-        tunnelClient={tunnelClient}
       />,
     )
 
@@ -331,7 +326,6 @@ describe('Dev', () => {
       00:00:00 │ backend │ third backend message
       "
     `)
-    expect(tunnelClient.stopTunnel).toHaveBeenCalledOnce()
     expect(vi.mocked(disableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
       apiKey: '123',
       token: '123',
