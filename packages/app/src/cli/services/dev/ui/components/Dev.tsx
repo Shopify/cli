@@ -9,7 +9,6 @@ import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
@@ -24,18 +23,10 @@ export interface DevProps {
     apiKey: string
     token: string
   }
-  tunnelClient?: TunnelClient
   pollingTime?: number
 }
 
-const Dev: FunctionComponent<DevProps> = ({
-  abortController,
-  processes,
-  previewUrl,
-  app,
-  tunnelClient,
-  pollingTime = 5000,
-}) => {
+const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, app, pollingTime = 5000}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
@@ -49,7 +40,6 @@ const Dev: FunctionComponent<DevProps> = ({
     }, 2000)
     clearInterval(pollingInterval.current)
     await disableDeveloperPreview({apiKey, token})
-    tunnelClient?.stopTunnel()
   })
 
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(Boolean(developmentStorePreviewEnabled))

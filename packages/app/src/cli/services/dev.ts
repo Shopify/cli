@@ -349,7 +349,6 @@ async function dev(options: DevOptions) {
       previewUrl,
       app,
       abortController,
-      tunnelClient,
     })
   } else {
     await runConcurrentHTTPProcessesAndPathForwardTraffic({
@@ -359,7 +358,6 @@ async function dev(options: DevOptions) {
       additionalProcesses,
       app,
       abortController,
-      tunnelClient,
     })
   }
 }
