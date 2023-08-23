@@ -36,6 +36,7 @@
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
 * [`shopify plugins update`](#shopify-plugins-update)
+* [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
@@ -812,6 +813,20 @@ FLAGS
 DESCRIPTION
   Update installed plugins.
 ```
+
+## `shopify search [QUERY]`
+
+Starts a search on shopify.dev.
+
+```
+USAGE
+  $ shopify search [QUERY]
+
+DESCRIPTION
+  Starts a search on shopify.dev.
+```
+
+_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.48.0/dist/cli/commands/search.js)_
 
 ## `shopify theme check`
 
