@@ -5,23 +5,9 @@
     "version": "0.2.0",
     "configurations": [
       {
-        "name": "Launch Chrome",
-        "request": "launch",
-        "type": "chrome",
-        "url": "https://shaunnode22.myshopify.com/admin",
-        "webRoot": "/"
-      },
-      {
-        "name": "Attach to Chrome",
-        "port": 9222,
-        "request": "attach",
-        "type": "chrome",
-        "webRoot": "${workspaceFolder}"
-      },
-      {
         "type": "node",
         "request": "launch",
-         "name": "shopify theme {command}",
+        "name": "shopify theme {command}",
         "cwd": "${workspaceFolder}",
         "runtimeExecutable": "pnpm",
         "runtimeArgs": [
