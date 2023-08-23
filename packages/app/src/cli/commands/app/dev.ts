@@ -9,6 +9,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -133,7 +134,7 @@ export default class Dev extends Command {
       notify: flags.notify,
     }
 
-    if (isTruthy(getEnvironmentVariables().SHOPIFY_CLI_NEW_DEV)) {
+    if (isTruthy(getEnvironmentVariables().SHOPIFY_CLI_NEW_DEV) || (await isShopify())) {
       await dev2(devOptions)
     } else {
       await dev(devOptions)
