@@ -972,7 +972,7 @@
           "name": "input",
           "type": "option",
           "char": "i",
-          "description": "The input JSON to pass to the function.",
+          "description": "The input JSON to pass to the function. If omitted, standard input is used.",
           "multiple": false
         },
         "json": {

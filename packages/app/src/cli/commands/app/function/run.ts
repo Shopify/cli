@@ -14,7 +14,7 @@ export default class FunctionRun extends Command {
     ...functionFlags,
     input: Flags.string({
       char: 'i',
-      description: 'The input JSON to pass to the function.',
+      description: 'The input JSON to pass to the function. If omitted, standard input is used.',
       env: 'SHOPIFY_FLAG_INPUT',
     }),
     json: Flags.boolean({
