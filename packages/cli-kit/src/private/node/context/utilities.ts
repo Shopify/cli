@@ -37,7 +37,6 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
         attempt: envs.GITHUB_RUN_ATTEMPT,
         branch: envs.GITHUB_REF_NAME,
         build: envs.GITHUB_RUN_ID,
-        commitMessage: envs.GITHUB_COMMIT_MESSAGE,
         commitSha: envs.GITHUB_SHA,
         run: envs.GITHUB_RUN_ID,
         runNumber: envs.GITHUB_RUN_NUMBER,
