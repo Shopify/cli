@@ -4,7 +4,7 @@ import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileSize} from '@shopify/cli-kit/node/fs'
-import {dirname, relativePath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -68,11 +68,15 @@ const SUPPORTED_BUCKETS = Object.keys(SUPPORTED_EXTS)
 
 async function validateThemeExtension(extension: ExtensionInstance): Promise<void> {
   const themeFiles = await themeExtensionFiles(extension)
+  let extensionDirectory = extension.directory
+  if (extension.configuration.build_directory) {
+    extensionDirectory = joinPath(extension.directory, extension.configuration.build_directory)
+  }
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
   await Promise.all(
     themeFiles.map(async (filepath) => {
-      const relativePathName = relativePath(extension.directory, filepath)
+      const relativePathName = relativePath(extensionDirectory, filepath)
       const directoryName = dirname(relativePathName)
       validateFile(relativePathName, directoryName)
       const filesize = await fileSize(filepath)
