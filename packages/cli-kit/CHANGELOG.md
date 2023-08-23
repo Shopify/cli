@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.48.4
+
+### Patch Changes
+
+- 70cdca4bb: Notify theme/theme extension updates when the workers have gone idle
+- b50d3dee7: Fix loading of custom fonts
+
 ## 3.48.3
 
 ## 3.48.2
