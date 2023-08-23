@@ -1,5 +1,14 @@
 # @shopify/theme
 
+## 3.48.4
+
+### Patch Changes
+
+- 1be2b05d7: Fix theme package on windows
+- Updated dependencies [70cdca4bb]
+- Updated dependencies [b50d3dee7]
+  - @shopify/cli-kit@3.48.4
+
 ## 3.48.3
 
 ### Patch Changes
