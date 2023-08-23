@@ -109,7 +109,7 @@ export async function setupDraftableExtensionsProcess({
 }: Omit<DraftableExtensionOptions, 'remoteExtensionIds' | 'extensions'> & {
   remoteApp: PartnersAppForIdentifierMatching
 }): Promise<DraftableExtensionProcess | undefined> {
-  // TODO it would be good if this process didn't require the full local & remote app instances
+  // it would be good if this process didn't require the full local & remote app instances
   const allExtensions = localApp.allExtensions
   const draftableExtensions = allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
   if (draftableExtensions.length === 0) {
