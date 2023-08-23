@@ -2,10 +2,12 @@
   "name": "@shopify/features",
   "version": "0.8.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "test": "nx run features:test",
+    "cucumber-esm": "cross-env NODE_OPTIONS=\"--loader ts-node/esm\" cucumber-js",
     "type-check": "nx type-check"
   },
   "eslintConfig": {
@@ -24,19 +26,19 @@
     }
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^8.2.2",
-    "@cucumber/messages": "20.0.0",
+    "@cucumber/cucumber": "^9.3.0",
+    "@cucumber/messages": "22.0.0",
     "@cucumber/pretty-formatter": "1.0.0",
-    "@types/cucumber": "^7.0.0",
     "@types/fs-extra": "^9.0.13",
-    "@types/node": "14.18.53",
+    "@types/node": "14.18.54",
     "@types/rimraf": "^3.0.2",
     "ansi-colors": "^4.1.3",
-    "execa": "^5.1.1",
+    "execa": "^7.2.0",
     "fs-extra": "^9.1.0",
     "pathe": "1.1.1",
     "rimraf": "^3.0.2",
-    "tempy": "^1.0.1"
+    "tempy": "^1.0.1",
+    "fast-glob": "^3.3.1"
   },
   "engines": {
     "node": ">=14.17.0"

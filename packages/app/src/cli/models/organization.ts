@@ -20,7 +20,6 @@ export type OrganizationApp = MinimalOrganizationApp & {
   grantedScopes: string[]
   betas?: {
     unifiedAppDeployment?: boolean
-    unifiedAppDeploymentOptIn?: boolean
   }
   applicationUrl: string
   redirectUrlWhitelist: string[]
@@ -39,6 +38,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
     subPathPrefix: string
     url: string
   }
+  developmentStorePreviewEnabled?: boolean
 }
 
 export interface OrganizationStore {

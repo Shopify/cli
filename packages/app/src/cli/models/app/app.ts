@@ -5,7 +5,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 export const LegacyAppSchema = zod
   .object({
@@ -87,7 +87,8 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  * @param item - the item to validate
  */
 export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
-  return isType(LegacyAppSchema, item)
+  const {path, ...rest} = item
+  return isType(LegacyAppSchema, rest)
 }
 
 /**
@@ -95,7 +96,8 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  * @param item - the item to validate
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  return isType(AppSchema, item)
+  const {path, ...rest} = item
+  return isType(AppSchema, rest)
 }
 
 /**
@@ -119,11 +121,8 @@ export function getAppScopesArray(config: AppConfiguration) {
   return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
 }
 
-export function usesLegacyScopesBehavior(app: AppInterface | AppConfiguration) {
-  const config: AppInterface | AppConfiguration = 'configurationPath' in app ? app.configuration : app
-
+export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
-
   return Boolean(config.access_scopes?.use_legacy_install_flow)
 }
 
@@ -164,9 +163,9 @@ export const WebConfigurationSchema = zod.union([
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema>
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema>
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string}
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
@@ -180,7 +179,6 @@ export interface Web {
 export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
-  configurationPath: string
 }
 
 export interface AppInterface extends AppConfigurationInterface {
@@ -204,7 +202,6 @@ export class App implements AppInterface {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
-  configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -219,7 +216,6 @@ export class App implements AppInterface {
     directory: string,
     packageManager: PackageManager,
     configuration: AppConfiguration,
-    configurationPath: string,
     nodeDependencies: {[key: string]: string},
     webs: Web[],
     extensions: ExtensionInstance[],
@@ -232,7 +228,6 @@ export class App implements AppInterface {
     this.directory = directory
     this.packageManager = packageManager
     this.configuration = configuration
-    this.configurationPath = configurationPath
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
@@ -259,58 +254,33 @@ export class App implements AppInterface {
 
 export class EmptyApp extends App {
   constructor() {
-    const configuration = {scopes: '', extension_directories: []}
-    super('', '', '', 'npm', configuration, '', {}, [], [], false)
+    const configuration = {scopes: '', extension_directories: [], path: ''}
+    super('', '', '', 'npm', configuration, {}, [], [], false)
   }
 }
 
 type RendererVersionResult = {name: string; version: string} | undefined | 'not_found'
 
 /**
- * Given a UI extension and the app it belongs to, it returns the version of the renderer package.
+ * Given a UI extension, it returns the version of the renderer package.
  * Looks for `/node_modules/@shopify/{renderer-package-name}/package.json` to find the real version used.
- * @param uiExtensionType - UI extension whose renderer version will be obtained.
- * @param appDirectory - location of the app code.
+ * @param extension - UI extension whose renderer version will be obtained.
  * @returns The version if the dependency exists.
  */
-export async function getUIExtensionRendererVersion(
-  extension: ExtensionInstance,
-  appDirectory: string,
-): Promise<RendererVersionResult> {
+export async function getUIExtensionRendererVersion(extension: ExtensionInstance): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
-  return getDependencyVersion(rendererDependency, appDirectory)
+  return getDependencyVersion(rendererDependency, extension.directory)
 }
 
 export async function getDependencyVersion(dependency: string, directory: string): Promise<RendererVersionResult> {
-  const isReact = dependency.includes('-react')
-  let cwd = directory
-  /**
-   * PNPM creates a symlink to a global cache where dependencies are hoisted. Therefore
-   * we need to first look up the *-react package and use that as a working directory from
-   * where to look up the non-react package.
-   */
-  if (isReact) {
-    const dependencyName = dependency.split('/')
-    const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
-    const reactPackageJsonPath = await findPathUp(pattern, {
-      type: 'file',
-      cwd: directory,
-      allowSymlinks: true,
-    })
-    if (!reactPackageJsonPath) {
-      return 'not_found'
-    }
-    cwd = await fileRealPath(dirname(reactPackageJsonPath))
-  }
-
-  // Split the dependency name to avoid using "/" in windows
+  // Split the dependency name to avoid using "/" in windows. Only look for non react dependencies.
   const dependencyName = dependency.replace('-react', '').split('/')
   const pattern = joinPath('node_modules', dependencyName[0]!, dependencyName[1]!, 'package.json')
 
   let packagePath = await findPathUp(pattern, {
-    cwd,
+    cwd: directory,
     type: 'file',
     allowSymlinks: true,
   })

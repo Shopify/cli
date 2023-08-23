@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
-  "version": "4.2.1",
+  "version": "5.0.0",
   "private": false,
   "license": "MIT",
   "exports": {
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
     "@shopify/ui-extensions-test-utils": "3.25.0",
-    "@types/node": "14.18.53",
+    "@types/node": "14.18.54",
     "@types/react": "17.0.2",
     "@types/react-dom": "^16.9.11",
     "@vitejs/plugin-react-refresh": "^1.3.6",
@@ -59,11 +59,11 @@
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "ts-node": "^10.9.1",
-    "typescript": "4.9.5",
+    "typescript": "5.0.4",
     "vi-fetch": "^0.8.0",
-    "vite": "^4.3.9",
+    "vite": "^4.4.8",
     "vite-tsconfig-paths": "^3.3.14",
-    "vitest": "^0.32.2"
+    "vitest": "^0.34.1"
   },
   "peerDependencies": {
     "react": "^17.0.2"

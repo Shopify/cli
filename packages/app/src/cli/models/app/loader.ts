@@ -43,11 +43,12 @@ export type AppLoaderMode = 'strict' | 'report'
 type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
 const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
 
-async function loadConfigurationFile(
+export async function loadConfigurationFile(
   filepath: string,
-  abortOrReport: AbortOrReport,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  decode: (input: any) => any = decodeToml,
+  abortOrReport: AbortOrReport = (errorMessage) => {
+    throw new AbortError(errorMessage)
+  },
+  decode: (input: string) => object = decodeToml,
 ): Promise<unknown> {
   if (!(await fileExists(filepath))) {
     return abortOrReport(
@@ -92,10 +93,11 @@ const isCurrentSchema = (schema: unknown) => {
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
-  abortOrReport: AbortOrReport,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  decode: (input: any) => any = decodeToml,
-): Promise<zod.TypeOf<TSchema>> {
+  abortOrReport: AbortOrReport = (errorMessage) => {
+    throw new AbortError(errorMessage)
+  },
+  decode: (input: string) => object = decodeToml,
+): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
@@ -110,7 +112,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema>> {
+): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -122,7 +124,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
       filepath,
     )
   }
-  return parseResult.data
+  return {...parseResult.data, path: filepath}
 }
 
 export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
@@ -216,13 +218,8 @@ class AppLoader {
       directory: this.directory,
       configName: this.configName,
     })
-    const {
-      directory: appDirectory,
-      configurationPath,
-      configuration,
-      configurationLoadResultMetadata,
-    } = await configurationLoader.loaded()
-    const dotenv = await loadDotEnv(appDirectory, configurationPath)
+    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
+    const dotenv = await loadDotEnv(appDirectory, configuration.path)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
       appDirectory,
@@ -245,7 +242,6 @@ class AppLoader {
       appDirectory,
       packageManager,
       configuration,
-      configurationPath,
       nodeDependencies,
       webs,
       allExtensions,
@@ -357,9 +353,7 @@ class AppLoader {
 
     const extensionPromises = configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
-
-      const fileContent = await readFile(configurationPath)
-      const obj = decodeToml(fileContent)
+      const obj = await loadConfigurationFile(configurationPath)
       const {extensions, type} = ExtensionsArraySchema.parse(obj)
 
       if (extensions) {
@@ -412,7 +406,7 @@ class AppLoader {
         this.abortOrReport(
           outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
           undefined,
-          extension.configurationPath,
+          extension.configuration.path,
         )
       } else if (extension.handle) {
         handles.add(extension.handle)
@@ -424,7 +418,7 @@ class AppLoader {
 
   async findEntryPath(directory: string, specification: ExtensionSpecification) {
     let entryPath
-    if (specification.singleEntryPath) {
+    if (specification.appModuleFeatures().includes('single_js_entry_path')) {
       entryPath = (
         await Promise.all(
           ['index']
@@ -507,7 +501,6 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
-  private configurationPath = ''
 
   constructor({directory, configName}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
@@ -539,11 +532,11 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
 
-    const file = await loadConfigurationFile(configurationPath, this.abort, decodeToml)
+    const file = await loadConfigurationFile(configurationPath)
 
     const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
 
-    const configuration = await parseConfigurationFile(appSchema, configurationPath, this.abort)
+    const configuration = await parseConfigurationFile(appSchema, configurationPath)
 
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
@@ -571,7 +564,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationPath, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
@@ -651,10 +644,6 @@ class AppConfigurationLoader {
       )
     ).filter((entry) => entry !== undefined) as [string, string][]
     return Object.fromEntries(entries)
-  }
-
-  abort<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
-    throw new AbortError(errorMessage)
   }
 }
 

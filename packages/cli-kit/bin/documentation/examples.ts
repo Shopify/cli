@@ -68,17 +68,6 @@ export const examples: {[key in string]: Example} = {
 
       await renderConcurrent({
         processes: [backendProcess, frontendProcess],
-        footer: {
-          shortcuts: [{
-            key: 'p',
-            action: 'preview in your browser'
-          }, {
-            key: 'q',
-            action: 'quit.',
-          }],
-          subTitle: `Preview URL: https://shopify.com`,
-        },
-
         renderOptions: {stdout: stdout as any, stdin: stdin as any, debug: true},
       })
 

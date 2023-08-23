@@ -2,14 +2,20 @@ import {AbortSignal} from '../../../../public/node/abort.js'
 import {useApp} from 'ink'
 import {useLayoutEffect, useState} from 'react'
 
-export default function useAbortSignal(abortSignal?: AbortSignal) {
+const noop = () => Promise.resolve()
+
+export default function useAbortSignal(abortSignal?: AbortSignal, onAbort: () => Promise<void> = noop) {
   const {exit: unmountInk} = useApp()
   const [isAborted, setIsAborted] = useState(false)
 
   useLayoutEffect(() => {
     abortSignal?.addEventListener('abort', () => {
-      setIsAborted(true)
-      unmountInk()
+      onAbort()
+        .then(() => {
+          setIsAborted(true)
+          unmountInk()
+        })
+        .catch(() => {})
     })
   }, [])
 

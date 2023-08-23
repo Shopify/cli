@@ -12,8 +12,9 @@ vi.mock('../../prompts/update-url.js')
 vi.mock('@shopify/cli-kit/node/session')
 
 const APP1 = testAppWithConfig({
-  app: {configurationPath: 'my-app/shopify.app.development.toml'},
+  app: {},
   config: {
+    path: 'my-app/shopify.app.development.toml',
     client_id: 'api-key',
     application_url: 'https://myapp.com',
   },

@@ -17,6 +17,7 @@ import {
   ensureGenerateContext,
   DeployContextOptions,
   ensureReleaseContext,
+  ensureVersionsListContext,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -35,7 +36,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderError, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {Config} from '@oclif/core'
 
 vi.mock('./local-storage.js')
@@ -159,7 +160,7 @@ const FETCH_RESPONSE = {
 const DEFAULT_SELECT_APP_OPTIONS = {
   directory: undefined,
   isLaunchable: true,
-  scopes: '',
+  scopesArray: [],
 }
 
 const options = (app: AppInterface): DeployContextOptions => {
@@ -187,8 +188,8 @@ describe('ensureGenerateContext', () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
       directory: '/app',
-      configurationPath: '/app/shopify.app.toml',
       configuration: {
+        path: '/app/shopify.app.toml',
         scopes: 'read_products',
       },
     })
@@ -226,8 +227,8 @@ describe('ensureGenerateContext', () => {
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       directory: '/app',
-      configurationPath: CACHED1_WITH_CONFIG.configFile!,
-      configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
+      configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
+        .configuration,
     })
     vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
 
@@ -246,8 +247,8 @@ describe('ensureGenerateContext', () => {
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       directory: '/app',
-      configurationPath: CACHED1_WITH_CONFIG.configFile!,
-      configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
+      configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
+        .configuration,
     })
     vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
 
@@ -267,8 +268,8 @@ describe('ensureGenerateContext', () => {
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       directory: '/app',
-      configurationPath: CACHED1_WITH_CONFIG.configFile!,
-      configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
+      configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
+        .configuration,
     })
     vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
 
@@ -312,8 +313,8 @@ describe('ensureDevContext', async () => {
   beforeEach(() => {
     vi.mocked(loadAppConfiguration).mockResolvedValue({
       directory: '/app',
-      configurationPath: '/app/shopify.app.toml',
       configuration: {
+        path: '/app/shopify.app.toml',
         scopes: 'read_products',
       },
     })
@@ -326,9 +327,9 @@ describe('ensureDevContext', async () => {
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
         configuration: testAppWithConfig({
           config: {
+            path: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
             name: APP2.apiKey,
             client_id: APP2.apiKey,
             build: {
@@ -393,9 +394,9 @@ dev_store_url = "domain1"
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
         configuration: testAppWithConfig({
           config: {
+            path: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
             name: APP1.apiKey,
             client_id: APP1.apiKey,
             build: {
@@ -446,8 +447,8 @@ dev_store_url = "domain1"
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
         configuration: {
+          path: joinPath(tmp, 'shopify.app.dev.toml'),
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
@@ -486,8 +487,8 @@ dev_store_url = "domain1"
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: joinPath(tmp, 'shopify.app.dev.toml'),
-        configuration: testApp({}, 'current').configuration,
+        configuration: testAppWithConfig({app: {}, config: {path: joinPath(tmp, 'shopify.app.dev.toml')}})
+          .configuration,
       })
       vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
 
@@ -533,8 +534,7 @@ dev_store_url = "domain1"
       vi.mocked(loadAppConfiguration).mockReset()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: joinPath(tmp, 'shopify.app.toml'),
-        configuration: testApp({}, 'current').configuration,
+        configuration: testAppWithConfig({config: {path: joinPath(tmp, 'shopify.app.toml')}}).configuration,
       })
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
@@ -737,8 +737,8 @@ dev_store_url = "domain1"
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: filePath,
         configuration: {
+          path: filePath,
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
@@ -776,8 +776,8 @@ dev_store_url = "domain1"
       const filePath = joinPath(tmp, 'shopify.app.toml')
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configurationPath: filePath,
         configuration: {
+          path: filePath,
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
@@ -1005,7 +1005,7 @@ describe('ensureReleaseContext', () => {
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
 
-    // Then
+    // When/Then
     await expect(() =>
       ensureReleaseContext({
         app,
@@ -1015,6 +1015,18 @@ describe('ensureReleaseContext', () => {
         commandConfig: COMMAND_CONFIG,
       }),
     ).rejects.toThrowError('')
+
+    expect(renderError).toHaveBeenCalledWith({
+      headline: 'The `app release` command is only available for apps that have upgraded to use simplified deployment.',
+      reference: [
+        {
+          link: {
+            label: 'Simplified extension deployment',
+            url: 'https://shopify.dev/docs/apps/deployment/extension',
+          },
+        },
+      ],
+    })
   })
 
   test('updates app identifiers if the beta flag is turned on', async () => {
@@ -1110,5 +1122,56 @@ describe('ensureThemeExtensionDevContext', () => {
     expect('UUID').toEqual(got.uuid)
     expect('theme app extension').toEqual(got.title)
     expect('THEME_APP_EXTENSION').toEqual(got.type)
+  })
+})
+
+describe('ensureVersionsListContext', () => {
+  test('returns the partners token and app', async () => {
+    // Given
+    const app = testApp()
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+
+    // When
+    const got = await ensureVersionsListContext({
+      app,
+      apiKey: 'key1',
+      reset: false,
+      commandConfig: COMMAND_CONFIG,
+    })
+
+    // Then
+    expect(got).toEqual({
+      token: 'token',
+      partnersApp: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
+    })
+  })
+
+  test('throws an error if the deployments beta is disabled', async () => {
+    // Given
+    const app = testApp()
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+
+    // When/Then
+    await expect(() =>
+      ensureVersionsListContext({
+        app,
+        apiKey: 'key1',
+        reset: false,
+        commandConfig: COMMAND_CONFIG,
+      }),
+    ).rejects.toThrowError('')
+
+    expect(renderError).toHaveBeenCalledWith({
+      headline:
+        'The `app versions list` command is only available for apps that have upgraded to use simplified deployment.',
+      reference: [
+        {
+          link: {
+            label: 'Simplified extension deployment',
+            url: 'https://shopify.dev/docs/apps/deployment/extension',
+          },
+        },
+      ],
+    })
   })
 })

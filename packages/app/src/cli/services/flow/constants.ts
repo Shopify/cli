@@ -31,6 +31,7 @@ const UI_TYPES = {
   singleLineText: 'single_line_text_field',
   url: 'url',
   decimal: 'number_decimal',
+  schemaTypeReference: 'schema_type_reference',
 }
 
 // Mapping of metafield types to Flow's Partner's Dashboard UI types
@@ -45,6 +46,7 @@ export const uiTypesMap: [string, string][] = [
   [UI_TYPES.singleLineText, 'text-single-line'],
   [UI_TYPES.url, 'url'],
   [UI_TYPES.decimal, 'number'],
+  [UI_TYPES.schemaTypeReference, 'schema-type-reference'],
 ]
 
 const supportedActionTypes: string[] = [
@@ -62,6 +64,7 @@ const supportedTriggerTypes: string[] = [
   UI_TYPES.singleLineText,
   UI_TYPES.url,
   UI_TYPES.decimal,
+  UI_TYPES.schemaTypeReference,
 ]
 
 export const actionUiTypesMap = uiTypesMap.filter(([key]) => supportedActionTypes.includes(key))

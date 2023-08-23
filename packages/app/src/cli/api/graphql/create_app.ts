@@ -78,7 +78,6 @@ export interface CreateAppQuerySchema {
       grantedScopes: string[]
       betas?: {
         unifiedAppDeployment?: boolean
-        unifiedAppDeploymentOptIn?: boolean
       }
       applicationUrl: string
       redirectUrlWhitelist: string[]

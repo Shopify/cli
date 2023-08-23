@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.47.0",
+  "version": "3.48.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -98,23 +98,24 @@
   "dependencies": {
     "@bugsnag/js": "7.20.2",
     "@iarna/toml": "2.2.5",
-    "@oclif/core": "2.8.11",
+    "@oclif/core": "2.11.7",
     "@types/archiver": "5.3.2",
     "abort-controller": "3.0.0",
     "ansi-escapes": "6.2.0",
     "archiver": "5.3.1",
+    "bottleneck": "2.19.5",
     "chalk": "5.3.0",
     "change-case": "4.1.2",
     "color-json": "3.0.5",
     "commondir": "1.0.1",
-    "conf": "11.0.1",
+    "conf": "11.0.2",
     "cross-zip": "4.0.0",
     "deepmerge": "4.3.1",
     "del": "6.1.1",
     "env-paths": "3.0.0",
     "envfile": "6.18.0",
-    "execa": "6.0.0",
-    "fast-glob": "3.3.0",
+    "execa": "7.2.0",
+    "fast-glob": "3.3.1",
     "figures": "5.0.0",
     "find-process": "1.4.7",
     "find-up": "6.3.0",
@@ -132,7 +133,7 @@
     "js-yaml": "4.1.0",
     "kill-port-process": "3.1.0",
     "latest-version": "7.0.0",
-    "liquidjs": "10.8.3",
+    "liquidjs": "10.8.4",
     "lodash": "4.17.21",
     "macaddress": "0.5.3",
     "mrmime": "1.0.1",
@@ -159,20 +160,20 @@
     "@types/commondir": "^1.0.0",
     "@types/cross-zip": "^4.0.0",
     "@types/diff": "^5.0.3",
-    "@types/git-diff": "^2.0.3",
     "@types/fs-extra": "9.0.13",
+    "@types/git-diff": "^2.0.3",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.195",
-    "@types/node": "14.18.53",
+    "@types/node": "14.18.54",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.0",
-    "@vitest/coverage-istanbul": "^0.32.2",
+    "@vitest/coverage-istanbul": "^0.34.1",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.24.8",
-    "typescript": "4.9.5",
-    "vite": "^4.3.9",
-    "vitest": "^0.32.2"
+    "typescript": "5.0.4",
+    "vite": "^4.4.8",
+    "vitest": "^0.34.1"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -186,8 +187,5 @@
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "engine-strict": true,
-  "resolutions": {
-    "@types/react": "18.2.0"
-  }
+  "engine-strict": true
 }

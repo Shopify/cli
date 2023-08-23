@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-import {writeFile} from '../lib/fs'
+import {writeFile} from '../lib/fs.js'
 import {Given, After, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
 import rimraf from 'rimraf'
@@ -37,6 +35,6 @@ Given('I have a working directory', async function () {
 
 After(function () {
   if (this.temporaryDirectory) {
-    rimraf.sync(this.temporaryDirectory, {force: true})
+    rimraf.sync(this.temporaryDirectory)
   }
 })

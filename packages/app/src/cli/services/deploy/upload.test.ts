@@ -109,6 +109,49 @@ describe('uploadFunctionExtensions', () => {
     })
   })
 
+  test('prints unsupported api version error if any user errors are returned with version_unsupported_error tag', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const uploadUrl = `test://test.com/moduleId.wasm`
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
+        data: {
+          uploadUrlGenerate: {
+            headers: {},
+            maxSize: '200',
+            url: uploadUrl,
+            moduleId: 'module-id',
+          },
+        },
+      }
+      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
+        data: {
+          functionSet: {
+            userErrors: [
+              {
+                field: '',
+                message: "Version '2022-07' for 'product_discounts' is unsupported.",
+                tag: 'version_unsupported_error',
+              },
+            ],
+          },
+        },
+      }
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
+      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
+
+      // When
+      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+        /Deployment failed due to an outdated API version/,
+      )
+
+      // Then
+      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
+    })
+  })
+
   test('prints relevant error if the wasm upload returns 400 from file size too large', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given

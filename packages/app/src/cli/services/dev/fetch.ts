@@ -16,37 +16,39 @@ import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/grap
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export const NoOrgError = (organizationId?: string) => {
-  const nextSteps = [
-    [
-      'Have you',
-      {
-        link: {
-          label: 'created a Shopify Partners organization',
-          url: 'https://partners.shopify.com/signup',
+export class NoOrgError extends AbortError {
+  constructor(organizationId?: string) {
+    const nextSteps = [
+      [
+        'Have you',
+        {
+          link: {
+            label: 'created a Shopify Partners organization',
+            url: 'https://partners.shopify.com/signup',
+          },
         },
-      },
-      {
-        char: '?',
-      },
-    ],
-    'Have you confirmed your accounts from the emails you received?',
-    [
-      'Need to connect to a different App or organization? Run the command again with',
-      {
-        command: '--reset',
-      },
-    ],
-  ]
+        {
+          char: '?',
+        },
+      ],
+      'Have you confirmed your accounts from the emails you received?',
+      [
+        'Need to connect to a different App or organization? Run the command again with',
+        {
+          command: '--reset',
+        },
+      ],
+    ]
 
-  if (organizationId) {
-    nextSteps.push([
-      'Do you have access to the right Shopify Partners organization? The CLI is loading',
-      {link: {label: 'this organization', url: `https://partner.shopify.com/${organizationId}`}},
-    ])
+    if (organizationId) {
+      nextSteps.push([
+        'Do you have access to the right Shopify Partners organization? The CLI is loading',
+        {link: {label: 'this organization', url: `https://partner.shopify.com/${organizationId}`}},
+      ])
+    }
+
+    super(`No Organization found`, undefined, nextSteps)
   }
-
-  return new AbortError(`No Organization found`, undefined, nextSteps)
 }
 
 export interface OrganizationAppsResponse {
@@ -100,7 +102,7 @@ export async function fetchOrganizations(token: string) {
   const query = AllOrganizationsQuery
   const result: AllOrganizationsQuerySchema = await partnersRequest(query, token)
   const organizations = result.organizations.nodes
-  if (organizations.length === 0) throw NoOrgError()
+  if (organizations.length === 0) throw new NoOrgError()
   return organizations
 }
 
@@ -116,7 +118,7 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
   if (title) params.title = title
   const result: FindOrganizationQuerySchema = await partnersRequest(query, token, params)
   const org = result.organizations.nodes[0]
-  if (!org) throw NoOrgError(orgId)
+  if (!org) throw new NoOrgError(orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName}
   return {organization: parsedOrg, apps: org.apps, stores: []}
 }
@@ -132,7 +134,7 @@ export async function fetchOrgFromId(id: string, token: string): Promise<Organiz
   const query = FindOrganizationBasicQuery
   const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, token, {id})
   const org = res.organizations.nodes[0]
-  if (!org) throw NoOrgError(id)
+  if (!org) throw new NoOrgError(id)
   return org
 }
 

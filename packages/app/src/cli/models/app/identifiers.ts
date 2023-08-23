@@ -45,7 +45,7 @@ export async function updateAppIdentifiers(
 
   if (!dotenvFile) {
     dotenvFile = {
-      path: joinPath(app.directory, getDotEnvFileName(app.configurationPath)),
+      path: joinPath(app.directory, getDotEnvFileName(app.configuration.path)),
       variables: {},
     }
   }

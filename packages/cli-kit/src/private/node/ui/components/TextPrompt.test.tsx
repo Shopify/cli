@@ -201,6 +201,9 @@ describe('TextPrompt', () => {
 
     abortController.abort()
 
+    // wait for the onAbort promise to resolve
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
     expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })

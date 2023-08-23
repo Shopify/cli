@@ -37,8 +37,7 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
   return testApp({
     name: 'my-app',
     directory: '/app',
-    configurationPath: '/shopify.app.toml',
-    configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
+    configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
     allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
@@ -77,7 +76,6 @@ vi.mock('./identifiers-functions')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_A',
     configuration: {
       name: 'EXTENSION A',
@@ -90,7 +88,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_A_2 = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_A_2',
     configuration: {
       name: 'EXTENSION A 2',

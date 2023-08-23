@@ -1,6 +1,5 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {defaultFunctionsFlavors} from '../../../constants.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -64,11 +63,7 @@ const spec = createExtensionSpecification({
     'fulfillment_constraints',
     'order_routing_location_rule',
   ],
-  singleEntryPath: false,
   schema: FunctionExtensionSchema,
-  supportedFlavors: defaultFunctionsFlavors,
-  partnersWebIdentifier: 'function',
-  graphQLType: 'function',
   appModuleFeatures: (_) => ['function'],
   deployConfig: async (config, directory, apiKey, moduleId) => {
     let inputQuery: string | undefined

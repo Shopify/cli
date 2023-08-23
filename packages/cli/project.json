@@ -15,7 +15,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["dist"],
+      "outputs": ["{workspaceRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
@@ -69,6 +69,13 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "pnpm oclif manifest",
+        "cwd": "packages/cli"
+      }
+    },
+    "refresh-readme": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm oclif readme",
         "cwd": "packages/cli"
       }
     }

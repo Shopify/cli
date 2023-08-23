@@ -15,7 +15,7 @@ import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
-import {render, renderOnce} from '../../private/node/ui.js'
+import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
@@ -58,20 +58,12 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  * 00:00:00 │ frontend │ second frontend message
  * 00:00:00 │ frontend │ third frontend message
  *
- * › Press p │ preview in your browser
- * › Press q │ quit.
- *
- * Preview URL: https://shopify.com
- *
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
   const abortSignal = props.abortSignal ?? new AbortController().signal
 
   if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, {
-      ...renderOptions,
-      exitOnCtrlC: typeof props.onInput === 'undefined',
-    })
+    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
   } else {
     return Promise.all(
       props.processes.map(async (concurrentProcess) => {
@@ -654,4 +646,4 @@ This usually happens when running a command non-interactively, for example in a 
 
 export type Key = InkKey
 export type InfoMessage = InfoMessageProps['message']
-export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken}
+export {Task, TokenItem, InlineToken, LinkToken, TableColumn, InfoTableSection, ListToken, render, handleCtrlC}

@@ -16,6 +16,7 @@ import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../fetch.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {Config} from '@oclif/core'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -53,10 +54,16 @@ describe('setup-dev-processes', () => {
     const storeFqdn = 'store.myshopify.io'
     const usesUnifiedDeployment = true
     const remoteAppUpdated = true
-    const commandOptions = {
+    const commandOptions: DevConfig['commandOptions'] = {
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
       theme: '1',
+      directory: '',
+      reset: false,
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      noTunnel: false,
     }
     const network: DevConfig['network'] = {
       backendPort: 111,

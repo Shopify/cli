@@ -1,6 +1,6 @@
 {
   "name": "features",
-  "root": "packages/features",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/features",
   "projectType": "library",
   "implicitDependencies": ["create-app", "cli"],
@@ -10,7 +10,7 @@
       "executor": "nx:run-commands",
       "dependsOn": ["^build"],
       "options": {
-        "command": "pnpm cucumber-js -p default -c cucumber.js",
+        "command": "pnpm cucumber-esm",
         "cwd": "packages/features"
       }
     },

@@ -43,7 +43,7 @@ interface Instance {
   stdin: Stdin
   frames: string[]
   lastFrame: () => string | undefined
-  waitUntilExit: () => Promise<void>
+  waitUntilExit: () => TrackedPromise<void>
 }
 
 interface RenderOptions {
@@ -73,7 +73,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
     rerender: instance.rerender,
     unmount: instance.unmount,
     cleanup: instance.cleanup,
-    waitUntilExit: instance.waitUntilExit,
+    waitUntilExit: () => trackPromise(instance.waitUntilExit()),
     stdout,
     stderr,
     stdin,
@@ -181,4 +181,41 @@ export async function sendInputAndWaitForContent(
  */
 export function getLastFrameAfterUnmount(renderInstance: ReturnType<typeof render>) {
   return isTruthy(process.env.CI) ? renderInstance.frames[renderInstance.frames.length - 2] : renderInstance.lastFrame()
+}
+
+type TrackedPromise<T> = Promise<T> & {
+  isFulfilled: () => boolean
+  isPending: () => boolean
+  isRejected: () => boolean
+}
+
+function trackPromise<T>(promise: Promise<T>): TrackedPromise<T> {
+  let isPending = true
+  let isRejected = false
+  let isFulfilled = false
+
+  const trackedPromise = promise.then(
+    function (result) {
+      isFulfilled = true
+      isPending = false
+      return result
+    },
+    function (error) {
+      isRejected = true
+      isPending = false
+      throw error
+    },
+  ) as TrackedPromise<T>
+
+  trackedPromise.isFulfilled = function () {
+    return isFulfilled
+  }
+  trackedPromise.isPending = function () {
+    return isPending
+  }
+  trackedPromise.isRejected = function () {
+    return isRejected
+  }
+
+  return trackedPromise
 }

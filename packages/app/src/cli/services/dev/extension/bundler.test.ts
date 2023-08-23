@@ -269,7 +269,7 @@ describe('setupConfigWatcher()', async () => {
       unifiedDeployment: true,
     })
 
-    expect(chokidar.watch).toHaveBeenCalledWith(mockExtension.configurationPath)
+    expect(chokidar.watch).toHaveBeenCalledWith(mockExtension.configuration.path)
     expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
   })
 
@@ -304,7 +304,7 @@ describe('setupConfigWatcher()', async () => {
       token: 'mock-token',
       unifiedDeployment: true,
     })
-    expect(outputInfo).toHaveBeenCalledWith(`Config file at path ${mockExtension.configurationPath} changed`, stdout)
+    expect(outputInfo).toHaveBeenCalledWith(`Config file at path ${mockExtension.configuration.path} changed`, stdout)
   })
 
   test('stops watching the config file when the signal aborts and close resolves', async () => {

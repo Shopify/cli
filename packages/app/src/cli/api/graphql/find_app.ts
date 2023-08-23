@@ -14,7 +14,6 @@ export const FindAppQuery = gql`
       grantedScopes
       betas {
         unifiedAppDeployment
-        unifiedAppDeploymentOptIn
       }
       applicationUrl
       redirectUrlWhitelist
@@ -33,6 +32,7 @@ export const FindAppQuery = gql`
         subPathPrefix
         url
       }
+      developmentStorePreviewEnabled
     }
   }
 `
@@ -50,7 +50,6 @@ export interface FindAppQuerySchema {
     grantedScopes: string[]
     betas?: {
       unifiedAppDeployment?: boolean
-      unifiedAppDeploymentOptIn?: boolean
     }
     applicationUrl: string
     redirectUrlWhitelist: string[]
@@ -69,5 +68,6 @@ export interface FindAppQuerySchema {
       subPathPrefix: string
       url: string
     }
+    developmentStorePreviewEnabled: boolean
   }
 }

@@ -47,10 +47,7 @@ export interface DevConfig {
   }
   token: string
   storeFqdn: string
-  commandOptions: Pick<
-    DevOptions,
-    'subscriptionProductUrl' | 'checkoutCartUrl' | 'theme' | 'themeExtensionPort' | 'notify'
-  >
+  commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
   usesUnifiedDeployment: boolean

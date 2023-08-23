@@ -20,6 +20,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -31,12 +32,13 @@ export interface LinkOptions {
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
+
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
 
-  const configuration = mergeAppConfiguration(localApp, remoteApp)
+  const configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
 
-  await writeAppConfigurationFile(configFilePath, configuration)
+  await writeAppConfigurationFile(configuration)
 
   await saveCurrentConfig({configFileName, directory: options.directory})
 
@@ -46,7 +48,10 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       body: `Using ${configFileName} as your default config.`,
       nextSteps: [
         [`Make updates to ${configFileName} in your local project`],
-        ['To upload your config, run', {command: 'shopify app config push'}],
+        [
+          'To upload your config, run',
+          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+        ],
       ],
       reference: [
         {
@@ -116,8 +121,12 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-export function mergeAppConfiguration(localApp: AppInterface, remoteApp: OrganizationApp): AppConfiguration {
-  const configuration: AppConfiguration = {
+export function mergeAppConfiguration(
+  appConfiguration: AppConfiguration,
+  remoteApp: OrganizationApp,
+): AppConfiguration {
+  const result: AppConfiguration = {
+    path: appConfiguration.path,
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
     application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
@@ -139,7 +148,7 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   if (hasAnyPrivacyWebhook) {
-    configuration.webhooks.privacy_compliance = {
+    result.webhooks.privacy_compliance = {
       customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
       customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
       shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
@@ -147,7 +156,7 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
   }
 
   if (remoteApp.appProxy?.url) {
-    configuration.app_proxy = {
+    result.app_proxy = {
       url: remoteApp.appProxy.url,
       subpath: remoteApp.appProxy.subPath,
       prefix: remoteApp.appProxy.subPathPrefix,
@@ -155,37 +164,37 @@ export function mergeAppConfiguration(localApp: AppInterface, remoteApp: Organiz
   }
 
   if (remoteApp.preferencesUrl) {
-    configuration.app_preferences = {url: remoteApp.preferencesUrl}
+    result.app_preferences = {url: remoteApp.preferencesUrl}
   }
 
-  configuration.access_scopes = getAccessScopes(localApp, remoteApp)
+  result.access_scopes = getAccessScopes(appConfiguration, remoteApp)
 
-  if (localApp.configuration?.extension_directories) {
-    configuration.extension_directories = localApp.configuration.extension_directories
+  if (appConfiguration.extension_directories) {
+    result.extension_directories = appConfiguration.extension_directories
   }
 
-  if (localApp.configuration?.web_directories) {
-    configuration.web_directories = localApp.configuration.web_directories
+  if (appConfiguration.web_directories) {
+    result.web_directories = appConfiguration.web_directories
   }
 
-  return configuration
+  return result
 }
 
-const getAccessScopes = (localApp: AppInterface, remoteApp: OrganizationApp) => {
+const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: OrganizationApp) => {
   // if we have upstream scopes, use them
-  if (remoteApp.requestedAccessScopes) {
+  if (remoteApp.requestedAccessScopes && remoteApp.requestedAccessScopes.length > 0) {
     return {
       scopes: remoteApp.requestedAccessScopes.join(','),
     }
     // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
-  } else if (isLegacyAppSchema(localApp.configuration) && localApp.configuration.scopes) {
+  } else if (isLegacyAppSchema(appConfiguration) && appConfiguration.scopes) {
     return {
-      scopes: localApp.configuration.scopes,
+      scopes: appConfiguration.scopes,
       use_legacy_install_flow: true,
     }
-  } else if (isCurrentAppSchema(localApp.configuration) && localApp.configuration.access_scopes?.scopes) {
+  } else if (isCurrentAppSchema(appConfiguration) && appConfiguration.access_scopes?.scopes) {
     return {
-      scopes: localApp.configuration.access_scopes.scopes,
+      scopes: appConfiguration.access_scopes.scopes,
       use_legacy_install_flow: true,
     }
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true

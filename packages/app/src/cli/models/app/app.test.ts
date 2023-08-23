@@ -1,5 +1,6 @@
 import {
   CurrentAppConfiguration,
+  LegacyAppConfiguration,
   getAppScopes,
   getAppScopesArray,
   getUIExtensionRendererVersion,
@@ -14,6 +15,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 const DEFAULT_APP = testApp()
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
+  path: '',
   name: 'app 1',
   client_id: '12345',
   webhooks: {
@@ -46,7 +48,8 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   },
 }
 
-const CORRECT_LEGACY_APP_SCHEMA = {
+const CORRECT_LEGACY_APP_SCHEMA: LegacyAppConfiguration = {
+  path: '',
   extension_directories: [],
   web_directories: [],
   scopes: 'write_products',
@@ -96,14 +99,13 @@ describe('getUIExtensionRendererVersion', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'admin-ui-extensions', '2.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'product_subscription'})
+      const extension = await testUIExtension({type: 'product_subscription', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/admin-ui-extensions')
       expect(got?.version).toEqual('2.4.5')
@@ -114,14 +116,13 @@ describe('getUIExtensionRendererVersion', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'checkout-ui-extensions', '1.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'checkout_ui_extension'})
+      const extension = await testUIExtension({type: 'checkout_ui_extension', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/checkout-ui-extensions')
       expect(got?.version).toEqual('1.4.5')
@@ -132,14 +133,13 @@ describe('getUIExtensionRendererVersion', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       await createPackageJson(tmpDir, 'post-purchase-ui-extensions', '3.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'checkout_post_purchase'})
+      const extension = await testUIExtension({type: 'checkout_post_purchase', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/post-purchase-ui-extensions')
       expect(got?.version).toEqual('3.4.5')
@@ -149,15 +149,14 @@ describe('getUIExtensionRendererVersion', () => {
   test('returns the version of the dependency package for web_pixel', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await createPackageJson(tmpDir, '@shopify/web-pixels-extension', '3.4.5')
-      DEFAULT_APP.directory = tmpDir
-      const extension = await testUIExtension({type: 'web_pixel_extension'})
+      await createPackageJson(tmpDir, 'web-pixels-extension', '3.4.5')
+      const extension = await testUIExtension({type: 'web_pixel_extension', directory: tmpDir})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
-      expect(got).not.toEqual('not-found')
+      expect(got).not.toEqual('not_found')
       if (got === 'not_found') return
       expect(got?.name).to.toEqual('@shopify/web-pixels-extension')
       expect(got?.version).toEqual('3.4.5')
@@ -166,11 +165,10 @@ describe('getUIExtensionRendererVersion', () => {
 
   test('returns not_found if there is no renderer package', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      DEFAULT_APP.directory = tmpDir
       const extension = await testUIExtension({type: 'product_subscription'})
 
       // When
-      const got = await getUIExtensionRendererVersion(extension, DEFAULT_APP)
+      const got = await getUIExtensionRendererVersion(extension)
 
       // Then
       expect(got).toEqual('not_found')
@@ -180,7 +178,7 @@ describe('getUIExtensionRendererVersion', () => {
 
 describe('getAppScopes', () => {
   test('returns the scopes key when schema is legacy', () => {
-    const config = {scopes: 'read_themes,read_products'}
+    const config = {path: '', scopes: 'read_themes,read_products'}
     expect(getAppScopes(config)).toEqual('read_themes,read_products')
   })
 
@@ -192,7 +190,7 @@ describe('getAppScopes', () => {
 
 describe('getAppScopesArray', () => {
   test('returns the scopes key when schema is legacy', () => {
-    const config = {scopes: 'read_themes, read_order ,write_products'}
+    const config = {path: '', scopes: 'read_themes, read_order ,write_products'}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
   })
 

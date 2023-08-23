@@ -94,7 +94,6 @@ let FUNCTION_A: ExtensionInstance
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_A',
     configuration: {
       name: 'EXTENSION A',
@@ -107,7 +106,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_A_2 = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_A_2',
     configuration: {
       name: 'EXTENSION A 2',
@@ -120,7 +118,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_B = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_B',
     configuration: {
       name: 'EXTENSION B',
@@ -133,7 +130,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_B_2 = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_B_2',
     configuration: {
       name: 'EXTENSION B 2',
@@ -146,7 +142,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_C = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_C',
     configuration: {
       name: 'EXTENSION C',
@@ -159,7 +154,6 @@ beforeAll(async () => {
   })
 
   EXTENSION_D = await testUIExtension({
-    configurationPath: '',
     directory: '/EXTENSION_D',
     configuration: {
       name: 'EXTENSION D',

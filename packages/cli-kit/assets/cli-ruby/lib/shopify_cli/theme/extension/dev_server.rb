@@ -6,7 +6,6 @@ require "shopify_cli/theme/extension/app_extension"
 require "shopify_cli/theme/dev_server"
 require "shopify_cli/theme/extension/host_theme"
 require "shopify_cli/theme/syncer"
-require "shopify_cli/theme/notifier"
 require "shopify_cli/theme/ignore_filter"
 
 require_relative "dev_server/local_assets"
@@ -29,10 +28,11 @@ module ShopifyCLI
         ScriptInjector = ShopifyCLI::Theme::Extension::DevServer::HotReload::ScriptInjector
 
         attr_accessor :project, :specification_handler, :generate_tmp_theme
+        attr_reader :notify
 
         class << self
           def start(ctx, root, port: 9292, theme: nil, generate_tmp_theme: false, project:, specification_handler:,
-            notify: nil)
+            notify:)
             instance.project = project
             instance.specification_handler = specification_handler
             instance.generate_tmp_theme = generate_tmp_theme
@@ -65,12 +65,9 @@ module ShopifyCLI
             extension: extension,
             project: project,
             specification_handler: specification_handler,
-            ignore_filter: ignore_filter
+            ignore_filter: ignore_filter,
+            notify: notify
           )
-        end
-
-        def notifier
-          @notifier ||= ShopifyCLI::Theme::Notifier.new(ctx, path: notify)
         end
 
         def theme
@@ -142,7 +139,7 @@ module ShopifyCLI
         # Hooks
 
         def broadcast_hooks
-          file_handler = Hooks::FileChangeHook.new(ctx, extension: extension, syncer: syncer, notifier: notifier,
+          file_handler = Hooks::FileChangeHook.new(ctx, extension: extension, syncer: syncer,
             ignore_filter: ignore_filter)
           [file_handler]
         end
@@ -159,7 +156,7 @@ module ShopifyCLI
 
         def preview_message
           if Shopifolk.acting_as_shopify_organization?
-            parsed_uri = URI.parse(extension.preview_message)
+            parsed_uri = URI.parse(extension.location)
             shopify_org_url = "#{parsed_uri.scheme}://#{parsed_uri.host}/9082/impersonate"
             if ShopifyCLI::Environment.unified_deployment?
               ctx.message("serve.preview_message_1p_unified", shopify_org_url, theme.editor_url, address)

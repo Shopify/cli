@@ -39,19 +39,6 @@ export async function asyncTasks() {
 
   await renderConcurrent({
     processes: [backendProcess, frontendProcess],
-    footer: {
-      shortcuts: [
-        {
-          key: 'p',
-          action: 'preview in your browser',
-        },
-        {
-          key: 'q',
-          action: 'quit',
-        },
-      ],
-      subTitle: `Preview URL: https://shopify.com`,
-    },
   })
 
   // renderTasks

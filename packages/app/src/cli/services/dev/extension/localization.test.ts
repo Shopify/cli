@@ -12,6 +12,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
 
   const extension = await testUIExtension({
     configuration: {
+      path: `${tmpDir}/shopify.ui.extension.toml`,
       name: 'mock-name',
       type: 'checkout_ui_extension',
       metafields: [],
@@ -23,7 +24,6 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
     },
     idEnvironmentVariableName: 'mockId',
     localIdentifier: 'localIdentifier',
-    configurationPath: `${tmpDir}/shopify.ui.extension.toml`,
     directory: tmpDir,
     type: 'checkout_ui_extension',
     graphQLType: 'graphQLType',

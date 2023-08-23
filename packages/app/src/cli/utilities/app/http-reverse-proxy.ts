@@ -1,7 +1,7 @@
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputDebug, outputContent, outputToken, outputWarn, OutputProcess} from '@shopify/cli-kit/node/output'
 import Server from 'http-proxy'
+import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 import * as http from 'http'
 
@@ -39,7 +39,6 @@ export interface ReverseHTTPProxyTarget {
 }
 
 interface Options {
-  previewUrl: string
   portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
@@ -56,7 +55,6 @@ interface Options {
  * @returns A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
-  previewUrl,
   portNumber,
   proxyTargets,
   additionalProcesses,
@@ -98,6 +96,7 @@ export async function getProxyingWebServer(rules: {[key: string]: string}, abort
   server.on('upgrade', getProxyServerWebsocketUpgradeListener(rules, proxy))
 
   abortSignal.addEventListener('abort', () => {
+    outputDebug('Closing reverse HTTP proxy')
     server.close()
   })
   return {server}

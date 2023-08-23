@@ -11,11 +11,11 @@ on:
       node-version:
         description: 'Node version'
         required: true
-        default: '18.7.0'
+        default: '18.12.0'
         type: choice
         options:
           - 16.17.0
-          - 18.7.0
+          - 18.12.0
           - 20.2.0
       os:
         description: 'Operating system'
@@ -58,12 +58,12 @@ jobs:
   main:
     name: "[Main] Node ${{ matrix.node }} in ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     timeout-minutes: 30
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['16.17.0', '18.7.0', '20.2.0']
+        node: ['16.17.0', '18.12.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -75,17 +75,17 @@ jobs:
           node-version: ${{ matrix.node }}
       - name: Build
         run: pnpm nx affected --target=build
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
       - name: Lint
         run: pnpm nx affected --target=lint
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
       - name: Type-check
         run: pnpm nx affected --target=type-check
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
       - name: Unit tests
         run: pnpm nx affected --target=test --exclude=features
       - name: Acceptance tests
-        if: ${{ matrix.node == '18.7.0' }}
+        if: ${{ matrix.node == '18.12.0' }}
         run: pnpm nx run features:test
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
@@ -99,7 +99,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
         with:
           branch-name: ${{ github.ref_name }}
 
@@ -111,11 +111,12 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest']
-        node: ['18.7.0']
+        node: ['18.12.0']
         target: ['build', 'type-check', 'lint']
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
@@ -125,6 +126,28 @@ jobs:
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
+  oclif-readme:
+    name: "[PR] Check OCLIF readme"
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 18.12.0
+      - name: Build
+        run: pnpm build
+      - name: Refresh readme
+        run: pnpm refresh-readme
+      - name: Check if there are changes
+        run: 'test -z "$(git status --porcelain "packages/cli/README.md" )" || { echo -e "Run pnpm refresh-readme before pushing new commands or flags. Diff here:\n\n$(git diff)" ; exit 1; }'
+
   oclif-manifests:
     name: "[PR] Check OCLIF manifests"
     runs-on: ubuntu-latest
@@ -133,12 +156,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.7.0
+          node-version: 18.12.0
       - name: Build
         run: pnpm build
       - name: Refresh manifests
@@ -154,12 +178,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 18.7.0
+          node-version: 18.12.0
       - name: Build
         run: pnpm build
       - name: Refresh documentation
@@ -176,10 +201,11 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['16.17.0', '18.7.0', '20.2.0']
+        node: ['16.17.0', '18.12.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
           ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 0
       - name: Setup deps
@@ -189,16 +215,16 @@ jobs:
       - name: Unit tests
         run: pnpm test:unit
       - name: Acceptance tests
-        if: ${{ matrix.node == '18.7.0' }}
+        if: ${{ matrix.node == '18.12.0' }}
         run: pnpm test:features
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
         with:
           branch-name: '${{ github.head_ref }}'
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.7.0' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
         with:
           base-branch-name: '${{ github.base_ref }}'
 

@@ -96,6 +96,10 @@ export default class Dev extends Command {
     }),
   }
 
+  public static analyticsStopCommand(): string | undefined {
+    return 'app dev stop'
+  }
+
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
     if (flags['api-key']) {

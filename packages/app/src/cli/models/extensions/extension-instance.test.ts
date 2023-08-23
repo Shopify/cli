@@ -90,14 +90,20 @@ describe('watchPaths', async () => {
 })
 
 describe('isDraftable', () => {
-  test('returns false for ui extensions', async () => {
+  test('returns true for ui extensions when using unified deploys', async () => {
     const extensionInstance = await testUIExtension()
 
-    const got1 = extensionInstance.isDraftable(true)
-    const got2 = extensionInstance.isDraftable(false)
+    const got = extensionInstance.isDraftable(true)
 
-    expect(got1).toBe(false)
-    expect(got2).toBe(false)
+    expect(got).toBe(true)
+  })
+
+  test('returns false for ui extensions when not using unified deploys', async () => {
+    const extensionInstance = await testUIExtension()
+
+    const got = extensionInstance.isDraftable(false)
+
+    expect(got).toBe(false)
   })
 
   test('returns false for theme extensions', async () => {

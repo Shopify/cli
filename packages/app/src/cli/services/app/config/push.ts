@@ -21,7 +21,6 @@ import {basename} from '@shopify/cli-kit/node/path'
 
 export interface PushOptions {
   configuration: AppConfiguration
-  configurationPath: string
   force: boolean
 }
 
@@ -42,10 +41,10 @@ const FIELD_NAMES: {[key: string]: string} = {
 }
 
 export async function pushConfig(options: PushOptions) {
-  const {configuration, configurationPath} = options
+  const {configuration} = options
   if (isCurrentAppSchema(configuration)) {
     const token = await ensureAuthenticatedPartners()
-    const configFileName = isCurrentAppSchema(configuration) ? basename(configurationPath) : undefined
+    const configFileName = isCurrentAppSchema(configuration) ? basename(configuration.path) : undefined
 
     const queryVariables = {apiKey: configuration.client_id}
     const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)

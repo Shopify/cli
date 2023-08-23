@@ -39,7 +39,7 @@ describe('writeAppConfigurationFile', () => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
 
       // When
-      const got = await writeAppConfigurationFile(filePath, FULL_CONFIGURATION)
+      const got = await writeAppConfigurationFile({...FULL_CONFIGURATION, path: filePath})
 
       // Then
       const content = await readFile(filePath)
@@ -93,8 +93,9 @@ dev_store_url = "example.myshopify.com"
       const filePath = joinPath(tmp, 'shopify.app.toml')
 
       // When
-      const got = await writeAppConfigurationFile(filePath, {
+      const got = await writeAppConfigurationFile({
         ...FULL_CONFIGURATION,
+        path: filePath,
         build: undefined,
         app_preferences: undefined,
         pos: undefined,

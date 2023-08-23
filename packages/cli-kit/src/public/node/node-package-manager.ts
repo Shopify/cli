@@ -45,8 +45,10 @@ export type PackageManager = (typeof packageManager)[number]
  * @param directory - The path to the directory that should contain a package.json
  * @returns An abort error.
  */
-export const PackageJsonNotFoundError = (directory: string): AbortError => {
-  return new AbortError(`The directory ${directory} doesn't have a package.json.`)
+export class PackageJsonNotFoundError extends AbortError {
+  constructor(directory: string) {
+    super(`The directory ${directory} doesn't have a package.json.`)
+  }
 }
 
 /**
@@ -55,10 +57,10 @@ export const PackageJsonNotFoundError = (directory: string): AbortError => {
  * @param directory - The directory from which the traverse has been done
  * @returns An abort error.
  */
-export const FindUpAndReadPackageJsonNotFoundError = (directory: string): BugError => {
-  return new BugError(
-    outputContent`Couldn't find a a package.json traversing directories from ${outputToken.path(directory)}`,
-  )
+export class FindUpAndReadPackageJsonNotFoundError extends BugError {
+  constructor(directory: string) {
+    super(outputContent`Couldn't find a a package.json traversing directories from ${outputToken.path(directory)}`)
+  }
 }
 
 /**
@@ -85,7 +87,7 @@ export function packageManagerUsedForCreating(env = process.env): PackageManager
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
   const packageJson = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (!packageJson) {
-    throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
+    throw new FindUpAndReadPackageJsonNotFoundError(fromDirectory)
   }
   const directory = dirname(packageJson)
   outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
@@ -315,7 +317,7 @@ export interface PackageJson {
  */
 export async function readAndParsePackageJson(packageJsonPath: string): Promise<PackageJson> {
   if (!(await fileExists(packageJsonPath))) {
-    throw PackageJsonNotFoundError(dirname(packageJsonPath))
+    throw new PackageJsonNotFoundError(dirname(packageJsonPath))
   }
   return JSON.parse(await readFile(packageJsonPath))
 }
@@ -338,6 +340,9 @@ interface AddNPMDependenciesIfNeededOptions {
 
   /** Abort signal to stop the process */
   signal?: AbortSignal
+
+  /** Whether to add the dependencies to the root package.json or to the package.json of the directory */
+  addToRootDirectory?: boolean
 }
 
 /**
@@ -387,7 +392,7 @@ ${outputToken.json(options)}
   `)
   const packageJsonPath = joinPath(options.directory, 'package.json')
   if (!(await fileExists(packageJsonPath))) {
-    throw PackageJsonNotFoundError(options.directory)
+    throw new PackageJsonNotFoundError(options.directory)
   }
   const existingDependencies = Object.keys(await getDependencies(packageJsonPath))
   const dependenciesToAdd = dependencies.filter((dep) => {
@@ -421,7 +426,10 @@ export async function addNPMDependencies(
       await installDependencies(options, argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type))
       break
     case 'pnpm':
-      await installDependencies(options, argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type))
+      await installDependencies(
+        options,
+        argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type, Boolean(options.addToRootDirectory)),
+      )
       break
   }
 }
@@ -503,9 +511,19 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
  * @param type - The dependency type.
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithPNPM(
+  dependencies: string[],
+  type: DependencyType,
+  addAtRoot: boolean,
+): string[] {
   let command = ['add']
+
+  if (addAtRoot) {
+    command.push('-w')
+  }
+
   command = command.concat(dependencies)
+
   switch (type) {
     case 'dev':
       command.push('--save-dev')
@@ -533,7 +551,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
     const packageJson = JSON.parse(await readFile(packageJsonPath))
     return {path: packageJsonPath, content: packageJson}
   } else {
-    throw FindUpAndReadPackageJsonNotFoundError(fromDirectory)
+    throw new FindUpAndReadPackageJsonNotFoundError(fromDirectory)
   }
 }
 

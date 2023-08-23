@@ -101,8 +101,8 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
   return testApp({
     name: 'myapp',
     directory: '/',
-    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
+      path: joinPath('/', 'shopify.app.toml'),
       scopes: 'my-scope',
       extension_directories: ['extensions/*'],
     },

@@ -121,6 +121,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
 
   options.signal.addEventListener('abort', () => {
+    outputDebug('Closing the UI extensions dev server...')
     fileWatcher.close()
     websocketConnection.close()
     httpServer.close()

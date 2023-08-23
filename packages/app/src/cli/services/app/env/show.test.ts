@@ -7,8 +7,8 @@ import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js
 import {describe, expect, vi, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import * as file from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../../dev/fetch.js')
 vi.mock('../fetch-app-from-config-or-select.js')
@@ -63,8 +63,8 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
   return testApp({
     name: 'myapp',
     directory: '/',
-    configurationPath: joinPath('/', 'shopify.app.toml'),
     configuration: {
+      path: joinPath('/', 'shopify.app.toml'),
       scopes: 'my-scope',
     },
     nodeDependencies,

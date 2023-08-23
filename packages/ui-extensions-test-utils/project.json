@@ -1,40 +1,39 @@
 {
-    "name": "ui-extensions-test-utils",
-    "root": "packages/ui-extensions-test-utils",
-    "sourceRoot": "packages/ui-extensions-test-utils/src",
-    "$schema": "../../node_modules/nx/schemas/project-schema.json",
-    "projectType": "library",
-    "tags": ["scope:feature", "scope:ui-extensions"],
-    "targets": {
-      "clean": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm rimraf dist/",
-          "cwd": "packages/ui-extensions-test-utils"
-        }
-      },
-      "build": {
-        "executor": "nx:run-commands",
-        "outputs": ["dist"],
-        "inputs": ["{projectRoot}/src/**/*"],
-        "options": {
-          "command": "pnpm tsc",
-          "cwd": "packages/ui-extensions-test-utils"
-        }
-      },
-      "lint": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm eslint src",
-          "cwd": "packages/ui-extensions-test-utils"
-        }
-      },
-      "lint:fix": {
-        "executor": "nx:run-commands",
-        "options": {
-          "command": "pnpm eslint src --fix",
-          "cwd": "packages/ui-extensions-test-utils"
-        }
+  "name": "ui-extensions-test-utils",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/ui-extensions-test-utils/src",
+  "projectType": "library",
+  "tags": ["scope:feature", "scope:ui-extensions"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/ui-extensions-test-utils"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*"],
+      "options": {
+        "command": "pnpm tsc",
+        "cwd": "packages/ui-extensions-test-utils"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src",
+        "cwd": "packages/ui-extensions-test-utils"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src --fix",
+        "cwd": "packages/ui-extensions-test-utils"
       }
     }
+  }
 }

@@ -1,42 +1,25 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
-import {handleCtrlC} from '../../ui.js'
 import {addOrUpdateConcurrentUIEventOutput} from '../../demo-recorder.js'
-import {treeKill} from '../../tree-kill.js'
-import useAbortSignal from '../hooks/use-abort-signal.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
-import {Box, Key, Static, Text, useInput, TextProps, useStdin, useApp} from 'ink'
+import {Box, Static, Text, TextProps, useApp} from 'ink'
 import stripAnsi from 'strip-ansi'
 import figures from 'figures'
 import {Writable} from 'stream'
 
 export type WritableStream = (process: OutputProcess, index: number) => Writable
 
-interface Shortcut {
-  key: string
-  action: string
-}
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   abortSignal: AbortSignal
   showTimestamps?: boolean
-  onInput?: (input: string, key: Key, exit: () => void) => void
-  footer?: {
-    shortcuts: Shortcut[]
-    subTitle?: string
-  }
-  // If set, the component is not automatically unmounted once the processes have all finished
   keepRunningAfterProcessesResolve?: boolean
 }
+
 interface Chunk {
   color: TextProps['color']
   prefix: string
   lines: string[]
-}
-
-enum ConcurrentOutputState {
-  Running = 'running',
-  Stopped = 'stopped',
 }
 
 function addLeadingZero(number: number) {
@@ -49,11 +32,9 @@ function addLeadingZero(number: number) {
 
 function currentTime() {
   const currentDateTime = new Date()
-
   const hours = addLeadingZero(currentDateTime.getHours())
   const minutes = addLeadingZero(currentDateTime.getMinutes())
   const seconds = addLeadingZero(currentDateTime.getSeconds())
-
   return `${hours}:${minutes}:${seconds}`
 }
 
@@ -94,15 +75,11 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   processes,
   abortSignal,
   showTimestamps = true,
-  onInput,
-  footer,
-  keepRunningAfterProcessesResolve,
+  keepRunningAfterProcessesResolve = false,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
   const {exit: unmountInk} = useApp()
   const prefixColumnSize = Math.max(...processes.map((process) => process.prefix.length))
-  const {isRawModeSupported} = useStdin()
-  const [state, setState] = useState<ConcurrentOutputState>(ConcurrentOutputState.Running)
   const concurrentColors: TextProps['color'][] = useMemo(() => ['yellow', 'cyan', 'magenta', 'green', 'blue'], [])
   const lineColor = useCallback(
     (index: number) => {
@@ -111,14 +88,12 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     },
     [concurrentColors],
   )
-
   const writableStream = useCallback(
     (process: OutputProcess, index: number) => {
       return new Writable({
         write(chunk, _encoding, next) {
           const lines = stripAnsi(chunk.toString('utf8').replace(/(\n)$/, '')).split(/\n/)
-          addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')}, {footer})
-
+          addOrUpdateConcurrentUIEventOutput({prefix: process.prefix, index, output: lines.join('\n')})
           setProcessOutput((previousProcessOutput) => [
             ...previousProcessOutput,
             {
@@ -127,24 +102,11 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
               lines,
             },
           ])
-
           next()
         },
       })
     },
-    [footer, lineColor],
-  )
-
-  const {isAborted} = useAbortSignal(abortSignal)
-  const useShortcuts = isRawModeSupported && state === ConcurrentOutputState.Running && !isAborted
-
-  useInput(
-    (input, key) => {
-      handleCtrlC(input, key)
-
-      onInput!(input, key, () => treeKill('SIGINT'))
-    },
-    {isActive: typeof onInput !== 'undefined' && useShortcuts},
+    [lineColor],
   )
 
   useEffect(() => {
@@ -153,81 +115,49 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         processes.map(async (process, index) => {
           const stdout = writableStream(process, index)
           const stderr = writableStream(process, index)
-
           await process.action(stdout, stderr, abortSignal)
         }),
       )
     })()
       .then(() => {
         if (!keepRunningAfterProcessesResolve) {
-          setState(ConcurrentOutputState.Stopped)
           unmountInk()
         }
       })
       .catch((error) => {
-        setState(ConcurrentOutputState.Stopped)
-        unmountInk(error)
+        if (!keepRunningAfterProcessesResolve) {
+          unmountInk(error)
+        }
       })
   }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
 
   const {lineVertical} = figures
 
   return (
-    <>
-      <Static items={processOutput}>
-        {(chunk, index) => {
-          const prefixBuffer = ' '.repeat(prefixColumnSize - chunk.prefix.length)
-          return (
-            <Box flexDirection="column" key={index}>
-              {chunk.lines.map((line, index) => (
-                <Box key={index} flexDirection="row">
-                  <Text color={chunk.color}>
-                    {showTimestamps ? (
-                      <Text>
-                        {currentTime()} {lineVertical}{' '}
-                      </Text>
-                    ) : null}
-
+    <Static items={processOutput}>
+      {(chunk, index) => {
+        const prefixBuffer = ' '.repeat(prefixColumnSize - chunk.prefix.length)
+        return (
+          <Box flexDirection="column" key={index}>
+            {chunk.lines.map((line, index) => (
+              <Box key={index} flexDirection="row">
+                <Text color={chunk.color}>
+                  {showTimestamps ? (
                     <Text>
-                      {chunk.prefix}
-                      {prefixBuffer} {lineVertical} {line}
+                      {currentTime()} {lineVertical}{' '}
                     </Text>
+                  ) : null}
+                  <Text>
+                    {chunk.prefix}
+                    {prefixBuffer} {lineVertical} {line}
                   </Text>
-                </Box>
-              ))}
-            </Box>
-          )
-        }}
-      </Static>
-      {footer ? (
-        <Box
-          marginY={1}
-          flexDirection="column"
-          flexGrow={1}
-          borderStyle="single"
-          borderBottom={false}
-          borderLeft={false}
-          borderRight={false}
-          borderTop
-        >
-          {useShortcuts ? (
-            <Box flexDirection="column">
-              {footer.shortcuts.map((shortcut, index) => (
-                <Text key={index}>
-                  {figures.pointerSmall} Press <Text bold>{shortcut.key}</Text> {figures.lineVertical} {shortcut.action}
                 </Text>
-              ))}
-            </Box>
-          ) : null}
-          {footer.subTitle ? (
-            <Box marginTop={useShortcuts ? 1 : 0}>
-              <Text>{footer.subTitle}</Text>
-            </Box>
-          ) : null}
-        </Box>
-      ) : null}
-    </>
+              </Box>
+            ))}
+          </Box>
+        )
+      }}
+    </Static>
   )
 }
-
 export {ConcurrentOutput}

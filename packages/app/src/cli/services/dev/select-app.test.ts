@@ -14,8 +14,7 @@ vi.mock('@shopify/cli-kit/node/session')
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
-  configurationPath: '/shopify.app.toml',
-  configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
+  configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
   webs: [
     {
       directory: '',
@@ -71,7 +70,7 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, localApp.name, 'token', {scopes: 'write_products', isLaunchable: true})
+    const got = await createApp(ORG2, localApp.name, 'token', {scopesArray: ['write_products'], isLaunchable: true})
     expect(got).toEqual(APP1)
 
     // Then

@@ -14,9 +14,9 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
-import {outputUpdateURLsResult} from './dev/output.js'
-import {renderDevPreviewWarning} from './extensions/common.js'
+import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {DevProcessFunction} from './dev/processes/types.js'
+import {canEnablePreviewMode} from './extensions/common.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -27,9 +27,8 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderConcurrent, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {openURL} from '@shopify/cli-kit/node/system'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 
 export async function dev(commandOptions: DevOptions) {
@@ -42,7 +41,7 @@ export async function dev(commandOptions: DevOptions) {
 
   await actionsBeforeLaunchingDev(config)
 
-  await runDevProcesses(processes, previewUrl)
+  await runDevProcesses({processes, previewUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -127,7 +126,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
     renderWarning({
       headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
       body: [
-        `Scopes in ${basename(localApp.configurationPath)}:`,
+        `Scopes in ${basename(localApp.configuration.path)}:`,
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
@@ -139,8 +138,6 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
 }
 
 async function actionsBeforeLaunchingDev(config: DevConfig) {
-  await renderDevPreviewWarning(config.remoteApp, config.localApp)
-
   setPreviousAppId(config.commandOptions.directory, config.remoteApp.apiKey)
 
   await logMetadataForDev({
@@ -249,7 +246,15 @@ async function setupNetworkingOptions(
   }
 }
 
-async function runDevProcesses(processes: DevProcesses, previewUrl: string) {
+async function runDevProcesses({
+  processes,
+  previewUrl,
+  config,
+}: {
+  processes: DevProcesses
+  previewUrl: string
+  config: DevConfig
+}) {
   const abortController = new AbortController()
   const processesForTaskRunner: OutputProcess[] = processes.map((process) => {
     const outputProcess: OutputProcess = {
@@ -261,30 +266,18 @@ async function runDevProcesses(processes: DevProcesses, previewUrl: string) {
     }
     return outputProcess
   })
-  return renderConcurrent({
+
+  const app = {
+    canEnablePreviewMode: canEnablePreviewMode(config.remoteApp, config.localApp),
+    developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
+    apiKey: config.remoteApp.apiKey,
+    token: config.token,
+  }
+
+  return renderDev({
     processes: processesForTaskRunner,
-    abortSignal: abortController.signal,
-    onInput: (input, _key, exit) => {
-      if (input === 'p' && previewUrl) {
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        openURL(previewUrl)
-      } else if (input === 'q') {
-        exit()
-      }
-    },
-    footer: {
-      shortcuts: [
-        {
-          key: 'p',
-          action: 'preview in your browser',
-        },
-        {
-          key: 'q',
-          action: 'quit',
-        },
-      ],
-      subTitle: `Preview URL: ${previewUrl}`,
-    },
-    keepRunningAfterProcessesResolve: true,
+    previewUrl,
+    app,
+    abortController,
   })
 }

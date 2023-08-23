@@ -9,7 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
-import {outputUpdateURLsResult, renderDev} from './dev/output.js'
+import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {sendUninstallWebhookToAppServer} from './webhook/send-app-uninstalled-webhook.js'
@@ -17,8 +17,8 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
-import {renderDevPreviewWarning} from './extensions/common.js'
 import {DeploymentMode} from './deploy/mode.js'
+import {canEnablePreviewMode} from './extensions/common.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -34,7 +34,7 @@ import {
 import metadata from '../metadata.js'
 import {fetchProductVariant} from '../utilities/extensions/fetch-product-variant.js'
 import {loadApp} from '../models/app/loader.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
+import {getAppIdentifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
@@ -54,7 +54,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
 } from '@shopify/cli-kit/node/session'
-import {OutputProcess} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -102,15 +102,13 @@ async function dev(options: DevOptions) {
   } = await ensureDevContext(options, token)
 
   const apiKey = remoteApp.apiKey
-  let localApp
-  {
-    const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
+  const developmentStorePreviewEnabled = remoteApp.developmentStorePreviewEnabled
+  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
 
-    localApp = await loadApp({directory: options.directory, specifications, configName})
+  let localApp = await loadApp({directory: options.directory, specifications, configName})
 
-    if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
-      localApp = await installAppDependencies(localApp)
-    }
+  if (!options.skipDependenciesInstallation && !localApp.usesWorkspaces) {
+    localApp = await installAppDependencies(localApp)
   }
 
   if (
@@ -118,12 +116,18 @@ async function dev(options: DevOptions) {
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
     getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
   ) {
-    const nextSteps = [['Run', {command: 'shopify app config push'}, 'to push your scopes to the Partner Dashboard']]
+    const nextSteps = [
+      [
+        'Run',
+        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+        'to push your scopes to the Partner Dashboard',
+      ],
+    ]
 
     renderWarning({
       headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
       body: [
-        `Scopes in ${basename(localApp.configurationPath)}:`,
+        `Scopes in ${basename(localApp.configuration.path)}:`,
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
@@ -161,6 +165,7 @@ async function dev(options: DevOptions) {
       const newURLs = generatePartnersURLs(
         exposedUrl,
         localApp.webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs,
@@ -255,7 +260,7 @@ async function dev(options: DevOptions) {
   }
 
   if (draftableExtensions.length > 0) {
-    const {extensionIds: remoteExtensions} = await ensureDeploymentIdsPresence({
+    const identifiers = await ensureDeploymentIdsPresence({
       app: localApp,
       partnersApp: remoteApp,
       appId: apiKey,
@@ -266,6 +271,10 @@ async function dev(options: DevOptions) {
       envIdentifiers: prodEnvIdentifiers,
     })
 
+    if (isCurrentAppSchema(localApp.configuration)) {
+      await updateAppIdentifiers({app: localApp, identifiers, command: 'deploy'})
+    }
+
     additionalProcesses.push(
       devDraftableExtensionTarget({
         app: localApp,
@@ -273,7 +282,7 @@ async function dev(options: DevOptions) {
         url: proxyUrl,
         token,
         extensions: draftableExtensions,
-        remoteExtensions,
+        remoteExtensions: identifiers.extensionIds,
         unifiedDeployment,
       }),
     )
@@ -298,30 +307,27 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  {
-    const webhooksPath =
-      localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
-    const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
-    if (sendUninstallWebhook) {
-      additionalProcesses.push({
-        prefix: 'webhooks',
-        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          // If we have a backend, use that port, otherwise use the frontend port
-          const deliveryPort = backendConfig ? backendPort : frontendPort
+  const webhooksPath =
+    localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
 
-          await sendUninstallWebhookToAppServer({
-            stdout,
-            token,
-            address: `http://localhost:${deliveryPort}${webhooksPath}`,
-            sharedSecret: apiSecret,
-            storeFqdn,
-          })
-        },
-      })
-    }
+  if (sendUninstallWebhook) {
+    additionalProcesses.push({
+      prefix: 'webhooks',
+      action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+        // If we have a backend, use that port, otherwise use the frontend port
+        const deliveryPort = backendConfig ? backendPort : frontendPort
+
+        await sendUninstallWebhookToAppServer({
+          stdout,
+          token,
+          address: `http://localhost:${deliveryPort}${webhooksPath}`,
+          sharedSecret: apiSecret,
+          storeFqdn,
+        })
+      },
+    })
   }
-
-  await renderDevPreviewWarning(remoteApp, localApp)
 
   setPreviousAppId(options.directory, apiKey)
 
@@ -330,21 +336,28 @@ async function dev(options: DevOptions) {
   await reportAnalyticsEvent({config: options.commandConfig})
 
   const abortController = new AbortController()
+
   const processesIncludingAnyProxies = await runConcurrentHTTPProcessesAndPathForwardTraffic({
-    previewUrl,
     portNumber: proxyPort,
     proxyTargets,
     additionalProcesses,
     abortController,
   })
 
-  await renderDev(
-    {
-      processes: processesIncludingAnyProxies,
-      abortSignal: abortController.signal,
-    },
+  const app = {
+    canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
+    developmentStorePreviewEnabled,
+    apiKey,
+    token,
+  }
+
+  await renderDev({
+    processes: processesIncludingAnyProxies,
     previewUrl,
-  )
+    app,
+    abortController,
+    tunnelClient,
+  })
 }
 
 export function setPreviousAppId(directory: string, apiKey: string) {
@@ -672,7 +685,7 @@ export async function logMetadataForDev(options: {
   tunnelUrl: string
   shouldUpdateURLs: boolean
   storeFqdn: string
-  deploymentMode?: DeploymentMode
+  deploymentMode: DeploymentMode | undefined
 }) {
   const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublicMetadata(() => ({

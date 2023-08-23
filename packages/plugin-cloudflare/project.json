@@ -1,6 +1,5 @@
 {
   "name": "plugin-cloudflare",
-  "root": "packages/plugin-cloudflare",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/plugin-cloudflare/src",
   "projectType": "library",
@@ -15,7 +14,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": ["dist"],
+      "outputs": ["{workspaceRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",

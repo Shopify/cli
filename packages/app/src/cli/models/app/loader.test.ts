@@ -1717,27 +1717,30 @@ automatically_update_urls_on_dev = true
 
   const runningOnWindows = platformAndArch().platform === 'windows'
 
-  test('prompts to select new config if current config file is set but does not exist', async () => {
-    // Given
-    await writeConfig(linkedAppConfiguration)
-    vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
-    vi.mocked(use).mockResolvedValue('shopify.app.toml')
+  test.skipIf(runningOnWindows)(
+    'prompts to select new config if current config file is set but does not exist',
+    async () => {
+      // Given
+      await writeConfig(linkedAppConfiguration)
+      vi.mocked(getCachedAppInfo).mockReturnValue({directory: tmpDir, configFile: 'shopify.app.non-existent.toml'})
+      vi.mocked(use).mockResolvedValue('shopify.app.toml')
 
-    // When
-    await loadApp({directory: tmpDir, specifications})
+      // When
+      await loadApp({directory: tmpDir, specifications})
 
-    // Then
-    expect(use).toHaveBeenCalledWith({
-      directory: normalizePath(resolve(tmpDir)),
-      shouldRenderSuccess: false,
-      warningContent: {
-        headline: "Couldn't find shopify.app.non-existent.toml",
-        body: [
-          "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
-        ],
-      },
-    })
-  })
+      // Then
+      expect(use).toHaveBeenCalledWith({
+        directory: normalizePath(resolve(tmpDir)),
+        shouldRenderSuccess: false,
+        warningContent: {
+          headline: "Couldn't find shopify.app.non-existent.toml",
+          body: [
+            "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
+          ],
+        },
+      })
+    },
+  )
 
   test.skipIf(runningOnWindows)(`updates metadata after loading a config as code application`, async () => {
     const {webDirectory} = await writeConfig(linkedAppConfiguration, {
@@ -2088,7 +2091,9 @@ describe('parseConfigurationObject', () => {
     ]
     const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
     const abortOrReport = vi.fn()
-    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
+
+    const {path, ...toParse} = configurationObject
+    await parseConfigurationObject(AppSchema, 'tmp', toParse, abortOrReport)
 
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })

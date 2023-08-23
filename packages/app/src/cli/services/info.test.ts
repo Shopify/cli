@@ -62,8 +62,8 @@ describe('info', () => {
         app: testApp({
           name: 'my app',
           directory: tmp,
-          configurationPath: joinPath(tmp, 'shopify.app.toml'),
           configuration: {
+            path: joinPath(tmp, 'shopify.app.toml'),
             name: 'my app',
             client_id: '12345',
             application_url: 'https://example.com/lala',
@@ -236,25 +236,25 @@ describe('info', () => {
       // Given
       const uiExtension1 = await testUIExtension({
         configuration: {
+          path: 'extension/path/1',
           name: 'Extension 1',
           handle: 'handle-for-extension-1',
           type: 'ui_extension',
           metafields: [],
         },
-        configurationPath: 'extension/path/1',
       })
       const uiExtension2 = await testUIExtension({
         configuration: {
+          path: 'extension/path/2',
           name: 'Extension 2',
           type: 'checkout_ui_extension',
           metafields: [],
         },
-        configurationPath: 'extension/path/2',
       })
 
       const errors = new AppErrors()
-      errors.addError(uiExtension1.configurationPath, 'Mock error with ui_extension')
-      errors.addError(uiExtension2.configurationPath, 'Mock error with checkout_ui_extension')
+      errors.addError(uiExtension1.configuration.path, 'Mock error with ui_extension')
+      errors.addError(uiExtension2.configuration.path, 'Mock error with checkout_ui_extension')
 
       const app = mockApp({
         directory: tmp,
@@ -324,8 +324,8 @@ function mockApp({
   return testApp({
     name: 'my app',
     directory,
-    configurationPath: joinPath(directory, 'shopify.app.toml'),
     configuration: {
+      path: joinPath(directory, 'shopify.app.toml'),
       scopes: 'my-scope',
       extension_directories: ['extensions/*'],
     },
