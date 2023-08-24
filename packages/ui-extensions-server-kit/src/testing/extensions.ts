@@ -16,6 +16,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
   return {
     handle: 'my-extension',
     name: 'My extension',
+    description: 'My extension description',
     surface: 'admin',
     type: 'purchase_option',
     externalType: 'external_type',
