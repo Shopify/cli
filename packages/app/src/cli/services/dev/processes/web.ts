@@ -48,12 +48,13 @@ export async function setupWebProcesses({
       prefix: web.configuration.name ?? ['web', ...web.configuration.roles].join('-'),
       function: launchWebProcess,
       options: {
-        port: port ?? -1,
+        port,
         portFromConfig: web.configuration.port,
         apiKey,
         apiSecret,
         hostname: proxyUrl,
         backendPort,
+        // when we delete `dev.ts` we can rename frontendServerPort to frontendPort
         frontendServerPort: frontendPort,
         directory: web.directory,
         devCommand: web.configuration.commands.dev,

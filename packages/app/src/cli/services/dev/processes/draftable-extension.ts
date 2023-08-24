@@ -57,7 +57,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
           }),
         ]
 
-        // Only extensions with esbuild feature should be whatched using esbuild
+        // Only extensions with esbuild feature should be watched using esbuild
         if (extension.features.includes('esbuild')) {
           actions.push(
             setupDraftableExtensionBundler({
@@ -75,9 +75,8 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
           )
         }
 
-        // watch for Function changes that require a build and push
+        // watch for function changes that require a build and push
         if (extension.isFunctionExtension) {
-          // watch for changes
           actions.push(
             setupFunctionWatcher({
               extension,

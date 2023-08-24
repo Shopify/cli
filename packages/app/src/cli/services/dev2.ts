@@ -43,7 +43,6 @@ export async function dev(commandOptions: DevOptions) {
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   // Be optimistic about tunnel creation and do it as early as possible
   const tunnelPort = await getAvailableTCPPort()
-
   let tunnelClient: TunnelClient | undefined
   if (!commandOptions.tunnelUrl && !commandOptions.noTunnel) {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
@@ -59,10 +58,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   } = await ensureDevContext(commandOptions, token)
 
   const apiKey = remoteApp.apiKey
-  const usesUnifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
-
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
-
   let localApp = await loadApp({directory: commandOptions.directory, specifications, configName})
 
   if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
@@ -80,7 +76,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     },
     tunnelClient,
   )
-
   localApp.webs = webs
 
   const partnerUrlsUpdated = await handleUpdatingOfPartnerUrls(
@@ -107,7 +102,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     commandOptions,
     network,
     partnerUrlsUpdated,
-    usesUnifiedDeployment,
+    usesUnifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false,
   }
 }
 
