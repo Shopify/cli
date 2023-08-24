@@ -182,7 +182,7 @@ export function mergeAppConfiguration(
 
 const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: OrganizationApp) => {
   // if we have upstream scopes, use them
-  if (remoteApp.requestedAccessScopes && remoteApp.requestedAccessScopes.length > 0) {
+  if (remoteApp.requestedAccessScopes) {
     return {
       scopes: remoteApp.requestedAccessScopes.join(','),
     }

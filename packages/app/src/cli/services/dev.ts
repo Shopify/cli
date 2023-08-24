@@ -356,7 +356,6 @@ async function dev(options: DevOptions) {
     previewUrl,
     app,
     abortController,
-    tunnelClient,
   })
 }
 
