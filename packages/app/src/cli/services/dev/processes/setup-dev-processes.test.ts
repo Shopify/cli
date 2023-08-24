@@ -66,14 +66,10 @@ describe('setup-dev-processes', () => {
       noTunnel: false,
     }
     const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
       backendPort: 111,
       frontendPort: 222,
-      frontendServerPort: 333,
-      exposedUrl: 'https://example.com/exposed',
-      frontendUrl: 'https://example.com/frontend',
-      proxyPort: 444,
-      proxyUrl: 'https://example.com/proxy',
-      usingLocalhost: false,
       currentUrls: {
         applicationUrl: 'https://example.com/application',
         redirectUrlWhitelist: ['https://example.com/redirect'],
@@ -140,13 +136,13 @@ describe('setup-dev-processes', () => {
         backendPort: 111,
         devCommand: 'npm exec remix dev',
         directory: 'web',
-        frontendServerPort: 333,
+        frontendServerPort: 222,
         hmrServerOptions: {
           port: expect.any(Number),
           httpPaths: ['/ping'],
         },
         port: expect.any(Number),
-        hostname: 'https://example.com/frontend',
+        hostname: 'https://example.com/proxy',
         scopes: 'read_products',
       },
     })

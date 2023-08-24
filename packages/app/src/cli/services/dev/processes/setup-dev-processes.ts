@@ -28,14 +28,10 @@ type DevProcessDefinition =
 export type DevProcesses = DevProcessDefinition[]
 
 interface DevNetworkOptions {
-  backendPort: number
-  frontendPort: number
-  frontendUrl: string
-  usingLocalhost: boolean
-  exposedUrl: string
-  frontendServerPort?: number
   proxyPort: number
   proxyUrl: string
+  frontendPort: number
+  backendPort: number
   currentUrls: PartnersURLs
 }
 
@@ -66,18 +62,14 @@ export async function setupDevProcesses({
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
 
-  // setup the processes
   const processes = [
     ...(await setupWebProcesses({
       webs: localApp.webs,
-      frontendUrl: network.frontendUrl,
-      exposedUrl: network.exposedUrl,
+      proxyUrl: network.proxyUrl,
       frontendPort: network.frontendPort,
       backendPort: network.backendPort,
-      usingLocalhost: network.usingLocalhost,
       apiKey,
       apiSecret,
-      frontendServerPort: network.frontendServerPort,
       scopes: getAppScopes(localApp.configuration),
     })),
     await setupPreviewableExtensionsProcess({
@@ -127,13 +119,10 @@ export async function setupDevProcesses({
 
   // Decide on the appropriate preview URL for a session with these processes
   const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
-  let previewUrl
-  if (anyPreviewableExtensions.length > 0) {
-    // If any previewable extensions, the preview URL should be the dev console approach
-    previewUrl = `${network.proxyUrl}/extensions/dev-console`
-  } else {
-    previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  }
+  const previewUrl =
+    anyPreviewableExtensions.length > 0
+      ? `${network.proxyUrl}/extensions/dev-console`
+      : buildAppURLForWeb(storeFqdn, apiKey)
 
   return {processes: processesWithProxy, previewUrl}
 }
@@ -148,8 +137,8 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
     processes.map(async (process) => {
       const rules: {[key: string]: string} = {}
 
-      if (process.type === 'web' && process.options.port === -1) {
-        const targetPort = process.options.portFromConfig || (await getAvailableTCPPort())
+      if (process.type === 'web') {
+        const targetPort = process.options.portFromConfig || process.options.port
         rules.default = `http://localhost:${targetPort}`
         const hmrServer = process.options.hmrServerOptions
         if (hmrServer) {

@@ -12,25 +12,19 @@ export interface WebProcess extends BaseProcess<LaunchWebOptions> {
 
 export async function setupWebProcesses({
   webs,
-  frontendUrl,
-  exposedUrl,
+  proxyUrl,
   frontendPort,
   backendPort,
-  usingLocalhost,
   apiKey,
   apiSecret,
-  frontendServerPort,
   scopes,
 }: {
   webs: Web[]
-  frontendUrl: string
-  exposedUrl: string
+  proxyUrl: string
   frontendPort: number
   backendPort: number
-  usingLocalhost: boolean
   apiKey: string
   apiSecret: string
-  frontendServerPort: number | undefined
   scopes: string
 }): Promise<WebProcess[]> {
   const {frontendConfig} = frontAndBackendConfig(webs)
@@ -39,10 +33,7 @@ export async function setupWebProcesses({
   const shopCustomDomain = isSpinEnvironment() ? `shopify.${await spinFqdn()}` : undefined
 
   const webProcessSetups = webs.map(async (web) => {
-    const isFrontend = isWebType(web, WebType.Frontend)
-    const hostname = isFrontend ? frontendUrl : exposedUrl
-
-    const port = await getWebProcessPort({web, frontendPort, backendPort, usingLocalhost})
+    const port = await getWebProcessPort({web, frontendPort, backendPort})
 
     const hmrServerOptions =
       hmrServerPort && web.configuration.roles.includes(WebType.Frontend)
@@ -61,9 +52,9 @@ export async function setupWebProcesses({
         portFromConfig: web.configuration.port,
         apiKey,
         apiSecret,
-        hostname,
+        hostname: proxyUrl,
         backendPort,
-        frontendServerPort,
+        frontendServerPort: frontendPort,
         directory: web.directory,
         devCommand: web.configuration.commands.dev,
         scopes,
@@ -79,19 +70,12 @@ async function getWebProcessPort({
   web,
   frontendPort,
   backendPort,
-  usingLocalhost,
 }: {
   web: Web
   frontendPort: number
   backendPort: number
-  usingLocalhost: boolean
-}): Promise<number | undefined> {
-  const isFrontend = isWebType(web, WebType.Frontend)
-  if (isFrontend && !usingLocalhost) {
-    return
-  }
-
-  if (isFrontend) {
+}): Promise<number> {
+  if (isWebType(web, WebType.Frontend)) {
     return frontendPort
   } else if (isWebType(web, WebType.Backend)) {
     return backendPort

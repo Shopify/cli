@@ -144,7 +144,7 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
 
   await logMetadataForDev({
     devOptions: config.commandOptions,
-    tunnelUrl: config.network.frontendUrl,
+    tunnelUrl: config.network.proxyUrl,
     shouldUpdateURLs: config.partnerUrlsUpdated,
     storeFqdn: config.storeFqdn,
     deploymentMode: config.usesUnifiedDeployment ? 'unified' : 'legacy',
@@ -168,7 +168,7 @@ async function handleUpdatingOfPartnerUrls(
   webs: Web[],
   commandSpecifiedToUpdate: boolean,
   network: {
-    exposedUrl: string
+    proxyUrl: string
     currentUrls: PartnersURLs
   },
   localApp: AppInterface,
@@ -182,7 +182,7 @@ async function handleUpdatingOfPartnerUrls(
   if (frontendConfig || backendConfig) {
     if (commandSpecifiedToUpdate) {
       const newURLs = generatePartnersURLs(
-        network.exposedUrl,
+        network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
         isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
       )
@@ -208,11 +208,13 @@ async function setupNetworkingOptions(
   frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl' | 'commandConfig'>,
   tunnelClient?: TunnelClient,
 ) {
-  const {backendConfig, frontendConfig: baseFrontendConfig} = frontAndBackendConfig(webs)
+  const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
   await validateCustomPorts(webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
+  // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
+  // we can rename them to proxyUrl and proxyPort when we delete dev.ts
+  const [{frontendUrl: proxyUrl, frontendPort: proxyPort}, backendPort, currentUrls] = await Promise.all([
     generateFrontendURL({
       ...frontEndOptions,
       tunnelClient,
@@ -221,30 +223,22 @@ async function setupNetworkingOptions(
     getURLs(apiKey, token),
   ])
 
-  const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
-  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
-  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
-
-  const frontendConfig = baseFrontendConfig
-  let frontendServerPort = frontendConfig?.configuration.port
+  let frontendPort = frontendConfig?.configuration.port
   if (frontendConfig) {
-    if (!frontendServerPort) {
-      frontendServerPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
+    if (!frontendPort) {
+      frontendPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
     }
-    frontendConfig.configuration.port = frontendServerPort
+    frontendConfig.configuration.port = frontendPort
   }
+  frontendPort = frontendPort ?? (await getAvailableTCPPort())
 
   return {
-    backendPort,
-    frontendPort,
-    webs,
-    frontendUrl,
-    usingLocalhost,
-    exposedUrl,
-    frontendServerPort,
-    proxyPort,
     proxyUrl,
+    proxyPort,
+    frontendPort,
+    backendPort,
     currentUrls,
+    webs,
   }
 }
 
