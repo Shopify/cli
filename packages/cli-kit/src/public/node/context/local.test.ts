@@ -309,7 +309,7 @@ describe('ciPlatform', () => {
       GITHUB_RUN_NUMBER: '789',
       GITHUB_SHA: 'abcdef',
       GITHUB_SERVER_URL: 'https://github.com',
-      GITHUB_REPOSITORY: '/user/repo',
+      GITHUB_REPOSITORY: 'user/repo',
     }
 
     // When
