@@ -126,8 +126,6 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
     plugins: getPlugins(options.stdin.resolveDir, processEnv),
     target: 'es6',
     resolveExtensions: ['.tsx', '.ts', '.js', '.json', '.esnext', '.mjs', '.ejs'],
-    sourceRoot: `${options.stdin.resolveDir}/src`,
-    sourcemap: true,
   }
   if (options.watch) {
     const watch = options.watch
