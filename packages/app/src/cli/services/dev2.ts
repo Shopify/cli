@@ -32,7 +32,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export async function dev(commandOptions: DevOptions) {
-  renderWarning({body: 'Running in new dev mode!'})
+  renderWarning({body: 'Running in new dev mode! Pass SHOPIFY_CLI_NEW_DEV=0 to run in old mode.'})
   const config = await prepareForDev(commandOptions)
   await actionsBeforeSettingUpDevProcesses(config)
   const {processes, previewUrl} = await setupDevProcesses(config)

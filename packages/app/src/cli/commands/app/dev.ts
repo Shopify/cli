@@ -134,7 +134,9 @@ export default class Dev extends Command {
       notify: flags.notify,
     }
 
-    if (isTruthy(getEnvironmentVariables().SHOPIFY_CLI_NEW_DEV) || (await isShopify())) {
+    const enableNewDev = getEnvironmentVariables().SHOPIFY_CLI_NEW_DEV
+
+    if (isTruthy(enableNewDev) || (enableNewDev === undefined && (await isShopify()))) {
       await dev2(devOptions)
     } else {
       await dev(devOptions)
