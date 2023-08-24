@@ -214,7 +214,7 @@ async function setupNetworkingOptions(
 
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
-  const [{frontendUrl: proxyUrl, frontendPort: proxyPort}, backendPort, currentUrls] = await Promise.all([
+  const [{frontendUrl, frontendPort: proxyPort, usingLocalhost}, backendPort, currentUrls] = await Promise.all([
     generateFrontendURL({
       ...frontEndOptions,
       tunnelClient,
@@ -222,6 +222,7 @@ async function setupNetworkingOptions(
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
     getURLs(apiKey, token),
   ])
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   let frontendPort = frontendConfig?.configuration.port
   if (frontendConfig) {
