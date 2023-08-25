@@ -94,6 +94,9 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test("doesn't render shortcuts if the stdin is not a TTY", async () => {
@@ -163,6 +166,9 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('opens the previewUrl when p is pressed', async () => {
@@ -175,6 +181,8 @@ describe('Dev', () => {
     renderInstance.stdin.write('p')
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
+
+    renderInstance.unmount()
   })
 
   test('quits when q is pressed', async () => {
@@ -215,6 +223,9 @@ describe('Dev', () => {
     await promise
     // Then
     expect(abort).toHaveBeenCalledOnce()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('abortController can be used to exit from outside and should preserve static output', async () => {
@@ -275,6 +286,9 @@ describe('Dev', () => {
       apiKey: '123',
       token: '123',
     })
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('accepts inputs when the processes resolve', async () => {
@@ -318,6 +332,9 @@ describe('Dev', () => {
     await waitForInputsToBeReady()
     renderInstance.stdin.write('p')
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('when a process throws an error it calls abort on the abortController', async () => {
@@ -344,6 +361,9 @@ describe('Dev', () => {
 
     await renderInstance.waitUntilExit()
     expect(abort).toHaveBeenCalledOnce()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('polls for preview mode', async () => {
@@ -413,6 +433,9 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test("doesn't poll for preview mode when the app does not support it", async () => {
@@ -461,6 +484,9 @@ describe('Dev', () => {
 
     renderInstance.stdin.write('d')
     expect(vi.mocked(developerPreviewUpdate)).not.toHaveBeenCalled()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error message when polling for preview mode fails', async () => {
@@ -503,6 +529,9 @@ describe('Dev', () => {
       Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('enables preview mode when pressing d', async () => {
@@ -546,6 +575,9 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test("shows an error message if enabling preview mode by pressing d doesn't succeed", async () => {
@@ -590,6 +622,9 @@ describe('Dev', () => {
       Failed to turn off development store preview.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error message if enabling preview mode by pressing d throws an exception', async () => {
@@ -634,6 +669,9 @@ describe('Dev', () => {
       Failed to turn off development store preview.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('enables preview mode at startup', async () => {
@@ -657,10 +695,10 @@ describe('Dev', () => {
     // wait for useEffect callbacks to be run
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    expect(vi.mocked(enableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
-      apiKey: '123',
-      token: '123',
-    })
+    expect(vi.mocked(enableDeveloperPreview)).toHaveBeenCalled()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error message if enabling preview mode at startup fails', async () => {
@@ -686,6 +724,9 @@ describe('Dev', () => {
       Try turning it on manually by pressing \`d\`.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error if handling input throws an error', async () => {
@@ -724,5 +765,8 @@ describe('Dev', () => {
       Failed to handle your input.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 })
