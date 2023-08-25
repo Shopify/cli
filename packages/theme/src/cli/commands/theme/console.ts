@@ -37,7 +37,11 @@ export default class Console extends ThemeCommand {
     const authUrl = `http://localhost:${port}/password`
 
     renderInfo({
-      body: ['Activate Shopify Liquid console on', {link: {label: 'your browser', url: authUrl}}, {char: '.'}],
+      body: [
+        'Activate the Shopify Liquid console in',
+        {link: {label: 'your browser', url: authUrl}},
+        'and enter your store password if prompted.',
+      ],
     })
 
     return execCLI2(['theme', 'console', '--url', url, '--port', port], {
