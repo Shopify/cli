@@ -8,6 +8,7 @@ export function createConnectedAction(payload: ConnectedAction['payload']): Conn
 }
 
 export function createUpdateAction(payload: UpdateAction['payload']): UpdateAction {
+  console.log('zzzzzzzzzzzz#createUpdateAction', payload);
   return {
     type: 'update',
     payload,

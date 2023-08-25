@@ -247,6 +247,7 @@ async function dev(options: DevOptions) {
   if (previewableExtensions.length > 0) {
     // If any previewable extensions, the preview URL should be the dev console approach
     previewUrl = `${proxyUrl}/extensions/dev-console`
+    // something here
     const devExt = await devUIExtensionsTarget({
       app: localApp,
       id: remoteApp.id,
@@ -559,6 +560,7 @@ export function devDraftableExtensionTarget({
             const registrationId = remoteExtensions[extension.localIdentifier]
             if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
 
+            // something here
             const actions = [
               setupConfigWatcher({
                 extension,

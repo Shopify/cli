@@ -71,6 +71,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
       }),
     )
 
+    // something here
     const localeWatcher = chokidar
       .watch(joinPath(extension.directory, 'locales', '**.json'))
       .on('change', (_event, path) => {
@@ -78,11 +79,22 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         options.payloadStore
           .updateExtension(extension, options.devOptions)
           .then((_closed) => {
-            outputDebug(`Notified extension ${extension.devUUID} about the locale change.`, options.devOptions.stdout)
+            outputInfo(`Notified extension ${extension.handle} about the locale change.`, options.devOptions.stdout)
           })
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .catch((_: any) => {})
       })
+
+    const configWatcher = chokidar.watch(extension.configuration.path).on('change', (_event, _path) => {
+      outputDebug(`Config file at path ${extension.configuration.path} changed`, options.devOptions.stdout)
+      options.payloadStore
+          .updateExtension(extension, options.devOptions)
+          .then((_closed) => {
+            outputInfo(`Notified extension ${extension.handle} about the config change.`, options.devOptions.stdout)
+          })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .catch((_: any) => {})
+    })
 
     abortController.signal.addEventListener('abort', () => {
       outputDebug(`Closing locale file watching for extension with ID ${extension.devUUID}`, options.devOptions.stdout)
@@ -198,7 +210,9 @@ export async function setupConfigWatcher({
       stdout,
       stderr,
       unifiedDeployment,
-    }).catch((_: unknown) => {})
+    }).catch((_: unknown) => {
+      console.log('eeeeeeeeeeee', _);
+    })
   })
 
   signal.addEventListener('abort', () => {
