@@ -21,7 +21,7 @@ vi.mock('../../fetch.js')
 
 const testApp = {
   canEnablePreviewMode: true,
-  developmentStorePreviewEnabled: true,
+  developmentStorePreviewEnabled: false,
   apiKey: '123',
   token: '123',
 }
@@ -88,61 +88,6 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ development store preview: ✔ on
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      "
-    `)
-  })
-
-  test('renders a different state if the preview mode is off', async () => {
-    // Given
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>(function (resolve, _reject) {
-      backendPromiseResolve = resolve
-    })
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-
-        backendPromiseResolve()
-
-        // await promise that never resolves
-        await new Promise(() => {})
-      },
-    }
-
-    // When
-
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        app={{
-          ...testApp,
-          developmentStorePreviewEnabled: false,
-        }}
-      />,
-    )
-
-    await backendPromise
-
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ development store preview: ✖ off
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -401,6 +346,75 @@ describe('Dev', () => {
     expect(abort).toHaveBeenCalledOnce()
   })
 
+  test('polls for preview mode', async () => {
+    // Given
+    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce({
+      developmentStorePreviewEnabled: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    let backendPromiseResolve: () => void
+
+    const backendPromise = new Promise<void>((resolve) => {
+      backendPromiseResolve = resolve
+    })
+
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+
+        backendPromiseResolve()
+      },
+    }
+
+    const renderInstance = render(
+      <Dev
+        processes={[backendProcess]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        app={testApp}
+        pollingTime={200}
+      />,
+    )
+
+    await backendPromise
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press d │ development store preview: ✔ on
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      "
+    `)
+
+    await waitForContent(renderInstance, 'off')
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press d │ development store preview: ✖ off
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      "
+    `)
+  })
+
   test("doesn't poll for preview mode when the app does not support it", async () => {
     // Given
     const backendProcess = {
@@ -534,7 +548,7 @@ describe('Dev', () => {
     `)
   })
 
-  test('shows an error message if enabling preview mode by pressing d fails', async () => {
+  test("shows an error message if enabling preview mode by pressing d doesn't succeed", async () => {
     // Given
     vi.mocked(developerPreviewUpdate).mockResolvedValueOnce(false)
 
@@ -578,18 +592,9 @@ describe('Dev', () => {
     `)
   })
 
-  test('polls for preview mode', async () => {
+  test('shows an error message if enabling preview mode by pressing d throws an exception', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce({
-      developmentStorePreviewEnabled: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
-
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>((resolve) => {
-      backendPromiseResolve = resolve
-    })
+    vi.mocked(developerPreviewUpdate).mockRejectedValueOnce(new Error('something went wrong'))
 
     const backendProcess = {
       prefix: 'backend',
@@ -597,8 +602,6 @@ describe('Dev', () => {
         stdout.write('first backend message')
         stdout.write('second backend message')
         stdout.write('third backend message')
-
-        backendPromiseResolve()
       },
     }
 
@@ -608,11 +611,13 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         app={testApp}
-        pollingTime={200}
       />,
     )
 
-    await backendPromise
+    await waitForInputsToBeReady()
+    renderInstance.stdin.write('d')
+
+    await waitForContent(renderInstance, 'Failed to turn off development store preview.')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -626,56 +631,16 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      "
-    `)
-
-    await waitForContent(renderInstance, 'off')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ development store preview: ✖ off
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
+      Failed to turn off development store preview.
       "
     `)
   })
 
   test('enables preview mode at startup', async () => {
     // Given
-    vi.mocked(enableDeveloperPreview).mockResolvedValueOnce(true)
-
     const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        app={{
-          ...testApp,
-          developmentStorePreviewEnabled: false,
-        }}
-      />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
     )
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ development store preview: ✖ off
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      "
-    `)
-
-    await waitForContent(renderInstance, 'on')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
@@ -688,6 +653,14 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       "
     `)
+
+    // wait for useEffect callbacks to be run
+    await new Promise((resolve) => setTimeout(resolve, 0))
+
+    expect(vi.mocked(enableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
+      apiKey: '123',
+      token: '123',
+    })
   })
 
   test('shows an error message if enabling preview mode at startup fails', async () => {
@@ -695,15 +668,7 @@ describe('Dev', () => {
     vi.mocked(enableDeveloperPreview).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        app={{
-          ...testApp,
-          developmentStorePreviewEnabled: false,
-        }}
-      />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
     )
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
@@ -724,7 +689,7 @@ describe('Dev', () => {
   })
 
   test('shows an error if handling input throws an error', async () => {
-    vi.mocked(developerPreviewUpdate).mockRejectedValueOnce(new Error('something went wrong'))
+    vi.mocked(openURL).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
       <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
@@ -743,7 +708,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('d')
+    renderInstance.stdin.write('p')
 
     await waitForContent(renderInstance, 'Failed to handle your input.')
 

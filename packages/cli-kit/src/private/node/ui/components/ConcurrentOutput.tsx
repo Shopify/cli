@@ -110,25 +110,28 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   )
 
   useEffect(() => {
-    ;(() => {
-      return Promise.all(
-        processes.map(async (process, index) => {
-          const stdout = writableStream(process, index)
-          const stderr = writableStream(process, index)
-          await process.action(stdout, stderr, abortSignal)
-        }),
-      )
-    })()
-      .then(() => {
+    const runProcesses = async () => {
+      try {
+        await Promise.all(
+          processes.map(async (process, index) => {
+            const stdout = writableStream(process, index)
+            const stderr = writableStream(process, index)
+            await process.action(stdout, stderr, abortSignal)
+          }),
+        )
         if (!keepRunningAfterProcessesResolve) {
           unmountInk()
         }
-      })
-      .catch((error) => {
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error: unknown) {
         if (!keepRunningAfterProcessesResolve) {
-          unmountInk(error)
+          unmountInk(error as Error | undefined)
         }
-      })
+      }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    runProcesses()
   }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
 
   const {lineVertical} = figures
