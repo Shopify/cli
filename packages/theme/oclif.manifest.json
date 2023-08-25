@@ -149,12 +149,11 @@
     },
     "theme:console": {
       "id": "theme:console",
-      "description": "Early access feature: Shopify Liquid REPL",
+      "description": "Shopify Liquid REPL (read-eval-print loop) tool",
       "strict": true,
       "pluginName": "@shopify/theme",
       "pluginAlias": "@shopify/theme",
       "pluginType": "core",
-      "hidden": true,
       "aliases": [],
       "flags": {
         "no-color": {
@@ -190,6 +189,20 @@
           "char": "e",
           "description": "The environment to apply to the current command.",
           "multiple": false
+        },
+        "url": {
+          "name": "url",
+          "type": "option",
+          "description": "The url to be used as context",
+          "multiple": false,
+          "default": "/"
+        },
+        "port": {
+          "name": "port",
+          "type": "option",
+          "description": "Local port to serve authentication service.",
+          "multiple": false,
+          "default": "9293"
         }
       },
       "args": {}
