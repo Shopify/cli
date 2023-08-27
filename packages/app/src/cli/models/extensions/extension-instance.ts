@@ -104,6 +104,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
+  get buildDirectory() {
+    if (this.configuration.build_directory) {
+      return joinPath(this.directory, this.configuration.build_directory)
+    } else {
+      return this.directory
+    }
+  }
+
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string

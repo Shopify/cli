@@ -81,14 +81,10 @@ export async function bundleThemeExtension(
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
   const files = await themeExtensionFiles(extension)
-  let extensionDirectory = extension.directory
-  if (extension.configuration.build_directory) {
-    extensionDirectory = joinPath(extensionDirectory, extension.configuration.build_directory)
-  }
 
   await Promise.all(
     files.map(function (filepath) {
-      const relativePathName = relativePath(extensionDirectory, filepath)
+      const relativePathName = relativePath(extension.buildDirectory, filepath)
       const outputFile = joinPath(extension.outputPath, relativePathName)
       return copyFile(filepath, outputFile)
     }),
