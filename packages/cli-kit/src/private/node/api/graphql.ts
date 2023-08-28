@@ -37,8 +37,8 @@ The ${outputToken.raw(
 ${outputToken.json(error.response.errors)}
       `)
       let mappedError: Error
-      if (error.response.status < 500) {
-        mappedError = new GraphQLClientError(errorMessage, error.response.status, error.response.errors)
+      if (status < 500) {
+        mappedError = new GraphQLClientError(errorMessage, status, error.response.errors)
       } else {
         mappedError = new AbortError(errorMessage)
       }
