@@ -28,10 +28,11 @@ function sanitizeVariables(variables: Variables): string {
 export function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
   return (error: unknown) => {
     if (error instanceof ClientError) {
+      const {status} = error.response
       const errorMessage = stringifyMessage(outputContent`
   The ${outputToken.raw(
     api,
-  )} GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
+  )} GraphQL API responded unsuccessfully with${status === 200 ? '' : ` the HTTP status ${status} and`} errors:
 
   ${outputToken.json(error.response.errors)}
       `)
