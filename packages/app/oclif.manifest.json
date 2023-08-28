@@ -889,7 +889,7 @@
     },
     "app:function:build": {
       "id": "app:function:build",
-      "description": "Compile a function to WASM.",
+      "description": "Compile a function to wasm.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
