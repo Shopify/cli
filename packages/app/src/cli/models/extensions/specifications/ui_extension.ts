@@ -52,6 +52,7 @@ const spec = createExtensionSpecification({
       extension_points: config.extension_points,
       capabilities: config.capabilities,
       name: config.name,
+      description: config.description,
       settings: config.settings,
       localization: await loadLocalesConfig(directory, config.type),
     }
