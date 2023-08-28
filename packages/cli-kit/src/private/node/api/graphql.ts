@@ -3,7 +3,7 @@ import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../.
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
 
-export function debugLogRequestInfo<T>(
+export function debugLogRequestInfo(
   api: string,
   query: RequestDocument,
   variables?: Variables,
@@ -25,7 +25,7 @@ function sanitizeVariables(variables: Variables): string {
   return JSON.stringify(result, null, 2)
 }
 
-export function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
+export function errorHandler(api: string): (error: unknown) => Error | unknown {
   return (error: unknown) => {
     if (error instanceof ClientError) {
       const {status} = error.response
