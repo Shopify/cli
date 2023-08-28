@@ -30,9 +30,9 @@ export function errorHandler(api: string): (error: unknown) => Error | unknown {
     if (error instanceof ClientError) {
       const {status} = error.response
       const errorMessage = stringifyMessage(outputContent`
-The ${outputToken.raw(
-  api,
-)} GraphQL API responded unsuccessfully with${status === 200 ? '' : ` the HTTP status ${status} and`} errors:
+The ${outputToken.raw(api)} GraphQL API responded unsuccessfully with${
+        status === 200 ? '' : ` the HTTP status ${status} and`
+      } errors:
 
 ${outputToken.json(error.response.errors)}
       `)
