@@ -52,11 +52,9 @@ async function testBundlerAndFileWatcher() {
   const fileWatcherOptions = {
     devOptions: {
       extensions: [extension1, extension2],
-      app: {
-        dotenv: {
-          variables: {
-            SOME_KEY: 'SOME_VALUE',
-          },
+      appDotEnvFile: {
+        variables: {
+          SOME_KEY: 'SOME_VALUE',
         },
       },
       url: 'mock/url',

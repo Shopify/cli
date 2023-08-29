@@ -1,6 +1,6 @@
-import {renderDev} from '../../services/dev/ui.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import Server from 'http-proxy'
 import {OutputProcess, outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 import * as http from 'http'
@@ -39,17 +39,10 @@ export interface ReverseHTTPProxyTarget {
 }
 
 interface Options {
-  previewUrl: string
   portNumber: number
   proxyTargets: ReverseHTTPProxyTarget[]
   additionalProcesses: OutputProcess[]
-  app: {
-    canEnablePreviewMode: boolean
-    developmentStorePreviewEnabled?: boolean
-    apiKey: string
-    token: string
-  }
-  abortController?: AbortController
+  abortController: AbortController
 }
 
 /**
@@ -62,46 +55,73 @@ interface Options {
  * @returns A promise that resolves with an interface to get the port of the proxy and stop it.
  */
 export async function runConcurrentHTTPProcessesAndPathForwardTraffic({
-  previewUrl,
   portNumber,
   proxyTargets,
   additionalProcesses,
-  app,
   abortController,
-}: Options): Promise<void> {
-  // Lazy-importing it because it's CJS and we don't want it
-  // to block the loading of the ESM module graph.
-  const {default: httpProxy} = await import('http-proxy')
+}: Options): Promise<OutputProcess[]> {
+  if (proxyTargets.length === 0) {
+    return [...additionalProcesses]
+  }
 
-  const rules: {[key: string]: string} = {}
-
-  const processes = await Promise.all(
-    proxyTargets.map(async (target): Promise<OutputProcess> => {
-      const targetPort = target.customPort || (await getAvailableTCPPort())
-      rules[target.pathPrefix ?? 'default'] = `http://localhost:${targetPort}`
-      const hmrServer = target.hmrServer
-      if (hmrServer) {
-        rules.websocket = `http://localhost:${hmrServer.port}`
-        hmrServer.httpPaths.forEach((path) => (rules[path] = `http://localhost:${hmrServer.port}`))
-      }
-
-      return {
-        prefix: target.logPrefix,
-        action: async (stdout, stderr, signal) => {
-          await target.action(stdout, stderr, signal, targetPort)
-        },
-      }
-    }),
-  )
+  const {rules, processDefinitions} = await createProcessDefinitionsForProxies(proxyTargets)
 
   outputDebug(outputContent`
 Starting reverse HTTP proxy on port ${outputToken.raw(portNumber.toString())}
 Routing traffic rules:
 ${outputToken.json(JSON.stringify(rules))}
 `)
+  const {server} = await getProxyingWebServer(rules, abortController.signal)
 
+  return [
+    {
+      prefix: 'proxy',
+      action: async () => {
+        await server.listen(portNumber)
+      },
+    },
+    ...processDefinitions,
+    ...additionalProcesses,
+  ]
+}
+
+export async function getProxyingWebServer(rules: {[key: string]: string}, abortSignal: AbortController['signal']) {
+  // Lazy-importing it because it's CJS and we don't want it
+  // to block the loading of the ESM module graph.
+  const {default: httpProxy} = await import('http-proxy')
   const proxy = httpProxy.createProxy()
-  const server = http.createServer(function (req, res) {
+  const server = http.createServer(getProxyServerRequestListener(rules, proxy))
+
+  // Capture websocket requests and forward them to the proxy
+  server.on('upgrade', getProxyServerWebsocketUpgradeListener(rules, proxy))
+
+  abortSignal.addEventListener('abort', () => {
+    outputDebug('Closing reverse HTTP proxy')
+    server.close()
+  })
+  return {server}
+}
+
+function getProxyServerWebsocketUpgradeListener(
+  rules: {[key: string]: string},
+  proxy: Server,
+): (req: http.IncomingMessage, socket: import('stream').Duplex, head: Buffer) => void {
+  return function (req, socket, head) {
+    const target = match(rules, req, true)
+    if (target) {
+      return proxy.ws(req, socket, head, {target}, (err) => {
+        outputWarn(`Error forwarding websocket request: ${err}`)
+      })
+    }
+    socket.destroy()
+  }
+}
+
+function getProxyServerRequestListener(
+  rules: {[key: string]: string},
+  proxy: Server,
+): http.RequestListener<typeof http.IncomingMessage, typeof http.ServerResponse> | undefined {
+  return function (req, res) {
     const target = match(rules, req)
     if (target) {
       return proxy.web(req, res, {target}, (err) => {
@@ -117,35 +137,31 @@ ${outputToken.json(JSON.stringify(rules))}
 
     res.statusCode = 500
     res.end(`Invalid path ${req.url}`)
-  })
+  }
+}
 
-  // Capture websocket requests and forward them to the proxy
-  server.on('upgrade', function (req, socket, head) {
-    const target = match(rules, req, true)
-    if (target) {
-      return proxy.ws(req, socket, head, {target}, (err) => {
-        outputWarn(`Error forwarding websocket request: ${err}`)
-      })
+async function createProcessDefinitionsForProxies(proxyTargets: ReverseHTTPProxyTarget[]) {
+  const rules: {[key: string]: string} & {websocket?: string} = {}
+
+  const createProxyProcessDefinition = async (target: ReverseHTTPProxyTarget): Promise<OutputProcess> => {
+    const targetPort = target.customPort || (await getAvailableTCPPort())
+    rules[target.pathPrefix ?? 'default'] = `http://localhost:${targetPort}`
+    const hmrServer = target.hmrServer
+    if (hmrServer) {
+      rules.websocket = `http://localhost:${hmrServer.port}`
+      hmrServer.httpPaths.forEach((path) => (rules[path] = `http://localhost:${hmrServer.port}`))
     }
-    socket.destroy()
-  })
 
-  const controller = abortController ?? new AbortController()
-
-  controller.signal.addEventListener('abort', () => {
-    outputDebug('Closing reverse HTTP proxy')
-    server.close()
-  })
-
-  await Promise.all([
-    renderDev({
-      processes: [...processes, ...additionalProcesses],
-      abortController: controller,
-      previewUrl,
-      app,
-    }),
-    server.listen(portNumber),
-  ])
+    return {
+      prefix: target.logPrefix,
+      action: async (stdout, stderr, signal) => {
+        await target.action(stdout, stderr, signal, targetPort)
+      },
+    }
+  }
+  const proxyProcessDefinitions = proxyTargets.map(createProxyProcessDefinition)
+  const processDefinitions = await Promise.all(proxyProcessDefinitions)
+  return {rules, processDefinitions}
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage, websocket = false) {

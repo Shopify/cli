@@ -1,7 +1,7 @@
 import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionDevOptions} from '../extension.js'
-import {testApp, testUIExtension} from '../../../models/app/app.test-data.js'
+import {testUIExtension} from '../../../models/app/app.test-data.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
@@ -45,7 +45,8 @@ describe('getUIExtensionPayload', () => {
         stdout,
         stderr,
         apiKey: 'api-key',
-        app: testApp(),
+        appName: 'foobar',
+        appDirectory: '/tmp',
         extensions: [uiExtension],
         grantedScopes: ['scope-a'],
         port: 123,

@@ -43,7 +43,6 @@ beforeEach(() => {
 })
 
 const defaultOptions: FrontendURLOptions = {
-  app: testApp(),
   noTunnel: false,
   tunnelUrl: undefined,
   commandConfig: new Config({root: ''}),
