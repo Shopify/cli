@@ -3,7 +3,7 @@ import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../.
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError, RequestDocument, Variables} from 'graphql-request'
 
-export function debugLogRequestInfo<T>(
+export function debugLogRequestInfo(
   api: string,
   query: RequestDocument,
   variables?: Variables,
@@ -28,12 +28,13 @@ function sanitizeVariables(variables: Variables): string {
 export function errorHandler<T>(api: string): (error: unknown, requestId?: string) => Error | unknown {
   return (error: unknown, requestId?: string) => {
     if (error instanceof ClientError) {
+      const {status} = error.response
       let errorMessage = stringifyMessage(outputContent`
-  The ${outputToken.raw(
-    api,
-  )} GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
+The ${outputToken.raw(api)} GraphQL API responded unsuccessfully with${
+        status === 200 ? '' : ` the HTTP status ${status} and`
+      } errors:
 
-  ${outputToken.json(error.response.errors)}
+${outputToken.json(error.response.errors)}
       `)
       if (requestId) {
         errorMessage += `
@@ -41,8 +42,8 @@ Request ID: ${requestId}
 `
       }
       let mappedError: Error
-      if (error.response.status < 500) {
-        mappedError = new GraphQLClientError(errorMessage, error.response.status, error.response.errors)
+      if (status < 500) {
+        mappedError = new GraphQLClientError(errorMessage, status, error.response.errors)
       } else {
         mappedError = new AbortError(errorMessage)
       }
