@@ -68,6 +68,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
             // ESBuild handles error output
           }
         },
+        sourceMaps: true,
       }),
     )
 
