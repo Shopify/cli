@@ -67,7 +67,7 @@ export interface ExtensionTranslationMap {
   [key: string]: string
 }
 
-export const TRANSLATED_KEYS = ['localization', 'name', `description`]
+export const TRANSLATED_KEYS = ['localization', 'name', 'description']
 /**
  * From a nested dictionary like the following :
  *
