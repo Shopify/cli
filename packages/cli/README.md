@@ -237,7 +237,7 @@ DESCRIPTION
 
 ## `shopify app function build`
 
-Compile a Function to WASM.
+Compile a function to wasm.
 
 ```
 USAGE
@@ -250,31 +250,32 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Compile a Function to WASM.
+  Compile a function to wasm.
 ```
 
 ## `shopify app function run`
 
-Run a Function locally for testing.
+Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-j]
+  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-e <value>] [-j]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
+  -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
   -j, --json            Log the run result as a JSON object.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your function directory.
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Run a Function locally for testing.
+  Run a function locally for testing.
 ```
 
 ## `shopify app function schema`
 
-Fetch the latest GraphQL schema for a Function.
+Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
@@ -289,12 +290,12 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Fetch the latest GraphQL schema for a Function.
+  Fetch the latest GraphQL schema for a function.
 ```
 
 ## `shopify app function typegen`
 
-Generate GraphQL types for a JavaScript Function.
+Generate GraphQL types for a JavaScript function.
 
 ```
 USAGE
@@ -307,7 +308,7 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Generate GraphQL types for a JavaScript Function.
+  Generate GraphQL types for a JavaScript function.
 ```
 
 ## `shopify app generate extension [FILE]`
@@ -341,7 +342,7 @@ EXAMPLES
 
 ## `shopify app generate schema`
 
-Fetch the latest GraphQL schema for a Function.
+Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
@@ -356,7 +357,7 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Fetch the latest GraphQL schema for a Function.
+  Fetch the latest GraphQL schema for a function.
 ```
 
 ## `shopify app import-flow-legacy-extensions`

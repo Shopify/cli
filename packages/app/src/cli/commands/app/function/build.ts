@@ -6,7 +6,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionBuild extends Command {
-  static description = 'Compile a Function to WASM.'
+  static description = 'Compile a function to wasm.'
 
   static flags = {
     ...globalFlags,

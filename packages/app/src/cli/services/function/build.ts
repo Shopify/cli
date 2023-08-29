@@ -148,11 +148,13 @@ export async function runJavy(
 
 interface FunctionRunnerOptions {
   json: boolean
+  export?: string
 }
 
 export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigType>, options: FunctionRunnerOptions) {
   const outputAsJson = options.json ? ['--json'] : []
-  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson], {
+  const exportName = options.export ? ['--export', options.export] : []
+  return exec('npm', ['exec', '--', 'function-runner', '-f', fun.outputPath, ...outputAsJson, ...exportName], {
     cwd: fun.directory,
     stdin: 'inherit',
     stdout: 'inherit',
