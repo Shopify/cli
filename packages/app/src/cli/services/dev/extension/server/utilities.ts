@@ -52,6 +52,15 @@ export function getExtensionPointRedirectUrl(
       rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
       rawUrl.searchParams.append('target', requestedTarget)
       break
+    case 'customer-account':
+      const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
+      const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+      const origin = `${options.url}/extensions`
+
+      rawUrl.host = accountsUrl
+      rawUrl.searchParams.append('origin', origin)
+      rawUrl.searchParams.append('extensionId', extension.devUUID)
+      break
     default:
       return undefined
   }
