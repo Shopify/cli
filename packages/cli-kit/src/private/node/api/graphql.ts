@@ -25,16 +25,21 @@ function sanitizeVariables(variables: Variables): string {
   return JSON.stringify(result, null, 2)
 }
 
-export function errorHandler<T>(api: string): (error: unknown) => Error | unknown {
-  return (error: unknown) => {
+export function errorHandler<T>(api: string): (error: unknown, requestId?: string) => Error | unknown {
+  return (error: unknown, requestId?: string) => {
     if (error instanceof ClientError) {
-      const errorMessage = stringifyMessage(outputContent`
+      let errorMessage = stringifyMessage(outputContent`
   The ${outputToken.raw(
     api,
   )} GraphQL API responded unsuccessfully with the HTTP status ${`${error.response.status}`} and errors:
 
   ${outputToken.json(error.response.errors)}
       `)
+      if (requestId) {
+        errorMessage += `
+Request ID: ${requestId}
+`
+      }
       let mappedError: Error
       if (error.response.status < 500) {
         mappedError = new GraphQLClientError(errorMessage, error.response.status, error.response.errors)
