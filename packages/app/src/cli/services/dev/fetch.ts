@@ -6,7 +6,7 @@ import {
 import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
-import {findAppCustomQuery} from '../../api/graphql/find_app_custom.js'
+import {FindAppPreviewModeQuery, FindAppPreviewModeQuerySchema} from '../../api/graphql/find_app_preview_mode.js'
 import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
 import {
   AllDevStoresByOrganizationQuery,
@@ -129,19 +129,11 @@ export async function fetchAppFromApiKey(apiKey: string, token: string): Promise
   return res.app
 }
 
-interface FetchAppFromApiKeyOptions {
-  fields: string
-}
-
-export async function fetchAppFromApiKey<TAppSchema extends {app: unknown}>(
-  apiKey: string,
-  token: string,
-  {fields = '{id}'}: FetchAppFromApiKeyOptions,
-): Promise<TAppSchema['app'] | undefined> {
-  const res: TAppSchema = await partnersRequest(findAppCustomQuery(fields), token, {
+export async function fetchAppPreviewMode(apiKey: string, token: string): Promise<boolean | undefined> {
+  const res: FindAppPreviewModeQuerySchema = await partnersRequest(FindAppPreviewModeQuery, token, {
     apiKey,
   })
-  return res.app
+  return res.app?.developmentStorePreviewEnabled
 }
 
 export async function fetchOrgFromId(id: string, token: string): Promise<Organization> {
