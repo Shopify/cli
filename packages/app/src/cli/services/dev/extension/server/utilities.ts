@@ -14,14 +14,7 @@ export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionD
 
     return rawUrl.toString()
   } else if (extension.surface === 'customer_accounts') {
-    const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
-    const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
-    const origin = `${options.url}/extensions`
-
-    const rawUrl = new URL(`https://${accountsUrl}/extensions-development`)
-    rawUrl.searchParams.append('origin', origin)
-    rawUrl.searchParams.append('extensionId', extension.devUUID)
-
+    const rawUrl = getCustomerAccountsRedirectUrl(extension, options)
     return rawUrl.toString()
   } else {
     const rawUrl = new URL(`https://${options.storeFqdn}/`)
@@ -38,7 +31,7 @@ export function getExtensionPointRedirectUrl(
   options: ExtensionDevOptions,
 ): string | undefined {
   const surface = getExtensionPointTargetSurface(requestedTarget)
-  const rawUrl = new URL(`https://${options.storeFqdn}/`)
+  let rawUrl = new URL(`https://${options.storeFqdn}/`)
 
   switch (surface) {
     case 'checkout':
@@ -52,11 +45,25 @@ export function getExtensionPointRedirectUrl(
       rawUrl.searchParams.append('url', getExtensionUrl(extension, options))
       rawUrl.searchParams.append('target', requestedTarget)
       break
+    case 'customer-accounts':
+      rawUrl = getCustomerAccountsRedirectUrl(extension, options)
+      break
     default:
       return undefined
   }
 
   return rawUrl.toString()
+}
+
+function getCustomerAccountsRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): URL {
+  const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
+  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+  const origin = `${options.url}/extensions`
+
+  const rawUrl = new URL(`https://${accountsUrl}/extensions-development`)
+  rawUrl.searchParams.append('origin', origin)
+  rawUrl.searchParams.append('extensionId', extension.devUUID)
+  return rawUrl
 }
 
 export function getExtensionUrl(extension: ExtensionInstance, options: ExtensionDevOptions): string {
