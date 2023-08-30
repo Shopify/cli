@@ -6,6 +6,7 @@ import {
 import {AllOrganizationsQuery, AllOrganizationsQuerySchema} from '../../api/graphql/all_orgs.js'
 import {FindOrganizationQuery, FindOrganizationQuerySchema} from '../../api/graphql/find_org.js'
 import {FindAppQuery, FindAppQuerySchema} from '../../api/graphql/find_app.js'
+import {findAppCustomQuery} from '../../api/graphql/find_app_custom.js'
 import {FindOrganizationBasicQuery, FindOrganizationBasicQuerySchema} from '../../api/graphql/find_org_basic.js'
 import {
   AllDevStoresByOrganizationQuery,
@@ -125,6 +126,21 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
 
 export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
   const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
+    apiKey,
+  })
+  return res.app
+}
+
+interface FetchAppFromApiKeyOptions {
+  fields: string
+}
+
+export async function fetchAppFromApiKey<TAppSchema extends {app: unknown}>(
+  apiKey: string,
+  token: string,
+  {fields = '{id}'}: FetchAppFromApiKeyOptions,
+): Promise<TAppSchema['app'] | undefined> {
+  const res: TAppSchema = await partnersRequest(findAppCustomQuery(fields), token, {
     apiKey,
   })
   return res.app
