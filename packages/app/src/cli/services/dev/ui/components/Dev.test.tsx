@@ -1,6 +1,6 @@
 import {Dev} from './Dev.js'
 import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../fetch.js'
+import {fetchAppPreviewMode} from '../../fetch.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -442,7 +442,7 @@ describe('Dev', () => {
       "
     `)
 
-    expect(vi.mocked(fetchAppDetailsFromApiKey)).not.toHaveBeenCalled()
+    expect(vi.mocked(fetchAppPreviewMode)).not.toHaveBeenCalled()
     expect(vi.mocked(enableDeveloperPreview)).not.toHaveBeenCalled()
 
     renderInstance.stdin.write('d')
@@ -451,7 +451,7 @@ describe('Dev', () => {
 
   test('shows an error message when polling for preview mode fails', async () => {
     // Given
-    vi.mocked(fetchAppDetailsFromApiKey).mockRejectedValueOnce(new Error('something went wrong'))
+    vi.mocked(fetchAppPreviewMode).mockRejectedValueOnce(new Error('something went wrong'))
 
     const backendProcess = {
       prefix: 'backend',
@@ -580,7 +580,7 @@ describe('Dev', () => {
 
   test('polls for preview mode', async () => {
     // Given
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce({
+    vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce({
       developmentStorePreviewEnabled: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any)
