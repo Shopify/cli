@@ -1,5 +1,5 @@
 import {InfoOptions, info} from './info.js'
-import {fetchAppFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import {AppInterface} from '../models/app/app.js'
@@ -53,7 +53,7 @@ describe('info', () => {
       api_version = "2023-07"
       `
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
         testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'}),
       )
 

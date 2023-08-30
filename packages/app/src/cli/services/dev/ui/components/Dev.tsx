@@ -1,5 +1,5 @@
 import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
-import {fetchAppFromApiKey} from '../../fetch.js'
+import {fetchAppDetailsFromApiKey} from '../../fetch.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -60,7 +60,7 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
-      const app = await fetchAppFromApiKey(apiKey, token)
+      const app = await fetchAppDetailsFromApiKey(apiKey, token)
       setDevPreviewEnabled(app?.developmentStorePreviewEnabled ?? false)
     }
 

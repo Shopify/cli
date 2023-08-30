@@ -123,7 +123,7 @@ export async function fetchOrgAndApps(orgId: string, token: string, title?: stri
   return {organization: parsedOrg, apps: org.apps, stores: []}
 }
 
-export async function fetchAppFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
+export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
   const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
     apiKey,
   })
