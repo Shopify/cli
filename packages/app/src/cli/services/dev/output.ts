@@ -1,5 +1,5 @@
 import {PartnersURLs} from './urls.js'
-import {fetchAppFromApiKey} from './fetch.js'
+import {fetchAppPreviewMode} from './fetch.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
@@ -167,11 +167,11 @@ function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 5)
 
     return new Promise<void>((_resolve, _reject) => {
       const onPoll = async () => {
-        const app = await fetchAppFromApiKey(apiKey, token)
+        const enabled = await fetchAppPreviewMode(apiKey, token)
         const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
         if (!currentShortcutAction) return
         const newShortcutAction = buildDevPreviewShortcut({
-          devPreviewStatus: app?.developmentStorePreviewEnabled ?? false,
+          devPreviewStatus: enabled ?? false,
           apiKey,
           token,
         })
