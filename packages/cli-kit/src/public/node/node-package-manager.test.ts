@@ -1,5 +1,5 @@
 import {
-  packageManagerUsedForCreating,
+  packageManagerFromUserAgent,
   addNPMDependenciesIfNeeded,
   installNodeModules,
   getDependencies,
@@ -59,13 +59,13 @@ describe('installNPMDependenciesRecursively', () => {
   })
 })
 
-describe('packageManagerUsedForCreating', () => {
+describe('packageManagerFromUserAgent', () => {
   test('returns pnpm if the npm_config_user_agent variable contains yarn', () => {
     // Given
     const env = {npm_config_user_agent: 'yarn/1.22.17'}
 
     // When
-    const got = packageManagerUsedForCreating(env)
+    const got = packageManagerFromUserAgent(env)
 
     // Then
     expect(got).toBe('yarn')
@@ -76,7 +76,7 @@ describe('packageManagerUsedForCreating', () => {
     const env = {npm_config_user_agent: 'pnpm'}
 
     // When
-    const got = packageManagerUsedForCreating(env)
+    const got = packageManagerFromUserAgent(env)
 
     // Then
     expect(got).toBe('pnpm')
@@ -87,7 +87,7 @@ describe('packageManagerUsedForCreating', () => {
     const env = {npm_config_user_agent: 'npm'}
 
     // When
-    const got = packageManagerUsedForCreating(env)
+    const got = packageManagerFromUserAgent(env)
 
     // Then
     expect(got).toBe('npm')
@@ -95,7 +95,7 @@ describe('packageManagerUsedForCreating', () => {
 
   test('returns unknown when the package manager cannot be detected', () => {
     // When
-    const got = packageManagerUsedForCreating({})
+    const got = packageManagerFromUserAgent({})
 
     // Then
     expect(got).toBe('unknown')

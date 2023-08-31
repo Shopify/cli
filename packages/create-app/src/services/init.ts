@@ -4,7 +4,7 @@ import {
   findUpAndReadPackageJson,
   packageManager,
   PackageManager,
-  packageManagerUsedForCreating,
+  packageManagerFromUserAgent,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
@@ -152,7 +152,7 @@ function inferPackageManager(optionsPackageManager: string | undefined): Package
   if (optionsPackageManager && packageManager.includes(optionsPackageManager as PackageManager)) {
     return optionsPackageManager as PackageManager
   }
-  const usedPackageManager = packageManagerUsedForCreating()
+  const usedPackageManager = packageManagerFromUserAgent()
   return usedPackageManager === 'unknown' ? 'npm' : usedPackageManager
 }
 

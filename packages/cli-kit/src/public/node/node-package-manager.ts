@@ -68,7 +68,7 @@ export class FindUpAndReadPackageJsonNotFoundError extends BugError {
  * @param env - The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function packageManagerUsedForCreating(env = process.env): PackageManager | 'unknown' {
+export function packageManagerFromUserAgent(env = process.env): PackageManager | 'unknown' {
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
@@ -80,14 +80,14 @@ export function packageManagerUsedForCreating(env = process.env): PackageManager
 }
 
 /**
- * Returns the dependency manager used by an existing project.
+ * Returns the dependency manager used in a directory.
  * @param fromDirectory - The starting directory
  * @returns The dependency manager
  */
-export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
+export async function getPackageManager(fromDirectory: string): Promise<PackageManager | 'unknown'> {
   const packageJson = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (!packageJson) {
-    throw new FindUpAndReadPackageJsonNotFoundError(fromDirectory)
+    return packageManagerFromUserAgent()
   }
   const directory = dirname(packageJson)
   outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
