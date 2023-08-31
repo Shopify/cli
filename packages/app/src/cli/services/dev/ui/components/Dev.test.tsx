@@ -87,7 +87,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -266,7 +266,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -321,7 +321,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -409,7 +409,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -426,7 +426,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✖ off
+      › Press d │ toggle development store preview: ✖ off
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -521,7 +521,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -546,7 +546,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -568,7 +568,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✖ off
+      › Press d │ toggle development store preview: ✖ off
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -614,7 +614,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -661,7 +661,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -684,7 +684,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -715,7 +715,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✖ off
+      › Press d │ toggle development store preview: ✖ off
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -740,7 +740,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -757,7 +757,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 

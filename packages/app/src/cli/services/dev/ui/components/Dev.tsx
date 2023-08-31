@@ -173,7 +173,8 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
             <Box flexDirection="column">
               {canEnablePreviewMode ? (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} development store preview: {}
+                  {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} toggle development store
+                  preview: {}
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}
