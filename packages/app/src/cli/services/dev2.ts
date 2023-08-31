@@ -273,13 +273,3 @@ async function launchDevProcesses({
     abortController,
   })
 }
-
-// internet -> tunnel:TUNNEL_PORT -> proxy:PROXY_PORT
-
-// -> "/"" frontend:FRONTEND_PORT (can include a backend)
-// -> "/extensions" server (dev-console, remote-ui server)
-
-// -> backend:BACKEND_PORT
-// -> functions watcher
-// -> toml watcher
-// -> ui/generic watcher

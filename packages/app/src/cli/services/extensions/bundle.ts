@@ -44,6 +44,11 @@ export interface BundleOptions {
    * with a migration plan.
    */
   environment: 'development' | 'production'
+
+  /**
+   * Whether or not to generate source maps.
+   */
+  sourceMaps?: boolean
 }
 
 /**
@@ -138,6 +143,11 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
         })
       },
     })
+  }
+
+  if (options.sourceMaps) {
+    esbuildOptions.sourcemap = true
+    esbuildOptions.sourceRoot = `${options.stdin.resolveDir}/src`
   }
   return esbuildOptions
 }

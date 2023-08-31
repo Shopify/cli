@@ -2,7 +2,7 @@ import {fetchAppFromConfigOrSelect} from './fetch-app-from-config-or-select.js'
 import {selectApp} from './select-app.js'
 import {AppInterface} from '../../models/app/app.js'
 import {testApp, testAppWithConfig, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {fetchAppFromApiKey} from '../dev/fetch.js'
+import {fetchAppDetailsFromApiKey} from '../dev/fetch.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -21,7 +21,7 @@ beforeEach(() => {
 describe('fetchAppFromConfigOrSelect', () => {
   test('if app has config as code, fetch app from config', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP1)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP1)
 
     // When
     const got = await fetchAppFromConfigOrSelect(APP_WITH_CONFIG)

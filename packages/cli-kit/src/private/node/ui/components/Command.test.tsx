@@ -7,6 +7,6 @@ describe('Command', async () => {
   test('renders correctly', async () => {
     const {lastFrame} = render(<Command command="npm install" />)
 
-    expect(lastFrame()).toMatchInlineSnapshot('"`npm install`"')
+    expect(lastFrame()).toMatchInlineSnapshot('"[95m`npm install`[39m"')
   })
 })

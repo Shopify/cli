@@ -6,6 +6,7 @@ import {
   actionUiTypesMap,
   triggerUiTypesMap,
 } from './constants.js'
+import {isSchemaTypeReference} from './validation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {capitalize} from '@shopify/cli-kit/common/string'
 
@@ -14,7 +15,10 @@ const triggerTypesToUiTypes = new Map<string, string>(triggerUiTypesMap)
 
 export const serializeConfigField = (field: ConfigField, type: FlowExtensionTypes) => {
   const typesToUiTypes = type === 'flow_action' ? actionTypesToUiTypes : triggerTypesToUiTypes
-  const uiType = typesToUiTypes.get(field.type)
+  const typeIsSchemaTypeReference = isSchemaTypeReference(field.type)
+  const uiType = typeIsSchemaTypeReference
+    ? typesToUiTypes.get('schema_type_reference')
+    : typesToUiTypes.get(field.type)
 
   if (typeof field.key !== 'string') {
     throw new AbortError(`key property must be specified for non-commerce object fields in ${JSON.stringify(field)}`)
@@ -35,6 +39,10 @@ export const serializeConfigField = (field: ConfigField, type: FlowExtensionType
   if (type === 'flow_action') {
     serializedField.label = field.name
     serializedField.required = field.required
+  }
+
+  if (typeIsSchemaTypeReference) {
+    serializedField.typeRefName = field.type.replace('schema.', '')
   }
 
   return serializedField

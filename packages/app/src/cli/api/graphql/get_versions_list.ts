@@ -13,7 +13,6 @@ export const AppVersionsQuery = gql`
           createdBy {
             displayName
           }
-          label
           message
           status
           versionTag
@@ -38,7 +37,6 @@ export interface AppVersionsQuerySchema {
         createdBy?: {
           displayName?: string
         }
-        label: string
         message?: string
         status: string
         versionTag: string

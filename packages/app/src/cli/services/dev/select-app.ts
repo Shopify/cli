@@ -1,6 +1,6 @@
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
-import {fetchAppFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema} from '../../api/graphql/create_app.js'
 import {getCachedCommandInfo, setCachedCommandInfo} from '../local-storage.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -42,7 +42,7 @@ export async function selectOrCreateApp(
 
     if (tomls[selectedAppApiKey]) setCachedCommandInfo({selectedToml: tomls[selectedAppApiKey], askConfigName: false})
 
-    const fullSelectedApp = await fetchAppFromApiKey(selectedAppApiKey, token)
+    const fullSelectedApp = await fetchAppDetailsFromApiKey(selectedAppApiKey, token)
     return fullSelectedApp!
   }
 }

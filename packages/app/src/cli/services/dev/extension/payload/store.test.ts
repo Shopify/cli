@@ -18,9 +18,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
 
     const options = {
       apiKey: 'mock-api-key',
-      app: {
-        name: 'mock-app-name',
-      },
+      appName: 'mock-app-name',
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
       extensions: [{}, {}, {}],

@@ -1,4 +1,3 @@
-import {ConcurrentOutputProps} from './ui/components/ConcurrentOutput.js'
 import {isTruthy} from '../../public/node/context/utilities.js'
 
 interface Event {
@@ -62,18 +61,7 @@ class DemoRecorder {
     this.sleepStart = Date.now()
   }
 
-  addOrUpdateConcurrentOutput(
-    {
-      prefix,
-      index,
-      output,
-    }: {
-      prefix: string
-      index: number
-      output: string
-    },
-    {footer}: {footer: ConcurrentOutputProps['footer']},
-  ) {
+  addOrUpdateConcurrentOutput({prefix, index, output}: {prefix: string; index: number; output: string}) {
     let last = this.recorded[this.recorded.length - 1]
     if (last?.type === 'concurrent') {
       // Don't sleep between concurrent lines
@@ -83,7 +71,6 @@ class DemoRecorder {
         type: 'concurrent',
         properties: {processes: [], concurrencyStart: Date.now()},
       }
-      if (footer) eventProperties.properties.footer = footer
       this.addEvent(eventProperties)
       last = this.recorded[this.recorded.length - 1]
     }
@@ -137,18 +124,7 @@ let _instance: {
   recordedEventsJson: () => string
   resetSleep: () => void
   addSleep: () => void
-  addOrUpdateConcurrentOutput: (
-    {
-      prefix,
-      index,
-      output,
-    }: {
-      prefix: string
-      index: number
-      output: string
-    },
-    {footer}: {footer: ConcurrentOutputProps['footer']},
-  ) => void
+  addOrUpdateConcurrentOutput: ({prefix, index, output}: {prefix: string; index: number; output: string}) => void
 }
 
 function ensureInstance() {
@@ -184,16 +160,9 @@ export function printEventsJson(): void {
   }
 }
 
-export function addOrUpdateConcurrentUIEventOutput(
-  data: {
-    prefix: string
-    index: number
-    output: string
-  },
-  componentData: {footer: ConcurrentOutputProps['footer']},
-) {
+export function addOrUpdateConcurrentUIEventOutput(data: {prefix: string; index: number; output: string}) {
   ensureInstance()
-  _instance.addOrUpdateConcurrentOutput(data, componentData)
+  _instance.addOrUpdateConcurrentOutput(data)
 }
 
 function isRecording() {

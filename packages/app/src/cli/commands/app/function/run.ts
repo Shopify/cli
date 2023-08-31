@@ -6,12 +6,19 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class FunctionRun extends Command {
-  static description = 'Run a Function locally for testing.'
+  static description = 'Run a function locally for testing.'
 
   static flags = {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    export: Flags.string({
+      char: 'e',
+      hidden: false,
+      description: 'Name of the wasm export to invoke.',
+      default: '_start',
+      env: 'SHOPIFY_FLAG_EXPORT',
+    }),
     json: Flags.boolean({
       char: 'j',
       hidden: false,
@@ -27,7 +34,10 @@ export default class FunctionRun extends Command {
       path: flags.path,
       configName: flags.config,
       callback: async (_app, ourFunction) => {
-        await runFunctionRunner(ourFunction, {json: flags.json})
+        await runFunctionRunner(ourFunction, {
+          json: flags.json,
+          export: flags.export,
+        })
       },
     })
   }

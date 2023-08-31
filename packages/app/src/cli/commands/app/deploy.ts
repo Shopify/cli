@@ -42,7 +42,6 @@ export default class Deploy extends Command {
       description: 'Deploy without asking for confirmation.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
-      default: false,
     }),
     'no-release': Flags.boolean({
       hidden: false,
@@ -92,6 +91,11 @@ export default class Deploy extends Command {
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+
+    const requiredNonTTYFlags = ['force']
+    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
+
     await deploy({
       app,
       apiKey,

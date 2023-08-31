@@ -36,7 +36,9 @@
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
 * [`shopify plugins update`](#shopify-plugins-update)
+* [`shopify search [QUERY]`](#shopify-search-query)
 * [`shopify theme check`](#shopify-theme-check)
+* [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
@@ -235,7 +237,7 @@ DESCRIPTION
 
 ## `shopify app function build`
 
-Compile a Function to WASM.
+Compile a function to wasm.
 
 ```
 USAGE
@@ -248,31 +250,32 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Compile a Function to WASM.
+  Compile a function to wasm.
 ```
 
 ## `shopify app function run`
 
-Run a Function locally for testing.
+Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-j]
+  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-e <value>] [-j]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
+  -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
   -j, --json            Log the run result as a JSON object.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your function directory.
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Run a Function locally for testing.
+  Run a function locally for testing.
 ```
 
 ## `shopify app function schema`
 
-Fetch the latest GraphQL schema for a Function.
+Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
@@ -287,12 +290,12 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Fetch the latest GraphQL schema for a Function.
+  Fetch the latest GraphQL schema for a function.
 ```
 
 ## `shopify app function typegen`
 
-Generate GraphQL types for a JavaScript Function.
+Generate GraphQL types for a JavaScript function.
 
 ```
 USAGE
@@ -305,7 +308,7 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Generate GraphQL types for a JavaScript Function.
+  Generate GraphQL types for a JavaScript function.
 ```
 
 ## `shopify app generate extension [FILE]`
@@ -339,7 +342,7 @@ EXAMPLES
 
 ## `shopify app generate schema`
 
-Fetch the latest GraphQL schema for a Function.
+Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
@@ -354,7 +357,7 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Fetch the latest GraphQL schema for a Function.
+  Fetch the latest GraphQL schema for a function.
 ```
 
 ## `shopify app import-flow-legacy-extensions`
@@ -813,6 +816,20 @@ DESCRIPTION
   Update installed plugins.
 ```
 
+## `shopify search [QUERY]`
+
+Starts a search on shopify.dev.
+
+```
+USAGE
+  $ shopify search [QUERY]
+
+DESCRIPTION
+  Starts a search on shopify.dev.
+```
+
+_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.48.0/dist/cli/commands/search.js)_
+
 ## `shopify theme check`
 
 Validate the theme.
@@ -846,6 +863,29 @@ FLAGS
 
 DESCRIPTION
   Validate the theme.
+```
+
+## `shopify theme console`
+
+Shopify Liquid REPL (read-eval-print loop) tool
+
+```
+USAGE
+  $ shopify theme console [--no-color] [--verbose] [-s <value>] [--password <value>] [-e <value>] [--url <value>]
+    [--port <value>]
+
+FLAGS
+  -e, --environment=<value>  The environment to apply to the current command.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  --no-color                 Disable color output.
+  --password=<value>         Password generated from the Theme Access app.
+  --port=<value>             [default: 9293] Local port to serve authentication service.
+  --url=<value>              [default: /] The url to be used as context
+  --verbose                  Increase the verbosity of the logs.
+
+DESCRIPTION
+  Shopify Liquid REPL (read-eval-print loop) tool
 ```
 
 ## `shopify theme delete`

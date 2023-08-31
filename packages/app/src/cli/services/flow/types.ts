@@ -12,6 +12,7 @@ export interface SerializedField {
   description?: string
   required?: boolean
   uiType: string
+  typeRefName?: string
 }
 
 export type FlowExtensionTypes = 'flow_action' | 'flow_trigger'

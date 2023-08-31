@@ -1,7 +1,7 @@
 import {selectOrCreateApp} from './dev/select-app.js'
 import {
   fetchAllDevStores,
-  fetchAppFromApiKey,
+  fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
@@ -91,7 +91,7 @@ export async function ensureGenerateContext(options: {
   configName?: string
 }): Promise<string> {
   if (options.apiKey) {
-    const app = await fetchAppFromApiKey(options.apiKey, options.token)
+    const app = await fetchAppDetailsFromApiKey(options.apiKey, options.token)
     if (!app) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -103,7 +103,7 @@ export async function ensureGenerateContext(options: {
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await fetchOrgFromId(cachedInfo.orgId, options.token)
-    const app = remoteApp || (await fetchAppFromApiKey(cachedInfo.appId, options.token))
+    const app = remoteApp || (await fetchAppDetailsFromApiKey(cachedInfo.appId, options.token))
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -213,7 +213,7 @@ export async function ensureDevContext(options: DevContextOptions, token: string
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
 const appFromId = async (appId: string, token: string): Promise<OrganizationApp> => {
-  const app = await fetchAppFromApiKey(appId, token)
+  const app = await fetchAppDetailsFromApiKey(appId, token)
   if (!app) throw new BugError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
   return app
 }
@@ -275,7 +275,7 @@ export async function fetchDevAppAndPrompt(app: AppInterface, token: string): Pr
   const devAppId = getCachedAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
-  const partnersResponse = await fetchAppFromApiKey(devAppId, token)
+  const partnersResponse = await fetchAppDetailsFromApiKey(devAppId, token)
   if (!partnersResponse) return undefined
 
   const org = await fetchOrgFromId(partnersResponse.organizationId, token)
@@ -538,7 +538,7 @@ async function fetchDevDataFromOptions(
     (async () => {
       let selectedApp: OrganizationApp | undefined
       if (options.apiKey) {
-        selectedApp = await fetchAppFromApiKey(options.apiKey, token)
+        selectedApp = await fetchAppDetailsFromApiKey(options.apiKey, token)
         if (!selectedApp) {
           const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
           throw new AbortError(errorMessage.message, errorMessage.tryMessage)
