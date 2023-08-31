@@ -125,15 +125,17 @@ describe('functionConfiguration', async () => {
       // Given
       extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
 
-      // When & Then
-      await expect(() => extension.deployConfig({apiKey, token, unifiedDeployment})).rejects.toThrowError(AbortError)
+      // When
+      const got = extension.deployConfig({apiKey, token, unifiedDeployment})
+
+      // Then
+      await expect(got).rejects.toThrowError(AbortError)
     })
   })
 
   describe('with legacy type', async () => {
     beforeEach(async () => {
       extension = await testFunctionExtension({
-        dir: '/function',
         config: {
           ...config,
           type: 'order_discounts',
