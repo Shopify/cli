@@ -693,9 +693,12 @@ describe('Dev', () => {
     `)
 
     // wait for useEffect callbacks to be run
-    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    expect(vi.mocked(enableDeveloperPreview)).toHaveBeenCalled()
+    expect(vi.mocked(enableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
+      apiKey: '123',
+      token: '123',
+    })
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
