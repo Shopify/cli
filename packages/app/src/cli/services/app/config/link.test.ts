@@ -4,7 +4,7 @@ import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppFromApiKey} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
@@ -307,14 +307,14 @@ embedded = false
       }
       vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      expect(fetchAppFromApiKey).toHaveBeenCalledWith('api-key', 'token')
+      expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith('api-key', 'token')
     })
   })
 
@@ -328,7 +328,7 @@ embedded = false
       }
       vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(undefined)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When

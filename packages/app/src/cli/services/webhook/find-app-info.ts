@@ -1,5 +1,5 @@
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, cwd} from '@shopify/cli-kit/node/path'
@@ -69,7 +69,7 @@ export async function findApiKey(token: string): Promise<string | undefined> {
  * @returns client_id, client_secret, client_api_key
  */
 export async function requestAppInfo(token: string, apiKey: string): Promise<AppCredentials> {
-  const fullSelectedApp = await fetchAppFromApiKey(apiKey, token)
+  const fullSelectedApp = await fetchAppDetailsFromApiKey(apiKey, token)
   const credentials: AppCredentials = {}
   if (fullSelectedApp === undefined) {
     return credentials

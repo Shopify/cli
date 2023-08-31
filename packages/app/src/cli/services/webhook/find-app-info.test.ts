@@ -1,6 +1,6 @@
 import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchAppFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {testOrganizationApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
@@ -131,7 +131,7 @@ describe('findApiKey', () => {
 describe('requestAppInfo', () => {
   test('no app found', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(undefined)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
 
     // When
     const credentials = await requestAppInfo(aToken, anApiKey)
@@ -142,7 +142,7 @@ describe('requestAppInfo', () => {
 
   test('no secrets available', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
       testOrganizationApp({
         apiKey: anApiKey,
         apiSecretKeys: [],
@@ -158,7 +158,7 @@ describe('requestAppInfo', () => {
 
   test('secrets available', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
       testOrganizationApp({
         apiKey: anApiKey,
       }),

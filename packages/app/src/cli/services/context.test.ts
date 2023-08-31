@@ -1,6 +1,6 @@
 import {
   fetchAppExtensionRegistrations,
-  fetchAppFromApiKey,
+  fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
   fetchOrganizations,
   fetchOrgFromId,
@@ -198,7 +198,7 @@ describe('ensureGenerateContext', () => {
   test('returns the provided app apiKey if valid, without cached state', async () => {
     // Given
     const input = {apiKey: 'key2', directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
@@ -210,7 +210,7 @@ describe('ensureGenerateContext', () => {
   test('returns the cached api key', async () => {
     // Given
     const input = {directory: '/app', reset: false, token: 'token', commandConfig: COMMAND_CONFIG}
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
 
     // When
@@ -230,13 +230,13 @@ describe('ensureGenerateContext', () => {
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
     })
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
 
     // Then
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
     expect(got).toEqual(APP2.apiKey)
   })
 
@@ -250,14 +250,14 @@ describe('ensureGenerateContext', () => {
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
     })
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
 
     // Then
     expect(link).toBeCalled()
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
     expect(got).toEqual(APP2.apiKey)
   })
 
@@ -271,21 +271,21 @@ describe('ensureGenerateContext', () => {
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
     })
-    vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
     // When
     const got = await ensureGenerateContext(input)
 
     // Then
     expect(link).toBeCalled()
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
     expect(got).toEqual(APP2.apiKey)
   })
 
   test('selects a new app and returns the api key', async () => {
     // Given
     const input = {directory: '/app', reset: true, token: 'token', commandConfig: COMMAND_CONFIG}
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
 
@@ -339,7 +339,7 @@ describe('ensureDevContext', async () => {
           },
         }).configuration,
       })
-      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
       // When
@@ -406,7 +406,7 @@ dev_store_url = "domain1"
           },
         }).configuration,
       })
-      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1).mockResolvedValue(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1).mockResolvedValue(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
       // When
@@ -457,7 +457,7 @@ dev_store_url = "domain1"
           embedded: true,
         },
       })
-      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
       // When
@@ -490,7 +490,7 @@ dev_store_url = "domain1"
         configuration: testAppWithConfig({app: {}, config: {path: joinPath(tmp, 'shopify.app.dev.toml')}})
           .configuration,
       })
-      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
 
       // When
       await ensureDevContext(
@@ -538,7 +538,7 @@ dev_store_url = "domain1"
       })
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-      vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
       // When
@@ -609,7 +609,7 @@ dev_store_url = "domain1"
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1_WITH_CONFIG, previousAppId: APP2.apiKey})
     // vi.mocked(fetchOrgFromId).mockResolvedValueOnce(ORG2)
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
@@ -628,7 +628,7 @@ dev_store_url = "domain1"
   test('returns selected data and updates internal state, with cached state', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue({...CACHED1, previousAppId: APP1.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
@@ -678,7 +678,7 @@ dev_store_url = "domain1"
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
     vi.mocked(convertToTestStoreIfNeeded).mockResolvedValueOnce()
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
@@ -708,7 +708,7 @@ dev_store_url = "domain1"
   test('throws if the store input is not valid', async () => {
     // Given
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
     // When
@@ -720,7 +720,7 @@ dev_store_url = "domain1"
   test('resets cached state if reset is true', async () => {
     // When
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1)
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
 
     await ensureDevContext({...INPUT, reset: true}, 'token')
 
@@ -746,7 +746,7 @@ dev_store_url = "domain1"
           embedded: true,
         },
       })
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
       // When
       const got = await ensureDevContext({...INPUT, reset: true}, 'token')
@@ -785,7 +785,7 @@ dev_store_url = "domain1"
           embedded: true,
         },
       })
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(APP2)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
       // When
       const got = await ensureDevContext({...INPUT}, 'token')
@@ -808,7 +808,7 @@ describe('ensureDeployContext', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
@@ -835,7 +835,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
 
@@ -861,7 +861,7 @@ describe('ensureDeployContext', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
@@ -870,7 +870,7 @@ describe('ensureDeployContext', () => {
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
     expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
-    expect(fetchAppFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
     expect(got.partnersApp.id).toEqual(APP2.id)
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
@@ -887,7 +887,7 @@ describe('ensureDeployContext', () => {
       extensionIds: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
     const got = await ensureDeployContext(options(app))
@@ -917,7 +917,7 @@ describe('ensureDeployContext', () => {
     // Given
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(undefined)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
     await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with Client ID key1/)
@@ -934,7 +934,7 @@ describe('ensureDeployContext', () => {
 
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     const opts = options(app)
@@ -975,7 +975,7 @@ describe('ensureDeployContext', () => {
 
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     const opts = options(app)
@@ -1003,7 +1003,7 @@ describe('ensureReleaseContext', () => {
     // Given
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
 
     // When/Then
     await expect(() =>
@@ -1033,7 +1033,7 @@ describe('ensureReleaseContext', () => {
     // Given
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey})
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
 
     // When
@@ -1129,7 +1129,7 @@ describe('ensureVersionsListContext', () => {
   test('returns the partners token and app', async () => {
     // Given
     const app = testApp()
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
 
     // When
     const got = await ensureVersionsListContext({
@@ -1149,7 +1149,7 @@ describe('ensureVersionsListContext', () => {
   test('throws an error if the deployments beta is disabled', async () => {
     // Given
     const app = testApp()
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce(APP1)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
 
     // When/Then
     await expect(() =>
