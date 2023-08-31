@@ -2,7 +2,7 @@ import {FunctionConfigType} from './function.js'
 import {testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
-import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -11,10 +11,10 @@ vi.mock('../../../services/deploy/upload.js')
 
 describe('functionConfiguration', async () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  let moduleId: string = 'module_id'
-  let apiKey: string = 'app-key'
-  let token: string = 'app-token'
-  let unifiedDeployment: boolean = true
+  const moduleId = 'module_id'
+  const apiKey = 'app-key'
+  const token = 'app-token'
+  const unifiedDeployment = true
 
   const inputQuery = 'query { f }'
   const config = {
@@ -44,12 +44,6 @@ describe('functionConfiguration', async () => {
     targeting: [{target: 'some.api.target1', input_query: 'target1.graphql'}],
   }
 
-  async function writeInputQueryFile(filename: string, contents: string) {
-    await inTemporaryDirectory(async (tmpDir) => {
-      await writeFile(joinPath(tmpDir, filename), contents)
-    })
-  }
-
   beforeEach(async () => {
     vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
       url: 'http://foo.bar',
@@ -64,38 +58,41 @@ describe('functionConfiguration', async () => {
   describe('with targets', async () => {
     test('returns a snake_case object with all possible fields', async () => {
       // Given
-      await writeInputQueryFile('target1.graphql', inputQuery)
-      extension.configuration.targeting!.push({target: 'some.api.target2', export: 'run_target2'})
+      await inTemporaryDirectory(async (tmpDir) => {
+        await writeFile(joinPath(tmpDir, 'target1.graphql'), inputQuery)
+        extension.directory = tmpDir
+        extension.configuration.targeting!.push({target: 'some.api.target2', export: 'run_target2'})
 
-      // When
-      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+        // When
+        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
-      // Then
-      expect(got).toEqual({
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        app_key: apiKey,
-        api_type: undefined,
-        api_version: extension.configuration.api_version,
-        ui: {
-          app_bridge: {
-            details_path: extension.configuration.ui!.paths!.details,
-            create_path: extension.configuration.ui!.paths!.create,
+        // Then
+        expect(got).toEqual({
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          app_key: apiKey,
+          api_type: undefined,
+          api_version: extension.configuration.api_version,
+          ui: {
+            app_bridge: {
+              details_path: extension.configuration.ui!.paths!.details,
+              create_path: extension.configuration.ui!.paths!.create,
+            },
           },
-        },
-        input_query: undefined,
-        input_query_variables: {
-          single_json_metafield: {
-            namespace: 'namespace',
-            key: 'key',
+          input_query: undefined,
+          input_query_variables: {
+            single_json_metafield: {
+              namespace: 'namespace',
+              key: 'key',
+            },
           },
-        },
-        enable_creation_ui: true,
-        module_id: moduleId,
-        targets: [
-          {handle: 'some.api.target1', input_query: inputQuery},
-          {handle: 'some.api.target2', export: 'run_target2'},
-        ],
+          enable_creation_ui: true,
+          module_id: moduleId,
+          targets: [
+            {handle: 'some.api.target1', input_query: inputQuery},
+            {handle: 'some.api.target2', export: 'run_target2'},
+          ],
+        })
       })
     })
 
@@ -147,35 +144,38 @@ describe('functionConfiguration', async () => {
 
     test('returns a snake_case object with all possible fields', async () => {
       // Given
-      const inputQuery = 'query { f }'
-      await writeInputQueryFile('input.graphql', inputQuery)
+      await inTemporaryDirectory(async (tmpDir) => {
+        const inputQuery = 'query { f }'
+        extension.directory = tmpDir
+        await writeFile(joinPath(tmpDir, 'input.graphql'), inputQuery)
 
-      // When
-      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+        // When
+        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
-      // Then
-      expect(got).toEqual({
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        app_key: apiKey,
-        api_type: 'order_discounts',
-        api_version: extension.configuration.api_version,
-        ui: {
-          app_bridge: {
-            details_path: extension.configuration.ui!.paths!.details,
-            create_path: extension.configuration.ui!.paths!.create,
+        // Then
+        expect(got).toEqual({
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          app_key: apiKey,
+          api_type: 'order_discounts',
+          api_version: extension.configuration.api_version,
+          ui: {
+            app_bridge: {
+              details_path: extension.configuration.ui!.paths!.details,
+              create_path: extension.configuration.ui!.paths!.create,
+            },
           },
-        },
-        input_query: inputQuery,
-        input_query_variables: {
-          single_json_metafield: {
-            namespace: 'namespace',
-            key: 'key',
+          input_query: inputQuery,
+          input_query_variables: {
+            single_json_metafield: {
+              namespace: 'namespace',
+              key: 'key',
+            },
           },
-        },
-        enable_creation_ui: true,
-        module_id: moduleId,
-        targets: undefined,
+          enable_creation_ui: true,
+          module_id: moduleId,
+          targets: undefined,
+        })
       })
     })
   })
@@ -185,6 +185,7 @@ describe('functionConfiguration', async () => {
     extension.configuration.input = undefined
     extension.configuration.ui = undefined
     extension.configuration.targeting = undefined
+    extension.configuration.type = 'order_discounts'
 
     // When
     const got = await extension.deployConfig({apiKey, token, unifiedDeployment})

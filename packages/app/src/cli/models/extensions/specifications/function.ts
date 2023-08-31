@@ -91,7 +91,7 @@ const spec = createExtensionSpecification({
       module_id: moduleId,
       description: config.description,
       app_key: apiKey,
-      api_type: config.type != 'function' ? config.type : undefined,
+      api_type: config.type === 'function' ? undefined : config.type,
       api_version: config.api_version,
       input_query: inputQuery,
       input_query_variables: config.input?.variables
