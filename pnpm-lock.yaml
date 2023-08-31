@@ -158,13 +158,13 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.0
         version: 4.1.0
       '@shopify/plugin-cloudflare':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../plugin-cloudflare
       abort-controller:
         specifier: 3.0.0
@@ -246,20 +246,20 @@ importers:
         specifier: 2.4.7
         version: 2.4.7
       '@shopify/cli-kit':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.21.3
         version: 3.21.3(zod@3.21.4)
     devDependencies:
       '@shopify/app':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../app
       '@shopify/theme':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../theme
       '@types/node':
         specifier: 14.18.53
@@ -512,7 +512,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -634,7 +634,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../cli-kit
       node-fetch:
         specifier: 3.3.1
@@ -656,7 +656,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -675,7 +675,7 @@ importers:
         specifier: 2.1.4
         version: 2.1.4
       '@shopify/cli-kit':
-        specifier: 3.48.4
+        specifier: 3.48.5
         version: link:../cli-kit
     devDependencies:
       '@types/node':

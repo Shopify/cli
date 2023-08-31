@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.48.5
+
+### Patch Changes
+
+- bb7d2d216: Use lighter query for polling developer preview status
+  - @shopify/cli-kit@3.48.5
+  - @shopify/plugin-cloudflare@3.48.5
+
 ## 3.48.4
 
 ### Patch Changes
