@@ -34,7 +34,7 @@
     "@babel/core": "^7.22.9",
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
-    "@nrwl/tao": "16.6.0",
+    "@nrwl/tao": "16.7.4",
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
