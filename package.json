@@ -55,7 +55,7 @@
     "fs-extra": "^11.1.0",
     "graphql": "^16.4.0",
     "graphql-tag": "^2.12.6",
-    "liquidjs": "^10.8.4",
+    "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.1",
     "nx": "16.6.0",
     "oclif": "3.11.0",

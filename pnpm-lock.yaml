@@ -98,8 +98,8 @@ importers:
         specifier: ^2.12.6
         version: 2.12.6(graphql@16.4.0)
       liquidjs:
-        specifier: ^10.8.4
-        version: 10.8.4
+        specifier: ^10.9.2
+        version: 10.9.2
       node-fetch:
         specifier: ^3.3.1
         version: 3.3.1
@@ -397,8 +397,8 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       liquidjs:
-        specifier: 10.8.4
-        version: 10.8.4
+        specifier: 10.9.2
+        version: 10.9.2
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -8458,7 +8458,7 @@ packages:
     resolution: {integrity: sha512-q7SeFAEFMyKxTblyVI+CsxHzfiMMP9JUDG0cRmOKEAmJiYrtrDW1YYTv129RXqfn7fMKcVc4h/LbAJvqvZIuEQ==}
     engines: {node: '>=14.16'}
     peerDependencies:
-      '@types/react': 17.0.2
+      '@types/react': '>=18.0.0'
       react: '>=18.0.0'
       react-devtools-core: ^4.19.1
     peerDependenciesMeta:
@@ -9209,8 +9209,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /liquidjs@10.8.4:
-    resolution: {integrity: sha512-HSpYAFBVWxhwWsTKPBJgPm3bnwwIzAZjy17XhX7uJCKJ8H6A1YstZSFmPqMmWfSuJOg43RSx+qWVSA1Fu3+B2w==}
+  /liquidjs@10.9.2:
+    resolution: {integrity: sha512-ygPCgYyiFKQNyRi/CK3s3U5RimosBtrIq7TaMYK5ek93mUl9CZ6xxqw2T+1G4kVc9dAmwI71bWLQNKRToV8SsQ==}
     engines: {node: '>=14'}
     hasBin: true
     dependencies:
@@ -13023,7 +13023,7 @@ packages:
   /vite-tsconfig-paths@3.6.0(vite@4.4.8):
     resolution: {integrity: sha512-UfsPYonxLqPD633X8cWcPFVuYzx/CMNHAjZTasYwX69sXpa4gNmQkR0XCjj82h7zhLGdTWagMjC1qfb9S+zv0A==}
     peerDependencies:
-      vite: 4.4.8
+      vite: '>2.0.0-0'
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       globrex: 0.1.2
