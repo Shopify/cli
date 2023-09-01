@@ -8,11 +8,9 @@ up:
       version: 3.1.2
   - bundler:
       gemfile: packages/cli-kit/assets/cli-ruby/Gemfile
-  - homebrew:
+  - packages:
     - jq
-    - delve
-    - pnpm:
-        version: 8.6.11
+    - pnpm
   - custom:
       name: 'Install PNPM dependencies'
       # we flip these two conditions to always run `pnpm install`
