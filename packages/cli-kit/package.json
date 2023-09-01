@@ -172,7 +172,7 @@
     "typedoc": "^0.24.8",
     "typescript": "5.0.4",
     "vite": "^4.4.8",
-    "vitest": "^0.34.1"
+    "vitest": "^0.34.3"
   },
   "engines": {
     "node": ">=14.17.0"

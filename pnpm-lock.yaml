@@ -45,7 +45,7 @@ importers:
         version: 19.0.13
       '@shopify/eslint-plugin-cli':
         specifier: file:packages/eslint-plugin-cli
-        version: file:packages/eslint-plugin-cli(eslint@8.46.0)(prettier@2.8.8)(typescript@5.0.4)(vitest@0.34.1)
+        version: file:packages/eslint-plugin-cli(eslint@8.46.0)(prettier@2.8.8)(typescript@5.0.4)(vitest@0.34.3)
       '@shopify/typescript-configs':
         specifier: ^5.1.0
         version: 5.1.0
@@ -223,7 +223,7 @@ importers:
         version: 8.5.5
       '@vitest/coverage-istanbul':
         specifier: ^0.34.1
-        version: 0.34.1(vitest@0.34.1)
+        version: 0.34.1(vitest@0.34.3)
       graphql:
         specifier: ^16.4.0
         version: 16.4.0
@@ -237,8 +237,8 @@ importers:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/cli:
     dependencies:
@@ -275,13 +275,13 @@ importers:
         version: 14.18.54
       '@vitest/coverage-istanbul':
         specifier: ^0.34.1
-        version: 0.34.1(vitest@0.34.1)
+        version: 0.34.1(vitest@0.34.3)
       vite:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/cli-kit:
     dependencies:
@@ -492,7 +492,7 @@ importers:
         version: 7.5.0
       '@vitest/coverage-istanbul':
         specifier: ^0.34.1
-        version: 0.34.1(vitest@0.34.1)
+        version: 0.34.1(vitest@0.34.3)
       node-stream-zip:
         specifier: ^1.15.0
         version: 1.15.0
@@ -509,8 +509,8 @@ importers:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/create-app:
     dependencies:
@@ -528,8 +528,8 @@ importers:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/eslint-plugin-cli:
     dependencies:
@@ -577,7 +577,7 @@ importers:
         version: 2.0.0(@typescript-eslint/eslint-plugin@5.62.0)(eslint@8.46.0)
       eslint-plugin-vitest:
         specifier: 0.2.8
-        version: 0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.1)
+        version: 0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.3)
       execa:
         specifier: 7.2.0
         version: 7.2.0
@@ -653,8 +653,8 @@ importers:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/plugin-did-you-mean:
     dependencies:
@@ -672,8 +672,8 @@ importers:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/theme:
     dependencies:
@@ -697,8 +697,8 @@ importers:
         specifier: 4.4.8
         version: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/ui-extensions-dev-console:
     dependencies:
@@ -773,8 +773,8 @@ importers:
         specifier: ^3.3.14
         version: 3.6.0(vite@4.4.8)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(sass@1.64.2)
+        specifier: ^0.34.3
+        version: 0.34.3(sass@1.64.2)
 
   packages/ui-extensions-server-kit:
     devDependencies:
@@ -827,8 +827,8 @@ importers:
         specifier: ^3.3.14
         version: 3.6.0(vite@4.4.8)
       vitest:
-        specifier: ^0.34.1
-        version: 0.34.1(jsdom@20.0.3)
+        specifier: ^0.34.3
+        version: 0.34.3(jsdom@20.0.3)
 
   packages/ui-extensions-test-utils:
     devDependencies:
@@ -4978,7 +4978,7 @@ packages:
       - supports-color
     dev: false
 
-  /@vitest/coverage-istanbul@0.34.1(vitest@0.34.1):
+  /@vitest/coverage-istanbul@0.34.1(vitest@0.34.3):
     resolution: {integrity: sha512-5GprlyY2t1g6+RrssWcN/w5RnZV3qIOM0eoaSDJw3jXbHpBpMvAfTg791zXo7PIqNYs5ORUqBWXIIU0gyAfZxA==}
     peerDependencies:
       vitest: '>=0.32.0 <1'
@@ -4989,39 +4989,39 @@ packages:
       istanbul-lib-source-maps: 4.0.1
       istanbul-reports: 3.1.5
       test-exclude: 6.0.0
-      vitest: 0.34.1(jsdom@20.0.3)
+      vitest: 0.34.3(jsdom@20.0.3)
     transitivePeerDependencies:
       - supports-color
     dev: true
 
-  /@vitest/expect@0.34.1:
-    resolution: {integrity: sha512-q2CD8+XIsQ+tHwypnoCk8Mnv5e6afLFvinVGCq3/BOT4kQdVQmY6rRfyKkwcg635lbliLPqbunXZr+L1ssUWiQ==}
+  /@vitest/expect@0.34.3:
+    resolution: {integrity: sha512-F8MTXZUYRBVsYL1uoIft1HHWhwDbSzwAU9Zgh8S6WFC3YgVb4AnFV2GXO3P5Em8FjEYaZtTnQYoNwwBrlOMXgg==}
     dependencies:
-      '@vitest/spy': 0.34.1
-      '@vitest/utils': 0.34.1
+      '@vitest/spy': 0.34.3
+      '@vitest/utils': 0.34.3
       chai: 4.3.7
 
-  /@vitest/runner@0.34.1:
-    resolution: {integrity: sha512-YfQMpYzDsYB7yqgmlxZ06NI4LurHWfrH7Wy3Pvf/z/vwUSgq1zLAb1lWcItCzQG+NVox+VvzlKQrYEXb47645g==}
+  /@vitest/runner@0.34.3:
+    resolution: {integrity: sha512-lYNq7N3vR57VMKMPLVvmJoiN4bqwzZ1euTW+XXYH5kzr3W/+xQG3b41xJn9ChJ3AhYOSoweu974S1V3qDcFESA==}
     dependencies:
-      '@vitest/utils': 0.34.1
+      '@vitest/utils': 0.34.3
       p-limit: 4.0.0
       pathe: 1.1.1
 
-  /@vitest/snapshot@0.34.1:
-    resolution: {integrity: sha512-0O9LfLU0114OqdF8lENlrLsnn024Tb1CsS9UwG0YMWY2oGTQfPtkW+B/7ieyv0X9R2Oijhi3caB1xgGgEgclSQ==}
+  /@vitest/snapshot@0.34.3:
+    resolution: {integrity: sha512-QyPaE15DQwbnIBp/yNJ8lbvXTZxS00kRly0kfFgAD5EYmCbYcA+1EEyRalc93M0gosL/xHeg3lKAClIXYpmUiQ==}
     dependencies:
       magic-string: 0.30.2
       pathe: 1.1.1
       pretty-format: 29.6.2
 
-  /@vitest/spy@0.34.1:
-    resolution: {integrity: sha512-UT4WcI3EAPUNO8n6y9QoEqynGGEPmmRxC+cLzneFFXpmacivjHZsNbiKD88KUScv5DCHVDgdBsLD7O7s1enFcQ==}
+  /@vitest/spy@0.34.3:
+    resolution: {integrity: sha512-N1V0RFQ6AI7CPgzBq9kzjRdPIgThC340DGjdKdPSE8r86aUSmeliTUgkTqLSgtEwWWsGfBQ+UetZWhK0BgJmkQ==}
     dependencies:
       tinyspy: 2.1.1
 
-  /@vitest/utils@0.34.1:
-    resolution: {integrity: sha512-/ql9dsFi4iuEbiNcjNHQWXBum7aL8pyhxvfnD9gNtbjR9fUKAjxhj4AA3yfLXg6gJpMGGecvtF8Au2G9y3q47Q==}
+  /@vitest/utils@0.34.3:
+    resolution: {integrity: sha512-kiSnzLG6m/tiT0XEl4U2H8JDBjFtwVlaE8I3QfGiMFR0QvnRDfYfdP3YvTBWM/6iJDAyaPY6yVQiCTUc7ZzTHA==}
     dependencies:
       diff-sequences: 29.4.3
       loupe: 2.3.6
@@ -5091,7 +5091,7 @@ packages:
   /acorn-globals@7.0.1:
     resolution: {integrity: sha512-umOSDSDrfHbTNPuNpC2NSnnA3LUrqpevPb4T9jRx4MagXNS0rs+gwiTcAvqCRmsD6utzsrzNt+ebm00SNWiC3Q==}
     dependencies:
-      acorn: 8.8.2
+      acorn: 8.9.0
       acorn-walk: 8.2.0
 
   /acorn-jsx@5.3.2(acorn@8.9.0):
@@ -7284,7 +7284,7 @@ packages:
       eslint: 8.46.0
       eslint-rule-composer: 0.3.0
 
-  /eslint-plugin-vitest@0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.1):
+  /eslint-plugin-vitest@0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.3):
     resolution: {integrity: sha512-q8s4tStyKtn3gXf+8nf1ZYTHhoCXKdnozZzp6u8b4ni5v68Y4vxhNh4Z8njUfNjEY8HoPBB77MazHMR23IPb+g==}
     engines: {node: 14.x || >= 16}
     peerDependencies:
@@ -7297,7 +7297,7 @@ packages:
     dependencies:
       '@typescript-eslint/utils': 6.2.1(eslint@8.46.0)(typescript@5.0.4)
       eslint: 8.46.0
-      vitest: 0.34.1(jsdom@20.0.3)
+      vitest: 0.34.3(jsdom@20.0.3)
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -8458,7 +8458,7 @@ packages:
     resolution: {integrity: sha512-q7SeFAEFMyKxTblyVI+CsxHzfiMMP9JUDG0cRmOKEAmJiYrtrDW1YYTv129RXqfn7fMKcVc4h/LbAJvqvZIuEQ==}
     engines: {node: '>=14.16'}
     peerDependencies:
-      '@types/react': 17.0.2
+      '@types/react': '>=18.0.0'
       react: '>=18.0.0'
       react-devtools-core: ^4.19.1
     peerDependenciesMeta:
@@ -12999,8 +12999,8 @@ packages:
       replace-ext: 1.0.1
     dev: true
 
-  /vite-node@0.34.1(@types/node@14.18.54)(sass@1.64.2):
-    resolution: {integrity: sha512-odAZAL9xFMuAg8aWd7nSPT+hU8u2r9gU3LRm9QKjxBEF2rRdWpMuqkrkjvyVQEdNFiBctqr2Gg4uJYizm5Le6w==}
+  /vite-node@0.34.3(@types/node@14.18.54)(sass@1.64.2):
+    resolution: {integrity: sha512-+0TzJf1g0tYXj6tR2vEyiA42OPq68QkRZCu/ERSo2PtsDJfBpDyEfuKbRvLmZqi/CgC7SCBtyC+WjTGNMRIaig==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
     dependencies:
@@ -13023,7 +13023,7 @@ packages:
   /vite-tsconfig-paths@3.6.0(vite@4.4.8):
     resolution: {integrity: sha512-UfsPYonxLqPD633X8cWcPFVuYzx/CMNHAjZTasYwX69sXpa4gNmQkR0XCjj82h7zhLGdTWagMjC1qfb9S+zv0A==}
     peerDependencies:
-      vite: 4.4.8
+      vite: '>2.0.0-0'
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       globrex: 0.1.2
@@ -13070,8 +13070,8 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
 
-  /vitest@0.34.1(jsdom@20.0.3):
-    resolution: {integrity: sha512-G1PzuBEq9A75XSU88yO5G4vPT20UovbC/2osB2KEuV/FisSIIsw7m5y2xMdB7RsAGHAfg2lPmp2qKr3KWliVlQ==}
+  /vitest@0.34.3(jsdom@20.0.3):
+    resolution: {integrity: sha512-7+VA5Iw4S3USYk+qwPxHl8plCMhA5rtfwMjgoQXMT7rO5ldWcdsdo3U1QD289JgglGK4WeOzgoLTsGFu6VISyQ==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
     peerDependencies:
@@ -13104,11 +13104,11 @@ packages:
       '@types/chai': 4.3.5
       '@types/chai-subset': 1.3.3
       '@types/node': 14.18.54
-      '@vitest/expect': 0.34.1
-      '@vitest/runner': 0.34.1
-      '@vitest/snapshot': 0.34.1
-      '@vitest/spy': 0.34.1
-      '@vitest/utils': 0.34.1
+      '@vitest/expect': 0.34.3
+      '@vitest/runner': 0.34.3
+      '@vitest/snapshot': 0.34.3
+      '@vitest/spy': 0.34.3
+      '@vitest/utils': 0.34.3
       acorn: 8.9.0
       acorn-walk: 8.2.0
       cac: 6.7.14
@@ -13124,7 +13124,7 @@ packages:
       tinybench: 2.5.0
       tinypool: 0.7.0
       vite: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
-      vite-node: 0.34.1(@types/node@14.18.54)(sass@1.64.2)
+      vite-node: 0.34.3(@types/node@14.18.54)(sass@1.64.2)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
@@ -13135,8 +13135,8 @@ packages:
       - supports-color
       - terser
 
-  /vitest@0.34.1(sass@1.64.2):
-    resolution: {integrity: sha512-G1PzuBEq9A75XSU88yO5G4vPT20UovbC/2osB2KEuV/FisSIIsw7m5y2xMdB7RsAGHAfg2lPmp2qKr3KWliVlQ==}
+  /vitest@0.34.3(sass@1.64.2):
+    resolution: {integrity: sha512-7+VA5Iw4S3USYk+qwPxHl8plCMhA5rtfwMjgoQXMT7rO5ldWcdsdo3U1QD289JgglGK4WeOzgoLTsGFu6VISyQ==}
     engines: {node: '>=v14.18.0'}
     hasBin: true
     peerDependencies:
@@ -13169,11 +13169,11 @@ packages:
       '@types/chai': 4.3.5
       '@types/chai-subset': 1.3.3
       '@types/node': 14.18.54
-      '@vitest/expect': 0.34.1
-      '@vitest/runner': 0.34.1
-      '@vitest/snapshot': 0.34.1
-      '@vitest/spy': 0.34.1
-      '@vitest/utils': 0.34.1
+      '@vitest/expect': 0.34.3
+      '@vitest/runner': 0.34.3
+      '@vitest/snapshot': 0.34.3
+      '@vitest/spy': 0.34.3
+      '@vitest/utils': 0.34.3
       acorn: 8.9.0
       acorn-walk: 8.2.0
       cac: 6.7.14
@@ -13188,7 +13188,7 @@ packages:
       tinybench: 2.5.0
       tinypool: 0.7.0
       vite: 4.4.8(@types/node@14.18.54)(sass@1.64.2)
-      vite-node: 0.34.1(@types/node@14.18.54)(sass@1.64.2)
+      vite-node: 0.34.3(@types/node@14.18.54)(sass@1.64.2)
       why-is-node-running: 2.2.2
     transitivePeerDependencies:
       - less
@@ -13681,7 +13681,7 @@ packages:
     resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
     dev: false
 
-  file:packages/eslint-plugin-cli(eslint@8.46.0)(prettier@2.8.8)(typescript@5.0.4)(vitest@0.34.1):
+  file:packages/eslint-plugin-cli(eslint@8.46.0)(prettier@2.8.8)(typescript@5.0.4)(vitest@0.34.3):
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
@@ -13703,7 +13703,7 @@ packages:
       eslint-plugin-react-hooks: 4.6.0(eslint@8.46.0)
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unused-imports: 2.0.0(@typescript-eslint/eslint-plugin@5.62.0)(eslint@8.46.0)
-      eslint-plugin-vitest: 0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.1)
+      eslint-plugin-vitest: 0.2.8(eslint@8.46.0)(typescript@5.0.4)(vitest@0.34.3)
       execa: 7.2.0
     transitivePeerDependencies:
       - eslint-import-resolver-node
