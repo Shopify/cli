@@ -171,7 +171,7 @@
     "ts-morph": "^17.0.1",
     "typedoc": "^0.24.8",
     "typescript": "5.0.4",
-    "vite": "^4.4.8",
+    "vite": "^4.4.9",
     "vitest": "^0.34.1"
   },
   "engines": {
