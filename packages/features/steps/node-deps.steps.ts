@@ -39,6 +39,7 @@ const sharedDependencies = [
   'graphql',
   'graphql-request',
   'graphql-tag',
+  'ink',
   'typescript',
   'vite',
   'vitest',
