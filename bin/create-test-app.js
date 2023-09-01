@@ -123,9 +123,7 @@ program
     };
 
     const appDev = async () => {
-      try {
-        await appExec(nodePackageManager, ["run", "dev"]);
-      } catch (error) {}
+      await appExec(nodePackageManager, ["run", "dev"]);
     };
 
     const generateExtension = async (args, options = {}) => {
