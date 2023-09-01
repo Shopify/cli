@@ -4,46 +4,50 @@ import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {Flags} from '@oclif/core'
 
 export default class Console extends ThemeCommand {
-  static description = 'Early access feature: Shopify Liquid REPL'
-  static hidden = true
+  static description = 'Shopify Liquid REPL (read-eval-print loop) tool'
 
   static flags = {
     ...globalFlags,
     store: themeFlags.store,
     password: themeFlags.password,
     environment: themeFlags.environment,
+    url: Flags.string({
+      description: 'The url to be used as context',
+      env: 'SHOPIFY_FLAG_URL',
+      default: '/',
+    }),
+    port: Flags.string({
+      description: 'Local port to serve authentication service.',
+      env: 'SHOPIFY_FLAG_PORT',
+      default: '9293',
+    }),
   }
 
   async run() {
     const {flags} = await this.parse(Console)
     const store = ensureThemeStore(flags)
-    const password = flags.password
+    const {password, url, port} = flags
 
     const adminSession = await ensureAuthenticatedThemes(store, password, [], true)
     const storefrontToken = await ensureAuthenticatedStorefront([], password)
-    const authUrl = 'http://localhost:9293'
+    const authUrl = `http://localhost:${port}/password`
 
-    renderWarning({
-      headline: 'This is a beta feature.',
+    renderInfo({
       body: [
-        'This command is beta, so it can change or be removed.',
-        'If you have any feedback or would like to to keep it, please leave an up-vote',
-        {link: {label: 'here', url: 'https://github.com/Shopify/cli/issues/1344'}},
-        {char: '.'},
+        'Activate the Shopify Liquid console in',
+        {link: {label: 'your browser', url: authUrl}},
+        'and enter your store password if prompted.',
       ],
     })
 
-    renderInfo({
-      body: ['Activate Shopify Liquid console on', {link: {label: 'your browser', url: authUrl}}, {char: '.'}],
+    return execCLI2(['theme', 'console', '--url', url, '--port', port], {
+      store,
+      adminToken: adminSession.token,
+      storefrontToken,
     })
-
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    setTimeout(() => openURL(authUrl), 2000)
-
-    return execCLI2(['theme', 'console'], {store, adminToken: adminSession.token, storefrontToken})
   }
 }

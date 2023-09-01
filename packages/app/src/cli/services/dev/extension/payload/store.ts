@@ -20,7 +20,7 @@ export async function getExtensionsPayloadStoreRawPayload(
 ): Promise<ExtensionsEndpointPayload> {
   return {
     app: {
-      title: options.app.name,
+      title: options.appName,
       apiKey: options.apiKey,
       url: buildAppURLForWeb(options.storeFqdn, options.apiKey),
       mobileUrl: buildAppURLForMobile(options.storeFqdn, options.apiKey),

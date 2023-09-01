@@ -39,7 +39,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
         outputPath: extension.outputPath,
         environment: 'development',
         env: {
-          ...(options.devOptions.app.dotenv?.variables ?? {}),
+          ...(options.devOptions.appDotEnvFile?.variables ?? {}),
           APP_URL: options.devOptions.url,
         },
         stdin: {
@@ -68,6 +68,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
             // ESBuild handles error output
           }
         },
+        sourceMaps: true,
       }),
     )
 

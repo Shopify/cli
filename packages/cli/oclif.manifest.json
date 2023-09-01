@@ -1,6 +1,21 @@
 {
   "version": "3.48.0",
   "commands": {
+    "search": {
+      "id": "search",
+      "description": "Starts a search on shopify.dev.",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {
+        "query": {
+          "name": "query"
+        }
+      }
+    },
     "upgrade": {
       "id": "upgrade",
       "description": "Upgrade the Shopify CLI.",

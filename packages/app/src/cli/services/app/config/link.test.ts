@@ -4,7 +4,7 @@ import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppFromApiKey} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
@@ -307,14 +307,14 @@ embedded = false
       }
       vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      expect(fetchAppFromApiKey).toHaveBeenCalledWith('api-key', 'token')
+      expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith('api-key', 'token')
     })
   })
 
@@ -328,7 +328,7 @@ embedded = false
       }
       vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-      vi.mocked(fetchAppFromApiKey).mockResolvedValue(undefined)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
@@ -444,50 +444,6 @@ embedded = true
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
-    })
-  })
-
-  test('uses local scopes if present and remote one is empty', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const options: LinkOptions = {
-        directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-      }
-      LOCAL_APP.configuration = {...LOCAL_APP.configuration, scopes: 'write_products'}
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
-        ...REMOTE_APP,
-        requestedAccessScopes: [],
-      })
-
-      // When
-      await link(options)
-
-      // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-name = "app1"
-client_id = "api-key"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]

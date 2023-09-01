@@ -1,11 +1,15 @@
 import {appFlags} from '../../flags.js'
 import dev from '../../services/dev.js'
+import {dev as dev2} from '../../services/dev2.js'
 import Command from '../../utilities/app-command.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {isShopify} from '@shopify/cli-kit/node/context/local'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -112,7 +116,7 @@ export default class Dev extends Command {
 
     const commandConfig = this.config
 
-    await dev({
+    const devOptions = {
       directory: flags.path,
       configName: flags.config,
       apiKey,
@@ -128,6 +132,14 @@ export default class Dev extends Command {
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
       notify: flags.notify,
-    })
+    }
+
+    const enableNewDev = getEnvironmentVariables().SHOPIFY_CLI_NEW_DEV
+
+    if (isTruthy(enableNewDev) || (enableNewDev === undefined && (await isShopify()))) {
+      await dev2(devOptions)
+    } else {
+      await dev(devOptions)
+    }
   }
 }

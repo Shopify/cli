@@ -104,7 +104,7 @@ module ShopifyCLI
                   name: "liquid-console-repl",
                 },
               }.to_json,
-              headers: {}
+              headers: {},
             )
         end
 
@@ -114,25 +114,40 @@ module ShopifyCLI
               body: {
                 "assets": [
                   {
-                    "key" => "sections/announcement-bar.liquid",
-                    "value" => "",
+                    "key" => "config/settings_data.json",
+                    "value" => "{}",
                   },
                   {
                     "key" => "config/settings_schema.json",
                     "value" => "[]",
                   },
                   {
-                    "key" => "config/settings_data.json",
-                    "value" => "{}",
+                    "key" => "snippets/eval.liquid",
+                    "value" => "",
+                  },
+                  {
+                    "key" => "layout/password.liquid",
+                    "value" => "{{ content_for_header }}{{ content_for_layout }}",
                   },
                   {
                     "key" => "layout/theme.liquid",
                     "value" => "{{ content_for_header }}{{ content_for_layout }}",
                   },
-                  { "key" => "layout/password.liquid",
-                    "value" => "{{ content_for_header }}{{ content_for_layout }}" },
+                  {
+                    "key" => "sections/announcement-bar.liquid",
+                    "value" => "",
+                  },
+                  {
+                    "key" => "templates/index.json",
+                    "value" => {
+                      "sections" => {
+                        "a" => { "type" => "announcement-bar", "settings" => {} },
+                      },
+                      "order" => ["a"],
+                    }.to_json,
+                  },
                 ],
-              }.to_json
+              }.to_json,
             )
             .to_return(status: 207, body: "[]")
         end

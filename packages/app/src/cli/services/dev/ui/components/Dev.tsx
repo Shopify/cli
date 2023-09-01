@@ -1,5 +1,5 @@
 import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
-import {fetchAppFromApiKey} from '../../fetch.js'
+import {fetchAppPreviewMode} from '../../fetch.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -9,7 +9,6 @@ import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
@@ -24,18 +23,10 @@ export interface DevProps {
     apiKey: string
     token: string
   }
-  tunnelClient?: TunnelClient
   pollingTime?: number
 }
 
-const Dev: FunctionComponent<DevProps> = ({
-  abortController,
-  processes,
-  previewUrl,
-  app,
-  tunnelClient,
-  pollingTime = 5000,
-}) => {
+const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, app, pollingTime = 5000}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
@@ -45,24 +36,28 @@ const Dev: FunctionComponent<DevProps> = ({
     setStatusMessage('Shutting down dev ...')
     setTimeout(() => {
       if (isUnitTest()) return
-      treeKill('SIGINT')
+      treeKill(process.pid, 'SIGINT', false, () => {
+        process.exit(0)
+      })
     }, 2000)
     clearInterval(pollingInterval.current)
     await disableDeveloperPreview({apiKey, token})
-    tunnelClient?.stopTunnel()
   })
 
-  const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(Boolean(developmentStorePreviewEnabled))
+  const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
   const [error, setError] = useState<string | undefined>(undefined)
 
   const errorHandledProcesses = useMemo(() => {
     return processes.map((process) => {
       return {
         ...process,
-        action: (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          return process.action(stdout, stderr, signal).catch(() => {
+        action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+          try {
+            return await process.action(stdout, stderr, signal)
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch {
             abortController.abort()
-          })
+          }
         },
       }
     })
@@ -70,45 +65,47 @@ const Dev: FunctionComponent<DevProps> = ({
 
   useEffect(() => {
     const pollDevPreviewMode = async () => {
-      const app = await fetchAppFromApiKey(apiKey, token)
-      setDevPreviewEnabled(app?.developmentStorePreviewEnabled ?? false)
+      try {
+        const enabled = await fetchAppPreviewMode(apiKey, token)
+        setDevPreviewEnabled(enabled ?? false)
+        setError('')
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (_) {
+        setError('Failed to fetch the latest status of the development store preview, trying again in 5 seconds.')
+      }
     }
 
     const enablePreviewMode = async () => {
       // Enable dev preview on app dev start
-      const enablingDevPreviewSucceeds = await enableDeveloperPreview({apiKey, token})
-      setDevPreviewEnabled(enablingDevPreviewSucceeds ? true : Boolean(developmentStorePreviewEnabled))
+      try {
+        await enableDeveloperPreview({apiKey, token})
+        setError('')
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (_) {
+        setError(
+          'Failed to turn on development store preview automatically.\nTry turning it on manually by pressing `d`.',
+        )
+        setDevPreviewEnabled(Boolean(developmentStorePreviewEnabled))
+      }
     }
 
     if (canEnablePreviewMode) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       enablePreviewMode()
-        .then(() => {
-          setError('')
-        })
-        .catch(() => {
-          setError(
-            'Failed to turn on development store preview automatically.\nTry turning it on manually by pressing `d`.',
-          )
-        })
 
       const startPolling = () => {
         return setInterval(
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
-          () =>
-            pollDevPreviewMode()
-              .then(() => {
-                setError('')
-              })
-              .catch(() => {
-                setError(
-                  'Failed to fetch the latest status of the development store preview, trying again in 5 seconds.',
-                )
-              }),
+          () => pollDevPreviewMode(),
           pollingTime,
         )
       }
 
       pollingInterval.current = startPolling()
+    }
+
+    return () => {
+      clearInterval(pollingInterval.current)
     }
   }, [canEnablePreviewMode])
 
@@ -117,30 +114,39 @@ const Dev: FunctionComponent<DevProps> = ({
       handleCtrlC(input, key, () => abortController.abort())
 
       const onInput = async () => {
-        setError('')
+        try {
+          setError('')
 
-        if (input === 'p' && previewUrl) {
-          await openURL(previewUrl)
-        } else if (input === 'q') {
-          abortController.abort()
-        } else if (input === 'd' && canEnablePreviewMode) {
-          const newDevPreviewEnabled = !devPreviewEnabled
-          const developerPreviewUpdateSucceded = await developerPreviewUpdate({
-            apiKey,
-            token,
-            enabled: newDevPreviewEnabled,
-          })
-          if (developerPreviewUpdateSucceded) {
+          if (input === 'p' && previewUrl) {
+            await openURL(previewUrl)
+          } else if (input === 'q') {
+            abortController.abort()
+          } else if (input === 'd' && canEnablePreviewMode) {
+            const newDevPreviewEnabled = !devPreviewEnabled
             setDevPreviewEnabled(newDevPreviewEnabled)
-          } else {
-            setError(`Failed to turn ${newDevPreviewEnabled ? 'on' : 'off'} development store preview.`)
+            try {
+              const developerPreviewUpdateSucceded = await developerPreviewUpdate({
+                apiKey,
+                token,
+                enabled: newDevPreviewEnabled,
+              })
+              if (!developerPreviewUpdateSucceded) {
+                throw new Error(`Failed to turn ${newDevPreviewEnabled ? 'on' : 'off'} development store preview.`)
+              }
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch (_) {
+              setDevPreviewEnabled(devPreviewEnabled)
+              setError(`Failed to turn ${newDevPreviewEnabled ? 'on' : 'off'} development store preview.`)
+            }
           }
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (_) {
+          setError('Failed to handle your input.')
         }
       }
 
-      onInput().catch(() => {
-        setError('Failed to handle your input.')
-      })
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      onInput()
     },
     {isActive: canUseShortcuts},
   )
@@ -169,7 +175,8 @@ const Dev: FunctionComponent<DevProps> = ({
             <Box flexDirection="column">
               {canEnablePreviewMode ? (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} development store preview:{' '}
+                  {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} toggle development store
+                  preview: {}
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}

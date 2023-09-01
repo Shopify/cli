@@ -17,6 +17,7 @@ import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from './dev/extension/bundler.js'
 import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
+import {DeploymentMode} from './deploy/mode.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {
   ReverseHTTPProxyTarget,
@@ -39,11 +40,11 @@ import {buildAppURLForWeb} from '../utilities/app/app-url.js'
 import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
@@ -61,7 +62,7 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
-const MANIFEST_VERSION = '3'
+export const MANIFEST_VERSION = '3'
 
 export interface DevOptions {
   directory: string
@@ -138,16 +139,12 @@ async function dev(options: DevOptions) {
 
   const frontendConfig = localApp.webs.find((web) => isWebType(web, WebType.Frontend))
   const backendConfig = localApp.webs.find((web) => isWebType(web, WebType.Backend))
-  const webhooksPath =
-    localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
-  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
 
   await validateCustomPorts(localApp.webs)
 
   const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
     generateFrontendURL({
       ...options,
-      app: localApp,
       tunnelClient,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
@@ -162,15 +159,7 @@ async function dev(options: DevOptions) {
   }
 
   const exposedUrl = usingLocalhost ? `${frontendUrl}:${frontendPort}` : frontendUrl
-  const proxyTargets: ReverseHTTPProxyTarget[] = []
-  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
-  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
-  const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
-
-  // By default, preview goes to the direct URL for the app.
-  let previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   let shouldUpdateURLs = false
-
   if (frontendConfig || backendConfig) {
     if (options.update) {
       const newURLs = generatePartnersURLs(
@@ -193,56 +182,65 @@ async function dev(options: DevOptions) {
 
   // If we have a real UUID for an extension, use that instead of a random one
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
-  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
-  const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-  localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  {
+    const envExtensionsIds = prodEnvIdentifiers.extensions || {}
+    const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
+    localApp.allExtensions.forEach((ext) => (ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID))
+  }
 
-  const additionalProcesses: OutputProcess[] = []
+  // By default, preview goes to the direct URL for the app.
+  let previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+
+  const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
+  const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
 
-  const webOptions = {
-    apiKey,
-    scopes: isLegacyAppSchema(localApp.configuration)
-      ? localApp.configuration.scopes
-      : localApp.configuration.access_scopes?.scopes,
-    apiSecret,
-    backendPort,
-    frontendServerPort,
-    hmrServerPort,
-  }
+  const additionalProcesses: OutputProcess[] = []
+  const proxyTargets: ReverseHTTPProxyTarget[] = []
 
-  await Promise.all(
-    localApp.webs.map(async (web) => {
-      const isFrontend = isWebType(web, WebType.Frontend)
-      const hostname = isFrontend ? frontendUrl : exposedUrl
-      const fullWebOptions: DevWebOptions = {...webOptions, web, hostname}
+  {
+    const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
+    const webOptions = {
+      apiKey,
+      scopes: isLegacyAppSchema(localApp.configuration)
+        ? localApp.configuration.scopes
+        : localApp.configuration.access_scopes?.scopes,
+      apiSecret,
+      backendPort,
+      frontendServerPort,
+      hmrServerPort,
+    }
 
-      if (isFrontend && !usingLocalhost) {
-        proxyTargets.push(await devProxyTarget(fullWebOptions))
-      } else {
-        let port: number
-        if (isFrontend) {
-          port = frontendPort
-        } else if (isWebType(web, WebType.Backend)) {
-          port = backendPort
+    await Promise.all(
+      localApp.webs.map(async (web) => {
+        const isFrontend = isWebType(web, WebType.Frontend)
+        const hostname = isFrontend ? frontendUrl : exposedUrl
+        const fullWebOptions: DevWebOptions = {...webOptions, web, hostname}
+
+        if (isFrontend && !usingLocalhost) {
+          proxyTargets.push(await devProxyTarget(fullWebOptions))
         } else {
-          port = await getAvailableTCPPort()
+          let port: number
+          if (isFrontend) {
+            port = frontendPort
+          } else if (isWebType(web, WebType.Backend)) {
+            port = backendPort
+          } else {
+            port = await getAvailableTCPPort()
+          }
+          additionalProcesses.push(await devNonProxyTarget(fullWebOptions, port))
         }
-        additionalProcesses.push(await devNonProxyTarget(fullWebOptions, port))
-      }
-    }),
-  )
+      }),
+    )
+  }
 
   const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
   const deploymentMode = unifiedDeployment ? 'unified' : 'legacy'
 
-  await metadata.addPublicMetadata(() => ({
-    cmd_app_deployment_mode: deploymentMode,
-  }))
-
   const previewableExtensions = localApp.allExtensions.filter((ext) => ext.isPreviewable)
   const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
+  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
 
   if (previewableExtensions.length > 0) {
     // If any previewable extensions, the preview URL should be the dev console approach
@@ -290,7 +288,6 @@ async function dev(options: DevOptions) {
     )
   }
 
-  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length > 0) {
     const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
     const extension = themeExtensions[0]!
@@ -309,6 +306,10 @@ async function dev(options: DevOptions) {
     const devExt = devThemeExtensionTarget(args, adminSession, storefrontToken, token, unifiedDeployment)
     additionalProcesses.push(devExt)
   }
+
+  const webhooksPath =
+    localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
+  const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
 
   if (sendUninstallWebhook) {
     additionalProcesses.push({
@@ -330,11 +331,18 @@ async function dev(options: DevOptions) {
 
   setPreviousAppId(options.directory, apiKey)
 
-  await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn})
+  await logMetadataForDev({devOptions: options, tunnelUrl: frontendUrl, shouldUpdateURLs, storeFqdn, deploymentMode})
 
   await reportAnalyticsEvent({config: options.commandConfig})
 
   const abortController = new AbortController()
+
+  const processesIncludingAnyProxies = await runConcurrentHTTPProcessesAndPathForwardTraffic({
+    portNumber: proxyPort,
+    proxyTargets,
+    additionalProcesses,
+    abortController,
+  })
 
   const app = {
     canEnablePreviewMode: canEnablePreviewMode(remoteApp, localApp),
@@ -343,28 +351,15 @@ async function dev(options: DevOptions) {
     token,
   }
 
-  if (proxyTargets.length === 0) {
-    await renderDev({
-      processes: additionalProcesses,
-      previewUrl,
-      app,
-      abortController,
-      tunnelClient,
-    })
-  } else {
-    await runConcurrentHTTPProcessesAndPathForwardTraffic({
-      previewUrl,
-      portNumber: proxyPort,
-      proxyTargets,
-      additionalProcesses,
-      app,
-      abortController,
-      tunnelClient,
-    })
-  }
+  await renderDev({
+    processes: processesIncludingAnyProxies,
+    previewUrl,
+    app,
+    abortController,
+  })
 }
 
-function setPreviousAppId(directory: string, apiKey: string) {
+export function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
 }
 
@@ -420,54 +415,105 @@ function devThemeExtensionTarget(
 async function devProxyTarget(options: DevWebOptions): Promise<ReverseHTTPProxyTarget> {
   const port = options.web.configuration.port
 
-  const {commands} = options.web.configuration
-  const [cmd, ...args] = commands.dev.split(' ')
-
-  const env = {
-    SHOPIFY_API_KEY: options.apiKey,
-    SHOPIFY_API_SECRET: options.apiSecret,
-    HOST: options.hostname,
-    SCOPES: options.scopes,
-    NODE_ENV: `development`,
-    ...(isSpinEnvironment() && {
-      SHOP_CUSTOM_DOMAIN: `shopify.${await spinFqdn()}`,
-    }),
-    BACKEND_PORT: `${options.backendPort}`,
-    FRONTEND_PORT: `${options.frontendServerPort}`,
-    ...(options.hmrServerPort && {
-      HMR_SERVER_PORT: `${options.hmrServerPort}`,
-    }),
-    APP_URL: options.hostname,
-    APP_ENV: 'development',
-    // Note: These are Remix-specific variables
-    REMIX_DEV_ORIGIN: options.hostname,
-  }
-
-  const hmrServerOptions = options.hmrServerPort &&
-    options.web.configuration.roles.includes(WebType.Frontend) && {
-      port: options.hmrServerPort,
-      httpPaths: options.web.configuration.hmr_server!.http_paths,
-    }
+  const hmrServerOptions =
+    options.hmrServerPort && options.web.configuration.roles.includes(WebType.Frontend)
+      ? {
+          port: options.hmrServerPort,
+          httpPaths: options.web.configuration.hmr_server!.http_paths,
+        }
+      : undefined
 
   return {
     logPrefix: options.web.configuration.name ?? ['web', ...options.web.configuration.roles].join('-'),
     customPort: port,
     ...(hmrServerOptions && {hmrServer: hmrServerOptions}),
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
-      await exec(cmd!, args, {
-        cwd: options.web.directory,
-        stdout,
-        stderr,
-        signal,
-        env: {
-          ...env,
-          PORT: `${port}`,
-          // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
-          SERVER_PORT: `${port}`,
+      return launchWebProcess(
+        {stdout, stderr, abortSignal: signal},
+        {
+          port,
+          apiKey: options.apiKey,
+          apiSecret: options.apiSecret,
+          hostname: options.hostname,
+          backendPort: options.backendPort,
+          frontendServerPort: options.frontendServerPort,
+          directory: options.web.directory,
+          devCommand: options.web.configuration.commands.dev,
+          scopes: options.scopes,
+          shopCustomDomain: isSpinEnvironment() ? `shopify.${await spinFqdn()}` : undefined,
+          hmrServerOptions,
         },
-      })
+      )
     },
   }
+}
+
+export interface LaunchWebOptions {
+  port: number
+  apiKey: string
+  apiSecret?: string
+  hostname?: string
+  backendPort: number
+  frontendServerPort?: number
+  directory: string
+  devCommand: string
+  scopes?: string
+  shopCustomDomain?: string
+  hmrServerOptions?: {port: number; httpPaths: string[]}
+  portFromConfig?: number
+}
+
+export async function launchWebProcess(
+  {stdout, stderr, abortSignal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
+  {
+    port,
+    apiKey,
+    apiSecret,
+    hostname,
+    backendPort,
+    frontendServerPort,
+    directory,
+    devCommand,
+    scopes,
+    shopCustomDomain,
+    hmrServerOptions,
+  }: LaunchWebOptions,
+) {
+  const hmrServerPort = hmrServerOptions?.port
+  const [cmd, ...args] = devCommand.split(' ')
+
+  const env = {
+    SHOPIFY_API_KEY: apiKey,
+    SHOPIFY_API_SECRET: apiSecret,
+    HOST: hostname,
+    SCOPES: scopes,
+    NODE_ENV: `development`,
+    ...(shopCustomDomain && {
+      SHOP_CUSTOM_DOMAIN: shopCustomDomain,
+    }),
+    BACKEND_PORT: `${backendPort}`,
+    FRONTEND_PORT: `${frontendServerPort}`,
+    ...(hmrServerPort && {
+      HMR_SERVER_PORT: `${hmrServerPort}`,
+    }),
+    APP_URL: hostname,
+    APP_ENV: 'development',
+    // Note: These are Remix-specific variables
+    REMIX_DEV_ORIGIN: hostname,
+  }
+
+  await exec(cmd!, args, {
+    cwd: directory,
+    stdout,
+    stderr,
+    signal: abortSignal,
+    env: {
+      ...env,
+      PORT: `${port}`,
+      // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
+      SERVER_PORT: `${port}`,
+    },
+  })
 }
 
 interface DevUIExtensionsTargetOptions {
@@ -499,7 +545,9 @@ async function devUIExtensionsTarget({
     pathPrefix: '/extensions',
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       await devUIExtensions({
-        app,
+        appName: app.name,
+        appDirectory: app.directory,
+        appDotEnvFile: app.dotenv,
         id,
         extensions,
         stdout,
@@ -623,7 +671,7 @@ export function devDraftableExtensionTarget({
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
+export async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl
@@ -631,11 +679,12 @@ async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: stri
   return `/cart/${variantId}:1`
 }
 
-async function logMetadataForDev(options: {
+export async function logMetadataForDev(options: {
   devOptions: DevOptions
   tunnelUrl: string
   shouldUpdateURLs: boolean
   storeFqdn: string
+  deploymentMode: DeploymentMode | undefined
 }) {
   const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublicMetadata(() => ({
@@ -645,6 +694,7 @@ async function logMetadataForDev(options: {
     store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
     cmd_app_reset_used: options.devOptions.reset,
+    cmd_app_deployment_mode: options.deploymentMode,
   }))
 
   await metadata.addSensitiveMetadata(() => ({
@@ -653,7 +703,7 @@ async function logMetadataForDev(options: {
   }))
 }
 
-async function validateCustomPorts(webConfigs: Web[]) {
+export async function validateCustomPorts(webConfigs: Web[]) {
   const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
   const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
   if (duplicatedPort) {
@@ -669,7 +719,7 @@ async function validateCustomPorts(webConfigs: Web[]) {
   )
 }
 
-function scopesMessage(scopes: string[]) {
+export function scopesMessage(scopes: string[]) {
   return {
     list: {
       items: scopes.length === 0 ? ['No scopes'] : scopes,

@@ -1,5 +1,6 @@
 import {ConfigField, FlowExtensionTypes} from './types.js'
 import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
+import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/flow_trigger.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
@@ -34,29 +35,25 @@ export const validateFieldShape = (
           required: zod.boolean().optional(),
         })
         .parse(configField)
+    } else {
+      return FlowTriggerSettingsSchema.parse(configField)
     }
-
-    return baseFieldSchema
-      .extend({
-        key: zod.string(fieldValidationErrorMessage('key', configField, extensionHandle, index)),
-      })
-      .parse(configField)
   }
 
   if (isCommerceObjectField) {
-    if (type === 'flow_action') {
-      return baseFieldSchema
-        .extend({
-          required: zod.boolean().optional(),
-        })
-        .parse(configField)
-    }
+    return baseFieldSchema
+      .extend({
+        required: zod.boolean().optional(),
+      })
+      .parse(configField)
   }
 
   return baseFieldSchema.parse(configField)
 }
 
 export const startsWithHttps = (url: string) => url.startsWith('https://')
+
+export const isSchemaTypeReference = (type: string) => type.startsWith('schema.')
 
 export const validateCustomConfigurationPageConfig = (
   configPageUrl?: string,
@@ -93,6 +90,20 @@ export const validateCustomConfigurationPageConfig = (
         },
       ])
     }
+  }
+
+  return true
+}
+
+export const validateTriggerSchemaPresence = (fields: ConfigField[], schema?: string) => {
+  if (fields.some((field) => isSchemaTypeReference(field.type)) && !schema) {
+    throw new zod.ZodError([
+      {
+        code: zod.ZodIssueCode.custom,
+        path: ['extensions[0].schema'],
+        message: 'To reference schema types a `schema` must be specified.',
+      },
+    ])
   }
 
   return true

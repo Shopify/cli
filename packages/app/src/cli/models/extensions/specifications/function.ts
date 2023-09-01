@@ -62,6 +62,7 @@ const spec = createExtensionSpecification({
     'shipping_discounts',
     'fulfillment_constraints',
     'order_routing_location_rule',
+    'local_pickup_delivery_option_generator',
   ],
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],

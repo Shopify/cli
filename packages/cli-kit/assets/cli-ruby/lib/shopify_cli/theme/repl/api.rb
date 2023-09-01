@@ -4,10 +4,11 @@ module ShopifyCLI
   module Theme
     class Repl
       class Api
-        attr_reader :ctx, :repl
+        attr_reader :ctx, :url, :repl
 
-        def initialize(ctx, repl)
+        def initialize(ctx, url, repl)
           @ctx = ctx
+          @url = url.start_with?("/") ? url : url.prepend("/")
           @repl = repl
         end
 
@@ -47,10 +48,9 @@ module ShopifyCLI
         end
 
         def form_data(liquid_snippet)
-          template = ["", "", liquid_snippet, "", liquid_template].join("\n")
-
           {
-            "replace_templates[sections/announcement-bar.liquid]" => template,
+            "replace_templates[snippets/eval.liquid]" => "\n#{liquid_snippet}\n",
+            "replace_templates[sections/announcement-bar.liquid]" => "\n{% render 'eval' %}#{liquid_template}",
             :_method => "GET",
           }
         end
@@ -92,9 +92,9 @@ module ShopifyCLI
           return @api_uri if @api_uri
 
           uri_address = if Environment.theme_access_password?
-            "https://#{ThemeAccessAPI::BASE_URL}/cli/sfr"
+            "https://#{ThemeAccessAPI::BASE_URL}/cli/sfr#{url}"
           else
-            "https://#{shop}"
+            "https://#{shop}#{url}"
           end
 
           @api_uri = URI(uri_address)

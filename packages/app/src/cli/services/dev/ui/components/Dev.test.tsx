@@ -1,6 +1,6 @@
 import {Dev} from './Dev.js'
 import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
-import {fetchAppFromApiKey} from '../../fetch.js'
+import {fetchAppPreviewMode} from '../../fetch.js'
 import {
   getLastFrameAfterUnmount,
   render,
@@ -13,7 +13,6 @@ import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -22,7 +21,7 @@ vi.mock('../../fetch.js')
 
 const testApp = {
   canEnablePreviewMode: true,
-  developmentStorePreviewEnabled: true,
+  developmentStorePreviewEnabled: false,
   apiKey: '123',
   token: '123',
 }
@@ -88,68 +87,16 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
       Preview URL: https://shopify.com
       "
     `)
-  })
 
-  test('renders a different state if the preview mode is off', async () => {
-    // Given
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>(function (resolve, _reject) {
-      backendPromiseResolve = resolve
-    })
-
-    const backendProcess = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-
-        backendPromiseResolve()
-
-        // await promise that never resolves
-        await new Promise(() => {})
-      },
-    }
-
-    // When
-
-    const renderInstance = render(
-      <Dev
-        processes={[backendProcess]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        app={{
-          ...testApp,
-          developmentStorePreviewEnabled: false,
-        }}
-      />,
-    )
-
-    await backendPromise
-
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ development store preview: ✖ off
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      "
-    `)
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test("doesn't render shortcuts if the stdin is not a TTY", async () => {
@@ -219,6 +166,9 @@ describe('Dev', () => {
       Preview URL: https://shopify.com
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('opens the previewUrl when p is pressed', async () => {
@@ -231,6 +181,8 @@ describe('Dev', () => {
     renderInstance.stdin.write('p')
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
+
+    renderInstance.unmount()
   })
 
   test('quits when q is pressed', async () => {
@@ -271,14 +223,14 @@ describe('Dev', () => {
     await promise
     // Then
     expect(abort).toHaveBeenCalledOnce()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('abortController can be used to exit from outside and should preserve static output', async () => {
     // Given
     const abortController = new AbortController()
-    const tunnelClient = {
-      stopTunnel: vi.fn(),
-    } as unknown as TunnelClient
 
     const backendProcess = {
       prefix: 'backend',
@@ -300,7 +252,6 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         app={testApp}
-        tunnelClient={tunnelClient}
       />,
     )
 
@@ -315,7 +266,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -331,11 +282,13 @@ describe('Dev', () => {
       00:00:00 │ backend │ third backend message
       "
     `)
-    expect(tunnelClient.stopTunnel).toHaveBeenCalledOnce()
     expect(vi.mocked(disableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
       apiKey: '123',
       token: '123',
     })
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('accepts inputs when the processes resolve', async () => {
@@ -368,7 +321,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -379,6 +332,9 @@ describe('Dev', () => {
     await waitForInputsToBeReady()
     renderInstance.stdin.write('p')
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('when a process throws an error it calls abort on the abortController', async () => {
@@ -405,6 +361,81 @@ describe('Dev', () => {
 
     await renderInstance.waitUntilExit()
     expect(abort).toHaveBeenCalledOnce()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
+  test('polls for preview mode', async () => {
+    // Given
+    vi.mocked(fetchAppPreviewMode).mockResolvedValueOnce({
+      developmentStorePreviewEnabled: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any)
+
+    let backendPromiseResolve: () => void
+
+    const backendPromise = new Promise<void>((resolve) => {
+      backendPromiseResolve = resolve
+    })
+
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+
+        backendPromiseResolve()
+      },
+    }
+
+    const renderInstance = render(
+      <Dev
+        processes={[backendProcess]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        app={testApp}
+        pollingTime={200}
+      />,
+    )
+
+    await backendPromise
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press d │ toggle development store preview: ✔ on
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      "
+    `)
+
+    await waitForContent(renderInstance, 'off')
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press d │ toggle development store preview: ✖ off
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      "
+    `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test("doesn't poll for preview mode when the app does not support it", async () => {
@@ -448,16 +479,19 @@ describe('Dev', () => {
       "
     `)
 
-    expect(vi.mocked(fetchAppFromApiKey)).not.toHaveBeenCalled()
+    expect(vi.mocked(fetchAppPreviewMode)).not.toHaveBeenCalled()
     expect(vi.mocked(enableDeveloperPreview)).not.toHaveBeenCalled()
 
     renderInstance.stdin.write('d')
     expect(vi.mocked(developerPreviewUpdate)).not.toHaveBeenCalled()
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error message when polling for preview mode fails', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockRejectedValueOnce(new Error('something went wrong'))
+    vi.mocked(fetchAppPreviewMode).mockRejectedValueOnce(new Error('something went wrong'))
 
     const backendProcess = {
       prefix: 'backend',
@@ -487,7 +521,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -495,6 +529,9 @@ describe('Dev', () => {
       Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('enables preview mode when pressing d', async () => {
@@ -509,7 +546,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -531,16 +568,19 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✖ off
+      › Press d │ toggle development store preview: ✖ off
       › Press p │ preview in your browser
       › Press q │ quit
 
       Preview URL: https://shopify.com
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
-  test('shows an error message if enabling preview mode by pressing d fails', async () => {
+  test("shows an error message if enabling preview mode by pressing d doesn't succeed", async () => {
     // Given
     vi.mocked(developerPreviewUpdate).mockResolvedValueOnce(false)
 
@@ -574,7 +614,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -582,20 +622,14 @@ describe('Dev', () => {
       Failed to turn off development store preview.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
-  test('polls for preview mode', async () => {
+  test('shows an error message if enabling preview mode by pressing d throws an exception', async () => {
     // Given
-    vi.mocked(fetchAppFromApiKey).mockResolvedValueOnce({
-      developmentStorePreviewEnabled: false,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } as any)
-
-    let backendPromiseResolve: () => void
-
-    const backendPromise = new Promise<void>((resolve) => {
-      backendPromiseResolve = resolve
-    })
+    vi.mocked(developerPreviewUpdate).mockRejectedValueOnce(new Error('something went wrong'))
 
     const backendProcess = {
       prefix: 'backend',
@@ -603,8 +637,6 @@ describe('Dev', () => {
         stdout.write('first backend message')
         stdout.write('second backend message')
         stdout.write('third backend message')
-
-        backendPromiseResolve()
       },
     }
 
@@ -614,11 +646,13 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         app={testApp}
-        pollingTime={200}
       />,
     )
 
-    await backendPromise
+    await waitForInputsToBeReady()
+    renderInstance.stdin.write('d')
+
+    await waitForContent(renderInstance, 'Failed to turn off development store preview.')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -627,53 +661,30 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      Failed to turn off development store preview.
       "
     `)
 
-    await waitForContent(renderInstance, 'off')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ development store preview: ✖ off
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      "
-    `)
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('enables preview mode at startup', async () => {
     // Given
-    vi.mocked(enableDeveloperPreview).mockResolvedValueOnce(true)
-
     const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        app={{
-          ...testApp,
-          developmentStorePreviewEnabled: false,
-        }}
-      />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✖ off
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -681,19 +692,16 @@ describe('Dev', () => {
       "
     `)
 
-    await waitForContent(renderInstance, 'on')
+    // wait for useEffect callbacks to be run
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
+    expect(vi.mocked(enableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
+      apiKey: '123',
+      token: '123',
+    })
 
-      › Press d │ development store preview: ✔ on
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Preview URL: https://shopify.com
-      "
-    `)
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error message if enabling preview mode at startup fails', async () => {
@@ -701,15 +709,7 @@ describe('Dev', () => {
     vi.mocked(enableDeveloperPreview).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev
-        processes={[]}
-        abortController={new AbortController()}
-        previewUrl="https://shopify.com"
-        app={{
-          ...testApp,
-          developmentStorePreviewEnabled: false,
-        }}
-      />,
+      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
     )
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
@@ -718,7 +718,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✖ off
+      › Press d │ toggle development store preview: ✖ off
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -727,10 +727,13 @@ describe('Dev', () => {
       Try turning it on manually by pressing \`d\`.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 
   test('shows an error if handling input throws an error', async () => {
-    vi.mocked(developerPreviewUpdate).mockRejectedValueOnce(new Error('something went wrong'))
+    vi.mocked(openURL).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
       <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" app={testApp} />,
@@ -740,7 +743,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -749,7 +752,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('d')
+    renderInstance.stdin.write('p')
 
     await waitForContent(renderInstance, 'Failed to handle your input.')
 
@@ -757,7 +760,7 @@ describe('Dev', () => {
       "
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press d │ development store preview: ✔ on
+      › Press d │ toggle development store preview: ✔ on
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -765,5 +768,8 @@ describe('Dev', () => {
       Failed to handle your input.
       "
     `)
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
   })
 })

@@ -889,7 +889,7 @@
     },
     "app:function:build": {
       "id": "app:function:build",
-      "description": "Compile a Function to WASM.",
+      "description": "Compile a function to wasm.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
@@ -931,7 +931,7 @@
     },
     "app:function:run": {
       "id": "app:function:run",
-      "description": "Run a Function locally for testing.",
+      "description": "Run a function locally for testing.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
@@ -975,6 +975,15 @@
           "description": "The input JSON to pass to the function. If omitted, standard input is used.",
           "multiple": false
         },
+        "export": {
+          "name": "export",
+          "type": "option",
+          "char": "e",
+          "description": "Name of the wasm export to invoke.",
+          "hidden": false,
+          "multiple": false,
+          "default": "_start"
+        },
         "json": {
           "name": "json",
           "type": "boolean",
@@ -988,7 +997,7 @@
     },
     "app:function:schema": {
       "id": "app:function:schema",
-      "description": "Fetch the latest GraphQL schema for a Function.",
+      "description": "Fetch the latest GraphQL schema for a function.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
@@ -1057,7 +1066,7 @@
     },
     "app:function:typegen": {
       "id": "app:function:typegen",
-      "description": "Generate GraphQL types for a JavaScript Function.",
+      "description": "Generate GraphQL types for a JavaScript function.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
@@ -1224,7 +1233,7 @@
     },
     "app:generate:schema": {
       "id": "app:generate:schema",
-      "description": "Fetch the latest GraphQL schema for a Function.",
+      "description": "Fetch the latest GraphQL schema for a function.",
       "strict": true,
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",

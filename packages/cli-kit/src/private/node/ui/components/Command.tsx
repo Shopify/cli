@@ -9,7 +9,7 @@ interface CommandProps {
  * `Command` displays a command as non-dimmed text.
  */
 const Command: FunctionComponent<CommandProps> = ({command}): JSX.Element => {
-  return <Text>`{command}`</Text>
+  return <Text color="magentaBright">`{command}`</Text>
 }
 
 export {Command}
