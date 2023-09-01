@@ -16,6 +16,7 @@ import {
   addNPMDependencies,
   DependencyVersion,
   PackageJsonNotFoundError,
+  UnknownPackageManagerError,
 } from './node-package-manager.js'
 import {exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -605,7 +606,7 @@ describe('addResolutionOrOverride', () => {
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
-      await expect(result).rejects.toThrow(new FindUpAndReadPackageJsonNotFoundError(tmpDir))
+      await expect(result).rejects.toThrow(new PackageJsonNotFoundError(tmpDir))
     })
   })
 
@@ -777,16 +778,16 @@ describe('getPackageManager', () => {
     })
   })
 
-  test("throws a FindUpAndReadPackageJsonNotFoundError error if it can't find a package.json", async () => {
+  test("tries to guess the package manager from the environment if it can't find a package.json", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const subDirectory = joinPath(tmpDir, 'subdir')
       await mkdir(subDirectory)
 
       // When/Then
-      await expect(() => getPackageManager(subDirectory)).rejects.toThrowError(
-        new FindUpAndReadPackageJsonNotFoundError(subDirectory),
-      )
+      const packageManager = await getPackageManager(tmpDir)
+      // pnpm is used locally and in CI
+      expect(packageManager).toEqual('pnpm')
     })
   })
 })
@@ -858,6 +859,25 @@ describe('addNPMDependencies', () => {
       expect(mockedExec).toHaveBeenCalledWith('pnpm', ['add', 'first@0.0.1', 'second@0.0.2', '--save-prod'], {
         cwd: tmpDir,
       })
+    })
+  })
+
+  test('when the package manager is unknown an error is thrown', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dependencies: DependencyVersion[] = [
+        {name: 'first', version: '0.0.1'},
+        {name: 'second', version: '0.0.2'},
+      ]
+
+      // When/Then
+      await expect(
+        addNPMDependencies(dependencies, {
+          type: 'prod',
+          packageManager: 'unknown',
+          directory: tmpDir,
+        }),
+      ).rejects.toThrowError(UnknownPackageManagerError)
     })
   })
 })

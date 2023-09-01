@@ -5,6 +5,7 @@ import {
   packageManager,
   PackageManager,
   packageManagerFromUserAgent,
+  UnknownPackageManagerError,
   writePackageJSON,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
@@ -86,6 +87,8 @@ async function init(options: InitOptions) {
               // pnpm due to missing peerDependencies.
               await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
               break
+            case 'unknown':
+              throw new UnknownPackageManagerError()
           }
 
           await updateCLIDependencies({packageJSON, local: options.local, directory: templateScaffoldDir})
