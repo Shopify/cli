@@ -259,11 +259,12 @@ Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-e <value>] [-j]
+  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-i <value>] [-e <value>] [-j]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
   -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
+  -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
   -j, --json            Log the run result as a JSON object.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your function directory.

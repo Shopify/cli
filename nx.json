@@ -16,7 +16,8 @@
     },
     "refresh-manifests": {
       "dependsOn": [
-        "build"
+        "build",
+        "refresh-readme"
       ]
     },
     "refresh-readme": {
