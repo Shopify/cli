@@ -595,14 +595,14 @@ importers:
   packages/features:
     devDependencies:
       '@cucumber/cucumber':
-        specifier: ^9.3.0
-        version: 9.3.0
+        specifier: ^9.4.0
+        version: 9.4.0
       '@cucumber/messages':
         specifier: 22.0.0
         version: 22.0.0
       '@cucumber/pretty-formatter':
         specifier: 1.0.0
-        version: 1.0.0(@cucumber/cucumber@9.3.0)(@cucumber/messages@22.0.0)
+        version: 1.0.0(@cucumber/cucumber@9.4.0)(@cucumber/messages@22.0.0)
       '@types/fs-extra':
         specifier: ^9.0.13
         version: 9.0.13
@@ -2692,8 +2692,8 @@ packages:
       regexp-match-indices: 1.0.2
     dev: true
 
-  /@cucumber/cucumber@9.3.0:
-    resolution: {integrity: sha512-8QvcQVJzRra3pZpV0dITPcFuT2yYH0C1fEgzDlqe6+Zpz9k3z+ov9xUWEYgKp0VMx65JxNKAYYYWmG6cWOiYQQ==}
+  /@cucumber/cucumber@9.4.0:
+    resolution: {integrity: sha512-NYui5lwyGJatlrC3xiE861yQwICGIHVZvqLCv+IwG+wfqDpTW4WPrzX9qdgXTqoOfuhmY79MbkgnRPYs2Z1nkw==}
     engines: {node: 14 || 16 || >=18}
     hasBin: true
     dependencies:
@@ -2811,13 +2811,13 @@ packages:
       uuid: 9.0.0
     dev: true
 
-  /@cucumber/pretty-formatter@1.0.0(@cucumber/cucumber@9.3.0)(@cucumber/messages@22.0.0):
+  /@cucumber/pretty-formatter@1.0.0(@cucumber/cucumber@9.4.0)(@cucumber/messages@22.0.0):
     resolution: {integrity: sha512-wcnIMN94HyaHGsfq72dgCvr1d8q6VGH4Y6Gl5weJ2TNZw1qn2UY85Iki4c9VdaLUONYnyYH3+178YB+9RFe/Hw==}
     peerDependencies:
       '@cucumber/cucumber': '>=7.0.0'
       '@cucumber/messages': '*'
     dependencies:
-      '@cucumber/cucumber': 9.3.0
+      '@cucumber/cucumber': 9.4.0
       '@cucumber/messages': 22.0.0
       ansi-styles: 5.2.0
       cli-table3: 0.6.3
@@ -8458,7 +8458,7 @@ packages:
     resolution: {integrity: sha512-q7SeFAEFMyKxTblyVI+CsxHzfiMMP9JUDG0cRmOKEAmJiYrtrDW1YYTv129RXqfn7fMKcVc4h/LbAJvqvZIuEQ==}
     engines: {node: '>=14.16'}
     peerDependencies:
-      '@types/react': 17.0.2
+      '@types/react': '>=18.0.0'
       react: '>=18.0.0'
       react-devtools-core: ^4.19.1
     peerDependenciesMeta:
@@ -13023,7 +13023,7 @@ packages:
   /vite-tsconfig-paths@3.6.0(vite@4.4.8):
     resolution: {integrity: sha512-UfsPYonxLqPD633X8cWcPFVuYzx/CMNHAjZTasYwX69sXpa4gNmQkR0XCjj82h7zhLGdTWagMjC1qfb9S+zv0A==}
     peerDependencies:
-      vite: 4.4.8
+      vite: '>2.0.0-0'
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       globrex: 0.1.2
