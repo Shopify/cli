@@ -36,7 +36,9 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
     setStatusMessage('Shutting down dev ...')
     setTimeout(() => {
       if (isUnitTest()) return
-      treeKill('SIGINT')
+      treeKill(process.pid, 'SIGINT', false, () => {
+        process.exit(0)
+      })
     }, 2000)
     clearInterval(pollingInterval.current)
     await disableDeveloperPreview({apiKey, token})
