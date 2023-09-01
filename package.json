@@ -72,7 +72,7 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.6.1",
     "typescript": "5.0.4",
-    "@nx/workspace": "16.6.0",
+    "@nx/workspace": "16.7.4",
     "@nx/js": "16.6.0",
     "@nx/eslint-plugin": "16.6.0"
   },
