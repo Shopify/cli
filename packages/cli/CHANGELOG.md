@@ -1,5 +1,13 @@
 # @shopify/cli
 
+## 3.48.6
+
+### Patch Changes
+
+- b23feb19d: Updated the simplified deployments info banner
+  - @shopify/cli-kit@3.48.6
+  - @shopify/plugin-did-you-mean@3.48.6
+
 ## 3.48.5
 
 ### Patch Changes
