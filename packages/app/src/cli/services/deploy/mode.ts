@@ -64,8 +64,8 @@ function displayDeployLegacyBanner(packageManager: PackageManager) {
           ],
         },
       },
-      'All apps will be automatically upgraded on',
-      {bold: 'Sept 5, 2023.'},
+      'All apps will be automatically upgraded in',
+      {bold: 'September 2023.'},
     ],
     reference: [
       {
