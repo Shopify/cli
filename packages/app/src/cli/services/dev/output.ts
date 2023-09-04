@@ -167,7 +167,20 @@ function buildPollForDevPreviewMode(apiKey: string, token: string, interval = 5)
 
     return new Promise<void>((_resolve, _reject) => {
       const onPoll = async () => {
-        const enabled = await fetchAppPreviewMode(apiKey, token)
+        let loadedAppPreviewMode = false
+        let enabled: boolean | undefined
+        try {
+          enabled = await fetchAppPreviewMode(apiKey, token)
+          loadedAppPreviewMode = true
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          outputDebug('Error fetching dev preview mode, retrying...')
+        }
+
+        if (!loadedAppPreviewMode) {
+          return
+        }
+
         const currentShortcutAction = footerContext.footer?.shortcuts.find((shortcut) => shortcut.key === 'd')
         if (!currentShortcutAction) return
         const newShortcutAction = buildDevPreviewShortcut({
