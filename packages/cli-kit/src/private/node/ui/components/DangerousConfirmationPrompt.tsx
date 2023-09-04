@@ -7,7 +7,7 @@ import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
-import React, {FunctionComponent, useCallback, useState} from 'react'
+import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 
@@ -49,8 +49,6 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
     if (key.escape) {
       setPromptState(PromptState.Cancelled)
       setError(undefined)
-      onSubmit(false)
-      unmountInk()
     }
 
     if (key.return) {
@@ -61,11 +59,19 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
         setError(error)
       } else {
         setPromptState(PromptState.Submitted)
-        onSubmit(true)
-        unmountInk()
       }
     }
   })
+
+  useEffect(() => {
+    if (promptState === PromptState.Submitted) {
+      onSubmit(true)
+      unmountInk()
+    } else if (promptState === PromptState.Cancelled) {
+      onSubmit(false)
+      unmountInk()
+    }
+  }, [onSubmit, promptState, unmountInk])
 
   const completed = promptState === PromptState.Submitted || promptState === PromptState.Cancelled
 

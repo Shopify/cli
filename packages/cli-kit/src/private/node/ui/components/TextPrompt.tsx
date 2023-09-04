@@ -6,7 +6,7 @@ import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
-import React, {FunctionComponent, useCallback, useState} from 'react'
+import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 
@@ -74,11 +74,16 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
         setError(error)
       } else {
         setPromptState(PromptState.Submitted)
-        onSubmit(answerOrDefault)
-        unmountInk()
       }
     }
   })
+
+  useEffect(() => {
+    if (promptState === PromptState.Submitted) {
+      onSubmit(answerOrDefault)
+      unmountInk()
+    }
+  }, [answerOrDefault, onSubmit, promptState, unmountInk])
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>

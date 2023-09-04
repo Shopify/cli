@@ -7,7 +7,7 @@ import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
-import React, {ReactElement, useCallback, useRef, useState} from 'react'
+import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
 import {Box, useApp} from 'ink'
 
 export interface SearchResults<T> {
@@ -65,13 +65,18 @@ function AutocompletePrompt<T>({
       if (promptState === PromptState.Idle) {
         setAnswer(answer)
         setPromptState(PromptState.Submitted)
-        setSearchTerm('')
-        unmountInk()
-        onSubmit(answer.value)
       }
     },
-    [promptState, setAnswer, setPromptState, unmountInk, onSubmit],
+    [promptState, setAnswer, setPromptState],
   )
+
+  useEffect(() => {
+    if (promptState === PromptState.Submitted && answer) {
+      setSearchTerm('')
+      unmountInk()
+      onSubmit(answer.value)
+    }
+  }, [answer, onSubmit, promptState, unmountInk])
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 
