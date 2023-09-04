@@ -72,6 +72,7 @@ export interface UIExtensionPayload {
   handle: string
   // user facing name for the extension
   name: string
+  description?: string
   approvalScopes: string[]
 }
 

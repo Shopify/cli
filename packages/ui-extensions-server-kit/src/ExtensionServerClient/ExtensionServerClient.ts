@@ -87,6 +87,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        *  extensionPoints: [{
        *    target: 'admin.product.item.action'
        *    name: 'en name'
+       *    description: 'en description'
        *    localization: {...}
        *  }],
        * }
@@ -220,8 +221,14 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         localization,
         name:
           parsedTranslation && extension.name.startsWith('t:')
-            ? this._getLocalizedName(parsedTranslation, extension.name)
+            ? this._getLocalizedValue(parsedTranslation, extension.name)
             : extension.name,
+        ...(extension.description && {
+          description:
+            parsedTranslation && extension.description?.startsWith('t:')
+              ? this._getLocalizedValue(parsedTranslation, extension.description)
+              : extension.description,
+        }),
       }
 
       this.uiExtensionsByUuid[extension.uuid] = {
@@ -235,7 +242,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   private _getLocalizedExtensionPoints(
     localization: FlattenedLocalization | Localization | null | undefined,
-    {extensionPoints, name}: ExtensionServer.UIExtension,
+    {extensionPoints, name, description}: ExtensionServer.UIExtension,
   ): ExtensionPoint[] {
     if (!localization || !isFlattenedTranslations(localization)) {
       return extensionPoints
@@ -246,13 +253,14 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         ...extensionPoint,
         localization,
         name,
+        ...(description && {description}),
       }
     })
   }
 
-  private _getLocalizedName(translations: {[x: string]: string}, name: string): string {
-    const translationKey = name.replace('t:', '')
-    return translations[translationKey] || name
+  private _getLocalizedValue(translations: {[x: string]: string}, value: string): string {
+    const translationKey = value.replace('t:', '')
+    return translations[translationKey] || value
   }
 }
 
