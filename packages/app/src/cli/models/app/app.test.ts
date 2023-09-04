@@ -1,4 +1,6 @@
 import {
+  AppSchema,
+  LegacyAppSchema,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
   getAppScopes,
@@ -15,7 +17,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 const DEFAULT_APP = testApp()
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
-  path: '',
   name: 'app 1',
   client_id: '12345',
   webhooks: {
@@ -49,7 +50,6 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
 }
 
 const CORRECT_LEGACY_APP_SCHEMA: LegacyAppConfiguration = {
-  path: '',
   extension_directories: [],
   web_directories: [],
   scopes: 'write_products',
@@ -197,6 +197,23 @@ describe('getAppScopesArray', () => {
   test('returns the access_scopes.scopes key when schema is current', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+  })
+})
+
+describe('correcting app scopes string', () => {
+  test('when schema is legacy', () => {
+    const config = LegacyAppSchema.safeParse({
+      ...CORRECT_LEGACY_APP_SCHEMA,
+      scopes: 'write_products , read_products',
+    }).data
+    expect(config.scopes).toEqual('write_products,read_products')
+  })
+  test('when schema is current', () => {
+    const config = AppSchema.safeParse({
+      ...CORRECT_CURRENT_APP_SCHEMA,
+      access_scopes: {scopes: 'write_products , read_products'},
+    }).data
+    expect(config.access_scopes.scopes).toEqual('write_products,read_products')
   })
 })
 

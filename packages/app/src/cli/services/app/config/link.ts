@@ -200,6 +200,7 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
   } else {
     return {
+      scopes: '',
       use_legacy_install_flow: true,
     }
   }
