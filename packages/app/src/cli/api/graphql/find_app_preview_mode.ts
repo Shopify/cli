@@ -1,7 +1,7 @@
 import {gql} from 'graphql-request'
 
 export const FindAppPreviewModeQuery = gql`
-  query FindApp($apiKey: String!) {
+  query FindAppPreviewMode($apiKey: String!) {
     app(apiKey: $apiKey) {
       developmentStorePreviewEnabled
     }
