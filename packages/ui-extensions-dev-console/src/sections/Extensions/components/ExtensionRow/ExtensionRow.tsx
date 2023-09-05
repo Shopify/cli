@@ -2,7 +2,7 @@ import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 
 import {PreviewLinks} from './components'
-import {NotApplicable, QRCodeModal, Row, Status, View} from '..'
+import {NotApplicable, QRCodeModal, Row, Status} from '..'
 import {useExtension} from '../../hooks/useExtension'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
