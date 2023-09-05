@@ -57,7 +57,7 @@ export class UnknownPackageManagerError extends AbortError {
  */
 export class PackageJsonNotFoundError extends AbortError {
   constructor(directory: string) {
-    super(`The directory ${directory} doesn't have a package.json.`)
+    super(outputContent`The directory ${outputToken.path(directory)} doesn't have a package.json.`)
   }
 }
 
