@@ -1,5 +1,13 @@
 # @shopify/cli
 
+## 3.48.7
+
+### Patch Changes
+
+- b4b5f71d7: Ignore errors fetching dev preview option
+  - @shopify/cli-kit@3.48.7
+  - @shopify/plugin-did-you-mean@3.48.7
+
 ## 3.48.6
 
 ### Patch Changes
