@@ -2,7 +2,7 @@ import * as styles from './ExtensionRow.module.scss'
 import en from './translations/en.json'
 
 import {PreviewLinks} from './components'
-import {QRCodeModal, Row, Status, View} from '..'
+import {NotApplicable, QRCodeModal, Row, Status, View} from '..'
 import {useExtension} from '../../hooks/useExtension'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
@@ -63,7 +63,7 @@ export function ExtensionRow({uuid}: Props) {
         />
       </td>
       <td>
-        <View show={show} hide={hide} hidden={extension.development.hidden} />
+        <NotApplicable />
       </td>
       <td>
         <Status status={extension.development.status} />
