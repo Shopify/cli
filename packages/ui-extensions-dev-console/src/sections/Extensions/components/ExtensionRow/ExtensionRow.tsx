@@ -63,9 +63,6 @@ export function ExtensionRow({uuid}: Props) {
         />
       </td>
       <td>
-        <NotApplicable />
-      </td>
-      <td>
         <Status status={extension.development.status} />
       </td>
     </Row>

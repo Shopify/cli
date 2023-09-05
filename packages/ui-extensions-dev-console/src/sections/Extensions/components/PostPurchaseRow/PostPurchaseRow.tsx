@@ -2,7 +2,7 @@ import * as styles from './PostPurchaseRow.module.scss'
 import en from './translations/en.json'
 
 import {PostPurchaseModal} from './components'
-import {Row, Status, View} from '..'
+import {Row, Status} from '..'
 import {useExtension} from '../../hooks/useExtension.js'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
@@ -39,9 +39,6 @@ export function PostPurchaseRow({uuid}: Props) {
         <PostPurchaseModal onClose={() => setShowModal(false)} url={extension.development.root.url} open={showModal} />
       </td>
       <td></td>
-      <td>
-        <View hidden={extension.development.hidden} show={show} hide={hide} />
-      </td>
       <td>
         <Status status={extension.development.status} />
       </td>

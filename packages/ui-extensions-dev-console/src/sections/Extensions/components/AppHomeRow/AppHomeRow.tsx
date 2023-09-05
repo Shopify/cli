@@ -52,9 +52,6 @@ export function AppHomeRow() {
       <td>
         <NotApplicable />
       </td>
-      <td>
-        <NotApplicable />
-      </td>
     </Row>
   )
 }
