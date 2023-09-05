@@ -17,7 +17,7 @@ vi.mock('..', () => ({
   QRCodeModal: () => null,
   Row: (props: any) => props.children,
   Status: () => null,
-  View: () => null,
+  NotApplicable: () => null,
 }))
 
 mockI18n(en)
