@@ -7,10 +7,7 @@ import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
 import {useApp} from './hooks/useApp'
 import {useI18n} from '@shopify/react-i18n'
 import React from 'react'
-import {QuestionMarkMajor} from '@shopify/polaris-icons'
-import {Icon} from '@/components/Icon'
 import {isEmbedded} from '@/utilities/embedded'
-import {Tooltip} from '@/components/Tooltip'
 
 export function Extensions() {
   const [i18n] = useI18n({
