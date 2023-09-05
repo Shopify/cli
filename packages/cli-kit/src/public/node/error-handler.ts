@@ -65,7 +65,10 @@ const reportError = async (error: unknown, config?: Interfaces.Config): Promise<
 export async function sendErrorToBugsnag(
   error: unknown,
 ): Promise<{reported: false; error: unknown} | {error: Error; reported: true}> {
-  if (settings.debug || !shouldReportError(error)) return {reported: false, error}
+  if (settings.debug || !shouldReportError(error)) {
+    outputDebug(`Skipping Bugsnag report`)
+    return {reported: false, error}
+  }
 
   let reportableError: Error
   let stacktrace: string | undefined
@@ -104,9 +107,8 @@ export async function sendErrorToBugsnag(
   if (report) {
     initializeBugsnag()
     await new Promise((resolve, reject) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      Bugsnag.notify(reportableError, undefined, (error, event) => {
+      outputDebug(`Reporting error to Bugsnag: ${reportableError.message}`)
+      Bugsnag.notify(reportableError, undefined, (error: unknown) => {
         if (error) {
           reject(error)
         } else {
