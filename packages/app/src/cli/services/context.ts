@@ -40,7 +40,7 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {TokenItem, renderError, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
@@ -214,7 +214,7 @@ const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command
 
 const appFromId = async (appId: string, token: string): Promise<OrganizationApp> => {
   const app = await fetchAppDetailsFromApiKey(appId, token)
-  if (!app) throw new BugError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
+  if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
   return app
 }
 
@@ -224,7 +224,7 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
     await convertToTestStoreIfNeeded(result.store, orgId, token)
     return result.store
   } else {
-    throw new BugError(`Couldn't find the store with domain "${storeFqdn}". ${resetHelpMessage}`)
+    throw new AbortError(`Couldn't find the store with domain "${storeFqdn}". ${resetHelpMessage}`)
   }
 }
 
@@ -549,11 +549,11 @@ async function fetchDevDataFromOptions(
     (async () => {
       if (options.storeFqdn) {
         const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
-        if (!orgWithStore) throw new BugError(`Could not find Organization for id ${orgId}.`)
+        if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
         if (!orgWithStore.store) {
           const partners = await partnersFqdn()
           const org = orgWithStore.organization
-          throw new BugError(
+          throw new AbortError(
             `Could not find ${options.storeFqdn} in the Organization ${org.businessName} as a valid store.`,
             `Visit https://${partners}/${org.id}/stores to create a new development or Shopify Plus sandbox store in your organization`,
           )
