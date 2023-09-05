@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Shopify Partners Community 🙌
-    url: https://www.shopify.com/partners/community#conversation
+    url: https://community.shopify.com/c/partners-and-developers/ct-p/appdev
     about: Connect with Shopify and other Shopify Partners through our online communities!
   - name: Shopify CLI 2.0 issues 📝
     url: https://www.github.com/Shopify/shopify-cli/issues/new/choose
