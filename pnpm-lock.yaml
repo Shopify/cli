@@ -188,8 +188,8 @@ importers:
         specifier: 1.18.1
         version: 1.18.1
       ink:
-        specifier: 4.3.0
-        version: 4.3.0(@types/react@17.0.2)(react@18.2.0)
+        specifier: 4.4.0
+        version: 4.4.0(@types/react@17.0.2)(react@18.2.0)
       javy-cli:
         specifier: 0.1.8
         version: 0.1.8
@@ -382,8 +382,8 @@ importers:
         specifier: 5.2.0
         version: 5.2.0(graphql@16.4.0)
       ink:
-        specifier: 4.3.0
-        version: 4.3.0(@types/react@17.0.2)(react@18.2.0)
+        specifier: 4.4.0
+        version: 4.4.0(@types/react@17.0.2)(react@18.2.0)
       is-interactive:
         specifier: 2.0.0
         version: 2.0.0
@@ -8467,8 +8467,8 @@ packages:
     engines: {node: '>=10'}
     dev: true
 
-  /ink@4.3.0(@types/react@17.0.2)(react@18.2.0):
-    resolution: {integrity: sha512-c+/4o5/VdAy3jGU7Q+HB/tU0smIFEcpOJbP53WVL+pjcy1uBpPg0OmC7QVsTrAFwwIlGBxi9VOde6FiW83j1YA==}
+  /ink@4.4.0(@types/react@17.0.2)(react@18.2.0):
+    resolution: {integrity: sha512-WEUkpgW6b/0yu30xYKNTxkpF90SzoTCzo0o96XEWZXQG+RmmadYC0nWgzmK0jy9pcsIDs1dqUBa+ihcJu1kfKQ==}
     engines: {node: '>=14.16'}
     peerDependencies:
       '@types/react': '>=18.0.0'
