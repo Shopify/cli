@@ -96,6 +96,10 @@ export interface ExtensionPoint {
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
 
+export interface CollectBuyerConsentCapability {
+  smsMarketing: boolean,
+}
+
 export interface ExtensionPayload {
   type: string
   externalType: string
@@ -122,6 +126,7 @@ export interface ExtensionPayload {
     apiAccess: boolean
     blockProgress: boolean
     networkAccess: boolean
+    collectBuyerConsent: CollectBuyerConsentCapability
   }
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]

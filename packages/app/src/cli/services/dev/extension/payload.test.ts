@@ -34,6 +34,9 @@ describe('getUIExtensionPayload', () => {
             block_progress: false,
             network_access: true,
             api_access: true,
+            collect_buyer_consent: {
+              sms_marketing: true,
+            },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
         },
@@ -81,6 +84,9 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: true,
           apiAccess: true,
+          collectBuyerConsent: {
+            smsMarketing: true,
+          },
         },
         development: {
           hidden: true,

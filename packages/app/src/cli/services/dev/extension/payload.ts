@@ -32,6 +32,9 @@ export async function getUIExtensionPayload(
       blockProgress: extension.configuration.capabilities?.block_progress || false,
       networkAccess: extension.configuration.capabilities?.network_access || false,
       apiAccess: extension.configuration.capabilities?.api_access || false,
+      collectBuyerConsent: {
+        smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
+      },
     },
     development: {
       ...options.currentDevelopmentPayload,
