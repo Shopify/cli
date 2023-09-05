@@ -121,10 +121,11 @@ describe('bugsnag metadata', () => {
 })
 
 describe('send to Bugsnag', () => {
-  test('processes Error instances', async () => {
+  test('processes Error instances as unhandled', async () => {
     const toThrow = new Error('In test')
     const res = await sendErrorToBugsnag(toThrow)
     expect(res.reported).toEqual(true)
+    expect(res.unhandled).toEqual(true)
 
     const {error} = res as any
 
@@ -141,10 +142,11 @@ describe('send to Bugsnag', () => {
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
-  test('ignores fatals', async () => {
+  test('processes AbortErrors as handled', async () => {
     const res = await sendErrorToBugsnag(new error.AbortError('In test'))
-    expect(res.reported).toEqual(false)
-    expect(onNotify).not.toHaveBeenCalled()
+    expect(res.reported).toEqual(true)
+    expect(res.unhandled).toEqual(false)
+    expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
   test.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {

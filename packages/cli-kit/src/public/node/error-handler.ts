@@ -18,6 +18,7 @@ import {CLI_KIT_VERSION} from '../common/version.js'
 import {Bugsnag} from '../../private/node/error-handler.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
+import {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
 export function errorHandler(
@@ -64,11 +65,14 @@ const reportError = async (error: unknown, config?: Interfaces.Config): Promise<
  */
 export async function sendErrorToBugsnag(
   error: unknown,
-): Promise<{reported: false; error: unknown} | {error: Error; reported: true}> {
-  if (settings.debug || !shouldReportError(error)) {
+): Promise<{reported: false; error: unknown; unhandled: unknown} | {error: Error; reported: true; unhandled: boolean}> {
+  if (settings.debug) {
     outputDebug(`Skipping Bugsnag report`)
-    return {reported: false, error}
+    return {reported: false, error, unhandled: undefined}
   }
+
+  let unhandled = false
+  if (shouldReportError(error)) unhandled = true
 
   let reportableError: Error
   let stacktrace: string | undefined
@@ -107,17 +111,22 @@ export async function sendErrorToBugsnag(
   if (report) {
     initializeBugsnag()
     await new Promise((resolve, reject) => {
-      outputDebug(`Reporting error to Bugsnag: ${reportableError.message}`)
-      Bugsnag.notify(reportableError, undefined, (error: unknown) => {
+      outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
+      const eventHandler = (event: Event) => {
+        event.severity = 'error'
+        event.unhandled = unhandled
+      }
+      const errorHandler = (error: unknown) => {
         if (error) {
           reject(error)
         } else {
           resolve(reportableError)
         }
-      })
+      }
+      Bugsnag.notify(reportableError, eventHandler, errorHandler)
     })
   }
-  return {error: reportableError, reported: report}
+  return {error: reportableError, reported: report, unhandled}
 }
 
 /**
