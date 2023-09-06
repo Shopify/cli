@@ -36,8 +36,18 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
 /**
  * A union that represents the package managers available.
  */
-export const packageManager = ['yarn', 'npm', 'pnpm'] as const
+export const packageManager = ['yarn', 'npm', 'pnpm', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
+
+/**
+ * Returns an abort error that's thrown when the package manager can't be determined.
+ * @returns An abort error.
+ */
+export class UnknownPackageManagerError extends AbortError {
+  constructor() {
+    super('Unknown package manager')
+  }
+}
 
 /**
  * Returns an abort error that's thrown when a directory that's expected to have
@@ -47,7 +57,7 @@ export type PackageManager = (typeof packageManager)[number]
  */
 export class PackageJsonNotFoundError extends AbortError {
   constructor(directory: string) {
-    super(`The directory ${directory} doesn't have a package.json.`)
+    super(outputContent`The directory ${outputToken.path(directory)} doesn't have a package.json.`)
   }
 }
 
@@ -68,7 +78,7 @@ export class FindUpAndReadPackageJsonNotFoundError extends BugError {
  * @param env - The environment variables of the process in which the CLI runs.
  * @returns The dependency manager
  */
-export function packageManagerUsedForCreating(env = process.env): PackageManager | 'unknown' {
+export function packageManagerFromUserAgent(env = process.env): PackageManager {
   if (env.npm_config_user_agent?.includes('yarn')) {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
@@ -80,14 +90,14 @@ export function packageManagerUsedForCreating(env = process.env): PackageManager
 }
 
 /**
- * Returns the dependency manager used by an existing project.
+ * Returns the dependency manager used in a directory.
  * @param fromDirectory - The starting directory
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
   const packageJson = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (!packageJson) {
-    throw new FindUpAndReadPackageJsonNotFoundError(fromDirectory)
+    return packageManagerFromUserAgent()
   }
   const directory = dirname(packageJson)
   outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
@@ -431,6 +441,8 @@ export async function addNPMDependencies(
         argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type, Boolean(options.addToRootDirectory)),
       )
       break
+    case 'unknown':
+      throw new UnknownPackageManagerError()
   }
 }
 
