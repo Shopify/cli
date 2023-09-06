@@ -3,10 +3,9 @@ import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess}
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
+import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {AppInterface, getAppScopes, getAppScopesArray} from '../../../models/app/app.js'
-import {setupGraphiQLServer} from '../graphiql/server.js'
-import {Writable} from 'node:stream'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -17,10 +16,6 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 
 export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
-}
-
-export interface GraphiQLServerProcess extends BaseProcess<{port: number}> {
-  type: 'graphiql'
 }
 
 type DevProcessDefinition =
@@ -56,34 +51,6 @@ export interface DevConfig {
   usesUnifiedDeployment: boolean
 }
 
-async function setupGraphiQLProcess(options: {
-  app: AppInterface
-  apiKey: string
-  apiSecret?: string
-  storeFqdn: string
-  url: string
-  port: number
-  scopes: string[]
-}): Promise<GraphiQLServerProcess | undefined> {
-  if (!options.apiSecret) return
-
-  const optionsWithDefiniteApiSecret = {
-    ...options,
-    apiSecret: options.apiSecret!,
-  }
-  return {
-    type: 'graphiql',
-    prefix: '/graphiql',
-    options: {port: options.port},
-    function: async ({stdout, stderr, abortSignal}, {port}: {port: number}) => {
-      const httpServer = setupGraphiQLServer({...optionsWithDefiniteApiSecret, stdout})
-      abortSignal.addEventListener('abort', async () => {
-        await httpServer.close()
-      })
-    },
-  }
-}
-
 export async function setupDevProcesses({
   localApp,
   remoteAppUpdated,
@@ -108,7 +75,7 @@ export async function setupDevProcesses({
       apiSecret,
       scopes: getAppScopes(localApp.configuration),
     })),
-    await setupGraphiQLProcess({
+    await setupGraphiQLServerProcess({
       app: localApp,
       apiKey,
       apiSecret,
