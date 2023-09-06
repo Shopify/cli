@@ -26,6 +26,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
           details: zod.string(),
         })
         .optional(),
+      handle: zod.string().optional(),
     })
     .optional(),
   api_version: zod.string(),
@@ -106,6 +107,7 @@ const spec = createExtensionSpecification({
               details_path: config.ui.paths.details,
               create_path: config.ui.paths.create,
             },
+            handle: config.ui?.handle,
           }
         : undefined,
       enable_creation_ui: config.ui?.enable_create ?? true,

@@ -44,6 +44,7 @@ describe('functionConfiguration', () => {
             details: '/details/:id',
           },
           enable_create: true,
+          handle: 'linked-ext-handle',
         },
         configuration_ui: false,
         api_version: '2022-07',
@@ -80,6 +81,7 @@ describe('functionConfiguration', () => {
             details_path: extension.configuration.ui!.paths!.details,
             create_path: extension.configuration.ui!.paths!.create,
           },
+          handle: extension.configuration.ui!.handle,
         },
         input_query: inputQuery,
         input_query_variables: {
