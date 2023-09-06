@@ -20,7 +20,6 @@ vi.mock('..', async () => {
     ...{
       Row: (props: any) => props.children,
       Status: () => null,
-      View: () => null,
     },
   }
 })
