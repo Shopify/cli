@@ -131,6 +131,7 @@ export function setupGraphiQLServer({
     try {
       const {body} = await client.query({data: req.body})
       res.json(body)
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       res.status(500).json({errors: [error]})
     }

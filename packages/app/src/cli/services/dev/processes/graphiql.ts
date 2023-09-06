@@ -1,7 +1,6 @@
-import {BaseProcess, DevProcessFunction} from './types.js'
+import {BaseProcess} from './types.js'
 import {setupGraphiQLServer} from '../graphiql/server.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {Writable} from 'node:stream'
 
 interface GraphiQLServerProcessOptions {
   app: AppInterface
@@ -13,16 +12,18 @@ interface GraphiQLServerProcessOptions {
   scopes: string[]
 }
 
-export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions > {
+export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions> {
   type: 'graphiql'
 }
 
-export async function setupGraphiQLServerProcess(options: GraphiQLServerProcessOptions): Promise<GraphiQLServerProcess | undefined> {
+export async function setupGraphiQLServerProcess(
+  options: GraphiQLServerProcessOptions,
+): Promise<GraphiQLServerProcess | undefined> {
   if (!options.apiSecret) return
 
   const optionsWithDefiniteApiSecret = {
     ...options,
-    apiSecret: options.apiSecret!,
+    apiSecret: options.apiSecret,
   }
 
   return {
