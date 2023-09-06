@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.9.0
+
+### Minor Changes
+
+- 2615b9765: Add new dev docs search command
+
 ## 0.8.0
 
 ### Minor Changes
