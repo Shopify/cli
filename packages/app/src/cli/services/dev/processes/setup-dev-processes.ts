@@ -4,7 +4,9 @@ import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes, getAppScopesArray} from '../../../models/app/app.js'
+import {setupGraphiQLServer} from '../graphiql/server.js'
+import {Writable} from 'node:stream'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -17,6 +19,10 @@ export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[
   type: 'proxy-server'
 }
 
+export interface GraphiQLServerProcess extends BaseProcess<{port: number}> {
+  type: 'graphiql'
+}
+
 type DevProcessDefinition =
   | SendWebhookProcess
   | PreviewThemeAppExtensionsProcess
@@ -24,6 +30,7 @@ type DevProcessDefinition =
   | ProxyServerProcess
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
+  | GraphiQLServerProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -49,6 +56,34 @@ export interface DevConfig {
   usesUnifiedDeployment: boolean
 }
 
+async function setupGraphiQLProcess(options: {
+  app: AppInterface
+  apiKey: string
+  apiSecret?: string
+  storeFqdn: string
+  url: string
+  port: number
+  scopes: string[]
+}): Promise<GraphiQLServerProcess | undefined> {
+  if (!options.apiSecret) return
+
+  const optionsWithDefiniteApiSecret = {
+    ...options,
+    apiSecret: options.apiSecret!,
+  }
+  return {
+    type: 'graphiql',
+    prefix: '/graphiql',
+    options: {port: options.port},
+    function: async ({stdout, stderr, abortSignal}, {port}: {port: number}) => {
+      const httpServer = setupGraphiQLServer({...optionsWithDefiniteApiSecret, stdout})
+      abortSignal.addEventListener('abort', async () => {
+        await httpServer.close()
+      })
+    },
+  }
+}
+
 export async function setupDevProcesses({
   localApp,
   remoteAppUpdated,
@@ -58,9 +93,10 @@ export async function setupDevProcesses({
   commandOptions,
   network,
   usesUnifiedDeployment,
-}: Omit<DevConfig, 'partnerUrlsUpdated'>): Promise<{processes: DevProcesses; previewUrl: string}> {
+}: Omit<DevConfig, 'partnerUrlsUpdated'>): Promise<{processes: DevProcesses; previewUrl: string; graphiqlUrl: string}> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
+  const graphiqlPort = await getAvailableTCPPort()
 
   const processes = [
     ...(await setupWebProcesses({
@@ -72,6 +108,15 @@ export async function setupDevProcesses({
       apiSecret,
       scopes: getAppScopes(localApp.configuration),
     })),
+    await setupGraphiQLProcess({
+      app: localApp,
+      apiKey,
+      apiSecret,
+      storeFqdn,
+      url: network.proxyUrl.replace(/^https?:\/\//, ''),
+      port: graphiqlPort,
+      scopes: getAppScopesArray(localApp.configuration),
+    }),
     await setupPreviewableExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,
@@ -124,7 +169,7 @@ export async function setupDevProcesses({
       ? `${network.proxyUrl}/extensions/dev-console`
       : buildAppURLForWeb(storeFqdn, apiKey)
 
-  return {processes: processesWithProxy, previewUrl}
+  return {processes: processesWithProxy, previewUrl, graphiqlUrl: `${network.proxyUrl}/graphiql`}
 }
 
 const stripUndefineds = <T>(process: T | undefined | false): process is T => {
@@ -150,6 +195,9 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
         const targetPort = await getAvailableTCPPort()
         rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
+      } else if (process.type === 'graphiql') {
+        const targetPort = process.options.port
+        rules[process.prefix] = `http://localhost:${targetPort}`
       }
 
       return {process, rules}

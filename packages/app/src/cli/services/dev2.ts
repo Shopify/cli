@@ -35,9 +35,9 @@ export async function dev(commandOptions: DevOptions) {
   renderWarning({body: 'Running in new dev mode! Pass SHOPIFY_CLI_NEW_DEV=0 to run in old mode.'})
   const config = await prepareForDev(commandOptions)
   await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, previewUrl} = await setupDevProcesses(config)
+  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)
-  await launchDevProcesses({processes, previewUrl, config})
+  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -241,10 +241,12 @@ async function setupNetworkingOptions(
 async function launchDevProcesses({
   processes,
   previewUrl,
+  graphiqlUrl,
   config,
 }: {
   processes: DevProcesses
   previewUrl: string
+  graphiqlUrl: string
   config: DevConfig
 }) {
   const abortController = new AbortController()
@@ -269,7 +271,7 @@ async function launchDevProcesses({
   return renderDev({
     processes: processesForTaskRunner,
     previewUrl,
-    graphiqlUrl: '',
+    graphiqlUrl,
     app,
     abortController,
   })
