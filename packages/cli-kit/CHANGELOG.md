@@ -1,5 +1,26 @@
 # @shopify/cli-kit
 
+## 3.49.0
+
+### Minor Changes
+
+- b2e93d9c3: Validate deploy flags in non-TTY environments
+- b4c9439c4: add Github attempt number to getCIMetadata
+
+### Patch Changes
+
+- 6211a4aea: Only report non-200 statuses on GraphQL errors
+- 8f5ac815e: Remove dev preview enabled flickering status
+- f1a774c78: Notify theme/theme extension updates when the workers have gone idle
+- 1914affaf: Fix pnpm shopify upgrade for workspaces
+- 8d3578b87: Fix internal server error issue in the `shopify theme dev` command
+- 6ab0ce1a8: Include Request ID in error message
+- d230b8773: - Enable dev preview mode on startup.
+  - Add dev log footer shortcut to toggle dev preview mode on/off.
+  - Disabke dev preview mode when exit
+- 3c88932af: Fix loading of custom fonts
+- c4396fd58: Make commands pop with magenta coloring
+
 ## 3.48.0
 
 ### Minor Changes
