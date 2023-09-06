@@ -31,9 +31,9 @@ export const mount = createMount<MountOptions, Context>({
       () =>
         new I18nManager({
           locale,
-          onError(error) {
+          onError(err) {
             // eslint-disable-next-line no-console
-            console.log(error)
+            console.log(err)
           },
         }),
       [],
