@@ -606,7 +606,7 @@ describe('addResolutionOrOverride', () => {
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
-      await expect(result).rejects.toThrow(new PackageJsonNotFoundError(tmpDir))
+      await expect(result).rejects.toThrow(new PackageJsonNotFoundError(normalizePath(tmpDir)))
     })
   })
 
