@@ -18,20 +18,13 @@ export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcess
 
 export async function setupGraphiQLServerProcess(
   options: GraphiQLServerProcessOptions,
-): Promise<GraphiQLServerProcess | undefined> {
-  if (!options.apiSecret) return
-
-  const optionsWithDefiniteApiSecret = {
-    ...options,
-    apiSecret: options.apiSecret,
-  }
-
+): Promise<GraphiQLServerProcess> {
   return {
     type: 'graphiql',
     prefix: '/graphiql',
-    options: optionsWithDefiniteApiSecret,
+    options,
     function: async ({stdout, stderr, abortSignal}, {port}: {port: number}) => {
-      const httpServer = setupGraphiQLServer({...optionsWithDefiniteApiSecret, stdout})
+      const httpServer = setupGraphiQLServer({...options, stdout})
       abortSignal.addEventListener('abort', async () => {
         await httpServer.close()
       })
