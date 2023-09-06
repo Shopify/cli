@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.49.1
+
+### Patch Changes
+
+- ea9e2a2aa: Fix issue with adding a react extension to an extensions only app with npm or yarn
+  - @shopify/cli-kit@3.49.1
+  - @shopify/plugin-cloudflare@3.49.1
+
 ## 3.49.0
 
 ### Minor Changes
