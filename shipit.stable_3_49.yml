@@ -1,0 +1,22 @@
+ci:
+  require: []
+
+dependencies:
+  override:
+    # We are making sure the deploys point to the NPM registry to prevent
+    # 404 issues like the one described in this comment:
+    # https://github.com/yarnpkg/yarn/issues/2935#issuecomment-355292633
+    - echo 'registry "https://registry.npmjs.org/"' | tee .npmrc .yarnrc
+    - curl -fsSL https://get.pnpm.io/install.sh | SHELL=`which bash` bash -
+    - bash -i -c "pnpm install"
+deploy:
+  override:
+    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish"
+    # When this is no longer the latest stable version, do 2 things:
+    # 1. Replace the previous line with this, replacing 3.x with the actual version:
+    #    - bash -i -c "npm_config_loglevel=verbose pnpm changeset publish --tag stable-3.x"
+    #    This will prevent publishes from being tagged as latest.
+    # 2. Remove the following line, which updates Homebrew
+    - bash -i -c "./bin/package.js"
+  post:
+    - bash -i -c "pnpm run update-bugsnag"
