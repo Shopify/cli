@@ -411,9 +411,17 @@ module ShopifyCLI
                 <body>
                   <style>
                     @font-face {
+                      font-family: Futura;
+                      font-weight: 400;
+                      font-style: normal;
+                      font-display: swap;
+                      src: url("//dev-theme-server-store.myshopify.com/cdn/fonts/futura/futura_n4.df36ce3d9db534a4d7947f4aa825495ed740e410.woff2?h1=cHVyZS10aGVtZS5hY2NvdW50Lm15c2hvcGlmeS5jb20&h2=dGhlLWlsZXMubXlzaG9waWZ5LmNvbQ&hmac=ba757f560100470edc74855959801fe8c5c1cf4a6c4beff66bd0d4fcd762d57d") format("woff2"),
+                           url("//dev-theme-server-store.myshopify.com/cdn/fonts/futura/futura_n4.6bce24beb4ba1ff4ddeb20f7cd6e2fa513a3d6ec.woff?h1=cHVyZS10aGVtZS5hY2NvdW50Lm15c2hvcGlmeS5jb20&h2=dGhlLWlsZXMubXlzaG9waWZ5LmNvbQ&hmac=2b05dd14532961ae90768ed4b64d3af8ab212b4dff90907df1e95f1268b61f26") format("woff");
+                    }
+                    @font-face {
                       font-family: "My Cool Font";
-                      src: url("https://dev-theme-server-store.myshopify.com/cdn/shop/t/6/assets/my-cool-font.woff2?v=32980254144382797261691268313") format("woff2"),
-                           url("https://dev-theme-server-store.myshopify.com/cdn/shop/t/6/assets/my-cool-font.woff?v=177194758756042663431691268313") format("woff");
+                      src: url("//dev-theme-server-store.myshopify.com/cdn/shop/t/6/assets/my-cool-font.woff2?v=32980254144382797261691268313") format("woff2"),
+                           url("//dev-theme-server-store.myshopify.com/cdn/shop/t/6/assets/my-cool-font.woff?v=177194758756042663431691268313") format("woff");
                     }
                   </style>
 
@@ -438,6 +446,14 @@ module ShopifyCLI
               <html>
                 <body>
                   <style>
+                    @font-face {
+                      font-family: Futura;
+                      font-weight: 400;
+                      font-style: normal;
+                      font-display: swap;
+                      src: url("//dev-theme-server-store.myshopify.com/cdn/fonts/futura/futura_n4.df36ce3d9db534a4d7947f4aa825495ed740e410.woff2?h1=cHVyZS10aGVtZS5hY2NvdW50Lm15c2hvcGlmeS5jb20&h2=dGhlLWlsZXMubXlzaG9waWZ5LmNvbQ&hmac=ba757f560100470edc74855959801fe8c5c1cf4a6c4beff66bd0d4fcd762d57d") format("woff2"),
+                           url("//dev-theme-server-store.myshopify.com/cdn/fonts/futura/futura_n4.6bce24beb4ba1ff4ddeb20f7cd6e2fa513a3d6ec.woff?h1=cHVyZS10aGVtZS5hY2NvdW50Lm15c2hvcGlmeS5jb20&h2=dGhlLWlsZXMubXlzaG9waWZ5LmNvbQ&hmac=2b05dd14532961ae90768ed4b64d3af8ab212b4dff90907df1e95f1268b61f26") format("woff");
+                    }
                     @font-face {
                       font-family: "My Cool Font";
                       src: url("http://127.0.0.1:9292/cdn/shop/t/6/assets/my-cool-font.woff2?v=32980254144382797261691268313") format("woff2"),
