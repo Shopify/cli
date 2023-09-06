@@ -48,7 +48,7 @@
     "@shopify/plugin-cloudflare": "3.49.1",
     "@shopify/shopify-api": "7.5.0",
     "abort-controller": "3.0.0",
-    "body-parser": "^1.20.2",
+    "body-parser": "1.20.2",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
     "esbuild": "0.18.17",
