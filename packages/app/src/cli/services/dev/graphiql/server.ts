@@ -117,6 +117,7 @@ export function setupGraphiQLServer({
         storeFqdn,
         versions: Object.values(ApiVersion),
         appName: appName,
+        scopes,
       }),
     )
   })

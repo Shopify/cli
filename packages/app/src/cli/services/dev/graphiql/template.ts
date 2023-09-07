@@ -96,6 +96,9 @@ export const template = `
           against <code>{{storeFqdn}}</code>
           as app <code>{{appName}}</code>
         </p>
+        <p>
+          Using app scopes: <code>{{scopes}}</code> (you can add/change scopes in the <code>shopify.app.toml</code> file)
+        </p>
       </div>
       <div id="graphiql-explorer">Loading...</div>
     </div>
