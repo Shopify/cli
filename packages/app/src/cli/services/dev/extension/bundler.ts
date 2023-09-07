@@ -27,6 +27,8 @@ export interface FileWatcher {
   close: () => void
 }
 
+export type ExtensionWithRegistrationId = ExtensionInstance & {registrationId: string}
+
 export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
   const abortController = new AbortController()
@@ -179,19 +181,16 @@ interface SetupConfigWatcherOptions {
   unifiedDeployment: boolean
 }
 
-export async function setupConfigWatcher({
-  extension,
-  token,
-  apiKey,
-  registrationId,
-  stdout,
-  stderr,
-  signal,
-  unifiedDeployment,
-}: SetupConfigWatcherOptions) {
+export async function createConfigWatcher(path: string, onChange: () => void) {
   const {default: chokidar} = await import('chokidar')
 
-  const configWatcher = chokidar.watch(extension.configuration.path).on('change', (_event, _path) => {
+  return chokidar.watch(path).on('change', onChange)
+}
+
+export async function setupConfigWatcher(options: SetupConfigWatcherOptions) {
+  const {extension, token, apiKey, registrationId, stdout, stderr, signal, unifiedDeployment} = options
+
+  const appConfigWatcher = await createConfigWatcher(extension.configuration.path, () => {
     outputInfo(`Config file at path ${extension.configuration.path} changed`, stdout)
     updateExtensionConfig({
       extension,
@@ -206,7 +205,7 @@ export async function setupConfigWatcher({
 
   signal.addEventListener('abort', () => {
     outputDebug(`Closing config file watching for extension with ID ${extension.devUUID}`, stdout)
-    configWatcher
+    appConfigWatcher
       .close()
       .then(() => {
         outputDebug(`Config file watching closed for extension with ${extension.devUUID}`, stdout)
@@ -339,4 +338,50 @@ Redeploy Paths:
     })
     listenForAbortOnWatcher(functionRedeployWatcher)
   }
+}
+
+export async function setupAppConfigWatcher({
+  path,
+  extensions,
+  stdout,
+  stderr,
+  token,
+  apiKey,
+  unifiedDeployment,
+  signal,
+}: {path: string; extensions: ExtensionWithRegistrationId[]} & Omit<
+  SetupConfigWatcherOptions,
+  'extension' | 'registrationId'
+>) {
+  const appConfigWatcher = await createConfigWatcher(path, () => {
+    outputInfo(`Config file at path ${path} changed`, stdout)
+
+    Promise.all(
+      extensions.map(async (extension) => {
+        return updateExtensionConfig({
+          extension,
+          token,
+          apiKey,
+          registrationId: extension.registrationId,
+          stdout,
+          stderr,
+          unifiedDeployment,
+        })
+      }),
+    ).catch((_: unknown) => {})
+  })
+
+  signal.addEventListener('abort', () => {
+    outputDebug(`Closing config file watching for file at path ${path}`, stdout)
+
+    appConfigWatcher
+      .close()
+      .then(() => {
+        outputDebug(`Config file watching closed for file at path ${path}`, stdout)
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .catch((error: any) => {
+        outputDebug(`Config file watching failed to close for file at path ${path} with ${error.message}`, stderr)
+      })
+  })
 }

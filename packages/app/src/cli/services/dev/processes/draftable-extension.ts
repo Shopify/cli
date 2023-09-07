@@ -1,6 +1,12 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {updateExtensionDraft} from '../update-extension.js'
-import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from '../extension/bundler.js'
+import {
+  ExtensionWithRegistrationId,
+  setupAppConfigWatcher,
+  setupConfigWatcher,
+  setupDraftableExtensionBundler,
+  setupFunctionWatcher,
+} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -43,8 +49,37 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
     }),
   )
 
+  const appConfigExtensions = extensions.filter((extension) => extension.isConfigExtension)
+  const normalExtensions = extensions.filter((extension) => !extension.isConfigExtension)
+
+  if (appConfigExtensions.length > 0) {
+    await Promise.all(
+      createAppConfigExtensionPathsMap(remoteExtensions, appConfigExtensions)
+        .map(async ([appConfigPath, appConfigExtension]) => {
+          if (!appConfigExtension) {
+            return
+          }
+
+          // Create a single watcher for each app config file and update all related extensions when the config updates
+          return [
+            setupAppConfigWatcher({
+              path: appConfigPath,
+              extensions: Array.from(appConfigExtension),
+              token,
+              apiKey,
+              stdout,
+              stderr,
+              signal,
+              unifiedDeployment,
+            }),
+          ]
+        })
+        .flat(),
+    )
+  }
+
   await Promise.all(
-    extensions
+    normalExtensions
       .map((extension) => {
         const registrationId = remoteExtensions[extension.localIdentifier]
         if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
@@ -152,4 +187,29 @@ export async function setupDraftableExtensionsProcess({
       remoteExtensionIds,
     },
   }
+}
+
+function createAppConfigExtensionPathsMap(
+  remoteExtensions: DraftableExtensionOptions['remoteExtensionIds'],
+  appConfigExtensions: ExtensionInstance[],
+) {
+  return Array.from(
+    appConfigExtensions.reduce((map, extension: ExtensionInstance) => {
+      if (!map.has(extension.configuration.path)) {
+        map.set(extension.configuration.path, new Set())
+      }
+
+      const registrationId = remoteExtensions[extension.localIdentifier]
+      if (!registrationId) {
+        return map
+      }
+
+      const extensionWithRegistrationId = extension as ExtensionWithRegistrationId
+      extensionWithRegistrationId.registrationId = registrationId
+
+      map.get(extension.configuration.path)!.add(extensionWithRegistrationId)
+
+      return map
+    }, new Map<string, Set<ExtensionWithRegistrationId>>()),
+  )
 }
