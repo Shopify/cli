@@ -2,25 +2,29 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
+  CurrentAppConfiguration,
   EmptyApp,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
-import {OrganizationApp} from '../../../models/organization.js'
+import {OrganizationApp, OrganizationConfigurationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
+
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
+import {APP_ACCESS_IDENTIFIER} from '../../../models/extensions/app-config.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -35,9 +39,13 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, directory)
 
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
-  const configFilePath = joinPath(directory, configFileName)
-
-  const configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
+  const configFilePath = joinPath(options.directory, configFileName)
+  // Get remote app configuration from app modules
+  const remoteAppConfig = await getRemoteAppConfig(remoteApp.apiKey)
+  const configuration = mergeAppConfiguration(
+    {...localApp.configuration, path: configFilePath},
+    {...remoteApp, ...remoteAppConfig},
+  )
 
   await writeAppConfigurationFile(configuration)
 
@@ -126,7 +134,7 @@ async function loadConfigurationFileName(
 
 export function mergeAppConfiguration(
   appConfiguration: AppConfiguration,
-  remoteApp: OrganizationApp,
+  remoteApp: OrganizationConfigurationApp,
 ): AppConfiguration {
   const result: AppConfiguration = {
     path: appConfiguration.path,
@@ -143,6 +151,7 @@ export function mergeAppConfiguration(
     pos: {
       embedded: remoteApp.posEmbedded || false,
     },
+    access: remoteApp.access,
   }
 
   const hasAnyPrivacyWebhook =
@@ -206,4 +215,25 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
       use_legacy_install_flow: true,
     }
   }
+}
+
+export async function getRemoteAppConfig(apiKey: string): Promise<Partial<CurrentAppConfiguration>> {
+  const token = await ensureAuthenticatedPartners()
+  const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
+  const appAccessModule = remoteSpecifications.app.extensionRegistrations.find((extension) => {
+    return extension.type.toLowerCase() === APP_ACCESS_IDENTIFIER
+  })
+  const appConfig: Partial<CurrentAppConfiguration> = {}
+
+  if (appAccessModule?.activeVersion?.config) {
+    try {
+      const appAccessConfig = JSON.parse(appAccessModule.activeVersion.config)
+      appConfig.access = appAccessConfig.access
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      // Ignore errors
+    }
+  }
+
+  return appConfig
 }

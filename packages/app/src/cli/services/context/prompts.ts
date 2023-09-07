@@ -3,6 +3,8 @@ import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
 import metadata from '../../metadata.js'
+import {isAppConfigSpecification} from '../../models/extensions/app-config.js'
+import {AppInterface} from '../../models/app/app.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -53,14 +55,16 @@ export async function deployConfirmationPrompt({
   release,
   apiKey,
   token,
+  app,
 }: {
   summary: SourceSummary
   release: boolean
   apiKey: string
   token: string
+  app: AppInterface
 }): Promise<boolean> {
   const {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
-    await buildInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly)
+    await buildInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly, app)
 
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
@@ -107,27 +111,38 @@ async function getInfoBreakdown(
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
+  app: AppInterface,
 ): Promise<{
   toCreate: string[]
   toUpdate: string[]
   fromDashboard: string[]
   onlyRemote: string[]
-} | null> {
+}> {
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  const nonDashboardRemoteRegistrations =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions
+  const appModuleVersions = activeAppVersion.app.activeAppVersion?.appModuleVersions || []
+  const nonDashboardRemoteRegistrationUuids =
+    appModuleVersions
       .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
       .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
   let toCreateFinal: string[] = []
   const toUpdate: string[] = []
   let dashboardOnlyFinal = dashboardOnly
+
   for (const [identifier, uuid] of Object.entries(localRegistration)) {
-    if (nonDashboardRemoteRegistrations.includes(uuid)) {
-      toUpdate.push(identifier)
-    } else {
-      toCreateFinal.push(identifier)
+    // Filter out app config extensions in the prompt
+    const localExtension = app.allExtensions.find((extension) => {
+      return extension.localIdentifier === identifier
+    })
+    const shouldExclude = localExtension?.isConfigExtension
+
+    if (!shouldExclude) {
+      if (nonDashboardRemoteRegistrationUuids.includes(uuid)) {
+        toUpdate.push(identifier)
+      } else {
+        toCreateFinal.push(identifier)
+      }
     }
 
     dashboardOnlyFinal = dashboardOnlyFinal.filter((dashboardOnly) => dashboardOnly.uuid !== uuid)
@@ -140,8 +155,10 @@ async function getInfoBreakdown(
     ...dashboardOnly.map((source) => source.uuid),
   ]
   const onlyRemote =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions
+    appModuleVersions
       .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
+      // Filter out app config extensions in the prompts
+      .filter((module) => !isAppConfigSpecification(app, module.specification.identifier))
       .map((module) => module.registrationTitle) ?? []
 
   return {
@@ -158,8 +175,9 @@ async function buildInfoPrompt(
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
+  app: AppInterface,
 ) {
-  const breakdown = await getInfoBreakdown(apiKey, token, localRegistration, toCreate, dashboardOnly)
+  const breakdown = await getInfoBreakdown(apiKey, token, localRegistration, toCreate, dashboardOnly, app)
   if (breakdown === null) return {infoTable: [], removesExtension: false}
 
   const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = breakdown
@@ -177,6 +195,7 @@ async function buildInfoPrompt(
     ...toUpdate,
     ...fromDashboard.map((sourceTitle) => [sourceTitle, {subdued: '(from Partner Dashboard)'}]),
   ]
+
   if (included.length > 0) {
     infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }

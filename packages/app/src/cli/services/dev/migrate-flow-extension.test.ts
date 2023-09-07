@@ -12,9 +12,6 @@ function getLocalExtension(attributes: Partial<LocalSource> = {}) {
   return {
     type: 'flow_action',
     localIdentifier: 'my-action',
-    configuration: {
-      name: 'my-action',
-    },
     ...attributes,
   } as unknown as LocalSource
 }

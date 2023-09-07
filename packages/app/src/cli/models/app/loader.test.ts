@@ -13,6 +13,7 @@ import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
+import appAccessSpecification from '../extensions/specifications/app_access.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -38,7 +39,7 @@ vi.mock('../../utilities/app/config/webhooks.js', async () => ({
 }))
 
 describe('load', () => {
-  let specifications: ExtensionSpecification[] = []
+  let specifications: ExtensionSpecification[] = [appAccessSpecification]
 
   let tmpDir: string
   const appConfiguration = `
@@ -49,6 +50,21 @@ name = "for-testing"
 client_id = "1234567890"
 application_url = "https://example.com/lala"
 embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[build]
+automatically_update_urls_on_dev = true
+`
+  const appConfigurationWithAppAccess = `
+name = "for-testing"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
+
+[access]
+api_access = {mode = "offline"}
 
 [webhooks]
 api_version = "2023-07"
@@ -1649,6 +1665,39 @@ automatically_update_urls_on_dev = true
     expect(functions[1]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_2_ID')
     expect(functions[0]!.localIdentifier).toBe('my-function-1')
     expect(functions[1]!.localIdentifier).toBe('my-function-2')
+  })
+
+  test('loads the app with an app access module when the app configuration includes app access', async () => {
+    // Given
+    await writeConfig(appConfigurationWithAppAccess)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications: [appAccessSpecification]})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const appAccessModule = app.allExtensions[0]
+    expect(appAccessModule).not.toBeUndefined()
+    if (appAccessModule) {
+      expect(appAccessModule.configuration).toMatchObject({
+        access: {
+          api_access: {mode: 'offline'},
+        },
+        type: appAccessSpecification.identifier,
+        name: appAccessSpecification.externalName,
+      })
+    }
+  })
+
+  test('does not load the app with an app access module when the app configuration does not include app access', async () => {
+    // Given
+    await writeConfig(linkedAppConfiguration)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications: [appAccessSpecification]})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(0)
   })
 
   test(`uses a custom function wasm path if configured`, async () => {

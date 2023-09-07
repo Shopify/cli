@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -10,6 +10,7 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -25,7 +26,11 @@ export const DEFAULT_CONFIG = {
   },
 }
 
-export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
+export function testApp(
+  app: Partial<AppInterface> = {},
+  schemaType: 'current' | 'legacy' = 'legacy',
+  specifications: ExtensionSpecification[] = [] as ExtensionSpecification[],
+): AppInterface {
   const getConfig = () => {
     if (schemaType === 'legacy') {
       return {scopes: '', extension_directories: [], path: ''}
@@ -52,6 +57,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     ],
     app.allExtensions ?? [],
     app.usesWorkspaces ?? false,
+    specifications,
     app.dotenv,
     app.errors,
   )
@@ -60,6 +66,9 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
   }
   if (app.extensionsForType) {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
+  }
+  if (app.specificationForIdentifier) {
+    Object.getPrototypeOf(newApp).specificationForIdentifier = app.specificationForIdentifier
   }
   return newApp
 }
@@ -149,6 +158,27 @@ export async function testUIExtension(
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+
+  return extension
+}
+
+export async function testAppAccessModule(
+  configuration: Partial<CurrentAppConfiguration>,
+  configurationPath: string,
+  directory: string,
+): Promise<ExtensionInstance> {
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'app_access')!
+
+  const extension = new ExtensionInstance({
+    configuration: {
+      type: 'app_access',
+      ...configuration,
+    } as unknown as BaseConfigType,
+    configurationPath,
+    directory,
+    specification,
+  })
 
   return extension
 }

@@ -7,7 +7,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-vi.mock('../../../models/app/app.js')
+vi.mock('../../../models/app/app.js', async () => {
+  const appModel: any = await vi.importActual('../../../models/app/app.js')
+
+  return {...appModel, getUIExtensionRendererVersion: vi.fn()}
+})
 
 describe('getUIExtensionPayload', () => {
   test('returns the right payload', async () => {
