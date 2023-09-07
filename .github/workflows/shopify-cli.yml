@@ -36,8 +36,6 @@ on:
       - main
       - stable/3.*
   pull_request:
-    paths-ignore:
-      - '**.md'
   merge_group:
 
 concurrency:
