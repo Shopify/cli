@@ -311,7 +311,7 @@ async function dev(options: DevOptions) {
 
   proxyTargets.push(
     devGraphiQLTarget({
-      app: localApp,
+      appName: localApp.name,
       apiKey,
       apiSecret,
       storeFqdn,
@@ -532,7 +532,7 @@ export async function launchWebProcess(
 }
 
 interface DevGraphiQLTargetOptions {
-  app: AppInterface
+  appName: string
   apiKey: string
   apiSecret: string
   port: number

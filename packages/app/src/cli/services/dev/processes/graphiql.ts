@@ -1,9 +1,8 @@
 import {BaseProcess} from './types.js'
 import {setupGraphiQLServer} from '../graphiql/server.js'
-import {AppInterface} from '../../../models/app/app.js'
 
 interface GraphiQLServerProcessOptions {
-  app: AppInterface
+  appName: string
   apiKey: string
   apiSecret: string
   storeFqdn: string

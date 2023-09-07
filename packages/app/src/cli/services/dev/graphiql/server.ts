@@ -50,7 +50,7 @@ function createShopify({
 interface SetupGraphiQLServerOptions {
   stdout: Writable
   port: number
-  app: AppInterface
+  appName: string
   apiKey: string
   apiSecret: string
   url: string
@@ -61,7 +61,7 @@ interface SetupGraphiQLServerOptions {
 export function setupGraphiQLServer({
   stdout,
   port,
-  app: partnersApp,
+  appName,
   apiKey,
   apiSecret,
   url,
@@ -116,7 +116,7 @@ export function setupGraphiQLServer({
         apiVersion: LATEST_API_VERSION,
         storeFqdn,
         versions: Object.values(ApiVersion),
-        appName: partnersApp.name,
+        appName: appName,
       }),
     )
   })

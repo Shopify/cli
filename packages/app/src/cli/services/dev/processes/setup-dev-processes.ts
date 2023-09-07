@@ -75,7 +75,7 @@ export async function setupDevProcesses({
       scopes: getAppScopes(localApp.configuration),
     })),
     await setupGraphiQLServerProcess({
-      app: localApp,
+      appName: localApp.name,
       apiKey,
       apiSecret,
       storeFqdn,
