@@ -1,8 +1,9 @@
 import {defaultQuery, template} from './template.js'
+import {AppInterface} from '../../../models/app/app.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import '@shopify/shopify-api/adapters/node'
-import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION} from '@shopify/shopify-api'
+import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION, ApiVersion} from '@shopify/shopify-api'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Server} from 'http'
@@ -14,14 +15,12 @@ function createShopify({
   apiSecret,
   scopes,
   url,
-  port,
 }: {
   stdout: Writable
   apiKey: string
   apiSecret: string
   scopes: string[]
   url: string
-  port: number
 }) {
   return shopifyApi({
     apiKey,
@@ -51,6 +50,7 @@ function createShopify({
 interface SetupGraphiQLServerOptions {
   stdout: Writable
   port: number
+  app: AppInterface
   apiKey: string
   apiSecret: string
   url: string
@@ -61,6 +61,7 @@ interface SetupGraphiQLServerOptions {
 export function setupGraphiQLServer({
   stdout,
   port,
+  app: partnersApp,
   apiKey,
   apiSecret,
   url,
@@ -69,7 +70,7 @@ export function setupGraphiQLServer({
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
 
-  const shopify = createShopify({stdout, apiKey, apiSecret, url, scopes, port})
+  const shopify = createShopify({stdout, apiKey, apiSecret, url, scopes})
   const app = express()
   let session: Session | undefined
 
@@ -113,6 +114,9 @@ export function setupGraphiQLServer({
         url: `https://${url}`,
         defaultQueries: [{query: defaultQuery}],
         apiVersion: LATEST_API_VERSION,
+        storeFqdn,
+        versions: Object.values(ApiVersion),
+        appName: partnersApp.name,
       }),
     )
   })
@@ -126,7 +130,7 @@ export function setupGraphiQLServer({
 
     const client = new shopify.clients.Graphql({
       session,
-      apiVersion: LATEST_API_VERSION,
+      apiVersion: (req.query.api_version ?? LATEST_API_VERSION) as ApiVersion,
     })
     try {
       const {body} = await client.query({data: req.body})

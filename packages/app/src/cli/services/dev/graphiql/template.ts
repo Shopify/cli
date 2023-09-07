@@ -54,8 +54,21 @@ export const template = `
         width: 100%;
         overflow: hidden;
       }
+      .top-bar {
+        padding: 4px 8px;
+        border-bottom: 1px solid #d6d6d6;
+      }
+      .top-bar p {
+        margin: 0;
+      }
       #graphiql {
         height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      #graphiql-explorer {
+        flex-grow: 1;
+        overflow: auto;
       }
     </style>
     <script
@@ -71,30 +84,52 @@ export const template = `
     <link rel="stylesheet" href="https://unpkg.com/graphiql/graphiql.min.css" />
   </head>
   <body>
-    <div id="graphiql">Loading...</div>
+    <div id="graphiql">
+      <div class="top-bar">
+        <p>
+          Running API version
+          <select id="version-select">
+            {% for version in versions %}
+              <option value="{{ version }}" {% if version == apiVersion %}selected{% endif %}>{{ version }}</option>
+            {% endfor %}
+          </select>
+          against <code>{{storeFqdn}}</code>
+          as app <code>{{appName}}</code>
+        </p>
+      </div>
+      <div id="graphiql-explorer">Loading...</div>
+    </div>
     <script
       src="https://unpkg.com/graphiql@3.0.4/graphiql.min.js"
       type="application/javascript"
     ></script>
     <script>
       const macCommandKey = String.fromCodePoint(8984)
-      ReactDOM.render(
-        React.createElement(GraphiQL, {
-          fetcher: GraphiQL.createFetcher({
-            url: '{{url}}/graphiql/graphql.json',
+      const renderGraphiQL = function(apiVersion) {
+        ReactDOM.render(
+          React.createElement(GraphiQL, {
+            fetcher: GraphiQL.createFetcher({
+              url: '{{url}}/graphiql/graphql.json?api_version=' + apiVersion,
+            }),
+            defaultEditorToolsVisibility: true,
+            defaultTabs: [
+              {query: "${graphiqlIntroMessage
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')}".replace(/MAC_COMMAND_KEY/g, macCommandKey)},
+              {%for query in defaultQueries%}
+                {query: "{%if query.preface %}{{query.preface}}\\n{% endif %}{{query.query}}", variables: "{{query.variables}}"},
+              {%endfor%}
+            ],
           }),
-          defaultEditorToolsVisibility: true,
-          defaultTabs: [
-            {query: "${graphiqlIntroMessage
-              .replace(/"/g, '\\"')
-              .replace(/\n/g, '\\n')}".replace(/MAC_COMMAND_KEY/g, macCommandKey)},
-            {%for query in defaultQueries%}
-              {query: "{%if query.preface %}{{query.preface}}\\n{% endif %}{{query.query}}", variables: "{{query.variables}}"},
-            {%endfor%}
-          ],
-        }),
-        document.getElementById('graphiql'),
-      );
+          document.getElementById('graphiql-explorer'),
+        )
+      }
+      renderGraphiQL('{{apiVersion}}')
+
+      // Update the version when the select changes
+      document.getElementById('version-select').addEventListener('change', function(event) {
+        renderGraphiQL(event.target.value)
+      })
     </script>
   </body>
 </html>
