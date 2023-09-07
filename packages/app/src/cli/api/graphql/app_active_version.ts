@@ -39,7 +39,7 @@ interface AppModuleVersion {
   registrationUuid: string
   registrationTitle: string
   type: string
-  specification?: AppModuleVersionSpecification
+  specification: AppModuleVersionSpecification
 }
 
 export interface ActiveAppVersionQuerySchema {

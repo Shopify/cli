@@ -1,9 +1,11 @@
-import {LocalSource, RemoteSource} from './identifiers.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {DeploymentMode} from '../deploy/mode.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
 import metadata from '../../metadata.js'
+import {AppInterface} from '../../models/app/app.js'
+import {isAppConfigSpecification} from '../../models/extensions/app-config.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -52,12 +54,24 @@ export interface SourceSummary {
 
 export async function deployConfirmationPrompt(
   {appTitle, question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
-  deploymentMode: DeploymentMode,
-  apiKey: string,
-  token: string,
+  {
+    deploymentMode,
+    appId: apiKey,
+    token,
+    app,
+  }: Pick<EnsureDeploymentIdsPresenceOptions, 'app' | 'appId' | 'deploymentMode' | 'token'>,
 ): Promise<boolean> {
   let {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
-    await buildUnifiedDeploymentInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly, deploymentMode)
+    await buildUnifiedDeploymentInfoPrompt(
+      apiKey,
+      token,
+      identifiers,
+      // Filter out app config extensions in the prompt
+      toCreate.filter((extension) => !extension.isConfigExtension),
+      dashboardOnly,
+      deploymentMode,
+      app,
+    )
   if (infoTable.length === 0 && deploymentMode === 'legacy') {
     ;({infoTable, removesExtension} = buildLegacyDeploymentInfoPrompt({
       identifiers,
@@ -150,6 +164,7 @@ async function getUnifiedDeploymentInfoBreakdown(
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   deploymentMode: DeploymentMode,
+  app: AppInterface,
 ): Promise<{
   toCreate: string[]
   toUpdate: string[]
@@ -168,11 +183,22 @@ async function getUnifiedDeploymentInfoBreakdown(
   let toCreateFinal: string[] = []
   const toUpdate: string[] = []
   let dashboardOnlyFinal = dashboardOnly
+
   for (const [identifier, uuid] of Object.entries(localRegistration)) {
-    if (nonDashboardRemoteRegistrations.includes(uuid)) {
-      toUpdate.push(identifier)
-    } else {
-      toCreateFinal.push(identifier)
+    // Filter out app config extensions in the prompt
+    const localExtension = app.allExtensions.find((extension) => {
+      return extension.localIdentifier === identifier
+    })
+    const shouldExclude =
+      localExtension?.specification.identifier &&
+      isAppConfigSpecification(app, localExtension?.specification.identifier)
+
+    if (!shouldExclude) {
+      if (nonDashboardRemoteRegistrations.includes(uuid)) {
+        toUpdate.push(identifier)
+      } else {
+        toCreateFinal.push(identifier)
+      }
     }
 
     dashboardOnlyFinal = dashboardOnlyFinal.filter((dashboardOnly) => dashboardOnly.uuid !== uuid)
@@ -187,6 +213,8 @@ async function getUnifiedDeploymentInfoBreakdown(
   const onlyRemote =
     activeAppVersion.app.activeAppVersion?.appModuleVersions
       .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
+      // Filter out app config extensions in the prompts
+      .filter((module) => !isAppConfigSpecification(app, module.specification.identifier))
       .map((module) => module.registrationTitle) ?? []
 
   return {
@@ -204,6 +232,7 @@ async function buildUnifiedDeploymentInfoPrompt(
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   deploymentMode: DeploymentMode,
+  app: AppInterface,
 ) {
   const breakdown = await getUnifiedDeploymentInfoBreakdown(
     apiKey,
@@ -212,6 +241,7 @@ async function buildUnifiedDeploymentInfoPrompt(
     toCreate,
     dashboardOnly,
     deploymentMode,
+    app,
   )
   if (breakdown === null) return {infoTable: [], removesExtension: false}
 
@@ -230,6 +260,7 @@ async function buildUnifiedDeploymentInfoPrompt(
     ...toUpdate,
     ...fromDashboard.map((sourceTitle) => [sourceTitle, {subdued: '(from Partner Dashboard)'}]),
   ]
+
   if (included.length > 0) {
     infoTable.push({header: 'Includes:', items: included, bullet: '+'})
   }

@@ -2,10 +2,11 @@ import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from '
 import {PushOptions} from '../services/app/config/push.js'
 import {testOrganizationApp, testAppWithConfig, DEFAULT_CONFIG} from '../models/app/app.test-data.js'
 import {App} from '../api/graphql/get_config.js'
-import {mergeAppConfiguration} from '../services/app/config/link.js'
+import {getRemoteAppConfig, mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {AppConfiguration, CurrentAppConfiguration} from '../models/app/app.js'
-import {describe, expect, test, vi} from 'vitest'
+import {fetchAppExtensionRegistrations} from '../services/dev/fetch.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -13,6 +14,29 @@ import {err, ok} from '@shopify/cli-kit/node/result'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('../services/dev/fetch.js', async () => {
+  const fetch: any = await vi.importActual('../services/dev/fetch.js')
+  return {
+    ...fetch,
+    fetchAppExtensionRegistrations: vi.fn().mockImplementation(async () => ({
+      app: {
+        extensionRegistrations: [],
+        dashboardManagedExtensionRegistrations: [],
+        functions: [],
+      },
+    })),
+  }
+})
+
+beforeEach(() => {
+  vi.mocked(fetchAppExtensionRegistrations).mockImplementation(async () => ({
+    app: {
+      extensionRegistrations: [],
+      dashboardManagedExtensionRegistrations: [],
+      functions: [],
+    },
+  }))
+})
 
 describe('selectConfigName', () => {
   test('returns the chosen file name when the file does not exist', async () => {
@@ -196,10 +220,12 @@ describe('confirmPushChanges', () => {
 
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-      const configuration = mergeAppConfiguration(
-        {...DEFAULT_CONFIG, path: configurationPath},
-        app as OrganizationApp,
-      ) as CurrentAppConfiguration
+      // Get remote app configuration from app modules
+      const remoteAppConfig = await getRemoteAppConfig(app.apiKey)
+      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, {
+        ...app,
+        ...remoteAppConfig,
+      } as OrganizationApp) as CurrentAppConfiguration
 
       configuration.name = 'app2'
       configuration.access_scopes = {scopes: 'read_themes, read_customers'}
@@ -268,7 +294,9 @@ api_version = "unstable"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
+
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
       const updatedContent = `client_id = "api-key"
       name = "app1"
       application_url = "https://example.com"
@@ -292,6 +320,7 @@ api_version = "unstable"
         configuration,
         force: false,
       }
+
       // When
       const result = await confirmPushChanges(options, app)
 
@@ -306,7 +335,9 @@ api_version = "unstable"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
+
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
       const updatedContent = `client_id = "api-key"
       name = "app1"
       application_url = "https://example.com"
@@ -363,6 +394,75 @@ api_version = "unstable"
       // Then
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
       expect(result).toBeFalsy()
+    })
+  })
+
+  test('returns true when remote app access config is different than local config', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const remoteConfig = {
+        access: {
+          direct_api_offline_access: false,
+        },
+      }
+
+      vi.mocked(fetchAppExtensionRegistrations).mockImplementation(async () => ({
+        app: {
+          extensionRegistrations: [
+            {
+              type: 'APP_ACCESS',
+              activeVersion: {
+                config: JSON.stringify(remoteConfig),
+              },
+            } as any,
+          ],
+          dashboardManagedExtensionRegistrations: [],
+          functions: [],
+        },
+      }))
+
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const localConfig = {...DEFAULT_CONFIG, access: {direct_api_offline_access: true}, path: configurationPath}
+      const options: PushOptions = {
+        configuration: {
+          ...localConfig,
+          build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
+        },
+        force: false,
+      }
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalled()
+      expect(result).toBeTruthy()
+    })
+  })
+
+  test('returns true when remote app access config is missing but local app has app access configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const localConfig = {...DEFAULT_CONFIG, access: {direct_api_offline_access: false}, path: configurationPath}
+      const options: PushOptions = {
+        configuration: {
+          ...localConfig,
+          build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
+        },
+        force: false,
+      }
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalled()
+      expect(result).toBeTruthy()
     })
   })
 })

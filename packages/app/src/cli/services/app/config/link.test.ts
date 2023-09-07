@@ -4,9 +4,9 @@ import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -33,6 +33,16 @@ vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 
 describe('link', () => {
+  beforeEach(() => {
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+      app: {
+        extensionRegistrations: [],
+        dashboardManagedExtensionRegistrations: [],
+        functions: [],
+      },
+    })
+  })
+
   test('does not ask for a name when it is provided as a flag', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -515,6 +525,68 @@ embedded = false
           },
         ],
       })
+    })
+  })
+
+  test('merge remote app access configuration', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+
+      const remoteConfig = {
+        access: {
+          direct_api_offline_access: true,
+        },
+      }
+
+      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+        app: {
+          extensionRegistrations: [
+            {
+              type: 'APP_ACCESS',
+              activeVersion: {
+                config: JSON.stringify(remoteConfig),
+              },
+            } as any,
+          ],
+          dashboardManagedExtensionRegistrations: [],
+          functions: [],
+        },
+      })
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "app1"
+client_id = "api-key"
+application_url = "https://example.com"
+embedded = true
+
+[access]
+direct_api_offline_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
     })
   })
 })

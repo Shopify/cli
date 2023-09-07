@@ -1,6 +1,7 @@
 import {deployConfirmationPrompt, SourceSummary} from './prompts.js'
-import {RemoteSource, LocalSource} from './identifiers.js'
+import {RemoteSource, LocalSource, EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {testApp} from '../../models/app/app.test-data.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderConfirmationPrompt, renderDangerousConfirmationPrompt, InfoTableSection} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
@@ -9,6 +10,13 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('deployConfirmationPrompt', () => {
+  const defaultOptions: Pick<EnsureDeploymentIdsPresenceOptions, 'app' | 'appId' | 'deploymentMode' | 'token'> = {
+    app: testApp(),
+    deploymentMode: 'unified',
+    appId: 'appId',
+    token: 'token',
+  }
+
   describe('when legacy deployment mode', () => {
     test('renders confirmation prompt with the source summary', async () => {
       // Given
@@ -22,9 +30,7 @@ describe('deployConfirmationPrompt', () => {
           onlyRemote: [remoteOnlyExtension],
           dashboardOnly: [dashboardOnlyExtension],
         }),
-        'legacy',
-        'apiKey',
-        'token',
+        {...defaultOptions, deploymentMode: 'legacy'},
       )
 
       // Then
@@ -37,7 +43,10 @@ describe('deployConfirmationPrompt', () => {
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
       // When
-      const response = await deployConfirmationPrompt(buildSourceSummary(), 'legacy', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt(buildSourceSummary(), {
+        ...defaultOptions,
+        deploymentMode: 'legacy',
+      })
 
       // Then
       expect(response).toBe(true)
@@ -58,7 +67,7 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt(sourceSummary, defaultOptions)
 
       // Then
       expect(response).toBe(true)
@@ -93,7 +102,7 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt(sourceSummary, defaultOptions)
 
       // Then
       expect(response).toBe(true)
@@ -141,7 +150,7 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension, dashboardExtensionIncludedInActiveVersion],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt(sourceSummary, defaultOptions)
 
       // Then
       expect(response).toBe(true)
@@ -185,7 +194,7 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt(sourceSummary, defaultOptions)
 
       // Then
       expect(response).toBe(true)
@@ -224,9 +233,7 @@ describe('deployConfirmationPrompt', () => {
       // When
       const response = await deployConfirmationPrompt(
         buildSourceSummary({identifiers: {...identifier1}}),
-        'unified',
-        'apiKey',
-        'token',
+        defaultOptions,
       )
 
       // Then
@@ -252,9 +259,7 @@ describe('deployConfirmationPrompt', () => {
       // When
       const response = await deployConfirmationPrompt(
         buildSourceSummary({onlyRemote: [remoteOnlyExtension]}),
-        'unified',
-        'apiKey',
-        'token',
+        defaultOptions,
       )
 
       // Then
@@ -268,7 +273,7 @@ describe('deployConfirmationPrompt', () => {
       vi.mocked(partnersRequest).mockResolvedValue({app: {activeAppVersion: null}})
 
       // When
-      const response = await deployConfirmationPrompt(buildSourceSummary(), 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt(buildSourceSummary(), defaultOptions)
 
       // Then
       expect(response).toBe(true)
@@ -283,9 +288,7 @@ describe('deployConfirmationPrompt', () => {
       // When
       const response = await deployConfirmationPrompt(
         buildSourceSummary({onlyRemote: [remoteOnlyExtension]}),
-        'unified',
-        'apiKey',
-        'token',
+        defaultOptions,
       )
 
       // Then
@@ -304,6 +307,9 @@ const createdExtension = {
   type: 'type1',
   handle: 'handle1',
   configuration: {name: 'name1'},
+  get isConfigExtension() {
+    return false
+  },
 }
 const remoteOnlyExtension = {
   id: 'remote_id1',
