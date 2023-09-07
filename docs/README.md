@@ -1,6 +1,6 @@
 <img src="https://github.com/Shopify/shopify-cli/raw/main/assets/logo.png" alt="Shopify logo" width="150">
 
-# Contributors documentation
+# Contributors doc
 
 This page contains resources for people interested in contributing to this repository or developing a [plugin](./plugins.md)](./plugins.md).
 
