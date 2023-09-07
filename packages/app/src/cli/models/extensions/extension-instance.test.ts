@@ -1,5 +1,6 @@
 import {
   testApp,
+  testAppAccessModule,
   testFunctionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
@@ -133,6 +134,15 @@ describe('isDraftable', () => {
     const got = extensionInstance.isDraftable()
 
     expect(got).toBe(true)
+  })
+
+  test('returns false for app config extensions', async () => {
+    const [configuration, configurationPath, directory] = [{}, '', '']
+    const extensionInstance = await testAppAccessModule(configuration, configurationPath, directory)
+
+    const got = extensionInstance.isDraftable()
+
+    expect(got).toBe(false)
   })
 })
 

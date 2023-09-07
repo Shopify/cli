@@ -1,14 +1,20 @@
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import metadata from '../metadata.js'
+import {AppInterface} from '../models/app/app.js'
+import {isAppConfigSpecification} from '../models/extensions/app-config.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export async function confirmReleasePrompt(
   appName: string,
   versionsDiff: AppVersionsDiffSchema['app']['versionsDiff'],
+  app: AppInterface,
 ) {
   const infoTable = []
-  const extensions = [...versionsDiff.added, ...versionsDiff.updated]
+  // Filter out app config extensions in the prompt
+  const extensions = [...versionsDiff.added, ...versionsDiff.updated].filter(
+    (extension) => !isAppConfigSpecification(app, extension.specification.identifier),
+  )
 
   if (extensions.length > 0) {
     infoTable.push({
@@ -18,17 +24,22 @@ export async function confirmReleasePrompt(
     })
   }
 
-  if (versionsDiff.removed.length > 0) {
+  // Filter out app config extensions in the prompt
+  const removed = versionsDiff.removed.filter(
+    (extension) => !isAppConfigSpecification(app, extension.specification.identifier),
+  )
+
+  if (removed.length > 0) {
     infoTable.push({
       header: 'Removes:',
       helperText: 'This can permanently delete app user data.',
-      items: versionsDiff.removed.map((extension) => extension.registrationTitle),
+      items: removed.map((extension) => extension.registrationTitle),
       bullet: '-',
     })
   }
   let confirm: boolean
   const message = `Release this version of ${appName}?`
-  if (versionsDiff.removed.length > 0) {
+  if (removed.length > 0) {
     confirm = await renderDangerousConfirmationPrompt({message, infoTable, confirmation: appName})
   } else {
     confirm = await renderConfirmationPrompt({

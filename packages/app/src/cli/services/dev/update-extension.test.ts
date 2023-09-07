@@ -1,6 +1,6 @@
 import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
-import {testUIExtension} from '../../models/app/app.test-data.js'
+import {testAppAccessModule, testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -229,6 +229,190 @@ another = "setting"
         `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
         stdout,
       )
+    })
+  })
+
+  test('updates draft with config for offline api_access mode using dotted keys', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configurationToml = `[access.api_access]
+      mode = "offline"
+      `
+      const path = joinPath(tmpDir, 'shopify.app.my-app.toml')
+      const mode = 'offline' as 'offline'
+      const config = {access: {api_access: {mode}}}
+
+      await writeFile(path, configurationToml)
+
+      const mockExtension = await testAppAccessModule(config, path, tmpDir)
+
+      vi.mocked(partnersRequest).mockResolvedValue({
+        extensionUpdateDraft: {
+          userErrors: [],
+        },
+      })
+
+      vi.mocked(parseConfigurationObject).mockResolvedValue({type: 'app_access', ...config})
+
+      const options = {extension: mockExtension, token, apiKey, registrationId, stdout, stderr}
+      await updateExtensionConfig(options)
+
+      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+        apiKey,
+        context: undefined,
+        registrationId,
+        config: '{"access":{"api_access":{"mode":"offline"}}}',
+        handle: '',
+      })
+
+      // Check if outputDebug is called with success message
+      expect(outputInfo).toHaveBeenCalledWith(`Draft config updated successfully for: ${mockExtension.name}`, stdout)
+    })
+  })
+
+  test('updates draft with config for offline api_access mode using inline table', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configurationToml = `[access]
+      api_access = {mode = "offline"}
+      `
+      const path = joinPath(tmpDir, 'shopify.app.my-app.toml')
+      const mode = 'offline' as 'offline'
+      const config = {access: {api_access: {mode}}}
+
+      await writeFile(path, configurationToml)
+
+      const mockExtension = await testAppAccessModule(config, path, tmpDir)
+
+      vi.mocked(partnersRequest).mockResolvedValue({
+        extensionUpdateDraft: {
+          userErrors: [],
+        },
+      })
+
+      vi.mocked(parseConfigurationObject).mockResolvedValue({type: 'app_access', ...config})
+
+      const options = {extension: mockExtension, token, apiKey, registrationId, stdout, stderr}
+      await updateExtensionConfig(options)
+
+      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+        apiKey,
+        context: undefined,
+        registrationId,
+        config: '{"access":{"api_access":{"mode":"offline"}}}',
+        handle: '',
+      })
+
+      // Check if outputDebug is called with success message
+      expect(outputInfo).toHaveBeenCalledWith(`Draft config updated successfully for: ${mockExtension.name}`, stdout)
+    })
+  })
+
+  test('updates draft with config for online api_access mode using dotted keys', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configurationToml = `[access.api_access]
+      mode = "online"
+      `
+      const path = joinPath(tmpDir, 'shopify.app.my-app.toml')
+      const mode = 'online' as 'online'
+      const config = {access: {api_access: {mode}}}
+
+      await writeFile(path, configurationToml)
+
+      const mockExtension = await testAppAccessModule(config, path, tmpDir)
+
+      vi.mocked(partnersRequest).mockResolvedValue({
+        extensionUpdateDraft: {
+          userErrors: [],
+        },
+      })
+
+      vi.mocked(parseConfigurationObject).mockResolvedValue({type: 'app_access', ...config})
+
+      const options = {extension: mockExtension, token, apiKey, registrationId, stdout, stderr}
+      await updateExtensionConfig(options)
+
+      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+        apiKey,
+        context: undefined,
+        registrationId,
+        config: '{"access":{"api_access":{"mode":"online"}}}',
+        handle: '',
+      })
+
+      // Check if outputDebug is called with success message
+      expect(outputInfo).toHaveBeenCalledWith(`Draft config updated successfully for: ${mockExtension.name}`, stdout)
+    })
+  })
+
+  test('updates draft with config for online api_access mode using inline table', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configurationToml = `[access]
+      api_access = {mode = "online"}
+      `
+      const path = joinPath(tmpDir, 'shopify.app.my-app.toml')
+      const mode = 'online' as 'online'
+      const config = {access: {api_access: {mode}}}
+
+      await writeFile(path, configurationToml)
+
+      const mockExtension = await testAppAccessModule(config, path, tmpDir)
+
+      vi.mocked(partnersRequest).mockResolvedValue({
+        extensionUpdateDraft: {
+          userErrors: [],
+        },
+      })
+
+      vi.mocked(parseConfigurationObject).mockResolvedValue({type: 'app_access', ...config})
+
+      const options = {extension: mockExtension, token, apiKey, registrationId, stdout, stderr}
+      await updateExtensionConfig(options)
+
+      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+        apiKey,
+        context: undefined,
+        registrationId,
+        config: '{"access":{"api_access":{"mode":"online"}}}',
+        handle: '',
+      })
+
+      // Check if outputDebug is called with success message
+      expect(outputInfo).toHaveBeenCalledWith(`Draft config updated successfully for: ${mockExtension.name}`, stdout)
+    })
+  })
+
+  test('updates draft with config for online api_access mode using boolean', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const configurationToml = `[access]
+      api_access = true
+      `
+      const path = joinPath(tmpDir, 'shopify.app.my-app.toml')
+      const config = {access: {api_access: true as true}}
+
+      await writeFile(path, configurationToml)
+
+      const mockExtension = await testAppAccessModule(config, path, tmpDir)
+
+      vi.mocked(partnersRequest).mockResolvedValue({
+        extensionUpdateDraft: {
+          userErrors: [],
+        },
+      })
+
+      vi.mocked(parseConfigurationObject).mockResolvedValue({type: 'app_access', ...config})
+
+      const options = {extension: mockExtension, token, apiKey, registrationId, stdout, stderr}
+      await updateExtensionConfig(options)
+
+      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+        apiKey,
+        context: undefined,
+        registrationId,
+        config: '{"access":{"api_access":true}}',
+        handle: '',
+      })
+
+      // Check if outputDebug is called with success message
+      expect(outputInfo).toHaveBeenCalledWith(`Draft config updated successfully for: ${mockExtension.name}`, stdout)
     })
   })
 })

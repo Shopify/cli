@@ -95,6 +95,7 @@ export async function ensureExtensionsIds(
       release: options.release,
       apiKey: options.appId,
       token: options.token,
+      app: options.app,
     })
     if (!confirmed) return err('user-cancelled')
   }
@@ -126,7 +127,10 @@ async function createExtensions(extensions: LocalSource[], appId: string) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.graphQLType, extension.handle, token)
-    outputCompleted(`Created extension ${extension.handle}.`)
+    // Don't output a log message for app config extensions
+    if (!extension.isConfigExtension) {
+      outputCompleted(`Created extension ${extension.handle}.`)
+    }
     result[extension.localIdentifier] = registration
   }
   return result

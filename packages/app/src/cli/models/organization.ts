@@ -38,6 +38,18 @@ export type OrganizationApp = MinimalOrganizationApp & {
   developmentStorePreviewEnabled?: boolean
 }
 
+type ApiAccessMode =
+  | true
+  | {
+      mode: 'offline' | 'online'
+    }
+
+export type OrganizationConfigurationApp = OrganizationApp & {
+  access?: {
+    api_access?: ApiAccessMode
+  }
+}
+
 export interface OrganizationStore {
   shopId: string
   link: string

@@ -87,7 +87,7 @@ describe('initialize a extension', async () => {
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications})
-      expect(loadedApp.allExtensions.length).toEqual(2)
+      expect(loadedApp.allExtensions.filter((extension) => !extension.isConfigExtension).length).toEqual(2)
     })
   })
 

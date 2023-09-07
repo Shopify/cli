@@ -32,7 +32,7 @@ export async function release(options: ReleaseOptions) {
 
   const {versionsDiff, versionDetails} = await versionDiffByVersion(partnersApp.apiKey, options.version, token)
 
-  await confirmReleasePrompt(partnersApp.title, versionsDiff)
+  await confirmReleasePrompt(partnersApp.title, versionsDiff, app)
   interface Context {
     appRelease: AppReleaseSchema
   }

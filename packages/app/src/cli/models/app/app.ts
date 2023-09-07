@@ -1,7 +1,8 @@
-import {AppErrors, isWebType} from './loader.js'
+import {AppErrors, findSpecificationForType, isWebType} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -33,6 +34,18 @@ export const AppSchema = zod
     client_id: zod.string(),
     application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),
+    access: zod
+      .object({
+        api_access: zod
+          .union([
+            zod.literal(true),
+            zod.object({
+              mode: zod.enum(['online', 'offline']),
+            }),
+          ])
+          .optional(),
+      })
+      .optional(),
     access_scopes: zod
       .object({
         scopes: zod.string().optional(),
@@ -198,6 +211,7 @@ export interface AppInterface extends AppConfigurationInterface {
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  specificationForIdentifier: (identifier: string) => ExtensionSpecification | undefined
 }
 
 export class App implements AppInterface {
@@ -213,6 +227,8 @@ export class App implements AppInterface {
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
 
+  private specifications: ExtensionSpecification[]
+
   // eslint-disable-next-line max-params
   constructor(
     name: string,
@@ -224,6 +240,7 @@ export class App implements AppInterface {
     webs: Web[],
     extensions: ExtensionInstance[],
     usesWorkspaces: boolean,
+    specifications: ExtensionSpecification[],
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -238,6 +255,7 @@ export class App implements AppInterface {
     this.allExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.specifications = specifications
   }
 
   async updateDependencies() {
@@ -275,6 +293,10 @@ export class App implements AppInterface {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
   }
+
+  specificationForIdentifier(identifier: string) {
+    return findSpecificationForType(this.specifications, identifier)
+  }
 }
 
 export function validateFunctionExtensionsWithUiHandle(
@@ -306,7 +328,7 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], false)
+    super('', '', '', 'npm', configuration, {}, [], [], false, [])
   }
 }
 

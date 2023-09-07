@@ -83,8 +83,8 @@ export async function confirmPushChanges(options: PushOptions, app: App) {
     configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
 
   const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(AppSchema, configuration) as object), build: undefined},
-    {...(rewriteConfiguration(AppSchema, remoteConfiguration) as object), build: undefined},
+    {...(rewriteConfiguration(AppSchema, configuration) as object), build: undefined, access: undefined},
+    {...(rewriteConfiguration(AppSchema, remoteConfiguration) as object), build: undefined, access: undefined},
   )
 
   if (deepCompare(updated, baseline)) {

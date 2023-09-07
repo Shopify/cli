@@ -1,6 +1,7 @@
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {APP_CONFIG_FEATURE} from './specifications/app_access.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -81,6 +82,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('function')
   }
 
+  get isConfigExtension() {
+    return this.features.includes(APP_CONFIG_FEATURE)
+  }
+
   get isESBuildExtension() {
     return this.features.includes('esbuild')
   }
@@ -121,7 +126,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension
+    return !this.isThemeExtension && !this.isConfigExtension
   }
 
   async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
@@ -233,7 +238,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
-      // Modules that are going to be inclued in the bundle should be built in the bundle directory
+      // Modules that are going to be included in the bundle should be built in the bundle directory
       this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
     }
 

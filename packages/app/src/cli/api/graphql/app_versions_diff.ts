@@ -7,14 +7,23 @@ export const AppVersionsDiffQuery = gql`
         added {
           uuid
           registrationTitle
+          specification {
+            identifier
+          }
         }
         updated {
           uuid
           registrationTitle
+          specification {
+            identifier
+          }
         }
         removed {
           uuid
           registrationTitle
+          specification {
+            identifier
+          }
         }
       }
     }
@@ -27,14 +36,23 @@ export interface AppVersionsDiffSchema {
       added: {
         uuid: string
         registrationTitle: string
+        specification: {
+          identifier: string
+        }
       }[]
       updated: {
         uuid: string
         registrationTitle: string
+        specification: {
+          identifier: string
+        }
       }[]
       removed: {
         uuid: string
         registrationTitle: string
+        specification: {
+          identifier: string
+        }
       }[]
     }
   }
