@@ -17,13 +17,13 @@ export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcess
 }
 
 export async function setupGraphiQLServerProcess(
-  options: GraphiQLServerProcessOptions,
+  options: Omit<GraphiQLServerProcessOptions, 'port'>,
 ): Promise<GraphiQLServerProcess> {
   return {
     type: 'graphiql',
     prefix: '/graphiql',
-    options,
-    function: async ({stdout, stderr, abortSignal}, {port}: {port: number}) => {
+    options: {...options, port: -1},
+    function: async ({stdout, stderr, abortSignal}, options: GraphiQLServerProcessOptions) => {
       const httpServer = setupGraphiQLServer({...options, stdout})
       abortSignal.addEventListener('abort', async () => {
         await httpServer.close()

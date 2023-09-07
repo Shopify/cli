@@ -63,7 +63,6 @@ export async function setupDevProcesses({
 }: Omit<DevConfig, 'partnerUrlsUpdated'>): Promise<{processes: DevProcesses; previewUrl: string; graphiqlUrl: string}> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
-  const graphiqlPort = await getAvailableTCPPort()
 
   const processes = [
     ...(await setupWebProcesses({
@@ -81,7 +80,6 @@ export async function setupDevProcesses({
       apiSecret,
       storeFqdn,
       url: network.proxyUrl.replace(/^https?:\/\//, ''),
-      port: graphiqlPort,
       scopes: getAppScopesArray(localApp.configuration),
     }),
     await setupPreviewableExtensionsProcess({
@@ -163,8 +161,9 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
         rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
       } else if (process.type === 'graphiql') {
-        const targetPort = process.options.port
+        const targetPort = await getAvailableTCPPort()
         rules[process.prefix] = `http://localhost:${targetPort}`
+        process.options.port = targetPort
       }
 
       return {process, rules}
