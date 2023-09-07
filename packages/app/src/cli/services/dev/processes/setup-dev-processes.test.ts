@@ -2,6 +2,7 @@ import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-proces
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
+import {GraphiQLServerProcess, launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
@@ -147,6 +148,20 @@ describe('setup-dev-processes', () => {
       },
     })
     expect(res.processes[1]).toMatchObject({
+      type: 'graphiql',
+      function: launchGraphiQLServer,
+      prefix: '/graphiql',
+      options: {
+        appName: 'App',
+        apiKey: 'api-key',
+        apiSecret: 'api-secret',
+        port: expect.any(Number),
+        scopes: ['read_products'],
+        storeFqdn: 'store.myshopify.io',
+        url: 'example.com/proxy',
+      },
+    })
+    expect(res.processes[2]).toMatchObject({
       type: 'previewable-extension',
       function: launchPreviewableExtensionProcess,
       prefix: 'extensions',
@@ -165,7 +180,7 @@ describe('setup-dev-processes', () => {
         appId: '1234',
       },
     })
-    expect(res.processes[2]).toMatchObject({
+    expect(res.processes[3]).toMatchObject({
       type: 'draftable-extension',
       prefix: 'extensions',
       function: pushUpdatesForDraftableExtensions,
@@ -179,7 +194,7 @@ describe('setup-dev-processes', () => {
         proxyUrl: 'https://example.com/proxy',
       },
     })
-    expect(res.processes[3]).toMatchObject({
+    expect(res.processes[4]).toMatchObject({
       type: 'theme-app-extensions',
       prefix: 'extensions',
       function: runThemeAppExtensionsServer,
@@ -197,7 +212,7 @@ describe('setup-dev-processes', () => {
         token,
       },
     })
-    expect(res.processes[4]).toMatchObject({
+    expect(res.processes[5]).toMatchObject({
       type: 'send-webhook',
       prefix: 'webhooks',
       function: sendWebhook,
@@ -213,9 +228,10 @@ describe('setup-dev-processes', () => {
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
-    const previewExtensionPort = (res.processes[1] as PreviewableExtensionProcess).options.port
+    const graphiqlPort = (res.processes[1] as GraphiQLServerProcess).options.port
+    const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
-    expect(res.processes[5]).toMatchObject({
+    expect(res.processes[6]).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
       function: startProxyServer,
@@ -223,6 +239,7 @@ describe('setup-dev-processes', () => {
         port: 444,
         rules: {
           '/extensions': `http://localhost:${previewExtensionPort}`,
+          '/graphiql': `http://localhost:${graphiqlPort}`,
           '/ping': `http://localhost:${hmrPort}`,
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,

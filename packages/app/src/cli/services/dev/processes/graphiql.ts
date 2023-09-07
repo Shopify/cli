@@ -22,11 +22,13 @@ export async function setupGraphiQLServerProcess(
     type: 'graphiql',
     prefix: '/graphiql',
     options: {...options, port: -1},
-    function: async ({stdout, stderr, abortSignal}, options: GraphiQLServerProcessOptions) => {
-      const httpServer = setupGraphiQLServer({...options, stdout})
-      abortSignal.addEventListener('abort', async () => {
-        await httpServer.close()
-      })
-    },
+    function: launchGraphiQLServer,
   }
+}
+
+export async function launchGraphiQLServer({stdout, stderr, abortSignal}, options: GraphiQLServerProcessOptions) {
+  const httpServer = setupGraphiQLServer({...options, stdout})
+  abortSignal.addEventListener('abort', async () => {
+    await httpServer.close()
+  })
 }
