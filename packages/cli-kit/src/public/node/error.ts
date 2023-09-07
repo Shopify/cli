@@ -178,7 +178,7 @@ function isFatal(error: unknown): error is FatalError {
 }
 
 /**
- * A function that checks if an error should be reported.
+ * A function that checks if an error should be reported as unhandled.
  *
  * @param error - Error to be checked.
  * @returns A boolean indicating if the error should be reported.
