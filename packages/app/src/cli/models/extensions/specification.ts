@@ -13,6 +13,7 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
+  | 'app_config'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

@@ -26,7 +26,7 @@ export interface ActiveAppVersionQueryVariables {
   apiKey: string
 }
 
-interface AppModuleVersionSpecification {
+export interface AppModuleVersionSpecification {
   identifier: string
   name: string
   options: {
@@ -34,12 +34,12 @@ interface AppModuleVersionSpecification {
   }
 }
 
-interface AppModuleVersion {
+export interface AppModuleVersion {
   registrationId: string
   registrationUuid: string
   registrationTitle: string
   type: string
-  specification?: AppModuleVersionSpecification
+  specification: AppModuleVersionSpecification
 }
 
 export interface ActiveAppVersionQuerySchema {

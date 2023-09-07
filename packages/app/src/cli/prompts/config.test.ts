@@ -365,4 +365,28 @@ api_version = "unstable"
       expect(result).toBeFalsy()
     })
   })
+
+  test('returns false when there are no changes to app config but there are changes to [access]', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const options: PushOptions = {
+        configuration: {
+          ...configuration,
+          access: {api_access: {mode: 'offline'}},
+        },
+        force: false,
+      }
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      // When
+      const result = await confirmPushChanges(options, app)
+
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
 })

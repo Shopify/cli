@@ -12,6 +12,7 @@ import {createExtension} from '../dev/create-extension.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 const REGISTRATION_A = {
   uuid: 'UUID_A',
@@ -102,6 +103,7 @@ vi.mock('../dev/create-extension')
 vi.mock('./id-matching')
 vi.mock('./id-manual-matching')
 vi.mock('../dev/migrate-to-ui-extension')
+vi.mock('@shopify/cli-kit/node/api/partners')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
@@ -183,6 +185,7 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(getUIExtensionsToMigrate).mockReturnValue([])
+  vi.mocked(partnersRequest).mockResolvedValue({app: {activeAppVersion: null}})
 })
 
 describe('ensureExtensionsIds: matchmaking returns more remote sources than local', () => {
@@ -507,6 +510,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       release: true,
       apiKey: opt.appId,
       token: opt.token,
+      app: opt.app,
     })
   })
 
@@ -545,6 +549,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       release: false,
       apiKey: opt.appId,
       token: opt.token,
+      app: opt.app,
     })
   })
 
