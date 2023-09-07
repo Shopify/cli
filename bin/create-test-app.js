@@ -80,11 +80,7 @@ program
         nodePackageManager = options.packageManager;
         break;
       case undefined:
-        if (options.install === "local") {
-          nodePackageManager = "pnpm";
-        } else if (options.install === "nightly") {
-          nodePackageManager = "npm";
-        }
+        nodePackageManager = "npm";
         break;
       default:
         log(
