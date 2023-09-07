@@ -28,7 +28,7 @@ const graphiqlIntroMessage = `
 #
 `
 
-export const defaultQuery = `{
+export const defaultQuery = `query shopInfo {
   shop {
     name
     url
