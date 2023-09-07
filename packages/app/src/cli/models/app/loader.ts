@@ -9,6 +9,7 @@ import {
   AppConfigurationInterface,
   AppSchema,
   LegacyAppSchema,
+  CurrentAppConfiguration,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -17,6 +18,7 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
+import {APP_ACCESS_IDENTIFIER, getAppConfiguration} from '../extensions/app-config.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -248,6 +250,7 @@ class AppLoader {
       webs,
       allExtensions,
       usesWorkspaces,
+      this.specifications,
       dotenv,
     )
 
@@ -318,10 +321,15 @@ class AppLoader {
       )
     }
 
+    let customConfigurationObject = configurationObject
+    if (specification.appModuleFeatures().includes('app_config')) {
+      customConfigurationObject = getAppConfiguration(configurationObject, specification)
+    }
+
     const configuration = await parseConfigurationObject(
       specification.schema,
       configurationPath,
-      configurationObject,
+      customConfigurationObject,
       this.abortOrReport.bind(this),
     )
 
@@ -414,7 +422,51 @@ class AppLoader {
       }
     })
 
-    return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
+    // Load app config modules
+    const appConfigModules = await this.loadAppConfigModules(appDirectory)
+
+    return {allExtensions: allExtensions.concat(appConfigModules), usedCustomLayout: extensionDirectories !== undefined}
+  }
+
+  async loadAppConfigModules(directory: string) {
+    const {configuration} = await loadAppConfiguration({
+      configName: undefined,
+      directory,
+    })
+
+    const appConfigSpecifications = this.specifications.filter((specification) =>
+      specification.appModuleFeatures().includes('app_config'),
+    )
+
+    const appConfigModules: ExtensionInstance[] = []
+
+    await Promise.all(
+      appConfigSpecifications
+        .map(async (specification) => {
+          // Skip creating an app access module unless `access` is configured
+          if (
+            specification.identifier === APP_ACCESS_IDENTIFIER &&
+            !(configuration as CurrentAppConfiguration).access
+          ) {
+            return
+          }
+
+          const promise = this.createExtensionInstance(
+            specification.identifier,
+            configuration,
+            configuration.path,
+            directory,
+          ).then((module) => {
+            if (module) {
+              appConfigModules.push(module)
+            }
+          })
+          return promise
+        })
+        .flat(),
+    )
+
+    return appConfigModules
   }
 
   async findEntryPath(directory: string, specification: ExtensionSpecification) {

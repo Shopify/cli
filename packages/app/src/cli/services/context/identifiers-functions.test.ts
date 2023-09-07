@@ -227,9 +227,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
         toCreate: [FUNCTION_A, FUNCTION_A_2],
         dashboardOnly: [],
       },
-      'legacy',
-      opts.appId,
-      opts.token,
+      opts,
     )
   })
 })
@@ -292,9 +290,7 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
         toCreate: [FUNCTION_B],
         dashboardOnly: [],
       },
-      'legacy',
-      opts.appId,
-      opts.token,
+      opts,
     )
   })
 })
@@ -357,9 +353,7 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
         toCreate: [],
         dashboardOnly: [],
       },
-      'legacy',
-      opts.appId,
-      opts.token,
+      opts,
     )
   })
 

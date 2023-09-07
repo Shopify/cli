@@ -89,6 +89,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('function')
   }
 
+  get isConfigExtension() {
+    return this.features.includes('app_config')
+  }
+
   get isESBuildExtension() {
     return this.features.includes('esbuild')
   }
@@ -137,7 +141,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (unifiedDeployment) {
       return !this.isThemeExtension
     } else {
-      return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
+      return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension && !this.isConfigExtension
     }
   }
 

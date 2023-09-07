@@ -6,6 +6,7 @@ import {
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
+import {getAppConfiguration} from '../../models/extensions/app-config.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -58,7 +59,10 @@ export async function updateExtensionDraft({
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)
   } else {
-    outputInfo(`Draft updated successfully for extension: ${extension.localIdentifier}`, stdout)
+    const successMessage = extension.isConfigExtension
+      ? `Draft config updated successfully for: ${extension.name}`
+      : `Draft updated successfully for extension: ${extension.localIdentifier}`
+    outputInfo(successMessage, stdout)
   }
 }
 
@@ -87,23 +91,29 @@ export async function updateExtensionConfig({
   }
 
   let configObject = await loadConfigurationFile(extension.configuration.path)
-  const {extensions} = ExtensionsArraySchema.parse(configObject)
 
-  if (extensions) {
-    // If the config has an array, find our extension using the handle.
-    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configuration.path, abort)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
-    if (!extensionConfig) {
-      abort(
-        `ERROR: Invalid handle
-  - Expected handle: "${extension.handle}"
-  - Configuration file path: ${relativizePath(extension.configuration.path)}.
-  - Handles are immutable, you can't change them once they are set.`,
-      )
+  // Get configuration object for app config modules and skip handle check
+  if (extension.specification.appModuleFeatures().includes('app_config')) {
+    configObject = getAppConfiguration(configObject, extension.specification)
+  } else {
+    const {extensions} = ExtensionsArraySchema.parse(configObject)
+
+    if (extensions) {
+      // If the config has an array, find our extension using the handle.
+      const configuration = await parseConfigurationFile(UnifiedSchema, extension.configuration.path, abort)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
+      if (!extensionConfig) {
+        abort(
+          `ERROR: Invalid handle
+    - Expected handle: "${extension.handle}"
+    - Configuration file path: ${relativizePath(extension.configuration.path)}.
+    - Handles are immutable, you can't change them once they are set.`,
+        )
+      }
+
+      configObject = {...configuration, ...extensionConfig}
     }
-
-    configObject = {...configuration, ...extensionConfig}
   }
 
   const newConfig = await parseConfigurationObject(
