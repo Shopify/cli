@@ -1,5 +1,4 @@
 import {defaultQuery, template} from './template.js'
-import {AppInterface} from '../../../models/app/app.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import '@shopify/shopify-api/adapters/node'
@@ -116,7 +115,7 @@ export function setupGraphiQLServer({
         apiVersion: LATEST_API_VERSION,
         storeFqdn,
         versions: Object.values(ApiVersion),
-        appName: appName,
+        appName,
         scopes,
       }),
     )

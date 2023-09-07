@@ -1,4 +1,4 @@
-import {BaseProcess} from './types.js'
+import {BaseProcess, DevProcessFunction} from './types.js'
 import {setupGraphiQLServer} from '../graphiql/server.js'
 
 interface GraphiQLServerProcessOptions {
@@ -26,7 +26,10 @@ export async function setupGraphiQLServerProcess(
   }
 }
 
-export async function launchGraphiQLServer({stdout, stderr, abortSignal}, options: GraphiQLServerProcessOptions) {
+export const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptions> = async (
+  {stdout, stderr, abortSignal},
+  options: GraphiQLServerProcessOptions,
+) => {
   const httpServer = setupGraphiQLServer({...options, stdout})
   abortSignal.addEventListener('abort', async () => {
     await httpServer.close()
