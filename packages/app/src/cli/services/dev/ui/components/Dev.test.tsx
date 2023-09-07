@@ -359,7 +359,7 @@ describe('Dev', () => {
       />,
     )
 
-    await renderInstance.waitUntilExit()
+    await expect(renderInstance.waitUntilExit()).rejects.toThrow('something went wrong')
     expect(abort).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
