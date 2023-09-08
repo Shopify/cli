@@ -291,6 +291,69 @@ describe('Dev', () => {
     renderInstance.unmount()
   })
 
+  test('abortController can be used to exit with an error', async () => {
+    // Given
+    const abortController = new AbortController()
+
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+
+        // await promise that never resolves
+        await new Promise(() => {})
+      },
+    }
+
+    // When
+
+    const renderInstance = render(
+      <Dev
+        processes={[backendProcess]}
+        abortController={abortController}
+        previewUrl="https://shopify.com"
+        app={testApp}
+      />,
+    )
+
+    const promise = renderInstance.waitUntilExit()
+
+    abortController.abort('something went wrong')
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press d │ toggle development store preview: ✔ on
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Shutting down dev because of an error ...
+      "
+    `)
+
+    await promise
+
+    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+      "
+    `)
+    expect(vi.mocked(disableDeveloperPreview)).toHaveBeenNthCalledWith(1, {
+      apiKey: '123',
+      token: '123',
+    })
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
+
   test('accepts inputs when the processes resolve', async () => {
     // Given
     const backendProcess = {
@@ -360,7 +423,7 @@ describe('Dev', () => {
     )
 
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('something went wrong')
-    expect(abort).toHaveBeenCalledOnce()
+    expect(abort).toHaveBeenNthCalledWith(1, new Error('something went wrong'))
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()

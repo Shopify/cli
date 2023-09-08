@@ -33,7 +33,9 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
   const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
-    if (!err) {
+    if (err) {
+      setStatusMessage('Shutting down dev because of an error ...')
+    } else {
       setStatusMessage('Shutting down dev ...')
       setTimeout(() => {
         if (isUnitTest()) return
