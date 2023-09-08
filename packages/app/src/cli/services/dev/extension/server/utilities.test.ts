@@ -122,6 +122,23 @@ describe('getExtensionPointRedirectUrl()', () => {
     )
   })
 
+  test('returns customer account server URL if the extension point uses legacy customer account target', () => {
+    const extension = {
+      devUUID: '123abc',
+    } as ExtensionInstance
+
+    const options = {
+      storeFqdn: 'example.myshopify.com',
+      url: 'https://localhost:8081',
+    } as unknown as ExtensionDevOptions
+
+    const result = getExtensionPointRedirectUrl('CustomerAccount::FullPage::RenderWithin', extension, options)
+
+    expect(result).toBe(
+      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc',
+    )
+  })
+
   test('returns undefined if the extension point surface is not supported', () => {
     const extension = {
       devUUID: '123abc',
