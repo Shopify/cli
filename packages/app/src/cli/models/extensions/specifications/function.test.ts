@@ -81,7 +81,7 @@ describe('functionConfiguration', () => {
             details_path: extension.configuration.ui!.paths!.details,
             create_path: extension.configuration.ui!.paths!.create,
           },
-          handle: extension.configuration.ui!.handle,
+          ui_extension_handle: extension.configuration.ui!.handle,
         },
         input_query: inputQuery,
         input_query_variables: {
@@ -115,7 +115,7 @@ describe('functionConfiguration', () => {
         module_id: moduleId,
         enable_creation_ui: true,
         input_query: undefined,
-        input_query_variabels: undefined,
+        input_query_variables: undefined,
         ui: undefined,
       })
     })
