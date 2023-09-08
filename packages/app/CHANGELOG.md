@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.49.2
+
+### Patch Changes
+
+- 114aed64b: Dev component rethrow the exception to display error banner
+- Updated dependencies [114aed64b]
+  - @shopify/cli-kit@3.49.2
+  - @shopify/plugin-cloudflare@3.49.2
+
 ## 3.49.1
 
 ### Patch Changes

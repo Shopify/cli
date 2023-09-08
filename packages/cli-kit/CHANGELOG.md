@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.49.2
+
+### Patch Changes
+
+- 114aed64b: Dev component rethrow the exception to display error banner
+
 ## 3.49.1
 
 ## 3.49.0
