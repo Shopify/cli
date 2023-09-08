@@ -9,8 +9,8 @@ import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
 export interface DevProps {
@@ -32,14 +32,18 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
   const pollingInterval = useRef<NodeJS.Timeout>()
   const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
 
-  const {isAborted} = useAbortSignal(abortController.signal, async () => {
-    setStatusMessage('Shutting down dev ...')
-    setTimeout(() => {
-      if (isUnitTest()) return
-      treeKill(process.pid, 'SIGINT', false, () => {
-        process.exit(0)
-      })
-    }, 2000)
+  const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
+    if (err) {
+      setStatusMessage('Shutting down dev because of an error ...')
+    } else {
+      setStatusMessage('Shutting down dev ...')
+      setTimeout(() => {
+        if (isUnitTest()) return
+        treeKill(process.pid, 'SIGINT', false, () => {
+          process.exit(0)
+        })
+      }, 2000)
+    }
     clearInterval(pollingInterval.current)
     await disableDeveloperPreview({apiKey, token})
   })
@@ -55,8 +59,8 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
           try {
             return await process.action(stdout, stderr, signal)
             // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch {
-            abortController.abort()
+          } catch (error) {
+            abortController.abort(error)
           }
         },
       }
