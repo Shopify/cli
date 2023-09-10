@@ -74,7 +74,11 @@ export const template = `
       .top-bar table tbody td {
         padding: 0 8px;
         text-align: left;
-        color: #888;
+        color: #666;
+      }
+      .top-bar table tbody td .note {
+        font-size: 0.8em;
+        color: #999;
       }
       #graphiql {
         height: 100vh;
