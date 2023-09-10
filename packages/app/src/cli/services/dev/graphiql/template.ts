@@ -61,6 +61,21 @@ export const template = `
       .top-bar p {
         margin: 0;
       }
+      .top-bar table {
+        margin: 0;
+        width: 100%;
+        max-width: 1200px;
+      }
+      .top-bar table thead td {
+        padding: 0 8px;
+        text-align: left;
+        font-weight: bold;
+      }
+      .top-bar table tbody td {
+        padding: 0 8px;
+        text-align: left;
+        color: #888;
+      }
       #graphiql {
         height: 100vh;
         display: flex;
@@ -86,19 +101,49 @@ export const template = `
   <body>
     <div id="graphiql">
       <div class="top-bar">
-        <p>
-          Running API version
-          <select id="version-select">
-            {% for version in versions %}
-              <option value="{{ version }}" {% if version == apiVersion %}selected{% endif %}>{{ version }}</option>
-            {% endfor %}
-          </select>
-          against <code>{{storeFqdn}}</code>
-          as app <code>{{appName}}</code>
-        </p>
-        <p>
-          Using app scopes: <code>{{scopes}}</code> (you can add/change scopes in the <code>shopify.app.toml</code> file)
-        </p>
+        <table>
+          <thead>
+            <td>
+              Status
+            </td>
+            <td>
+              API version
+            </td>
+            <td>
+              Store
+            </td>
+            <td>
+              App
+            </td>
+            <td>
+              Scopes
+            </td>
+          </thead>
+          <tbody>
+            <td>
+              <p id="status">🟢 Running</p>
+            </td>
+            <td>
+              <p id="api-version">
+                <select id="version-select">
+                  {% for version in versions %}
+                    <option value="{{ version }}" {% if version == apiVersion %}selected{% endif %}>{{ version }}</option>
+                  {% endfor %}
+                </select>
+              </p>
+            </td>
+            <td>
+              <p id="store">{{ storeFqdn }}</p>
+            </td>
+            <td>
+              <p id="app">{{ appName }}</p>
+            </td>
+            <td>
+              <p id="scopes"><code>{{ scopes }}</code></p>
+              <p class="note">add/change scopes in the <code>shopify.app.toml</code> file</p>
+            </td>
+          </tbody>
+        </table>
       </div>
       <div id="graphiql-explorer">Loading...</div>
     </div>
