@@ -84,6 +84,10 @@ export function setupGraphiQLServer({
     })
   }
 
+  app.get('/graphiql/ping', (_req, res) => {
+    res.send('pong')
+  })
+
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql/auth/callback', async (req, res) => {
     outputDebug('Handling /graphiql/auth/callback request', stdout)

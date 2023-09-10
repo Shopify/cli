@@ -133,6 +133,21 @@ export const template = `
       document.getElementById('version-select').addEventListener('change', function(event) {
         renderGraphiQL(event.target.value)
       })
+
+      // Warn when the server has been stopped
+      const pingInterval = setInterval(function() {
+        fetch('{{url}}/graphiql/ping')
+          .then(function(response) {
+            if (response.status !== 200) {
+              const topBar = document.querySelector('#graphiql .top-bar')
+              topBar.innerHTML =
+                '<p>⚠️ The server has been stopped. Please restart <code>dev</code> and launch the GraphiQL Explorer from the terminal again.</p>'
+              topBar.style.backgroundColor = '#ff0000'
+              topBar.style.color = '#ffffff'
+              clearInterval(pingInterval)
+            }
+          })
+      }, 2000)
     </script>
   </body>
 </html>
