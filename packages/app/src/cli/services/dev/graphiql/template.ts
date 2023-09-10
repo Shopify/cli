@@ -55,7 +55,7 @@ export const template = `
         overflow: hidden;
       }
       .top-bar {
-        padding: 4px 8px;
+        padding: 4px;
         border-bottom: 1px solid #d6d6d6;
       }
       .top-bar p {
@@ -104,19 +104,19 @@ export const template = `
         <table>
           <thead>
             <td>
-              Status
+              ⚡️ Status
             </td>
             <td>
-              API version
+              👩‍💻 API version
             </td>
             <td>
-              Store
+              🏪 Store
             </td>
             <td>
-              App
+              ⚙️  App
             </td>
             <td>
-              Scopes
+              🔑 Scopes
             </td>
           </thead>
           <tbody>
