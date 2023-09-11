@@ -4,6 +4,8 @@ import {fetchAppPreviewMode} from '../../fetch.js'
 import {
   getLastFrameAfterUnmount,
   render,
+  sendInputAndWait,
+  sendInputAndWaitForContent,
   Stdin,
   waitForContent,
   waitForInputsToBeReady,
@@ -178,7 +180,7 @@ describe('Dev', () => {
     )
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('p')
+    await sendInputAndWait(renderInstance, 100, 'p')
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
 
@@ -218,7 +220,7 @@ describe('Dev', () => {
     const promise = renderInstance.waitUntilExit()
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('\u0003')
+    await sendInputAndWait(renderInstance, 100, '\u0003')
 
     await promise
     // Then
@@ -330,7 +332,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('p')
+    await sendInputAndWait(renderInstance, 100, 'p')
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
 
     // unmount so that polling is cleared after every test
@@ -482,7 +484,7 @@ describe('Dev', () => {
     expect(vi.mocked(fetchAppPreviewMode)).not.toHaveBeenCalled()
     expect(vi.mocked(enableDeveloperPreview)).not.toHaveBeenCalled()
 
-    renderInstance.stdin.write('d')
+    await sendInputAndWait(renderInstance, 100, 'd')
     expect(vi.mocked(developerPreviewUpdate)).not.toHaveBeenCalled()
 
     // unmount so that polling is cleared after every test
@@ -555,7 +557,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('d')
+    await sendInputAndWait(renderInstance, 100, 'd')
     expect(vi.mocked(developerPreviewUpdate)).toHaveBeenNthCalledWith(1, {
       apiKey: '123',
       token: '123',
@@ -603,9 +605,7 @@ describe('Dev', () => {
     )
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('d')
-
-    await waitForContent(renderInstance, 'Failed to turn off development store preview.')
+    await sendInputAndWaitForContent(renderInstance, 'Failed to turn off development store preview.', 'd')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -650,9 +650,7 @@ describe('Dev', () => {
     )
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('d')
-
-    await waitForContent(renderInstance, 'Failed to turn off development store preview.')
+    await sendInputAndWaitForContent(renderInstance, 'Failed to turn off development store preview.', 'd')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
@@ -752,9 +750,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    renderInstance.stdin.write('p')
-
-    await waitForContent(renderInstance, 'Failed to handle your input.')
+    await sendInputAndWaitForContent(renderInstance, 'Failed to handle your input.', 'p')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "
