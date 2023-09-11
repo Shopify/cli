@@ -4,7 +4,8 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import {Box, Text, useStdin} from 'ink'
+import {handleCtrlC} from '../../ui.js'
+import {Box, Text, useStdin, useInput} from 'ink'
 import React, {useRef, useState} from 'react'
 
 const loadingBarChar = '▀'
@@ -98,6 +99,17 @@ function Tasks<TContext>({
       setState(TasksState.Failure)
     },
   })
+
+  useInput(
+    (input, key) => {
+      handleCtrlC(input, key)
+
+      if (key.return) {
+        return null
+      }
+    },
+    {isActive: Boolean(isRawModeSupported)},
+  )
 
   const {isAborted} = useAbortSignal(abortSignal)
 
