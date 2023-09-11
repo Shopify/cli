@@ -194,9 +194,9 @@ export const template = `
         fetch('{{url}}/graphiql/ping')
           .then(function(response) {
             if (response.status === 200) {
+              clearTimeout(displayErrorServerStoppedTimeout)
               topErrorBar.style.display = 'none'
               statusDiv.innerHTML = '🟢 Running'
-              clearTimeout(displayErrorServerStoppedTimeout)
             } else {
               displayErrorServerStopped()
             }
