@@ -74,21 +74,12 @@ program
     const appPath = path.join(homeDir, "Desktop", appName);
 
     switch (options.packageManager) {
-      case "npm":
       case "yarn":
       case "pnpm":
         nodePackageManager = options.packageManager;
         break;
-      case undefined:
-        nodePackageManager = "npm";
-        break;
       default:
-        log(
-          `Invalid package manager: ${
-            options.packageManager
-          }. Must be one of ${packageManagers.join(", ")}.`
-        );
-        process.exit(1);
+        nodePackageManager = "npm";
     }
 
     const nodeExec = async (commands, args = [], options = {}) => {
