@@ -18,6 +18,7 @@ class Stderr extends EventEmitter {
 
 export class Stdin extends EventEmitter {
   isTTY: boolean
+  data: string | null = null
 
   constructor(options: {isTTY?: boolean} = {}) {
     super()
@@ -25,13 +26,21 @@ export class Stdin extends EventEmitter {
   }
 
   write = (data: string) => {
-    this.emit('data', data)
+    this.data = data
+    this.emit('readable')
   }
 
   setEncoding() {}
   setRawMode() {}
   ref() {}
   unref() {}
+  read: () => string | null = () => {
+    const data = this.data
+
+    this.data = null
+
+    return data
+  }
 }
 
 interface Instance {
