@@ -50,6 +50,7 @@ interface SetupGraphiQLServerOptions {
   stdout: Writable
   port: number
   appName: string
+  appUrl: string
   apiKey: string
   apiSecret: string
   url: string
@@ -61,6 +62,7 @@ export function setupGraphiQLServer({
   stdout,
   port,
   appName,
+  appUrl,
   apiKey,
   apiSecret,
   url,
@@ -120,6 +122,7 @@ export function setupGraphiQLServer({
         storeFqdn,
         versions: Object.values(ApiVersion),
         appName,
+        appUrl,
         scopes,
       }),
     )

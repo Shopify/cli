@@ -55,8 +55,14 @@ export const template = `
         overflow: hidden;
       }
       .top-bar {
-        padding: 4px;
+        padding: 0 4px;
         border-bottom: 1px solid #d6d6d6;
+        font-family: sans-serif;
+        font-size: 0.85em;
+        color: #666;
+      }
+      .top-bar a {
+        text-decoration: none;
       }
       #top-error-bar {
         display: none;
@@ -66,24 +72,27 @@ export const template = `
       .top-bar p {
         margin: 0;
       }
-      .top-bar table {
+      .top-bar .container {
         margin: 0;
+        display: flex;
+        flex-direction: row;
+        align-content: start;
+        align-items: stretch;
+      }
+      .top-bar .container:not(.bounded) {
         width: 100%;
+      }
+      .top-bar .container.bounded {
         max-width: 1200px;
+        flex-wrap: wrap;
       }
-      .top-bar table thead td {
-        padding: 0 8px;
+      .top-bar .box {
+        padding: 8px;
         text-align: left;
-        font-weight: bold;
       }
-      .top-bar table tbody td {
-        padding: 0 8px;
-        text-align: left;
-        color: #666;
-      }
-      .top-bar table tbody td .note {
-        font-size: 0.8em;
-        color: #999;
+      .top-bar .box.align-right {
+        text-align: right;
+        flex-grow: 1;
       }
       #graphiql {
         height: 100vh;
@@ -110,52 +119,33 @@ export const template = `
   <body>
     <div id="graphiql">
       <div id="top-error-bar" class="top-bar">
-        <p>⚠️ The server has been stopped. Restart <code>dev</code> and launch the GraphiQL Explorer from the terminal again.</p>
+        <div class="box">⚠️ The server has been stopped. Restart <code>dev</code> and launch the GraphiQL Explorer from the terminal again.</div>
       </div>
       <div class="top-bar">
-        <table>
-          <thead>
-            <td>
-              ⚡️ Status
-            </td>
-            <td>
-              👩‍💻 API version
-            </td>
-            <td>
-              🏪 Store
-            </td>
-            <td>
-              ⚙️  App
-            </td>
-            <td>
-              🔑 Scopes
-            </td>
-          </thead>
-          <tbody>
-            <td>
-              <p id="status">🟢 Running</p>
-            </td>
-            <td>
-              <p id="api-version">
-                <select id="version-select">
-                  {% for version in versions %}
-                    <option value="{{ version }}" {% if version == apiVersion %}selected{% endif %}>{{ version }}</option>
-                  {% endfor %}
-                </select>
-              </p>
-            </td>
-            <td>
-              <p id="store">{{ storeFqdn }}</p>
-            </td>
-            <td>
-              <p id="app">{{ appName }}</p>
-            </td>
-            <td>
-              <p id="scopes"><code>{{ scopes }}</code></p>
-              <p class="note">add/change scopes in the <code>shopify.app.toml</code> file</p>
-            </td>
-          </tbody>
-        </table>
+        <div class="container">
+          <div class="container bounded">
+            <div class="box">
+              Status: <span id="status">🟢 Running</span>
+            </div>
+            <div class="box">
+              API version:
+              <select id="version-select">
+                {% for version in versions %}
+                  <option value="{{ version }}" {% if version == apiVersion %}selected{% endif %}>{{ version }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="box">
+              Store: <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a>
+            </div>
+            <div class="box">
+              App: <a href="{{ appUrl }}" target="_blank">{{ appName }}</a>
+            </div>
+          </div>
+          <div class="box align-right">
+            The GraphiQL Explorer uses the access scopes declared in your app's configuration file.
+          </div>
+        </div>
       </div>
       <div id="graphiql-explorer">Loading...</div>
     </div>

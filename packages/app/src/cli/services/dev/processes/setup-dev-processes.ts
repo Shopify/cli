@@ -63,6 +63,7 @@ export async function setupDevProcesses({
 }: Omit<DevConfig, 'partnerUrlsUpdated'>): Promise<{processes: DevProcesses; previewUrl: string; graphiqlUrl: string}> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
+  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -76,6 +77,7 @@ export async function setupDevProcesses({
     })),
     await setupGraphiQLServerProcess({
       appName: localApp.name,
+      appUrl: appPreviewUrl,
       apiKey,
       apiSecret,
       storeFqdn,
@@ -129,10 +131,7 @@ export async function setupDevProcesses({
 
   // Decide on the appropriate preview URL for a session with these processes
   const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
-  const previewUrl =
-    anyPreviewableExtensions.length > 0
-      ? `${network.proxyUrl}/extensions/dev-console`
-      : buildAppURLForWeb(storeFqdn, apiKey)
+  const previewUrl = anyPreviewableExtensions.length > 0 ? `${network.proxyUrl}/extensions/dev-console` : appPreviewUrl
 
   return {processes: processesWithProxy, previewUrl, graphiqlUrl: `${network.proxyUrl}/graphiql`}
 }

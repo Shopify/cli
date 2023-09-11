@@ -191,7 +191,8 @@ async function dev(options: DevOptions) {
   }
 
   // By default, preview goes to the direct URL for the app.
-  let previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  let previewUrl = appPreviewUrl
 
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
@@ -312,6 +313,7 @@ async function dev(options: DevOptions) {
   proxyTargets.push(
     devGraphiQLTarget({
       appName: localApp.name,
+      appUrl: appPreviewUrl,
       apiKey,
       apiSecret,
       storeFqdn,
@@ -533,6 +535,7 @@ export async function launchWebProcess(
 
 interface DevGraphiQLTargetOptions {
   appName: string
+  appUrl: string
   apiKey: string
   apiSecret: string
   port: number

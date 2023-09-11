@@ -3,6 +3,7 @@ import {setupGraphiQLServer} from '../graphiql/server.js'
 
 interface GraphiQLServerProcessOptions {
   appName: string
+  appUrl: string
   apiKey: string
   apiSecret: string
   storeFqdn: string
