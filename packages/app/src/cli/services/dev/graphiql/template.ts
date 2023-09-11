@@ -58,6 +58,11 @@ export const template = `
         padding: 4px;
         border-bottom: 1px solid #d6d6d6;
       }
+      #top-error-bar {
+        display: none;
+        background-color: #ff0000;
+        color: #ffffff;
+      }
       .top-bar p {
         margin: 0;
       }
@@ -104,6 +109,9 @@ export const template = `
   </head>
   <body>
     <div id="graphiql">
+      <div id="top-error-bar" class="top-bar">
+        <p>⚠️ The server has been stopped. Restart <code>dev</code> and launch the GraphiQL Explorer from the terminal again.</p>
+      </div>
       <div class="top-bar">
         <table>
           <thead>
@@ -185,15 +193,21 @@ export const template = `
 
       // Warn when the server has been stopped
       const pingInterval = setInterval(function() {
+        const topErrorBar = document.querySelector('#graphiql #top-error-bar')
+        const statusDiv = document.querySelector('#graphiql #status')
+        const displayErrorServerStopped = function() {
+          topErrorBar.style.display = 'block'
+          statusDiv.innerHTML = '❌ Disconnected'
+        }
+        const displayErrorServerStoppedTimeout = setTimeout(displayErrorServerStopped, 1000)
         fetch('{{url}}/graphiql/ping')
           .then(function(response) {
-            if (response.status !== 200) {
-              const topBar = document.querySelector('#graphiql .top-bar')
-              topBar.innerHTML =
-                '<p>⚠️ The server has been stopped. Please restart <code>dev</code> and launch the GraphiQL Explorer from the terminal again.</p>'
-              topBar.style.backgroundColor = '#ff0000'
-              topBar.style.color = '#ffffff'
-              clearInterval(pingInterval)
+            if (response.status === 200) {
+              topErrorBar.style.display = 'none'
+              statusDiv.innerHTML = '🟢 Running'
+              clearTimeout(displayErrorServerStoppedTimeout)
+            } else {
+              displayErrorServerStopped()
             }
           })
       }, 2000)
