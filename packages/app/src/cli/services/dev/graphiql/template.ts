@@ -89,6 +89,7 @@ export const template = `
       .top-bar .box {
         padding: 8px;
         text-align: left;
+        align-self: center;
       }
       .top-bar .box.align-right {
         text-align: right;
