@@ -190,7 +190,7 @@ export const template = `
           topErrorBar.style.display = 'block'
           statusDiv.innerHTML = '❌ Disconnected'
         }
-        const displayErrorServerStoppedTimeout = setTimeout(displayErrorServerStopped, 1000)
+        const displayErrorServerStoppedTimeout = setTimeout(displayErrorServerStopped, 3000)
         fetch('{{url}}/graphiql/ping')
           .then(function(response) {
             if (response.status === 200) {
