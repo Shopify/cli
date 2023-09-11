@@ -30,8 +30,8 @@ export class Stdin extends EventEmitter {
 
   setEncoding() {}
   setRawMode() {}
-  resume() {}
-  pause() {}
+  ref() {}
+  unref() {}
 }
 
 interface Instance {
