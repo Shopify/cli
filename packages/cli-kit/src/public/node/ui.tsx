@@ -62,15 +62,7 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
   const abortSignal = props.abortSignal ?? new AbortController().signal
 
-  if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
-  } else {
-    return Promise.all(
-      props.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
-      }),
-    )
-  }
+  return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
 }
 
 export type AlertCustomSection = CustomSection
