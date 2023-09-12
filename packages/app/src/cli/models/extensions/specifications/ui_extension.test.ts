@@ -28,6 +28,9 @@ describe('ui_extension', async () => {
         block_progress: false,
         network_access: false,
         api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
       },
       settings: {},
     }
@@ -85,6 +88,9 @@ describe('ui_extension', async () => {
           block_progress: false,
           network_access: false,
           api_access: false,
+          collect_buyer_consent: {
+            sms_marketing: false,
+          },
         },
         settings: {},
       }
@@ -116,6 +122,9 @@ describe('ui_extension', async () => {
           block_progress: false,
           network_access: false,
           api_access: false,
+          collect_buyer_consent: {
+            sms_marketing: false,
+          },
         },
         settings: {},
       }
