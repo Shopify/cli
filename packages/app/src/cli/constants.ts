@@ -27,3 +27,7 @@ export const blocks = {
     configurationName: configurationFileNames.web,
   },
 } as const
+
+export const urlNamespaces = {
+  devTools: '.shopify',
+} as const

@@ -60,9 +60,9 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export async function renderDev({processes, previewUrl, app, abortController}: DevProps) {
+export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl}: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
-    return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} />, {
+    return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} graphiqlUrl={graphiqlUrl} />, {
       exitOnCtrlC: false,
     })
   } else {

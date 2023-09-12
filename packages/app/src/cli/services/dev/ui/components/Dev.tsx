@@ -17,6 +17,7 @@ export interface DevProps {
   processes: OutputProcess[]
   abortController: AbortController
   previewUrl: string
+  graphiqlUrl: string
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -26,7 +27,7 @@ export interface DevProps {
   pollingTime?: number
 }
 
-const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, app, pollingTime = 5000}) => {
+const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, graphiqlUrl, app, pollingTime = 5000}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
@@ -123,6 +124,8 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
 
           if (input === 'p' && previewUrl) {
             await openURL(previewUrl)
+          } else if (input === 'g' && graphiqlUrl) {
+            openURL(graphiqlUrl)
           } else if (input === 'q') {
             abortController.abort()
           } else if (input === 'd' && canEnablePreviewMode) {
@@ -184,6 +187,9 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}
+              <Text>
+                {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in your browser
+              </Text>
               <Text>
                 {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
               </Text>

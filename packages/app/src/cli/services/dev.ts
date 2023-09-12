@@ -9,6 +9,7 @@ import {
 } from './dev/urls.js'
 import {installAppDependencies} from './dependencies.js'
 import {devUIExtensions} from './dev/extension.js'
+import {setupGraphiQLServer} from './dev/graphiql/server.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {themeExtensionArgs} from './dev/theme-extension-args.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
@@ -19,6 +20,7 @@ import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {DeploymentMode} from './deploy/mode.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {urlNamespaces} from '../constants.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -142,12 +144,13 @@ async function dev(options: DevOptions) {
 
   await validateCustomPorts(localApp.webs)
 
-  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, currentURLs] = await Promise.all([
+  const [{frontendUrl, frontendPort, usingLocalhost}, backendPort, graphiqlPort, currentURLs] = await Promise.all([
     generateFrontendURL({
       ...options,
       tunnelClient,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
+    getAvailableTCPPort(),
     getURLs(apiKey, token),
   ])
   let frontendServerPort = frontendConfig?.configuration.port
@@ -189,7 +192,8 @@ async function dev(options: DevOptions) {
   }
 
   // By default, preview goes to the direct URL for the app.
-  let previewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  let previewUrl = appPreviewUrl
 
   const proxyPort = usingLocalhost ? await getAvailableTCPPort() : frontendPort
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
@@ -307,6 +311,19 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
+  proxyTargets.push(
+    devGraphiQLTarget({
+      appName: localApp.name,
+      appUrl: appPreviewUrl,
+      apiKey,
+      apiSecret,
+      storeFqdn,
+      url: proxyUrl.replace(/^https?:\/\//, ''),
+      port: graphiqlPort,
+      scopes: getAppScopesArray(localApp.configuration),
+    }),
+  )
+
   const webhooksPath =
     localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
   const sendUninstallWebhook = Boolean(webhooksPath) && remoteAppUpdated && Boolean(frontendConfig || backendConfig)
@@ -354,6 +371,7 @@ async function dev(options: DevOptions) {
   await renderDev({
     processes: processesIncludingAnyProxies,
     previewUrl,
+    graphiqlUrl: `${proxyUrl}/${urlNamespaces.devTools}/graphiql`,
     app,
     abortController,
   })
@@ -514,6 +532,31 @@ export async function launchWebProcess(
       SERVER_PORT: `${port}`,
     },
   })
+}
+
+interface DevGraphiQLTargetOptions {
+  appName: string
+  appUrl: string
+  apiKey: string
+  apiSecret: string
+  port: number
+  url: string
+  storeFqdn: string
+  scopes: string[]
+}
+
+function devGraphiQLTarget(options: DevGraphiQLTargetOptions): ReverseHTTPProxyTarget {
+  return {
+    logPrefix: 'graphiql',
+    pathPrefix: `/${urlNamespaces.devTools}/graphiql`,
+    customPort: options.port,
+    action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
+      const httpServer = setupGraphiQLServer({...options, stdout, port})
+      signal.addEventListener('abort', async () => {
+        await httpServer.close()
+      })
+    },
+  }
 }
 
 interface DevUIExtensionsTargetOptions {
