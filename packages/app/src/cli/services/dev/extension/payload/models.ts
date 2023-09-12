@@ -78,6 +78,10 @@ export interface UIExtensionPayload {
 
 export type ExtensionAssetBuildStatus = 'success' | 'error' | ''
 
-export interface Capabilities {
+interface Capability {
   [key: string]: boolean | undefined
+}
+
+export interface Capabilities {
+  [key: string]: Capability | boolean | undefined
 }

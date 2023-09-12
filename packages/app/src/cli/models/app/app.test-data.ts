@@ -118,6 +118,9 @@ export async function testUIExtension(
       block_progress: false,
       network_access: false,
       api_access: false,
+      collect_buyer_consent: {
+        sms_marketing: false,
+      },
     },
   }
   const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
