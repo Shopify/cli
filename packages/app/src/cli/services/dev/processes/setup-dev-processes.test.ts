@@ -14,6 +14,7 @@ import {
 import {launchWebProcess} from '../../dev.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
+import {urlNamespaces} from '../../../constants.js'
 import {fetchAppExtensionRegistrations} from '../fetch.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
@@ -150,12 +151,14 @@ describe('setup-dev-processes', () => {
     expect(res.processes[1]).toMatchObject({
       type: 'graphiql',
       function: launchGraphiQLServer,
-      prefix: '/graphiql',
+      prefix: 'graphiql',
+      urlPrefix: `/${urlNamespaces.devTools}/graphiql`,
       options: {
         appName: 'App',
         apiKey: 'api-key',
         apiSecret: 'api-secret',
         port: expect.any(Number),
+        appUrl: 'https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key',
         scopes: ['read_products'],
         storeFqdn: 'store.myshopify.io',
         url: 'example.com/proxy',
@@ -239,7 +242,7 @@ describe('setup-dev-processes', () => {
         port: 444,
         rules: {
           '/extensions': `http://localhost:${previewExtensionPort}`,
-          '/graphiql': `http://localhost:${graphiqlPort}`,
+          [`/${urlNamespaces.devTools}/graphiql`]: `http://localhost:${graphiqlPort}`,
           '/ping': `http://localhost:${hmrPort}`,
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,

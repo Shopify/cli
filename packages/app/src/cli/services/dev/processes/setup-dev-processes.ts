@@ -5,6 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {urlNamespaces} from '../../../constants.js'
 import {AppInterface, getAppScopes, getAppScopesArray} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
@@ -133,7 +134,11 @@ export async function setupDevProcesses({
   const anyPreviewableExtensions = processesWithProxy.filter((process) => process.type === 'previewable-extension')
   const previewUrl = anyPreviewableExtensions.length > 0 ? `${network.proxyUrl}/extensions/dev-console` : appPreviewUrl
 
-  return {processes: processesWithProxy, previewUrl, graphiqlUrl: `${network.proxyUrl}/graphiql`}
+  return {
+    processes: processesWithProxy,
+    previewUrl,
+    graphiqlUrl: `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql`,
+  }
 }
 
 const stripUndefineds = <T>(process: T | undefined | false): process is T => {
@@ -161,7 +166,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
         process.options.port = targetPort
       } else if (process.type === 'graphiql') {
         const targetPort = await getAvailableTCPPort()
-        rules[process.prefix] = `http://localhost:${targetPort}`
+        rules[process.urlPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
       }
 

@@ -1,4 +1,5 @@
 import {defaultQuery, template} from './template.js'
+import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import '@shopify/shopify-api/adapters/node'
@@ -73,13 +74,21 @@ export function setupGraphiQLServer({
 
   const shopify = createShopify({stdout, apiKey, apiSecret, url, scopes})
   const app = express()
+    // Make the app accept all routes starting with /.shopify/xxx as /xxx
+    .use((req, _res, next) => {
+      if (req.path.startsWith(`/${urlNamespaces.devTools}`)) {
+        req.url = req.url.replace(`/${urlNamespaces.devTools}`, '')
+      }
+      next()
+    })
+
   let session: Session | undefined
 
   async function beginAuth(req: express.Request, res: express.Response) {
     stdout.write('Initiating OAuth flow...')
     await shopify.auth.begin({
       shop: shopify.utils.sanitizeShop(storeFqdn, true)!,
-      callbackPath: '/graphiql/auth/callback',
+      callbackPath: `/${urlNamespaces.devTools}/graphiql/auth/callback`,
       isOnline: false,
       rawRequest: req,
       rawResponse: res,
@@ -100,8 +109,9 @@ export function setupGraphiQLServer({
     })
     session = callback.session
     // You can now use callback.session to make API requests
-    res.redirect('/graphiql')
+    res.redirect(`/${urlNamespaces.devTools}/graphiql`)
   })
+
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
@@ -116,7 +126,7 @@ export function setupGraphiQLServer({
     // const session = await getSessionFromStorage(sessionId)
     res.send(
       await renderLiquidTemplate(template, {
-        url: `https://${url}`,
+        url: `https://${url}/${urlNamespaces.devTools}`,
         defaultQueries: [{query: defaultQuery}],
         apiVersion: LATEST_API_VERSION,
         storeFqdn,
@@ -127,6 +137,7 @@ export function setupGraphiQLServer({
       }),
     )
   })
+
   app.use(bodyParser.json())
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {

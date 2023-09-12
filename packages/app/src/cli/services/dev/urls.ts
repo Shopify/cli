@@ -1,3 +1,4 @@
+import {urlNamespaces} from '../../constants.js'
 import {updateURLsPrompt} from '../../prompts/dev.js'
 import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
@@ -141,7 +142,7 @@ export function generatePartnersURLs(
       `${baseURL}/auth/callback`,
       `${baseURL}/auth/shopify/callback`,
       `${baseURL}/api/auth/callback`,
-      `${baseURL}/graphiql/auth/callback`,
+      `${baseURL}/${urlNamespaces.devTools}/graphiql/auth/callback`,
     ]
   }
 

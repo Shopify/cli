@@ -1,4 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
+import {urlNamespaces} from '../../../constants.js'
 import {setupGraphiQLServer} from '../graphiql/server.js'
 
 interface GraphiQLServerProcessOptions {
@@ -14,6 +15,7 @@ interface GraphiQLServerProcessOptions {
 
 export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions> {
   type: 'graphiql'
+  urlPrefix: string
 }
 
 export async function setupGraphiQLServerProcess(
@@ -21,7 +23,8 @@ export async function setupGraphiQLServerProcess(
 ): Promise<GraphiQLServerProcess> {
   return {
     type: 'graphiql',
-    prefix: '/graphiql',
+    prefix: `graphiql`,
+    urlPrefix: `/${urlNamespaces.devTools}/graphiql`,
     options: {...options, port: -1},
     function: launchGraphiQLServer,
   }
