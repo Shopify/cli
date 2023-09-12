@@ -20,6 +20,7 @@ import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {DeploymentMode} from './deploy/mode.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {urlNamespaces} from '../constants.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -370,7 +371,7 @@ async function dev(options: DevOptions) {
   await renderDev({
     processes: processesIncludingAnyProxies,
     previewUrl,
-    graphiqlUrl: `${proxyUrl}/graphiql`,
+    graphiqlUrl: `${proxyUrl}/${urlNamespaces.devTools}/graphiql`,
     app,
     abortController,
   })
@@ -547,7 +548,7 @@ interface DevGraphiQLTargetOptions {
 function devGraphiQLTarget(options: DevGraphiQLTargetOptions): ReverseHTTPProxyTarget {
   return {
     logPrefix: 'graphiql',
-    pathPrefix: '/graphiql',
+    pathPrefix: `/${urlNamespaces.devTools}/graphiql`,
     customPort: options.port,
     action: async (stdout: Writable, stderr: Writable, signal: AbortSignal, port: number) => {
       const httpServer = setupGraphiQLServer({...options, stdout, port})
