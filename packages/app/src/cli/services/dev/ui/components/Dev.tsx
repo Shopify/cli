@@ -188,10 +188,10 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
                 </Text>
               ) : null}
               <Text>
-                {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in your browser
               </Text>
               <Text>
-                {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL explorer in your browser
+                {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
               </Text>
               <Text>
                 {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
