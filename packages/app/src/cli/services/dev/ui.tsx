@@ -8,6 +8,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -60,9 +61,17 @@ export async function outputUpdateURLsResult(
 }
 
 export async function renderDev({processes, previewUrl, app, abortController}: DevProps) {
-  return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} />, {
-    exitOnCtrlC: false,
-  })
+  if (terminalSupportsRawMode(process.stdin)) {
+    return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} />, {
+      exitOnCtrlC: false,
+    })
+  } else {
+    return Promise.all(
+      processes.map(async (concurrentProcess) => {
+        await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
+      }),
+    )
+  }
 }
 
 async function partnersURL(organizationId: string, appId: string) {

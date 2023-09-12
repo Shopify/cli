@@ -1,4 +1,5 @@
-import {outputUpdateURLsResult} from './ui.js'
+import {outputUpdateURLsResult, renderDev} from './ui.js'
+import {Dev} from './ui/components/Dev.js'
 import {
   testApp,
   testFunctionExtension,
@@ -7,9 +8,14 @@ import {
   testUIExtension,
 } from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
-import {afterEach, describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortController} from '@shopify/cli-kit/node/abort'
+import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('./ui/components/Dev.js')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -112,6 +118,66 @@ describe('output', () => {
         ╰──────────────────────────────────────────────────────────────────────────────╯
         "
       `)
+    })
+  })
+})
+
+describe('ui', () => {
+  describe('renderDev', () => {
+    test("doesn't use ink when terminal doesn't support TTY", async () => {
+      vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+      const concurrentProcess = {
+        prefix: 'prefix',
+        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+      }
+
+      const processes = [concurrentProcess]
+      const previewUrl = 'https://lala.cloudflare.io/'
+      const app = {
+        canEnablePreviewMode: true,
+        developmentStorePreviewEnabled: false,
+        apiKey: '123',
+        token: '123',
+      }
+
+      const abortController = new AbortController()
+
+      await renderDev({processes, previewUrl, app, abortController})
+
+      expect(vi.mocked(Dev)).not.toHaveBeenCalled()
+      expect(concurrentProcess.action).toHaveBeenNthCalledWith(
+        1,
+        process.stdout,
+        process.stderr,
+        abortController.signal,
+      )
+    })
+
+    test('uses ink when terminal supports TTY', async () => {
+      vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+      const concurrentProcess = {
+        prefix: 'prefix',
+        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+      }
+
+      const processes = [concurrentProcess]
+      const previewUrl = 'https://lala.cloudflare.io/'
+      const app = {
+        canEnablePreviewMode: true,
+        developmentStorePreviewEnabled: false,
+        apiKey: '123',
+        token: '123',
+      }
+
+      const abortController = new AbortController()
+
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      renderDev({processes, previewUrl, app, abortController})
+
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      expect(vi.mocked(Dev)).toHaveBeenCalled()
+      expect(concurrentProcess.action).not.toHaveBeenCalled()
     })
   })
 })
