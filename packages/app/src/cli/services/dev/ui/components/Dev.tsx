@@ -148,7 +148,7 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       onInput()
     },
-    {isActive: canUseShortcuts},
+    {isActive: Boolean(canUseShortcuts)},
   )
 
   return (
