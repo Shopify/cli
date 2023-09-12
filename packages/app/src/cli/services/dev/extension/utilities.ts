@@ -40,8 +40,7 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
     // Covers Customer Accounts UI extensions (future)
     case 'customeraccount':
     case 'customer-account': {
-      // These targets are rendered by Checkout
-      if (page === 'order-status') {
+      if (isCheckoutRenderedCustomerAccountTarget(extensionPointTarget)) {
         return 'checkout'
       }
 
@@ -57,4 +56,15 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
       // Covers Admin UI extensions
       return domain
   }
+}
+
+function isCheckoutRenderedCustomerAccountTarget(extensionPointTarget: string) {
+  const customerAccountCheckoutRenderedTargets = new Set([
+    'customer-account.order-status.cart-line-item.render-after',
+    'customer-account.order-status.cart-line-list.render-after',
+    'customer-account.order-status.customer-information.render-after',
+    'customer-account.order-status.block.render',
+  ])
+
+  return customerAccountCheckoutRenderedTargets.has(extensionPointTarget)
 }
