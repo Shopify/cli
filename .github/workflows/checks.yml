@@ -9,13 +9,13 @@ env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  PNPM_VERSION: '8.6.1'
+  PNPM_VERSION: '8.7.0'
   RUBY_VERSION: '3.1.2'
   BUNDLER_VERSION: '2.3.18'
 
 jobs:
   type-diff:
-    name: "[PR] Type-diff with Node ${{ matrix.node }} in ${{ matrix.os }}"
+    name: '[PR] Type-diff with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
     if: github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 30
