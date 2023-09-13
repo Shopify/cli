@@ -17,7 +17,7 @@ export interface DevProps {
   processes: OutputProcess[]
   abortController: AbortController
   previewUrl: string
-  graphiqlUrl: string
+  graphiqlUrl?: string
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -187,9 +187,11 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
                 </Text>
               ) : null}
-              <Text>
-                {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in your browser
-              </Text>
+              {graphiqlUrl ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in your browser
+                </Text>
+              ) : null}
               <Text>
                 {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
               </Text>
