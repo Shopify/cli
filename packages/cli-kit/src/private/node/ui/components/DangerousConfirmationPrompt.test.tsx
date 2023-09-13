@@ -37,7 +37,7 @@ describe('DangerousConfirmationPrompt', () => {
          Type [36myes[39m to confirm, or press Escape to cancel.
       [31m>[39m  [31m[41m█[49m[39m
          [31m▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔[39m
-         [31mValue must be exactly [36myes[39m[31m[39m
+         [31mValue must be exactly [36myes[39m
       "
     `)
     await sendInputAndWaitForChange(renderInstance, 'A')
