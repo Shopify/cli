@@ -433,7 +433,10 @@ export async function addNPMDependencies(
       }
       break
     case 'yarn':
-      await installDependencies(options, argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type))
+      await installDependencies(
+        options,
+        argumentsToAddDependenciesWithYarn(dependenciesWithVersion, options.type, Boolean(options.addToRootDirectory)),
+      )
       break
     case 'pnpm':
       await installDependencies(
@@ -498,10 +501,16 @@ function argumentsToAddDependenciesWithNPM(dependency: string, type: DependencyT
  * Returns the arguments to add dependencies using Yarn.
  * @param dependencies - The list of dependencies to add
  * @param type - The dependency type.
+ * @param addAtRoot - Force to install the dependencies in the workspace root (optional, default = false)
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType): string[] {
+function argumentsToAddDependenciesWithYarn(dependencies: string[], type: DependencyType, addAtRoot = false): string[] {
   let command = ['add']
+
+  if (addAtRoot) {
+    command.push('-W')
+  }
+
   command = command.concat(dependencies)
   switch (type) {
     case 'dev':
@@ -521,13 +530,10 @@ function argumentsToAddDependenciesWithYarn(dependencies: string[], type: Depend
  * Returns the arguments to add dependencies using PNPM.
  * @param dependencies - The list of dependencies to add
  * @param type - The dependency type.
+ * @param addAtRoot - Force to install the dependencies in the workspace root (optional, default = false)
  * @returns An array with the arguments.
  */
-function argumentsToAddDependenciesWithPNPM(
-  dependencies: string[],
-  type: DependencyType,
-  addAtRoot: boolean,
-): string[] {
+function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: DependencyType, addAtRoot = false): string[] {
   let command = ['add']
 
   if (addAtRoot) {
