@@ -313,8 +313,9 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  const shouldRenderGraphiQL =
-    isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
+  const scopesArray = getAppScopesArray(localApp.configuration)
+  const shouldRenderGraphiQL = scopesArray.length > 0 &&
+    (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
   if (shouldRenderGraphiQL) {
     proxyTargets.push(
       devGraphiQLTarget({
@@ -325,7 +326,7 @@ async function dev(options: DevOptions) {
         storeFqdn,
         url: proxyUrl.replace(/^https?:\/\//, ''),
         port: graphiqlPort,
-        scopes: getAppScopesArray(localApp.configuration),
+        scopes: scopesArray,
       }),
     )
   }

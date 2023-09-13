@@ -71,8 +71,9 @@ export async function setupDevProcesses({
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  const shouldRenderGraphiQL =
-    isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
+  const scopesArray = getAppScopesArray(localApp.configuration)
+  const shouldRenderGraphiQL = scopesArray.length > 0 &&
+    (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
 
   const processes = [
     ...(await setupWebProcesses({
@@ -92,7 +93,7 @@ export async function setupDevProcesses({
           apiSecret,
           storeFqdn,
           url: network.proxyUrl.replace(/^https?:\/\//, ''),
-          scopes: getAppScopesArray(localApp.configuration),
+          scopes: scopesArray,
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
