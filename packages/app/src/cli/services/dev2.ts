@@ -246,7 +246,7 @@ async function launchDevProcesses({
 }: {
   processes: DevProcesses
   previewUrl: string
-  graphiqlUrl: string
+  graphiqlUrl: string | undefined
   config: DevConfig
 }) {
   const abortController = new AbortController()
