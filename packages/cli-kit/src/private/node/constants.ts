@@ -26,8 +26,9 @@ export const environmentVariables = {
   noThemeBundling: 'SHOPIFY_CLI_NO_THEME_BUNDLING',
   bundledThemeCLI: 'SHOPIFY_CLI_BUNDLED_THEME_CLI',
   // Variables to detect if the CLI is running in a cloud environment
-  codespaceName: 'CODESPACE_NAME',
   codespaces: 'CODESPACES',
+  codespaceName: 'CODESPACE_NAME',
+  codespacePortForwardingDomain: 'GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN',
   gitpod: 'GITPOD_WORKSPACE_URL',
   cloudShell: 'CLOUD_SHELL',
   spin: 'SPIN',
