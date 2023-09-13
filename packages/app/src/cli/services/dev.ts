@@ -314,7 +314,9 @@ async function dev(options: DevOptions) {
   }
 
   const scopesArray = getAppScopesArray(localApp.configuration)
-  const shouldRenderGraphiQL = scopesArray.length > 0 &&
+  const shouldRenderGraphiQL =
+    scopesArray.length > 0 &&
+    shouldUpdateURLs &&
     (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
   if (shouldRenderGraphiQL) {
     proxyTargets.push(

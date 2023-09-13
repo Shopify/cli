@@ -63,7 +63,8 @@ export async function setupDevProcesses({
   commandOptions,
   network,
   usesUnifiedDeployment,
-}: Omit<DevConfig, 'partnerUrlsUpdated'>): Promise<{
+  partnerUrlsUpdated,
+}: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
   graphiqlUrl: string | undefined
@@ -72,7 +73,9 @@ export async function setupDevProcesses({
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const scopesArray = getAppScopesArray(localApp.configuration)
-  const shouldRenderGraphiQL = scopesArray.length > 0 &&
+  const shouldRenderGraphiQL =
+    scopesArray.length > 0 &&
+    partnerUrlsUpdated &&
     (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
 
   const processes = [
