@@ -13,7 +13,6 @@ export const dotEnvFileNames = {
 }
 
 export const versions = {
-  react: '^17.0.0',
   reactTypes: '17.0.30',
 } as const
 
