@@ -38,7 +38,7 @@
     "@shopify/cli-kit": "3.49.1"
   },
   "devDependencies": {
-    "@types/node": "14.18.54",
+    "@types/node": "14.18.56",
     "json-schema-to-zod": "0.6.3",
     "vite": "^4.4.9",
     "vitest": "^0.34.3",
