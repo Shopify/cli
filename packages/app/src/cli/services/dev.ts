@@ -20,7 +20,7 @@ import {updateExtensionDraft} from './dev/update-extension.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {DeploymentMode} from './deploy/mode.js'
 import {canEnablePreviewMode} from './extensions/common.js'
-import {urlNamespaces} from '../constants.js'
+import {environmentVariableNames, urlNamespaces} from '../constants.js'
 import {
   ReverseHTTPProxyTarget,
   runConcurrentHTTPProcessesAndPathForwardTraffic,
@@ -43,6 +43,8 @@ import {HostThemeManager} from '../utilities/host-theme-manager.js'
 
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {Config} from '@oclif/core'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -311,18 +313,25 @@ async function dev(options: DevOptions) {
     additionalProcesses.push(devExt)
   }
 
-  proxyTargets.push(
-    devGraphiQLTarget({
-      appName: localApp.name,
-      appUrl: appPreviewUrl,
-      apiKey,
-      apiSecret,
-      storeFqdn,
-      url: proxyUrl.replace(/^https?:\/\//, ''),
-      port: graphiqlPort,
-      scopes: getAppScopesArray(localApp.configuration),
-    }),
-  )
+  const scopesArray = getAppScopesArray(localApp.configuration)
+  const shouldRenderGraphiQL =
+    scopesArray.length > 0 &&
+    shouldUpdateURLs &&
+    (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
+  if (shouldRenderGraphiQL) {
+    proxyTargets.push(
+      devGraphiQLTarget({
+        appName: localApp.name,
+        appUrl: appPreviewUrl,
+        apiKey,
+        apiSecret,
+        storeFqdn,
+        url: proxyUrl.replace(/^https?:\/\//, ''),
+        port: graphiqlPort,
+        scopes: scopesArray,
+      }),
+    )
+  }
 
   const webhooksPath =
     localApp.webs.map(({configuration}) => configuration.webhooks_path).find((path) => path) || '/api/webhooks'
@@ -371,7 +380,7 @@ async function dev(options: DevOptions) {
   await renderDev({
     processes: processesIncludingAnyProxies,
     previewUrl,
-    graphiqlUrl: `${proxyUrl}/${urlNamespaces.devTools}/graphiql`,
+    ...(shouldRenderGraphiQL ? {graphiqlUrl: `${proxyUrl}/${urlNamespaces.devTools}/graphiql`} : {}),
     app,
     abortController,
   })

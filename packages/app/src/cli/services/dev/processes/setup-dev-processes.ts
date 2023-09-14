@@ -5,7 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {urlNamespaces} from '../../../constants.js'
+import {environmentVariableNames, urlNamespaces} from '../../../constants.js'
 import {AppInterface, getAppScopes, getAppScopesArray} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
@@ -14,6 +14,8 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -61,10 +63,20 @@ export async function setupDevProcesses({
   commandOptions,
   network,
   usesUnifiedDeployment,
-}: Omit<DevConfig, 'partnerUrlsUpdated'>): Promise<{processes: DevProcesses; previewUrl: string; graphiqlUrl: string}> {
+  partnerUrlsUpdated,
+}: DevConfig): Promise<{
+  processes: DevProcesses
+  previewUrl: string
+  graphiqlUrl: string | undefined
+}> {
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
+  const scopesArray = getAppScopesArray(localApp.configuration)
+  const shouldRenderGraphiQL =
+    scopesArray.length > 0 &&
+    partnerUrlsUpdated &&
+    (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
 
   const processes = [
     ...(await setupWebProcesses({
@@ -76,15 +88,17 @@ export async function setupDevProcesses({
       apiSecret,
       scopes: getAppScopes(localApp.configuration),
     })),
-    await setupGraphiQLServerProcess({
-      appName: localApp.name,
-      appUrl: appPreviewUrl,
-      apiKey,
-      apiSecret,
-      storeFqdn,
-      url: network.proxyUrl.replace(/^https?:\/\//, ''),
-      scopes: getAppScopesArray(localApp.configuration),
-    }),
+    shouldRenderGraphiQL
+      ? await setupGraphiQLServerProcess({
+          appName: localApp.name,
+          appUrl: appPreviewUrl,
+          apiKey,
+          apiSecret,
+          storeFqdn,
+          url: network.proxyUrl.replace(/^https?:\/\//, ''),
+          scopes: scopesArray,
+        })
+      : undefined,
     await setupPreviewableExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,
@@ -137,7 +151,7 @@ export async function setupDevProcesses({
   return {
     processes: processesWithProxy,
     previewUrl,
-    graphiqlUrl: `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql`,
+    graphiqlUrl: shouldRenderGraphiQL ? `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql` : undefined,
   }
 }
 

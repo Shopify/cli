@@ -125,6 +125,7 @@ describe('setup-dev-processes', () => {
       storeFqdn,
       token,
       usesUnifiedDeployment,
+      partnerUrlsUpdated: true,
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
