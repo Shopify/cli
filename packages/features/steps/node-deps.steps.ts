@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename)
 interface PackageJson {
   dependencies?: {[key: string]: string}
   devDependencies?: {[key: string]: string}
+  peerDependencies?: {[key: string]: string}
   resolutions?: {[key: string]: string}
 }
 
@@ -54,7 +55,10 @@ Then(/I see all shared node dependencies on the same version/, async function ()
       (acc: {packageName: string; version: string}[], [packageName, json]) => {
         const packageJson = json as PackageJson
         const depVersion =
-          packageJson.dependencies?.[dep] ?? packageJson.devDependencies?.[dep] ?? packageJson.resolutions?.[dep]
+          packageJson.dependencies?.[dep] ??
+          packageJson.devDependencies?.[dep] ??
+          packageJson.peerDependencies?.[dep] ??
+          packageJson.resolutions?.[dep]
         if (depVersion) {
           acc.push({packageName, version: depVersion.replace(/^\^/, '')})
         }
