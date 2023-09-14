@@ -264,8 +264,8 @@ importers:
         specifier: 2.2.21
         version: 2.2.21(@types/node@14.18.54)(typescript@5.0.4)
       '@oclif/plugin-help':
-        specifier: 5.2.15
-        version: 5.2.15(@types/node@14.18.54)(typescript@5.0.4)
+        specifier: 5.2.18
+        version: 5.2.18(@types/node@14.18.54)(typescript@5.0.4)
       '@oclif/plugin-plugins':
         specifier: 3.1.8
         version: 3.1.8(@types/node@14.18.54)(typescript@5.0.4)
@@ -3687,8 +3687,8 @@ packages:
       - typescript
     dev: false
 
-  /@oclif/plugin-help@5.2.15(@types/node@14.18.54)(typescript@5.0.4):
-    resolution: {integrity: sha512-q3gC4kIRlTilA8sG/9Eq2BEW2wo2KWV0ZbQ+8i3uQCvrgY4qoCIp5JTfsbbKR5XWaqPDdZPWhWuS1Rveu5V4FA==}
+  /@oclif/plugin-help@5.2.18(@types/node@14.18.54)(typescript@5.0.4):
+    resolution: {integrity: sha512-0JjupXUuDzlI0Ojj7/YL42btfUNuvSgZxdi8ZfeYt/uhC1/zvsSkO29KjffPxKEnbhr6jrkjOgy/Vly5JquYLg==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
@@ -10521,7 +10521,7 @@ packages:
     hasBin: true
     dependencies:
       '@oclif/core': 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
-      '@oclif/plugin-help': 5.2.15(@types/node@14.18.54)(typescript@5.0.4)
+      '@oclif/plugin-help': 5.2.18(@types/node@14.18.54)(typescript@5.0.4)
       '@oclif/plugin-not-found': 2.3.34(@types/node@14.18.54)(typescript@5.0.4)
       '@oclif/plugin-warn-if-update-available': 2.0.46(@types/node@14.18.54)(typescript@5.0.4)
       aws-sdk: 2.1383.0
