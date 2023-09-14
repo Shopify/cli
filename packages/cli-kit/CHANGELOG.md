@@ -1,5 +1,14 @@
 # @shopify/cli-kit
 
+## 3.49.3
+
+### Patch Changes
+
+- 06bae0ce7: Fix issue caused by cli-kit and app providing multiple copies of react.
+- 36e2a94af: Fix support for github codespaces
+- 22aec4fee: Fix dependency installation for yarn with workspaces
+- bbd15acbf: Fix local font urls
+
 ## 3.49.2
 
 ### Patch Changes
