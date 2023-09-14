@@ -20,7 +20,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
-import {codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
@@ -466,13 +466,14 @@ describe('generateFrontendURL', () => {
   test('Returns a codespace url if we are in a codespace environment', async () => {
     // Given
     vi.mocked(codespaceURL).mockReturnValue('codespace.url.fqdn.com')
+    vi.mocked(codespacePortForwardingDomain).mockReturnValue('app.github.dev')
 
     // When
     const got = await generateFrontendURL(defaultOptions)
 
     // Then
     expect(got).toEqual({
-      frontendUrl: 'https://codespace.url.fqdn.com-4040.githubpreview.dev',
+      frontendUrl: 'https://codespace.url.fqdn.com-4040.app.github.dev',
       frontendPort: 4040,
       usingLocalhost: false,
     })
