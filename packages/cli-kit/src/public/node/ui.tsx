@@ -28,6 +28,7 @@ import {
   LinkToken,
   ListToken,
   TokenItem,
+  TokenizedText,
 } from '../../private/node/ui/components/TokenizedText.js'
 import {
   DangerousConfirmationPrompt,
@@ -602,6 +603,23 @@ export function renderText({text, logLevel = 'info', logger = consoleLog}: Rende
   if (isUnitTest()) collectLog(logLevel, textWithLineReturn)
   outputWhereAppropriate(logLevel, logger, textWithLineReturn)
   return textWithLineReturn
+}
+
+
+interface RenderTokenOptions {
+  token: TokenItem
+  logLevel?: LogLevel
+  logger?: Logger
+}
+
+/** Renders a text token to the console.
+ * Using this function allows use of all text tokens
+ * @example
+ * Hello world!
+ *
+ */
+export function renderToken({token, logLevel = 'info', logger = consoleLog}: RenderTokenOptions) {
+  return renderOnce(<TokenizedText item={token} />, {logLevel, logger})
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */

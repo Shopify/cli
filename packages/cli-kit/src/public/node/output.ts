@@ -18,6 +18,8 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
+import {TokenItem, TokenizedText} from '../../private/node/ui/components/TokenizedText.js'
+import {renderToken} from './ui.js'
 import {recordUIEvent} from '../../private/node/demo-recorder.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
@@ -248,10 +250,15 @@ export const clearCollectedLogs = (): void => {
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputInfo(content: OutputMessage, logger: Logger = consoleLog): void {
-  const message = stringifyMessage(content)
-  if (isUnitTest()) collectLog('info', content)
-  outputWhereAppropriate('info', logger, message)
+export function outputInfo(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
+  if (typeof content === 'string' || content instanceof TokenizedString) {
+    const message = stringifyMessage(content)
+    if (isUnitTest()) collectLog('info', content)
+    outputWhereAppropriate('info', logger, message)
+  } else {
+    const result = renderToken({token: content, logger})
+    if (isUnitTest()) collectLog('info', result ?? '')
+  }
 }
 
 /**
