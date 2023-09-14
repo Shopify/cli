@@ -98,8 +98,8 @@ importers:
         specifier: ^2.12.6
         version: 2.12.6(graphql@16.4.0)
       liquidjs:
-        specifier: ^10.8.4
-        version: 10.8.4
+        specifier: ^10.9.2
+        version: 10.9.2
       node-fetch:
         specifier: ^3.3.1
         version: 3.3.1
@@ -412,8 +412,8 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       liquidjs:
-        specifier: 10.8.4
-        version: 10.8.4
+        specifier: 10.9.2
+        version: 10.9.2
       lodash:
         specifier: 4.17.21
         version: 4.17.21
@@ -561,8 +561,8 @@ importers:
         specifier: 5.62.0
         version: 5.62.0(eslint@8.46.0)(typescript@5.0.4)
       eslint-config-prettier:
-        specifier: 8.8.0
-        version: 8.8.0(eslint@8.46.0)
+        specifier: 8.10.0
+        version: 8.10.0(eslint@8.46.0)
       eslint-plugin-import:
         specifier: 2.28.0
         version: 2.28.0(@typescript-eslint/parser@5.62.0)(eslint@8.46.0)
@@ -577,7 +577,7 @@ importers:
         version: 1.1.0(eslint@8.46.0)
       eslint-plugin-prettier:
         specifier: 4.2.1
-        version: 4.2.1(eslint-config-prettier@8.8.0)(eslint@8.46.0)(prettier@2.8.8)
+        version: 4.2.1(eslint-config-prettier@8.10.0)(eslint@8.46.0)(prettier@2.8.8)
       eslint-plugin-react:
         specifier: 7.32.2
         version: 7.32.2(eslint@8.46.0)
@@ -4070,7 +4070,7 @@ packages:
       common-tags: 1.8.2
       doctrine: 2.1.0
       eslint: 8.46.0
-      eslint-config-prettier: 8.8.0(eslint@8.46.0)
+      eslint-config-prettier: 8.10.0(eslint@8.46.0)
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.62.0)(eslint-import-resolver-node@0.3.7)(eslint@8.46.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.46.0)
       eslint-plugin-import: 2.28.0(@typescript-eslint/parser@5.62.0)(eslint@8.46.0)
@@ -4078,7 +4078,7 @@ packages:
       eslint-plugin-jest-formatting: 3.1.0(eslint@8.46.0)
       eslint-plugin-jsx-a11y: 6.7.1(eslint@8.46.0)
       eslint-plugin-node: 11.1.0(eslint@8.46.0)
-      eslint-plugin-prettier: 4.2.1(eslint-config-prettier@8.8.0)(eslint@8.46.0)(prettier@2.8.8)
+      eslint-plugin-prettier: 4.2.1(eslint-config-prettier@8.10.0)(eslint@8.46.0)(prettier@2.8.8)
       eslint-plugin-promise: 6.1.1(eslint@8.46.0)
       eslint-plugin-react: 7.32.2(eslint@8.46.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.46.0)
@@ -7062,8 +7062,8 @@ packages:
     optionalDependencies:
       source-map: 0.6.1
 
-  /eslint-config-prettier@8.8.0(eslint@8.46.0):
-    resolution: {integrity: sha512-wLbQiFre3tdGgpDv67NQKnJuTlcUVYHas3k+DZCc2U2BadthoEY4B7hLPvAxaqdyOGCzuLfii2fqGph10va7oA==}
+  /eslint-config-prettier@8.10.0(eslint@8.46.0):
+    resolution: {integrity: sha512-SM8AMJdeQqRYT9O9zguiruQZaN7+z+E4eAP9oiLNGKMtomwaB1E9dcgUD6ZAn/eQAb52USbvezbiljfZUhbJcg==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -7252,7 +7252,7 @@ packages:
       resolve: 1.22.3
       semver: 6.3.1
 
-  /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.8.0)(eslint@8.46.0)(prettier@2.8.8):
+  /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.10.0)(eslint@8.46.0)(prettier@2.8.8):
     resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
@@ -7264,7 +7264,7 @@ packages:
         optional: true
     dependencies:
       eslint: 8.46.0
-      eslint-config-prettier: 8.8.0(eslint@8.46.0)
+      eslint-config-prettier: 8.10.0(eslint@8.46.0)
       prettier: 2.8.8
       prettier-linter-helpers: 1.0.0
 
@@ -9334,8 +9334,8 @@ packages:
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
     dev: true
 
-  /liquidjs@10.8.4:
-    resolution: {integrity: sha512-HSpYAFBVWxhwWsTKPBJgPm3bnwwIzAZjy17XhX7uJCKJ8H6A1YstZSFmPqMmWfSuJOg43RSx+qWVSA1Fu3+B2w==}
+  /liquidjs@10.9.2:
+    resolution: {integrity: sha512-ygPCgYyiFKQNyRi/CK3s3U5RimosBtrIq7TaMYK5ek93mUl9CZ6xxqw2T+1G4kVc9dAmwI71bWLQNKRToV8SsQ==}
     engines: {node: '>=14'}
     hasBin: true
     dependencies:
@@ -13896,12 +13896,12 @@ packages:
       '@typescript-eslint/eslint-plugin': 5.62.0(@typescript-eslint/parser@5.62.0)(eslint@8.46.0)(typescript@5.0.4)
       '@typescript-eslint/parser': 5.62.0(eslint@8.46.0)(typescript@5.0.4)
       eslint: 8.46.0
-      eslint-config-prettier: 8.8.0(eslint@8.46.0)
+      eslint-config-prettier: 8.10.0(eslint@8.46.0)
       eslint-plugin-import: 2.28.0(@typescript-eslint/parser@5.62.0)(eslint@8.46.0)
       eslint-plugin-jsdoc: 39.9.1(eslint@8.46.0)
       eslint-plugin-jsx-a11y: 6.7.1(eslint@8.46.0)
       eslint-plugin-no-catch-all: 1.1.0(eslint@8.46.0)
-      eslint-plugin-prettier: 4.2.1(eslint-config-prettier@8.8.0)(eslint@8.46.0)(prettier@2.8.8)
+      eslint-plugin-prettier: 4.2.1(eslint-config-prettier@8.10.0)(eslint@8.46.0)(prettier@2.8.8)
       eslint-plugin-react: 7.32.2(eslint@8.46.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.46.0)
       eslint-plugin-tsdoc: 0.2.17
