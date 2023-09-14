@@ -63,8 +63,8 @@
     "sass": "^1.64.2",
     "ts-node": "^10.9.1",
     "typescript": "5.0.4",
-    "vite": "^4.4.8",
+    "vite": "^4.4.9",
     "vite-tsconfig-paths": "^3.3.14",
-    "vitest": "^0.34.1"
+    "vitest": "^0.34.3"
   }
 }

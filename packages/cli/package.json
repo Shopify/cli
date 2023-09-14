@@ -106,9 +106,9 @@
     "@shopify/app": "3.49.1",
     "@shopify/theme": "3.49.1",
     "@types/node": "14.18.54",
-    "@vitest/coverage-istanbul": "^0.34.1",
-    "vite": "^4.4.8",
-    "vitest": "^0.34.1"
+    "@vitest/coverage-istanbul": "^0.34.3",
+    "vite": "^4.4.9",
+    "vitest": "^0.34.3"
   },
   "engines": {
     "node": ">=14.17.0"

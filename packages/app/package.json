@@ -70,11 +70,11 @@
     "@types/react": "18.2.0",
     "@types/serve-static": "^1.15.2",
     "@types/ws": "^8.5.5",
-    "@vitest/coverage-istanbul": "^0.34.1",
+    "@vitest/coverage-istanbul": "^0.34.3",
     "graphql": "^16.4.0",
     "graphql-tag": "^2.12.6",
-    "vite": "^4.4.8",
-    "vitest": "^0.34.1"
+    "vite": "^4.4.9",
+    "vitest": "^0.34.3"
   },
   "peerDependencies": {
     "ink": "4.4.1",
