@@ -10,7 +10,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
-import {codespaceURL, gitpodURL} from '@shopify/cli-kit/node/context/local'
+import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -53,7 +53,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   let usingLocalhost = false
 
   if (codespaceURL()) {
-    frontendUrl = `https://${codespaceURL()}-${frontendPort}.githubpreview.dev`
+    frontendUrl = `https://${codespaceURL()}-${frontendPort}.${codespacePortForwardingDomain()}`
     return {frontendUrl, frontendPort, usingLocalhost}
   }
 
