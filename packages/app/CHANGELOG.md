@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.49.3
+
+### Patch Changes
+
+- 06bae0ce7: Fix issue caused by cli-kit and app providing multiple copies of react.
+- 36e2a94af: Fix support for github codespaces
+- 03ff7defd: Avoid naming collision in JS function exports
+- Updated dependencies [06bae0ce7]
+- Updated dependencies [36e2a94af]
+- Updated dependencies [22aec4fee]
+- Updated dependencies [bbd15acbf]
+  - @shopify/cli-kit@3.49.3
+  - @shopify/plugin-cloudflare@3.49.3
+
 ## 3.49.2
 
 ### Patch Changes

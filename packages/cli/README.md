@@ -829,7 +829,7 @@ DESCRIPTION
   Starts a search on shopify.dev.
 ```
 
-_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.2/dist/cli/commands/search.js)_
+_See code: [dist/cli/commands/search.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.3/dist/cli/commands/search.js)_
 
 ## `shopify theme check`
 
@@ -1225,7 +1225,7 @@ DESCRIPTION
   Upgrade the Shopify CLI.
 ```
 
-_See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.2/dist/cli/commands/upgrade.js)_
+_See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.3/dist/cli/commands/upgrade.js)_
 
 ## `shopify version`
 
@@ -1239,7 +1239,7 @@ DESCRIPTION
   Shopify CLI version.
 ```
 
-_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.2/dist/cli/commands/version.js)_
+_See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.3/dist/cli/commands/version.js)_
 
 ## `shopify webhook trigger`
 
