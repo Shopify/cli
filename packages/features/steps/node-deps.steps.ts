@@ -42,6 +42,7 @@ const sharedDependencies = [
   'graphql-tag',
   'ink',
   'liquidjs',
+  'node-fetch',
   'typescript',
   'vite',
   'vitest',
