@@ -261,8 +261,8 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.56)(typescript@5.0.4)
       '@oclif/plugin-commands':
-        specifier: 2.2.21
-        version: 2.2.21(@types/node@14.18.56)(typescript@5.0.4)
+        specifier: 2.2.24
+        version: 2.2.24(@types/node@14.18.56)(typescript@5.0.4)
       '@oclif/plugin-help':
         specifier: 5.2.18
         version: 5.2.18(@types/node@14.18.56)(typescript@5.0.4)
@@ -3715,8 +3715,8 @@ packages:
       - '@types/node'
       - typescript
 
-  /@oclif/plugin-commands@2.2.21(@types/node@14.18.56)(typescript@5.0.4):
-    resolution: {integrity: sha512-PgYDJxILtXS+Ae/4i9Dj/0Ge7coNjrdGyhtndMRp4jqVeS8K2hjKvwMWLaHmUN3tU3RrdUBxJchaJ1bZ03ShBA==}
+  /@oclif/plugin-commands@2.2.24(@types/node@14.18.56)(typescript@5.0.4):
+    resolution: {integrity: sha512-bUZOBefMPR59oHngWNHDn+zGRQctVR5iMkO3qRWFUSVYt1VQtqOwAPBtpTIuIxL17/iGTG+U2b8jafn09lQNxA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@oclif/core': 2.11.7(@types/node@14.18.56)(typescript@5.0.4)
