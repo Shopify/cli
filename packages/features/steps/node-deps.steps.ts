@@ -31,6 +31,7 @@ When(/I look at the package.json files in all packages/, async function () {
 
 const sharedDependencies = [
   // react is not included as cli-kit uses 18, while other packages use 17
+  '@babel/core',
   '@oclif/core',
   '@shopify/cli-kit',
   '@types/node',
