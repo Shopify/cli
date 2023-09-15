@@ -35,6 +35,7 @@ const sharedDependencies = [
   '@oclif/core',
   '@shopify/cli-kit',
   '@types/node',
+  '@typescript-eslint/parser',
   'esbuild',
   'execa',
   'fast-glob',
