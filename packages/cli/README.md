@@ -76,6 +76,8 @@ DESCRIPTION
   Build the app.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/build.js)_
+
 ## `shopify app config link`
 
 Fetch your app configuration from the Partner Dashboard.
@@ -95,6 +97,8 @@ DESCRIPTION
   Fetch your app configuration from the Partner Dashboard.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/config/link.js)_
+
 ## `shopify app config push`
 
 Push your app configuration to the Partner Dashboard.
@@ -113,6 +117,8 @@ FLAGS
 DESCRIPTION
   Push your app configuration to the Partner Dashboard.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/config/push.js)_
 
 ## `shopify app config use [CONFIG]`
 
@@ -134,6 +140,8 @@ FLAGS
 DESCRIPTION
   Activate an app configuration.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/config/use.js)_
 
 ## `shopify app deploy`
 
@@ -162,6 +170,8 @@ FLAGS
 DESCRIPTION
   Deploy your Shopify app.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/deploy.js)_
 
 ## `shopify app dev`
 
@@ -198,6 +208,8 @@ DESCRIPTION
   Run the app.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/dev.js)_
+
 ## `shopify app env pull`
 
 Pull app and extensions environment variables.
@@ -217,6 +229,8 @@ DESCRIPTION
   Pull app and extensions environment variables.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/env/pull.js)_
+
 ## `shopify app env show`
 
 Display app and extensions environment variables.
@@ -235,6 +249,8 @@ DESCRIPTION
   Display app and extensions environment variables.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/env/show.js)_
+
 ## `shopify app function build`
 
 Compile a function to wasm.
@@ -252,6 +268,8 @@ FLAGS
 DESCRIPTION
   Compile a function to wasm.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/function/build.js)_
 
 ## `shopify app function run`
 
@@ -274,6 +292,8 @@ DESCRIPTION
   Run a function locally for testing.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/function/run.js)_
+
 ## `shopify app function schema`
 
 Fetch the latest GraphQL schema for a function.
@@ -294,6 +314,8 @@ DESCRIPTION
   Fetch the latest GraphQL schema for a function.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/function/schema.js)_
+
 ## `shopify app function typegen`
 
 Generate GraphQL types for a JavaScript function.
@@ -311,6 +333,8 @@ FLAGS
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/function/typegen.js)_
 
 ## `shopify app generate extension [FILE]`
 
@@ -341,6 +365,8 @@ EXAMPLES
   $ shopify app generate extension
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/generate/extension.js)_
+
 ## `shopify app generate schema`
 
 Fetch the latest GraphQL schema for a function.
@@ -360,6 +386,8 @@ FLAGS
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/generate/schema.js)_
 
 ## `shopify app import-flow-legacy-extensions`
 
@@ -381,6 +409,8 @@ DESCRIPTION
   Import dashboard-managed flow extensions into your app.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/import-flow-legacy-extensions.js)_
+
 ## `shopify app info`
 
 Print basic information about your app and extensions.
@@ -400,6 +430,8 @@ FLAGS
 DESCRIPTION
   Print basic information about your app and extensions.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/info.js)_
 
 ## `shopify app release`
 
@@ -422,6 +454,8 @@ FLAGS
 DESCRIPTION
   Release an app version.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/release.js)_
 
 ## `shopify app update-url`
 
@@ -446,6 +480,8 @@ DESCRIPTION
   Update your app and redirect URLs in the Partners Dashboard.
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/update-url.js)_
+
 ## `shopify app versions list [FILE]`
 
 List deployed versions of your app.
@@ -468,6 +504,8 @@ EXAMPLES
   $ shopify app versions list
 ```
 
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/app/versions/list.js)_
+
 ## `shopify auth logout`
 
 Logout from Shopify.
@@ -479,6 +517,8 @@ USAGE
 DESCRIPTION
   Logout from Shopify.
 ```
+
+_See code: [dist/cli/commands/auth/logout.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.1/dist/cli/commands/auth/logout.js)_
 
 ## `shopify commands`
 
@@ -580,6 +620,8 @@ DESCRIPTION
   View the UI kit components that process async tasks
 ```
 
+_See code: [dist/cli/commands/kitchen-sink/async.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.1/dist/cli/commands/kitchen-sink/async.js)_
+
 ## `shopify kitchen-sink prompts`
 
 View the UI kit components prompts
@@ -592,6 +634,8 @@ DESCRIPTION
   View the UI kit components prompts
 ```
 
+_See code: [dist/cli/commands/kitchen-sink/prompts.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.1/dist/cli/commands/kitchen-sink/prompts.js)_
+
 ## `shopify kitchen-sink static`
 
 View the UI kit components that display static output
@@ -603,6 +647,8 @@ USAGE
 DESCRIPTION
   View the UI kit components that display static output
 ```
+
+_See code: [dist/cli/commands/kitchen-sink/static.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.49.1/dist/cli/commands/kitchen-sink/static.js)_
 
 ## `shopify plugins:install PLUGIN...`
 
@@ -667,6 +713,8 @@ EXAMPLES
   $ shopify plugins:inspect myplugin
 ```
 
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.1.8/src/commands/plugins/inspect.ts)_
+
 ## `shopify plugins:install PLUGIN...`
 
 Installs a plugin into the CLI.
@@ -705,6 +753,8 @@ EXAMPLES
   $ shopify plugins:install someuser/someplugin
 ```
 
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.1.8/src/commands/plugins/install.ts)_
+
 ## `shopify plugins:link PLUGIN`
 
 Links a plugin into the CLI for development.
@@ -732,28 +782,7 @@ EXAMPLES
   $ shopify plugins:link myplugin
 ```
 
-## `shopify plugins:uninstall PLUGIN...`
-
-Removes a plugin from the CLI.
-
-```
-USAGE
-  $ shopify plugins:uninstall PLUGIN...
-
-ARGUMENTS
-  PLUGIN  plugin to uninstall
-
-FLAGS
-  -h, --help     Show CLI help.
-  -v, --verbose
-
-DESCRIPTION
-  Removes a plugin from the CLI.
-
-ALIASES
-  $ shopify plugins unlink
-  $ shopify plugins remove
-```
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.1.8/src/commands/plugins/link.ts)_
 
 ## `shopify plugins:uninstall PLUGIN...`
 
@@ -777,6 +806,31 @@ ALIASES
   $ shopify plugins unlink
   $ shopify plugins remove
 ```
+
+## `shopify plugins:uninstall PLUGIN...`
+
+Removes a plugin from the CLI.
+
+```
+USAGE
+  $ shopify plugins:uninstall PLUGIN...
+
+ARGUMENTS
+  PLUGIN  plugin to uninstall
+
+FLAGS
+  -h, --help     Show CLI help.
+  -v, --verbose
+
+DESCRIPTION
+  Removes a plugin from the CLI.
+
+ALIASES
+  $ shopify plugins unlink
+  $ shopify plugins remove
+```
+
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.1.8/src/commands/plugins/uninstall.ts)_
 
 ## `shopify plugins:uninstall PLUGIN...`
 
@@ -816,6 +870,8 @@ FLAGS
 DESCRIPTION
   Update installed plugins.
 ```
+
+_See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.1.8/src/commands/plugins/update.ts)_
 
 ## `shopify search [QUERY]`
 
@@ -866,6 +922,8 @@ DESCRIPTION
   Validate the theme.
 ```
 
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/check.js)_
+
 ## `shopify theme console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
@@ -888,6 +946,8 @@ FLAGS
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/console.js)_
 
 ## `shopify theme delete`
 
@@ -913,6 +973,8 @@ FLAGS
 DESCRIPTION
   Delete remote themes from the connected store. This command can't be undone.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/delete.js)_
 
 ## `shopify theme dev`
 
@@ -984,6 +1046,8 @@ DESCRIPTION
   your terminal. While running, changes will push to the store in real time.
 ```
 
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/dev.js)_
+
 ## `shopify theme info`
 
 Print basic information about your theme environment.
@@ -999,6 +1063,8 @@ FLAGS
 DESCRIPTION
   Print basic information about your theme environment.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/info.js)_
 
 ## `shopify theme init [NAME]`
 
@@ -1023,6 +1089,8 @@ DESCRIPTION
   Clones a Git repository to use as a starting point for building a new theme.
 ```
 
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/init.js)_
+
 ## `shopify theme language-server`
 
 Start a Language Server Protocol server.
@@ -1038,6 +1106,8 @@ FLAGS
 DESCRIPTION
   Start a Language Server Protocol server.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/language-server.js)_
 
 ## `shopify theme list`
 
@@ -1064,6 +1134,8 @@ DESCRIPTION
   Lists your remote themes.
 ```
 
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/list.js)_
+
 ## `shopify theme open`
 
 Opens the preview of your remote theme.
@@ -1089,6 +1161,8 @@ DESCRIPTION
   Opens the preview of your remote theme.
 ```
 
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/open.js)_
+
 ## `shopify theme package`
 
 Package your theme into a .zip file, ready to upload to the Online Store.
@@ -1105,6 +1179,8 @@ FLAGS
 DESCRIPTION
   Package your theme into a .zip file, ready to upload to the Online Store.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/package.js)_
 
 ## `shopify theme publish`
 
@@ -1127,6 +1203,8 @@ FLAGS
 DESCRIPTION
   Set a remote theme as the live theme.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/publish.js)_
 
 ## `shopify theme pull`
 
@@ -1155,6 +1233,8 @@ FLAGS
 DESCRIPTION
   Download your remote theme files locally.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/pull.js)_
 
 ## `shopify theme push`
 
@@ -1188,6 +1268,8 @@ DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
 ```
 
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/push.js)_
+
 ## `shopify theme share`
 
 Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.
@@ -1209,6 +1291,8 @@ DESCRIPTION
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to
   `shopify theme push -u -t=RANDOMIZED_NAME`.
 ```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.49.1/dist/cli/commands/theme/share.js)_
 
 ## `shopify upgrade`
 
@@ -1283,4 +1367,6 @@ FLAGS
 DESCRIPTION
   Trigger delivery of a sample webhook topic payload to a designated address.
 ```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.49.1/dist/cli/commands/webhook/trigger.js)_
 <!-- commandsstop -->
