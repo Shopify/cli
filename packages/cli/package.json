@@ -95,8 +95,8 @@
   },
   "dependencies": {
     "@oclif/core": "2.11.7",
-    "@oclif/plugin-commands": "2.2.21",
-    "@oclif/plugin-help": "5.2.15",
+    "@oclif/plugin-commands": "2.2.24",
+    "@oclif/plugin-help": "5.2.18",
     "@oclif/plugin-plugins": "3.1.8",
     "@shopify/cli-kit": "3.49.1",
     "@shopify/plugin-did-you-mean": "3.49.1",
@@ -105,10 +105,10 @@
   "devDependencies": {
     "@shopify/app": "3.49.1",
     "@shopify/theme": "3.49.1",
-    "@types/node": "14.18.54",
-    "@vitest/coverage-istanbul": "^0.34.1",
-    "vite": "^4.4.8",
-    "vitest": "^0.34.1"
+    "@types/node": "14.18.56",
+    "@vitest/coverage-istanbul": "^0.34.3",
+    "vite": "^4.4.9",
+    "vitest": "^0.34.3"
   },
   "engines": {
     "node": ">=14.17.0"
