@@ -329,6 +329,7 @@ async function dev(options: DevOptions) {
         url: proxyUrl.replace(/^https?:\/\//, ''),
         port: graphiqlPort,
         scopes: scopesArray,
+        customShopDomain: isSpinEnvironment() ? `shopify.${await spinFqdn()}` : undefined,
       }),
     )
   }
@@ -552,6 +553,7 @@ interface DevGraphiQLTargetOptions {
   url: string
   storeFqdn: string
   scopes: string[]
+  customShopDomain: string | undefined
 }
 
 function devGraphiQLTarget(options: DevGraphiQLTargetOptions): ReverseHTTPProxyTarget {

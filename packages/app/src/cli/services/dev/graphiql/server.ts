@@ -15,12 +15,14 @@ function createShopify({
   apiSecret,
   scopes,
   url,
+  shopCustomDomain,
 }: {
   stdout: Writable
   apiKey: string
   apiSecret: string
   scopes: string[]
   url: string
+  shopCustomDomain?: string
 }) {
   return shopifyApi({
     apiKey,
@@ -29,6 +31,7 @@ function createShopify({
     hostName: url,
     apiVersion: LATEST_API_VERSION,
     isEmbeddedApp: false,
+    customShopDomains: shopCustomDomain ? [shopCustomDomain] : [],
     logger: {
       level: LogSeverity.Debug,
       timestamps: false,
@@ -57,6 +60,7 @@ interface SetupGraphiQLServerOptions {
   url: string
   storeFqdn: string
   scopes: string[]
+  shopCustomDomain?: string
 }
 
 export function setupGraphiQLServer({
@@ -69,10 +73,11 @@ export function setupGraphiQLServer({
   url,
   storeFqdn,
   scopes,
+  shopCustomDomain,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
 
-  const shopify = createShopify({stdout, apiKey, apiSecret, url, scopes})
+  const shopify = createShopify({stdout, apiKey, apiSecret, url, scopes, shopCustomDomain})
   const app = express()
     // Make the app accept all routes starting with /.shopify/xxx as /xxx
     .use((req, _res, next) => {

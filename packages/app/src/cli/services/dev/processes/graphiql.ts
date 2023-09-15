@@ -1,6 +1,7 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {urlNamespaces} from '../../../constants.js'
 import {setupGraphiQLServer} from '../graphiql/server.js'
+import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 
 interface GraphiQLServerProcessOptions {
   appName: string
@@ -11,6 +12,7 @@ interface GraphiQLServerProcessOptions {
   url: string
   port: number
   scopes: string[]
+  shopCustomDomain: string | undefined
 }
 
 export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions> {
@@ -19,13 +21,15 @@ export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcess
 }
 
 export async function setupGraphiQLServerProcess(
-  options: Omit<GraphiQLServerProcessOptions, 'port'>,
+  options: Omit<GraphiQLServerProcessOptions, 'port' | 'shopCustomDomain'>,
 ): Promise<GraphiQLServerProcess> {
+  const shopCustomDomain = isSpinEnvironment() ? `shopify.${await spinFqdn()}` : undefined
+
   return {
     type: 'graphiql',
     prefix: `graphiql`,
     urlPrefix: `/${urlNamespaces.devTools}/graphiql`,
-    options: {...options, port: -1},
+    options: {...options, port: -1, shopCustomDomain},
     function: launchGraphiQLServer,
   }
 }
