@@ -128,6 +128,16 @@ export interface ExtensionPayload {
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   localization?: FlattenedLocalization | Localization | null
+  settings?: {
+    fields?: {
+      type: string
+      key?: string
+      name?: string
+      description?: string
+      required?: boolean
+      validations?: any[]
+    }[]
+  }
 }
 
 export enum Status {
