@@ -3,7 +3,7 @@ import {saveCurrentConfig} from './use.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {fetchOrCreateOrganizationApp} from '../../context.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -12,6 +12,7 @@ import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@sh
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 const LOCAL_APP = testApp()
 const REMOTE_APP = testOrganizationApp()
@@ -29,13 +30,7 @@ vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('../../dev/fetch.js')
-vi.mock('../../context.js', async () => {
-  const context: any = await vi.importActual('../../context.js')
-  return {
-    ...context,
-    fetchOrCreateOrganizationApp: vi.fn(),
-  }
-})
+vi.mock('../../context.js')
 
 describe('link', () => {
   test('does not ask for a name when it is provided as a flag', async () => {
@@ -319,6 +314,11 @@ embedded = false
   })
 
   test('throws an error when an invalid api key is is provided', async () => {
+    vi.mocked(InvalidApiKeyErrorMessage).mockReturnValue({
+      message: outputContent`Invalid Client ID`,
+      tryMessage: outputContent`You can find the Client ID in the app settings in the Partners Dashboard.`,
+    })
+
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
