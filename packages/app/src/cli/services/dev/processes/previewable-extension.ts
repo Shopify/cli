@@ -1,8 +1,10 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {devUIExtensions} from '../extension.js'
-import {MANIFEST_VERSION, buildCartURLIfNeeded} from '../../dev.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+
+export const MANIFEST_VERSION = '3'
 
 export interface PreviewableExtensionOptions {
   apiKey: string
@@ -90,4 +92,17 @@ export async function setupPreviewableExtensionsProcess({
       ...options,
     },
   }
+}
+
+/**
+ * To prepare Checkout UI Extensions for dev'ing we need to retrieve a valid product variant ID
+ * @param extensions - The UI Extensions to dev
+ * @param store - The store FQDN
+ */
+export async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
+  const hasUIExtension = extensions.map((ext) => ext.type).includes('checkout_ui_extension')
+  if (!hasUIExtension) return undefined
+  if (checkoutCartUrl) return checkoutCartUrl
+  const variantId = await fetchProductVariant(store)
+  return `/cart/${variantId}:1`
 }
