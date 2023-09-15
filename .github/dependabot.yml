@@ -19,6 +19,25 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
+        exclude-patterns:
+          - "oclif"
+          - "@oclif/*"
+          - "nx"
+          - "@nx/*"
+          - "ink"
+          - "typescript"
+          - "esbuild"
+          - "react"
+          - "@babel/*"
+          - "javy-cli"
+      oclif:
+        patterns:
+          - "oclif"
+          - "@oclif/*"
+      nx:
+        patterns:
+          - "nx"
+          - "@nx/*"
   - package-ecosystem: "bundler"
     versioning-strategy: increase
     directory: "/"
