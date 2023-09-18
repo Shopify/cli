@@ -3,7 +3,7 @@ import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import '@shopify/shopify-api/adapters/node'
-import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION, ApiVersion} from '@shopify/shopify-api'
+import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION, ApiVersion, HttpResponseError} from '@shopify/shopify-api'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Server} from 'http'
@@ -100,6 +100,18 @@ export function setupGraphiQLServer({
     })
   }
 
+  async function isAuthorized(): Promise<boolean> {
+    if (!session) return false
+    const client = new shopify.clients.Graphql({session, apiVersion: LATEST_API_VERSION})
+    try {
+      await client.query({data: '{ shop { id } }'})
+      return true
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return (error as HttpResponseError)?.response?.code !== 401
+    }
+  }
+
   app.get('/graphiql/ping', (_req, res) => {
     res.send('pong')
   })
@@ -120,15 +132,9 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
-    if (!session) {
+    if (!session || !(await isAuthorized())) {
       return beginAuth(req, res)
     }
-    // const sessionId = await shopify.session.getCurrentId({
-    // isOnline: false,
-    // rawRequest: req,
-    // rawResponse: res,
-    // })
-    // const session = await getSessionFromStorage(sessionId)
     res.send(
       await renderLiquidTemplate(template, {
         url: `https://${url}/${urlNamespaces.devTools}`,
