@@ -3,6 +3,7 @@ import * as localEnvironment from './context.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {testApp, testFunctionExtension, testOrganizationApp} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
+import {TargetSchemaDefinitionQuery} from '../api/graphql/functions/target_schema_definition.js'
 import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -87,6 +88,98 @@ describe('generateSchemaService', () => {
 
       // Then
       expect(mockOutput).toHaveBeenCalledWith('schema')
+    })
+  })
+
+  describe('GraphQL query', () => {
+    test('Uses ApiSchemaDefinitionQuery when not using targets', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const app = testApp()
+        const extension = await testFunctionExtension({
+          config: {
+            name: 'test function extension',
+            description: 'description',
+            type: 'api_type',
+            build: {
+              command: 'echo "hello world"',
+            },
+            api_version: 'unstable',
+            configuration_ui: true,
+            metafields: [],
+          },
+        })
+        const apiKey = 'api-key'
+        const path = tmpDir
+        const {
+          configuration: {api_version: version},
+          type,
+        } = extension
+
+        // When
+        await generateSchemaService({
+          app,
+          extension,
+          apiKey,
+          path,
+          stdout: false,
+        })
+
+        // Then
+        expect(request).toHaveBeenCalledWith(ApiSchemaDefinitionQuery, token, {
+          apiKey,
+          version,
+          type,
+        })
+      })
+    })
+
+    test('Uses TargetSchemaDefinitionQuery when targets present', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const app = testApp()
+        const extension = await testFunctionExtension({
+          config: {
+            name: 'test function extension',
+            description: 'description',
+            type: 'function',
+            targeting: [
+              {
+                target: 'first',
+              },
+              {
+                target: 'second',
+              },
+            ],
+            build: {
+              command: 'echo "hello world"',
+            },
+            api_version: 'unstable',
+            configuration_ui: true,
+            metafields: [],
+          },
+        })
+        const apiKey = 'api-key'
+        const path = tmpDir
+        const expectedTarget = extension.configuration.targeting![0]!.target
+        const version = extension.configuration.api_version
+
+        // When
+        await generateSchemaService({
+          app,
+          extension,
+          apiKey,
+          path,
+          stdout: false,
+        })
+
+        // Then
+        expect(request).toHaveBeenCalledWith(TargetSchemaDefinitionQuery, token, {
+          apiKey,
+          version,
+          target: expectedTarget,
+        })
+      })
     })
   })
 
