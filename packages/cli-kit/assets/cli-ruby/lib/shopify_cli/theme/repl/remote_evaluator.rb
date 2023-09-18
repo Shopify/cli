@@ -131,6 +131,9 @@ module ShopifyCLI
 
         def extract_body(response)
           response.body.lines[1..-2].join.strip
+        rescue StandardError
+          # Handle malformed body gracefully
+          "{}"
         end
 
         def not_found?(response)
