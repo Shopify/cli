@@ -3,7 +3,7 @@ import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import '@shopify/shopify-api/adapters/node'
-import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION, ApiVersion} from '@shopify/shopify-api'
+import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION, ApiVersion, HttpResponseError} from '@shopify/shopify-api'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {Server} from 'http'
@@ -104,10 +104,10 @@ export function setupGraphiQLServer({
     if (!session) return false
     const client = new shopify.clients.Graphql({session, apiVersion: LATEST_API_VERSION})
     try {
-      const {body} = await client.query({data: '{ shop { id } }'}) as any
-      return !body.errors
-    } catch {
-      return false
+      await client.query({data: '{ shop { id } }'})
+      return true
+    } catch(e) {
+      return (e as HttpResponseError)?.response?.code !== 401
     }
   }
 
