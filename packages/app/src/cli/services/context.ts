@@ -777,6 +777,13 @@ async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
   }))
 }
 
+export async function logMetadataForLoadedConfigContext(app: {organizationId: string; apiKey: string}) {
+  await metadata.addPublicMetadata(() => ({
+    partner_id: tryParseInt(app.organizationId),
+    api_key: app.apiKey,
+  }))
+}
+
 export async function enableDeveloperPreview({apiKey, token}: {apiKey: string; token: string}) {
   return developerPreviewUpdate({apiKey, token, enabled: true})
 }
