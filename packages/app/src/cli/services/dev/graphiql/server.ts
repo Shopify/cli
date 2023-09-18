@@ -100,6 +100,17 @@ export function setupGraphiQLServer({
     })
   }
 
+  async function isAuthorized(): Promise<boolean> {
+    if (!session) return false
+    const client = new shopify.clients.Graphql({session, apiVersion: LATEST_API_VERSION})
+    try {
+      const {body} = await client.query({data: '{ shop { id } }'}) as any
+      return !body.errors
+    } catch {
+      return false
+    }
+  }
+
   app.get('/graphiql/ping', (_req, res) => {
     res.send('pong')
   })
@@ -120,7 +131,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
-    if (!session) {
+    if (!session || !(await isAuthorized())) {
       return beginAuth(req, res)
     }
     // const sessionId = await shopify.session.getCurrentId({
