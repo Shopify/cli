@@ -238,15 +238,17 @@ describe('updateURLsPrompt', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
     // When
-    const got = await updateURLsPrompt('http://current-url', [
-      'http://current-redirect-url1',
-      'http://current-redirect-url2',
-    ])
+    const got = await updateURLsPrompt(
+      'http://current-url',
+      ['http://current-redirect-url1', 'http://current-redirect-url2'],
+      {hasWeb: true},
+    )
 
     // Then
     expect(got).toEqual(true)
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
-      message: `Have Shopify automatically update your app's URL in order to create a preview experience?`,
+      message:
+        "Have Shopify automatically update your app's URL in order to create a preview experience and enable the GraphiQL Explorer?",
       infoTable: {
         'Current app URL': ['http://current-url'],
         'Current redirect URLs': ['http://current-redirect-url1', 'http://current-redirect-url2'],

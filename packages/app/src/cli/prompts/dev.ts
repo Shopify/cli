@@ -113,9 +113,19 @@ export async function reuseDevConfigPrompt(): Promise<boolean> {
   })
 }
 
-export function updateURLsPrompt(currentAppUrl: string, currentRedirectUrls: string[]): Promise<boolean> {
+interface UpdateURLsPromptOptions {
+  hasWeb: boolean
+}
+
+export function updateURLsPrompt(
+  currentAppUrl: string,
+  currentRedirectUrls: string[],
+  {hasWeb}: UpdateURLsPromptOptions,
+): Promise<boolean> {
   return renderConfirmationPrompt({
-    message: "Have Shopify automatically update your app's URL in order to create a preview experience?",
+    message: `Have Shopify automatically update your app's URL in order to ${
+      hasWeb ? 'create a preview experience and ' : ''
+    }enable the GraphiQL Explorer?`,
     confirmationMessage: 'Yes, automatically update',
     cancellationMessage: 'No, never',
     infoTable: {

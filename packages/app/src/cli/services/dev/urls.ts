@@ -219,6 +219,7 @@ export interface ShouldOrPromptUpdateURLsOptions {
   newApp?: boolean
   localApp?: AppInterface
   apiKey: string
+  hasWeb?: boolean
 }
 
 export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLsOptions): Promise<boolean> {
@@ -230,6 +231,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     shouldUpdateURLs = await updateURLsPrompt(
       options.currentURLs.applicationUrl,
       options.currentURLs.redirectUrlWhitelist,
+      {hasWeb: options.hasWeb ?? true},
     )
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {

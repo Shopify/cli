@@ -198,24 +198,24 @@ async function handleUpdatingOfPartnerUrls(
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
   let shouldUpdateURLs = false
-  if (frontendConfig || backendConfig) {
-    if (commandSpecifiedToUpdate) {
-      const newURLs = generatePartnersURLs(
-        network.proxyUrl,
-        webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
-      )
-      shouldUpdateURLs = await shouldOrPromptUpdateURLs({
-        currentURLs: network.currentUrls,
-        appDirectory: localApp.directory,
-        cachedUpdateURLs,
-        newApp: remoteApp.newApp,
-        localApp,
-        apiKey,
-      })
-      if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
-      await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
-    }
+  const hasWeb = Boolean(frontendConfig || backendConfig)
+  if (commandSpecifiedToUpdate) {
+    const newURLs = generatePartnersURLs(
+      network.proxyUrl,
+      webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+      isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
+    )
+    shouldUpdateURLs = await shouldOrPromptUpdateURLs({
+      currentURLs: network.currentUrls,
+      appDirectory: localApp.directory,
+      cachedUpdateURLs,
+      newApp: remoteApp.newApp,
+      localApp,
+      apiKey,
+      hasWeb,
+    })
+    if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
+    await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
   }
   return shouldUpdateURLs
 }
