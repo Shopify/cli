@@ -99,6 +99,12 @@ export default class Dev extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Dev)
+
+    if (!flags['api-key']) {
+      if (process.env.SHOPIFY_API_KEY) {
+        flags['api-key'] = process.env.SHOPIFY_API_KEY
+      }
+    }
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
