@@ -106,8 +106,9 @@ export function setupGraphiQLServer({
     try {
       await client.query({data: '{ shop { id } }'})
       return true
-    } catch(e) {
-      return (e as HttpResponseError)?.response?.code !== 401
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      return (error as HttpResponseError)?.response?.code !== 401
     }
   }
 
