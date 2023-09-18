@@ -80,6 +80,11 @@ export default class Deploy extends Command {
     validateVersion(flags.version)
     validateMessage(flags.message)
 
+    if (!flags['api-key']) {
+      if (process.env.SHOPIFY_API_KEY) {
+        flags['api-key'] = process.env.SHOPIFY_API_KEY
+      }
+    }
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }
