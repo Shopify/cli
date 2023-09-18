@@ -39,9 +39,6 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
         return handler(error)
       })
       .then((mappedError) => reportError(mappedError, config))
-      .then(() => {
-        exit(1)
-      })
   }
 }
 

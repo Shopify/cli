@@ -10,7 +10,7 @@ import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {Command} from '@oclif/core'
+import {Command, Errors} from '@oclif/core'
 import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 interface EnvironmentFlags {
@@ -29,6 +29,7 @@ abstract class BaseCommand extends Command {
 
   async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
     errorHandler(error, this.config)
+    return Errors.handle(error)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
