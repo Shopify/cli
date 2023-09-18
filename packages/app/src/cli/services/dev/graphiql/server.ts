@@ -134,12 +134,6 @@ export function setupGraphiQLServer({
     if (!session || !(await isAuthorized())) {
       return beginAuth(req, res)
     }
-    // const sessionId = await shopify.session.getCurrentId({
-    // isOnline: false,
-    // rawRequest: req,
-    // rawResponse: res,
-    // })
-    // const session = await getSessionFromStorage(sessionId)
     res.send(
       await renderLiquidTemplate(template, {
         url: `https://${url}/${urlNamespaces.devTools}`,
