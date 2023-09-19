@@ -32,19 +32,17 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
       outputInfo(`✨  ${error.message}`)
     }
   } else if (error instanceof AbortSilentError) {
-    exit(1)
+    printEventsJson()
   } else {
     return errorMapper(error)
       .then((error) => {
         return handler(error)
       })
-      .then((mappedError) => reportError(mappedError, config))
+      .then((mappedError) => {
+        printEventsJson()
+        return reportError(mappedError, config)
+      })
   }
-}
-
-function exit(code: number) {
-  printEventsJson()
-  process.exit(code)
 }
 
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
