@@ -22,6 +22,7 @@ vi.mock('../../models/app/loader.js', async () => {
 const token = 'mock-token'
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
+const handle = 'mock-handle'
 const stdout = {write: vi.fn()} as any
 const stderr = {write: vi.fn()} as any
 
@@ -38,6 +39,7 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         configuration,
         directory: tmpDir,
+        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -63,6 +65,7 @@ describe('updateExtensionDraft()', () => {
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
         context: undefined,
+        handle,
         registrationId,
         config:
           '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object"},"serialized_script":"dGVzdCBjb250ZW50"}',
@@ -88,6 +91,7 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         configuration,
         directory: tmpDir,
+        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -111,6 +115,7 @@ describe('updateExtensionDraft()', () => {
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
         context: undefined,
+        handle,
         registrationId,
         config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',
       })
@@ -129,6 +134,7 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         directory: tmpDir,
         type: 'web_pixel_extension',
+        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -178,6 +184,7 @@ another = "setting"
         devUUID: '1',
         configuration,
         directory: tmpDir,
+        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -216,6 +223,7 @@ another = "setting"
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
         context: undefined,
+        handle,
         registrationId,
         config:
           '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object","another":"setting"},"serialized_script":"dGVzdCBjb250ZW50"}',

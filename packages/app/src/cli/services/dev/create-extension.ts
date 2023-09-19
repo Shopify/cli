@@ -35,6 +35,7 @@ export async function createExtension(
     title: name,
     config: JSON.stringify({}),
     context: null,
+    handle: name,
   }
   const result: ExtensionCreateSchema = await partnersRequest(query, token, variables)
 

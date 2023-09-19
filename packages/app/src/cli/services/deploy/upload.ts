@@ -64,6 +64,7 @@ export async function uploadThemeExtensions(
         config: JSON.stringify(themeExtensionConfig),
         context: undefined,
         registrationId: themeId,
+        handle: themeExtension.handle,
       }
       const mutation = ExtensionUpdateDraftMutation
       const result: ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)

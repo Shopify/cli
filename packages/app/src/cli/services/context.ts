@@ -299,7 +299,7 @@ export async function ensureThemeExtensionDevContext(
     return remoteRegistrations[0]!
   }
 
-  const registration = await createExtension(apiKey, extension.graphQLType, extension.localIdentifier, token)
+  const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, token)
 
   return registration
 }
