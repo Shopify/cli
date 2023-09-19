@@ -83,6 +83,9 @@ export interface Schemas {
       cmd_dev_tunnel_type?: Optional<string>
       cmd_dev_tunnel_custom_hash?: Optional<string>
       cmd_dev_urls_updated?: Optional<boolean>
+      cmd_dev_preview_url_opened?: Optional<boolean>
+      cmd_dev_graphiql_opened?: Optional<boolean>
+      cmd_dev_dev_preview_toggle_used?: Optional<boolean>
 
       // Create-app related commands
       cmd_create_app_template?: Optional<string>
