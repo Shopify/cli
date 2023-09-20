@@ -1,5 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
+import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -109,6 +110,7 @@ const spec = createExtensionSpecification({
           }
         : undefined,
       enable_creation_ui: config.ui?.enable_create ?? true,
+      localization: await loadLocalesConfig(directory, 'function'),
       targets,
     }
   },
