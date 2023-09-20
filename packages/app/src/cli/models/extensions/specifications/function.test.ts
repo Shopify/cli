@@ -11,17 +11,40 @@ vi.mock('../../../services/deploy/upload.js')
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
-  let moduleId: string
-  let apiKey: string
-  let token: string
-  let unifiedDeployment: boolean
+  const moduleId = 'module_id'
+  const apiKey = 'app-key'
+  const token = 'app-token'
+  const unifiedDeployment = true
+  const inputQuery = 'query { f }'
+
+  const config = {
+    name: 'function',
+    type: 'function',
+    metafields: [],
+    description: 'my function',
+    build: {
+      command: 'make build',
+      path: 'dist/index.wasm',
+    },
+    ui: {
+      paths: {
+        create: '/create',
+        details: '/details/:id',
+      },
+      enable_create: true,
+      handle: 'linked-ext-handle',
+    },
+    configuration_ui: false,
+    api_version: '2022-07',
+    input: {
+      variables: {
+        namespace: 'namespace',
+        key: 'key',
+      },
+    },
+  }
 
   beforeEach(async () => {
-    moduleId = 'module_id'
-    apiKey = 'app-key'
-    token = 'app-token'
-    unifiedDeployment = true
-
     vi.spyOn(upload, 'uploadWasmBlob').mockResolvedValue({
       url: 'http://foo.bar',
       moduleId,
@@ -29,41 +52,14 @@ describe('functionConfiguration', () => {
 
     extension = await testFunctionExtension({
       dir: '/function',
-      config: {
-        name: 'function',
-        type: 'order_discounts',
-        metafields: [],
-        description: 'my function',
-        build: {
-          command: 'make build',
-          path: 'dist/index.wasm',
-        },
-        ui: {
-          paths: {
-            create: '/create',
-            details: '/details/:id',
-          },
-          enable_create: true,
-          handle: 'linked-ext-handle',
-        },
-        configuration_ui: false,
-        api_version: '2022-07',
-        input: {
-          variables: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-      },
+      config,
     })
   })
 
   test('returns a snake_case object with all possible fields', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const inputQuery = 'inputQuery'
       extension.directory = tmpDir
-      await touchFile(extension.inputQueryPath)
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
@@ -74,7 +70,7 @@ describe('functionConfiguration', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         app_key: apiKey,
-        api_type: 'order_discounts',
+        api_type: undefined,
         api_version: extension.configuration.api_version,
         ui: {
           app_bridge: {
@@ -110,7 +106,7 @@ describe('functionConfiguration', () => {
         title: extension.configuration.name,
         description: extension.configuration.description,
         app_key: apiKey,
-        api_type: 'order_discounts',
+        api_type: undefined,
         api_version: extension.configuration.api_version,
         module_id: moduleId,
         enable_creation_ui: true,
@@ -150,5 +146,80 @@ describe('functionConfiguration', () => {
 
     // When & Then
     await expect(() => extension.deployConfig({apiKey, token, unifiedDeployment})).rejects.toThrowError(AbortError)
+  })
+
+  describe('with legacy type', async () => {
+    beforeEach(async () => {
+      extension = await testFunctionExtension({
+        config: {
+          ...config,
+          type: 'order_discounts',
+          targeting: undefined,
+        },
+      })
+    })
+
+    test('returns a snake_case object with all possible fields', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const inputQuery = 'inputQuery'
+        extension.directory = tmpDir
+        await touchFile(extension.inputQueryPath)
+        await writeFile(extension.inputQueryPath, inputQuery)
+
+        // When
+        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+
+        // Then
+        expect(got).toEqual({
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          app_key: apiKey,
+          api_type: 'order_discounts',
+          api_version: extension.configuration.api_version,
+          ui: {
+            app_bridge: {
+              details_path: extension.configuration.ui!.paths!.details,
+              create_path: extension.configuration.ui!.paths!.create,
+            },
+            ui_extension_handle: extension.configuration.ui!.handle,
+          },
+          input_query: inputQuery,
+          input_query_variables: {
+            single_json_metafield: {
+              namespace: 'namespace',
+              key: 'key',
+            },
+          },
+          enable_creation_ui: true,
+          module_id: moduleId,
+        })
+      })
+    })
+
+    test('returns a snake_case object with only required fields', async () => {
+      await inTemporaryDirectory(async (_tmpDir) => {
+        // Given
+        extension.configuration.input = undefined
+        extension.configuration.ui = undefined
+
+        // When
+        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+
+        // Then
+        expect(got).toEqual({
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          app_key: apiKey,
+          api_type: 'order_discounts',
+          api_version: extension.configuration.api_version,
+          module_id: moduleId,
+          enable_creation_ui: true,
+          input_query: undefined,
+          input_query_variables: undefined,
+          ui: undefined,
+        })
+      })
+    })
   })
 })
