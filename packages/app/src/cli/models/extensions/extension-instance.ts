@@ -17,6 +17,8 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
  * Class that represents an instance of a local extension
@@ -145,6 +147,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     token,
     unifiedDeployment,
+    extension,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
     if (this.isFunctionExtension) {
       if (!unifiedDeployment) return undefined
@@ -155,7 +158,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return (
       // module id param is not necessary for non-Function extensions
       this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined) ??
-      Promise.resolve(undefined)
+      Promise.resolve(this.parseDeployConfigurationObject(this.specification.deploySchema, extension.configuration))
     )
   }
 
@@ -261,8 +264,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
+  async bundleConfig({identifiers, token, apiKey, unifiedDeployment, extension}: ExtensionBundleConfigOptions) {
+    const configValue = await this.deployConfig({apiKey, token, unifiedDeployment, extension})
     if (!configValue) return undefined
 
     const {handle, ...remainingConfigs} = configValue
@@ -275,12 +278,27 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
   }
+
+  private async parseDeployConfigurationObject<TSchema extends zod.ZodType>(
+    schema: zod.ZodType<TSchema> | undefined,
+    configurationObject: unknown,
+  ): Promise<zod.TypeOf<TSchema>> {
+    if (!schema) return undefined
+
+    const parseResult = schema.safeParse(configurationObject)
+    if (!parseResult.success) {
+      const formattedError = JSON.stringify(parseResult.error.issues, null, 2)
+      throw new AbortError(formattedError)
+    }
+    return parseResult.data
+  }
 }
 
 export interface ExtensionDeployConfigOptions {
   apiKey: string
   token: string
   unifiedDeployment: boolean
+  extension: ExtensionInstance
 }
 
 export interface ExtensionBundleConfigOptions {
@@ -288,4 +306,5 @@ export interface ExtensionBundleConfigOptions {
   token: string
   apiKey: string
   unifiedDeployment: boolean
+  extension: ExtensionInstance
 }

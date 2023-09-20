@@ -122,7 +122,7 @@ export async function deploy(options: DeployOptions) {
           task: async () => {
             const appModules = await Promise.all(
               options.app.allExtensions.flatMap((ext) =>
-                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
+                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment, extension: ext}),
               ),
             )
 

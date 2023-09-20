@@ -4,6 +4,7 @@ import {blocks} from '../../constants.js'
 
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -29,6 +30,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
+  deploySchema?: zod.ZodType
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,
