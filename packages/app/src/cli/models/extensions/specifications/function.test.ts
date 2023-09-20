@@ -2,21 +2,21 @@ import {FunctionConfigType} from './function.js'
 import {testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/deploy/upload.js')
 
-describe('functionConfiguration', async () => {
+describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
   const moduleId = 'module_id'
   const apiKey = 'app-key'
   const token = 'app-token'
   const unifiedDeployment = true
-
   const inputQuery = 'query { f }'
+
   const config = {
     name: 'function',
     type: 'function',
@@ -32,16 +32,16 @@ describe('functionConfiguration', async () => {
         details: '/details/:id',
       },
       enable_create: true,
+      handle: 'linked-ext-handle',
     },
     configuration_ui: false,
-    api_version: '2023-10',
+    api_version: '2022-07',
     input: {
       variables: {
         namespace: 'namespace',
         key: 'key',
       },
     },
-    targeting: [{target: 'some.api.target1', input_query: 'target1.graphql'}],
   }
 
   beforeEach(async () => {
@@ -49,58 +49,54 @@ describe('functionConfiguration', async () => {
       url: 'http://foo.bar',
       moduleId,
     })
+
     extension = await testFunctionExtension({
       dir: '/function',
       config,
     })
   })
 
-  describe('with targets', async () => {
-    test('returns a snake_case object with all possible fields', async () => {
+  test('returns a snake_case object with all possible fields', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(joinPath(tmpDir, 'target1.graphql'), inputQuery)
-        extension.directory = tmpDir
-        extension.configuration.targeting!.push({target: 'some.api.target2', export: 'run_target2'})
+      extension.directory = tmpDir
+      await writeFile(extension.inputQueryPath, inputQuery)
 
-        // When
-        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+      // When
+      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
-        // Then
-        expect(got).toEqual({
-          title: extension.configuration.name,
-          description: extension.configuration.description,
-          app_key: apiKey,
-          api_type: undefined,
-          api_version: extension.configuration.api_version,
-          ui: {
-            app_bridge: {
-              details_path: extension.configuration.ui!.paths!.details,
-              create_path: extension.configuration.ui!.paths!.create,
-            },
+      // Then
+      expect(got).toEqual({
+        title: extension.configuration.name,
+        description: extension.configuration.description,
+        app_key: apiKey,
+        api_type: undefined,
+        api_version: extension.configuration.api_version,
+        ui: {
+          app_bridge: {
+            details_path: extension.configuration.ui!.paths!.details,
+            create_path: extension.configuration.ui!.paths!.create,
           },
-          input_query: undefined,
-          input_query_variables: {
-            single_json_metafield: {
-              namespace: 'namespace',
-              key: 'key',
-            },
+          ui_extension_handle: extension.configuration.ui!.handle,
+        },
+        input_query: inputQuery,
+        input_query_variables: {
+          single_json_metafield: {
+            namespace: 'namespace',
+            key: 'key',
           },
-          enable_creation_ui: true,
-          module_id: moduleId,
-          targets: [
-            {handle: 'some.api.target1', input_query: inputQuery},
-            {handle: 'some.api.target2', export: 'run_target2'},
-          ],
-        })
+        },
+        enable_creation_ui: true,
+        module_id: moduleId,
       })
     })
+  })
 
-    test('returns a snake_case object with only required fields', async () => {
+  test('returns a snake_case object with only required fields', async () => {
+    await inTemporaryDirectory(async (_tmpDir) => {
       // Given
       extension.configuration.input = undefined
       extension.configuration.ui = undefined
-      extension.configuration.targeting = [{target: 'some.api.target1'}]
 
       // When
       const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
@@ -117,20 +113,39 @@ describe('functionConfiguration', async () => {
         input_query: undefined,
         input_query_variables: undefined,
         ui: undefined,
-        targets: [{handle: 'some.api.target1'}],
       })
     })
+  })
 
-    test('aborts when a target input query file is missing', async () => {
+  test('parses targeting array', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
+      extension.directory = tmpDir
+      const inputQuery = 'query { f }'
+      const inputQueryFileName = 'target1.graphql'
+      extension.configuration.targeting = [
+        {target: 'some.api.target1', input_query: inputQueryFileName},
+        {target: 'some.api.target2', export: 'run_target2'},
+      ]
+      await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
 
       // When
-      const got = extension.deployConfig({apiKey, token, unifiedDeployment})
+      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
       // Then
-      await expect(got).rejects.toThrowError(AbortError)
+      expect(got!.targets).toEqual([
+        {handle: 'some.api.target1', input_query: inputQuery},
+        {handle: 'some.api.target2', export: 'run_target2'},
+      ])
     })
+  })
+
+  test('aborts when an target input query file is missing', async () => {
+    // Given
+    extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
+
+    // When & Then
+    await expect(() => extension.deployConfig({apiKey, token, unifiedDeployment})).rejects.toThrowError(AbortError)
   })
 
   describe('with legacy type', async () => {
@@ -145,11 +160,12 @@ describe('functionConfiguration', async () => {
     })
 
     test('returns a snake_case object with all possible fields', async () => {
-      // Given
       await inTemporaryDirectory(async (tmpDir) => {
-        const inputQuery = 'query { f }'
+        // Given
+        const inputQuery = 'inputQuery'
         extension.directory = tmpDir
-        await writeFile(joinPath(tmpDir, 'input.graphql'), inputQuery)
+        await touchFile(extension.inputQueryPath)
+        await writeFile(extension.inputQueryPath, inputQuery)
 
         // When
         const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
@@ -166,6 +182,7 @@ describe('functionConfiguration', async () => {
               details_path: extension.configuration.ui!.paths!.details,
               create_path: extension.configuration.ui!.paths!.create,
             },
+            ui_extension_handle: extension.configuration.ui!.handle,
           },
           input_query: inputQuery,
           input_query_variables: {
@@ -176,34 +193,33 @@ describe('functionConfiguration', async () => {
           },
           enable_creation_ui: true,
           module_id: moduleId,
-          targets: undefined,
         })
       })
     })
-  })
 
-  test('returns a snake_case object with only required fields', async () => {
-    // Given
-    extension.configuration.input = undefined
-    extension.configuration.ui = undefined
-    extension.configuration.targeting = undefined
-    extension.configuration.type = 'order_discounts'
+    test('returns a snake_case object with only required fields', async () => {
+      await inTemporaryDirectory(async (_tmpDir) => {
+        // Given
+        extension.configuration.input = undefined
+        extension.configuration.ui = undefined
 
-    // When
-    const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+        // When
+        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
 
-    // Then
-    expect(got).toEqual({
-      title: extension.configuration.name,
-      description: extension.configuration.description,
-      app_key: apiKey,
-      api_type: 'order_discounts',
-      api_version: extension.configuration.api_version,
-      module_id: moduleId,
-      enable_creation_ui: true,
-      input_query: undefined,
-      input_query_variables: undefined,
-      ui: undefined,
+        // Then
+        expect(got).toEqual({
+          title: extension.configuration.name,
+          description: extension.configuration.description,
+          app_key: apiKey,
+          api_type: 'order_discounts',
+          api_version: extension.configuration.api_version,
+          module_id: moduleId,
+          enable_creation_ui: true,
+          input_query: undefined,
+          input_query_variables: undefined,
+          ui: undefined,
+        })
+      })
     })
   })
 })
