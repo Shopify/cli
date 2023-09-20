@@ -11,6 +11,7 @@ const __dirname = path.dirname(__filename)
 interface PackageJson {
   dependencies?: {[key: string]: string}
   devDependencies?: {[key: string]: string}
+  peerDependencies?: {[key: string]: string}
   resolutions?: {[key: string]: string}
 }
 
@@ -30,15 +31,20 @@ When(/I look at the package.json files in all packages/, async function () {
 
 const sharedDependencies = [
   // react is not included as cli-kit uses 18, while other packages use 17
+  '@babel/core',
   '@oclif/core',
   '@shopify/cli-kit',
   '@types/node',
+  '@typescript-eslint/parser',
   'esbuild',
   'execa',
   'fast-glob',
   'graphql',
   'graphql-request',
   'graphql-tag',
+  'ink',
+  'liquidjs',
+  'node-fetch',
   'typescript',
   'vite',
   'vitest',
@@ -53,7 +59,10 @@ Then(/I see all shared node dependencies on the same version/, async function ()
       (acc: {packageName: string; version: string}[], [packageName, json]) => {
         const packageJson = json as PackageJson
         const depVersion =
-          packageJson.dependencies?.[dep] ?? packageJson.devDependencies?.[dep] ?? packageJson.resolutions?.[dep]
+          packageJson.dependencies?.[dep] ??
+          packageJson.devDependencies?.[dep] ??
+          packageJson.peerDependencies?.[dep] ??
+          packageJson.resolutions?.[dep]
         if (depVersion) {
           acc.push({packageName, version: depVersion.replace(/^\^/, '')})
         }

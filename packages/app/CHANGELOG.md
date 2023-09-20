@@ -1,5 +1,49 @@
 # @shopify/app
 
+## 3.49.1
+
+### Patch Changes
+
+- ea9e2a2aa: Fix issue with adding a react extension to an extensions only app with npm or yarn
+  - @shopify/cli-kit@3.49.1
+  - @shopify/plugin-cloudflare@3.49.1
+
+## 3.49.0
+
+### Minor Changes
+
+- b2e93d9c3: Validate deploy flags in non-TTY environments
+
+### Patch Changes
+
+- 56bb0c823: Generate sourcemaps when running dev
+- a22987448: Remove deprecated label field from AppVersionsQuery
+- 986480774: Added support for wasm export choice in 'app function run'.
+- 8f5ac815e: Remove dev preview enabled flickering status
+- 13feacfe1: Improve error message for invalid configuration files
+- 3d6abe3b7: Remove rolled out beta flag
+- d230b8773: - Enable dev preview mode on startup.
+  - Add dev log footer shortcut to toggle dev preview mode on/off.
+  - Disabke dev preview mode when exit
+- fa7937b65: Updated the simplified deployments info banner
+- b16ea6664: Abort versions list and release commands early when deployments beta is disabled
+- da3e660f8: Enable draft pushing for UI extensions when using unified deploys
+- 5cffc35a5: Fix redirection issue for customer account ui extension
+- 8538c8f7c: Use lighter query for polling developer preview status
+- Updated dependencies [6211a4aea]
+- Updated dependencies [b2e93d9c3]
+- Updated dependencies [8f5ac815e]
+- Updated dependencies [f1a774c78]
+- Updated dependencies [1914affaf]
+- Updated dependencies [8d3578b87]
+- Updated dependencies [b4c9439c4]
+- Updated dependencies [6ab0ce1a8]
+- Updated dependencies [d230b8773]
+- Updated dependencies [3c88932af]
+- Updated dependencies [c4396fd58]
+  - @shopify/cli-kit@3.49.0
+  - @shopify/plugin-cloudflare@3.49.0
+
 ## 3.48.0
 
 ### Minor Changes

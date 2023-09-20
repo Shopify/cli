@@ -8,11 +8,11 @@ on:
       - stable/3.*
 
 concurrency:
-  group: changeset-${{ github.head_ref }}
+  group: changeset-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
-  PNPM_VERSION: '8.6.1'
+  PNPM_VERSION: '8.7.0'
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:

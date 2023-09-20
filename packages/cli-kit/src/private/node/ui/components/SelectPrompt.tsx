@@ -5,7 +5,7 @@ import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
-import React, {ReactElement, useCallback} from 'react'
+import React, {ReactElement, useCallback, useEffect} from 'react'
 import {useApp} from 'ink'
 
 export interface SelectPromptProps<T> {
@@ -42,11 +42,16 @@ function SelectPrompt<T>({
     (answer: SelectItem<T>) => {
       setAnswer(answer)
       setPromptState(PromptState.Submitted)
+    },
+    [setAnswer, setPromptState],
+  )
+
+  useEffect(() => {
+    if (promptState === PromptState.Submitted && answer) {
       unmountInk()
       onSubmit(answer.value)
-    },
-    [setAnswer, setPromptState, unmountInk, onSubmit],
-  )
+    }
+  }, [answer, onSubmit, promptState, unmountInk])
 
   return (
     <PromptLayout

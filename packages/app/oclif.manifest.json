@@ -1,5 +1,5 @@
 {
-  "version": "3.48.0",
+  "version": "3.49.1",
   "commands": {
     "app:build": {
       "id": "app:build",
@@ -966,6 +966,13 @@
           "char": "c",
           "description": "The name of the app configuration.",
           "hidden": false,
+          "multiple": false
+        },
+        "input": {
+          "name": "input",
+          "type": "option",
+          "char": "i",
+          "description": "The input JSON to pass to the function. If omitted, standard input is used.",
           "multiple": false
         },
         "export": {

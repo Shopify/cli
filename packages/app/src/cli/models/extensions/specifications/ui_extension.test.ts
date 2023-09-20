@@ -21,6 +21,7 @@ describe('ui_extension', async () => {
       extension_points: extensionPoints,
       api_version: '2023-01' as const,
       name: 'UI Extension',
+      description: 'This is an ordinary test extension.',
       type: 'ui_extension',
       metafields: [],
       capabilities: {
@@ -77,6 +78,7 @@ describe('ui_extension', async () => {
         ],
         api_version: '2023-01' as const,
         name: 'UI Extension',
+        description: 'This is an ordinary test extension',
         type: 'ui_extension',
         metafields: [{namespace: 'test', key: 'test'}],
         capabilities: {
@@ -107,6 +109,7 @@ describe('ui_extension', async () => {
       const configuration = {
         api_version: '2023-01' as const,
         name: 'UI Extension',
+        description: 'This is an ordinary test extension',
         type: 'ui_extension',
         metafields: [{namespace: 'test', key: 'test'}],
         capabilities: {
@@ -224,6 +227,7 @@ Please check the configuration in ${uiExtension.configuration.path}`),
           extension_points: uiExtension.configuration.extension_points,
           capabilities: uiExtension.configuration.capabilities,
           name: uiExtension.configuration.name,
+          description: uiExtension.configuration.description,
           api_version: uiExtension.configuration.api_version,
           settings: uiExtension.configuration.settings,
         })

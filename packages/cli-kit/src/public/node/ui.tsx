@@ -62,15 +62,7 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
   const abortSignal = props.abortSignal ?? new AbortController().signal
 
-  if (terminalSupportsRawMode(renderOptions?.stdin)) {
-    return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
-  } else {
-    return Promise.all(
-      props.processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, abortSignal)
-      }),
-    )
-  }
+  return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
 }
 
 export type AlertCustomSection = CustomSection
@@ -496,7 +488,10 @@ export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOpti
 
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} />, renderOptions)
+    render(<Tasks tasks={tasks} onComplete={resolve} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
       .then(() => resetRecordedSleep())
       .catch(reject)
   })

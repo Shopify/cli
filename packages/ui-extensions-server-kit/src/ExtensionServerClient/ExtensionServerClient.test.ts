@@ -153,12 +153,15 @@ describe('ExtensionServerClient', () => {
         translations: {
           ja: {
             welcome: 'いらっしゃいませ!',
+            description: '拡張子の説明',
           },
           en: {
             welcome: 'Welcome!',
+            description: 'Extension description',
           },
           fr: {
             welcome: 'Bienvenue!',
+            description: "Description de l'extension",
           },
         },
         lastUpdated: 1684164163736,
@@ -166,7 +169,7 @@ describe('ExtensionServerClient', () => {
 
       const translatedLocalization = {
         extensionLocale: 'ja',
-        translations: '{"welcome":"いらっしゃいませ!"}',
+        translations: '{"welcome":"いらっしゃいませ!","description":"拡張子の説明"}',
         lastUpdated: localization.lastUpdated,
       }
 
@@ -177,6 +180,7 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             name: 't:welcome',
+            description: 't:description',
             localization,
             extensionPoints: [{localization}],
           },
@@ -202,11 +206,13 @@ describe('ExtensionServerClient', () => {
               uuid: '123',
               type: 'ui_extension',
               name: 'いらっしゃいませ!',
+              description: '拡張子の説明',
               localization: translatedLocalization,
               extensionPoints: [
                 {
                   localization: translatedLocalization,
                   name: 'いらっしゃいませ!',
+                  description: '拡張子の説明',
                 },
               ],
             },
@@ -285,12 +291,15 @@ describe('ExtensionServerClient', () => {
         translations: {
           ja: {
             welcome: 'いらっしゃいませ!',
+            description: '拡張子の説明',
           },
           en: {
             welcome: 'Welcome!',
+            description: 'Extension description',
           },
           fr: {
             welcome: 'Bienvenue!',
+            description: "Description de l'extension",
           },
         },
         lastUpdated: 1684164163736,
@@ -303,6 +312,7 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             name: 't:welcome',
+            description: 't:description',
             localization,
             extensionPoints: [{localization}],
           },
@@ -338,12 +348,15 @@ describe('ExtensionServerClient', () => {
         translations: {
           ja: {
             welcome: 'いらっしゃいませ!',
+            description: '拡張子の説明',
           },
           en: {
             welcome: 'Welcome!',
+            description: 'Extension description',
           },
           fr: {
             welcome: 'Bienvenue!',
+            description: "Description de l'extension",
           },
         },
         lastUpdated: 1684164163736,
@@ -351,7 +364,7 @@ describe('ExtensionServerClient', () => {
 
       const translatedLocalization = {
         extensionLocale: 'ja',
-        translations: '{"welcome":"いらっしゃいませ!"}',
+        translations: '{"welcome":"いらっしゃいませ!","description":"拡張子の説明"}',
         lastUpdated: localization.lastUpdated,
       }
 
@@ -362,6 +375,7 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             name: 't:welcome',
+            description: 't:description',
             localization,
             extensionPoints: [{localization}],
           },
@@ -369,6 +383,7 @@ describe('ExtensionServerClient', () => {
             uuid: '456',
             type: 'ui_extension',
             name: 'Extension 456',
+            description: 'This is a test extension',
             localization: null,
             extensionPoints: [{localization: null}],
           },
@@ -387,13 +402,17 @@ describe('ExtensionServerClient', () => {
               uuid: '123',
               type: 'ui_extension',
               name: 'いらっしゃいませ!',
+              description: '拡張子の説明',
               localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization, name: 'いらっしゃいませ!'}],
+              extensionPoints: [
+                {localization: translatedLocalization, name: 'いらっしゃいませ!', description: '拡張子の説明'},
+              ],
             },
             {
               uuid: '456',
               type: 'ui_extension',
               name: 'Extension 456',
+              description: 'This is a test extension',
               localization: null,
               extensionPoints: [{localization: null}],
             },
@@ -413,12 +432,15 @@ describe('ExtensionServerClient', () => {
         translations: {
           ja: {
             welcome: 'いらっしゃいませ!',
+            description: '拡張子の説明',
           },
           en: {
             welcome: 'Welcome!',
+            description: 'Extension description',
           },
           fr: {
             welcome: 'Bienvenue!',
+            description: "Description de l'extension",
           },
         },
         lastUpdated: 1684164163736,
@@ -426,7 +448,7 @@ describe('ExtensionServerClient', () => {
 
       const translatedLocalization = {
         extensionLocale: 'ja',
-        translations: '{"welcome":"いらっしゃいませ!"}',
+        translations: '{"welcome":"いらっしゃいませ!","description":"拡張子の説明"}',
         lastUpdated: localization.lastUpdated,
       }
 
@@ -437,6 +459,7 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             name: 't:welcome',
+            description: 't:description',
             localization,
             extensionPoints: [{localization}],
           },
@@ -444,6 +467,7 @@ describe('ExtensionServerClient', () => {
             uuid: '456',
             type: 'ui_extension',
             name: 'Extension 456',
+            description: 'This is a test extension',
             localization: null,
             extensionPoints: [{localization: null}],
           },
@@ -463,13 +487,17 @@ describe('ExtensionServerClient', () => {
               uuid: '123',
               type: 'ui_extension',
               name: 'いらっしゃいませ!',
+              description: '拡張子の説明',
               localization: translatedLocalization,
-              extensionPoints: [{localization: translatedLocalization, name: 'いらっしゃいませ!'}],
+              extensionPoints: [
+                {localization: translatedLocalization, name: 'いらっしゃいませ!', description: '拡張子の説明'},
+              ],
             },
             {
               uuid: '456',
               type: 'ui_extension',
               name: 'Extension 456',
+              description: 'This is a test extension',
               localization: null,
               extensionPoints: [{localization: null}],
             },
@@ -593,8 +621,9 @@ describe('ExtensionServerClient', () => {
             uuid: '123',
             type: 'ui_extension',
             name: 'いらっしゃいませ!',
+            description: '拡張子の説明',
             localization: {},
-            extensionPoints: [{localization: {}, name: 'いらっしゃいませ!'}],
+            extensionPoints: [{localization: {}, name: 'いらっしゃいませ!', description: '拡張子の説明'}],
           },
         ],
       })

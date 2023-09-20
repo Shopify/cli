@@ -1,5 +1,18 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.49.1
+
+### Patch Changes
+
+- c0e97b168: Remove the show/hide button from console
+
+## 3.49.0
+
+### Patch Changes
+
+- Updated dependencies [84fddcf69]
+  - @shopify/ui-extensions-server-kit@5.1.0
+
 ## 3.48.0
 
 ### Patch Changes

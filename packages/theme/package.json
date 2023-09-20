@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.48.0",
+  "version": "3.49.1",
   "private": false,
   "description": "Utilities for building and publishing themes",
   "homepage": "https://github.com/shopify/cli#readme",
@@ -35,13 +35,13 @@
   },
   "dependencies": {
     "@oclif/core": "2.11.7",
-    "@shopify/cli-kit": "3.48.0"
+    "@shopify/cli-kit": "3.49.1"
   },
   "devDependencies": {
-    "@types/node": "14.18.54",
+    "@types/node": "14.18.56",
     "json-schema-to-zod": "0.6.3",
-    "vite": "^4.4.8",
-    "vitest": "^0.34.1",
+    "vite": "^4.4.9",
+    "vitest": "^0.34.3",
     "node-stream-zip": "^1.15.0"
   },
   "engines": {

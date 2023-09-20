@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.1.0
+
+### Minor Changes
+
+- 84fddcf69: Added support for optional localizable description to UI extensions dev and deploy
+
 ## 5.0.0
 
 ### Major Changes

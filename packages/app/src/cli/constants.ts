@@ -1,5 +1,6 @@
 export const environmentVariableNames = {
   skipEsbuildReactDedeuplication: 'SHOPIFY_CLI_SKIP_ESBUILD_REACT_DEDUPLICATION',
+  enableGraphiQLExplorer: 'SHOPIFY_CLI_ENABLE_GRAPHIQL_EXPLORER',
 }
 
 export const configurationFileNames = {
@@ -13,7 +14,6 @@ export const dotEnvFileNames = {
 }
 
 export const versions = {
-  react: '^17.0.0',
   reactTypes: '17.0.30',
 } as const
 
@@ -26,4 +26,8 @@ export const blocks = {
     directoryName: 'web',
     configurationName: configurationFileNames.web,
   },
+} as const
+
+export const urlNamespaces = {
+  devTools: '.shopify',
 } as const

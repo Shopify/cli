@@ -15,17 +15,17 @@
   "license": "MIT",
   "author": "Shopify Inc.",
   "dependencies": {
-    "@babel/core": "7.22.9",
+    "@babel/core": "7.22.19",
     "@shopify/eslint-plugin": "42.1.0",
     "@typescript-eslint/eslint-plugin": "5.62.0",
     "@typescript-eslint/parser": "5.62.0",
-    "eslint-config-prettier": "8.8.0",
+    "eslint-config-prettier": "8.10.0",
     "eslint-plugin-import": "2.28.0",
     "eslint-plugin-jsdoc": "39.9.1",
     "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-no-catch-all": "1.1.0",
     "eslint-plugin-prettier": "4.2.1",
-    "eslint-plugin-react": "7.32.2",
+    "eslint-plugin-react": "7.33.2",
     "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-tsdoc": "0.2.17",
     "eslint-plugin-unused-imports": "2.0.0",
@@ -33,12 +33,11 @@
     "execa": "7.2.0"
   },
   "devDependencies": {
-    "eslint": "^8.46.0",
-    "typescript": "5.0.4",
+    "typescript": "5.2.2",
     "prettier": "2.8.8"
   },
   "peerDependencies": {
-    "eslint": "^8.46.0"
+    "eslint": "^8.48.0"
   },
   "publishConfig": {
     "@shopify:registry": "https://registry.npmjs.org",

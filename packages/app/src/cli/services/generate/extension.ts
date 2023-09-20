@@ -203,14 +203,6 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
       task: async () => {
         const packageManager = app.packageManager
         if (app.usesWorkspaces) {
-          // NPM doesn't resolve the react dependency properly with extensions depending on React 17 and cli-kit on React 18
-          if (extensionFlavor?.value.includes('react') && packageManager === 'npm') {
-            await addNPMDependenciesIfNeeded([{name: 'react', version: versions.react}], {
-              packageManager,
-              type: 'prod',
-              directory: app.directory,
-            })
-          }
           // Only install dependencies if the extension is javascript
           if (getTemplateLanguage(extensionFlavor?.value) === 'javascript') {
             await installNodeModules({

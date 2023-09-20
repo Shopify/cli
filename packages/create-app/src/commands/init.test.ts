@@ -9,6 +9,16 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 vi.mock('../services/init')
 vi.mock('@shopify/cli-kit/node/error-handler')
+vi.mock('@oclif/core', async () => {
+  const actual = (await vi.importActual('@oclif/core')) as any
+
+  return {
+    ...actual,
+    Errors: {
+      handle: vi.fn(),
+    },
+  }
+})
 
 beforeEach(() => {
   vi.spyOn(initPrompt, 'default').mockResolvedValue({name: 'name', template: 'http://test.es', templateType: 'custom'})

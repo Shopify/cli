@@ -219,6 +219,8 @@ class AppLoader {
       configName: this.configName,
     })
     const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
+    await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
+
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
 
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
@@ -254,7 +256,6 @@ class AppLoader {
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
       usedCustomLayoutForExtensions: usedCustomLayout,
-      configurationLoadResultMetadata,
     })
 
     return appClass
@@ -467,7 +468,9 @@ export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
 ): Promise<AppConfigurationInterface> {
   const loader = new AppConfigurationLoader(options)
-  return loader.loaded()
+  const result = await loader.loaded()
+  await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
+  return result
 }
 
 interface AppConfigurationLoaderConstructorArgs {
@@ -689,11 +692,9 @@ async function logMetadataForLoadedApp(
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
     usedCustomLayoutForExtensions: boolean
-    configurationLoadResultMetadata: ConfigurationLoadResultMetadata
   },
 ) {
   await metadata.addPublicMetadata(async () => {
-    const loadMetadata = loadingStrategy.configurationLoadResultMetadata
     const projectType = await getProjectType(app.webs)
 
     const extensionFunctionCount = app.allExtensions.filter((extension) => extension.isFunctionExtension).length
@@ -738,6 +739,19 @@ async function logMetadataForLoadedApp(
       app_web_frontend_any: webFrontendCount > 0,
       app_web_frontend_count: webFrontendCount,
       env_package_manager_workspaces: app.usesWorkspaces,
+    }
+  })
+
+  await metadata.addSensitiveMetadata(async () => {
+    return {
+      app_name: app.name,
+    }
+  })
+}
+
+async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadResultMetadata) {
+  await metadata.addPublicMetadata(async () => {
+    return {
       // Generic config as code instrumentation
       cmd_app_all_configs_any: Object.keys(loadMetadata.allClientIdsByConfigName).length > 0,
       cmd_app_all_configs_clients: JSON.stringify(loadMetadata.allClientIdsByConfigName),
@@ -750,12 +764,6 @@ async function logMetadataForLoadedApp(
             cmd_app_linked_config_uses_cli_managed_urls: loadMetadata.usesCliManagedUrls,
           }
         : {}),
-    }
-  })
-
-  await metadata.addSensitiveMetadata(async () => {
-    return {
-      app_name: app.name,
     }
   })
 }

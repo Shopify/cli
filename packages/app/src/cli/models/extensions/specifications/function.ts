@@ -6,6 +6,14 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
+interface UI {
+  app_bridge?: {
+    create_path: string
+    details_path: string
+  }
+  ui_extension_handle?: string
+}
+
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
 export const FunctionExtensionSchema = BaseSchema.extend({
   build: zod.object({
@@ -26,6 +34,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
           details: zod.string(),
         })
         .optional(),
+      handle: zod.string().optional(),
     })
     .optional(),
   api_version: zod.string(),
@@ -87,6 +96,24 @@ const spec = createExtensionSpecification({
         }),
       ))
 
+    let ui: UI | undefined
+
+    if (config.ui?.paths) {
+      ui = {
+        app_bridge: {
+          details_path: config.ui.paths.details,
+          create_path: config.ui.paths.create,
+        },
+      }
+    }
+
+    if (config.ui?.handle) {
+      ui = {
+        ...ui,
+        ui_extension_handle: config.ui.handle,
+      }
+    }
+
     return {
       title: config.name,
       module_id: moduleId,
@@ -100,14 +127,7 @@ const spec = createExtensionSpecification({
             single_json_metafield: config.input.variables,
           }
         : undefined,
-      ui: config.ui?.paths
-        ? {
-            app_bridge: {
-              details_path: config.ui.paths.details,
-              create_path: config.ui.paths.create,
-            },
-          }
-        : undefined,
+      ui,
       enable_creation_ui: config.ui?.enable_create ?? true,
       targets,
     }

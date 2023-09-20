@@ -1,5 +1,5 @@
 import {hashString} from '../../public/node/crypto.js'
-import {getPackageManager, packageManagerUsedForCreating} from '../../public/node/node-package-manager.js'
+import {getPackageManager, packageManagerFromUserAgent} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
 import {CommandContent} from '../../public/node/hooks/prerun.js'
 import * as metadata from '../../public/node/metadata.js'
@@ -35,7 +35,7 @@ export async function startAnalytics({
   }))
 
   await metadata.addPublicMetadata(() => ({
-    cmd_all_launcher: packageManagerUsedForCreating(),
+    cmd_all_launcher: packageManagerFromUserAgent(),
     cmd_all_alias_used: commandContent.alias,
     cmd_all_topic: commandContent.topic,
     cmd_all_plugin: commandClass?.plugin?.name,

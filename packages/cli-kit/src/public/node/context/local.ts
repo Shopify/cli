@@ -156,6 +156,17 @@ export function codespaceURL(env = process.env): string | undefined {
 }
 
 /**
+ * Return codespacePortForwardingDomain if we are running in codespaces.
+ * Https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace#list-of-default-environment-variables.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns The codespace port forwarding domain.
+ */
+export function codespacePortForwardingDomain(env = process.env): string | undefined {
+  return env[environmentVariables.codespacePortForwardingDomain]
+}
+
+/**
  * Checks if the CLI is run from a cloud environment.
  *
  * @param env - Environment variables used when the cli is launched.

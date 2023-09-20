@@ -53,7 +53,7 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
    */
   const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
-  const {run, settings, flush} = await import('@oclif/core')
+  const {run, settings, flush, Errors} = await import('@oclif/core')
 
   if (isDevelopment()) {
     settings.debug = true
@@ -62,7 +62,10 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
   run(undefined, options.moduleURL)
     .then(() => flush())
     .then(printEventsJson)
-    .catch(errorHandler)
+    .catch((error) => {
+      errorHandler(error)
+      return Errors.handle(error)
+    })
 }
 
 /**

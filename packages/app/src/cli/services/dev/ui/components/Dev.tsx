@@ -9,14 +9,15 @@ import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
 import figures from '@shopify/cli-kit/node/figures'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
 export interface DevProps {
   processes: OutputProcess[]
   abortController: AbortController
   previewUrl: string
+  graphiqlUrl?: string
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -26,18 +27,24 @@ export interface DevProps {
   pollingTime?: number
 }
 
-const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, app, pollingTime = 5000}) => {
+const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, graphiqlUrl, app, pollingTime = 5000}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
 
-  const {isAborted} = useAbortSignal(abortController.signal, async () => {
-    setStatusMessage('Shutting down dev ...')
-    setTimeout(() => {
-      if (isUnitTest()) return
-      treeKill('SIGINT')
-    }, 2000)
+  const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
+    if (err) {
+      setStatusMessage('Shutting down dev because of an error ...')
+    } else {
+      setStatusMessage('Shutting down dev ...')
+      setTimeout(() => {
+        if (isUnitTest()) return
+        treeKill(process.pid, 'SIGINT', false, () => {
+          process.exit(0)
+        })
+      }, 2000)
+    }
     clearInterval(pollingInterval.current)
     await disableDeveloperPreview({apiKey, token})
   })
@@ -53,8 +60,8 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
           try {
             return await process.action(stdout, stderr, signal)
             // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch {
-            abortController.abort()
+          } catch (error) {
+            abortController.abort(error)
           }
         },
       }
@@ -117,6 +124,8 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
 
           if (input === 'p' && previewUrl) {
             await openURL(previewUrl)
+          } else if (input === 'g' && graphiqlUrl) {
+            openURL(graphiqlUrl)
           } else if (input === 'q') {
             abortController.abort()
           } else if (input === 'd' && canEnablePreviewMode) {
@@ -146,7 +155,7 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       onInput()
     },
-    {isActive: canUseShortcuts},
+    {isActive: Boolean(canUseShortcuts)},
   )
 
   return (
@@ -176,6 +185,11 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
                   {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} toggle development store
                   preview: {}
                   {devPreviewEnabled ? <Text color="green">✔ on</Text> : <Text color="red">✖ off</Text>}
+                </Text>
+              ) : null}
+              {graphiqlUrl ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in your browser
                 </Text>
               ) : null}
               <Text>

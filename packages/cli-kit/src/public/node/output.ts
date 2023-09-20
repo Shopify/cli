@@ -115,6 +115,10 @@ export function formatPackageManagerCommand(
       }
       return pieces.join(' ')
     }
+    case 'unknown': {
+      const pieces = [scriptName, ...scriptArgs]
+      return pieces.join(' ')
+    }
   }
 }
 
@@ -442,10 +446,7 @@ export function shouldDisplayColors(_process = process): boolean {
  * @param version - The version to update to.
  * @returns The message to remind the user to update the CLI.
  */
-export function getOutputUpdateCLIReminder(
-  packageManager: PackageManager | 'unknown' | undefined,
-  version: string,
-): string {
+export function getOutputUpdateCLIReminder(packageManager: PackageManager | undefined, version: string): string {
   const versionMessage = `💡 Version ${version} available!`
   if (!packageManager || packageManager === 'unknown') return versionMessage
 

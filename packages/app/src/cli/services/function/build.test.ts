@@ -195,6 +195,35 @@ describe('runFunctionRunner', () => {
     )
   })
 
+  test('it supports receiving an input on the command line', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+
+    // When
+    const got = runFunctionRunner(ourFunction, {input: 'input.json', json: false})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(
+      'npm',
+      [
+        'exec',
+        '--',
+        'function-runner',
+        '-f',
+        joinPath(ourFunction.directory, 'dist/index.wasm'),
+        '--input',
+        'input.json',
+      ],
+      {
+        cwd: ourFunction.directory,
+        stderr: 'inherit',
+        stdin: 'inherit',
+        stdout: 'inherit',
+      },
+    )
+  })
+
   test('calls function runner to execute function locally with wasm export name', async () => {
     // Given
     const ourFunction = await testFunctionExtension()

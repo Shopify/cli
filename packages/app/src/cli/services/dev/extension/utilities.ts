@@ -38,6 +38,7 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
     }
 
     // Covers Customer Accounts UI extensions (future)
+    case 'customeraccount':
     case 'customer-account': {
       // These targets are rendered by Checkout
       if (page === 'order-status') {

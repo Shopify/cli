@@ -58,9 +58,9 @@ describe('GitDiff', async () => {
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
 
     expect(lastFrame()).toMatchInlineSnapshot(`
-      "[31m- hello[m
+      "[31m- hello[m[39m
         world[m
-      [32m+ [m[32mhello[m"
+      [32m+ [m[32mhello[m[0m[39m"
     `)
   })
 

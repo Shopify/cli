@@ -123,9 +123,7 @@ program
     };
 
     const appDev = async () => {
-      try {
-        await appExec(nodePackageManager, ["run", "dev"]);
-      } catch (error) {}
+      await appExec(nodePackageManager, ["run", "dev"]);
     };
 
     const generateExtension = async (args, options = {}) => {
@@ -160,6 +158,7 @@ program
             `--template=${template}`,
             `--name=${appName}`,
             `--path=${path.join(homeDir, "Desktop")}`,
+            `--package-manager=${nodePackageManager}`,
           ],
           defaultOpts
         );
