@@ -483,8 +483,6 @@ type LinkedConfigurationSource =
   | 'flag'
   // Config file came from the cache (i.e. app use)
   | 'cached'
-  // Config file is based on the default shopify.app.toml
-  | 'default'
 
 type ConfigurationLoadResultMetadata = {
   allClientIdsByConfigName: {[key: string]: string}
@@ -512,8 +510,7 @@ class AppConfigurationLoader {
 
   async loaded() {
     const appDirectory = await this.getAppDirectory()
-    let configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
-
+    const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
     const cachedCurrentConfigPath = cachedCurrentConfig ? joinPath(appDirectory, cachedCurrentConfig) : null
 
@@ -529,18 +526,10 @@ class AppConfigurationLoader {
 
     this.configName = this.configName ?? cachedCurrentConfig
 
-    if (this.configName === undefined) {
-      configSource = 'default'
-    }
-
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
-
     const file = await loadConfigurationFile(configurationPath)
-
     const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
-
     const configuration = await parseConfigurationFile(appSchema, configurationPath)
-
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
