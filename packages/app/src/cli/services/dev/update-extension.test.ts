@@ -33,13 +33,13 @@ describe('updateExtensionDraft()', () => {
         runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,
-        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -85,13 +85,13 @@ describe('updateExtensionDraft()', () => {
         production_api_base_url: 'url1',
         benchmark_api_base_url: 'url2',
         type: 'tax_calculation',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,
-        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -134,7 +134,6 @@ describe('updateExtensionDraft()', () => {
         devUUID: '1',
         directory: tmpDir,
         type: 'web_pixel_extension',
-        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
@@ -178,13 +177,13 @@ another = "setting"
         runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
         devUUID: '1',
         configuration,
         directory: tmpDir,
-        handle,
       })
 
       await mkdir(joinPath(tmpDir, 'dist'))
