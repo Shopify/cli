@@ -19,9 +19,9 @@ describe('getExtensionPointTargetSurface()', () => {
     expect(getExtensionPointTargetSurface('purchase.thank-you.cart-line-list.render-after')).toBe('checkout')
   })
 
-  test('returns "checkout" for a UI extension targeting customer-account.order-status.*', async () => {
+  test('returns "checkout" for a checkout UI extension target that starts with customer-account', async () => {
     expect(getExtensionPointTargetSurface('customer-account.order-status.block.render')).toBe('checkout')
-    expect(getExtensionPointTargetSurface('customer-account.order-status.contact-information.render-after')).toBe(
+    expect(getExtensionPointTargetSurface('customer-account.order-status.customer-information.render-after')).toBe(
       'checkout',
     )
     expect(getExtensionPointTargetSurface('customer-account.order-status.cart-line-item.render-after')).toBe('checkout')
