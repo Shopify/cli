@@ -1762,7 +1762,7 @@ automatically_update_urls_on_dev = true
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
       cmd_app_linked_config_git_tracked: true,
-      cmd_app_linked_config_source: 'cache',
+      cmd_app_linked_config_source: 'cached',
     })
   })
 
