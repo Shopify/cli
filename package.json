@@ -53,7 +53,7 @@
     "fast-glob": "^3.3.1",
     "find-up": "^6.3.0",
     "fs-extra": "^11.1.0",
-    "graphql": "^16.4.0",
+    "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
