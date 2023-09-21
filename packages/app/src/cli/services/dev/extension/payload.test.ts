@@ -31,9 +31,12 @@ describe('getUIExtensionPayload', () => {
           type: 'checkout_ui_extension',
           metafields: [],
           capabilities: {
-            block_progress: false,
             network_access: true,
             api_access: true,
+            block_progress: false,
+            collect_buyer_consent: {
+              sms_marketing: false,
+            },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
         },
@@ -81,6 +84,9 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: true,
           apiAccess: true,
+          collectBuyerConsent: {
+            smsMarketing: false,
+          },
         },
         development: {
           hidden: true,
@@ -131,6 +137,9 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: false,
           apiAccess: false,
+          collectBuyerConsent: {
+            smsMarketing: false,
+          },
         },
       })
     })
@@ -146,9 +155,12 @@ describe('getUIExtensionPayload', () => {
           type: 'ui_extension',
           metafields: [],
           capabilities: {
-            block_progress: false,
             network_access: false,
+            block_progress: false,
             api_access: false,
+            collect_buyer_consent: {
+              sms_marketing: false,
+            },
           },
           extension_points: [
             {
@@ -228,9 +240,12 @@ describe('getUIExtensionPayload', () => {
           api_version: apiVersion,
           metafields: [],
           capabilities: {
-            block_progress: false,
             network_access: false,
+            block_progress: false,
             api_access: false,
+            collect_buyer_consent: {
+              sms_marketing: false,
+            },
           },
           extension_points: [
             {

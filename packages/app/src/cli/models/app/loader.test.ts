@@ -1101,6 +1101,9 @@ automatically_update_urls_on_dev = true
         block_progress = true
         api_access = true
 
+        [extensions.capabilities.collect_buyer_consent]
+        sms_marketing = true
+
         [extensions.settings]
           [[extensions.settings.fields]]
           key = "field_key"
@@ -1165,6 +1168,9 @@ automatically_update_urls_on_dev = true
           network_access: true,
           block_progress: true,
           api_access: true,
+          collect_buyer_consent: {
+            sms_marketing: true,
+          },
         },
         settings: {
           fields: [
@@ -1484,6 +1490,9 @@ automatically_update_urls_on_dev = true
       block_progress = true
       api_access = true
 
+      [capabilities.collect_buyer_consent]
+      sms_marketing = true
+
       [settings]
         [[settings.fields]]
         key = "field_key"
@@ -1517,6 +1526,9 @@ automatically_update_urls_on_dev = true
           api_access: true,
           block_progress: true,
           network_access: true,
+          collect_buyer_consent: {
+            sms_marketing: true,
+          },
         },
         settings: {
           fields: [

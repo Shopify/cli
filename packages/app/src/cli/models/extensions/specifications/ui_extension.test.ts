@@ -28,6 +28,9 @@ describe('ui_extension', async () => {
         block_progress: false,
         network_access: false,
         api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
       },
       settings: {},
     }
@@ -85,6 +88,9 @@ describe('ui_extension', async () => {
           block_progress: false,
           network_access: false,
           api_access: false,
+          collect_buyer_consent: {
+            sms_marketing: false,
+          },
         },
         settings: {},
       }
@@ -116,6 +122,9 @@ describe('ui_extension', async () => {
           block_progress: false,
           network_access: false,
           api_access: false,
+          collect_buyer_consent: {
+            sms_marketing: false,
+          },
         },
         settings: {},
       }
@@ -225,7 +234,14 @@ Please check the configuration in ${uiExtension.configuration.path}`),
         expect(deployConfig).toStrictEqual({
           localization,
           extension_points: uiExtension.configuration.extension_points,
-          capabilities: uiExtension.configuration.capabilities,
+
+          // Ensure nested capabilities are updated
+          capabilities: {
+            ...uiExtension.configuration.capabilities,
+            collect_buyer_consent: {
+              ...uiExtension.configuration.capabilities.collect_buyer_consent,
+            },
+          },
           name: uiExtension.configuration.name,
           description: uiExtension.configuration.description,
           api_version: uiExtension.configuration.api_version,
