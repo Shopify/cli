@@ -35,6 +35,7 @@ describe('createApp', () => {
       title: 'my-ext',
       config: '{}',
       context: null,
+      handle: 'my-ext',
     }
 
     // When

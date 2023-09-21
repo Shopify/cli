@@ -52,6 +52,7 @@ export interface AppModuleSettings {
   uuid: string
   config: string
   context: string
+  handle: string
 }
 
 export interface AppDeployVariables {

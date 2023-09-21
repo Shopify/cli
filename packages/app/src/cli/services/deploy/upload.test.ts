@@ -780,7 +780,7 @@ describe('uploadExtensionsBundle', () => {
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        appModules: [{uuid: '123', config: '{}', context: ''}],
+        appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         token: 'api-token',
         extensionIds: {},
         deploymentMode: 'legacy',
@@ -795,6 +795,7 @@ describe('uploadExtensionsBundle', () => {
             config: '{}',
             context: '',
             uuid: '123',
+            handle: 'handle',
           },
         ],
         uuid: 'random-uuid',
@@ -829,7 +830,7 @@ describe('uploadExtensionsBundle', () => {
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        appModules: [{uuid: '123', config: '{}', context: ''}],
+        appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         token: 'api-token',
         extensionIds: {},
         deploymentMode: 'unified',
@@ -846,6 +847,7 @@ describe('uploadExtensionsBundle', () => {
             config: '{}',
             context: '',
             uuid: '123',
+            handle: 'handle',
           },
         ],
         uuid: 'random-uuid',
@@ -971,8 +973,8 @@ describe('uploadExtensionsBundle', () => {
           apiKey: 'app-id',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           appModules: [
-            {uuid: '123', config: '{}', context: ''},
-            {uuid: '456', config: '{}', context: ''},
+            {uuid: '123', config: '{}', context: '', handle: 'handle'},
+            {uuid: '456', config: '{}', context: '', handle: 'handle'},
           ],
           token: 'api-token',
           extensionIds: {
@@ -1073,8 +1075,8 @@ describe('uploadExtensionsBundle', () => {
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [
-          {uuid: '123', config: '{}', context: ''},
-          {uuid: '456', config: '{}', context: ''},
+          {uuid: '123', config: '{}', context: '', handle: 'handle'},
+          {uuid: '456', config: '{}', context: '', handle: 'handle'},
         ],
         token: 'api-token',
         extensionIds: {

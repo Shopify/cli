@@ -1,8 +1,17 @@
 import {gql} from 'graphql-request'
 
 export const ExtensionCreateQuery = gql`
-  mutation ExtensionCreate($apiKey: String!, $type: ExtensionType!, $title: String!, $config: JSON!, $context: String) {
-    extensionCreate(input: {apiKey: $apiKey, type: $type, title: $title, config: $config, context: $context}) {
+  mutation ExtensionCreate(
+    $apiKey: String!
+    $type: ExtensionType!
+    $title: String!
+    $config: JSON!
+    $context: String
+    $handle: String
+  ) {
+    extensionCreate(
+      input: {apiKey: $apiKey, type: $type, title: $title, config: $config, context: $context, handle: $handle}
+    ) {
       extensionRegistration {
         id
         uuid
@@ -32,6 +41,7 @@ export interface ExtensionCreateVariables {
   title: string
   config: string
   context?: string | null
+  handle: string
 }
 
 export interface ExtensionCreateSchema {

@@ -135,6 +135,7 @@ export async function testUIExtension(
   })
 
   extension.devUUID = uiExtension?.devUUID ?? 'test-ui-extension-uuid'
+
   return extension
 }
 

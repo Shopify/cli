@@ -22,6 +22,7 @@ vi.mock('../../models/app/loader.js', async () => {
 const token = 'mock-token'
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
+const handle = 'mock-handle'
 const stdout = {write: vi.fn()} as any
 const stderr = {write: vi.fn()} as any
 
@@ -32,6 +33,7 @@ describe('updateExtensionDraft()', () => {
         runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
@@ -63,6 +65,7 @@ describe('updateExtensionDraft()', () => {
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
         context: undefined,
+        handle,
         registrationId,
         config:
           '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object"},"serialized_script":"dGVzdCBjb250ZW50"}',
@@ -82,6 +85,7 @@ describe('updateExtensionDraft()', () => {
         production_api_base_url: 'url1',
         benchmark_api_base_url: 'url2',
         type: 'tax_calculation',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
@@ -111,6 +115,7 @@ describe('updateExtensionDraft()', () => {
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
         context: undefined,
+        handle,
         registrationId,
         config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',
       })
@@ -172,6 +177,7 @@ another = "setting"
         runtime_context: 'strict',
         settings: {type: 'object'},
         type: 'web_pixel_extension',
+        handle,
       } as any
 
       const mockExtension = await testUIExtension({
@@ -216,6 +222,7 @@ another = "setting"
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
         context: undefined,
+        handle,
         registrationId,
         config:
           '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object","another":"setting"},"serialized_script":"dGVzdCBjb250ZW50"}',
