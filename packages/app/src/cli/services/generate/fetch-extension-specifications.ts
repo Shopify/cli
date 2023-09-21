@@ -5,7 +5,8 @@ import {
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
 
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecification, createExtensionSpecification} from '../../models/extensions/specification.js'
+import {jsonToZod} from '@shopify/cli-kit/node/schema'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -67,6 +68,27 @@ function mergeLocalAndRemoteSpecs(
     if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
     return undefined
   })
+
+  const appAccess = remote.find((remote) => remote.identifier === 'app_access')
+  if (appAccess) {
+    console.log(JSON.parse(appAccess.options.cliSchema!))
+    const emptyLocalSpec: ExtensionSpecification = createExtensionSpecification({
+      identifier: '',
+      appModuleFeatures: () => [],
+    })
+    const localAppAccess = {
+      ...emptyLocalSpec,
+      ...{
+        ...appAccess,
+        schema: appAccess.options.cliSchema
+          ? jsonToZod(JSON.parse(appAccess.options.cliSchema))
+          : emptyLocalSpec.schema,
+        appModuleFeatures: () =>
+          appAccess.options.cliFeatures ? appAccess.options.cliFeatures.split(',') : emptyLocalSpec.appModuleFeatures(),
+      },
+    } as ExtensionSpecification
+    updated.push(localAppAccess)
+  }
 
   return getArrayRejectingUndefined<ExtensionSpecification>(updated)
 }

@@ -11,6 +11,8 @@ export const ExtensionSpecificationsQuery = gql`
       options {
         managementExperience
         registrationLimit
+        cliSchema
+        cliFeatures
       }
       features {
         argo {
@@ -34,6 +36,8 @@ export interface RemoteSpecification {
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
+    cliSchema?: string
+    cliFeatures?: string
   }
   features?: {
     argo?: {
