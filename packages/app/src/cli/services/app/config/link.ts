@@ -35,16 +35,17 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
+  const directory = localApp.directory && localApp.directory !== '' ? localApp.directory : options.directory
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, directory)
 
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
-  const configFilePath = joinPath(options.directory, configFileName)
+  const configFilePath = joinPath(directory, configFileName)
 
   const configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
 
   await writeAppConfigurationFile(configuration)
 
-  await saveCurrentConfig({configFileName, directory: options.directory})
+  await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -123,7 +124,7 @@ async function loadConfigurationFileName(
     return configurationFileNames.app
   }
 
-  const configName = await selectConfigName(options.directory, remoteApp.title)
+  const configName = await selectConfigName(localApp.directory ?? options.directory, remoteApp.title)
   return `shopify.app.${configName}.toml`
 }
 
