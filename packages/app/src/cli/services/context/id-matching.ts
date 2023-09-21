@@ -21,7 +21,8 @@ export interface MatchResult {
  * Filter function to match a local and a remote source by type and name
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.configuration.name)
+  const activeHandle = remote.matchIdentifier ?? remote.title
+  return remote.type === local.graphQLType && slugify(activeHandle) === slugify(local.configuration.name)
 }
 
 /**
@@ -35,11 +36,15 @@ function matchByNameAndType(
   remoteIdField: 'id' | 'uuid',
 ): {matched: IdentifiersExtensions; pending: {local: LocalSource[]; remote: RemoteSource[]}} {
   const uniqueLocal = uniqBy(local, (elem) => [elem.graphQLType, elem.handle])
-  const uniqueRemote = uniqBy(remote, (elem) => [elem.type, elem.title])
+  const uniqueRemote = uniqBy(remote, (elem) => [elem.type, elem.matchIdentifier ?? elem.title])
   const validMatches: IdentifiersExtensions = {}
+
+  // console.log('uniqueLocal', uniqueLocal)
+  // console.log('uniqueRemote', uniqueRemote)
 
   uniqueLocal.forEach((localSource) => {
     const possibleMatch = uniqueRemote.find((remoteSource) => sameTypeAndName(localSource, remoteSource))
+    // console.log('possibleMatch', possibleMatch)
     if (possibleMatch) validMatches[localSource.localIdentifier] = possibleMatch[remoteIdField]
   })
 

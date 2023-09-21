@@ -76,6 +76,18 @@ export async function fetchAppExtensionRegistrations({
   const result: AllAppExtensionRegistrationsQuerySchema = await partnersRequest(query, token, {
     apiKey,
   })
+  result.app.extensionRegistrations = result.app.extensionRegistrations.map((extension) => {
+    let matchIdentifier = extension.title
+    const activeHandle = extension.activeVersion?.handle ?? ''
+    const draftHandle = extension.draftVersion?.handle ?? ''
+    if (activeHandle !== '') {
+      matchIdentifier = activeHandle
+    } else if (draftHandle !== '') {
+      matchIdentifier = draftHandle
+    }
+    return {...extension, matchIdentifier}
+  })
+  // console.log(JSON.stringify(result, null, 2))
   return result
 }
 

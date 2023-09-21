@@ -13,6 +13,7 @@ export interface ExtensionRegistration {
   title: string
   draftVersion?: {
     config: string
+    handle: string
     registrationId: string
     lastUserInteractionAt: string
     validationErrors: {

@@ -18,7 +18,9 @@ export async function matchConfirmationPrompt(
   type: 'extension' | 'function' = 'extension',
 ) {
   return renderConfirmationPrompt({
-    message: `Match ${local.handle} (local name) with ${remote.title} (name on Shopify Partners, ID: ${remote.id})?`,
+    message: `Match ${local.handle} (local handle) with ${
+      remote.matchIdentifier ?? remote.title
+    } (handle on Shopify Partners, ID: ${remote.id})?`,
     confirmationMessage: `Yes, match to existing ${type}`,
     cancellationMessage: `No, create as a new ${type}`,
   })
