@@ -10,11 +10,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
-import {
-  InvalidApiKeyErrorMessage,
-  fetchOrCreateOrganizationApp,
-  logMetadataForLoadedConfigContext,
-} from '../../context.js'
+import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
 import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -68,7 +64,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     })
   }
 
-  await logMetadataForLoadedConfigContext(remoteApp)
+  await logMetadataForLoadedContext(remoteApp)
 
   return configuration
 }

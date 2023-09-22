@@ -2,7 +2,7 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {AppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
-import {logMetadataForLoadedConfigContext} from '../../context.js'
+import {logMetadataForLoadedContext} from '../../context.js'
 import {GetConfigQuerySchema, GetConfig} from '../../../api/graphql/get_config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -102,7 +102,7 @@ async function logMetadata(configuration: AppConfiguration) {
   if (queryResult.app) {
     const {app} = queryResult
 
-    await logMetadataForLoadedConfigContext(app)
+    await logMetadataForLoadedContext(app)
   } else {
     outputDebug("Couldn't find app for analytics. Make sure you have a valid client ID.")
   }
