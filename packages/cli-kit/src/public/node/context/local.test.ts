@@ -273,10 +273,10 @@ describe('ciPlatform', () => {
     const bitbucketEnv = {
       CI: 'true',
       BITBUCKET_BUILD_NUMBER: '123',
-      BITBUCKET_COMMIT_AUTHOR: 'author',
       BITBUCKET_BRANCH: 'main',
       BITBUCKET_COMMIT: 'abcdef',
-      BITBUCKET_BUILD_URL: 'https://example.com/bitbucket/build/123',
+      BITBUCKET_REPO_SLUG: 'some-repo',
+      BITBUCKET_WORKSPACE: 'some-workspace',
     }
 
     // When
@@ -287,12 +287,11 @@ describe('ciPlatform', () => {
       isCI: true,
       name: 'bitbucket',
       metadata: {
-        actor: 'author',
         branch: 'main',
         build: '123',
         commitSha: 'abcdef',
         run: '123',
-        url: 'https://example.com/bitbucket/build/123',
+        url: 'https://bitbucket.org/some-workspace/some-repo/pipelines/results/123',
       },
     })
   })
