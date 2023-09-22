@@ -101,10 +101,10 @@ describe('extension prompt', async () => {
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce(answers.extensionFlavor)
     const expectedFlavors = [
-      {label: 'TypeScript', value: 'typescript'},
+      {label: 'JavaScript React', value: 'react'},
       {label: 'JavaScript', value: 'vanilla-js'},
       {label: 'TypeScript React', value: 'typescript-react'},
-      {label: 'JavaScript React', value: 'react'},
+      {label: 'TypeScript', value: 'typescript'},
     ]
 
     // When
