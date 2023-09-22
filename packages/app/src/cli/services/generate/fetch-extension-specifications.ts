@@ -69,26 +69,28 @@ function mergeLocalAndRemoteSpecs(
     return undefined
   })
 
-  const appAccess = remote.find((remote) => remote.identifier === 'app_access')
-  if (appAccess) {
-    console.log(JSON.parse(appAccess.options.cliSchema!))
+  const customRemoteSpecs = remote.filter((remote) => remote.identifier === 'checkout_post_purchase')
+  customRemoteSpecs.forEach((remote) => {
     const emptyLocalSpec: ExtensionSpecification = createExtensionSpecification({
       identifier: '',
       appModuleFeatures: () => [],
     })
-    const localAppAccess = {
+    const localSpec = {
       ...emptyLocalSpec,
       ...{
-        ...appAccess,
-        schema: appAccess.options.cliSchema
-          ? jsonToZod(JSON.parse(appAccess.options.cliSchema))
+        ...remote,
+        schema: remote.options.cliSchema ? jsonToZod(JSON.parse(remote.options.cliSchema)) : emptyLocalSpec.schema,
+        deploySchema: remote.options.cliSchemaDeploy
+          ? jsonToZod(JSON.parse(remote.options.cliSchemaDeploy))
           : emptyLocalSpec.schema,
         appModuleFeatures: () =>
-          appAccess.options.cliFeatures ? appAccess.options.cliFeatures.split(',') : emptyLocalSpec.appModuleFeatures(),
+          remote.options.cliFeatures ? remote.options.cliFeatures.split(',') : emptyLocalSpec.appModuleFeatures(),
+        dependency: remote.options.cliDependency,
+        partnersWebIdentifier: remote.options.cliPartnersSlug,
       },
     } as ExtensionSpecification
-    updated.push(localAppAccess)
-  }
+    updated.push(localSpec)
+  })
 
   return getArrayRejectingUndefined<ExtensionSpecification>(updated)
 }

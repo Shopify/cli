@@ -13,6 +13,9 @@ export const ExtensionSpecificationsQuery = gql`
         registrationLimit
         cliSchema
         cliFeatures
+        cliSchemaDeploy
+        cliDependency
+        cliPartnersSlug
       }
       features {
         argo {
@@ -38,6 +41,9 @@ export interface RemoteSpecification {
     registrationLimit: number
     cliSchema?: string
     cliFeatures?: string
+    cliSchemaDeploy?: string
+    cliDependency?: string
+    cliPartnersSlug?: string
   }
   features?: {
     argo?: {
