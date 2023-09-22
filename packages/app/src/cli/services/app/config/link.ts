@@ -35,16 +35,17 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const localApp = await loadAppConfigFromDefaultToml(options)
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.directory)
+  const directory = localApp?.directory || options.directory
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, directory)
 
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
-  const configFilePath = joinPath(options.directory, configFileName)
+  const configFilePath = joinPath(directory, configFileName)
 
   const configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
 
   await writeAppConfigurationFile(configuration)
 
-  await saveCurrentConfig({configFileName, directory: options.directory})
+  await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -109,7 +110,7 @@ async function loadRemoteApp(
 async function loadConfigurationFileName(
   remoteApp: OrganizationApp,
   options: LinkOptions,
-  localApp?: AppInterface,
+  localApp: AppInterface,
 ): Promise<string> {
   const cache = getCachedCommandInfo()
 
@@ -119,11 +120,11 @@ async function loadConfigurationFileName(
     return getAppConfigurationFileName(options.configName)
   }
 
-  if (!localApp?.configuration || (localApp && isLegacyAppSchema(localApp.configuration))) {
+  if (!localApp.configuration || (localApp && isLegacyAppSchema(localApp.configuration))) {
     return configurationFileNames.app
   }
 
-  const configName = await selectConfigName(options.directory, remoteApp.title)
+  const configName = await selectConfigName(localApp.directory || options.directory, remoteApp.title)
   return `shopify.app.${configName}.toml`
 }
 

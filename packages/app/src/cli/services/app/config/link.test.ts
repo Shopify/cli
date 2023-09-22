@@ -41,7 +41,7 @@ describe('link', () => {
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         configName: 'Default value',
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -116,23 +116,22 @@ embedded = false
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(loadApp).mockResolvedValue(
-        testApp({
-          configuration: {
-            path: 'shopify.app.development.toml',
-            name: 'my app',
-            client_id: '12345',
-            scopes: 'write_products',
-            webhooks: {api_version: '2023-04'},
-            application_url: 'https://myapp.com',
-            embedded: true,
-            build: {
-              automatically_update_urls_on_dev: true,
-              dev_store_url: 'my-store.myshopify.com',
-            },
+      const localApp = testApp({
+        configuration: {
+          path: 'shopify.app.development.toml',
+          name: 'my app',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {api_version: '2023-04'},
+          application_url: 'https://myapp.com',
+          embedded: true,
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: 'my-store.myshopify.com',
           },
-        }),
-      )
+        },
+      })
+      vi.mocked(loadApp).mockResolvedValue({...localApp, directory: tmp})
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
@@ -200,7 +199,7 @@ embedded = false
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -259,7 +258,7 @@ embedded = false
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
 
       // When
@@ -300,7 +299,7 @@ embedded = false
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         apiKey: 'api-key',
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -326,7 +325,7 @@ embedded = false
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         apiKey: '1234-5678',
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -346,19 +345,18 @@ embedded = false
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(loadApp).mockResolvedValue(
-        testApp({
-          configuration: {
-            path: 'shopify.app.foo.toml',
-            name: 'my app',
-            client_id: '12345',
-            scopes: 'write_products',
-            webhooks: {api_version: '2023-04'},
-            application_url: 'https://myapp.com',
-            embedded: true,
-          },
-        }),
-      )
+      const localApp = testApp({
+        configuration: {
+          path: 'shopify.app.foo.toml',
+          name: 'my app',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {api_version: '2023-04'},
+          application_url: 'https://myapp.com',
+          embedded: true,
+        },
+      })
+      vi.mocked(loadApp).mockResolvedValue({...localApp, directory: tmp})
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
@@ -423,7 +421,7 @@ embedded = false
         directory: tmp,
         commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
-      vi.mocked(loadApp).mockResolvedValue(LOCAL_APP)
+      vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...REMOTE_APP,
         requestedAccessScopes: ['read_products', 'write_orders'],
