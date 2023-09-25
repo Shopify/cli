@@ -14,7 +14,15 @@ import {hyphenate} from '@shopify/cli-kit/common/string'
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
-import {appendFile, fileExists, inTemporaryDirectory, mkdir, moveFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  appendFile,
+  fileExists,
+  fileExistsSync,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {username} from '@shopify/cli-kit/node/os'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -75,18 +83,21 @@ async function init(options: InitOptions) {
           packageJSON.name = hyphenizedName
           packageJSON.author = (await username()) ?? ''
           packageJSON.private = true
+          const workspacesFolders = ['extensions/*'].concat(detectAddittionalWorkspacesFolders(templateScaffoldDir))
 
           switch (packageManager) {
             case 'npm':
             case 'yarn':
-              packageJSON.workspaces = ['extensions/*']
+              packageJSON.workspaces = workspacesFolders
               break
-            case 'pnpm':
-              await writeFile(joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'), `packages:\n  - 'extensions/*'\n`)
+            case 'pnpm': {
+              const workspacesContent = workspacesFolders.map((folder) => ` - '${folder}'`).join(`\n`)
+              await writeFile(joinPath(templateScaffoldDir, 'pnpm-workspace.yaml'), `packages:\n${workspacesContent}`)
               // Ensure that the installation of dependencies doesn't fail when using
               // pnpm due to missing peerDependencies.
               await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
               break
+            }
             case 'unknown':
               throw new UnknownPackageManagerError()
           }
@@ -163,6 +174,10 @@ async function ensureAppDirectoryIsAvailable(directory: string, name: string): P
   const exists = await fileExists(directory)
   if (exists)
     throw new AbortError(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
+}
+
+function detectAddittionalWorkspacesFolders(directory: string) {
+  return ['web', 'web/frontend'].filter((folder) => fileExistsSync(joinPath(directory, folder)))
 }
 
 export default init
