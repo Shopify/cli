@@ -49,18 +49,20 @@ export function setupGraphiQLServer({
   async function token(): Promise<string> {
     if (!_token) {
       outputDebug(`fetching token`, stdout)
-      const queryString = queryStringEncode({client_id: apiKey, client_secret: apiSecret, grant_type: 'client_credentials'})
-      const tokenResponse = await fetch(
-        `https://${storeFqdn}/admin/oauth/access_token?${queryString}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+      const queryString = queryStringEncode({
+        client_id: apiKey,
+        client_secret: apiSecret,
+        grant_type: 'client_credentials',
+      })
+      const tokenResponse = await fetch(`https://${storeFqdn}/admin/oauth/access_token?${queryString}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      )
-      const tokenJson = await tokenResponse.json() as {access_token: string}
+      })
+      const tokenJson = (await tokenResponse.json()) as {access_token: string}
       outputDebug(`fetched token ${tokenJson.access_token}`, stdout)
+      // eslint-disable-next-line require-atomic-updates
       _token = tokenJson.access_token
     }
     return _token
@@ -93,29 +95,32 @@ export function setupGraphiQLServer({
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
 
-    const headers: any = {}
-    headers["Accept"] = 'application/json'
-    headers["Content-Type"] = 'application/json'
-    headers["X-Shopify-Access-Token"] = await token()
+    const headers = {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'X-Shopify-Access-Token': await token(),
+    }
 
     const graphqlUrl = `https://${storeFqdn}/admin/api/${req.query.api_version ?? LATEST_API_VERSION}/graphql.json`
     try {
-      const result = await fetch(
-        graphqlUrl,
-        {
-          method: req.method,
-          headers,
-          body: JSON.stringify(req.body),
-        }
-      )
+      const result = await fetch(graphqlUrl, {
+        method: req.method,
+        headers,
+        body: JSON.stringify(req.body),
+      })
 
       res.setHeader('Content-Type', 'application/json')
-      const responseBody = await result.json()
       res.statusCode = result.status
+      const responseBody = await result.json()
       res.json(responseBody)
-    } catch (error: any) {
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error: unknown) {
       res.statusCode = 500
-      res.json({errors: [error.message]})
+      if (error instanceof Error) {
+        res.json({errors: [error.message]})
+      } else {
+        res.json({errors: ['Unknown error']})
+      }
     }
     res.end()
   })
