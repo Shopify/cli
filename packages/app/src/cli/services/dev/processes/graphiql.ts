@@ -31,11 +31,11 @@ export async function setupGraphiQLServerProcess(
 }
 
 export const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptions> = async (
-  {stdout, stderr, abortSignal},
+  {stdout, abortSignal},
   options: GraphiQLServerProcessOptions,
 ) => {
   const httpServer = setupGraphiQLServer({...options, stdout})
   abortSignal.addEventListener('abort', async () => {
-    await httpServer.close()
+    httpServer.close()
   })
 }
