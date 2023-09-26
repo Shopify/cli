@@ -1,8 +1,12 @@
 import {themeFlags, themeDevPreviewFlag} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {formatOffenses} from '../../services/check.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {themeCheckRun} from '@shopify/theme-check-node'
+import {Severity} from '@shopify/theme-check-common'
+import {renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -97,6 +101,38 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
+
+    if (flags['dev-preview']) {
+      const {offenses} = await themeCheckRun(flags.path)
+
+      const errors = offenses.filter((offense) => offense.severity === Severity.ERROR)
+      const infos = offenses.filter((offense) => offense.severity === Severity.INFO)
+      const warnings = offenses.filter((offense) => offense.severity === Severity.WARNING)
+
+      // console.log(JSON.stringify(offenses, null, 2))
+
+      if (errors.length > 0) {
+        renderError({
+          headline: `Theme Check found ${errors.length} errors.`,
+          customSections: formatOffenses(errors),
+        })
+      }
+      if (warnings.length > 0) {
+        renderWarning({
+          headline: `Theme Check found ${warnings.length} warnings.`,
+          customSections: formatOffenses(warnings),
+        })
+      }
+      if (infos.length > 0) {
+        renderInfo({
+          headline: `Theme Check found ${infos.length} info issues.`,
+          customSections: formatOffenses(infos),
+        })
+      }
+
+      return
+    }
+
     await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
       directory: flags.path,
     })
