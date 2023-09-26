@@ -1673,7 +1673,7 @@ automatically_update_urls_on_dev = true
     }
   })
 
-  test('does not the app with an app access module when the app configuration does not include app access', async () => {
+  test('does not load the app with an app access module when the app configuration does not include app access', async () => {
     // Given
     await writeConfig(linkedAppConfiguration)
 
