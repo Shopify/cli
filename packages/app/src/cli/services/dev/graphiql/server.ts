@@ -3,52 +3,13 @@ import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import '@shopify/shopify-api/adapters/node'
-import {shopifyApi, LogSeverity, Session, LATEST_API_VERSION, ApiVersion, HttpResponseError} from '@shopify/shopify-api'
+import {LATEST_API_VERSION, ApiVersion} from '@shopify/shopify-api'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
-import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
-
-function createShopify({
-  stdout,
-  apiKey,
-  apiSecret,
-  scopes,
-  url,
-  shopCustomDomain,
-}: {
-  stdout: Writable
-  apiKey: string
-  apiSecret: string
-  scopes: string[]
-  url: string
-  shopCustomDomain?: string
-}) {
-  return shopifyApi({
-    apiKey,
-    apiSecretKey: apiSecret,
-    scopes,
-    hostName: url,
-    apiVersion: LATEST_API_VERSION,
-    isEmbeddedApp: false,
-    customShopDomains: shopCustomDomain ? [shopCustomDomain] : [],
-    logger: {
-      level: LogSeverity.Debug,
-      timestamps: false,
-      httpRequests: true,
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      log: async (severity, message) => {
-        if (severity === LogSeverity.Debug) {
-          outputDebug(message, stdout)
-        } else if (severity === LogSeverity.Error || severity === LogSeverity.Warning) {
-          outputWarn(message, stdout)
-        } else {
-          outputInfo(message, stdout)
-        }
-      },
-    },
-  })
-}
 
 interface SetupGraphiQLServerOptions {
   stdout: Writable
@@ -60,7 +21,6 @@ interface SetupGraphiQLServerOptions {
   url: string
   storeFqdn: string
   scopes: string[]
-  shopCustomDomain?: string
 }
 
 export function setupGraphiQLServer({
@@ -73,11 +33,9 @@ export function setupGraphiQLServer({
   url,
   storeFqdn,
   scopes,
-  shopCustomDomain,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
 
-  const shopify = createShopify({stdout, apiKey, apiSecret, url, scopes, shopCustomDomain})
   const app = express()
     // Make the app accept all routes starting with /.shopify/xxx as /xxx
     .use((req, _res, next) => {
@@ -87,29 +45,25 @@ export function setupGraphiQLServer({
       next()
     })
 
-  let session: Session | undefined
-
-  async function beginAuth(req: express.Request, res: express.Response) {
-    stdout.write('Initiating OAuth flow...')
-    await shopify.auth.begin({
-      shop: shopify.utils.sanitizeShop(storeFqdn, true)!,
-      callbackPath: `/${urlNamespaces.devTools}/graphiql/auth/callback`,
-      isOnline: false,
-      rawRequest: req,
-      rawResponse: res,
-    })
-  }
-
-  async function isAuthorized(): Promise<boolean> {
-    if (!session) return false
-    const client = new shopify.clients.Graphql({session, apiVersion: LATEST_API_VERSION})
-    try {
-      await client.query({data: '{ shop { id } }'})
-      return true
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      return (error as HttpResponseError)?.response?.code !== 401
+  let _token: string | undefined
+  async function token(): Promise<string> {
+    if (!_token) {
+      outputDebug(`fetching token`, stdout)
+      const queryString = queryStringEncode({client_id: apiKey, client_secret: apiSecret, grant_type: 'client_credentials'})
+      const tokenResponse = await fetch(
+        `https://${storeFqdn}/admin/oauth/access_token?${queryString}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      )
+      const tokenJson = await tokenResponse.json() as {access_token: string}
+      outputDebug(`fetched token ${tokenJson.access_token}`, stdout)
+      _token = tokenJson.access_token
     }
+    return _token
   }
 
   app.get('/graphiql/ping', (_req, res) => {
@@ -117,24 +71,8 @@ export function setupGraphiQLServer({
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/graphiql/auth/callback', async (req, res) => {
-    outputDebug('Handling /graphiql/auth/callback request', stdout)
-    // The library will automatically set the appropriate HTTP headers
-    const callback = await shopify.auth.callback({
-      rawRequest: req,
-      rawResponse: res,
-    })
-    session = callback.session
-    // You can now use callback.session to make API requests
-    res.redirect(`/${urlNamespaces.devTools}/graphiql`)
-  })
-
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/graphiql', async (req, res) => {
+  app.get('/graphiql', async (_req, res) => {
     outputDebug('Handling /graphiql request', stdout)
-    if (!session || !(await isAuthorized())) {
-      return beginAuth(req, res)
-    }
     res.send(
       await renderLiquidTemplate(template, {
         url: `https://${url}/${urlNamespaces.devTools}`,
@@ -150,24 +88,36 @@ export function setupGraphiQLServer({
   })
 
   app.use(bodyParser.json())
+
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
-    if (!session) {
-      return res.json({errors: [{message: 'Not authenticated'}]})
-    }
 
-    const client = new shopify.clients.Graphql({
-      session,
-      apiVersion: (req.query.api_version ?? LATEST_API_VERSION) as ApiVersion,
-    })
+    const headers: any = {}
+    headers["Accept"] = 'application/json'
+    headers["Content-Type"] = 'application/json'
+    headers["X-Shopify-Access-Token"] = await token()
+
+    const graphqlUrl = `https://${storeFqdn}/admin/api/${req.query.api_version ?? LATEST_API_VERSION}/graphql.json`
     try {
-      const {body} = await client.query({data: req.body})
-      res.json(body)
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      res.status(500).json({errors: [error]})
+      const result = await fetch(
+        graphqlUrl,
+        {
+          method: req.method,
+          headers,
+          body: JSON.stringify(req.body),
+        }
+      )
+
+      res.setHeader('Content-Type', 'application/json')
+      const responseBody = await result.json()
+      res.statusCode = result.status
+      res.json(responseBody)
+    } catch (error: any) {
+      res.statusCode = 500
+      res.json({errors: [error.message]})
     }
+    res.end()
   })
   return app.listen(port, () => stdout.write('GraphiQL server started'))
 }
