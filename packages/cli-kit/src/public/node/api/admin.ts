@@ -33,7 +33,7 @@ async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<st
 }
 
 /**
- * GraphQL query to retrieve all supported API version.
+ * GraphQL query to retrieve all supported API versions.
  *
  * @param session - Shopify admin session including token and Store FQDN.
  * @returns - An array of supported API versions.
@@ -46,6 +46,12 @@ export async function supportedApiVersions(session: AdminSession): Promise<strin
     .sort()
 }
 
+/**
+ * GraphQL query to retrieve all API versions.
+ *
+ * @param session - Shopify admin session including token and Store FQDN.
+ * @returns - An array of supported and unsupported API versions.
+ */
 async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()

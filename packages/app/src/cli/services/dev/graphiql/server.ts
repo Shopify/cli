@@ -92,7 +92,7 @@ export function setupGraphiQLServer({
     let apiVersions: string[]
     try {
       apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
-    } catch(err) {
+    } catch (err) {
       if (err instanceof TokenRefreshError) {
         return res.send("Can't connect to the store. Be sure to install the app before using GraphiQL.")
       }
@@ -104,10 +104,7 @@ export function setupGraphiQLServer({
         defaultQueries: [{query: defaultQuery}],
         apiVersion: apiVersions.sort().reverse()[0]!,
         storeFqdn,
-        versions: [
-          ...apiVersions,
-          'unstable',
-        ],
+        versions: [...apiVersions, 'unstable'],
         appName,
         appUrl,
         scopes,
