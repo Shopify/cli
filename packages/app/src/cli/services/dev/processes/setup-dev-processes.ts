@@ -63,7 +63,6 @@ export async function setupDevProcesses({
   storeId,
   commandOptions,
   network,
-  partnerUrlsUpdated,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -75,7 +74,6 @@ export async function setupDevProcesses({
   const scopesArray = getAppScopesArray(localApp.configuration)
   const shouldRenderGraphiQL =
     scopesArray.length > 0 &&
-    partnerUrlsUpdated &&
     (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
 
   const processes = [
