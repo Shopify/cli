@@ -166,9 +166,6 @@ importers:
       '@shopify/plugin-cloudflare':
         specifier: 3.51.0
         version: link:../plugin-cloudflare
-      '@shopify/shopify-api':
-        specifier: 7.5.0
-        version: 7.5.0
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0
@@ -4605,11 +4602,6 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
-  /@shopify/network@3.2.1:
-    resolution: {integrity: sha512-Ih/6Oe80dynlUsRfEqptWBfsySCqI0rjQvPAjS8HuWeK9nZ+TvmYScfxjucKXZ2deXwAClnU6SMdh3/B1lMMog==}
-    engines: {node: ^14.17.0 || >=16.0.0}
-    dev: false
-
   /@shopify/polaris-icons@4.23.0:
     resolution: {integrity: sha512-70iT2GNXVASA7jPtuKTsPKoq82Ws/x9Nu1sGuTnvchQpeltFG9oJEu/1r9AuTS05dQoM6fivnOCxZGy5XnCFqw==}
     dev: false
@@ -4678,20 +4670,6 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
       react-reconciler: 0.26.2(react@17.0.2)
     dev: true
-
-  /@shopify/shopify-api@7.5.0:
-    resolution: {integrity: sha512-0VAYsV2VKL4tWsfGYXKav3nnLRLhaHInrDnyTj1MJfGJHeBLlRhvYMJ0g+f9fxX5k6yo/hvrpW6vVS52hD4sxw==}
-    dependencies:
-      '@shopify/network': 3.2.1
-      compare-versions: 5.0.3
-      isbot: 3.6.13
-      jose: 4.14.4
-      node-fetch: 2.6.11
-      tslib: 2.6.0
-      uuid: 9.0.0
-    transitivePeerDependencies:
-      - encoding
-    dev: false
 
   /@shopify/theme-check-common@1.20.1:
     resolution: {integrity: sha512-M8176CVIDM9kZ8G991lN+HXefavMdk++UlaxgVBjVKLCtx0cn/z013KHFZTusUvcO+OyApZlcqMawN1zonT2LQ==}
@@ -6743,10 +6721,6 @@ packages:
 
   /commondir@1.0.1:
     resolution: {integrity: sha512-W9pAhw0ja1Edb5GVdIF1mjZw/ASI0AlShXM83UUGe2DVr5TdAPEA1OA8m/g8zWp9x6On7gqufY+FatDbC3MDQg==}
-
-  /compare-versions@5.0.3:
-    resolution: {integrity: sha512-4UZlZP8Z99MGEY+Ovg/uJxJuvoXuN4M6B3hKaiackiHrgzQFEe3diJi1mf1PNHbFujM7FvLrK2bpgIaImbtZ1A==}
-    dev: false
 
   /compress-commons@4.1.1:
     resolution: {integrity: sha512-QLdDLCKNV2dtoTorqgxngQCMA+gWXkM/Nwu7FpeBhk/RdkzimqC3jueb/FDmaZeXh+uby1jkBqE3xArsLBE5wQ==}
@@ -9481,11 +9455,6 @@ packages:
     engines: {node: '>= 14.0.0'}
     dev: true
 
-  /isbot@3.6.13:
-    resolution: {integrity: sha512-uoP4uK5Dc2CrabmK+Gue1jTL+scHiCc1c9rblRpJwG8CPxjLIv8jmGyyGRGkbPOweayhkskdZsEQXG6p+QCQrg==}
-    engines: {node: '>=12'}
-    dev: false
-
   /iserror@0.0.2:
     resolution: {integrity: sha512-oKGGrFVaWwETimP3SiWwjDeY27ovZoyZPHtxblC4hCq9fXxed/jasx+ATWFFjCVSRZng8VTMsN1nDnGo6zMBSw==}
     dev: false
@@ -9636,10 +9605,6 @@ packages:
     resolution: {integrity: sha512-9FzQjJ7MATs1tSpnco1K6ayiYE3figslrXA72G2HQ/n76RzvYlofyi5QM+iX4YRs/pu3yzxlVQSST23+dMDknw==}
     engines: {node: '>= 0.6.0'}
     dev: true
-
-  /jose@4.14.4:
-    resolution: {integrity: sha512-j8GhLiKmUAh+dsFXlX1aJCbt5KMibuKb+d7j1JaOJG6s2UjX1PQlW+OKB/sD4a/5ZYF4RcmYmLSndOoU3Lt/3g==}
-    dev: false
 
   /js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -13798,6 +13763,7 @@ packages:
   /uuid@9.0.0:
     resolution: {integrity: sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==}
     hasBin: true
+    dev: true
 
   /v8-compile-cache-lib@3.0.1:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}

@@ -2,14 +2,20 @@ import {defaultQuery, template} from './template.js'
 import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
-import '@shopify/shopify-api/adapters/node'
-import {LATEST_API_VERSION, ApiVersion} from '@shopify/shopify-api'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
+
+class TokenRefreshError extends AbortError {
+  constructor() {
+    super('Failed to refresh credentials. Check that your app is installed, and try again.')
+  }
+}
 
 interface SetupGraphiQLServerOptions {
   stdout: Writable
@@ -48,7 +54,16 @@ export function setupGraphiQLServer({
   let _token: string | undefined
   async function token(): Promise<string> {
     if (!_token) {
-      outputDebug(`fetching token`, stdout)
+      // eslint-disable-next-line require-atomic-updates
+      _token = await refreshToken()
+    }
+    return _token
+  }
+
+  async function refreshToken(): Promise<string> {
+    try {
+      outputDebug('refreshing token', stdout)
+      _token = undefined
       const queryString = queryStringEncode({
         client_id: apiKey,
         client_secret: apiSecret,
@@ -61,11 +76,10 @@ export function setupGraphiQLServer({
         },
       })
       const tokenJson = (await tokenResponse.json()) as {access_token: string}
-      outputDebug(`fetched token ${tokenJson.access_token}`, stdout)
-      // eslint-disable-next-line require-atomic-updates
-      _token = tokenJson.access_token
+      return tokenJson.access_token
+    } catch (_error) {
+      throw new TokenRefreshError()
     }
-    return _token
   }
 
   app.get('/graphiql/ping', (_req, res) => {
@@ -75,13 +89,25 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (_req, res) => {
     outputDebug('Handling /graphiql request', stdout)
+    let apiVersions: string[]
+    try {
+      apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
+    } catch(err) {
+      if (err instanceof TokenRefreshError) {
+        return res.send("Can't connect to the store. Be sure to install the app before using GraphiQL.")
+      }
+      throw err
+    }
     res.send(
       await renderLiquidTemplate(template, {
         url: `https://${url}/${urlNamespaces.devTools}`,
         defaultQueries: [{query: defaultQuery}],
-        apiVersion: LATEST_API_VERSION,
+        apiVersion: apiVersions.sort().reverse()[0]!,
         storeFqdn,
-        versions: Object.values(ApiVersion),
+        versions: [
+          ...apiVersions,
+          'unstable',
+        ],
         appName,
         appUrl,
         scopes,
@@ -95,19 +121,30 @@ export function setupGraphiQLServer({
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
 
-    const headers = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'X-Shopify-Access-Token': await token(),
-    }
-
-    const graphqlUrl = `https://${storeFqdn}/admin/api/${req.query.api_version ?? LATEST_API_VERSION}/graphql.json`
+    const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
     try {
-      const result = await fetch(graphqlUrl, {
-        method: req.method,
-        headers,
-        body: JSON.stringify(req.body),
-      })
+      const reqBody = JSON.stringify(req.body)
+
+      const runRequest = async () => {
+        const headers = {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          'X-Shopify-Access-Token': await token(),
+        }
+
+        return fetch(graphqlUrl, {
+          method: req.method,
+          headers,
+          body: reqBody,
+        })
+      }
+
+      let result = await runRequest()
+      if (result.status === 401) {
+        outputDebug('Token expired, fetching new token', stdout)
+        await refreshToken()
+        result = await runRequest()
+      }
 
       res.setHeader('Content-Type', 'application/json')
       res.statusCode = result.status

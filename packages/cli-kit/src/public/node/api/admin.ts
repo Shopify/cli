@@ -16,7 +16,7 @@ import {ClientError, gql} from 'graphql-request'
  */
 export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
   const api = 'Admin'
-  const version = await fetchApiVersion(session)
+  const version = await fetchLatestSupportedApiVersion(session)
   const url = adminUrl(session.storeFqdn, version)
   return graphqlRequest({query, api, url, token: session.token, variables})
 }
@@ -27,7 +27,26 @@ export async function adminRequest<T>(query: string, session: AdminSession, vari
  * @param session - Shopify admin session including token and Store FQDN.
  * @returns - The latest supported API version.
  */
-async function fetchApiVersion(session: AdminSession): Promise<string> {
+async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<string> {
+  const apiVersions = await supportedApiVersions(session)
+  return apiVersions.reverse()[0]!
+}
+
+/**
+ * GraphQL query to retrieve all supported API version.
+ *
+ * @param session - Shopify admin session including token and Store FQDN.
+ * @returns - An array of supported API versions.
+ */
+export async function supportedApiVersions(session: AdminSession): Promise<string[]> {
+  const apiVersions = await fetchApiVersions(session)
+  return apiVersions
+    .filter((item) => item.supported)
+    .map((item) => item.handle)
+    .sort()
+}
+
+async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
   const url = adminUrl(session.storeFqdn, 'unstable')
   const query = apiVersionQuery()
   try {
@@ -41,10 +60,6 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
     })
 
     return data.publicApiVersions
-      .filter((item) => item.supported)
-      .map((item) => item.handle)
-      .sort()
-      .reverse()[0]!
   } catch (error) {
     if (error instanceof ClientError && error.response.status === 403) {
       const storeName = session.storeFqdn.replace('.myshopify.com', '')
@@ -67,13 +82,18 @@ async function fetchApiVersion(session: AdminSession): Promise<string> {
  * @param version - API version.
  * @returns - Admin API URL.
  */
-function adminUrl(store: string, version: string | undefined): string {
+export function adminUrl(store: string, version: string | undefined): string {
   const realVersion = version || 'unstable'
   return `https://${store}/admin/api/${realVersion}/graphql.json`
 }
 
+interface ApiVersion {
+  handle: string
+  supported: boolean
+}
+
 interface ApiVersionResponse {
-  publicApiVersions: {handle: string; supported: boolean}[]
+  publicApiVersions: ApiVersion[]
 }
 
 /**
