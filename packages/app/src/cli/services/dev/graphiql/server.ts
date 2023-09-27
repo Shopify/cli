@@ -1,4 +1,4 @@
-import {defaultQuery, template} from './template.js'
+import {defaultQuery, template, unauthorizedTemplate} from './template.js'
 import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
@@ -93,10 +93,20 @@ export function setupGraphiQLServer({
     try {
       apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
     } catch (err) {
-      if (err instanceof TokenRefreshError) {
-        return res.send("Can't connect to the store. Be sure to install the app before using GraphiQL.")
+      // Retry once with a new token, in case the token expired or was revoked
+      try {
+        await refreshToken()
+        apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
+      } catch (err) {
+        if (err instanceof TokenRefreshError) {
+          return res.send(
+            await renderLiquidTemplate(unauthorizedTemplate, {
+              previewUrl: appUrl,
+            }),
+          )
+        }
+        throw err
       }
-      throw err
     }
     res.send(
       await renderLiquidTemplate(template, {

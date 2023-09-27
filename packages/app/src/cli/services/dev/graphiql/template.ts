@@ -206,3 +206,22 @@ export const template = `
   </body>
 </html>
 `
+
+export const unauthorizedTemplate = `
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>GraphiQL Explorer - App Not Installed</title>
+    <meta http-equiv="refresh" content="5">
+  </head>
+  <body>
+    <h1>App Not Installed</h1>
+    <p>
+      The GraphiQL Explorer is only available for apps that have been installed on the store.
+    </p>
+    <p>
+      <a href="{{ previewUrl }}" target="_blank">Install the app</a> and try again.
+    </p>
+  </body>
+</html>
+`
