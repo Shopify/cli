@@ -1,5 +1,12 @@
 # @shopify/plugin-cloudflare
 
+## 3.49.4
+
+### Patch Changes
+
+- 54b661460: Support new cloudfare error message and add a default error message for unknown returned errors
+  - @shopify/cli-kit@3.49.4
+
 ## 3.49.3
 
 ### Patch Changes
