@@ -168,6 +168,7 @@ function findError(data: Buffer): string | undefined {
     /failed to provision routing/,
     /ERR Couldn't start tunnel/,
     /ERR Failed to serve quic connection/,
+    /ERR Failed to create new quic connection error/,
   ]
   const match = knownErrors.some((error) => error.test(data.toString()))
   return match ? data.toString() : undefined
