@@ -1,12 +1,12 @@
 import {themeFlags, themeDevPreviewFlag} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {formatOffenses} from '../../services/check.js'
+import {formatOffenses, sortOffenses, formatSummary} from '../../services/check.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {themeCheckRun} from '@shopify/theme-check-node'
+import {themeCheckRun, ThemeCheckRun} from '@shopify/theme-check-node'
 import {Severity} from '@shopify/theme-check-common'
-import {renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderError, renderWarning, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -21,6 +21,7 @@ export default class Check extends ThemeCommand {
       description: 'Automatically fix offenses',
       env: 'SHOPIFY_FLAG_AUTO_CORRECT',
     }),
+    // don't need anymore
     category: Flags.string({
       char: 'c',
       required: false,
@@ -28,6 +29,7 @@ export default class Check extends ThemeCommand {
 Runs checks matching all categories when specified more than once`,
       env: 'SHOPIFY_FLAG_CATEGORY',
     }),
+    // yes pls
     config: Flags.string({
       char: 'C',
       required: false,
@@ -35,6 +37,7 @@ Runs checks matching all categories when specified more than once`,
 Use :theme_app_extension to use default checks for theme app extensions`,
       env: 'SHOPIFY_FLAG_CONFIG',
     }),
+    // don't need anymore
     'exclude-category': Flags.string({
       char: 'x',
       required: false,
@@ -42,27 +45,36 @@ Use :theme_app_extension to use default checks for theme app extensions`,
 Excludes checks matching any category when specified more than once`,
       env: 'SHOPIFY_FLAG_EXCLUDE_CATEGORY',
     }),
+    // this we need
     'fail-level': Flags.string({
       required: false,
       description: 'Minimum severity for exit with error code',
       env: 'SHOPIFY_FLAG_FAIL_LEVEL',
       options: ['error', 'suggestion', 'style'],
     }),
+    // theme-docs-updater thingy
     'update-docs': Flags.boolean({
       required: false,
       description: 'Update Theme Check docs (objects, filters, and tags)',
       env: 'SHOPIFY_FLAG_UPDATE_DOCS',
     }),
+
+    // new and only lives here, copy recommended or extends: recommended
     init: Flags.boolean({
       required: false,
       description: 'Generate a .theme-check.yml file',
       env: 'SHOPIFY_FLAG_INIT',
     }),
+
+    // read the config and list all the enabled ones... unforutnate but logic for loadConfig is in theme-language-server-node right now..... I think?
+    // config is { settings: { checkName: {...} }, checks: CheckDefinition[], root, ignore: string[] }
     list: Flags.boolean({
       required: false,
       description: 'List enabled checks',
       env: 'SHOPIFY_FLAG_LIST',
     }),
+
+    // json or human readable, yes pls
     output: Flags.string({
       char: 'o',
       required: false,
@@ -71,6 +83,7 @@ Excludes checks matching any category when specified more than once`,
       options: ['text', 'json'],
       default: 'text',
     }),
+    // similar to list but just prints the config as YAML(?)
     print: Flags.boolean({
       required: false,
       description: 'Output active config to STDOUT',
@@ -103,32 +116,47 @@ Excludes checks matching any category when specified more than once`,
     const {flags} = await this.parse(Check)
 
     if (flags['dev-preview']) {
-      const {offenses} = await themeCheckRun(flags.path)
+      let themeCheckResults = {} as ThemeCheckRun
 
-      const errors = offenses.filter((offense) => offense.severity === Severity.ERROR)
-      const infos = offenses.filter((offense) => offense.severity === Severity.INFO)
-      const warnings = offenses.filter((offense) => offense.severity === Severity.WARNING)
+      const themeCheckTask: Task = {
+        title: `Performing theme check. Please wait...\nEvaluating ${flags.path}`,
+        task: async () => {
+          themeCheckResults = await themeCheckRun(flags.path)
+        },
+      }
 
-      // console.log(JSON.stringify(offenses, null, 2))
+      await renderTasks([themeCheckTask])
 
-      if (errors.length > 0) {
-        renderError({
-          headline: `Theme Check found ${errors.length} errors.`,
-          customSections: formatOffenses(errors),
+      const {offenses, theme} = themeCheckResults
+
+      // Bucket offenses by absolute path
+      const offensesByFile = sortOffenses(offenses)
+
+      console.log(JSON.stringify(offensesByFile, null, 2))
+      console.log('flags', flags)
+
+      if (Object.keys(offensesByFile).length) {
+        const sortedFiles = Object.keys(offensesByFile).sort()
+
+        sortedFiles.forEach((filePath) => {
+          const hasErrorOffenses = offensesByFile[filePath]!.some((offense) => offense.severity === Severity.ERROR)
+          const render = hasErrorOffenses ? renderError : renderWarning
+
+          // Format the file path to be relative to the theme root.
+          // Remove the leading slash agnostic of windows or unix.
+          const headlineFilePath = filePath.replace(flags.path, '').slice(1)
+
+          render({
+            headline: headlineFilePath,
+            body: formatOffenses(offensesByFile[filePath]!),
+          })
         })
       }
-      if (warnings.length > 0) {
-        renderWarning({
-          headline: `Theme Check found ${warnings.length} warnings.`,
-          customSections: formatOffenses(warnings),
-        })
-      }
-      if (infos.length > 0) {
-        renderInfo({
-          headline: `Theme Check found ${infos.length} info issues.`,
-          customSections: formatOffenses(infos),
-        })
-      }
+
+      renderInfo({
+        headline: 'Theme Check Summary.',
+        body: formatSummary(offenses, theme),
+      })
 
       return
     }
