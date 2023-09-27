@@ -81,7 +81,15 @@ class TunnelClientInstance implements TunnelClient {
       if (!resolved) {
         resolved = true
         const lastErrors = errors.slice(-5).join('\n')
-        this.currentStatus = {status: 'error', message: lastErrors}
+        if (lastErrors === '') {
+          this.currentStatus = {
+            status: 'error',
+            message: 'Could not start Cloudflare tunnel, unknown error.',
+            tryMessage: whatToTry(),
+          }
+        } else {
+          this.currentStatus = {status: 'error', message: lastErrors}
+        }
         this.abortController?.abort()
       }
     }, TUNNEL_TIMEOUT * 1000)
@@ -168,6 +176,7 @@ function findError(data: Buffer): string | undefined {
     /failed to provision routing/,
     /ERR Couldn't start tunnel/,
     /ERR Failed to serve quic connection/,
+    /ERR Failed to create new quic connection error/,
   ]
   const match = knownErrors.some((error) => error.test(data.toString()))
   return match ? data.toString() : undefined
