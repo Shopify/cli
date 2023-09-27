@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.49.4
+
+### Patch Changes
+
+- fbedd1277: exclude src/\*.graphql from renamed files when generating functions
+- c8c781097: Read SHOPIFY_API_KEY env var for dev/deploy instead of warning because API key wasn't passed
+- Updated dependencies [54b661460]
+  - @shopify/plugin-cloudflare@3.49.4
+  - @shopify/cli-kit@3.49.4
+
 ## 3.49.3
 
 ### Patch Changes
