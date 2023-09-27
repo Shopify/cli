@@ -240,14 +240,14 @@ world ${JAVY_WORLD} {
 
   get entrypointContents() {
     const prelude = `
-import run from "@shopify/shopify_function/run"`
+import __runFunction from "@shopify/shopify_function/run"`
 
     const exports = this.exports.map((name) => {
       const identifier = camelize(name)
       const alias = camelize(`run-${name}`)
       return `
 import { ${identifier} as ${alias} } from "user-function"
-export function ${identifier}() { return run(${alias}) }`
+export function ${identifier}() { return __runFunction(${alias}) }`
     })
 
     return `${prelude}\n${exports.join('\n')}`
