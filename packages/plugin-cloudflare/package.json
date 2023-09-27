@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "vite": "^4.4.9",
-    "vitest": "^0.34.3"
+    "vitest": "^0.34.5"
   },
   "engines": {
     "node": ">=14.17.0"

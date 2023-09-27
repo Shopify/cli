@@ -53,9 +53,9 @@
     "@shopify/cli-kit": "3.49.1"
   },
   "devDependencies": {
-    "@types/node": "14.18.56",
+    "@types/node": "14.18.63",
     "vite": "^4.4.9",
-    "vitest": "^0.34.3"
+    "vitest": "^0.34.5"
   },
   "engines": {
     "node": ">=14.17.0"
