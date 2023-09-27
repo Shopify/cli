@@ -81,7 +81,15 @@ class TunnelClientInstance implements TunnelClient {
       if (!resolved) {
         resolved = true
         const lastErrors = errors.slice(-5).join('\n')
-        this.currentStatus = {status: 'error', message: lastErrors}
+        if (lastErrors === '') {
+          this.currentStatus = {
+            status: 'error',
+            message: 'Could not start Cloudflare tunnel, unknown error.',
+            tryMessage: whatToTry(),
+          }
+        } else {
+          this.currentStatus = {status: 'error', message: lastErrors}
+        }
         this.abortController?.abort()
       }
     }, TUNNEL_TIMEOUT * 1000)
