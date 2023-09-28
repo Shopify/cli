@@ -8,10 +8,15 @@ export const MetafieldSchema = zod.object({
   key: zod.string(),
 })
 
+export const CollectBuyerConsentCapabilitySchema = zod.object({
+  sms_marketing: zod.boolean().optional(),
+})
+
 export const CapabilitiesSchema = zod.object({
   network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
+  collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
 })
 
 export const ExtensionsArraySchema = zod.object({

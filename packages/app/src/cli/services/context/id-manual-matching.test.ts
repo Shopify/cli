@@ -33,7 +33,14 @@ beforeAll(async () => {
       name: 'EXTENSION A',
       type: 'checkout_post_purchase',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -45,7 +52,14 @@ beforeAll(async () => {
       name: 'EXTENSION A 2',
       type: 'checkout_post_purchase',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -57,7 +71,14 @@ beforeAll(async () => {
       name: 'EXTENSION B',
       type: 'checkout_post_purchase',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
