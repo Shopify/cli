@@ -349,11 +349,11 @@ describe('ExportJavyBuilder', () => {
     const got = builder.entrypointContents
 
     // Then
-    expect(got).toContain('import run from "@shopify/shopify_function/run"')
+    expect(got).toContain('import __runFunction from "@shopify/shopify_function/run"')
     expect(got).toContain('import { fooBar as runFooBar } from "user-function"')
-    expect(got).toContain('export function fooBar() { return run(runFooBar) }')
+    expect(got).toContain('export function fooBar() { return __runFunction(runFooBar) }')
     expect(got).toContain('import { fooBaz as runFooBaz } from "user-function"')
-    expect(got).toContain('export function fooBaz() { return run(runFooBaz) }')
+    expect(got).toContain('export function fooBaz() { return __runFunction(runFooBaz) }')
   })
 })
 
