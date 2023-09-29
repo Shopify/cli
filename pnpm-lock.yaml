@@ -8283,7 +8283,7 @@ packages:
     resolution: {integrity: sha512-q7SeFAEFMyKxTblyVI+CsxHzfiMMP9JUDG0cRmOKEAmJiYrtrDW1YYTv129RXqfn7fMKcVc4h/LbAJvqvZIuEQ==}
     engines: {node: '>=14.16'}
     peerDependencies:
-      '@types/react': '>=18.0.0'
+      '@types/react': 17.0.2
       react: '>=18.0.0'
       react-devtools-core: ^4.19.1
     peerDependenciesMeta:
@@ -12862,7 +12862,7 @@ packages:
   /vite-tsconfig-paths@3.6.0(vite@4.4.8):
     resolution: {integrity: sha512-UfsPYonxLqPD633X8cWcPFVuYzx/CMNHAjZTasYwX69sXpa4gNmQkR0XCjj82h7zhLGdTWagMjC1qfb9S+zv0A==}
     peerDependencies:
-      vite: '>2.0.0-0'
+      vite: 4.4.8
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       globrex: 0.1.2
@@ -13526,7 +13526,6 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
-    version: 3.46.0
     peerDependencies:
       eslint: ^8.46.0
     dependencies:

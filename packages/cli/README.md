@@ -635,7 +635,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin
+  $ shopify plugins:install myplugin 
 
   $ shopify plugins:install https://github.com/someuser/someplugin
 
@@ -698,7 +698,7 @@ ALIASES
   $ shopify plugins add
 
 EXAMPLES
-  $ shopify plugins:install myplugin
+  $ shopify plugins:install myplugin 
 
   $ shopify plugins:install https://github.com/someuser/someplugin
 
