@@ -34,7 +34,6 @@ export const themeFlags = {
 
 export const themeDevPreviewFlag = {
   'dev-preview': Flags.boolean({
-    char: 'd',
     required: false,
     description: `Use the dev preview version of theme check
 Applies the typescript implementation of theme check to the theme`,

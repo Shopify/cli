@@ -27,7 +27,6 @@
         "dev-preview": {
           "name": "dev-preview",
           "type": "boolean",
-          "char": "d",
           "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
           "required": false,
           "allowNo": false
@@ -579,7 +578,6 @@
         "dev-preview": {
           "name": "dev-preview",
           "type": "boolean",
-          "char": "d",
           "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
           "required": false,
           "allowNo": false
