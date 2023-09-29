@@ -24,6 +24,13 @@
           "hidden": false,
           "allowNo": false
         },
+        "dev-preview": {
+          "name": "dev-preview",
+          "type": "boolean",
+          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
+          "required": false,
+          "allowNo": false
+        },
         "path": {
           "name": "path",
           "type": "option",
@@ -566,6 +573,13 @@
           "type": "boolean",
           "description": "Increase the verbosity of the logs.",
           "hidden": false,
+          "allowNo": false
+        },
+        "dev-preview": {
+          "name": "dev-preview",
+          "type": "boolean",
+          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
+          "required": false,
           "allowNo": false
         }
       },

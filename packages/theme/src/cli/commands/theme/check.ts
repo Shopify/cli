@@ -1,4 +1,4 @@
-import {themeFlags} from '../../flags.js'
+import {themeFlags, themeDevPreviewFlag} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
@@ -9,6 +9,7 @@ export default class Check extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...themeDevPreviewFlag,
     path: themeFlags.path,
     'auto-correct': Flags.boolean({
       char: 'a',

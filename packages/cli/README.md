@@ -893,8 +893,9 @@ Validate the theme.
 
 ```
 USAGE
-  $ shopify theme check [--no-color] [--verbose] [--path <value>] [-a] [-c <value>] [-C <value>] [-x <value>]
-    [--fail-level error|suggestion|style] [--update-docs] [--init] [--list] [-o text|json] [--print] [-v] [-e <value>]
+  $ shopify theme check [--no-color] [--verbose] [--dev-preview] [--path <value>] [-a] [-c <value>] [-C <value>]
+    [-x <value>] [--fail-level error|suggestion|style] [--update-docs] [--init] [--list] [-o text|json] [--print] [-v]
+    [-e <value>]
 
 FLAGS
   -C, --config=<value>            Use the config provided, overriding .theme-check.yml if present
@@ -908,6 +909,8 @@ FLAGS
   -v, --version                   Print Theme Check version
   -x, --exclude-category=<value>  Exclude this category of checks
                                   Excludes checks matching any category when specified more than once
+  --dev-preview                   Use the dev preview version of theme check
+                                  Applies the typescript implementation of theme check to the theme
   --fail-level=<option>           Minimum severity for exit with error code
                                   <options: error|suggestion|style>
   --init                          Generate a .theme-check.yml file
@@ -1097,11 +1100,13 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--no-color] [--verbose]
+  $ shopify theme language-server [--no-color] [--verbose] [--dev-preview]
 
 FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  --dev-preview  Use the dev preview version of theme check
+                 Applies the typescript implementation of theme check to the theme
+  --no-color     Disable color output.
+  --verbose      Increase the verbosity of the logs.
 
 DESCRIPTION
   Start a Language Server Protocol server.
