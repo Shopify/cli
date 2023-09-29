@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.49.5
+
+### Patch Changes
+
+- ead388a9a: - New extension capability `collect_buyer_consent` with nested capability `sms_marketing`
+- f18f40256: Fix duplicated extensions in dev
+- 301a7f8dd: Function extensions are now able to provide a `locales` directory, and translate name and description
+  - @shopify/cli-kit@3.49.5
+  - @shopify/plugin-cloudflare@3.49.5
+
 ## 3.49.4
 
 ### Patch Changes
