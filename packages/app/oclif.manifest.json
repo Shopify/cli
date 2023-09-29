@@ -242,6 +242,12 @@
           "hidden": false,
           "multiple": false
         },
+        "skip-store-validation": {
+          "name": "skip-store-validation",
+          "type": "boolean",
+          "description": "If providing a store URL, skip any checks used to validate if the store is suitable for testing.",
+          "allowNo": false
+        },
         "reset": {
           "name": "reset",
           "type": "boolean",

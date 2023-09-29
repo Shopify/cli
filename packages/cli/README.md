@@ -180,9 +180,9 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [-s <value>]
-    [--reset | ] [--skip-dependencies-installation] [--no-update] [--subscription-product-url <value>]
-    [--checkout-cart-url <value>] [--tunnel-url <value> |  | ] [-t <value>] [--theme-app-extension-port <value>]
-    [--notify <value>]
+    [--skip-store-validation] [--reset | ] [--skip-dependencies-installation] [--no-update] [--subscription-product-url
+    <value>] [--checkout-cart-url <value>] [--tunnel-url <value> |  | ] [-t <value>] [--theme-app-extension-port
+    <value>] [--notify <value>]
 
 FLAGS
   -c, --config=<value>                The name of the app configuration.
@@ -198,6 +198,8 @@ FLAGS
   --path=<value>                      [default: .] The path to your app directory.
   --reset                             Reset all your settings.
   --skip-dependencies-installation    Skips the installation of dependencies. Deprecated, use workspaces instead.
+  --skip-store-validation             If providing a store URL, skip any checks used to validate if the store is
+                                      suitable for testing.
   --subscription-product-url=<value>  Resource URL for subscription UI extension. Format: "/products/{productId}"
   --theme-app-extension-port=<value>  Local port of the theme app extension development server.
   --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
