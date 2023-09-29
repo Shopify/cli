@@ -32,6 +32,11 @@ export default class Dev extends Command {
       env: 'SHOPIFY_FLAG_STORE',
       parse: async (input) => normalizeStoreFqdn(input),
     }),
+    'skip-store-validation': Flags.boolean({
+      env: 'SHOPIFY_FLAG_STORE_SKIP_VALIDATION',
+      default: false,
+      description: 'If providing a store URL, skip any checks used to validate if the store is suitable for testing.',
+    }),
     reset: Flags.boolean({
       hidden: false,
       description: 'Reset all your settings.',
@@ -123,6 +128,7 @@ export default class Dev extends Command {
       configName: flags.config,
       apiKey,
       storeFqdn: flags.store,
+      skipStoreValidation: flags['skip-store-validation'],
       reset: flags.reset,
       update: !flags['no-update'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],

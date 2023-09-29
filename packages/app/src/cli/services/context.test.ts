@@ -796,6 +796,61 @@ dev_store_url = "domain1"
       expect(got.configName).toEqual('shopify.app.toml')
     })
   })
+
+  test('accepts a store URL as an option, validates it', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configuration: {
+          path: filePath,
+          client_id: APP2.apiKey,
+          name: APP2.apiKey,
+          application_url: APP2.applicationUrl,
+          webhooks: {api_version: '2023-04'},
+          embedded: true,
+        },
+      })
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
+      vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+
+      // When
+      const got = await ensureDevContext({...INPUT, storeFqdn: STORE1.shopDomain}, 'token')
+
+      // Then
+      expect(got.storeFqdn).toEqual(STORE1.shopDomain)
+      expect(fetchStoreByDomain).toHaveBeenLastCalledWith(ORG1.id, 'token', STORE1.shopDomain)
+    })
+  })
+
+  test('accepts a store URL as an option, can ignore validation', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configuration: {
+          path: filePath,
+          client_id: APP2.apiKey,
+          name: APP2.apiKey,
+          application_url: APP2.applicationUrl,
+          webhooks: {api_version: '2023-04'},
+          embedded: true,
+        },
+      })
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
+
+      // When
+      const got = await ensureDevContext({...INPUT, storeFqdn: STORE1.shopDomain, skipStoreValidation: true}, 'token')
+
+      // Then
+      expect(got.storeFqdn).toEqual(STORE1.shopDomain)
+      expect(fetchStoreByDomain).not.toHaveBeenCalled()
+    })
+  })
 })
 
 describe('ensureDeployContext', () => {

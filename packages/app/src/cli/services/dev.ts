@@ -43,6 +43,7 @@ export interface DevOptions {
   configName?: string
   apiKey?: string
   storeFqdn?: string
+  skipStoreValidation?: boolean
   reset: boolean
   update: boolean
   commandConfig: Config

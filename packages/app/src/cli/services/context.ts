@@ -55,14 +55,18 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   }
 }
 
-export interface DevContextOptions {
+export type DevContextOptions = {
   directory: string
   apiKey?: string
   configName?: string
-  storeFqdn?: string
   reset: boolean
   commandConfig: Config
-}
+} & (
+  | {
+      storeFqdn?: undefined
+    }
+  | {storeFqdn: string; skipStoreValidation?: boolean}
+)
 
 interface DevContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
@@ -228,7 +232,11 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
   }
 }
 
-function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
+function buildOutput(
+  app: OrganizationApp,
+  store: Pick<OrganizationStore, 'shopDomain'>,
+  cachedInfo?: CachedAppInfo,
+): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -533,7 +541,7 @@ async function fetchDevDataFromOptions(
   options: DevContextOptions,
   orgId: string,
   token: string,
-): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
+): Promise<{app?: OrganizationApp; store?: OrganizationStore | {shopDomain: string}}> {
   const [selectedApp, orgWithStore] = await Promise.all([
     (async () => {
       let selectedApp: OrganizationApp | undefined
@@ -548,6 +556,11 @@ async function fetchDevDataFromOptions(
     })(),
     (async () => {
       if (options.storeFqdn) {
+        // A user can choose to ignore the validation steps, in which case we won't load a partner organisation
+        if (options.skipStoreValidation) {
+          return {store: {shopDomain: options.storeFqdn}, organization: undefined}
+        }
+
         const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
         if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
         if (!orgWithStore.store) {
@@ -562,11 +575,13 @@ async function fetchDevDataFromOptions(
       }
     })(),
   ])
-  let selectedStore: OrganizationStore | undefined
+  let selectedStore: OrganizationStore | undefined | {shopDomain: string}
 
-  if (options.storeFqdn) {
-    selectedStore = orgWithStore!.store
-    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, token)
+  if (orgWithStore?.organization !== undefined) {
+    selectedStore = orgWithStore.store
+    await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization.id, token)
+  } else if (orgWithStore) {
+    selectedStore = orgWithStore.store
   }
 
   return {app: selectedApp, store: selectedStore}
@@ -656,7 +671,7 @@ async function selectOrg(token: string): Promise<string> {
 interface ReusedValuesOptions {
   organization: Organization
   selectedApp: OrganizationApp
-  selectedStore: OrganizationStore
+  selectedStore: Pick<OrganizationStore, 'shopDomain'>
   cachedInfo?: CachedAppInfo
 }
 
