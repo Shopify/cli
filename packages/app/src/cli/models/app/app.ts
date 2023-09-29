@@ -194,6 +194,7 @@ export interface AppInterface extends AppConfigurationInterface {
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
+  updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
 }
 
 export class App implements AppInterface {
@@ -249,6 +250,12 @@ export class App implements AppInterface {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
+  }
+
+  updateExtensionUUIDS(uuids: {[key: string]: string}) {
+    this.allExtensions.forEach((extension) => {
+      extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
+    })
   }
 }
 

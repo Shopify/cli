@@ -117,7 +117,7 @@ export async function setupDraftableExtensionsProcess({
   const deploymentMode = unifiedDeployment ? 'unified' : 'legacy'
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
 
-  const {extensionIds: remoteExtensionIds} = await ensureDeploymentIdsPresence({
+  const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({
     app: localApp,
     partnersApp: remoteApp,
     appId: apiKey,
@@ -127,6 +127,11 @@ export async function setupDraftableExtensionsProcess({
     token,
     envIdentifiers: prodEnvIdentifiers,
   })
+
+  // Update the local app with the remote extension UUIDs.
+  // Extensions are initialized with a random dev UUID when running the dev command
+  // which is sent over WS messages for live reload in dev preview of UI Extensions.
+  localApp.updateExtensionUUIDS(extensionsUuids)
 
   return {
     type: 'draftable-extension',
