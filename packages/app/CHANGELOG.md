@@ -1,19 +1,14 @@
 # @shopify/app
 
-## 3.49.5
-
-### Patch Changes
-
-- ead388a9a: - New extension capability `collect_buyer_consent` with nested capability `sms_marketing`
-- f18f40256: Fix duplicated extensions in dev
-- 301a7f8dd: Function extensions are now able to provide a `locales` directory, and translate name and description
-  - @shopify/cli-kit@3.49.5
-  - @shopify/plugin-cloudflare@3.49.5
-
 ## 3.49.4
 
 ### Patch Changes
 
+- f18f40256: Fix duplicated extensions in dev
+- ead388a9a: - New extension capability `collect_buyer_consent` with nested capability `sms_marketing`
+- 301a7f8dd: Function extensions are now able to provide a `locales` directory, and translate name and description
+  - @shopify/cli-kit@3.49.4
+  - @shopify/plugin-cloudflare@3.49.4
 - fbedd1277: exclude src/\*.graphql from renamed files when generating functions
 - c8c781097: Read SHOPIFY_API_KEY env var for dev/deploy instead of warning because API key wasn't passed
 - Updated dependencies [54b661460]
