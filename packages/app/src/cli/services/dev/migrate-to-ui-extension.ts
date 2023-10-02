@@ -23,7 +23,7 @@ export function getUIExtensionsToMigrate(
     if (localSource.type === 'ui_extension') {
       const remoteSource = remoteSources.find((source) => {
         const matchesId = source.uuid === ids[localSource.localIdentifier]
-        const matchesTitle = slugify(source.title) === slugify(localSource.configuration.name)
+        const matchesTitle = slugify(source.title) === slugify(localSource.handle)
 
         return matchesId || matchesTitle
       })
