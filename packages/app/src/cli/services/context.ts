@@ -58,7 +58,6 @@ export const InvalidApiKeyErrorMessage = (apiKey: string) => {
 export interface DevContextOptions {
   directory: string
   apiKey?: string
-  configName?: string
   storeFqdn?: string
   reset: boolean
   commandConfig: Config
@@ -69,7 +68,6 @@ interface DevContextOutput {
   remoteAppUpdated: boolean
   storeFqdn: string
   updateURLs: boolean | undefined
-  configName?: string
 }
 
 /**
@@ -237,7 +235,6 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
     remoteAppUpdated: app.apiKey !== cachedInfo?.previousAppId,
     storeFqdn: store.shopDomain,
     updateURLs: cachedInfo?.updateURLs,
-    configName: cachedInfo?.configFile,
   }
 }
 

@@ -78,12 +78,15 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-    configName,
   } = await ensureDevContext(commandOptions, token)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
-  let localApp = await loadApp({directory: commandOptions.directory, specifications, configName})
+  let localApp = await loadApp({
+    directory: commandOptions.directory,
+    specifications,
+    configName: commandOptions.configName,
+  })
 
   if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
