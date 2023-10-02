@@ -20,7 +20,8 @@ export default class Check extends ThemeCommand {
       description: 'Automatically fix offenses',
       env: 'SHOPIFY_FLAG_AUTO_CORRECT',
     }),
-    // don't need anymore
+    // Typescript theme check no longer uses `--category`
+    // Remove this when we remove the ruby version
     category: Flags.string({
       char: 'c',
       required: false,
@@ -28,7 +29,6 @@ export default class Check extends ThemeCommand {
 Runs checks matching all categories when specified more than once`,
       env: 'SHOPIFY_FLAG_CATEGORY',
     }),
-    // yes pls
     config: Flags.string({
       char: 'C',
       required: false,
@@ -36,7 +36,8 @@ Runs checks matching all categories when specified more than once`,
 Use :theme_app_extension to use default checks for theme app extensions`,
       env: 'SHOPIFY_FLAG_CONFIG',
     }),
-    // don't need anymore
+    // Typescript theme check no longer uses `--exclude-categories`
+    // Remove this when we remove the ruby version
     'exclude-category': Flags.string({
       char: 'x',
       required: false,
@@ -44,7 +45,7 @@ Use :theme_app_extension to use default checks for theme app extensions`,
 Excludes checks matching any category when specified more than once`,
       env: 'SHOPIFY_FLAG_EXCLUDE_CATEGORY',
     }),
-    // this we need
+    // todo: this requires implementation for typescript theme check
     'fail-level': Flags.string({
       required: false,
       description: 'Minimum severity for exit with error code',
@@ -59,6 +60,7 @@ Excludes checks matching any category when specified more than once`,
     }),
 
     // new and only lives here, copy recommended or extends: recommended
+    // todo: this requires implementation for typescript theme check
     init: Flags.boolean({
       required: false,
       description: 'Generate a .theme-check.yml file',
@@ -67,13 +69,12 @@ Excludes checks matching any category when specified more than once`,
 
     // read the config and list all the enabled ones... unforutnate but logic for loadConfig is in theme-language-server-node right now..... I think?
     // config is { settings: { checkName: {...} }, checks: CheckDefinition[], root, ignore: string[] }
+    // todo: this requires implementation for typescript theme check
     list: Flags.boolean({
       required: false,
       description: 'List enabled checks',
       env: 'SHOPIFY_FLAG_LIST',
     }),
-
-    // json or human readable, yes pls
     output: Flags.string({
       char: 'o',
       required: false,
@@ -83,6 +84,7 @@ Excludes checks matching any category when specified more than once`,
       default: 'text',
     }),
     // similar to list but just prints the config as YAML(?)
+    // todo: this requires implementation for typescript theme check
     print: Flags.boolean({
       required: false,
       description: 'Output active config to STDOUT',
@@ -120,7 +122,7 @@ Excludes checks matching any category when specified more than once`,
       const themeCheckTask: Task = {
         title: `Performing theme check. Please wait...\nEvaluating ${flags.path}`,
         task: async () => {
-          themeCheckResults = await themeCheckRun(flags.path)
+          themeCheckResults = await themeCheckRun(flags.path, flags.config)
         },
       }
 
@@ -138,15 +140,15 @@ Excludes checks matching any category when specified more than once`,
           headline: 'Theme Check Summary.',
           body: formatSummary(offenses, theme),
         })
+        return
       }
 
       if (flags.output === 'json') {
         // JSON output should go to STDOUT without additional formatting
         // eslint-disable-next-line no-console
         console.log(JSON.stringify(formatOffensesJson(offensesByFile), null, 2))
+        return
       }
-
-      return
     }
 
     await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
