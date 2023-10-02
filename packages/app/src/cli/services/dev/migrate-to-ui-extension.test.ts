@@ -139,7 +139,7 @@ describe('getExtensionsToMigrate()', () => {
       // Given
       const localExtension = getLocalExtension({
         type: 'ui_extension',
-        configuration: {name: 'a-different-extension'},
+        handle: 'a-different-extension',
       })
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'does-not-match', uuid: '5678'})
 
