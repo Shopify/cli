@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.49.5
+
+### Patch Changes
+
+- db3c0a382: Fix bug in extension matching when using localized names
+  - @shopify/cli-kit@3.49.5
+  - @shopify/plugin-cloudflare@3.49.5
+
 ## 3.49.4
 
 ### Patch Changes
