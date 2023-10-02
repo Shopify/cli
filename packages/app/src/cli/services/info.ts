@@ -1,5 +1,6 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -15,7 +16,6 @@ import {
   stringifyMessage,
   getOutputUpdateCLIReminder,
 } from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -74,9 +74,9 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const token = await ensureAuthenticatedPartners()
+    const partnersSession = await fetchPartnersSession()
     const {cachedInfo} = await getAppContext({
-      token,
+      partnersSession,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
@@ -103,6 +103,7 @@ class AppInfo {
       ['Access scopes', getAppScopes(this.app.configuration)],
       ['Dev store', cachedInfo?.storeFqdn || NOT_CONFIGURED_TEXT],
       ['Update URLs', updateUrls],
+      ['Partners account', partnersSession.accountInfo.email],
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
   }

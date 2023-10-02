@@ -1,14 +1,13 @@
 import versionList from './versions-list.js'
 import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
 import {fetchOrgFromId} from './dev/fetch.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testApp} from '../models/app/app.test-data.js'
 import {Organization} from '../models/organization.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {Config} from '@oclif/core'
 
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('../models/app/identifiers.js')
 vi.mock('./context.js')
@@ -35,7 +34,7 @@ const ORG1: Organization = {
 describe('versions-list', () => {
   beforeEach(() => {
     vi.mocked(ensureVersionsListContext).mockResolvedValue({
-      token: 'token',
+      partnersSession: PARTNERS_SESSION,
       partnersApp: {
         id: 'app-id',
         apiKey: 'app-api-key',

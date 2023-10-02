@@ -5,12 +5,13 @@ import {requestTopics} from './request-topics.js'
 import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {findApiKey, findInEnv} from './find-app-info.js'
+import {fetchPartnersSession} from '../context/partner-account-info.js'
+import {PARTNERS_SESSION} from '../../models/app/app.test-data.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-const aToken = 'A_TOKEN'
+const aToken = 'token'
 const samplePayload = '{ "sampleField": "SampleValue" }'
 const sampleHeaders = '{ "header": "Header Value" }'
 const aTopic = 'A_TOPIC'
@@ -24,7 +25,7 @@ const anEventBridgeAddress = 'arn:aws:events:us-east-3::event-source/aws.partner
 
 vi.mock('@shopify/cli-kit')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../context/partner-account-info.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../prompts/webhook/options-prompt.js')
 vi.mock('./request-sample.js')
@@ -50,7 +51,7 @@ const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 
 describe('webhookTriggerService', () => {
   beforeEach(async () => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue(aToken)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
   })
 
   test('notifies about request errors', async () => {

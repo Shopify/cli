@@ -10,6 +10,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
+import {PartnersSession} from '../context/partner-account-info.js'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -27,7 +28,10 @@ import {AbortError} from '@shopify/cli-kit/node/error'
  * @param secret - secret flag
  * @returns a pair with client-secret, api-key (possibly empty)
  */
-export async function collectCredentials(token: string, secret: string | undefined): Promise<AppCredentials> {
+export async function collectCredentials(
+  partnersSession: PartnersSession,
+  secret: string | undefined,
+): Promise<AppCredentials> {
   if (isValueSet(secret)) {
     const credentials: AppCredentials = {clientSecret: secret as string}
     return credentials
@@ -51,14 +55,14 @@ export async function collectCredentials(token: string, secret: string | undefin
     return localCredentials
   }
 
-  const apiKey = await findApiKey(token)
+  const apiKey = await findApiKey(partnersSession)
   if (apiKey === undefined) {
     const manualSecret = await clientSecretPrompt()
     const credentials: AppCredentials = {clientSecret: manualSecret}
     return credentials
   }
 
-  const appCredentials = await requestAppInfo(token, apiKey)
+  const appCredentials = await requestAppInfo(partnersSession.token, apiKey)
   if (isValueSet(appCredentials.clientSecret)) {
     outputInfo('Reading client-secret from app settings in Partners')
   } else {
@@ -78,14 +82,14 @@ export async function collectCredentials(token: string, secret: string | undefin
  * @returns a api-key
  * @throws AbortError if none found
  */
-export async function collectApiKey(token: string): Promise<string> {
+export async function collectApiKey(partnersSession: PartnersSession): Promise<string> {
   const localCredentials = await findInEnv()
   if (isValueSet(localCredentials.apiKey)) {
     outputInfo('Using api-key from .env file')
     return localCredentials.apiKey as string
   }
 
-  const apiKey = await findApiKey(token)
+  const apiKey = await findApiKey(partnersSession)
   if (apiKey === undefined) {
     throw new AbortError(
       'No app configuration found in Partners or .env file',

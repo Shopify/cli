@@ -8,7 +8,7 @@ import {
   updateURLsPrompt,
 } from './dev.js'
 import {Organization, OrganizationStore} from '../models/organization.js'
-import {testOrganizationApp} from '../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -92,7 +92,7 @@ describe('selectApp', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
     // When
-    const got = await selectAppPrompt(apps, ORG1.id, 'token')
+    const got = await selectAppPrompt(apps, ORG1.id, PARTNERS_SESSION)
 
     // Then
     expect(got).toEqual(APP2.apiKey)
@@ -116,7 +116,7 @@ describe('selectApp', () => {
     const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: true}}
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
-    const got = await selectAppPrompt(apps, ORG1.id, 'token', {directory: '/'})
+    const got = await selectAppPrompt(apps, ORG1.id, PARTNERS_SESSION, {directory: '/'})
 
     expect(got).toEqual(APP2.apiKey)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({

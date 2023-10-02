@@ -1,16 +1,17 @@
 import {PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {DEFAULT_CONFIG, testApp} from '../../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, PARTNERS_SESSION, testApp} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
+import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {describe, vi, test, expect, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../context/partner-account-info.js')
 vi.mock('../../../prompts/config.js')
 vi.mock('../../context.js')
 vi.mock('../../dev/fetch.js')
@@ -25,6 +26,7 @@ describe('pushConfig', () => {
   beforeEach(() => {
     vi.mocked(confirmPushChanges).mockResolvedValue(true)
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
   })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {

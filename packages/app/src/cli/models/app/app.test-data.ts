@@ -497,3 +497,10 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   productSubscriptionUIExtension,
   webPixelUIExtension,
 ]
+
+export const PARTNERS_SESSION = {
+  token: 'token',
+  accountInfo: {
+    email: 'partner@shopify.com',
+  },
+}

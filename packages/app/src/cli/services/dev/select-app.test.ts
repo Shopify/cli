@@ -2,15 +2,20 @@ import {createApp, selectOrCreateApp} from './select-app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {testApp, testAppWithLegacyConfig, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {
+  PARTNERS_SESSION,
+  testApp,
+  testAppWithLegacyConfig,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
+import {fetchPartnersSession} from '../context/partner-account-info.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 vi.mock('../../prompts/dev')
 vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../context/partner-account-info.js')
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
@@ -51,7 +56,7 @@ const APP_LIST = {
 }
 
 beforeEach(() => {
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
 })
 
 describe('createApp', () => {
@@ -121,11 +126,11 @@ describe('selectOrCreateApp', () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce({app: APP1})
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, 'token')
+    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, PARTNERS_SESSION)
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, 'token', {directory: undefined})
+    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, PARTNERS_SESSION, {directory: undefined})
   })
 
   test('prompts user to create if chooses to create', async () => {
@@ -143,7 +148,7 @@ describe('selectOrCreateApp', () => {
     }
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, 'token')
+    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, PARTNERS_SESSION)
 
     // Then
     expect(got).toEqual(APP1)

@@ -12,7 +12,7 @@ import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
-import {testOrganizationApp} from '../../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -74,7 +74,7 @@ describe('fetchOrganizations', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
 
     // When
-    const got = await fetchOrganizations('token')
+    const got = await fetchOrganizations(PARTNERS_SESSION)
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
@@ -86,10 +86,10 @@ describe('fetchOrganizations', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = fetchOrganizations('token')
+    const got = fetchOrganizations(PARTNERS_SESSION)
 
     // Then
-    await expect(got).rejects.toThrow(new NoOrgError())
+    await expect(got).rejects.toThrow(new NoOrgError('partner@shopify.com'))
     expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 })
@@ -100,7 +100,7 @@ describe('fetchApp', async () => {
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await fetchOrgAndApps(ORG1.id, 'token')
+    const got = await fetchOrgAndApps(ORG1.id, PARTNERS_SESSION)
 
     // Then
     expect(got).toEqual({organization: ORG1, apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}}, stores: []})
@@ -112,10 +112,10 @@ describe('fetchApp', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = () => fetchOrgAndApps(ORG1.id, 'token')
+    const got = () => fetchOrgAndApps(ORG1.id, PARTNERS_SESSION)
 
     // Then
-    await expect(got).rejects.toThrowError(new NoOrgError())
+    await expect(got).rejects.toThrowError(new NoOrgError('partner@shopify.com'))
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
@@ -188,7 +188,7 @@ describe('NoOrgError', () => {
   test('renders correctly', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError('3')
+    const subject = new NoOrgError('partner@shopify.com', '3')
 
     // When
     renderFatalError(subject)
@@ -200,6 +200,9 @@ describe('NoOrgError', () => {
       │  No Organization found                                                       │
       │                                                                              │
       │  Next steps                                                                  │
+      │    • Your current active session is asscociated with the                     │
+      │      partner@shopify.com account. To start a new session with a different    │
+      │      account, run \`shopify auth logout\`                                      │
       │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Does your account include Manage app permissions?, please contact the   │
       │      owner of the organization to grant you access.                          │

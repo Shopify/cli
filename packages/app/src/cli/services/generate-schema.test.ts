@@ -1,12 +1,12 @@
 import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './context.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import * as identifiers from '../models/app/identifiers.js'
-import {testApp, testFunctionExtension, testOrganizationApp} from '../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testApp, testFunctionExtension, testOrganizationApp} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
 import {TargetSchemaDefinitionQuery} from '../api/graphql/functions/target_schema_definition.js'
 import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
@@ -14,10 +14,10 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import * as output from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/context/local')
 
 vi.mock('../../../models/app/loader.ts')
+vi.mock('./context/partner-account-info.js')
 
 vi.mock('../models/app/identifiers.js', async () => {
   const identifiers: any = await vi.importActual('../models/app/identifiers.js')
@@ -39,7 +39,7 @@ describe('generateSchemaService', () => {
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
 
   beforeEach(() => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 

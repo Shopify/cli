@@ -15,6 +15,7 @@ import {
   deliveryMethodPrompt,
   topicPrompt,
 } from '../../prompts/webhook/trigger.js'
+import {PARTNERS_SESSION} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -27,7 +28,7 @@ vi.mock('./request-api-versions.js')
 vi.mock('./request-topics.js')
 vi.mock('./find-app-info.js')
 
-const aToken = 'A_TOKEN'
+const aToken = 'token'
 const aSecret = 'A_SECRET'
 const anApiKey = 'AN_API_KEY'
 
@@ -155,7 +156,7 @@ describe('collectCredentials', () => {
     vi.mocked(requestAppInfo)
 
     // When
-    const credentials = await collectCredentials(aToken, aSecret)
+    const credentials = await collectCredentials(PARTNERS_SESSION, aSecret)
 
     // Then
     expect(credentials).toEqual({clientSecret: aSecret})
@@ -175,7 +176,7 @@ describe('collectCredentials', () => {
     vi.mocked(requestAppInfo)
 
     // When
-    const credentials = await collectCredentials(aToken, undefined)
+    const credentials = await collectCredentials(PARTNERS_SESSION, undefined)
 
     // Then
     expect(credentials).toEqual({clientSecret: aSecret})
@@ -194,7 +195,7 @@ describe('collectCredentials', () => {
     vi.mocked(requestAppInfo)
 
     // When
-    const secret = await collectCredentials(aToken, undefined)
+    const secret = await collectCredentials(PARTNERS_SESSION, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret, apiKey: anApiKey})
@@ -214,7 +215,7 @@ describe('collectCredentials', () => {
     vi.mocked(requestAppInfo)
 
     // When
-    const secret = await collectCredentials(aToken, undefined)
+    const secret = await collectCredentials(PARTNERS_SESSION, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret})
@@ -233,7 +234,7 @@ describe('collectCredentials', () => {
     vi.mocked(requestAppInfo).mockResolvedValue({clientSecret: aSecret, apiKey: anApiKey, clientId: 'Id'})
 
     // When
-    const secret = await collectCredentials(aToken, undefined)
+    const secret = await collectCredentials(PARTNERS_SESSION, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret, apiKey: anApiKey, clientId: 'Id'})
@@ -253,7 +254,7 @@ describe('collectCredentials', () => {
     vi.mocked(requestAppInfo).mockResolvedValue({})
 
     // When
-    const secret = await collectCredentials(aToken, undefined)
+    const secret = await collectCredentials(PARTNERS_SESSION, undefined)
 
     // Then
     expect(secret).toEqual({clientSecret: aSecret, apiKey: anApiKey})
@@ -271,7 +272,7 @@ describe('collectApiKey', () => {
     vi.mocked(findApiKey)
 
     // When
-    const apiKey = await collectApiKey(aToken)
+    const apiKey = await collectApiKey(PARTNERS_SESSION)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -286,7 +287,7 @@ describe('collectApiKey', () => {
     vi.mocked(findApiKey).mockResolvedValue(anApiKey)
 
     // When
-    const apiKey = await collectApiKey(aToken)
+    const apiKey = await collectApiKey(PARTNERS_SESSION)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -301,6 +302,6 @@ describe('collectApiKey', () => {
     vi.mocked(findApiKey).mockResolvedValue(undefined)
 
     // When Then
-    await expect(collectApiKey(aToken)).rejects.toThrow(AbortError)
+    await expect(collectApiKey(PARTNERS_SESSION)).rejects.toThrow(AbortError)
   })
 })

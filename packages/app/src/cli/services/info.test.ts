@@ -2,13 +2,13 @@ import {InfoOptions, info} from './info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -17,13 +17,17 @@ vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('./context/partner-account-info.js')
 
 const infoOptions: InfoOptions = {
   format: 'text',
   webEnv: false,
 }
+
+beforeEach(() => {
+  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+})
 
 describe('info', () => {
   test('returns update shopify cli reminder when last version is greater than current version', async () => {
@@ -85,6 +89,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
       expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
       expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
+      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -111,6 +116,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
       expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
       expect(unstyled(result)).toMatch(/Update URLs\s*Yes/)
+      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -127,6 +133,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
       expect(unstyled(result)).toMatch(/Client ID\s*Not yet configured/)
       expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
+      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -172,7 +179,6 @@ describe('info', () => {
         },
       })
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
       // When
       const result = await info(app, {...infoOptions, webEnv: true})
@@ -215,7 +221,6 @@ describe('info', () => {
         },
       })
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
       // When
       const result = await info(app, {...infoOptions, format: 'json', webEnv: true})
@@ -286,7 +291,6 @@ describe('info', () => {
         },
       })
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
       // When
       const result = await info(app, infoOptions)

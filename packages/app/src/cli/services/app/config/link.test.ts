@@ -1,17 +1,17 @@
 import link, {LinkOptions} from './link.js'
 import {saveCurrentConfig} from './use.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
+import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
 const LOCAL_APP = testApp()
@@ -28,7 +28,7 @@ vi.mock('../../../models/app/loader.js', async () => {
 })
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../context/partner-account-info.js')
 vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 
@@ -300,7 +300,7 @@ embedded = false
         apiKey: 'api-key',
       }
       vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+      vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
@@ -326,7 +326,7 @@ embedded = false
         apiKey: '1234-5678',
       }
       vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+      vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 

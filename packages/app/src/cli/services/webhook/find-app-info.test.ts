@@ -2,7 +2,7 @@ import {findInEnv, findApiKey, requestAppInfo} from './find-app-info.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, FetchResponse} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {testOrganizationApp} from '../../models/app/app.test-data.js'
+import {PARTNERS_SESSION, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -77,7 +77,7 @@ describe('findApiKey', () => {
     vi.mocked(fetchOrgAndApps).mockResolvedValue(buildFetchResponse([]))
 
     // When
-    const apiKey = await findApiKey(aToken)
+    const apiKey = await findApiKey(PARTNERS_SESSION)
 
     // Then
     expect(apiKey).toEqual(undefined)
@@ -89,7 +89,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anAppName}`)
 
     // When
-    const apiKey = await findApiKey(aToken)
+    const apiKey = await findApiKey(PARTNERS_SESSION)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -101,7 +101,7 @@ describe('findApiKey', () => {
     vi.mocked(basename).mockResolvedValue(`folder/${anotherAppName}`)
 
     // When
-    const apiKey = await findApiKey(aToken)
+    const apiKey = await findApiKey(PARTNERS_SESSION)
 
     // Then
     expect(apiKey).toEqual(anApiKey)
@@ -114,7 +114,7 @@ describe('findApiKey', () => {
     vi.mocked(selectAppPrompt).mockResolvedValue(anotherApp.apiKey)
 
     // When
-    const apiKey = await findApiKey(aToken)
+    const apiKey = await findApiKey(PARTNERS_SESSION)
 
     // Then
     expect(selectAppPrompt).toHaveBeenCalledOnce()

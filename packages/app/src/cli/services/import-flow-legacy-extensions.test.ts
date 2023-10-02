@@ -1,20 +1,20 @@
 import {importFlowExtensions} from './import-flow-legacy-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
+import {PARTNERS_SESSION, testApp} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
 vi.mock('./flow/fetch-flow-dashboard-extensions.js')
+vi.mock('./context/partner-account-info.js')
 
 const organizationApp: OrganizationApp = {
   id: 'id',
@@ -51,7 +51,7 @@ describe('import-flow-legacy-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     const commandConfig = new Config({root: '/tmp'})
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
@@ -79,7 +79,7 @@ describe('import-flow-legacy-extensions', () => {
   test('selecting All imports all extensions', async () => {
     // Given
     const commandConfig = new Config({root: '/tmp'})
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
@@ -107,7 +107,7 @@ describe('import-flow-legacy-extensions', () => {
   test('Show message if there are not extensions to migrate', async () => {
     // Given
     const commandConfig = new Config({root: '/tmp'})
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([])
 

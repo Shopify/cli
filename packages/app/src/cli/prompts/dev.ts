@@ -2,6 +2,7 @@ import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models
 import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandInfo} from '../services/local-storage.js'
+import {PartnersSession} from '../services/context/partner-account-info.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -20,7 +21,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
 export async function selectAppPrompt(
   apps: OrganizationAppsResponse,
   orgId: string,
-  token: string,
+  partnersSession: PartnersSession,
   options?: {
     directory?: string
   },
@@ -44,7 +45,7 @@ export async function selectAppPrompt(
     choices: appList,
     hasMorePages: apps.pageInfo.hasNextPage,
     search: async (term) => {
-      const result = await fetchOrgAndApps(orgId, token, term)
+      const result = await fetchOrgAndApps(orgId, partnersSession, term)
 
       return {
         data: result.apps.nodes.map(toAnswer),

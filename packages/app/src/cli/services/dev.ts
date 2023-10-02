@@ -19,6 +19,7 @@ import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -27,7 +28,6 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
@@ -37,6 +37,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   directory: string
@@ -95,13 +96,14 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const token = await ensureAuthenticatedPartners()
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
   const {
     storeFqdn,
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-  } = await ensureDevContext(commandOptions, token)
+  } = await ensureDevContext(commandOptions, partnersSession)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
