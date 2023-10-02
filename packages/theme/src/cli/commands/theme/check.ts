@@ -1,12 +1,11 @@
-import {themeFlags, themeDevPreviewFlag} from '../../flags.js'
+import {themeDevPreviewFlag, themeFlags} from '../../flags.js'
+import {formatOffensesJson, formatSummary, renderOffensesText, sortOffenses} from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {formatOffenses, sortOffenses, formatSummary} from '../../services/check.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {themeCheckRun, ThemeCheckRun} from '@shopify/theme-check-node'
-import {Severity} from '@shopify/theme-check-common'
-import {renderInfo, renderError, renderWarning, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {renderInfo, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
+import {ThemeCheckRun, themeCheckRun} from '@shopify/theme-check-node'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -132,31 +131,20 @@ Excludes checks matching any category when specified more than once`,
       // Bucket offenses by absolute path
       const offensesByFile = sortOffenses(offenses)
 
-      console.log(JSON.stringify(offensesByFile, null, 2))
-      console.log('flags', flags)
+      if (flags.output === 'text') {
+        renderOffensesText(offensesByFile, flags.path)
 
-      if (Object.keys(offensesByFile).length) {
-        const sortedFiles = Object.keys(offensesByFile).sort()
-
-        sortedFiles.forEach((filePath) => {
-          const hasErrorOffenses = offensesByFile[filePath]!.some((offense) => offense.severity === Severity.ERROR)
-          const render = hasErrorOffenses ? renderError : renderWarning
-
-          // Format the file path to be relative to the theme root.
-          // Remove the leading slash agnostic of windows or unix.
-          const headlineFilePath = filePath.replace(flags.path, '').slice(1)
-
-          render({
-            headline: headlineFilePath,
-            body: formatOffenses(offensesByFile[filePath]!),
-          })
+        renderInfo({
+          headline: 'Theme Check Summary.',
+          body: formatSummary(offenses, theme),
         })
       }
 
-      renderInfo({
-        headline: 'Theme Check Summary.',
-        body: formatSummary(offenses, theme),
-      })
+      if (flags.output === 'json') {
+        // JSON output should go to STDOUT without additional formatting
+        // eslint-disable-next-line no-console
+        console.log(JSON.stringify(formatOffensesJson(offensesByFile), null, 2))
+      }
 
       return
     }

@@ -1,70 +1,36 @@
-import {Offense, Theme, Severity} from '@shopify/theme-check-common'
+import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {type Offense, type Theme, Severity} from '@shopify/theme-check-common'
 import fs from 'fs'
 
-interface CommandToken {
-  command: string
-}
-
-interface LinkToken {
-  link: {
-    label?: string
-    url: string
-  }
-}
-
-interface CharToken {
-  char: string
-}
-
-interface UserInputToken {
-  userInput: string
-}
-
-interface SubduedToken {
-  subdued: string
-}
-
-interface FilePathToken {
-  filePath: string
-}
-
-type InlineToken = Exclude<Token, ListToken>
-interface ListToken {
-  list: {
-    title?: TokenItem<InlineToken>
-    items: TokenItem<InlineToken>[]
-    ordered?: boolean
-  }
-}
-
-interface BoldToken {
-  bold: string
-}
-
-type Token =
-  | string
-  | CommandToken
-  | LinkToken
-  | CharToken
-  | UserInputToken
-  | SubduedToken
-  | FilePathToken
-  | ListToken
-  | BoldToken
-
-type TokenItem<T extends Token = Token> = T | T[]
-
-interface CustomSection {
-  title?: string
-  body: TokenItem
-}
-
-// TODO: CONSIDER EXPOSING THOSE TYPES PUBLICALLY FROM UI-KIT
-// TODO: might not need to export once moved code into here
-interface OffensesByCheck {
+interface OffenseMap {
   [check: string]: Offense[]
 }
 
+interface TransformedOffense {
+  check: string
+  severity: number
+  start_row: number
+  start_column: number
+  end_row: number
+  end_column: number
+  message: string
+}
+
+interface TransformedOffenseMap {
+  path: string
+  offenses: TransformedOffense[]
+  errorCount: number
+  suggestionCount: number
+  styleCount: number
+}
+
+/**
+ * Returns a code snippet from a file.
+ * @param absolutePath - The absolute path to the file.
+ * @param startLine - The line number of the first line of the snippet.
+ * @param endLine - The line number of the last line of the snippet.
+ * @returns The code snippet.
+ */
 const getSnippet = (absolutePath: string, startLine: number, endLine: number) => {
   const fileContent = fs.readFileSync(absolutePath, 'utf-8')
   const lines = fileContent.split('\n')
@@ -75,7 +41,7 @@ const getSnippet = (absolutePath: string, startLine: number, endLine: number) =>
 /**
  * Format theme-check Offenses into a format for cli-kit to output.
  */
-export function formatOffenses(offenses: Offense[]): TokenItem {
+export function formatOffenses(offenses: Offense[]) {
   const offenseBodies = []
 
   for (const offense of offenses) {
@@ -96,13 +62,16 @@ export function formatOffenses(offenses: Offense[]): TokenItem {
   return offenseBodies.flat()
 }
 
+const offenseSeverityAscending = (offenseA: Offense, offenseB: Offense) => offenseA.severity - offenseB.severity
+
 /**
  * Sorts theme check offenses. First all offenses are grouped by file path,
  *
  * then within each collection of offenses, they are sorted by severity.
  */
-export function sortOffenses(offenses: Offense[]): OffensesByCheck {
-  const offensesByFile = offenses.reduce((acc: OffensesByCheck, offense: Offense) => {
+export function sortOffenses(offenses: Offense[]): OffenseMap {
+  // Bucket offenses by filename
+  const offensesByFile = offenses.reduce((acc: OffenseMap, offense: Offense) => {
     const {absolutePath} = offense
     if (!acc[absolutePath]) {
       acc[absolutePath] = []
@@ -112,14 +81,11 @@ export function sortOffenses(offenses: Offense[]): OffensesByCheck {
     return acc
   }, {})
 
-  const severitySorted: OffensesByCheck = {}
-  Object.keys(offensesByFile).forEach((filePath) => {
-    severitySorted[filePath] = offensesByFile[filePath]!.sort(
-      (offenseA, offenseB) => offenseA.severity - offenseB.severity,
-    )
-  })
-
-  return severitySorted
+  // Finally sort each collection of offenses by severity
+  return Object.keys(offensesByFile).reduce((acc: OffenseMap, filePath) => {
+    acc[filePath] = offensesByFile[filePath]!.sort(offenseSeverityAscending)
+    return acc
+  }, {})
 }
 
 export function formatSummary(offenses: Offense[], theme: Theme): string[] {
@@ -159,4 +125,54 @@ export function formatSummary(offenses: Offense[], theme: Theme): string[] {
   }
 
   return summary
+}
+
+export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string) {
+  const fileNames = Object.keys(offensesByFile).sort()
+
+  fileNames.forEach((filePath) => {
+    const hasErrorOffenses = offensesByFile[filePath]!.some((offense) => offense.severity === Severity.ERROR)
+    const render = hasErrorOffenses ? renderError : renderWarning
+
+    // Format the file path to be relative to the theme root.
+    // Remove the leading slash agnostic of windows or unix.
+    const headlineFilePath = filePath.replace(themeRootPath, '').slice(1)
+
+    render({
+      headline: headlineFilePath,
+      body: formatOffenses(offensesByFile[filePath]!),
+    })
+  })
+}
+
+export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffenseMap[] {
+  return Object.entries(offensesByFile).map(([path, offenses]) => {
+    let errorCount = 0
+    let suggestionCount = 0
+    let styleCount = 0
+
+    const transformedOffenses = offenses.map((offense: Offense) => {
+      if (offense.severity === Severity.ERROR) errorCount++
+      if (offense.severity === Severity.WARNING) suggestionCount++
+      if (offense.severity === Severity.INFO) styleCount++
+
+      return {
+        check: offense.check,
+        severity: offense.severity,
+        start_row: offense.start.line,
+        start_column: offense.start.character,
+        end_row: offense.end.line,
+        end_column: offense.end.character,
+        message: offense.message,
+      }
+    })
+
+    return {
+      path,
+      offenses: transformedOffenses,
+      errorCount,
+      suggestionCount,
+      styleCount,
+    }
+  })
 }
