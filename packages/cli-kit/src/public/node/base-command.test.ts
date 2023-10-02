@@ -14,6 +14,7 @@ vi.mock('./system.js')
 
 beforeEach(() => {
   vi.mocked(terminalSupportsRawMode).mockReturnValue(true)
+  vi.unstubAllEnvs()
 })
 
 let testResult: {[flag: string]: unknown} = {}
@@ -40,6 +41,7 @@ class MockCommand extends Command {
     password: Flags.string({}),
     environment: Flags.string({}),
     nonTTYRequiredFlag: Flags.string({}),
+    noRelease: Flags.boolean({}),
   }
   /* eslint-enable @shopify/cli/command-flags-with-env */
 
@@ -369,5 +371,60 @@ describe('applying environments', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+
+  test('shows a warning about NPM separator when using a flag that matches a NPM config env variable', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('npm_config_some_string', '')
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  NPM scripts require an extra \`--\` separator to pass the flags. Example:     │
+      │  \`npm run dev -- --reset\`                                                    │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('shows a warning about NPM separator when using a negated flag that matches a NPM config env variable', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('npm_config_release', 'true')
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  NPM scripts require an extra \`--\` separator to pass the flags. Example:     │
+      │  \`npm run dev -- --reset\`                                                    │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('does not show a warning about NPM separator when no flag matches a NPM config env variable', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('npm_config_other', 'x')
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot('""')
   })
 })

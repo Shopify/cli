@@ -49,9 +49,9 @@ abstract class BaseCommand extends Command {
   protected showNpmFlagWarning(): void {
     const commandVariables = this.constructor as unknown as {_flags: JsonMap}
     const commandFlags = Object.keys(commandVariables._flags || {})
-    const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key)}`)
+    const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key).replace(/^no_/, '')}`)
 
-    if (possibleNpmEnvVars.some((flag) => process.env[flag])) {
+    if (possibleNpmEnvVars.some((flag) => process.env[flag] !== undefined)) {
       renderWarning({
         body: [
           'NPM scripts require an extra',
