@@ -291,7 +291,7 @@ describe('automaticMatchmaking: some local of the same type, only one remote', (
   })
 })
 
-describe('automaticMatchmaking: some local of the same type, a remote with same type but different name', () => {
+describe('automaticMatchmaking: some local of the same type, a remote with same type but a remote name that doesnt match a local handle', () => {
   test('prompts for manual matching', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A_3], {}, 'uuid')
