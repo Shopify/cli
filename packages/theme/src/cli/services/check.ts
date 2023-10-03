@@ -176,3 +176,24 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
     }
   })
 }
+
+const SEVERITY_MAP = {
+  error: Severity.ERROR,
+  suggestion: Severity.WARNING,
+  style: Severity.INFO,
+}
+
+export type FailLevel = 'error' | 'suggestion' | 'style'
+
+/**
+ * Handles the process exit based on the offenses and fail level.
+ */
+export function handleExit(offenses: Offense[], failLevel?: FailLevel) {
+  // If there is no fail level set, exit with 0
+  if (!failLevel) process.exit(0)
+
+  const failSeverity = SEVERITY_MAP[failLevel]
+  const shouldFail = offenses.some((offense) => offense.severity < failSeverity)
+
+  process.exit(shouldFail ? 1 : 0)
+}

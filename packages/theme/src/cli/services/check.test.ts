@@ -1,8 +1,15 @@
-import {expect, it, describe, afterEach, afterAll, vi, Mock, beforeEach} from 'vitest'
-import {formatOffenses, sortOffenses, formatSummary, renderOffensesText, formatOffensesJson} from './check.js'
+import {
+  formatOffenses,
+  sortOffenses,
+  formatSummary,
+  renderOffensesText,
+  formatOffensesJson,
+  handleExit,
+} from './check.js'
+import {expect, describe, afterAll, vi, Mock, beforeEach, test, SpyInstance} from 'vitest'
 import {Offense, Severity, SourceCodeType, Theme} from '@shopify/theme-check-common'
-import fs from 'fs'
 import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import fs from 'fs'
 
 vi.mock('fs', async () => {
   const actual: any = await vi.importActual('fs')
@@ -25,15 +32,11 @@ describe('formatOffenses', () => {
     readFileMock.mockReturnValue('Line1\nLine2\nLine3')
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
   afterAll(() => {
     vi.unstubAllGlobals()
   })
 
-  it('should format offenses correctly', () => {
+  test('should format offenses correctly', () => {
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
@@ -48,8 +51,6 @@ describe('formatOffenses', () => {
 
     const result = formatOffenses(offenses)
 
-    console.log(JSON.stringify(result, null, 2))
-
     /**
      * Line numbers are 0-indexed to remain backwards compatible with the ruby theme-check output
      * Thats why given line:1 in the offense, we expect the second mocked line in the final output
@@ -57,7 +58,7 @@ describe('formatOffenses', () => {
     expect(result).toEqual([{bold: '\nL1:'}, 'LiquidHTMLSyntaxError\nAttempting to close HtmlElement\n\nLine2\n\n'])
   })
 
-  it('should format multiple offenses correctly', () => {
+  test('should format multiple offenses correctly', () => {
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
@@ -91,7 +92,7 @@ describe('formatOffenses', () => {
 })
 
 describe('sortOffenses', () => {
-  it('should sort offenses by file path', () => {
+  test('should sort offenses by file path', () => {
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
@@ -121,7 +122,7 @@ describe('sortOffenses', () => {
     })
   })
 
-  it('should sort offenses by severity within each file', () => {
+  test('should sort offenses by severity within each file', () => {
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
@@ -152,7 +153,7 @@ describe('sortOffenses', () => {
 })
 
 describe('formatSummary', () => {
-  it('should format summary correctly when no offenses found', () => {
+  test('should format summary correctly when no offenses found', () => {
     const offenses: Offense[] = []
     const theme: unknown = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
@@ -161,7 +162,7 @@ describe('formatSummary', () => {
     expect(result).toEqual(['10 files inspected', 'with no offenses found.'])
   })
 
-  it('should format summary correctly when offenses found', () => {
+  test('should format summary correctly when offenses found', () => {
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
@@ -196,15 +197,11 @@ describe('renderOffensesText', () => {
     readFileMock.mockReturnValue('Line1\nLine2\nLine3')
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
   afterAll(() => {
     vi.unstubAllGlobals()
   })
 
-  it('should call renderError for offenses with severity ERROR', () => {
+  test('should call renderError for offenses with severity ERROR', () => {
     const offensesByFile = {
       '/path/to/file': [
         {
@@ -226,7 +223,7 @@ describe('renderOffensesText', () => {
     expect(renderWarning).toHaveBeenCalledTimes(0)
   })
 
-  it('should call renderWarning for offenses with severity WARNING or INFO', () => {
+  test('should call renderWarning for offenses with severity WARNING or INFO', () => {
     const offensesByFile = {
       '/path/to/file': [
         {
@@ -249,7 +246,7 @@ describe('renderOffensesText', () => {
   })
 })
 describe('formatOffensesJson', () => {
-  it('should format offenses into JSON correctly', () => {
+  test('should format offenses into JSON correctly', () => {
     const offensesByFile = {
       '/path/to/file': [
         {
@@ -303,5 +300,57 @@ describe('formatOffensesJson', () => {
         styleCount: 0,
       },
     ])
+  })
+})
+
+describe('handleExit', () => {
+  let exitSpy: SpyInstance
+
+  beforeEach(() => {
+    // Create a spy on process.exit
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation(vi.fn())
+  })
+
+  afterAll(() => {
+    // Restore the original process.exit function after each test
+    exitSpy.mockRestore()
+  })
+
+  test('should exit with 0 when no fail level is set', () => {
+    const offenses: Offense[] = []
+    handleExit(offenses)
+    expect(exitSpy).toHaveBeenCalledWith(0)
+  })
+
+  test('should exit with 1 when offenses severity is less than fail level', () => {
+    const offenses: Offense[] = [
+      {
+        type: SourceCodeType.LiquidHtml,
+        check: 'LiquidHTMLSyntaxError',
+        message: 'Attempting to close HtmlElement',
+        absolutePath: '/path/to/file',
+        severity: Severity.ERROR,
+        start: {index: 0, line: 1, character: 0},
+        end: {index: 10, line: 1, character: 10},
+      },
+    ]
+    handleExit(offenses, 'suggestion')
+    expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+
+  test('should exit with 0 when offenses severity is not less than fail level', () => {
+    const offenses: Offense[] = [
+      {
+        type: SourceCodeType.LiquidHtml,
+        check: 'LiquidHTMLSyntaxError',
+        message: 'Attempting to close HtmlElement',
+        absolutePath: '/path/to/file',
+        severity: Severity.ERROR,
+        start: {index: 0, line: 1, character: 0},
+        end: {index: 10, line: 1, character: 10},
+      },
+    ]
+    handleExit(offenses, 'error')
+    expect(exitSpy).toHaveBeenCalledWith(0)
   })
 })

@@ -1,5 +1,12 @@
 import {themeDevPreviewFlag, themeFlags} from '../../flags.js'
-import {formatOffensesJson, formatSummary, renderOffensesText, sortOffenses} from '../../services/check.js'
+import {
+  formatOffensesJson,
+  formatSummary,
+  renderOffensesText,
+  sortOffenses,
+  handleExit,
+  type FailLevel,
+} from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -45,14 +52,18 @@ Use :theme_app_extension to use default checks for theme app extensions`,
 Excludes checks matching any category when specified more than once`,
       env: 'SHOPIFY_FLAG_EXCLUDE_CATEGORY',
     }),
-    // todo: this requires implementation for typescript theme check
     'fail-level': Flags.string({
       required: false,
       description: 'Minimum severity for exit with error code',
       env: 'SHOPIFY_FLAG_FAIL_LEVEL',
       options: ['error', 'suggestion', 'style'],
     }),
-    // theme-docs-updater thingy
+
+    /**
+     * Typescript theme check no longer uses `--update-docs`
+     * theme check initialization verifies it has the latest revision of theme docs
+     * every time it runs, and downloads the latest revision if it doesn't.
+     */
     'update-docs': Flags.boolean({
       required: false,
       description: 'Update Theme Check docs (objects, filters, and tags)',
@@ -117,6 +128,9 @@ Excludes checks matching any category when specified more than once`,
     const {flags} = await this.parse(Check)
 
     if (flags['dev-preview']) {
+      // console.log('flags', flags)
+      // return
+
       let themeCheckResults = {} as ThemeCheckRun
 
       const themeCheckTask: Task = {
@@ -140,15 +154,15 @@ Excludes checks matching any category when specified more than once`,
           headline: 'Theme Check Summary.',
           body: formatSummary(offenses, theme),
         })
-        return
       }
 
       if (flags.output === 'json') {
         // JSON output should go to STDOUT without additional formatting
         // eslint-disable-next-line no-console
         console.log(JSON.stringify(formatOffensesJson(offensesByFile), null, 2))
-        return
       }
+
+      handleExit(offenses, flags['fail-level'] as FailLevel)
     }
 
     await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
