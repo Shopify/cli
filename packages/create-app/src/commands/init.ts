@@ -1,4 +1,4 @@
-import initPrompt, {allTemplates, visibleTemplates} from '../prompts/init.js'
+import initPrompt, {isPredefinedTemplate, visibleTemplates} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -83,7 +83,7 @@ export default class Init extends Command {
         'Only GitHub repository references are supported, ' +
           'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
       )
-    if (!url && !allTemplates.includes(template))
+    if (!url && !isPredefinedTemplate(template))
       throw new AbortError(
         outputContent`Only ${visibleTemplates
           .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
