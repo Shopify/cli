@@ -1,4 +1,3 @@
-import * as utilities from './extension/utilities.js'
 import * as store from './extension/payload/store.js'
 import * as server from './extension/server.js'
 import * as websocket from './extension/websocket.js'
@@ -20,10 +19,10 @@ describe('devUIExtensions()', () => {
     signal: {addEventListener: vi.fn()},
     stdout: process.stdout,
     stderr: process.stderr,
+    checkoutCartUrl: 'mock/path/from/extensions',
   } as unknown as ExtensionDevOptions
 
   function spyOnEverything() {
-    vi.spyOn(utilities, 'getCartPathFromExtensions').mockResolvedValue('mock/path/from/extensions')
     vi.spyOn(store, 'getExtensionsPayloadStoreRawPayload').mockResolvedValue({
       mock: 'payload',
     } as unknown as ExtensionsEndpointPayload)
@@ -53,7 +52,7 @@ describe('devUIExtensions()', () => {
     // THEN
     expect(store.ExtensionsPayloadStore).toHaveBeenCalledWith(
       {mock: 'payload'},
-      {...options, checkoutCartUrl: 'mock/path/from/extensions', websocketURL: 'wss://mock.url/extensions'},
+      {...options, websocketURL: 'wss://mock.url/extensions'},
     )
   })
 
@@ -66,10 +65,7 @@ describe('devUIExtensions()', () => {
 
     // THEN
     expect(server.setupHTTPServer).toHaveBeenCalledWith({
-      devOptions: {
-        ...options,
-        checkoutCartUrl: 'mock/path/from/extensions',
-      },
+      devOptions: options,
       payloadStore: {mock: 'payload-store'},
     })
   })
@@ -98,10 +94,7 @@ describe('devUIExtensions()', () => {
 
     // THEN
     expect(bundler.setupBundlerAndFileWatcher).toHaveBeenCalledWith({
-      devOptions: {
-        ...options,
-        checkoutCartUrl: 'mock/path/from/extensions',
-      },
+      devOptions: options,
       payloadStore: {mock: 'payload-store'},
     })
   })

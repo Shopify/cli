@@ -14,11 +14,7 @@ const CUSTOMER_ACCOUNT_CHECKOUT_RENDERED_TARGETS = new Set([
  * @param extensions - The UI Extensions to dev
  * @param store - The store FQDN
  */
-export async function getCartPathFromExtensions(
-  extensions: ExtensionInstance[],
-  store: string,
-  checkoutCartUrl?: string,
-) {
+export async function buildCartURLIfNeeded(extensions: ExtensionInstance[], store: string, checkoutCartUrl?: string) {
   const hasUIExtension = extensions.filter((extension) => extension.shouldFetchCartUrl()).length > 0
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl
