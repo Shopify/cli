@@ -13,6 +13,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
 import {ThemeCheckRun, themeCheckRun} from '@shopify/theme-check-node'
+import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -128,8 +129,11 @@ Excludes checks matching any category when specified more than once`,
     const {flags} = await this.parse(Check)
 
     if (flags['dev-preview']) {
-      // console.log('flags', flags)
-      // return
+      if (flags.version) {
+        // eslint-disable-next-line no-console
+        console.log(themeCheckPackage.version)
+        return
+      }
 
       let themeCheckResults = {} as ThemeCheckRun
 
