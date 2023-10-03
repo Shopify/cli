@@ -7,13 +7,13 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-const scopeString = zod.string().default('').transform(scopes => scopes.replace(/\s+,\s+/g, ','))
+const scopeString = zod.string().transform((scopes) => scopes.replace(/\s+,\s+/g, ','))
 
 export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
     name: zod.string().optional(),
-    scopes: scopeString,
+    scopes: scopeString.default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
@@ -35,7 +35,7 @@ export const AppSchema = zod
     embedded: zod.boolean(),
     access_scopes: zod
       .object({
-        scopes: scopeString,
+        scopes: scopeString.optional(),
         use_legacy_install_flow: zod.boolean().optional(),
       })
       .optional(),
