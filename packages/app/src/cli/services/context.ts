@@ -229,7 +229,7 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
     await convertToTestStoreIfNeeded(result.store, orgId, token)
     return result.store
   } else {
-    throw new AbortError(`Couldn't find the store with domain "${storeFqdn}". ${resetHelpMessage}`)
+    throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
   }
 }
 
