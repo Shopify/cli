@@ -10,7 +10,7 @@ import {
 } from '../../../models/app/app.js'
 import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {logMetadataForLoadedConfigContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
+import {logMetadataForLoadedContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -95,7 +95,7 @@ export async function pushConfig(options: PushOptions) {
       }
     }
 
-    await logMetadataForLoadedConfigContext(app)
+    await logMetadataForLoadedContext(app)
 
     renderSuccess({
       headline: `Updated your app config for ${configuration.name}`,

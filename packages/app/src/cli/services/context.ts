@@ -119,6 +119,10 @@ export async function ensureGenerateContext(options: {
       directory: options.directory,
       orgId,
     })
+    await logMetadataForLoadedContext({
+      organizationId: selectedApp.organizationId,
+      apiKey: selectedApp.apiKey,
+    })
     return selectedApp.apiKey
   }
 }
@@ -204,7 +208,10 @@ export async function ensureDevContext(options: DevContextOptions, token: string
   })
 
   const result = buildOutput(selectedApp, selectedStore, cachedInfo)
-  await logMetadataForLoadedDevContext(result)
+  await logMetadataForLoadedContext({
+    organizationId: result.remoteApp.organizationId,
+    apiKey: result.remoteApp.apiKey,
+  })
   return result
 }
 
@@ -371,7 +378,10 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     deploymentMode,
   }
 
-  await logMetadataForLoadedDeployContext(result)
+  await logMetadataForLoadedContext({
+    organizationId: result.partnersApp.organizationId,
+    apiKey: result.identifiers.app,
+  })
   return result
 }
 
@@ -405,7 +415,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
     token,
   }
 
-  await logMetadataForLoadedReleaseContext(result, partnersApp.organizationId)
+  await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
   return result
 }
 
@@ -760,21 +770,7 @@ function showDevValues(org: string, appName: string) {
   })
 }
 
-async function logMetadataForLoadedDevContext(env: DevContextOutput) {
-  await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.remoteApp.organizationId),
-    api_key: env.remoteApp.apiKey,
-  }))
-}
-
-async function logMetadataForLoadedDeployContext(env: DeployContextOutput) {
-  await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(env.partnersApp.organizationId),
-    api_key: env.identifiers.app,
-  }))
-}
-
-export async function logMetadataForLoadedConfigContext(app: {organizationId: string; apiKey: string}) {
+export async function logMetadataForLoadedContext(app: {organizationId: string; apiKey: string}) {
   await metadata.addPublicMetadata(() => ({
     partner_id: tryParseInt(app.organizationId),
     api_key: app.apiKey,
@@ -816,13 +812,6 @@ export async function developerPreviewUpdate({
   } catch (error: unknown) {
     return false
   }
-}
-
-async function logMetadataForLoadedReleaseContext(env: ReleaseContextOutput, partnerId: string) {
-  await metadata.addPublicMetadata(() => ({
-    partner_id: tryParseInt(partnerId),
-    api_key: env.partnersApp.apiKey,
-  }))
 }
 
 function checkDeploymentsBeta(command: string, partnersApp: OrganizationApp) {

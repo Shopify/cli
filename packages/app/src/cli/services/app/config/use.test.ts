@@ -3,7 +3,7 @@ import {testApp, testAppWithConfig, testOrganizationApp} from '../../../models/a
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {logMetadataForLoadedConfigContext} from '../../context.js'
+import {logMetadataForLoadedContext} from '../../context.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -265,7 +265,7 @@ describe('use', () => {
       await use({directory, configName: 'something'})
 
       // Then
-      expect(logMetadataForLoadedConfigContext).toHaveBeenNthCalledWith(1, REMOTE_APP)
+      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, REMOTE_APP)
     })
   })
 })
