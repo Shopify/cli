@@ -4,6 +4,7 @@ import {
   formatSummary,
   handleExit,
   initConfig,
+  outputActiveChecks,
   outputActiveConfig,
   performAutoFixes,
   renderOffensesText,
@@ -140,17 +141,19 @@ Excludes checks matching any category when specified more than once`,
 
       if (flags.print) {
         await outputActiveConfig(flags.config, flags.path)
+
+        // --print should not trigger full theme check operation
         return
       }
 
       if (flags.list) {
-        // todo: implement --list
+        await outputActiveChecks(flags.config, flags.path)
 
         // --list should not trigger full theme check operation
         return
       }
 
-      const {offenses, theme, config} = await runThemeCheck(flags.path, flags.config)
+      const {offenses, theme} = await runThemeCheck(flags.path, flags.config)
       const offensesByFile = sortOffenses(offenses)
 
       if (flags.output === 'text') {

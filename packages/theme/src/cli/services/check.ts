@@ -189,13 +189,29 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
   })
 }
 
-const SEVERITY_MAP = {
-  error: Severity.ERROR,
-  suggestion: Severity.WARNING,
-  style: Severity.INFO,
+export type FailLevel = 'error' | 'suggestion' | 'style'
+
+function severityToFailLevel(severity: Severity): FailLevel {
+  switch (severity) {
+    case Severity.ERROR:
+      return 'error'
+    case Severity.WARNING:
+      return 'suggestion'
+    case Severity.INFO:
+      return 'style'
+  }
 }
 
-export type FailLevel = 'error' | 'suggestion' | 'style'
+function failLevelToSeverity(failLevel: FailLevel): Severity {
+  switch (failLevel) {
+    case 'error':
+      return Severity.ERROR
+    case 'suggestion':
+      return Severity.WARNING
+    case 'style':
+      return Severity.INFO
+  }
+}
 
 /**
  * Handles the process exit based on the offenses and fail level.
@@ -204,7 +220,7 @@ export function handleExit(offenses: Offense[], failLevel?: FailLevel) {
   // If there is no fail level set, exit with 0
   if (!failLevel) process.exit(0)
 
-  const failSeverity = SEVERITY_MAP[failLevel]
+  const failSeverity = failLevelToSeverity(failLevel)
   const shouldFail = offenses.some((offense) => offense.severity < failSeverity)
 
   process.exit(shouldFail ? 1 : 0)
@@ -280,4 +296,39 @@ export async function outputActiveConfig(configPath?: string, root?: string) {
     ...settings,
   }
   outputInfo(YAML.stringify(config))
+}
+
+export async function outputActiveChecks(configPath?: string, root?: string) {
+  const {settings, ignore, checks} = await loadConfig(configPath, root)
+  // Depending on how the configs were merged during loadConfig, there may be
+  // duplicate patterns to ignore. We can clean them before outputting.
+  const ignorePatterns = [...new Set(ignore)]
+
+  const checkCodes = Object.keys(settings)
+
+  const checksList = checkCodes.reduce((acc: {[key: string]: unknown}, checkCode: string) => {
+    const {severity, enabled, ...additional} = settings[checkCode]!
+    if (!enabled) {
+      return acc
+    }
+    const meta = checks.find((check) => check.meta.code === checkCode)
+    const metafields =
+      meta && meta.meta
+        ? {
+            description: meta.meta.docs.description,
+            doc: meta.meta.docs.url,
+          }
+        : {}
+
+    acc[checkCode] = {
+      severity: severityToFailLevel(severity!),
+      ...metafields,
+      // Manually formatting ignore patterns to keep single line array output
+      ignored_patterns: `[${ignorePatterns.join(', ')}]`,
+      ...additional,
+    }
+    return acc
+  }, {})
+
+  outputInfo(YAML.stringify(checksList))
 }
