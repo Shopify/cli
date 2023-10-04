@@ -108,7 +108,7 @@ const spec = createExtensionSpecification({
       }
     }
 
-    if (config.ui?.handle) {
+    if (config.ui?.handle !== undefined) {
       ui = {
         ...ui,
         ui_extension_handle: config.ui.handle,

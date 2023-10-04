@@ -260,4 +260,40 @@ describe('functionConfiguration', () => {
       expect(got!.localization).toEqual(expectedLocalization)
     })
   })
+
+  test("parses ui.handle when it's an empty string", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.directory = tmpDir
+      extension.configuration.ui!.handle = ''
+
+      // When
+      const got = (await extension.deployConfig({
+        apiKey,
+        token,
+        unifiedDeployment,
+      })) as unknown as {ui: {ui_extension_handle: string}}
+
+      // Then
+      expect(got.ui?.ui_extension_handle).toStrictEqual('')
+    })
+  })
+
+  test("parses ui.handle when it's undefined", async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.directory = tmpDir
+      extension.configuration.ui = undefined
+
+      // When
+      const got = (await extension.deployConfig({
+        apiKey,
+        token,
+        unifiedDeployment,
+      })) as unknown as {ui: {ui_extension_handle: string}}
+
+      // Then
+      expect(got.ui?.ui_extension_handle).toBeUndefined()
+    })
+  })
 })
