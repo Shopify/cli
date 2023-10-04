@@ -577,11 +577,9 @@ async function fetchDevDataFromOptions(
   ])
   let selectedStore: OrganizationStore | undefined | {shopDomain: string}
 
-  if (orgWithStore?.organization !== undefined) {
-    selectedStore = orgWithStore.store
-    await convertToTestStoreIfNeeded(orgWithStore.store, orgWithStore.organization.id, token)
-  } else if (orgWithStore) {
-    selectedStore = orgWithStore.store
+  selectedStore = orgWithStore?.store
+  if (orgWithStore?.organization) {
+    await convertToTestStoreIfNeeded(selectedStore, orgWithStore.organization.id, token)
   }
 
   return {app: selectedApp, store: selectedStore}
