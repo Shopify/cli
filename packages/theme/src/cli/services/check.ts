@@ -263,3 +263,21 @@ const saveToDiskFixApplicator: FixApplicator = async (sourceCode, fix) => {
 export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) {
   await autofix(sourceCodes, offenses, saveToDiskFixApplicator)
 }
+
+export async function outputActiveConfig(configPath?: string, root?: string) {
+  const {ignore, settings} = await loadConfig(configPath, root)
+
+  const config = {
+    // loadConfig has no clear idea of where to extend the config from.
+    // We can default to recommended to be safe.
+    extends: 'theme-check:recommended',
+
+    // Depending on how the configs were merged during loadConfig, there may be
+    // duplicate patterns to ignore. We can clean them before outputting.
+    ignore: [...new Set(ignore)],
+
+    // Dump out the active settings for all checks.
+    ...settings,
+  }
+  outputInfo(YAML.stringify(config))
+}

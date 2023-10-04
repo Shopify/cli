@@ -4,19 +4,20 @@ import {
   formatSummary,
   handleExit,
   initConfig,
+  outputActiveConfig,
+  performAutoFixes,
   renderOffensesText,
   runThemeCheck,
   sortOffenses,
-  performAutoFixes,
   type FailLevel,
 } from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
-import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -78,10 +79,6 @@ Excludes checks matching any category when specified more than once`,
       description: 'Generate a .theme-check.yml file',
       env: 'SHOPIFY_FLAG_INIT',
     }),
-
-    // read the config and list all the enabled ones... unforutnate but logic for loadConfig is in theme-language-server-node right now..... I think?
-    // config is { settings: { checkName: {...} }, checks: CheckDefinition[], root, ignore: string[] }
-    // todo: this requires implementation for typescript theme check
     list: Flags.boolean({
       required: false,
       description: 'List enabled checks',
@@ -95,8 +92,6 @@ Excludes checks matching any category when specified more than once`,
       options: ['text', 'json'],
       default: 'text',
     }),
-    // similar to list but just prints the config as YAML(?)
-    // todo: this requires implementation for typescript theme check
     print: Flags.boolean({
       required: false,
       description: 'Output active config to STDOUT',
@@ -143,8 +138,19 @@ Excludes checks matching any category when specified more than once`,
         return
       }
 
-      const {offenses, theme} = await runThemeCheck(flags.path, flags.config)
+      if (flags.print) {
+        await outputActiveConfig(flags.config, flags.path)
+        return
+      }
 
+      if (flags.list) {
+        // todo: implement --list
+
+        // --list should not trigger full theme check operation
+        return
+      }
+
+      const {offenses, theme, config} = await runThemeCheck(flags.path, flags.config)
       const offensesByFile = sortOffenses(offenses)
 
       if (flags.output === 'text') {
