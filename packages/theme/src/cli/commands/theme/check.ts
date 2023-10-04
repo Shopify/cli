@@ -7,6 +7,7 @@ import {
   renderOffensesText,
   runThemeCheck,
   sortOffenses,
+  performAutoFixes,
   type FailLevel,
 } from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
@@ -24,7 +25,6 @@ export default class Check extends ThemeCommand {
     ...globalFlags,
     ...themeDevPreviewFlag,
     path: themeFlags.path,
-    // todo: this requires implementation for typescript theme check
     'auto-correct': Flags.boolean({
       char: 'a',
       required: false,
@@ -161,7 +161,7 @@ Excludes checks matching any category when specified more than once`,
       }
 
       if (flags['auto-correct']) {
-        // TODO: Implement me
+        await performAutoFixes(theme, offenses)
       }
 
       handleExit(offenses, flags['fail-level'] as FailLevel)

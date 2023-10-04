@@ -1,9 +1,18 @@
-import {renderError, renderWarning, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
-import {type Offense, type Theme, Severity} from '@shopify/theme-check-common'
-import {loadConfig, type ThemeCheckRun, themeCheckRun} from '@shopify/theme-check-node'
-import YAML from 'yaml'
-import {fileExists, writeFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {renderError, renderTasks, renderWarning, type Task} from '@shopify/cli-kit/node/ui'
+import {
+  Severity,
+  applyFixToString,
+  autofix,
+  loadConfig,
+  themeCheckRun,
+  type FixApplicator,
+  type Offense,
+  type Theme,
+  type ThemeCheckRun,
+} from '@shopify/theme-check-node'
+import YAML from 'yaml'
 
 interface OffenseMap {
   [check: string]: Offense[]
@@ -244,4 +253,13 @@ export async function runThemeCheck(themeRoot: string, configPath?: string) {
   await renderTasks([themeCheckTask])
 
   return themeCheckResults
+}
+
+const saveToDiskFixApplicator: FixApplicator = async (sourceCode, fix) => {
+  const updatedSource = applyFixToString(sourceCode.source, fix)
+  await writeFile(sourceCode.absolutePath, updatedSource)
+}
+
+export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) {
+  await autofix(sourceCodes, offenses, saveToDiskFixApplicator)
 }
