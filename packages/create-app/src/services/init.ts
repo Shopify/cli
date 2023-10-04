@@ -83,7 +83,7 @@ async function init(options: InitOptions) {
           packageJSON.name = hyphenizedName
           packageJSON.author = (await username()) ?? ''
           packageJSON.private = true
-          const workspacesFolders = ['extensions/*'].concat(detectAddittionalWorkspacesFolders(templateScaffoldDir))
+          const workspacesFolders = ['extensions/*'].concat(detectAdditionalWorkspacesFolders(templateScaffoldDir))
 
           switch (packageManager) {
             case 'npm':
@@ -176,7 +176,7 @@ async function ensureAppDirectoryIsAvailable(directory: string, name: string): P
     throw new AbortError(`\nA directory with this name (${name}) already exists.\nChoose a new name for your app.`)
 }
 
-function detectAddittionalWorkspacesFolders(directory: string) {
+function detectAdditionalWorkspacesFolders(directory: string) {
   return ['web', 'web/frontend'].filter((folder) => fileExistsSync(joinPath(directory, folder)))
 }
 
