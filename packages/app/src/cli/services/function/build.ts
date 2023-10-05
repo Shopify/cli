@@ -43,7 +43,7 @@ async function buildJSFunctionWithoutTasks(
     await buildGraphqlTypes(fun, options)
   }
   if (!options.signal?.aborted) {
-    options.stdout.write(`Bundling JS function 22...\n`)
+    options.stdout.write(`Bundling JS function...\n`)
     await builder.bundle(fun, options)
   }
   if (!options.signal?.aborted) {
@@ -98,8 +98,6 @@ export async function buildGraphqlTypes(
 }
 
 export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
-  options.stdout.write(`yesssss\n`)
-
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -117,7 +115,6 @@ export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>
     ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}),
     entryPoints: [entryPoint],
   }
-  options.stdout.write(`yesssss\n`)
 
   return esBuild(esbuildOptions)
 }
