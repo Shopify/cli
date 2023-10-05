@@ -97,7 +97,11 @@ export async function buildGraphqlTypes(
   })
 }
 
-export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+export async function bundleExtension(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: JSFunctionBuildOptions,
+  processEnv = process.env,
+) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -112,7 +116,7 @@ export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>
   }
 
   const esbuildOptions = {
-    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}),
+    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}, processEnv),
     entryPoints: [entryPoint],
   }
 
@@ -212,7 +216,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     this.exports = exports
   }
 
-  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions, processEnv = process.env) {
     if (!fun.entrySourceFilePath) {
       throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
     }
@@ -222,7 +226,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     outputDebug(contents)
 
     const esbuildOptions: Parameters<typeof esBuild>[0] = {
-      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}),
+      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}, processEnv),
       stdin: {
         contents,
         loader: 'ts',
