@@ -125,7 +125,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
     if (selectedTemplate.branches) {
       const templateBranch = await renderSelectPrompt({
-        message: 'Which template would you like to use?',
+        message: 'For your Remix template, which language do you prefer?',
         choices: selectedTemplate.branches.map((branch) => ({value: branch.branch, label: branch.label})),
       })
 
