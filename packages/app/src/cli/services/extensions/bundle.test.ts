@@ -63,7 +63,7 @@ describe('bundleExtension()', () => {
         stdout,
         stderr,
       },
-      {CUSTOM_VAR_FROM_RUNTIME: 'custom_var'},
+      {VAR_FROM_RUNTIME: 'runtime_var'},
     )
 
     // Then
@@ -94,7 +94,7 @@ describe('bundleExtension()', () => {
     expect(options.define).toEqual({
       'process.env.FOO': JSON.stringify('BAR'),
       'process.env.NODE_ENV': JSON.stringify('production'),
-      'process.env.CUSTOM_VAR_FROM_RUNTIME': JSON.stringify('custom_var'),
+      'process.env.VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
     })
     expect(vi.mocked(stdout.write).mock.calls[0][0]).toMatchInlineSnapshot(`
       "▲ [WARNING] warning text [plugin plugin]
