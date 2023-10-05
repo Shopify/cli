@@ -1,6 +1,9 @@
-import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderError, renderWarning, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
 import {type Offense, type Theme, Severity} from '@shopify/theme-check-common'
-import fs from 'fs'
+import {loadConfig, type ThemeCheckRun, themeCheckRun} from '@shopify/theme-check-node'
+import YAML from 'yaml'
+import {fileExists, writeFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 
 interface OffenseMap {
   [check: string]: Offense[]
@@ -31,8 +34,8 @@ interface TransformedOffenseMap {
  * @param endLine - The line number of the last line of the snippet.
  * @returns The code snippet.
  */
-const getSnippet = (absolutePath: string, startLine: number, endLine: number) => {
-  const fileContent = fs.readFileSync(absolutePath, 'utf-8')
+function getSnippet(absolutePath: string, startLine: number, endLine: number) {
+  const fileContent = readFileSync(absolutePath).toString()
   const lines = fileContent.split('\n')
   const snippetLines = lines.slice(startLine, endLine + 1)
   return snippetLines.join('\n')
@@ -196,4 +199,49 @@ export function handleExit(offenses: Offense[], failLevel?: FailLevel) {
   const shouldFail = offenses.some((offense) => offense.severity < failSeverity)
 
   process.exit(shouldFail ? 1 : 0)
+}
+
+/**
+ * Adds a '#' character at the start of each line in a string.
+ */
+function commentString(input: string): string {
+  return input
+    .split('\n')
+    .map((line) => `# ${line}`)
+    .join('\n')
+}
+
+export async function initConfig(root: string) {
+  const basefile = '.theme-check.yml'
+  const filePath = `${root}/${basefile}`
+  if (await fileExists(filePath)) {
+    outputInfo(`${basefile} already exists at ${root}`)
+    return
+  }
+
+  // The initialized config will extend the recommended settings and
+  // will simply show the commented checks for the user to customize.
+  const {settings} = await loadConfig(undefined, root)
+  const checksYml = commentString(YAML.stringify(settings))
+
+  const initConfigYml = YAML.stringify({extends: 'theme-check:recommended', ignore: ['node_modules/**']})
+
+  await writeFile(filePath, `${initConfigYml}${checksYml}`)
+
+  outputSuccess(`Created ${basefile} at ${root}`)
+}
+
+export async function runThemeCheck(themeRoot: string, configPath?: string) {
+  let themeCheckResults = {} as ThemeCheckRun
+
+  const themeCheckTask: Task = {
+    title: `Performing theme check. Please wait...\nEvaluating ${themeRoot}`,
+    task: async () => {
+      themeCheckResults = await themeCheckRun(themeRoot, configPath)
+    },
+  }
+
+  await renderTasks([themeCheckTask])
+
+  return themeCheckResults
 }

@@ -2,18 +2,20 @@ import {themeDevPreviewFlag, themeFlags} from '../../flags.js'
 import {
   formatOffensesJson,
   formatSummary,
-  renderOffensesText,
-  sortOffenses,
   handleExit,
+  initConfig,
+  renderOffensesText,
+  runThemeCheck,
+  sortOffenses,
   type FailLevel,
 } from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderInfo, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
-import {ThemeCheckRun, themeCheckRun} from '@shopify/theme-check-node'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -22,6 +24,7 @@ export default class Check extends ThemeCommand {
     ...globalFlags,
     ...themeDevPreviewFlag,
     path: themeFlags.path,
+    // todo: this requires implementation for typescript theme check
     'auto-correct': Flags.boolean({
       char: 'a',
       required: false,
@@ -70,9 +73,6 @@ Excludes checks matching any category when specified more than once`,
       description: 'Update Theme Check docs (objects, filters, and tags)',
       env: 'SHOPIFY_FLAG_UPDATE_DOCS',
     }),
-
-    // new and only lives here, copy recommended or extends: recommended
-    // todo: this requires implementation for typescript theme check
     init: Flags.boolean({
       required: false,
       description: 'Generate a .theme-check.yml file',
@@ -129,26 +129,22 @@ Excludes checks matching any category when specified more than once`,
     const {flags} = await this.parse(Check)
 
     if (flags['dev-preview']) {
-      if (flags.version) {
-        // eslint-disable-next-line no-console
-        console.log(themeCheckPackage.version)
+      if (flags.init) {
+        await initConfig(flags.path)
+
+        // --init should not trigger full theme check operation
         return
       }
 
-      let themeCheckResults = {} as ThemeCheckRun
+      if (flags.version) {
+        outputInfo(themeCheckPackage.version)
 
-      const themeCheckTask: Task = {
-        title: `Performing theme check. Please wait...\nEvaluating ${flags.path}`,
-        task: async () => {
-          themeCheckResults = await themeCheckRun(flags.path, flags.config)
-        },
+        // --version should not trigger full theme check operation
+        return
       }
 
-      await renderTasks([themeCheckTask])
+      const {offenses, theme} = await runThemeCheck(flags.path, flags.config)
 
-      const {offenses, theme} = themeCheckResults
-
-      // Bucket offenses by absolute path
       const offensesByFile = sortOffenses(offenses)
 
       if (flags.output === 'text') {
@@ -161,9 +157,11 @@ Excludes checks matching any category when specified more than once`,
       }
 
       if (flags.output === 'json') {
-        // JSON output should go to STDOUT without additional formatting
-        // eslint-disable-next-line no-console
-        console.log(JSON.stringify(formatOffensesJson(offensesByFile), null, 2))
+        outputInfo(JSON.stringify(formatOffensesJson(offensesByFile), null, 2))
+      }
+
+      if (flags['auto-correct']) {
+        // TODO: Implement me
       }
 
       handleExit(offenses, flags['fail-level'] as FailLevel)

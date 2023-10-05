@@ -5,19 +5,31 @@ import {
   renderOffensesText,
   formatOffensesJson,
   handleExit,
+  initConfig,
 } from './check.js'
 import {expect, describe, afterAll, vi, Mock, beforeEach, test, SpyInstance} from 'vitest'
 import {Offense, Severity, SourceCodeType, Theme} from '@shopify/theme-check-common'
+import {loadConfig} from '@shopify/theme-check-node'
 import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
-import fs from 'fs'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {fileExists, writeFile, readFileSync} from '@shopify/cli-kit/node/fs'
 
-vi.mock('fs', async () => {
-  const actual: any = await vi.importActual('fs')
+vi.mock('@shopify/cli-kit/node/fs', async () => ({
+  fileExists: vi.fn(),
+  writeFile: vi.fn(),
+  readFileSync: vi.fn(),
+}))
+
+vi.mock('@shopify/cli-kit/node/output', async () => ({
+  outputInfo: vi.fn(),
+  outputSuccess: vi.fn(),
+}))
+
+vi.mock('@shopify/theme-check-node', async () => {
+  const actual: any = await vi.importActual('@shopify/theme-check-node')
   return {
-    default: {
-      ...actual,
-      readFileSync: vi.fn(),
-    },
+    ...actual,
+    loadConfig: vi.fn(),
   }
 })
 
@@ -28,8 +40,8 @@ vi.mock('@shopify/cli-kit/node/ui', async () => ({
 
 describe('formatOffenses', () => {
   beforeEach(() => {
-    const readFileMock = fs.readFileSync as Mock
-    readFileMock.mockReturnValue('Line1\nLine2\nLine3')
+    const readFileMock = readFileSync as Mock
+    readFileMock.mockReturnValue({toString: () => 'Line1\nLine2\nLine3'})
   })
 
   afterAll(() => {
@@ -193,7 +205,7 @@ describe('formatSummary', () => {
 
 describe('renderOffensesText', () => {
   beforeEach(() => {
-    const readFileMock = fs.readFileSync as Mock
+    const readFileMock = readFileSync as Mock
     readFileMock.mockReturnValue('Line1\nLine2\nLine3')
   })
 
@@ -352,5 +364,41 @@ describe('handleExit', () => {
     ]
     handleExit(offenses, 'error')
     expect(exitSpy).toHaveBeenCalledWith(0)
+  })
+})
+
+describe('initConfig', () => {
+  let fileMock: Mock
+  let loadConfigMock: Mock
+
+  beforeEach(() => {
+    fileMock = fileExists as Mock
+    loadConfigMock = loadConfig as Mock
+  })
+
+  afterAll(() => {
+    vi.unstubAllGlobals()
+  })
+
+  test('should not create a new config file if one already exists', async () => {
+    fileMock.mockResolvedValue(true)
+
+    await initConfig('/path/to/root')
+
+    expect(fileExists).toHaveBeenCalledWith('/path/to/root/.theme-check.yml')
+    expect(outputInfo).toHaveBeenCalledWith('.theme-check.yml already exists at /path/to/root')
+    expect(writeFile).toHaveBeenCalledTimes(0)
+  })
+
+  test('should create a new config file if one does not exist', async () => {
+    fileMock.mockResolvedValue(false)
+    loadConfigMock.mockResolvedValue({settings: {}})
+
+    await initConfig('/path/to/root')
+
+    expect(fileExists).toHaveBeenCalledWith('/path/to/root/.theme-check.yml')
+    expect(loadConfig).toHaveBeenCalledWith(undefined, '/path/to/root')
+    expect(writeFile).toHaveBeenCalledWith('/path/to/root/.theme-check.yml', expect.any(String))
+    expect(outputSuccess).toHaveBeenCalledWith('Created .theme-check.yml at /path/to/root')
   })
 })
