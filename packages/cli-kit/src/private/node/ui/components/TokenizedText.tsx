@@ -5,7 +5,7 @@ import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
 import {Box, Text} from 'ink'
-import React, {FunctionComponent} from 'react'
+import React, {FunctionComponent, ComponentProps} from 'react'
 
 export interface CommandToken {
   command: string
@@ -46,6 +46,11 @@ export interface BoldToken {
   bold: string
 }
 
+export interface ColoredToken {
+  color: ComponentProps<typeof Text>['color']
+  value: string
+}
+
 export type Token =
   | string
   | CommandToken
@@ -56,6 +61,7 @@ export type Token =
   | FilePathToken
   | ListToken
   | BoldToken
+  | ColoredToken
 
 export type InlineToken = Exclude<Token, ListToken>
 export type TokenItem<T extends Token = Token> = T | T[]
@@ -92,6 +98,8 @@ export function tokenItemToString(token: TokenItem): string {
     return token.list.items.map(tokenItemToString).join(' ')
   } else if ('bold' in token) {
     return token.bold
+  } else if ('color' in token) {
+    return token.value
   } else {
     return token
       .map((item, index) => {
@@ -163,6 +171,8 @@ const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
     return <List {...item.list} />
   } else if ('bold' in item) {
     return <Text bold>{item.bold}</Text>
+  } else if ('color' in item) {
+    return <Text color={item.color}>{item.value}</Text>
   } else {
     const groupedItems = item.map(tokenToBlock).reduce(splitByDisplayType, [])
 
