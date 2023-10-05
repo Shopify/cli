@@ -191,6 +191,7 @@ export interface AppInterface extends AppConfigurationInterface {
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   errors?: AppErrors
+  loadedExtensions: boolean
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -208,6 +209,7 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
+  loadedExtensions: boolean
 
   // eslint-disable-next-line max-params
   constructor(
@@ -218,10 +220,10 @@ export class App implements AppInterface {
     configuration: AppConfiguration,
     nodeDependencies: {[key: string]: string},
     webs: Web[],
-    extensions: ExtensionInstance[],
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
+    extensions?: ExtensionInstance[],
   ) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
@@ -231,9 +233,10 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.allExtensions = extensions
+    this.allExtensions = extensions ?? []
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.loadedExtensions = Boolean(extensions)
   }
 
   async updateDependencies() {
@@ -255,7 +258,7 @@ export class App implements AppInterface {
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], false)
+    super('', '', '', 'npm', configuration, {}, [], false, undefined, undefined, [])
   }
 }
 

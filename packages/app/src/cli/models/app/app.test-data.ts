@@ -49,10 +49,10 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
         },
       },
     ],
-    app.allExtensions ?? [],
     app.usesWorkspaces ?? false,
     app.dotenv,
     app.errors,
+    app.allExtensions ?? [],
   )
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies

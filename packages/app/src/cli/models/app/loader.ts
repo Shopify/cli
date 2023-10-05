@@ -38,7 +38,7 @@ import {checkIfIgnoredInGitRepository} from '@shopify/cli-kit/node/git'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-export type AppLoaderMode = 'strict' | 'report'
+export type ParseConfigurationMode = 'strict' | 'report'
 
 type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
 const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
@@ -158,9 +158,10 @@ export class AppErrors {
 
 interface AppLoaderConstructorArgs {
   directory: string
-  mode?: AppLoaderMode
+  mode?: ParseConfigurationMode
   configName?: string
-  specifications: ExtensionSpecification[]
+  config?: AppConfigurationInterface
+  specifications?: ExtensionSpecification[]
 }
 
 /**
@@ -186,22 +187,12 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-class AppLoader {
-  private directory: string
-  private mode: AppLoaderMode
-  private configName?: string
-  private errors: AppErrors = new AppErrors()
-  private specifications: ExtensionSpecification[]
+class ParseConfigurationHandler {
+  errors: AppErrors = new AppErrors()
+  mode: ParseConfigurationMode
 
-  constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
-    this.mode = mode ?? 'strict'
-    this.directory = directory
-    this.specifications = specifications
-    this.configName = configName
-  }
-
-  findSpecificationForType(type: string) {
-    return findSpecificationForType(this.specifications, type)
+  constructor(mode: ParseConfigurationMode) {
+    this.mode = mode
   }
 
   parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -213,20 +204,43 @@ class AppLoader {
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
 
+  abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
+    if (this.mode === 'strict') {
+      throw new AbortError(errorMessage)
+    } else {
+      this.errors.addError(configurationPath, errorMessage)
+      return fallback
+    }
+  }
+}
+
+class AppLoader extends ParseConfigurationHandler {
+  private directory: string
+  private configName?: string
+  private config?: AppConfigurationInterface
+  private specifications?: ExtensionSpecification[]
+
+  constructor({directory, configName, mode, specifications, config}: AppLoaderConstructorArgs) {
+    super(mode ?? 'strict')
+    this.directory = directory
+    this.specifications = specifications
+    this.configName = configName
+    this.config = config
+  }
+
+  findSpecificationForType(type: string, specifications: ExtensionSpecification[]) {
+    return findSpecificationForType(specifications, type)
+  }
+
   async loaded() {
-    const configurationLoader = new AppConfigurationLoader({
-      directory: this.directory,
-      configName: this.configName,
-    })
-    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
-    await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
+    const {directory: appDirectory, configuration} =
+      this.config ??
+      (await loadAppConfiguration({
+        directory: this.directory,
+        configName: this.configName,
+      }))
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
-
-    const {allExtensions, usedCustomLayout} = await this.loadExtensions(
-      appDirectory,
-      configuration.extension_directories,
-    )
 
     const packageJSONPath = joinPath(appDirectory, 'package.json')
     const name = await loadAppName(appDirectory)
@@ -246,16 +260,21 @@ class AppLoader {
       configuration,
       nodeDependencies,
       webs,
-      allExtensions,
       usesWorkspaces,
       dotenv,
+      this.errors.isEmpty() ? undefined : this.errors,
+      this.specifications
+        ? await loadAppExtensions({
+            appDirectory,
+            specifications: this.specifications,
+            extensionDirectories: configuration.extension_directories,
+            mode: this.mode,
+          })
+        : undefined,
     )
-
-    if (!this.errors.isEmpty()) appClass.errors = this.errors
 
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
-      usedCustomLayoutForExtensions: usedCustomLayout,
     })
 
     return appClass
@@ -302,6 +321,131 @@ class AppLoader {
       framework: await resolveFramework(dirname(WebConfigurationFile)),
     }
   }
+}
+
+/**
+ * Parse the app configuration file from the given directory.
+ * If the app configuration does not match any known schemas, it will throw an error.
+ */
+export async function loadAppConfiguration(
+  options: AppConfigurationLoaderConstructorArgs,
+): Promise<AppConfigurationInterface> {
+  const loader = new AppConfigurationLoader(options)
+  const result = await loader.loaded()
+  await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
+  return result
+}
+
+interface AppConfigurationLoaderConstructorArgs {
+  directory: string
+  configName?: string
+}
+
+/**
+ * Parse the app configuration file from the given directory.
+ * If the app configuration does not match any known schemas, it will throw an error.
+ */
+export async function loadAppExtensions(options: AppExtensionsLoaderConstructorArgs): Promise<ExtensionInstance[]> {
+  const loader = new AppExtensionsLoader(options)
+  const result = await loader.loaded()
+  await metadata.addPublicMetadata(async () => {
+    return {app_extensions_custom_layout: result.usedCustomLayout}
+  })
+  return result.allExtensions
+}
+
+interface AppExtensionsLoaderConstructorArgs {
+  appDirectory: string
+  specifications: ExtensionSpecification[]
+  extensionDirectories?: string[]
+  mode?: ParseConfigurationMode
+}
+
+class AppExtensionsLoader extends ParseConfigurationHandler {
+  appDirectory: string
+  specifications: ExtensionSpecification[]
+  extensionDirectories?: string[]
+
+  constructor({appDirectory, specifications, extensionDirectories, mode}: AppExtensionsLoaderConstructorArgs) {
+    super(mode ?? 'strict')
+    this.appDirectory = appDirectory
+    this.extensionDirectories = extensionDirectories
+    this.specifications = specifications
+  }
+
+  async loaded(): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
+    const extensionConfigPaths = [...(this.extensionDirectories ?? [defaultExtensionDirectory])].map(
+      (extensionPath) => {
+        return joinPath(this.appDirectory, extensionPath, '*.extension.toml')
+      },
+    )
+    extensionConfigPaths.push(`!${joinPath(this.appDirectory, '**/node_modules/**')}`)
+    const configPaths = await glob(extensionConfigPaths)
+
+    const extensionPromises = configPaths.map(async (configurationPath) => {
+      const directory = dirname(configurationPath)
+      const obj = await loadConfigurationFile(configurationPath)
+      const {extensions, type} = ExtensionsArraySchema.parse(obj)
+
+      if (extensions) {
+        // If the extension is an array, it's a unified toml file.
+        // Parse all extensions by merging each extension config with the global unified configuration.
+        const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
+        const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
+          const mergedConfig = {...configuration, ...extensionConfig}
+          const {extensions, ...restConfig} = mergedConfig
+          if (!restConfig.handle) {
+            // Handle is required for unified config extensions.
+            this.abortOrReport(
+              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
+                this.appDirectory,
+                configurationPath,
+              )}`,
+              undefined,
+              configurationPath,
+            )
+            restConfig.handle = 'unknown-handle'
+          }
+          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
+        })
+        return Promise.all(extensionsInstancesPromises)
+      } else if (type) {
+        // Legacy toml file with a single extension.
+        return this.createExtensionInstance(type, obj, configurationPath, directory)
+      } else {
+        return this.abortOrReport(
+          outputContent`Invalid extension type at "${outputToken.path(
+            relativePath(this.appDirectory, configurationPath),
+          )}". Please specify a type.`,
+          undefined,
+          configurationPath,
+        )
+      }
+    })
+
+    const extensions = await Promise.all(extensionPromises)
+    const allExtensions = getArrayRejectingUndefined(extensions.flat())
+
+    // Validate that all extensions have a unique handle.
+    const handles = new Set()
+    allExtensions.forEach((extension) => {
+      if (extension.handle && handles.has(extension.handle)) {
+        const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
+        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
+        const handle = outputToken.cyan(extension.handle)
+
+        this.abortOrReport(
+          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
+          undefined,
+          extension.configuration.path,
+        )
+      } else if (extension.handle) {
+        handles.add(extension.handle)
+      }
+    })
+
+    return {allExtensions, usedCustomLayout: this.extensionDirectories !== undefined}
+  }
 
   async createExtensionInstance(
     type: string,
@@ -342,81 +486,6 @@ class AppLoader {
     return extensionInstance
   }
 
-  async loadExtensions(
-    appDirectory: string,
-    extensionDirectories?: string[],
-  ): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
-    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(appDirectory, extensionPath, '*.extension.toml')
-    })
-    extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
-    const configPaths = await glob(extensionConfigPaths)
-
-    const extensionPromises = configPaths.map(async (configurationPath) => {
-      const directory = dirname(configurationPath)
-      const obj = await loadConfigurationFile(configurationPath)
-      const {extensions, type} = ExtensionsArraySchema.parse(obj)
-
-      if (extensions) {
-        // If the extension is an array, it's a unified toml file.
-        // Parse all extensions by merging each extension config with the global unified configuration.
-        const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
-        const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
-          const mergedConfig = {...configuration, ...extensionConfig}
-          const {extensions, ...restConfig} = mergedConfig
-          if (!restConfig.handle) {
-            // Handle is required for unified config extensions.
-            this.abortOrReport(
-              outputContent`Missing handle for extension "${restConfig.name}" at ${relativePath(
-                appDirectory,
-                configurationPath,
-              )}`,
-              undefined,
-              configurationPath,
-            )
-            restConfig.handle = 'unknown-handle'
-          }
-          return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
-        })
-        return Promise.all(extensionsInstancesPromises)
-      } else if (type) {
-        // Legacy toml file with a single extension.
-        return this.createExtensionInstance(type, obj, configurationPath, directory)
-      } else {
-        return this.abortOrReport(
-          outputContent`Invalid extension type at "${outputToken.path(
-            relativePath(appDirectory, configurationPath),
-          )}". Please specify a type.`,
-          undefined,
-          configurationPath,
-        )
-      }
-    })
-
-    const extensions = await Promise.all(extensionPromises)
-    const allExtensions = getArrayRejectingUndefined(extensions.flat())
-
-    // Validate that all extensions have a unique handle.
-    const handles = new Set()
-    allExtensions.forEach((extension) => {
-      if (extension.handle && handles.has(extension.handle)) {
-        const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
-        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
-        const handle = outputToken.cyan(extension.handle)
-
-        this.abortOrReport(
-          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
-          undefined,
-          extension.configuration.path,
-        )
-      } else if (extension.handle) {
-        handles.add(extension.handle)
-      }
-    })
-
-    return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
-  }
-
   async findEntryPath(directory: string, specification: ExtensionSpecification) {
     let entryPath
     if (specification.appModuleFeatures().includes('single_js_entry_path')) {
@@ -449,33 +518,6 @@ class AppLoader {
     }
     return entryPath
   }
-
-  abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
-    if (this.mode === 'strict') {
-      throw new AbortError(errorMessage)
-    } else {
-      this.errors.addError(configurationPath, errorMessage)
-      return fallback
-    }
-  }
-}
-
-/**
- * Parse the app configuration file from the given directory.
- * If the app configuration does not match any known schemas, it will throw an error.
- */
-export async function loadAppConfiguration(
-  options: AppConfigurationLoaderConstructorArgs,
-): Promise<AppConfigurationInterface> {
-  const loader = new AppConfigurationLoader(options)
-  const result = await loader.loaded()
-  await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)
-  return result
-}
-
-interface AppConfigurationLoaderConstructorArgs {
-  directory: string
-  configName?: string
 }
 
 type LinkedConfigurationSource =
@@ -691,7 +733,6 @@ async function logMetadataForLoadedApp(
   app: App,
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
-    usedCustomLayoutForExtensions: boolean
   },
 ) {
   await metadata.addPublicMetadata(async () => {
@@ -722,7 +763,6 @@ async function logMetadataForLoadedApp(
       app_extensions_any: extensionTotalCount > 0,
       app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
       app_extensions_count: extensionTotalCount,
-      app_extensions_custom_layout: loadingStrategy.usedCustomLayoutForExtensions,
       app_extensions_function_any: extensionFunctionCount > 0,
       app_extensions_function_count: extensionFunctionCount,
       app_extensions_theme_any: extensionThemeCount > 0,
