@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.49.6
+
+### Patch Changes
+
+- de8104d9b: Fix concurrent function builds
+  - @shopify/cli-kit@3.49.6
+  - @shopify/plugin-cloudflare@3.49.6
+
 ## 3.49.5
 
 ### Patch Changes
