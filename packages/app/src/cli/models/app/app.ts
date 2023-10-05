@@ -1,11 +1,13 @@
-import {AppErrors, isWebType} from './loader.js'
+import {AppErrors, isWebType, loadAppExtensions} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
+import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {Config} from '@oclif/core'
 
 export const LegacyAppSchema = zod
   .object({
@@ -294,4 +296,27 @@ export async function getDependencyVersion(dependency: string, directory: string
   const packageContent = await readAndParsePackageJson(packagePath)
   if (!packageContent.version) return 'not_found'
   return {name: dependency, version: packageContent.version}
+}
+
+export async function loadExtensionsFromRemote(
+  app: AppInterface,
+  token: string,
+  apiKey: string,
+  commandConfig: Config,
+) {
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey,
+    config: commandConfig,
+  })
+  const extensions = await loadAppExtensions({
+    appDirectory: app.directory,
+    specifications,
+    extensionDirectories: app.configuration.extension_directories,
+  })
+
+  const appWithExtensions = app
+  appWithExtensions.allExtensions = extensions
+  appWithExtensions.loadedExtensions = true
+  return appWithExtensions
 }

@@ -23,6 +23,7 @@ import {
   isCurrentAppSchema,
   appIsLaunchable,
   getAppScopesArray,
+  loadExtensionsFromRemote,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -329,22 +330,29 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
 
+  const {optionsWithApp, envIdentifiersWithExtensions} = await ensureDeployExtensionsContext(
+    token,
+    partnersApp.apiKey,
+    options,
+    envIdentifiers,
+  )
+
   const org = await fetchOrgFromId(partnersApp.organizationId, token)
-  showReusedDeployValues(org.businessName, options.app, partnersApp)
+  showReusedDeployValues(org.businessName, optionsWithApp.app, partnersApp)
 
-  const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
+  const deploymentMode = await resolveDeploymentMode(partnersApp, optionsWithApp, token)
 
-  if (deploymentMode === 'legacy' && options.commitReference) {
+  if (deploymentMode === 'legacy' && optionsWithApp.commitReference) {
     throw new AbortError('The `source-control-url` flag is not supported for this app.')
   }
 
-  let identifiers: Identifiers = envIdentifiers as Identifiers
+  let identifiers: Identifiers = envIdentifiersWithExtensions as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
-    app: options.app,
+    app: optionsWithApp.app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
-    force: options.force,
+    force: optionsWithApp.force,
     deploymentMode,
     token,
     envIdentifiers,
@@ -376,6 +384,24 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 
   await logMetadataForLoadedDeployContext(result)
   return result
+}
+
+async function ensureDeployExtensionsContext(
+  token: string,
+  apiKey: string,
+  options: DeployContextOptions,
+  envIdentifiers: Partial<UuidOnlyIdentifiers>,
+) {
+  const appWithExtensions = await loadExtensionsFromRemote(options.app, token, apiKey, options.commandConfig)
+  let envIdentifiersWithExtensions = envIdentifiers
+  if (!options.reset) {
+    envIdentifiersWithExtensions = {
+      ...envIdentifiersWithExtensions,
+      extensions: getAppIdentifiers({app: appWithExtensions}).extensions,
+    }
+  }
+  const optionsWithApp = {...options, app: appWithExtensions}
+  return {optionsWithApp, envIdentifiersWithExtensions}
 }
 
 /**
