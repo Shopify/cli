@@ -49,19 +49,22 @@ describe('bundleExtension()', () => {
     })
 
     // When
-    await bundleExtension({
-      env: app.dotenv?.variables ?? {},
-      outputPath: extension.outputPath,
-      minify: true,
-      environment: 'production',
-      stdin: {
-        contents: 'console.log("mock stdin content")',
-        resolveDir: 'mock/resolve/dir',
-        loader: 'tsx',
+    await bundleExtension(
+      {
+        env: app.dotenv?.variables ?? {},
+        outputPath: extension.outputPath,
+        minify: true,
+        environment: 'production',
+        stdin: {
+          contents: 'console.log("mock stdin content")',
+          resolveDir: 'mock/resolve/dir',
+          loader: 'tsx',
+        },
+        stdout,
+        stderr,
       },
-      stdout,
-      stderr,
-    })
+      {CUSTOM_VAR_FROM_RUNTIME: 'custom_var'},
+    )
 
     // Then
     const call = vi.mocked(esContext).mock.calls[0]!
@@ -91,6 +94,7 @@ describe('bundleExtension()', () => {
     expect(options.define).toEqual({
       'process.env.FOO': JSON.stringify('BAR'),
       'process.env.NODE_ENV': JSON.stringify('production'),
+      'process.env.CUSTOM_VAR_FROM_RUNTIME': JSON.stringify('custom_var'),
     })
     expect(vi.mocked(stdout.write).mock.calls[0][0]).toMatchInlineSnapshot(`
       "▲ [WARNING] warning text [plugin plugin]

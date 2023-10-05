@@ -1,5 +1,5 @@
 import {buildGraphqlTypes, bundleExtension, runFunctionRunner, runJavy, ExportJavyBuilder, jsExports} from './build.js'
-import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -19,6 +19,8 @@ let stdout: any
 let stderr: any
 let signal: any
 
+const app = testApp()
+
 beforeEach(async () => {
   stderr = {write: vi.fn()}
   stdout = {write: vi.fn()}
@@ -31,7 +33,7 @@ describe('buildGraphqlTypes', () => {
     const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
 
     // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal})
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
     // Then
     await expect(got).resolves.toBeUndefined()
@@ -48,7 +50,7 @@ describe('buildGraphqlTypes', () => {
     ourFunction.entrySourceFilePath = 'src/main.rs'
 
     // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal})
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
     // Then
     await expect(got).rejects.toThrow(/GraphQL types can only be built for JavaScript functions/)
@@ -72,7 +74,7 @@ describe('bundleExtension', () => {
       const shopifyFunction = await installShopifyLibrary(tmpDir)
 
       // When
-      const got = bundleExtension(ourFunction, {stdout, stderr, signal})
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
 
       // Then
       await expect(got).resolves.toBeUndefined()
@@ -98,7 +100,7 @@ describe('bundleExtension', () => {
       ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
 
       // When
-      const got = bundleExtension(ourFunction, {stdout, stderr, signal})
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
 
       // Then
       await expect(got).rejects.toThrow(/Could not find the Shopify Function runtime/)
@@ -112,7 +114,7 @@ describe('bundleExtension', () => {
       await installShopifyLibrary(tmpDir)
 
       // When
-      const got = bundleExtension(ourFunction, {stdout, stderr, signal})
+      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app})
 
       // Then
       await expect(got).rejects.toThrow(/Could not find your function entry point./)
@@ -126,7 +128,7 @@ describe('runJavy', () => {
     const ourFunction = await testFunctionExtension()
 
     // When
-    const got = runJavy(ourFunction, {stdout, stderr, signal})
+    const got = runJavy(ourFunction, {stdout, stderr, signal, app})
 
     // Then
     await expect(got).resolves.toBeUndefined()
@@ -258,7 +260,7 @@ describe('ExportJavyBuilder', () => {
         ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
 
         // When
-        const got = builder.bundle(ourFunction, {stdout, stderr, signal})
+        const got = builder.bundle(ourFunction, {stdout, stderr, signal, app})
 
         // Then
         await expect(got).resolves.toBeUndefined()
@@ -287,7 +289,7 @@ describe('ExportJavyBuilder', () => {
         const ourFunction = await testFunctionExtension({dir: tmpDir})
 
         // When
-        const got = builder.bundle(ourFunction, {stdout, stderr, signal})
+        const got = builder.bundle(ourFunction, {stdout, stderr, signal, app})
 
         // Then
         await expect(got).rejects.toThrow(/Could not find your function entry point./)
@@ -302,7 +304,7 @@ describe('ExportJavyBuilder', () => {
         const ourFunction = await testFunctionExtension()
 
         // When
-        const got = builder.compile(ourFunction, {stdout, stderr, signal})
+        const got = builder.compile(ourFunction, {stdout, stderr, signal, app})
 
         // Then
         await expect(got).resolves.toBeUndefined()
