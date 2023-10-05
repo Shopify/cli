@@ -13,6 +13,7 @@ import {
   type ThemeCheckRun,
 } from '@shopify/theme-check-node'
 import YAML from 'yaml'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface OffenseMap {
   [check: string]: Offense[]
@@ -238,7 +239,7 @@ function commentString(input: string): string {
 
 export async function initConfig(root: string) {
   const basefile = '.theme-check.yml'
-  const filePath = `${root}/${basefile}`
+  const filePath = joinPath(root, basefile)
   if (await fileExists(filePath)) {
     outputInfo(`${basefile} already exists at ${root}`)
     return

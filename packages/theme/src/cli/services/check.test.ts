@@ -1,18 +1,17 @@
+import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Severity, SourceCodeType, loadConfig, type Offense, type Theme} from '@shopify/theme-check-node'
+import {Mock, SpyInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {
   formatOffenses,
-  sortOffenses,
-  formatSummary,
-  renderOffensesText,
   formatOffensesJson,
+  formatSummary,
   handleExit,
   initConfig,
+  renderOffensesText,
+  sortOffenses,
 } from './check.js'
-import {expect, describe, afterAll, vi, Mock, beforeEach, test, SpyInstance} from 'vitest'
-import {Offense, Severity, SourceCodeType, Theme} from '@shopify/theme-check-common'
-import {loadConfig} from '@shopify/theme-check-node'
-import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
-import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {fileExists, writeFile, readFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
   fileExists: vi.fn(),
