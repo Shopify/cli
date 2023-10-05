@@ -128,9 +128,11 @@ export default class Init extends Command {
 
     if (!templateConfig.branches.options[flavor]) {
       throw new AbortError(
-        outputContent`Only ${Object.keys(templateConfig.branches.options)
+        outputContent`Invalid option for ${outputToken.yellow('--flavor')}\nThe ${outputToken.yellow(
+          '--flavor',
+        )} flag for ${outputToken.yellow(template)} accepts only ${Object.keys(templateConfig.branches.options)
           .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
-          .join(', ')} template flavors are supported for ${outputToken.yellow(template)}`,
+          .join(', ')}`,
       )
     }
   }

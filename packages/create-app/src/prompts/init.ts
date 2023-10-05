@@ -37,7 +37,7 @@ export const templates = {
     label: 'Start with Remix (recommended)',
     visible: true,
     branches: {
-      prompt: 'For your Remix template, which language do you prefer?',
+      prompt: 'For your Remix template, which language do you want?',
       options: {
         javascript: {branch: 'javascript', label: 'JavaScript'},
         typescript: {branch: 'main', label: 'TypeScript'},
