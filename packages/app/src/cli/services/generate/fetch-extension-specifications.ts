@@ -6,6 +6,7 @@ import {
 } from '../../api/graphql/extension_specifications.js'
 
 import {ExtensionSpecification, createExtensionSpecification} from '../../models/extensions/specification.js'
+import {BaseSchema} from '../../models/extensions/schemas.js'
 import {jsonToZod} from '@shopify/cli-kit/node/schema'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
@@ -75,14 +76,13 @@ function mergeLocalAndRemoteSpecs(
       identifier: '',
       appModuleFeatures: () => [],
     })
+    const zodRemoteSchema = remote.options.cliSchema ? jsonToZod(JSON.parse(remote.options.cliSchema)) : undefined
     const localSpec = {
       ...emptyLocalSpec,
       ...{
         ...remote,
-        schema: remote.options.cliSchema ? jsonToZod(JSON.parse(remote.options.cliSchema)) : emptyLocalSpec.schema,
-        deploySchema: remote.options.cliSchemaDeploy
-          ? jsonToZod(JSON.parse(remote.options.cliSchemaDeploy))
-          : emptyLocalSpec.schema,
+        schema: zodRemoteSchema ? zodRemoteSchema.and(BaseSchema) : BaseSchema,
+        deploySchema: zodRemoteSchema ?? emptyLocalSpec.deploySchema,
         appModuleFeatures: () =>
           remote.options.cliFeatures ? remote.options.cliFeatures.split(',') : emptyLocalSpec.appModuleFeatures(),
         dependency: remote.options.cliDependency,
