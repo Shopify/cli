@@ -2,7 +2,7 @@ import {PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
 import {DEFAULT_CONFIG, testApp} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
-import {fetchOrgFromId} from '../../dev/fetch.js'
+import {fetchAppExtensionRegistrations, fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
 import {describe, vi, test, expect, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -25,6 +25,13 @@ describe('pushConfig', () => {
   beforeEach(() => {
     vi.mocked(confirmPushChanges).mockResolvedValue(true)
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
+    vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+      app: {
+        extensionRegistrations: [],
+        dashboardManagedExtensionRegistrations: [],
+        functions: [],
+      },
+    })
   })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {
@@ -38,6 +45,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         title: 'name of the app',
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
@@ -87,6 +95,7 @@ describe('pushConfig', () => {
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
@@ -132,6 +141,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         requestedAccessScopes: ['read_orders'],
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
@@ -177,6 +187,7 @@ describe('pushConfig', () => {
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
@@ -221,6 +232,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         requestedAccessScopes: ['read_orders'],
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
@@ -275,7 +287,7 @@ describe('pushConfig', () => {
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
-      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
+      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id, applicationUrl: 'https://myapp.com'},
       appUpdate: {
         userErrors: [{message: 'failed to update app'}],
       },
@@ -294,7 +306,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {configuration, force: true}
 
     vi.mocked(partnersRequest).mockResolvedValue({
-      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
+      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id, applicationUrl: 'https://myapp.com'},
       appUpdate: {
         userErrors: [
           {message: "I don't like this name", field: ['input', 'title']},
@@ -354,6 +366,7 @@ app_preferences > url: this url is blocked 6`)
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
@@ -401,6 +414,7 @@ app_preferences > url: this url is blocked 6`)
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        applicationUrl: 'https://myapp.com',
       },
       appUpdate: {
         userErrors: [],
