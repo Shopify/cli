@@ -1,6 +1,7 @@
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {renderError, renderTasks, renderWarning, type Task} from '@shopify/cli-kit/node/ui'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {renderInfo, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
 import {
   Severity,
   applyFixToString,
@@ -13,7 +14,6 @@ import {
   type ThemeCheckRun,
 } from '@shopify/theme-check-node'
 import YAML from 'yaml'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface OffenseMap {
   [check: string]: Offense[]
@@ -36,9 +36,42 @@ interface TransformedOffenseMap {
   suggestionCount: number
   styleCount: number
 }
+export type FailLevel = 'error' | 'suggestion' | 'style'
 
+function severityToFailLevel(severity: Severity): FailLevel {
+  switch (severity) {
+    case Severity.ERROR:
+      return 'error'
+    case Severity.WARNING:
+      return 'suggestion'
+    case Severity.INFO:
+      return 'style'
+  }
+}
+
+function failLevelToSeverity(failLevel: FailLevel): Severity {
+  switch (failLevel) {
+    case 'error':
+      return Severity.ERROR
+    case 'suggestion':
+      return Severity.WARNING
+    case 'style':
+      return Severity.INFO
+  }
+}
+
+function severityToColor(severity: Severity) {
+  switch (severity) {
+    case Severity.ERROR:
+      return 'red'
+    case Severity.WARNING:
+      return 'yellow'
+    case Severity.INFO:
+      return 'blue'
+  }
+}
 /**
- * Returns a code snippet from a file.
+ * Returns a code snippet from a file. All line numbers given MUST be zero indexed
  * @param absolutePath - The absolute path to the file.
  * @param startLine - The line number of the first line of the snippet.
  * @param endLine - The line number of the last line of the snippet.
@@ -48,29 +81,47 @@ function getSnippet(absolutePath: string, startLine: number, endLine: number) {
   const fileContent = readFileSync(absolutePath).toString()
   const lines = fileContent.split('\n')
   const snippetLines = lines.slice(startLine, endLine + 1)
-  return snippetLines.join('\n')
+  const isSingleLine = snippetLines.length === 1
+
+  return snippetLines
+    .map((line, index) => {
+      // For each line in snippetLines, prepend the line number and a space.
+      const lineNumber = startLine + index + 1
+
+      // Normalize variable whitespace from single line snippets
+      const formattedLine = isSingleLine ? line.trim() : line
+      return `${lineNumber}  ${formattedLine}`
+    })
+    .join('\n')
 }
 
 /**
  * Format theme-check Offenses into a format for cli-kit to output.
  */
 export function formatOffenses(offenses: Offense[]) {
-  const offenseBodies = []
+  const offenseBodies = offenses.map((offense, index) => {
+    const {message, absolutePath, start, end, check, severity} = offense
+    // Theme check line numbers are zero indexed, but intuitively 1-indexed
+    const codeSnippet = getSnippet(absolutePath, start.line, end.line)
 
-  for (const offense of offenses) {
-    const {message, absolutePath, start, end, check} = offense
-    const line = start.line === end.line ? `L${start.line}` : `L${start.line} - L${end.line}`
-
-    const codeSnippet = getSnippet(absolutePath, start.line, end.line).trim()
-
-    const offenseDetails = `${check}\n${message}\n\n${codeSnippet}\n\n`
     /**
-     * Leading newlines works around a formatting issue in the ui library where
+     * Leading newlines works around a formatting behavior in the ui library where
      * spaces are automatically appended between tokens. This can cause unexpected
      * formatting issues when presenting theme check offenses
      */
-    offenseBodies.push([{bold: `\n${line}:`}, offenseDetails])
-  }
+    const failLevelLabel = `\n${severityToFailLevel(severity)}:`
+
+    // Ensure enough padding between offenses
+    const offensePadding = `${index === offenses.length - 1 ? '' : '\n\n'}`
+
+    return [
+      {color: severityToColor(severity), value: failLevelLabel},
+      {bold: `${check}`},
+      {subdued: `\n${message}`},
+      `\n\n${codeSnippet}`,
+      offensePadding,
+    ]
+  })
 
   return offenseBodies.flat()
 }
@@ -101,13 +152,13 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
   }, {})
 }
 
-export function formatSummary(offenses: Offense[], theme: Theme): string[] {
+export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, theme: Theme): string[] {
   const summary = [`${theme.length} files inspected`]
 
   if (offenses.length === 0) {
     summary.push('with no offenses found.')
   } else {
-    summary.push(`with ${offenses.length} total offenses found.`)
+    summary.push(`with ${offenses.length} total offenses found across ${Object.keys(offensesByFile).length} files.`)
     const {numErrors, numWarnings, numInfos} = offenses.reduce(
       (acc, offense) => {
         switch (offense.severity) {
@@ -144,14 +195,11 @@ export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: st
   const fileNames = Object.keys(offensesByFile).sort()
 
   fileNames.forEach((filePath) => {
-    const hasErrorOffenses = offensesByFile[filePath]!.some((offense) => offense.severity === Severity.ERROR)
-    const render = hasErrorOffenses ? renderError : renderWarning
-
     // Format the file path to be relative to the theme root.
     // Remove the leading slash agnostic of windows or unix.
     const headlineFilePath = filePath.replace(themeRootPath, '').slice(1)
 
-    render({
+    renderInfo({
       headline: headlineFilePath,
       body: formatOffenses(offensesByFile[filePath]!),
     })
@@ -188,30 +236,6 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
       styleCount,
     }
   })
-}
-
-export type FailLevel = 'error' | 'suggestion' | 'style'
-
-function severityToFailLevel(severity: Severity): FailLevel {
-  switch (severity) {
-    case Severity.ERROR:
-      return 'error'
-    case Severity.WARNING:
-      return 'suggestion'
-    case Severity.INFO:
-      return 'style'
-  }
-}
-
-function failLevelToSeverity(failLevel: FailLevel): Severity {
-  switch (failLevel) {
-    case 'error':
-      return Severity.ERROR
-    case 'suggestion':
-      return Severity.WARNING
-    case 'style':
-      return Severity.INFO
-  }
 }
 
 /**

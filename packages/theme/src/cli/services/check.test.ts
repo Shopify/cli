@@ -1,8 +1,3 @@
-import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {renderError, renderWarning} from '@shopify/cli-kit/node/ui'
-import {Severity, SourceCodeType, loadConfig, type Offense, type Theme} from '@shopify/theme-check-node'
-import {Mock, SpyInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {
   formatOffenses,
   formatOffensesJson,
@@ -12,6 +7,11 @@ import {
   renderOffensesText,
   sortOffenses,
 } from './check.js'
+import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {Severity, SourceCodeType, loadConfig, type Offense, type Theme} from '@shopify/theme-check-node'
+import {Mock, SpyInstance, afterAll, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
   fileExists: vi.fn(),
@@ -33,8 +33,7 @@ vi.mock('@shopify/theme-check-node', async () => {
 })
 
 vi.mock('@shopify/cli-kit/node/ui', async () => ({
-  renderError: vi.fn(),
-  renderWarning: vi.fn(),
+  renderInfo: vi.fn(),
 }))
 
 describe('formatOffenses', () => {
@@ -66,7 +65,16 @@ describe('formatOffenses', () => {
      * Line numbers are 0-indexed to remain backwards compatible with the ruby theme-check output
      * Thats why given line:1 in the offense, we expect the second mocked line in the final output
      */
-    expect(result).toEqual([{bold: '\nL1:'}, 'LiquidHTMLSyntaxError\nAttempting to close HtmlElement\n\nLine2\n\n'])
+    expect(result).toEqual([
+      {
+        color: 'red',
+        value: '\nerror:',
+      },
+      {bold: 'LiquidHTMLSyntaxError'},
+      {subdued: '\nAttempting to close HtmlElement'},
+      '\n\n2  Line2',
+      '',
+    ])
   })
 
   test('should format multiple offenses correctly', () => {
@@ -94,10 +102,16 @@ describe('formatOffenses', () => {
     const result = formatOffenses(offenses)
 
     expect(result).toEqual([
-      {bold: '\nL1:'},
-      'LiquidHTMLSyntaxError\nAttempting to close HtmlElement\n\nLine2\n\n',
-      {bold: '\nL2:'},
-      'LiquidHTMLSyntaxError\nAttempting to close HtmlElement\n\nLine3\n\n',
+      {color: 'red', value: '\nerror:'},
+      {bold: 'LiquidHTMLSyntaxError'},
+      {subdued: '\nAttempting to close HtmlElement'},
+      '\n\n2  Line2',
+      '\n\n',
+      {color: 'yellow', value: '\nsuggestion:'},
+      {bold: 'LiquidHTMLSyntaxError'},
+      {subdued: '\nAttempting to close HtmlElement'},
+      '\n\n3  Line3',
+      '',
     ])
   })
 })
@@ -168,7 +182,7 @@ describe('formatSummary', () => {
     const offenses: Offense[] = []
     const theme: unknown = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-    const result = formatSummary(offenses, theme as Theme)
+    const result = formatSummary(offenses, {}, theme as Theme)
 
     expect(result).toEqual(['10 files inspected', 'with no offenses found.'])
   })
@@ -196,9 +210,14 @@ describe('formatSummary', () => {
     ]
     const theme: unknown = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
-    const result = formatSummary(offenses, theme as Theme)
+    const result = formatSummary(offenses, {}, theme as Theme)
 
-    expect(result).toEqual(['10 files inspected', 'with 2 total offenses found.', '\n1 errors.', '\n1 suggestions.'])
+    expect(result).toEqual([
+      '10 files inspected',
+      'with 2 total offenses found across 0 files.',
+      '\n1 errors.',
+      '\n1 suggestions.',
+    ])
   })
 })
 
@@ -212,7 +231,7 @@ describe('renderOffensesText', () => {
     vi.unstubAllGlobals()
   })
 
-  test('should call renderError for offenses with severity ERROR', () => {
+  test('should call renderInfo for offenses', () => {
     const offensesByFile = {
       '/path/to/file': [
         {
@@ -230,32 +249,10 @@ describe('renderOffensesText', () => {
 
     renderOffensesText(offensesByFile, themeRootPath)
 
-    expect(renderError).toHaveBeenCalledTimes(1)
-    expect(renderWarning).toHaveBeenCalledTimes(0)
-  })
-
-  test('should call renderWarning for offenses with severity WARNING or INFO', () => {
-    const offensesByFile = {
-      '/path/to/file': [
-        {
-          type: SourceCodeType.LiquidHtml,
-          check: 'LiquidHTMLSyntaxError',
-          message: 'Attempting to close HtmlElement',
-          absolutePath: '/path/to/file',
-          severity: Severity.WARNING,
-          start: {index: 0, line: 1, character: 0},
-          end: {index: 10, line: 1, character: 10},
-        },
-      ],
-    }
-    const themeRootPath = '/path/to'
-
-    renderOffensesText(offensesByFile, themeRootPath)
-
-    expect(renderError).toHaveBeenCalledTimes(0)
-    expect(renderWarning).toHaveBeenCalledTimes(1)
+    expect(renderInfo).toHaveBeenCalledTimes(1)
   })
 })
+
 describe('formatOffensesJson', () => {
   test('should format offenses into JSON correctly', () => {
     const offensesByFile = {

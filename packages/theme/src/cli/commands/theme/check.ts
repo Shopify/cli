@@ -161,7 +161,7 @@ Excludes checks matching any category when specified more than once`,
 
         renderInfo({
           headline: 'Theme Check Summary.',
-          body: formatSummary(offenses, theme),
+          body: formatSummary(offenses, offensesByFile, theme),
         })
       }
 
