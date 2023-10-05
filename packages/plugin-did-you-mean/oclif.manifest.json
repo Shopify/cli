@@ -1,5 +1,5 @@
 {
-  "version": "3.49.5",
+  "version": "3.49.6",
   "commands": {
     "config:autocorrect:off": {
       "id": "config:autocorrect:off",
