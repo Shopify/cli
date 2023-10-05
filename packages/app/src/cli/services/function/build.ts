@@ -1,5 +1,6 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {AppInterface} from '../../models/app/app.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -14,6 +15,7 @@ interface JSFunctionBuildOptions {
   stdout: Writable
   stderr: Writable
   signal?: AbortSignal
+  app: AppInterface
   // we want to use tasks when this is a primary command, i.e. 'shopify app function build',
   // but we don't want the fancy UI when this is running as part of 'shopify app build'.
   useTasks?: boolean
@@ -41,7 +43,7 @@ async function buildJSFunctionWithoutTasks(
     await buildGraphqlTypes(fun, options)
   }
   if (!options.signal?.aborted) {
-    options.stdout.write(`Bundling JS function...\n`)
+    options.stdout.write(`Bundling JS function 22...\n`)
     await builder.bundle(fun, options)
   }
   if (!options.signal?.aborted) {
@@ -95,7 +97,9 @@ export async function buildGraphqlTypes(
   })
 }
 
-export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>, _options: JSFunctionBuildOptions) {
+export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+  options.stdout.write(`yesssss\n`)
+
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -110,18 +114,35 @@ export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>
   }
 
   const esbuildOptions = {
-    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath),
+    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}),
     entryPoints: [entryPoint],
   }
+  options.stdout.write(`yesssss\n`)
+
   return esBuild(esbuildOptions)
 }
 
-function getESBuildOptions(directory: string, userFunction: string): Parameters<typeof esBuild>[0] {
+function getESBuildOptions(
+  directory: string,
+  userFunction: string,
+  appEnv: {[variable: string]: string | undefined},
+  processEnv = process.env,
+): Parameters<typeof esBuild>[0] {
+  const env: {[variable: string]: string | undefined} = {...appEnv, ...processEnv}
+  const define = Object.keys(env || {}).reduce(
+    (acc, key) => ({
+      ...acc,
+      [`process.env.${key}`]: JSON.stringify(env[key]),
+    }),
+    {},
+  )
+
   const esbuildOptions: Parameters<typeof esBuild>[0] = {
     outfile: joinPath(directory, 'dist/function.js'),
     alias: {
       'user-function': userFunction,
     },
+    define,
     logLevel: 'silent',
     bundle: true,
     legalComments: 'none',
@@ -194,7 +215,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     this.exports = exports
   }
 
-  async bundle(fun: ExtensionInstance<FunctionConfigType>, _options: JSFunctionBuildOptions) {
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
     if (!fun.entrySourceFilePath) {
       throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
     }
@@ -204,14 +225,13 @@ export class ExportJavyBuilder implements JavyBuilder {
     outputDebug(contents)
 
     const esbuildOptions: Parameters<typeof esBuild>[0] = {
-      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath),
+      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}),
       stdin: {
         contents,
         loader: 'ts',
         resolveDir: fun.directory,
       },
     }
-
     return esBuild(esbuildOptions)
   }
 
