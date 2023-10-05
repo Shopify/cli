@@ -15,9 +15,9 @@ import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {DevProcessFunction} from './dev/processes/types.js'
-import {canEnablePreviewMode} from './extensions/common.js'
 import {DeploymentMode} from './deploy/mode.js'
 import {setCachedAppInfo} from './local-storage.js'
+import {canEnablePreviewMode} from './extensions/common.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -289,7 +289,12 @@ async function launchDevProcesses({
   })
 
   const app = {
-    canEnablePreviewMode: canEnablePreviewMode(config.remoteApp, config.localApp),
+    canEnablePreviewMode: await canEnablePreviewMode({
+      remoteApp: config.remoteApp,
+      localApp: config.localApp,
+      token: config.token,
+      apiKey: config.remoteApp.apiKey,
+    }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
     apiKey: config.remoteApp.apiKey,
     token: config.token,
