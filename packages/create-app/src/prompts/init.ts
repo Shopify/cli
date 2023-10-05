@@ -4,6 +4,7 @@ import {renderText, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit
 interface InitOptions {
   name?: string
   template?: string
+  flavor?: string
   directory: string
 }
 
@@ -22,7 +23,10 @@ interface Template {
   url: string
   label?: string
   visible: boolean
-  branches?: TemplateBranch[]
+  branches?: {
+    prompt: string
+    options: {[key: string]: TemplateBranch}
+  }
 }
 
 // Eventually this list should be taken from a remote location
@@ -32,10 +36,13 @@ export const templates = {
     url: 'https://github.com/Shopify/shopify-app-template-remix',
     label: 'Start with Remix (recommended)',
     visible: true,
-    branches: [
-      {branch: 'javascript', label: 'JavaScript'},
-      {branch: 'main', label: 'TypeScript'},
-    ],
+    branches: {
+      prompt: 'For your Remix template, which language do you prefer?',
+      options: {
+        javascript: {branch: 'javascript', label: 'JavaScript'},
+        typescript: {branch: 'main', label: 'TypeScript'},
+      },
+    },
   } as Template,
   none: {
     url: 'https://github.com/Shopify/shopify-app-template-none',
@@ -65,6 +72,7 @@ const templateOptionsInOrder = ['remix', 'none'] as const
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let name = options.name
   let template = options.template
+  const flavor = options.flavor
 
   const defaults = {
     name: await generateRandomNameForSubdirectory({suffix: 'app', directory: options.directory}),
@@ -118,19 +126,28 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   }
 
   let selectedUrl: string | undefined
+  let branch: string | undefined
   if (answers.templateType !== 'custom') {
     const selectedTemplate = templates[answers.templateType]
-
     selectedUrl = selectedTemplate.url
 
     if (selectedTemplate.branches) {
-      const templateBranch = await renderSelectPrompt({
-        message: 'For your Remix template, which language do you prefer?',
-        choices: selectedTemplate.branches.map((branch) => ({value: branch.branch, label: branch.label})),
-      })
-
-      selectedUrl += `#${templateBranch}`
+      if (flavor) {
+        branch = selectedTemplate.branches.options[flavor]?.branch
+      } else {
+        branch = await renderSelectPrompt({
+          message: selectedTemplate.branches.prompt || 'Choose a flavor:',
+          choices: Object.entries(selectedTemplate.branches.options).map(([_key, branch]) => ({
+            value: branch.branch,
+            label: branch.label,
+          })),
+        })
+      }
     }
+  }
+
+  if (branch) {
+    selectedUrl += `#${branch}`
   }
 
   answers.template = selectedUrl || answers.template || defaults.template

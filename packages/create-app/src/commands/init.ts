@@ -1,4 +1,4 @@
-import initPrompt, {isPredefinedTemplate, visibleTemplates} from '../prompts/init.js'
+import initPrompt, {isPredefinedTemplate, templates, visibleTemplates} from '../prompts/init.js'
 import initService from '../services/init.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -33,6 +33,10 @@ export default class Init extends Command {
        - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]`,
       env: 'SHOPIFY_FLAG_TEMPLATE',
     }),
+    flavor: Flags.string({
+      description: 'Which flavor of the given template to use.',
+      env: 'SHOPIFY_FLAG_TEMPLATE_FLAVOR',
+    }),
     'package-manager': Flags.string({
       char: 'd',
       env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
@@ -51,10 +55,12 @@ export default class Init extends Command {
     const {flags} = await this.parse(Init)
 
     this.validateTemplateValue(flags.template)
+    this.validateFlavorValue(flags.template, flags.flavor)
 
     const promptAnswers = await initPrompt({
       name: flags.name,
       template: flags.template,
+      flavor: flags.flavor,
       directory: flags.path,
     })
 
@@ -89,6 +95,44 @@ export default class Init extends Command {
           .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
           .join(', ')} template aliases are supported`,
       )
+  }
+
+  validateFlavorValue(template: string | undefined, flavor: string | undefined) {
+    if (!template) {
+      if (flavor) {
+        throw new AbortError(
+          outputContent`The ${outputToken.yellow('--flavor')} flag requires the ${outputToken.yellow(
+            '--template',
+          )} flag to be set`,
+        )
+      } else {
+        return
+      }
+    }
+
+    if (!flavor) {
+      return
+    }
+
+    if (!isPredefinedTemplate(template)) {
+      throw new AbortError(
+        outputContent`The ${outputToken.yellow('--flavor')} flag is not supported for custom templates`,
+      )
+    }
+
+    const templateConfig = templates[template]
+
+    if (!templateConfig.branches) {
+      throw new AbortError(outputContent`The ${outputToken.yellow(template)} template does not support flavors`)
+    }
+
+    if (!templateConfig.branches.options[flavor]) {
+      throw new AbortError(
+        outputContent`Only ${Object.keys(templateConfig.branches.options)
+          .map((alias) => outputContent`${outputToken.yellow(alias)}`.value)
+          .join(', ')} template flavors are supported for ${outputToken.yellow(template)}`,
+      )
+    }
   }
 
   parseURL(url: string): URL | undefined {

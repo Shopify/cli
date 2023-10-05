@@ -101,7 +101,7 @@ describe('init', () => {
         {label: 'JavaScript', value: 'javascript'},
         {label: 'TypeScript', value: 'main'},
       ],
-      message: 'Which template would you like to use?',
+      message: 'For your Remix template, which language do you prefer?',
     })
     expect(got).toEqual({...options, ...answers, templateType: 'remix'})
   })
