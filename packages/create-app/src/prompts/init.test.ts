@@ -71,4 +71,38 @@ describe('init', () => {
     })
     expect(got).toEqual({...options, ...answers, templateType: 'none'})
   })
+
+  test('it renders branches for templates that have them', async () => {
+    const answers = {
+      name: 'app',
+      template: 'https://github.com/Shopify/shopify-app-template-remix#javascript',
+    }
+    const options = {directory: '/'}
+
+    // Given
+    vi.mocked(renderTextPrompt).mockResolvedValueOnce(answers.name)
+    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('remix')
+    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('javascript')
+
+    // When
+    const got = await init(options)
+
+    // Then
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      choices: [
+        {label: 'Start with Remix (recommended)', value: 'remix'},
+        {label: 'Start by adding your first extension', value: 'none'},
+      ],
+      message: 'Get started building your app:',
+      defaultValue: 'remix',
+    })
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      choices: [
+        {label: 'JavaScript', value: 'javascript'},
+        {label: 'TypeScript', value: 'main'},
+      ],
+      message: 'For your Remix template, which language do you want?',
+    })
+    expect(got).toEqual({...options, ...answers, templateType: 'remix'})
+  })
 })
