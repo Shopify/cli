@@ -8,7 +8,6 @@ import {
 import {ExtensionSpecification, createExtensionSpecification} from '../../models/extensions/specification.js'
 import {BaseSchema} from '../../models/extensions/schemas.js'
 import {jsonToZod} from '@shopify/cli-kit/node/schema'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -64,33 +63,30 @@ function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
 ): ExtensionSpecification[] {
-  const updated = local.map((spec) => {
-    const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
-    return undefined
+  return remote.map((remote) => {
+    const spec = local.find((local) => remote.identifier === local.identifier)
+    if (spec) return {...spec, ...remote} as ExtensionSpecification
+    return buildLocalSpecFromRemote(remote)
   })
+}
 
-  const customRemoteSpecs = remote.filter((remote) => remote.identifier === 'checkout_post_purchase')
-  customRemoteSpecs.forEach((remote) => {
-    const emptyLocalSpec: ExtensionSpecification = createExtensionSpecification({
-      identifier: '',
-      appModuleFeatures: () => [],
-    })
-    const zodRemoteSchema = remote.options.cliSchema ? jsonToZod(JSON.parse(remote.options.cliSchema)) : undefined
-    const localSpec = {
-      ...emptyLocalSpec,
-      ...{
-        ...remote,
-        schema: zodRemoteSchema ? zodRemoteSchema.and(BaseSchema) : BaseSchema,
-        deploySchema: zodRemoteSchema ?? emptyLocalSpec.deploySchema,
-        appModuleFeatures: () =>
-          remote.options.cliFeatures ? remote.options.cliFeatures.split(',') : emptyLocalSpec.appModuleFeatures(),
-        dependency: remote.options.cliDependency,
-        partnersWebIdentifier: remote.options.cliPartnersSlug,
-      },
-    } as ExtensionSpecification
-    updated.push(localSpec)
+function buildLocalSpecFromRemote(remote: FlattenedRemoteSpecification): ExtensionSpecification {
+  const emptyLocalSpec: ExtensionSpecification = createExtensionSpecification({
+    identifier: '',
+    appModuleFeatures: () => [],
   })
-
-  return getArrayRejectingUndefined<ExtensionSpecification>(updated)
+  const zodRemoteSchema = remote.options.cliSchema ? jsonToZod(JSON.parse(remote.options.cliSchema)) : undefined
+  const localSpec = {
+    ...emptyLocalSpec,
+    ...{
+      ...remote,
+      schema: zodRemoteSchema ? zodRemoteSchema.and(BaseSchema) : BaseSchema,
+      deploySchema: zodRemoteSchema ?? emptyLocalSpec.deploySchema,
+      appModuleFeatures: () =>
+        remote.options.cliFeatures ? remote.options.cliFeatures.split(',') : emptyLocalSpec.appModuleFeatures(),
+      dependency: remote.options.cliDependency,
+      partnersWebIdentifier: remote.options.cliPartnersSlug,
+    },
+  } as ExtensionSpecification
+  return localSpec
 }
