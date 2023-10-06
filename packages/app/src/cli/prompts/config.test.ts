@@ -1,35 +1,18 @@
-import {selectConfigFile, selectConfigName, validate} from './config.js'
-import {fetchAppExtensionRegistrations} from '../services/dev/fetch.js'
+import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from './config.js'
+import {PushOptions} from '../services/app/config/push.js'
+import {testOrganizationApp, testAppWithConfig, DEFAULT_CONFIG} from '../models/app/app.test-data.js'
+import {App} from '../api/graphql/get_config.js'
+import * as link from '../services/app/config/link.js'
+import {OrganizationApp} from '../models/organization.js'
+import {AppConfiguration, CurrentAppConfiguration} from '../models/app/app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('../services/dev/fetch.js', async () => {
-  const fetch: any = await vi.importActual('../services/dev/fetch.js')
-  return {
-    ...fetch,
-    fetchAppExtensionRegistrations: vi.fn().mockImplementation(async () => ({
-      app: {
-        extensionRegistrations: [],
-        dashboardManagedExtensionRegistrations: [],
-        functions: [],
-      },
-    })),
-  }
-})
-
-beforeEach(() => {
-  vi.mocked(fetchAppExtensionRegistrations).mockImplementation(async () => ({
-    app: {
-      extensionRegistrations: [],
-      dashboardManagedExtensionRegistrations: [],
-      functions: [],
-    },
-  }))
-})
 
 describe('selectConfigName', () => {
   test('returns the chosen file name when the file does not exist', async () => {
@@ -189,273 +172,364 @@ describe('validate', () => {
   })
 })
 
-// describe('confirmPushChanges', () => {
-//   test('returns true when force is passed', async () => {
-//     // Given
-//     const options: PushOptions = {
-//       configuration: testAppWithConfig().configuration,
-//       force: true,
-//     }
-//     const app = testOrganizationApp() as App
+describe('confirmPushChanges', () => {
+  beforeEach(() => {
+    vi.spyOn(link, 'getRemoteAppConfig').mockResolvedValue({})
+  })
 
-//     // When
-//     const result = await confirmPushChanges(options, app)
+  test('returns true when force is passed', async () => {
+    // Given
+    const options: PushOptions = {
+      configuration: testAppWithConfig().configuration,
+      force: true,
+    }
 
-//     // Then
-//     expect(result).toBeTruthy()
-//   })
+    const remoteConfiguration: AppConfiguration = {scopes: '', path: ''}
 
-//   test('calls renderConfirmationPrompt with the expected params', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp({requestedAccessScopes: ['read_products']}) as App
+    // When
+    const result = await confirmPushChanges(options, remoteConfiguration)
 
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    // Then
+    expect(result).toBeTruthy()
+  })
 
-//       // Get remote app configuration from app modules
-//       const remoteAppConfig = await getRemoteAppConfig(app.apiKey)
-//       const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, {
-//         ...app,
-//         ...remoteAppConfig,
-//       } as OrganizationApp) as CurrentAppConfiguration
+  test('calls renderConfirmationPrompt with the expected params', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp({requestedAccessScopes: ['read_products']}) as App
 
-//       configuration.name = 'app2'
-//       configuration.access_scopes = {scopes: 'read_themes, read_customers'}
-//       configuration.webhooks.api_version = 'unstable'
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-//       const options: PushOptions = {
-//         configuration,
-//         force: false,
-//       }
+      const configuration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      ) as CurrentAppConfiguration
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+      configuration.name = 'app2'
+      configuration.access_scopes = {scopes: 'read_themes, read_customers'}
+      configuration.webhooks.api_version = 'unstable'
 
-//       // Then
-//       expect(renderConfirmationPrompt).toHaveBeenCalledWith({
-//         message: ['Make the following changes to your remote configuration?'],
-//         gitDiff: {
-//           baselineContent: `name = "app1"
+      const options: PushOptions = {
+        configuration,
+        force: false,
+      }
 
-// [access_scopes]
-// scopes = "read_products"
+      const remoteConfiguration: AppConfiguration = {
+        ...configuration,
+        name: 'app1',
+        access_scopes: {scopes: 'read_products'},
+        webhooks: {api_version: '2023-07'},
+      }
 
-// [webhooks]
-// api_version = "2023-07"
-// `,
-//           updatedContent: `name = "app2"
+      // When
+      const result = await confirmPushChanges(options, remoteConfiguration)
 
-// [access_scopes]
-// scopes = "read_themes,read_customers"
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+        message: ['Make the following changes to your remote configuration?'],
+        gitDiff: {
+          baselineContent: `name = "app1"
 
-// [webhooks]
-// api_version = "unstable"
-// `,
-//         },
-//         defaultValue: true,
-//         confirmationMessage: 'Yes, confirm changes',
-//         cancellationMessage: 'No, cancel',
-//       })
-//       expect(result).toBeTruthy()
-//     })
-//   })
+[access_scopes]
+scopes = "read_products"
 
-//   test('returns false when there are no changes', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp() as App
-//       const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
-//       const options: PushOptions = {
-//         configuration,
-//         force: false,
-//       }
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+[webhooks]
+api_version = "2023-07"
+`,
+          updatedContent: `name = "app2"
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+[access_scopes]
+scopes = "read_themes,read_customers"
 
-//       // Then
-//       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-//       expect(result).toBeFalsy()
-//     })
-//   })
+[webhooks]
+api_version = "unstable"
+`,
+        },
+        defaultValue: true,
+        confirmationMessage: 'Yes, confirm changes',
+        cancellationMessage: 'No, cancel',
+      })
+      expect(result).toBeTruthy()
+    })
+  })
 
-//   test('returns false when there are only ordering changes', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp() as App
+  test('returns false when there are no changes', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const configuration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      )
+      const options: PushOptions = {
+        configuration,
+        force: false,
+      }
 
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      const remoteConfiguration: AppConfiguration = {
+        ...configuration,
+      }
 
-//       const updatedContent = `client_id = "api-key"
-//       name = "app1"
-//       application_url = "https://example.com"
-//       embedded = true
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-//       [webhooks]
-//       api_version = "2023-07"
+      // When
+      const result = await confirmPushChanges(options, remoteConfiguration)
 
-//       [auth]
-//       redirect_urls = [ "https://example.com/callback1" ]
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
 
-//       [pos]
-//       embedded = false
+  test('returns false when there are only ordering changes', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-//       [access_scopes]
-//       use_legacy_install_flow = true
-//       scopes = "read_products"
-//       `
-//       const configuration = decodeToml(updatedContent) as AppConfiguration
-//       const options: PushOptions = {
-//         configuration,
-//         force: false,
-//       }
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const remoteConfiguration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      )
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+      const updatedContent = `client_id = "api-key"
+      name = "app1"
+      application_url = "https://example.com"
+      embedded = true
 
-//       // Then
-//       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-//       expect(result).toBeFalsy()
-//     })
-//   })
+      [webhooks]
+      api_version = "2023-07"
 
-//   test('returns false when there are only changes in comments', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp() as App
+      [auth]
+      redirect_urls = [ "https://example.com/callback1" ]
 
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      [pos]
+      embedded = false
 
-//       const updatedContent = `client_id = "api-key"
-//       name = "app1"
-//       application_url = "https://example.com"
-//       embedded = true
+      [access_scopes]
+      use_legacy_install_flow = true
+      scopes = "read_products"
+      `
+      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const options: PushOptions = {
+        configuration,
+        force: false,
+      }
 
-//       # new comment!
+      // When
+      const result = await confirmPushChanges(options, remoteConfiguration)
 
-//       [webhooks]
-//       api_version = "2023-07"
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
 
-//       [auth]
-//       redirect_urls = [ "https://example.com/callback1" ]
+  test('returns false when there are only changes in comments', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const remoteConfiguration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      )
 
-//       [pos]
-//       embedded = false
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-//       [access_scopes]
-//       scopes = "read_products"
-//       use_legacy_install_flow = true
-//       `
-//       const configuration = decodeToml(updatedContent) as AppConfiguration
-//       const options: PushOptions = {
-//         configuration,
-//         force: false,
-//       }
+      const updatedContent = `client_id = "api-key"
+      name = "app1"
+      application_url = "https://example.com"
+      embedded = true
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+      # new comment!
 
-//       // Then
-//       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-//       expect(result).toBeFalsy()
-//     })
-//   })
+      [webhooks]
+      api_version = "2023-07"
 
-//   test('returns false when there are no changes to app config but there are changes to [build]', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp() as App
-//       const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
-//       const options: PushOptions = {
-//         configuration: {
-//           ...configuration,
-//           build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
-//         },
-//         force: false,
-//       }
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      [auth]
+      redirect_urls = [ "https://example.com/callback1" ]
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+      [pos]
+      embedded = false
 
-//       // Then
-//       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-//       expect(result).toBeFalsy()
-//     })
-//   })
+      [access_scopes]
+      scopes = "read_products"
+      use_legacy_install_flow = true
+      `
+      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const options: PushOptions = {
+        configuration,
+        force: false,
+      }
 
-//   test('returns true when remote app access config is different than local config', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       const remoteConfig = {
-//         access: {
-//           direct_api_offline_access: false,
-//         },
-//       }
+      // When
+      const result = await confirmPushChanges(options, remoteConfiguration)
 
-//       vi.mocked(fetchAppExtensionRegistrations).mockImplementation(async () => ({
-//         app: {
-//           extensionRegistrations: [
-//             {
-//               type: 'APP_ACCESS',
-//               activeVersion: {
-//                 config: JSON.stringify(remoteConfig),
-//               },
-//             } as any,
-//           ],
-//           dashboardManagedExtensionRegistrations: [],
-//           functions: [],
-//         },
-//       }))
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
 
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp() as App
-//       const localConfig = {...DEFAULT_CONFIG, access: {direct_api_offline_access: true}, path: configurationPath}
-//       const options: PushOptions = {
-//         configuration: {
-//           ...localConfig,
-//           build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
-//         },
-//         force: false,
-//       }
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+  test('returns false when there are no changes to app config but there are changes to [build]', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp() as App
+      const configuration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      )
+      const options: PushOptions = {
+        configuration: {
+          ...configuration,
+          build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
+        },
+        force: false,
+      }
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+      // When
+      const result = await confirmPushChanges(options, configuration)
 
-//       // Then
-//       expect(renderConfirmationPrompt).toHaveBeenCalled()
-//       expect(result).toBeTruthy()
-//     })
-//   })
+      // Then
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+      expect(result).toBeFalsy()
+    })
+  })
 
-//   test('returns true when remote app access config is missing but local app has app access configuration', async () => {
-//     await inTemporaryDirectory(async (tmpDir) => {
-//       // Given
-//       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
-//       const app = testOrganizationApp() as App
-//       const localConfig = {...DEFAULT_CONFIG, access: {direct_api_offline_access: false}, path: configurationPath}
-//       const options: PushOptions = {
-//         configuration: {
-//           ...localConfig,
-//           build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
-//         },
-//         force: false,
-//       }
-//       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+  test('when remote app has access config and is missing locally prompts with the difference', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
 
-//       // When
-//       const result = await confirmPushChanges(options, app)
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp({requestedAccessScopes: ['read_products']}) as App
 
-//       // Then
-//       expect(renderConfirmationPrompt).toHaveBeenCalled()
-//       expect(result).toBeTruthy()
-//     })
-//   })
-// })
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      const configuration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      ) as CurrentAppConfiguration
+
+      const options: PushOptions = {
+        configuration,
+        force: false,
+      }
+      const remoteConfiguration = {
+        ...configuration,
+        access: {
+          direct_api_offline_access: false,
+        },
+      }
+
+      // When
+      const result = await confirmPushChanges(options, remoteConfiguration)
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+        message: ['Make the following changes to your remote configuration?'],
+        gitDiff: {
+          baselineContent: `[access]
+direct_api_offline_access = false
+`,
+          updatedContent: '',
+        },
+        defaultValue: true,
+        confirmationMessage: 'Yes, confirm changes',
+        cancellationMessage: 'No, cancel',
+      })
+      expect(result).toBeTruthy()
+    })
+  })
+
+  test('when remote app has no access config but exists locally prompts with the difference', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp({requestedAccessScopes: ['read_products']}) as App
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      const configuration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      ) as CurrentAppConfiguration
+
+      const options: PushOptions = {
+        configuration: {
+          ...configuration,
+          access: {direct_api_offline_access: false},
+        },
+        force: false,
+      }
+
+      // When
+      const result = await confirmPushChanges(options, configuration)
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+        message: ['Make the following changes to your remote configuration?'],
+        gitDiff: {
+          baselineContent: '',
+          updatedContent: `[access]
+direct_api_offline_access = false
+`,
+        },
+        defaultValue: true,
+        confirmationMessage: 'Yes, confirm changes',
+        cancellationMessage: 'No, cancel',
+      })
+      expect(result).toBeTruthy()
+    })
+  })
+
+  test('when remote and local app has access config with different value locally prompts with the difference', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
+      const app = testOrganizationApp({requestedAccessScopes: ['read_products']}) as App
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+
+      const configuration = link.mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+      ) as CurrentAppConfiguration
+
+      const options: PushOptions = {
+        configuration: {
+          ...configuration,
+          access: {direct_api_offline_access: false},
+        },
+        force: false,
+      }
+
+      const remoteConfiguration = {...configuration, access: {direct_api_offline_access: true}}
+
+      // When
+      const result = await confirmPushChanges(options, remoteConfiguration)
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+        message: ['Make the following changes to your remote configuration?'],
+        gitDiff: {
+          baselineContent: `[access]
+direct_api_offline_access = true
+`,
+          updatedContent: `[access]
+direct_api_offline_access = false
+`,
+        },
+        defaultValue: true,
+        confirmationMessage: 'Yes, confirm changes',
+        cancellationMessage: 'No, cancel',
+      })
+      expect(result).toBeTruthy()
+    })
+  })
+})

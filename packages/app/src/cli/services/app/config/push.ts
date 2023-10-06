@@ -1,3 +1,4 @@
+import {getRemoteAppConfig, mergeAppConfiguration} from './link.js'
 import {PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
 import {ClearScopesSchema, clearRequestedScopes} from '../../../api/graphql/clear_requested_scopes.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
@@ -12,6 +13,7 @@ import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_pro
 import {confirmPushChanges} from '../../../prompts/config.js'
 import {logMetadataForLoadedContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
+import {OrganizationApp} from '../../../models/organization.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -55,7 +57,11 @@ export async function pushConfig(options: PushOptions) {
     const {businessName: org} = await fetchOrgFromId(app.organizationId, token)
     renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
 
-    if (!(await confirmPushChanges(options, app))) return
+    // Get remote app configuration from app modules
+    const remoteAppConfig = await getRemoteAppConfig(app.apiKey)
+    const remoteConfiguration = mergeAppConfiguration(configuration, {...app, ...remoteAppConfig} as OrganizationApp)
+
+    if (!(await confirmPushChanges(options, remoteConfiguration))) return
 
     const variables = getMutationVars(app, configuration)
 

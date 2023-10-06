@@ -278,6 +278,7 @@ another = "setting"
         context: undefined,
         registrationId,
         config: '{"access":{"direct_api_offline_access":true}}',
+        handle: '',
       })
 
       // Check if outputDebug is called with success message
