@@ -8,7 +8,6 @@ import {
   outputActiveConfig,
   performAutoFixes,
   renderOffensesText,
-  runThemeCheck,
   sortOffenses,
   type FailLevel,
 } from '../../services/check.js'
@@ -18,6 +17,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {themeCheckRun} from '@shopify/theme-check-node'
 import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
 
 export default class Check extends ThemeCommand {
@@ -153,7 +153,8 @@ Excludes checks matching any category when specified more than once`,
         return
       }
 
-      const {offenses, theme} = await runThemeCheck(flags.path, flags.config)
+      const {offenses, theme} = await themeCheckRun(flags.path, flags.config)
+
       const offensesByFile = sortOffenses(offenses)
 
       if (flags.output === 'text') {

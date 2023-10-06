@@ -1,17 +1,15 @@
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderTasks, type Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {
   Severity,
   applyFixToString,
   autofix,
   loadConfig,
-  themeCheckRun,
   type FixApplicator,
   type Offense,
   type Theme,
-  type ThemeCheckRun,
 } from '@shopify/theme-check-node'
 import YAML from 'yaml'
 
@@ -67,10 +65,6 @@ function severityToLabel(severity: Severity) {
 
 /**
  * Returns a code snippet from a file. All line numbers given MUST be zero indexed
- * @param absolutePath - The absolute path to the file.
- * @param startLine - The line number of the first line of the snippet.
- * @param endLine - The line number of the last line of the snippet.
- * @returns The code snippet.
  */
 function getSnippet(absolutePath: string, startLine: number, endLine: number) {
   const fileContent = readFileSync(absolutePath).toString()
@@ -134,7 +128,6 @@ const offenseSeverityAscending = (offenseA: Offense, offenseB: Offense) => offen
 
 /**
  * Sorts theme check offenses. First all offenses are grouped by file path,
- *
  * then within each collection of offenses, they are sorted by severity.
  */
 export function sortOffenses(offenses: Offense[]): OffenseMap {
@@ -158,11 +151,11 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
 
 /**
  * Returns the number of offenses for each severity type.
- * @param offenses
  */
 function countOffenseTypes(offenses: Offense[]) {
   return offenses.reduce((acc: SeverityCounts, offense: Offense) => {
-    if (!acc.hasOwnProperty(offense.severity)) {
+    const isSeverityUncounted = !Object.prototype.hasOwnProperty.call(acc, offense.severity)
+    if (isSeverityUncounted) {
       acc[offense.severity] = 0
     }
 
@@ -280,21 +273,6 @@ export async function initConfig(root: string) {
   outputSuccess(`Created ${basefile} at ${root}`)
 }
 
-export async function runThemeCheck(themeRoot: string, configPath?: string) {
-  let themeCheckResults = {} as ThemeCheckRun
-
-  const themeCheckTask: Task = {
-    title: `Performing theme check. Please wait...\nEvaluating ${themeRoot}`,
-    task: async () => {
-      themeCheckResults = await themeCheckRun(themeRoot, configPath)
-    },
-  }
-
-  await renderTasks([themeCheckTask])
-
-  return themeCheckResults
-}
-
 const saveToDiskFixApplicator: FixApplicator = async (sourceCode, fix) => {
   const updatedSource = applyFixToString(sourceCode.source, fix)
   await writeFile(sourceCode.absolutePath, updatedSource)
@@ -335,6 +313,10 @@ export async function outputActiveChecks(configPath?: string, root?: string) {
     if (!enabled) {
       return acc
     }
+
+    const severityLabel = severityToLabel(severity === undefined ? Severity.INFO : severity)
+
+    // Map metafields from the check into desired output format
     const meta = checks.find((check) => check.meta.code === checkCode)
     const metafields =
       meta && meta.meta
@@ -345,7 +327,7 @@ export async function outputActiveChecks(configPath?: string, root?: string) {
         : {}
 
     acc[checkCode] = {
-      severity: severityToLabel(severity !== undefined ? severity : Severity.INFO),
+      severity: severityLabel,
       ...metafields,
       // Manually formatting ignore patterns to keep single line array output
       ignored_patterns: `[${ignorePatterns.join(', ')}]`,
