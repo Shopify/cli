@@ -66,10 +66,7 @@ describe('formatOffenses', () => {
      * Thats why given line:1 in the offense, we expect the second mocked line in the final output
      */
     expect(result).toEqual([
-      {
-        color: 'red',
-        value: '\nerror:',
-      },
+      {error: '\n[error]:'},
       {bold: 'LiquidHTMLSyntaxError'},
       {subdued: '\nAttempting to close HtmlElement'},
       '\n\n2  Line2',
@@ -102,12 +99,12 @@ describe('formatOffenses', () => {
     const result = formatOffenses(offenses)
 
     expect(result).toEqual([
-      {color: 'red', value: '\nerror:'},
+      {error: '\n[error]:'},
       {bold: 'LiquidHTMLSyntaxError'},
       {subdued: '\nAttempting to close HtmlElement'},
       '\n\n2  Line2',
       '\n\n',
-      {color: 'yellow', value: '\nsuggestion:'},
+      {warn: '\n[warning]:'},
       {bold: 'LiquidHTMLSyntaxError'},
       {subdued: '\nAttempting to close HtmlElement'},
       '\n\n3  Line3',
@@ -216,7 +213,7 @@ describe('formatSummary', () => {
       '10 files inspected',
       'with 2 total offenses found across 0 files.',
       '\n1 errors.',
-      '\n1 suggestions.',
+      '\n1 warnings.',
     ])
   })
 })
@@ -286,7 +283,7 @@ describe('formatOffensesJson', () => {
         offenses: [
           {
             check: 'LiquidHTMLSyntaxError',
-            severity: Severity.ERROR,
+            severity: 'error',
             start_row: 1,
             start_column: 0,
             end_row: 1,
@@ -295,7 +292,7 @@ describe('formatOffensesJson', () => {
           },
           {
             check: 'LiquidHTMLSyntaxError',
-            severity: Severity.WARNING,
+            severity: 'warning',
             start_row: 2,
             start_column: 0,
             end_row: 2,
@@ -304,8 +301,8 @@ describe('formatOffensesJson', () => {
           },
         ],
         errorCount: 1,
-        suggestionCount: 1,
-        styleCount: 0,
+        warningCount: 1,
+        infoCount: 0,
       },
     ])
   })

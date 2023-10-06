@@ -21,7 +21,7 @@ interface OffenseMap {
 
 interface TransformedOffense {
   check: string
-  severity: number
+  severity: string
   start_row: number
   start_column: number
   end_row: number
@@ -33,21 +33,15 @@ interface TransformedOffenseMap {
   path: string
   offenses: TransformedOffense[]
   errorCount: number
-  suggestionCount: number
-  styleCount: number
+  warningCount: number
+  infoCount: number
 }
-export type FailLevel = 'error' | 'suggestion' | 'style'
 
-function severityToFailLevel(severity: Severity): FailLevel {
-  switch (severity) {
-    case Severity.ERROR:
-      return 'error'
-    case Severity.WARNING:
-      return 'suggestion'
-    case Severity.INFO:
-      return 'style'
-  }
-}
+type SeverityCounts = Partial<{
+  [K in keyof typeof Severity]: number
+}>
+
+export type FailLevel = 'error' | 'suggestion' | 'style'
 
 function failLevelToSeverity(failLevel: FailLevel): Severity {
   switch (failLevel) {
@@ -60,16 +54,17 @@ function failLevelToSeverity(failLevel: FailLevel): Severity {
   }
 }
 
-function severityToColor(severity: Severity) {
+function severityToLabel(severity: Severity) {
   switch (severity) {
     case Severity.ERROR:
-      return 'red'
+      return 'error'
     case Severity.WARNING:
-      return 'yellow'
+      return 'warning'
     case Severity.INFO:
-      return 'blue'
+      return 'info'
   }
 }
+
 /**
  * Returns a code snippet from a file. All line numbers given MUST be zero indexed
  * @param absolutePath - The absolute path to the file.
@@ -95,6 +90,22 @@ function getSnippet(absolutePath: string, startLine: number, endLine: number) {
     .join('\n')
 }
 
+function severityToToken(severity: Severity) {
+  /**
+   * Leading newlines works around a formatting behavior in the ui library where
+   * spaces are automatically appended between tokens. This can cause unexpected
+   * formatting issues when presenting theme check offenses
+   */
+  switch (severity) {
+    case Severity.ERROR:
+      return {error: '\n[error]:'}
+    case Severity.WARNING:
+      return {warn: '\n[warning]:'}
+    case Severity.INFO:
+      return {info: '\n[info]:'}
+  }
+}
+
 /**
  * Format theme-check Offenses into a format for cli-kit to output.
  */
@@ -104,18 +115,11 @@ export function formatOffenses(offenses: Offense[]) {
     // Theme check line numbers are zero indexed, but intuitively 1-indexed
     const codeSnippet = getSnippet(absolutePath, start.line, end.line)
 
-    /**
-     * Leading newlines works around a formatting behavior in the ui library where
-     * spaces are automatically appended between tokens. This can cause unexpected
-     * formatting issues when presenting theme check offenses
-     */
-    const failLevelLabel = `\n${severityToFailLevel(severity)}:`
-
     // Ensure enough padding between offenses
     const offensePadding = `${index === offenses.length - 1 ? '' : '\n\n'}`
 
     return [
-      {color: severityToColor(severity), value: failLevelLabel},
+      severityToToken(severity),
       {bold: `${check}`},
       {subdued: `\n${message}`},
       `\n\n${codeSnippet}`,
@@ -152,6 +156,22 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
   }, {})
 }
 
+/**
+ * Returns the number of offenses for each severity type.
+ * @param offenses
+ */
+function countOffenseTypes(offenses: Offense[]) {
+  return offenses.reduce((acc: SeverityCounts, offense: Offense) => {
+    if (!acc.hasOwnProperty(offense.severity)) {
+      acc[offense.severity] = 0
+    }
+
+    acc[offense.severity]!++
+
+    return acc
+  }, {})
+}
+
 export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, theme: Theme): string[] {
   const summary = [`${theme.length} files inspected`]
 
@@ -159,32 +179,17 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
     summary.push('with no offenses found.')
   } else {
     summary.push(`with ${offenses.length} total offenses found across ${Object.keys(offensesByFile).length} files.`)
-    const {numErrors, numWarnings, numInfos} = offenses.reduce(
-      (acc, offense) => {
-        switch (offense.severity) {
-          case Severity.ERROR:
-            acc.numErrors++
-            break
-          case Severity.WARNING:
-            acc.numWarnings++
-            break
-          case Severity.INFO:
-            acc.numInfos++
-            break
-        }
-        return acc
-      },
-      {numErrors: 0, numWarnings: 0, numInfos: 0},
-    )
 
-    if (numErrors > 0) {
-      summary.push(`\n${numErrors} errors.`)
+    const counts = countOffenseTypes(offenses)
+
+    if (counts[Severity.ERROR]) {
+      summary.push(`\n${counts[Severity.ERROR]} errors.`)
     }
-    if (numWarnings > 0) {
-      summary.push(`\n${numWarnings} suggestions.`)
+    if (counts[Severity.WARNING]) {
+      summary.push(`\n${counts[Severity.WARNING]} warnings.`)
     }
-    if (numInfos > 0) {
-      summary.push(`\n${numInfos} style issues.`)
+    if (counts[Severity.INFO]) {
+      summary.push(`\n${counts[Severity.INFO]} info issues.`)
     }
   }
 
@@ -208,18 +213,10 @@ export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: st
 
 export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffenseMap[] {
   return Object.entries(offensesByFile).map(([path, offenses]) => {
-    let errorCount = 0
-    let suggestionCount = 0
-    let styleCount = 0
-
     const transformedOffenses = offenses.map((offense: Offense) => {
-      if (offense.severity === Severity.ERROR) errorCount++
-      if (offense.severity === Severity.WARNING) suggestionCount++
-      if (offense.severity === Severity.INFO) styleCount++
-
       return {
         check: offense.check,
-        severity: offense.severity,
+        severity: severityToLabel(offense.severity),
         start_row: offense.start.line,
         start_column: offense.start.character,
         end_row: offense.end.line,
@@ -228,12 +225,14 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
       }
     })
 
+    const counts = countOffenseTypes(offenses)
+
     return {
       path,
       offenses: transformedOffenses,
-      errorCount,
-      suggestionCount,
-      styleCount,
+      errorCount: counts[Severity.ERROR] || 0,
+      warningCount: counts[Severity.WARNING] || 0,
+      infoCount: counts[Severity.INFO] || 0,
     }
   })
 }
@@ -346,7 +345,7 @@ export async function outputActiveChecks(configPath?: string, root?: string) {
         : {}
 
     acc[checkCode] = {
-      severity: severityToFailLevel(severity!),
+      severity: severityToLabel(severity !== undefined ? severity : Severity.INFO),
       ...metafields,
       // Manually formatting ignore patterns to keep single line array output
       ignored_patterns: `[${ignorePatterns.join(', ')}]`,
