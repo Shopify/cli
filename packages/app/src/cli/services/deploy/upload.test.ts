@@ -783,7 +783,7 @@ describe('uploadExtensionsBundle', () => {
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         token: 'api-token',
         extensionIds: {},
-        deploymentMode: 'legacy',
+        release: true,
       })
 
       // Then
@@ -833,7 +833,7 @@ describe('uploadExtensionsBundle', () => {
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         token: 'api-token',
         extensionIds: {},
-        deploymentMode: 'unified',
+        release: true,
         message: 'test',
         version: '1.0.0',
       })
@@ -878,7 +878,7 @@ describe('uploadExtensionsBundle', () => {
       appModules: [],
       token: 'api-token',
       extensionIds: {},
-      deploymentMode: 'legacy',
+      release: true,
     })
 
     // Then
@@ -981,7 +981,7 @@ describe('uploadExtensionsBundle', () => {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
           },
-          deploymentMode: 'unified',
+          release: true,
         })
 
         // eslint-disable-next-line no-catch-all/no-catch-all
@@ -1083,7 +1083,7 @@ describe('uploadExtensionsBundle', () => {
           'amortizable-marketplace-ext': '123',
           'amortizable-marketplace-ext-2': '456',
         },
-        deploymentMode: 'unified',
+        release: true,
       })
 
       // Then

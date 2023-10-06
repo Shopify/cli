@@ -1,21 +1,12 @@
 /* eslint-disable require-atomic-updates */
-import {
-  uploadFunctionExtensions,
-  uploadThemeExtensions,
-  uploadExtensionsBundle,
-  UploadExtensionsBundleOutput,
-} from './deploy/upload.js'
+import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
-import {DeploymentMode} from './deploy/mode.js'
 import {AppInterface} from '../models/app/app.js'
-import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
-import {OrganizationApp} from '../models/organization.js'
+import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -23,7 +14,7 @@ import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/c
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
-import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
+import type {Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -61,26 +52,14 @@ interface TasksContext {
 
 export async function deploy(options: DeployOptions) {
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token, deploymentMode} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, token, release} = await ensureDeployContext(options)
   const apiKey = identifiers.app
-  const unifiedDeployment = deploymentMode !== 'legacy'
-
-  if (!options.app.hasExtensions() && !unifiedDeployment) {
-    renderInfo({headline: 'No extensions to deploy to Shopify Partners yet.'})
-    return
-  }
 
   outputNewline()
-  switch (deploymentMode) {
-    case 'legacy':
-      outputInfo(`Deploying your work to Shopify Partners.`)
-      break
-    case 'unified':
-      outputInfo(`Releasing a new app version as part of ${partnersApp.title}`)
-      break
-    case 'unified-skip-release':
-      outputInfo(`Creating a new app version as part of ${partnersApp.title}`)
-      break
+  if (release) {
+    outputInfo(`Releasing a new app version as part of ${partnersApp.title}`)
+  } else {
+    outputInfo(`Creating a new app version as part of ${partnersApp.title}`)
   }
 
   outputNewline()
@@ -99,16 +78,13 @@ export async function deploy(options: DeployOptions) {
       }
       await bundleAndBuildExtensions({app, bundlePath, identifiers})
 
-      const uploadTaskTitle = (() => {
-        switch (deploymentMode) {
-          case 'legacy':
-            return 'Pushing your code to Shopify'
-          case 'unified':
-            return 'Releasing an app version'
-          case 'unified-skip-release':
-            return 'Creating an app version'
-        }
-      })()
+      let uploadTaskTitle
+
+      if (release) {
+        uploadTaskTitle = 'Releasing an app version'
+      } else {
+        uploadTaskTitle = 'Creating an app version'
+      }
 
       const tasks: Task<TasksContext>[] = [
         {
@@ -121,17 +97,15 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const appModules = await Promise.all(
-              options.app.allExtensions.flatMap((ext) =>
-                ext.bundleConfig({identifiers, token, apiKey, unifiedDeployment}),
-              ),
+              options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
 
-            if (bundle || unifiedDeployment) {
+            if (bundle) {
               uploadExtensionsBundleResult = await uploadExtensionsBundle({
                 apiKey,
                 bundlePath,
                 appModules: getArrayRejectingUndefined(appModules),
-                deploymentMode,
+                release,
                 token,
                 extensionIds: identifiers.extensionIds,
                 message: options.message,
@@ -145,16 +119,6 @@ export async function deploy(options: DeployOptions) {
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 
-            if (!unifiedDeployment) {
-              const functions = options.app.allExtensions.filter(
-                (ext) => ext.isFunctionExtension,
-              ) as ExtensionInstance<FunctionConfigType>[]
-              identifiers = await uploadFunctionExtensions(functions, {
-                identifiers,
-                token,
-              })
-            }
-
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
             registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
           },
@@ -165,11 +129,7 @@ export async function deploy(options: DeployOptions) {
 
       await outputCompletionMessage({
         app,
-        partnersApp,
-        partnersOrganizationId: partnersApp.organizationId,
-        identifiers,
-        registrations,
-        deploymentMode,
+        release,
         uploadExtensionsBundleResult,
       })
 
@@ -187,113 +147,18 @@ export async function deploy(options: DeployOptions) {
 
 async function outputCompletionMessage({
   app,
-  partnersApp,
-  partnersOrganizationId,
-  identifiers,
-  registrations,
-  deploymentMode,
+  release,
   uploadExtensionsBundleResult,
 }: {
   app: AppInterface
-  partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
-  partnersOrganizationId: string
-  identifiers: Identifiers
-  registrations: AllAppExtensionRegistrationsQuerySchema
-  deploymentMode: DeploymentMode
+  release: boolean
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 }) {
-  if (deploymentMode !== 'legacy') {
-    return outputUnifiedCompletionMessage(deploymentMode, uploadExtensionsBundleResult, app)
-  }
-
-  let headline: string
-
-  const validationErrors = uploadExtensionsBundleResult?.validationErrors ?? []
-  if (validationErrors.length > 0) {
-    headline = 'Deployed to Shopify, but fixes are needed.'
-  } else {
-    headline = 'Deployed to Shopify!'
-  }
-
-  const outputDeployedButNotLiveMessage = (extension: ExtensionInstance) => {
-    const result = [`${extension.localIdentifier} is deployed to Shopify but not yet live`]
-    const uuid = identifiers.extensions[extension.localIdentifier]
-    const validationError = validationErrors.find((error) => error.uuid === uuid)
-
-    if (validationError) {
-      result.push('\n- Validation errors found in your extension toml file')
-      validationError.errors.forEach((err) => {
-        result.push(`\n  └ ${err.message}`)
-      })
-    }
-
-    return result
-  }
-
-  const outputDeployedAndLiveMessage = (extension: ExtensionInstance) => {
-    return `${extension.localIdentifier} is live`
-  }
-
-  const outputNextStep = async (extension: ExtensionInstance) => {
-    const extensionId =
-      registrations.app.extensionRegistrations.find((registration) => {
-        return registration.uuid === identifiers.extensions[extension.localIdentifier]
-      })?.id ?? ''
-    return [
-      'Publish',
-      {
-        link: {
-          url: await extension.publishURL({orgId: partnersOrganizationId, appId: partnersApp.id, extensionId}),
-          label: extension.localIdentifier,
-        },
-      },
-    ]
-  }
-
-  const nonFunctionExtensions = app.allExtensions.filter((ext) => !ext.isFunctionExtension)
-  const functionExtensions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
-
-  const customSections: AlertCustomSection[] = [
-    {
-      title: 'Summary',
-      body: {
-        list: {
-          items: [
-            ...nonFunctionExtensions.map(outputDeployedButNotLiveMessage),
-            ...functionExtensions.map(outputDeployedAndLiveMessage),
-          ],
-        },
-      },
-    },
-  ]
-
-  if (nonFunctionExtensions.length > 0) {
-    customSections.push({
-      title: 'Next steps',
-      body: {
-        list: {
-          items: await Promise.all(nonFunctionExtensions.map(outputNextStep)),
-        },
-      },
-    })
-  }
-
-  renderSuccess({
-    headline,
-    customSections,
-  })
-}
-
-async function outputUnifiedCompletionMessage(
-  deploymentMode: DeploymentMode,
-  uploadExtensionsBundleResult: UploadExtensionsBundleOutput,
-  app: AppInterface,
-) {
   const linkAndMessage = [
     {link: {label: uploadExtensionsBundleResult.versionTag, url: uploadExtensionsBundleResult.location}},
     uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
   ]
-  if (deploymentMode === 'unified') {
+  if (release) {
     return uploadExtensionsBundleResult.deployError
       ? renderInfo({
           headline: 'New version created, but not released.',

@@ -1,11 +1,4 @@
-import {
-  testApp,
-  testFunctionExtension,
-  testTaxCalculationExtension,
-  testThemeExtensions,
-  testUIExtension,
-  testWebPixelExtension,
-} from '../app/app.test-data.js'
+import {testApp, testFunctionExtension, testTaxCalculationExtension} from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -86,58 +79,6 @@ describe('watchPaths', async () => {
     const got = extensionInstance.watchPaths
 
     expect(got).toBeNull()
-  })
-})
-
-describe('isDraftable', () => {
-  test('returns true for ui extensions when using unified deploys', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable(true)
-
-    expect(got).toBe(true)
-  })
-
-  test('returns false for ui extensions when not using unified deploys', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(false)
-  })
-
-  test('returns false for theme extensions', async () => {
-    const extensionInstance = await testThemeExtensions()
-
-    const got1 = extensionInstance.isDraftable(true)
-    const got2 = extensionInstance.isDraftable(false)
-
-    expect(got1).toBe(false)
-    expect(got2).toBe(false)
-  })
-
-  test('returns false for functions when not using unified deploys', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(false)
-  })
-
-  test('returns true for functions when using unified deploys', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable(true)
-
-    expect(got).toBe(true)
-  })
-
-  test('returns true for web pixel extensions', async () => {
-    const extensionInstance = await testWebPixelExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(true)
   })
 })
 

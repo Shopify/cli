@@ -1,5 +1,4 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
-import {DeploymentMode} from './mode.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {
   UploadUrlGenerateMutation,
@@ -92,8 +91,8 @@ interface UploadExtensionsBundleOptions {
   /** The extensions' numeric identifiers (expressed as a string). */
   extensionIds: IdentifiersExtensions
 
-  /** The mode of the deployment */
-  deploymentMode: DeploymentMode
+  /** Wether or not to release the version */
+  release: boolean
 
   /** App version message */
   message?: string
@@ -153,7 +152,7 @@ export async function uploadExtensionsBundle(
   const variables: AppDeployVariables = {
     apiKey: options.apiKey,
     uuid: appVersionUUID,
-    skipPublish: !(options.deploymentMode === 'unified'),
+    skipPublish: !options.release,
     message: options.message,
     versionTag: options.version,
     commitReference: options.commitReference,

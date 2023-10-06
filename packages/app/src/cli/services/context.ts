@@ -13,7 +13,6 @@ import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
-import {DeploymentMode, resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -38,9 +37,9 @@ import {
 } from '../api/graphql/development_preview.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {TokenItem, renderError, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
@@ -264,7 +263,7 @@ interface DeployContextOutput {
   token: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
-  deploymentMode: DeploymentMode
+  release: boolean
 }
 
 /**
@@ -336,12 +335,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const org = await fetchOrgFromId(partnersApp.organizationId, token)
   showReusedDeployValues(org.businessName, options.app, partnersApp)
 
-  const deploymentMode = await resolveDeploymentMode(partnersApp, options, token)
-
-  if (deploymentMode === 'legacy' && options.commitReference) {
-    throw new AbortError('The `source-control-url` flag is not supported for this app.')
-  }
-
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
@@ -349,7 +342,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
     force: options.force,
-    deploymentMode,
+    release: !options.noRelease,
     token,
     envIdentifiers,
     partnersApp,
@@ -369,13 +362,12 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,
       grantedScopes: partnersApp.grantedScopes,
-      betas: partnersApp.betas,
       applicationUrl: partnersApp.applicationUrl,
       redirectUrlWhitelist: partnersApp.redirectUrlWhitelist,
     },
     identifiers,
     token,
-    deploymentMode,
+    release: !options.noRelease,
   }
 
   await logMetadataForLoadedContext({
@@ -401,7 +393,6 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
   const token = await ensureAuthenticatedPartners()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, token)
   const identifiers: Identifiers = envIdentifiers as Identifiers
-  checkDeploymentsBeta('release', partnersApp)
 
   // eslint-disable-next-line no-param-reassign
   options = {
@@ -447,7 +438,6 @@ export async function ensureVersionsListContext(
 ): Promise<VersionsListContextOutput> {
   const token = await ensureAuthenticatedPartners()
   const [partnersApp] = await fetchAppAndIdentifiers(options, token)
-  checkDeploymentsBeta('versions list', partnersApp)
 
   return {
     token,
@@ -811,23 +801,5 @@ export async function developerPreviewUpdate({
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error: unknown) {
     return false
-  }
-}
-
-function checkDeploymentsBeta(command: string, partnersApp: OrganizationApp) {
-  const deploymentMode: DeploymentMode = partnersApp.betas?.unifiedAppDeployment ? 'unified' : 'legacy'
-  if (deploymentMode === 'legacy') {
-    renderError({
-      headline: `The \`app ${command}\` command is only available for apps that have upgraded to use simplified deployment.`,
-      reference: [
-        {
-          link: {
-            label: 'Simplified extension deployment',
-            url: 'https://shopify.dev/docs/apps/deployment/extension',
-          },
-        },
-      ],
-    })
-    throw new AbortSilentError()
   }
 }

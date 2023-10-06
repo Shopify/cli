@@ -133,21 +133,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  isDraftable(unifiedDeployment: boolean) {
-    if (unifiedDeployment) {
-      return !this.isThemeExtension
-    } else {
-      return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
-    }
-  }
-
-  async deployConfig({
-    apiKey,
-    token,
-    unifiedDeployment,
-  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+  async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
     if (this.isFunctionExtension) {
-      if (!unifiedDeployment) return undefined
       const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
       return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
     }
@@ -261,8 +248,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
+  async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
+    const configValue = await this.deployConfig({apiKey, token})
     if (!configValue) return undefined
 
     const {handle, ...remainingConfigs} = configValue
@@ -280,12 +267,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 export interface ExtensionDeployConfigOptions {
   apiKey: string
   token: string
-  unifiedDeployment: boolean
 }
 
 export interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   token: string
   apiKey: string
-  unifiedDeployment: boolean
 }

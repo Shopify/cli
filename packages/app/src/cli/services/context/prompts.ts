@@ -1,7 +1,6 @@
 import {LocalSource, RemoteSource} from './identifiers.js'
 import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {DeploymentMode} from '../deploy/mode.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
 import metadata from '../../metadata.js'
 import {
@@ -46,60 +45,50 @@ export interface SourceSummary {
   question: string
   identifiers: IdentifiersExtensions
   toCreate: LocalSource[]
-  onlyRemote: RemoteSource[]
   dashboardOnly: RemoteSource[]
 }
 
-export async function deployConfirmationPrompt(
-  {appTitle, question, identifiers, toCreate, onlyRemote, dashboardOnly}: SourceSummary,
-  deploymentMode: DeploymentMode,
-  apiKey: string,
-  token: string,
-): Promise<boolean> {
-  let {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
-    await buildUnifiedDeploymentInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly, deploymentMode)
-  if (infoTable.length === 0 && deploymentMode === 'legacy') {
-    ;({infoTable, removesExtension} = buildLegacyDeploymentInfoPrompt({
-      identifiers,
-      toCreate,
-      onlyRemote,
-      dashboardOnly,
-    }))
-  }
+export async function deployConfirmationPrompt({
+  summary: {appTitle, question, identifiers, toCreate, dashboardOnly},
+  release,
+  apiKey,
+  token,
+}: {
+  summary: SourceSummary
+  release: boolean
+  apiKey: string
+  token: string
+}): Promise<boolean> {
+  const {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
+    await buildInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly)
 
-  const canSkipConfirmation = infoTable.length === 0 && deploymentMode === 'legacy'
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
 
-  if (!canSkipConfirmation) {
-    const appExists = Boolean(appTitle)
-    const isDangerous = appExists && removesExtension && deploymentMode === 'unified'
+  const appExists = Boolean(appTitle)
+  const isDangerous = appExists && removesExtension
 
-    if (isDangerous) {
-      confirmationResponse = await renderDangerousConfirmationPrompt({
-        message: question,
-        infoTable,
-        confirmation: appTitle!,
-      })
+  if (isDangerous) {
+    confirmationResponse = await renderDangerousConfirmationPrompt({
+      message: question,
+      infoTable,
+      confirmation: appTitle!,
+    })
+  } else {
+    let confirmationMessage
+
+    if (release) {
+      confirmationMessage = 'Yes, release this new version'
     } else {
-      const confirmationMessage = (() => {
-        switch (deploymentMode) {
-          case 'legacy':
-            return 'Yes, deploy to push changes'
-          case 'unified':
-            return 'Yes, release this new version'
-          case 'unified-skip-release':
-            return 'Yes, create this new version'
-        }
-      })()
-
-      confirmationResponse = await renderConfirmationPrompt({
-        message: question,
-        infoTable,
-        confirmationMessage,
-        cancellationMessage: 'No, cancel',
-      })
+      confirmationMessage = 'Yes, create this new version'
     }
+
+    confirmationResponse = await renderConfirmationPrompt({
+      message: question,
+      infoTable,
+      confirmationMessage,
+      cancellationMessage: 'No, cancel',
+    })
   }
 
   const timeToConfirmOrCancelMs = new Date().valueOf() - timeBeforeConfirmationMs
@@ -112,52 +101,18 @@ export async function deployConfirmationPrompt(
   return confirmationResponse
 }
 
-function buildLegacyDeploymentInfoPrompt({
-  identifiers,
-  toCreate,
-  onlyRemote,
-  dashboardOnly,
-}: Omit<SourceSummary, 'appTitle' | 'question'>) {
-  const infoTable: InfoTableSection[] = []
-
-  const included = [
-    ...toCreate.map((source) => [source.localIdentifier, {subdued: '(new)'}]),
-    ...Object.keys(identifiers),
-    ...dashboardOnly.map((source) => [source.title, {subdued: '(from Partner Dashboard)'}]),
-  ]
-
-  if (included.length > 0) {
-    infoTable.push({header: 'Includes:', items: included, bullet: '+'})
-  }
-
-  const removesExtension = onlyRemote.length > 0
-  if (removesExtension) {
-    infoTable.push({
-      header: 'Removes:',
-      items: onlyRemote.map((source) => source.title),
-      bullet: '-',
-      helperText: 'This can permanently delete app user data.',
-    })
-  }
-
-  return {infoTable, removesExtension}
-}
-
-async function getUnifiedDeploymentInfoBreakdown(
+async function getInfoBreakdown(
   apiKey: string,
   token: string,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
-  deploymentMode: DeploymentMode,
 ): Promise<{
   toCreate: string[]
   toUpdate: string[]
   fromDashboard: string[]
   onlyRemote: string[]
 } | null> {
-  if (deploymentMode === 'legacy') return null
-
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
   const nonDashboardRemoteRegistrations =
@@ -197,22 +152,14 @@ async function getUnifiedDeploymentInfoBreakdown(
   }
 }
 
-async function buildUnifiedDeploymentInfoPrompt(
+async function buildInfoPrompt(
   apiKey: string,
   token: string,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
-  deploymentMode: DeploymentMode,
 ) {
-  const breakdown = await getUnifiedDeploymentInfoBreakdown(
-    apiKey,
-    token,
-    localRegistration,
-    toCreate,
-    dashboardOnly,
-    deploymentMode,
-  )
+  const breakdown = await getInfoBreakdown(apiKey, token, localRegistration, toCreate, dashboardOnly)
   if (breakdown === null) return {infoTable: [], removesExtension: false}
 
   const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = breakdown

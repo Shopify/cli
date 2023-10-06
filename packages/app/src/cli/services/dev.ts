@@ -15,7 +15,6 @@ import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {DevProcessFunction} from './dev/processes/types.js'
-import {DeploymentMode} from './deploy/mode.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {loadApp} from '../models/app/loader.js'
@@ -129,7 +128,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     commandOptions,
     network,
     partnerUrlsUpdated,
-    usesUnifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false,
   }
 }
 
@@ -169,7 +167,6 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
     tunnelUrl: config.network.proxyUrl,
     shouldUpdateURLs: config.partnerUrlsUpdated,
     storeFqdn: config.storeFqdn,
-    deploymentMode: config.usesUnifiedDeployment ? 'unified' : 'legacy',
   })
 
   await reportAnalyticsEvent({config: config.commandOptions.commandConfig})
@@ -314,7 +311,6 @@ export async function logMetadataForDev(options: {
   tunnelUrl: string
   shouldUpdateURLs: boolean
   storeFqdn: string
-  deploymentMode: DeploymentMode | undefined
 }) {
   const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublicMetadata(() => ({
@@ -324,7 +320,6 @@ export async function logMetadataForDev(options: {
     store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
     cmd_app_reset_used: options.devOptions.reset,
-    cmd_app_deployment_mode: options.deploymentMode,
   }))
 
   await metadata.addSensitiveMetadata(() => ({

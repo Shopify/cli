@@ -6,7 +6,6 @@ import {RemoteSource} from './identifiers.js'
 import {deployConfirmationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {AppInterface} from '../../models/app/app.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
-import {DeploymentMode} from '../deploy/mode.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
@@ -46,11 +45,7 @@ const LOCAL_APP = (functionExtensions: ExtensionInstance[]): AppInterface => {
   })
 }
 
-const options = (
-  functionExtensions: ExtensionInstance[],
-  identifiers: any = {},
-  deploymentMode: DeploymentMode = 'legacy',
-) => {
+const options = (functionExtensions: ExtensionInstance[], identifiers: any = {}, release = true) => {
   return {
     app: LOCAL_APP(functionExtensions),
     token: 'token',
@@ -58,7 +53,7 @@ const options = (
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
     force: false,
-    deploymentMode,
+    release,
   }
 }
 

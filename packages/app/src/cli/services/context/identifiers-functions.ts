@@ -27,29 +27,25 @@ export async function ensureFunctionsIds(
     }
   }
 
-  let onlyRemoteFunctions = matchFunctions.toManualMatch.remote ?? []
-
   if (matchFunctions.toManualMatch.local.length > 0) {
     const matchResult = await manualMatchIds(matchFunctions.toManualMatch, 'id')
     validMatches = {...validMatches, ...matchResult.identifiers}
     functionsToCreate.push(...matchResult.toCreate)
-    onlyRemoteFunctions = matchResult.onlyRemote
   }
 
   if (!options.force) {
-    const confirmed = await deployConfirmationPrompt(
-      {
+    const confirmed = await deployConfirmationPrompt({
+      summary: {
         appTitle: options.app.name,
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: validMatches,
         toCreate: functionsToCreate,
-        onlyRemote: onlyRemoteFunctions,
         dashboardOnly: [],
       },
-      options.deploymentMode,
-      options.appId,
-      options.token,
-    )
+      release: options.release,
+      apiKey: options.appId,
+      token: options.token,
+    })
     if (!confirmed) return err('user-cancelled')
   }
 
