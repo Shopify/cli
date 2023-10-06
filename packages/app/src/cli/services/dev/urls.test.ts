@@ -595,6 +595,28 @@ describe('generatePartnersURLs', () => {
       },
     })
   })
+
+  test('Returns app proxy section changing only the host of the proxy url', () => {
+    const applicationUrl = 'http://my-base-url'
+    const proxyUrl = 'http://old-base-url/subpath'
+
+    const got = generatePartnersURLs(applicationUrl, [], {url: proxyUrl, subpath: 'subpath', prefix: 'prefix'})
+
+    expect(got).toMatchObject({
+      applicationUrl,
+      redirectUrlWhitelist: [
+        `${applicationUrl}/auth/callback`,
+        `${applicationUrl}/auth/shopify/callback`,
+        `${applicationUrl}/api/auth/callback`,
+        `${applicationUrl}/${urlNamespaces.devTools}/graphiql/auth/callback`,
+      ],
+      appProxy: {
+        proxyUrl: 'http://my-base-url/subpath',
+        proxySubPath: 'subpath',
+        proxySubPathPrefix: 'prefix',
+      },
+    })
+  })
 })
 
 describe('validatePartnersURLs', () => {

@@ -147,7 +147,13 @@ export function generatePartnersURLs(
   }
 
   const appProxy = proxyFields
-    ? {appProxy: {proxyUrl: baseURL, proxySubPath: proxyFields.subpath, proxySubPathPrefix: proxyFields.prefix}}
+    ? {
+        appProxy: {
+          proxyUrl: replaceHost(proxyFields.url, baseURL),
+          proxySubPath: proxyFields.subpath,
+          proxySubPathPrefix: proxyFields.prefix,
+        },
+      }
     : {}
 
   return {
@@ -155,6 +161,13 @@ export function generatePartnersURLs(
     redirectUrlWhitelist,
     ...appProxy,
   }
+}
+
+function replaceHost(oldUrl: string, newUrl: string): string {
+  const oldUrlObject = new URL(oldUrl)
+  const newUrlObject = new URL(newUrl)
+  oldUrlObject.host = newUrlObject.host
+  return oldUrlObject.toString().replace(/\/$/, '')
 }
 
 export async function updateURLs(
