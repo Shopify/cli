@@ -39,15 +39,17 @@ type SeverityCounts = Partial<{
   [K in keyof typeof Severity]: number
 }>
 
-export type FailLevel = 'error' | 'suggestion' | 'style'
+export type FailLevel = 'error' | 'suggestion' | 'style' | 'warning' | 'info' | 'crash'
 
-function failLevelToSeverity(failLevel: FailLevel): Severity {
+function failLevelToSeverity(failLevel: FailLevel): Severity | undefined {
   switch (failLevel) {
     case 'error':
       return Severity.ERROR
     case 'suggestion':
+    case 'warning':
       return Severity.WARNING
     case 'style':
+    case 'info':
       return Severity.INFO
   }
 }
@@ -233,12 +235,12 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
 /**
  * Handles the process exit based on the offenses and fail level.
  */
-export function handleExit(offenses: Offense[], failLevel?: FailLevel) {
+export function handleExit(offenses: Offense[], failLevel: FailLevel) {
   // If there is no fail level set, exit with 0
   if (!failLevel) process.exit(0)
 
   const failSeverity = failLevelToSeverity(failLevel)
-  const shouldFail = offenses.some((offense) => offense.severity < failSeverity)
+  const shouldFail = failSeverity !== undefined && offenses.some((offense) => offense.severity <= failSeverity)
 
   process.exit(shouldFail ? 1 : 0)
 }

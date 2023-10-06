@@ -62,7 +62,8 @@ Excludes checks matching any category when specified more than once`,
       required: false,
       description: 'Minimum severity for exit with error code',
       env: 'SHOPIFY_FLAG_FAIL_LEVEL',
-      options: ['error', 'suggestion', 'style'],
+      options: ['crash', 'error', 'suggestion', 'style', 'warning', 'info'],
+      default: 'error',
     }),
 
     /**
