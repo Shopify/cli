@@ -124,9 +124,12 @@ Excludes checks matching any category when specified more than once`,
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
 
+    // Its not clear to typescript that path will always be defined
+    const path = flags.path!
+
     if (flags['dev-preview']) {
       if (flags.init) {
-        await initConfig(flags.path)
+        await initConfig(path)
 
         // --init should not trigger full theme check operation
         return
@@ -140,25 +143,25 @@ Excludes checks matching any category when specified more than once`,
       }
 
       if (flags.print) {
-        await outputActiveConfig(flags.config, flags.path)
+        await outputActiveConfig(flags.config, path)
 
         // --print should not trigger full theme check operation
         return
       }
 
       if (flags.list) {
-        await outputActiveChecks(flags.config, flags.path)
+        await outputActiveChecks(flags.config, path)
 
         // --list should not trigger full theme check operation
         return
       }
 
-      const {offenses, theme} = await themeCheckRun(flags.path, flags.config)
+      const {offenses, theme} = await themeCheckRun(path, flags.config)
 
       const offensesByFile = sortOffenses(offenses)
 
       if (flags.output === 'text') {
-        renderOffensesText(offensesByFile, flags.path)
+        renderOffensesText(offensesByFile, path)
 
         renderInfo({
           headline: 'Theme Check Summary.',
@@ -177,8 +180,8 @@ Excludes checks matching any category when specified more than once`,
       handleExit(offenses, flags['fail-level'] as FailLevel)
     }
 
-    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
-      directory: flags.path,
+    await execCLI2(['theme', 'check', path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
+      directory: path,
     })
   }
 }
