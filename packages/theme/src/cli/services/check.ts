@@ -342,3 +342,28 @@ export async function outputActiveChecks(configPath?: string, root?: string) {
 
   outputInfo(YAML.stringify(checksList))
 }
+
+interface ExtendedWriteStream extends NodeJS.WriteStream {
+  _handle: {
+    setBlocking: (blocking: boolean) => void
+  }
+}
+
+interface HandleObject {
+  _handle: unknown
+}
+
+interface HandleWithSetBlocking {
+  _handle: {
+    setBlocking: unknown
+  }
+}
+
+export function isExtendedWriteStream(stream: NodeJS.WriteStream): stream is ExtendedWriteStream {
+  return (
+    '_handle' in stream &&
+    typeof (stream as HandleObject)._handle === 'object' &&
+    (stream as HandleObject)._handle !== null &&
+    typeof (stream as HandleWithSetBlocking)._handle.setBlocking === 'function'
+  )
+}

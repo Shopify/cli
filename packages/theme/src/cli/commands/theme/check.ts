@@ -9,6 +9,7 @@ import {
   performAutoFixes,
   renderOffensesText,
   sortOffenses,
+  isExtendedWriteStream,
   type FailLevel,
 } from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
@@ -126,6 +127,7 @@ Excludes checks matching any category when specified more than once`,
     const {flags} = await this.parse(Check)
 
     // Its not clear to typescript that path will always be defined
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     const path = flags.path!
 
     if (flags['dev-preview']) {
@@ -171,7 +173,22 @@ Excludes checks matching any category when specified more than once`,
       }
 
       if (flags.output === 'json') {
-        outputInfo(JSON.stringify(formatOffensesJson(offensesByFile), null, 2))
+        /**
+         * Workaround:
+         * Force stdout to be blocking so that the JSON output is not broken when piped to another process.
+         * ie: ` | jq .`
+         * It turns out that console.log is technically asynchronous, and when we call process.exit(),
+         * node doesn't wait on all the output being sent to stdout and instead closes the process immediately
+         *
+         * https://github.com/pnp/cli-microsoft365/issues/1266#issuecomment-727254264
+         *
+         */
+        const stdout = process.stdout
+        if (isExtendedWriteStream(stdout)) {
+          stdout._handle.setBlocking(true)
+        }
+
+        outputInfo(JSON.stringify(formatOffensesJson(offensesByFile)))
       }
 
       if (flags['auto-correct']) {
