@@ -1,9 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
-import {AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
-import {getRemoteAppConfig, mergeAppConfiguration} from '../services/app/config/link.js'
-import {OrganizationApp} from '../models/organization.js'
-import {App} from '../api/graphql/get_config.js'
+import {AppConfiguration, AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
 import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
 import {
   RenderTextPromptOptions,
@@ -73,13 +70,10 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(options: PushOptions, app: App) {
+export async function confirmPushChanges(options: PushOptions, remoteConfiguration: AppConfiguration) {
   if (options.force) return true
 
   const configuration = options.configuration as CurrentAppConfiguration
-  // Get remote app configuration from app modules
-  const remoteAppConfig = await getRemoteAppConfig(app.apiKey)
-  const remoteConfiguration = mergeAppConfiguration(configuration, {...app, ...remoteAppConfig} as OrganizationApp)
 
   if (configuration.access_scopes?.scopes)
     configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
