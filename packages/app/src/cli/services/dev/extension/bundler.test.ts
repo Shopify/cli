@@ -9,6 +9,7 @@ import {
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import * as updateExtension from '../update-extension.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -18,6 +19,7 @@ import {BuildResult} from 'esbuild'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import * as cliKitFS from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -552,6 +554,42 @@ describe('setupFunctionWatcher', () => {
 
     expect(chokidarWatchSpy).toHaveBeenCalledWith(expect.arrayContaining<string>([joinPath('foo', '*.rs')]))
     expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
+  })
+
+  test('deploys the function on file change in locales directory', async () => {
+    // Given
+    vi.spyOn(cliKitFS, 'fileExists').mockResolvedValue(true)
+
+    const watchOptions = await mockWatcherOptions({
+      watchPath: '*.rs',
+    })
+
+    const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
+      // Call the file watch handler immediately
+      handler(`${watchOptions.extension.directory}/locales/en.json`)
+    })
+
+    // When
+    const chokidarWatchSpy = vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      if (path.toString().includes('locales')) {
+        return {
+          on: chokidarOnSpy,
+        } as any
+      }
+      return {
+        on: vi.fn(),
+      } as any
+    })
+
+    const updateExtensionConfigSpy = vi.spyOn(updateExtension, 'updateExtensionConfig').mockResolvedValue()
+
+    await setupFunctionWatcher(watchOptions)
+    await flushPromises()
+
+    // Then
+    expect(chokidarOnSpy).toHaveBeenCalled()
+    expect(chokidarWatchSpy).toHaveBeenCalledWith([`${watchOptions.extension.directory}/locales/**.json`])
+    expect(updateExtensionConfigSpy).toHaveBeenCalled()
   })
 
   test('builds and deploys the function on file change', async () => {
