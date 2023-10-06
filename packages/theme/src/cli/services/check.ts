@@ -282,8 +282,8 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
   await autofix(sourceCodes, offenses, saveToDiskFixApplicator)
 }
 
-export async function outputActiveConfig(configPath?: string, root?: string) {
-  const {ignore, settings} = await loadConfig(configPath, root)
+export async function outputActiveConfig(configPath?: string, themeRoot?: string) {
+  const {ignore, settings, root} = await loadConfig(configPath, themeRoot)
 
   const config = {
     // loadConfig has no clear idea of where to extend the config from.
@@ -293,6 +293,8 @@ export async function outputActiveConfig(configPath?: string, root?: string) {
     // Depending on how the configs were merged during loadConfig, there may be
     // duplicate patterns to ignore. We can clean them before outputting.
     ignore: [...new Set(ignore)],
+
+    root,
 
     // Dump out the active settings for all checks.
     ...settings,
