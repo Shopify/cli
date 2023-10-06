@@ -1367,6 +1367,10 @@ automatically_update_urls_on_dev = true
       benchmark_api_base_url = "https://benchmark.example.com"
       calculate_taxes_api_endpoint = "/calculate-taxes"
 
+      [input.metafield_identifiers]
+      namespace = "taxy-tax"
+      key = "metafield-config"
+
       [[metafields]]
       namespace = "my-namespace"
       key = "my-key"
@@ -1396,6 +1400,12 @@ automatically_update_urls_on_dev = true
             key: 'my-key',
           },
         ],
+        input: {
+          metafield_identifiers: {
+            namespace: 'taxy-tax',
+            key: 'metafield-config',
+          },
+        },
       })
     }
   })

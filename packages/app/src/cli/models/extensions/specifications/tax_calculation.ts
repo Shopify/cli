@@ -6,6 +6,16 @@ const TaxCalculationsSchema = BaseSchema.extend({
   production_api_base_url: zod.string(),
   benchmark_api_base_url: zod.string().optional(),
   calculate_taxes_api_endpoint: zod.string(),
+  input: zod
+    .object({
+      metafield_identifiers: zod
+        .object({
+          namespace: zod.string(),
+          key: zod.string(),
+        })
+        .optional(),
+    })
+    .optional(),
 })
 
 const spec = createExtensionSpecification({
@@ -19,6 +29,7 @@ const spec = createExtensionSpecification({
       calculate_taxes_api_endpoint: config.calculate_taxes_api_endpoint,
       metafields: config.metafields,
       api_version: config.api_version,
+      metafield_identifiers: config.input?.metafield_identifiers,
     }
   },
 })
