@@ -894,8 +894,8 @@ Validate the theme.
 ```
 USAGE
   $ shopify theme check [--no-color] [--verbose] [--dev-preview] [--path <value>] [-a] [-c <value>] [-C <value>]
-    [-x <value>] [--fail-level error|suggestion|style] [--update-docs] [--init] [--list] [-o text|json] [--print] [-v]
-    [-e <value>]
+    [-x <value>] [--fail-level crash|error|suggestion|style|warning|info] [--update-docs] [--init] [--list] [-o
+    text|json] [--print] [-v] [-e <value>]
 
 FLAGS
   -C, --config=<value>            Use the config provided, overriding .theme-check.yml if present
@@ -911,8 +911,8 @@ FLAGS
                                   Excludes checks matching any category when specified more than once
   --dev-preview                   Use the dev preview version of theme check
                                   Applies the typescript implementation of theme check to the theme
-  --fail-level=<option>           Minimum severity for exit with error code
-                                  <options: error|suggestion|style>
+  --fail-level=<option>           [default: error] Minimum severity for exit with error code
+                                  <options: crash|error|suggestion|style|warning|info>
   --init                          Generate a .theme-check.yml file
   --list                          List enabled checks
   --no-color                      Disable color output.

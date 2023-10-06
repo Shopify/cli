@@ -51,6 +51,8 @@ function failLevelToSeverity(failLevel: FailLevel): Severity | undefined {
     case 'style':
     case 'info':
       return Severity.INFO
+    case 'crash':
+      return undefined
   }
 }
 

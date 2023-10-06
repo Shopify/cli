@@ -321,9 +321,9 @@ describe('handleExit', () => {
     exitSpy.mockRestore()
   })
 
-  test('should exit with 0 when no fail level is set', () => {
+  test('should exit with 0 when crash fail level is set', () => {
     const offenses: Offense[] = []
-    handleExit(offenses)
+    handleExit(offenses, 'crash')
     expect(exitSpy).toHaveBeenCalledWith(0)
   })
 
@@ -343,7 +343,7 @@ describe('handleExit', () => {
     expect(exitSpy).toHaveBeenCalledWith(1)
   })
 
-  test('should exit with 0 when offenses severity is not less than fail level', () => {
+  test('should exit with 1 when offenses severity is equal to the fail level', () => {
     const offenses: Offense[] = [
       {
         type: SourceCodeType.LiquidHtml,
@@ -356,6 +356,22 @@ describe('handleExit', () => {
       },
     ]
     handleExit(offenses, 'error')
+    expect(exitSpy).toHaveBeenCalledWith(1)
+  })
+
+  test('should exit with 0 when offenses severity is not less than fail level', () => {
+    const offenses: Offense[] = [
+      {
+        type: SourceCodeType.LiquidHtml,
+        check: 'LiquidHTMLSyntaxError',
+        message: 'Attempting to close HtmlElement',
+        absolutePath: '/path/to/file',
+        severity: Severity.INFO,
+        start: {index: 0, line: 1, character: 0},
+        end: {index: 10, line: 1, character: 10},
+      },
+    ]
+    handleExit(offenses, 'warning')
     expect(exitSpy).toHaveBeenCalledWith(0)
   })
 })
