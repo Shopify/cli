@@ -34,6 +34,15 @@ describe('TokenizedText', async () => {
       {
         filePath: 'src/this/is/a/test.js',
       },
+      {
+        info: 'some info',
+      },
+      {
+        warn: 'some warn',
+      },
+      {
+        error: 'some error',
+      },
     ]
 
     const {lastFrame} = render(<TokenizedText item={item} />)
@@ -43,7 +52,7 @@ describe('TokenizedText', async () => {
         • Item 1
         • Item 2
         • Item 3
-      src/this/is/a/test.js"
+      src/this/is/a/test.js some info some warn some error"
     `)
   })
 

@@ -2,4 +2,4 @@
 '@shopify/cli-kit': minor
 ---
 
-Added ColoredTokens to cli-kit ui
+Added InfoToken, WarnToken, and ErrorToken to cli-kit ui
