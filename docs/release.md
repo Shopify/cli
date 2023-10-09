@@ -65,3 +65,12 @@ Finally, it's time to do a bit of manual shuffling, as we welcome a stable versi
     2. Ensure npm's `@latest` tag always points to the latest stable version
 8. Commit and push your changes.
 9. If we have decided to label a minor version as end-of-life, find the appropriate stack in [CLI Shipit](https://shipit.shopify.io/shopify/cli) and archive it.
+
+### Creating a new experimental version
+Sometimes it's not easy to test some modification you have made, for example, if you modify some dependencies that genarete an issue when they are installed with an specific `package-manager`. In those cases, you can `create a new app` using the flag `--local` and as a result all the `cli dependencies` will point to your local copy of the repository. Another use case could be when you require a third party team to test some of your modifications but you don't want them to know how to checkout the CLI repo and contributing to them.
+A good way to cover the previous examples would be to generate a new release that includes the content of one or more specific branches and that can be easily installed using the [normal app creation flow](https://shopify.dev/docs/apps/tools/cli#getting-started).
+To create a new experimental release:
+1. Push al the changes from your branch to the `experimental` branch with `git push origin <your-branch-name> experimental -f`
+
+
+To create a new app using the `experimental` release run the command `npm init @shopify/app@experimental` which will create the app using the last `experimental` version. Please, note that anyone can overwrite the content of the `experimental` and generate a new release. In that cases, if you want to be sure that you or the people that need to test the release use the correct version, please locate it in the (npm registry)[https://www.npmjs.com/package/@shopify/cli?activeTab=versions] and create the app using it `npm init @shopify/app@0.0.0-experimental-20231009094413`
