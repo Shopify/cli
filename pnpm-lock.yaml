@@ -158,13 +158,13 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
       '@shopify/cli-kit':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../plugin-cloudflare
       abort-controller:
         specifier: 3.0.0
@@ -255,20 +255,20 @@ importers:
         specifier: 3.1.8
         version: 3.1.8(@types/node@14.18.54)(typescript@5.0.4)
       '@shopify/cli-kit':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.21.4)
     devDependencies:
       '@shopify/app':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../app
       '@shopify/theme':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../theme
       '@types/node':
         specifier: 14.18.54
@@ -518,7 +518,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
       '@shopify/cli-kit':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -640,7 +640,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
       '@shopify/cli-kit':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../cli-kit
       node-fetch:
         specifier: 3.3.1
@@ -662,7 +662,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
       '@shopify/cli-kit':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -681,7 +681,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.54)(typescript@5.0.4)
       '@shopify/cli-kit':
-        specifier: 3.49.6
+        specifier: 3.49.7
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -13526,6 +13526,7 @@ packages:
     resolution: {directory: packages/eslint-plugin-cli, type: directory}
     id: file:packages/eslint-plugin-cli
     name: '@shopify/eslint-plugin-cli'
+    version: 3.46.0
     peerDependencies:
       eslint: ^8.46.0
     dependencies:
