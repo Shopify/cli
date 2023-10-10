@@ -17,7 +17,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {themeCheckRun} from '@shopify/theme-check-node'
 import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
 
@@ -166,7 +166,10 @@ Excludes checks matching any category when specified more than once`,
       if (flags.output === 'text') {
         renderOffensesText(offensesByFile, path)
 
-        renderInfo({
+        // Use renderSuccess when theres no offenses
+        const render = offenses.length ? renderInfo : renderSuccess
+
+        render({
           headline: 'Theme Check Summary.',
           body: formatSummary(offenses, offensesByFile, theme),
         })
