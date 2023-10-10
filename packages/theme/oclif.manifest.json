@@ -77,10 +77,14 @@
           "required": false,
           "multiple": false,
           "options": [
+            "crash",
             "error",
             "suggestion",
-            "style"
-          ]
+            "style",
+            "warning",
+            "info"
+          ],
+          "default": "error"
         },
         "update-docs": {
           "name": "update-docs",

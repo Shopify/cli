@@ -46,6 +46,18 @@ export interface BoldToken {
   bold: string
 }
 
+export interface InfoToken {
+  info: string
+}
+
+export interface WarnToken {
+  warn: string
+}
+
+export interface ErrorToken {
+  error: string
+}
+
 export type Token =
   | string
   | CommandToken
@@ -56,6 +68,9 @@ export type Token =
   | FilePathToken
   | ListToken
   | BoldToken
+  | InfoToken
+  | WarnToken
+  | ErrorToken
 
 export type InlineToken = Exclude<Token, ListToken>
 export type TokenItem<T extends Token = Token> = T | T[]
@@ -92,6 +107,12 @@ export function tokenItemToString(token: TokenItem): string {
     return token.list.items.map(tokenItemToString).join(' ')
   } else if ('bold' in token) {
     return token.bold
+  } else if ('info' in token) {
+    return token.info
+  } else if ('warn' in token) {
+    return token.warn
+  } else if ('error' in token) {
+    return token.error
   } else {
     return token
       .map((item, index) => {
@@ -163,6 +184,12 @@ const TokenizedText: FunctionComponent<TokenizedTextProps> = ({item}) => {
     return <List {...item.list} />
   } else if ('bold' in item) {
     return <Text bold>{item.bold}</Text>
+  } else if ('info' in item) {
+    return <Text color="blue">{item.info}</Text>
+  } else if ('warn' in item) {
+    return <Text color="yellow">{item.warn}</Text>
+  } else if ('error' in item) {
+    return <Text color="red">{item.error}</Text>
   } else {
     const groupedItems = item.map(tokenToBlock).reduce(splitByDisplayType, [])
 

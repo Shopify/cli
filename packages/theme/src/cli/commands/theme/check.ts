@@ -1,8 +1,25 @@
-import {themeFlags, themeDevPreviewFlag} from '../../flags.js'
+import {themeDevPreviewFlag, themeFlags} from '../../flags.js'
+import {
+  formatOffensesJson,
+  formatSummary,
+  handleExit,
+  initConfig,
+  outputActiveChecks,
+  outputActiveConfig,
+  performAutoFixes,
+  renderOffensesText,
+  sortOffenses,
+  isExtendedWriteStream,
+  type FailLevel,
+} from '../../services/check.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {themeCheckRun} from '@shopify/theme-check-node'
+import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -17,6 +34,8 @@ export default class Check extends ThemeCommand {
       description: 'Automatically fix offenses',
       env: 'SHOPIFY_FLAG_AUTO_CORRECT',
     }),
+    // Typescript theme check no longer uses `--category`
+    // Remove this when we remove the ruby version
     category: Flags.string({
       char: 'c',
       required: false,
@@ -31,6 +50,8 @@ Runs checks matching all categories when specified more than once`,
 Use :theme_app_extension to use default checks for theme app extensions`,
       env: 'SHOPIFY_FLAG_CONFIG',
     }),
+    // Typescript theme check no longer uses `--exclude-categories`
+    // Remove this when we remove the ruby version
     'exclude-category': Flags.string({
       char: 'x',
       required: false,
@@ -42,8 +63,15 @@ Excludes checks matching any category when specified more than once`,
       required: false,
       description: 'Minimum severity for exit with error code',
       env: 'SHOPIFY_FLAG_FAIL_LEVEL',
-      options: ['error', 'suggestion', 'style'],
+      options: ['crash', 'error', 'suggestion', 'style', 'warning', 'info'],
+      default: 'error',
     }),
+
+    /**
+     * Typescript theme check no longer uses `--update-docs`
+     * theme check initialization verifies it has the latest revision of theme docs
+     * every time it runs, and downloads the latest revision if it doesn't.
+     */
     'update-docs': Flags.boolean({
       required: false,
       description: 'Update Theme Check docs (objects, filters, and tags)',
@@ -97,8 +125,84 @@ Excludes checks matching any category when specified more than once`,
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Check)
-    await execCLI2(['theme', 'check', flags.path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
-      directory: flags.path,
+
+    // Its not clear to typescript that path will always be defined
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+    const path = flags.path!
+
+    if (flags['dev-preview']) {
+      if (flags.init) {
+        await initConfig(path)
+
+        // --init should not trigger full theme check operation
+        return
+      }
+
+      if (flags.version) {
+        outputInfo(themeCheckPackage.version)
+
+        // --version should not trigger full theme check operation
+        return
+      }
+
+      if (flags.print) {
+        await outputActiveConfig(flags.config, path)
+
+        // --print should not trigger full theme check operation
+        return
+      }
+
+      if (flags.list) {
+        await outputActiveChecks(flags.config, path)
+
+        // --list should not trigger full theme check operation
+        return
+      }
+
+      const {offenses, theme} = await themeCheckRun(path, flags.config)
+
+      const offensesByFile = sortOffenses(offenses)
+
+      if (flags.output === 'text') {
+        renderOffensesText(offensesByFile, path)
+
+        // Use renderSuccess when theres no offenses
+        const render = offenses.length ? renderInfo : renderSuccess
+
+        render({
+          headline: 'Theme Check Summary.',
+          body: formatSummary(offenses, offensesByFile, theme),
+        })
+      }
+
+      if (flags.output === 'json') {
+        /**
+         * Workaround:
+         * Force stdout to be blocking so that the JSON output is not broken when piped to another process.
+         * ie: ` | jq .`
+         * It turns out that console.log is technically asynchronous, and when we call process.exit(),
+         * node doesn't wait on all the output being sent to stdout and instead closes the process immediately
+         *
+         * https://github.com/pnp/cli-microsoft365/issues/1266#issuecomment-727254264
+         *
+         */
+        const stdout = process.stdout
+        if (isExtendedWriteStream(stdout)) {
+          stdout._handle.setBlocking(true)
+        }
+
+        outputInfo(JSON.stringify(formatOffensesJson(offensesByFile)))
+      }
+
+      if (flags['auto-correct']) {
+        await performAutoFixes(theme, offenses)
+      }
+
+      handleExit(offenses, flags['fail-level'] as FailLevel)
+    }
+
+    await execCLI2(['theme', 'check', path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
+      directory: path,
     })
   }
 }
