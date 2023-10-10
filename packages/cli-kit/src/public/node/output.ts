@@ -263,7 +263,7 @@ export function outputInfo(content: OutputMessage, logger: Logger = consoleLog):
  * @param logger - The logging function to use to output to the user.
  */
 export function outputSuccess(content: OutputMessage, logger: Logger = consoleLog): void {
-  const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
+  const message = colors.bold(`✅ Success! ${stringifyMessage(content)}`)
   if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', logger, message)
 }
