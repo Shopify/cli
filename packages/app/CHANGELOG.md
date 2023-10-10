@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.49.7
+
+### Patch Changes
+
+- cad66e690: Fix ink dependency error with only app extensions and yarn
+  - @shopify/cli-kit@3.49.7
+  - @shopify/plugin-cloudflare@3.49.7
+
 ## 3.49.6
 
 ### Patch Changes
