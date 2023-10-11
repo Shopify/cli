@@ -52,7 +52,7 @@ describe('hookStart', () => {
     const result = tunnelClient.valueOrAbort().getTunnelStatus()
 
     // Then
-    expect(result).toEqual({status: 'error', message: 'Could not find tunnel url'})
+    expect(result).toEqual({status: 'error', message: 'Could not start Cloudflare tunnel: URL not found.'})
   })
 
   test('returns starting status if a URL is detected but there is no connection yet', async () => {
@@ -105,7 +105,7 @@ describe('hookStart', () => {
     expect(exec).toBeCalledTimes(5)
     expect(result).toEqual({
       status: 'error',
-      message: 'Could not start Cloudflare tunnel, max retries reached.',
+      message: 'Could not start Cloudflare tunnel: max retries reached.',
       tryMessage: expect.anything(),
     })
   })
