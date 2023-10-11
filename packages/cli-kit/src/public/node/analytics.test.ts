@@ -14,6 +14,7 @@ import {inTemporaryDirectory, touchFile, mkdir} from './fs.js'
 import {joinPath, dirname} from './path.js'
 import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
+import {addPublicMetadata} from './metadata.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -66,6 +67,12 @@ describe('event tracking', () => {
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
+      // Log some timings from the command
+      await addPublicMetadata(() => ({
+        cmd_all_timing_network_ms: 30,
+        cmd_all_timing_prompts_ms: 20,
+      }))
+
       // When
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
@@ -78,7 +85,7 @@ describe('event tracking', () => {
           },
         ],
       } as any
-      await reportAnalyticsEvent({config})
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
       // Then
       const version = CLI_KIT_VERSION
       const expectedPayloadPublic = {
@@ -98,6 +105,10 @@ describe('event tracking', () => {
         env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
         env_device_id: 'hashed-macaddress',
         env_cloud: 'spin',
+        cmd_all_exit: 'ok',
+        cmd_all_timing_active_ms: 50,
+        cmd_all_timing_network_ms: 30,
+        cmd_all_timing_prompts_ms: 20,
       }
       const expectedPayloadSensitive = {
         args: args.join(' '),
@@ -121,7 +132,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportAnalyticsEvent({config, errorMessage: 'Permission denied'})
+      await reportAnalyticsEvent({config, errorMessage: 'Permission denied', exitMode: 'unexpected_error'})
 
       // Then
       const version = CLI_KIT_VERSION
@@ -160,7 +171,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportAnalyticsEvent({config})
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
 
       // Then
       const expectedPayloadSensitive = {
@@ -184,7 +195,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportAnalyticsEvent({config})
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
 
       // Then
       expect(publishMonorailEvent).not.toHaveBeenCalled()
@@ -206,7 +217,7 @@ describe('event tracking', () => {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
         plugins: [],
       } as any
-      await reportAnalyticsEvent({config})
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
 
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')

@@ -1,6 +1,8 @@
 import {createRuntimeMetadataContainer} from './metadata.js'
 import * as errorHandler from './error-handler.js'
+import {sleep} from './system.js'
 import {describe, expect, test, vi} from 'vitest'
+import {performance} from 'node:perf_hooks'
 
 vi.mock('./error-handler.js')
 
@@ -61,5 +63,83 @@ describe('runtime metadata', () => {
     // In mute mode, can handle setting values
     await container.addPublicMetadata(() => ({foo: 123}), 'mute-and-report')
     expect(container.getAllPublicMetadata()).toEqual({foo: 123})
+  })
+
+  test('can manage a timer', async () => {
+    const container = createRuntimeMetadataContainer<{foo: number}, {}>()
+
+    const timeIt = container.runWithTimer('foo')
+    expect(container.getAllPublicMetadata()).toEqual({})
+
+    await timeIt(async () => {})
+    expect(container.getAllPublicMetadata().foo).toBeTypeOf('number')
+    const previous = container.getAllPublicMetadata().foo as number
+    await timeIt(async () => {})
+    expect(container.getAllPublicMetadata().foo).toBeTypeOf('number')
+    expect(container.getAllPublicMetadata().foo).toBeGreaterThanOrEqual(previous)
+  })
+
+  test('can manage nested timers', async () => {
+    /**
+     * ----------- a ------------
+     *    ------ b -----------
+     *     -c-  ----d----
+     *             -e-
+     */
+    const container = createRuntimeMetadataContainer<{a: number; b: number; c: number; d: number; e: number}, {}>()
+    performance.clearMeasures()
+
+    await container.runWithTimer('a')(async () => {
+      await sleep(0.01)
+      await container.runWithTimer('b')(async () => {
+        await sleep(0.01)
+        await container.runWithTimer('c')(async () => {
+          await sleep(0.01)
+        })
+        await container.runWithTimer('d')(async () => {
+          await sleep(0.01)
+          await container.runWithTimer('e')(async () => {
+            await sleep(0.01)
+          })
+        })
+      })
+    })
+
+    // eslint-disable-next-line id-length
+    const {a, b, c, d, e} = container.getAllPublicMetadata() as any
+
+    // because measurements are so small, the `.toBeCloseTo` matcher is not sufficient
+
+    // all the numbers should be between 9 and 15
+    expect(a).toBeGreaterThanOrEqual(9)
+    expect(a).toBeLessThanOrEqual(15)
+
+    expect(b).toBeGreaterThanOrEqual(9)
+    expect(b).toBeLessThanOrEqual(15)
+
+    expect(c).toBeGreaterThanOrEqual(9)
+    expect(c).toBeLessThanOrEqual(15)
+
+    expect(d).toBeGreaterThanOrEqual(9)
+    expect(d).toBeLessThanOrEqual(15)
+
+    expect(e).toBeGreaterThanOrEqual(9)
+    expect(e).toBeLessThanOrEqual(15)
+
+    const performanceEntries = performance.getEntries()
+
+    const entries = Object.fromEntries(performanceEntries.map((entry) => [entry.name, entry.duration]))
+    expect(entries).toMatchObject({
+      'a#wall': a + b + c + d + e,
+      'a#measurable': a,
+      'b#wall': b + c + d + e,
+      'b#measurable': b,
+      'c#wall': c,
+      'c#measurable': c,
+      'd#wall': d + e,
+      'd#measurable': d,
+      'e#wall': e,
+      'e#measurable': e,
+    })
   })
 })

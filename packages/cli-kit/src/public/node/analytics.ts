@@ -8,9 +8,18 @@ import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/nod
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {Interfaces} from '@oclif/core'
 
+export type CommandExitMode =
+  // The command completed successfully
+  | 'ok'
+  // The command exited for some unexpected reason -- i.e. a bug
+  | 'unexpected_error'
+  // The command exited with an error, but its one we expect and doesn't point to a bug -- i.e. malformed config files
+  | 'expected_error'
+
 interface ReportAnalyticsEventOptions {
   config: Interfaces.Config
   errorMessage?: string
+  exitMode: CommandExitMode
 }
 
 /**
@@ -44,7 +53,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
   }
 }
 
-async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions) {
+async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEventOptions) {
   const {commandStartOptions, environmentFlags, ...sensitiveMetadata} = metadata.getAllSensitiveMetadata()
   if (commandStartOptions === undefined) {
     outputDebug('Unable to log analytics event - no information on executed command')
@@ -62,13 +71,26 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
 
   const environmentData = await getEnvironmentData(config)
   const sensitiveEnvironmentData = await getSensitiveEnvironmentData(config)
+  const publicMetadata = metadata.getAllPublicMetadata()
+
+  // Automatically calculate the total time spent in the command, excluding time spent in subtimers.
+  const subTimers = ['cmd_all_timing_network_ms', 'cmd_all_timing_prompts_ms'] as const
+  const totalTimeFromSubtimers = subTimers.reduce((total, timer) => {
+    const value = publicMetadata[timer]
+    if (value !== undefined) {
+      return total + value
+    }
+    return total
+  }, 0)
+  const wallClockElapsed = currentTime - startTime
+  const totalTimeWithoutSubtimers = wallClockElapsed - totalTimeFromSubtimers
 
   let payload = {
     public: {
       command: startCommand,
       time_start: startTime,
       time_end: currentTime,
-      total_time: currentTime - startTime,
+      total_time: wallClockElapsed,
       success: errorMessage === undefined,
       cli_version: CLI_KIT_VERSION,
       ruby_version: (await rubyVersion()) || '',
@@ -76,7 +98,9 @@ async function buildPayload({config, errorMessage}: ReportAnalyticsEventOptions)
       is_employee: await isShopify(),
       ...environmentData,
       ...appPublic,
-      ...metadata.getAllPublicMetadata(),
+      ...publicMetadata,
+      cmd_all_timing_active_ms: totalTimeWithoutSubtimers,
+      cmd_all_exit: exitMode,
     },
     sensitive: {
       args: startArgs.join(' '),
