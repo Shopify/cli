@@ -51,6 +51,8 @@ env:
   PNPM_VERSION: '8.7.0'
   BUNDLE_GEMFILE: ${{ github.workspace }}/packages/cli-kit/assets/cli-ruby/Gemfile
   BUNDLE_WITHOUT: 'test:development'
+  SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
+  SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
 
 jobs:
   main:
