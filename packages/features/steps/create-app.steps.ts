@@ -51,7 +51,7 @@ Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   await this.execCLI(['app', 'build', '--path', this.appDirectory])
 })
 
-Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
+Then(/all the extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   const appInfo = await this.appInfo()
   const extensionsMissingBuildFile = appInfo.allExtensions.filter((extension: ExtensionConfiguration) => {
     const buildFilePath = extension.outputPath

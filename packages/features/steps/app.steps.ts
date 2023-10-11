@@ -6,9 +6,6 @@ import fs from 'fs-extra'
 import {strict as assert} from 'assert'
 
 interface AppInfo {
-  extensions: {
-    [category: string]: Extension[]
-  }
   allExtensions: Extension[]
 }
 
@@ -21,6 +18,7 @@ interface Extension {
 interface ExtensionConfiguration {
   name: string
   type: string
+  handle?: string
 }
 
 When(
@@ -31,8 +29,8 @@ When(
       name,
       type,
       directory: this.appDirectory,
-      extraArgs: ['--template', flavor],
-      env: {...process.env, ...this.temporaryEnv},
+      extraArgs: ['--flavor', flavor],
+      env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: ''},
     })
   },
 )
@@ -46,18 +44,18 @@ When(
       type,
       directory: this.appDirectory,
       extraArgs: [],
-      env: {...process.env, ...this.temporaryEnv},
+      env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: ''},
     })
   },
 )
 
 Then(
-  /I have a (.+) extension named (.+) of type ([^\s]+) and flavor (.+)$/,
+  /I have an extension named (.+) of type ([^\s]+) and flavor (.+)$/,
   {},
-  async function (category: string, appName: string, extensionType: string, flavor: string) {
+  async function (appName: string, extensionType: string, flavor: string) {
     const appInfo: AppInfo = await this.appInfo()
-    const extension = appInfo.extensions[category]?.find((extension: {configuration: ExtensionConfiguration}) => {
-      return extension.configuration.name === appName
+    const extension = appInfo.allExtensions.find((extension: {configuration: ExtensionConfiguration}) => {
+      return extension.configuration.name === appName || extension.configuration.handle === appName.toLowerCase()
     })
     if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
     assert.equal(extension.configuration.type, extensionType)
@@ -85,26 +83,22 @@ Then(
   },
 )
 
-Then(
-  /I have a (.+) extension named (.+) of type ([^\s]+)$/,
-  {},
-  async function (category: string, appName: string, extensionType: string) {
-    const appInfo: AppInfo = await this.appInfo()
-    const extension = appInfo.extensions[category]?.find((extension: {configuration: ExtensionConfiguration}) => {
-      return extension.configuration.name === appName
-    })
-    if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
-    assert.equal(extension.configuration.type, extensionType)
-  },
-)
+Then(/I have an extension named (.+) of type ([^\s]+)$/, {}, async function (appName: string, extensionType: string) {
+  const appInfo: AppInfo = await this.appInfo()
+  const extension = appInfo.allExtensions.find((extension: {configuration: ExtensionConfiguration}) => {
+    return extension.configuration.name === appName || extension.configuration.handle === appName.toLowerCase()
+  })
+  if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
+  assert.equal(extension.configuration.type, extensionType)
+})
 
 Then(
-  /I do not have a (.+) extension named (.+) of type ([^\s]+)/,
+  /I do not have an extension named (.+) of type ([^\s]+)/,
   {},
-  async function (category: string, appName: string, extensionType: string) {
+  async function (appName: string, extensionType: string) {
     const appInfo: AppInfo = await this.appInfo()
-    const extension = appInfo.extensions[category]?.find((extension: {configuration: ExtensionConfiguration}) => {
-      return extension.configuration.name === appName
+    const extension = appInfo.allExtensions.find((extension: {configuration: ExtensionConfiguration}) => {
+      return extension.configuration.name === appName || extension.configuration.handle === appName.toLowerCase()
     })
     assert.equal(extension, undefined)
   },
@@ -113,7 +107,7 @@ Then(
 Then(/The extension named (.+) contains the theme extension directories/, {}, async function (appName: string) {
   const appInfo: AppInfo = await this.appInfo()
   const extension = appInfo.allExtensions.find((extension: {configuration: ExtensionConfiguration}) => {
-    return extension.configuration.name === appName
+    return extension.configuration.handle === appName.toLowerCase()
   })
   if (!extension) assert.fail(`Extension not created! Config:\n${JSON.stringify(appInfo, null, 2)}`)
   const expectedDirectories = ['assets', 'blocks', 'locales', 'snippets']
@@ -150,7 +144,7 @@ async function generateExtension({name, type, directory, extraArgs, env}: Genera
         name,
         '--path',
         directory,
-        '--type',
+        '--template',
         type,
         ...extraArgs,
       ],
