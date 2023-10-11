@@ -201,6 +201,8 @@ describe('NoOrgError', () => {
       │                                                                              │
       │  Next steps                                                                  │
       │    • Have you created a Shopify Partners organization [1]?                   │
+      │    • Does your account include Manage app permissions?, please contact the   │
+      │      owner of the organization to grant you access.                          │
       │    • Have you confirmed your accounts from the emails you received?          │
       │    • Need to connect to a different App or organization? Run the command     │
       │      again with \`--reset\`                                                    │
