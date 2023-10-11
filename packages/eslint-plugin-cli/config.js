@@ -144,6 +144,7 @@ module.exports = {
         '@typescript-eslint/no-explicit-any': 'off',
         'no-restricted-syntax': 'off',
         '@shopify/cli/required-fields-when-loading-app': 'off',
+        '@typescript-eslint/ban-types': 'off',
       },
     },
   ],
