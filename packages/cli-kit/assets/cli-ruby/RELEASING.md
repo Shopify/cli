@@ -1,6 +1,6 @@
 ## Releasing Shopify CLI
 
-This page contains instructions for CLI 2.0. If you are looking for instructions for CLI 3.0, please visit the [CLI 3.0 documentation](https://github.com/Shopify/cli/blob/main/docs/release.md).
+This page contains instructions for CLI 2.0. If you are looking for instructions for CLI 3.0, please visit the [Vault CLI 3.0 documentation](https://vault.shopify.io/teams/2493/pages/Releasing~FkHb.md).
 
 ### Automated process
 
@@ -48,7 +48,7 @@ In case the automation goes wrong, try with the manual instructions.
    $ git checkout main
    $ git pull
    ```
-   
+
 12. On local machine and _AFTER_ gem has been published to https://rubygems.org/gems/shopify-cli, run
    ```
    $ rake package
@@ -61,7 +61,7 @@ In case the automation goes wrong, try with the manual instructions.
     * update the brew formula in `shopify-cli.rb` with the generated formula in `packaging/builds/X.Y.Z/` in the `Shopify/shopify-cli` repo (from the `rake package` step above)
     * commit the change and create a PR on the [Shopify Homebrew repository](https://github.com/Shopify/homebrew-shopify)
     * when PR is approved, merge into main branch
-  
+
 14. Go to [releases](https://github.com/Shopify/shopify-cli/releases) page of `Shopify/shopify-cli` repo and create a new release:
     * use the tag created by Shipit (should be "vX.Y.Z")
     * release title = "Version X.Y.Z"
