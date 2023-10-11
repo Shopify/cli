@@ -133,7 +133,9 @@ export function createRuntimeMetadataContainer<
         // Do the work, and time it
         const start = performance.now()
         const result = await fn()
-        const end = performance.now()
+        let end = performance.now()
+        // For very short durations, the end time can be before the start time(!) - we flatten this out to zero.
+        end = Math.max(start, end)
 
         // The top of the stack is the total time for all nested timers
         const wallClockDuration = end - start
