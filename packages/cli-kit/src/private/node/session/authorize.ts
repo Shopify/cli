@@ -8,6 +8,7 @@ import {keypress, renderConfirmationPrompt} from '../../../public/node/ui.js'
 import {outputInfo} from '../../../public/node/output.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
 import findProcess from 'find-process'
+import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 
 export interface CodeAuthResult {
   code: string
@@ -44,15 +45,17 @@ export async function authorize(scopes: string[], state: string = randomHex(30))
   url = `${url}?${new URLSearchParams(params).toString()}`
   await openURL(url)
 
-  const result = await listenRedirect(host, port, url)
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    const result = await listenRedirect(host, port, url)
 
-  if (result.state !== state) {
-    throw new AbortError(
-      "The state received from the authentication doesn't match the one that initiated the authentication process.",
-    )
-  }
+    if (result.state !== state) {
+      throw new AbortError(
+        "The state received from the authentication doesn't match the one that initiated the authentication process.",
+      )
+    }
 
-  return {code: result.code, codeVerifier}
+    return {code: result.code, codeVerifier}
+  })
 }
 
 function generateRandomChallengePair() {
