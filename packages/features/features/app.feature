@@ -3,10 +3,8 @@ Feature: Apps
 Background:
   Given I have a working directory
 
-# "yarn install" on Windows introduces flakiness: https://github.com/Shopify/cli/runs/7988961342?check_suite_focus=true
-@skip_windows
-Scenario: I scaffold theme, ui, and function extensions
-  And I create an app named MyExtendedApp with pnpm as package manager
+Scenario: I scaffold ui, theme and function extensions in a remix app
+  And I create a remix app named MyExtendedApp with pnpm as package manager
   When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
   Then I have an extension named TestPurchaseExtensionReact of type checkout_post_purchase and flavor react
   When I create an extension named TestThemeExtension of type theme_app_extension
@@ -16,21 +14,11 @@ Scenario: I scaffold theme, ui, and function extensions
   Then I build the app
   Then all the extensions are built
 
-# Scenario: I scaffold ui extensions with different templates
-#   And I create an app named MyExtendedApp with npm as package manager
-#   When I create an extension named TestPurchaseExtensionJavaScript of type checkout_ui and flavor vanilla-js
-#   Then I have a ui extension named TestPurchaseExtensionJavaScript of type checkout_ui_extension and flavor vanilla-js
-#   When I create an extension named TestPurchaseExtensionReact of type checkout_ui and flavor react
-#   Then I have a ui extension named TestPurchaseExtensionReact of type checkout_ui_extension and flavor react
-#   When I create an extension named TestPurchaseExtensionTypeScript of type checkout_ui and flavor typescript
-#   Then I have a ui extension named TestPurchaseExtensionTypeScript of type checkout_ui_extension and flavor typescript
-#   When I create an extension named TestPurchaseExtensionTypeScriptReact of type checkout_ui and flavor typescript-react
-#   Then I have a ui extension named TestPurchaseExtensionTypeScriptReact of type checkout_ui_extension and flavor typescript-react
-
-# Overrides with relative paths cause `pnpm install` to fail:
-# Issue: https://github.com/pnpm/pnpm/issues/4514
-#
-# Scenario: I create an app with a extension using pnpm
-#   And I create an app named MyExtendedApp with pnpm as package manager
-#   When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
-#   Then I build the app and its extensions
+Scenario: I scaffold ui and function extensions in a extension only app
+  And I create a extension-only app named MyExtendedApp with pnpm as package manager
+  When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
+  Then I have an extension named TestPurchaseExtensionReact of type checkout_post_purchase and flavor react
+  When I create an extension named TestOrderDiscounts of type order_discounts and flavor vanilla-js
+  Then I have an extension named TestOrderDiscounts of type function
+  Then I build the app
+  Then all the extensions are built

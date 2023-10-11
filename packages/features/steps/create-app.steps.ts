@@ -13,9 +13,21 @@ interface ExtensionConfiguration {
 }
 
 When(
-  /I create an app named (.+) with (.+) as package manager/,
+  /I create a (.+) app named (.+) with (.+) as package manager/,
   {timeout: 5 * 60 * 1000},
-  async function (appName: string, packageManager: string) {
+  async function (appType: string, appName: string, packageManager: string) {
+    let template
+    switch (appType) {
+      case 'remix':
+        template = 'https://github.com/Shopify/shopify-app-template-remix'
+        break
+      case 'extension-only':
+        template = 'https://github.com/Shopify/shopify-app-template-none'
+        break
+      default:
+        throw new Error(`Unknown app type: ${appType}`)
+    }
+
     const {stdout} = await exec(
       'node',
       [
@@ -28,7 +40,7 @@ When(
         packageManager,
         '--local',
         '--template',
-        'https://github.com/Shopify/shopify-app-template-remix',
+        template,
       ],
       {env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: '', FORCE_COLOR: '0'}},
     )
