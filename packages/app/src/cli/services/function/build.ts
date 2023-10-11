@@ -1,5 +1,6 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {AppInterface} from '../../models/app/app.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -144,6 +145,13 @@ export async function runJavy(
     stderr: 'inherit',
     signal: options.signal,
   })
+}
+
+export async function installJavy(app: AppInterface) {
+  const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
+  if (javyRequired) {
+    await exec('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+  }
 }
 
 interface FunctionRunnerOptions {
