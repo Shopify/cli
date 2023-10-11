@@ -6,9 +6,9 @@ import {AbortError, CancelExecution} from '../../../public/node/error.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {keypress, renderConfirmationPrompt} from '../../../public/node/ui.js'
 import {outputInfo} from '../../../public/node/output.js'
+import {runWithTimer} from '../../../public/node/metadata.js'
 import {checkPort as isPortAvailable} from 'get-port-please'
 import findProcess from 'find-process'
-import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 
 export interface CodeAuthResult {
   code: string

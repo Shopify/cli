@@ -1,9 +1,8 @@
-import {MonorailEventPublic} from './monorail.js'
-import {sendErrorToBugsnag} from './error-handler.js'
 import {isUnitTest} from './context/local.js'
-import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
-import {AnyJson} from '../../private/common/json.js'
 import {performance} from 'node:perf_hooks'
+import type {PickByPrefix} from '../common/ts/pick-by-prefix.js'
+import type {AnyJson} from '../../private/common/json.js'
+import type {MonorailEventPublic} from './monorail.js'
 
 type ProvideMetadata<T> = () => Partial<T> | Promise<Partial<T>>
 
@@ -95,6 +94,8 @@ export function createRuntimeMetadataContainer<
         await getAndSet()
         // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
       } catch (error: any) {
+        // This is very prone to becoming a circular dependency, so we import it dynamically
+        const {sendErrorToBugsnag} = await import('./error-handler.js')
         await sendErrorToBugsnag(error, 'unexpected_error')
       }
     }
