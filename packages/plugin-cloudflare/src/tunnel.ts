@@ -80,7 +80,7 @@ class TunnelClientInstance implements TunnelClient {
     setTimeout(() => {
       if (!resolved) {
         resolved = true
-        const lastErrors = errors.slice(-5).join('\n')
+        const lastErrors = [...new Set(errors)].slice(-5).join('\n')
         if (lastErrors === '') {
           this.currentStatus = {
             status: 'error',
@@ -189,7 +189,8 @@ function findError(data: Buffer): string | undefined {
 
 function cleanCloudflareLog(input: string): string {
   const prefixRegex = /^[0-9TZ:-]+ (ERR )?/g
-  return input.replace(prefixRegex, '')
+  const suffixRegex = /connIndex.*/g
+  return input.replace(prefixRegex, '').replace(suffixRegex, '')
 }
 
 function findConnection(data: Buffer): string | undefined {
