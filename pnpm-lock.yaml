@@ -310,22 +310,22 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@14.18.56)(typescript@5.2.2)
       '@opentelemetry/api':
-        specifier: ^1.6.0
+        specifier: 1.6.0
         version: 1.6.0
       '@opentelemetry/core':
-        specifier: ^1.17.1
+        specifier: 1.17.1
         version: 1.17.1(@opentelemetry/api@1.6.0)
       '@opentelemetry/exporter-metrics-otlp-http':
-        specifier: ^0.44.0
+        specifier: 0.44.0
         version: 0.44.0(@opentelemetry/api@1.6.0)
       '@opentelemetry/resources':
-        specifier: ^1.17.1
+        specifier: 1.17.1
         version: 1.17.1(@opentelemetry/api@1.6.0)
       '@opentelemetry/sdk-metrics':
-        specifier: ^1.17.1
+        specifier: 1.17.1
         version: 1.17.1(@opentelemetry/api@1.6.0)
       '@opentelemetry/semantic-conventions':
-        specifier: ^1.17.1
+        specifier: 1.17.1
         version: 1.17.1
       '@types/archiver':
         specifier: 5.3.2
