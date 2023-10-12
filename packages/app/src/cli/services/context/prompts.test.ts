@@ -2,6 +2,7 @@ import {deployConfirmationPrompt, matchConfirmationPrompt, SourceSummary} from '
 import {RemoteSource, LocalSource, EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {testApp} from '../../models/app/app.test-data.js'
+import {DeploymentMode} from '../deploy/mode.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderConfirmationPrompt, renderDangerousConfirmationPrompt, InfoTableSection} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
@@ -55,6 +56,43 @@ describe('deployConfirmationPrompt', () => {
   })
 
   describe('when unified deployment mode and app has an active version', () => {
+    test('renders confirmation prompt for deploymentMode: unified-skip-release', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent({noDelete: true}))
+
+      // When
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const deploymentMode: DeploymentMode = 'unified-skip-release'
+      const options = {app: testApp(), deploymentMode, appId: 'appId', token: 'token'}
+      const response = await deployConfirmationPrompt(sourceSummary, options)
+
+      // Then
+      expect(response).toBe(true)
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+        cancellationMessage: 'No, cancel',
+        confirmationMessage: 'Yes, create this new version',
+        infoTable: [
+          {
+            bullet: '+',
+            header: 'Includes:',
+            items: [
+              ['extension1', {subdued: '(new)'}],
+              ['id1', {subdued: '(new)'}],
+              'extension2',
+              ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+            ],
+          },
+        ],
+        message: 'question',
+      })
+    })
+
     test('renders confirmation prompt with the comparison between source summary and active version', async () => {
       // Given
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
