@@ -1,4 +1,4 @@
-import {deployConfirmationPrompt, SourceSummary} from './prompts.js'
+import {deployConfirmationPrompt, matchConfirmationPrompt, SourceSummary} from './prompts.js'
 import {RemoteSource, LocalSource, EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {testApp} from '../../models/app/app.test-data.js'
@@ -294,6 +294,27 @@ describe('deployConfirmationPrompt', () => {
       // Then
       expect(response).toBe(true)
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+    })
+  })
+})
+
+describe('matchConfirmationPrompt', () => {
+  test('returns a renderConfirmationPrompt', async () => {
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    // Given
+    const [localIdentifier, graphQLType, type, handle, isConfigExtension] = ['', '', '', 'foo', false]
+    const localSource = {localIdentifier, graphQLType, type, handle, isConfigExtension, configuration: {name: ''}}
+    const remoteSource = {uuid: '', type: '', id: '', title: 'bar'}
+
+    // When
+    const response = await matchConfirmationPrompt(localSource, remoteSource)
+
+    // Then
+    expect(response).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      cancellationMessage: 'No, create as a new extension',
+      confirmationMessage: 'Yes, match to existing extension',
+      message: 'Match foo (local name) with bar (name on Shopify Partners, ID: )?',
     })
   })
 })
