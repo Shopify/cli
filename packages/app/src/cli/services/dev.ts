@@ -172,7 +172,7 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
     deploymentMode: config.usesUnifiedDeployment ? 'unified' : 'legacy',
   })
 
-  await reportAnalyticsEvent({config: config.commandOptions.commandConfig})
+  await reportAnalyticsEvent({config: config.commandOptions.commandConfig, exitMode: 'ok'})
 }
 
 function getDevUUIDsForAllExtensions(localApp: AppInterface, apiKey: string) {

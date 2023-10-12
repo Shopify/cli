@@ -1,5 +1,6 @@
 import {dirname} from './path.js'
 import {createFileWriteStream, fileExistsSync, mkdirSync, unlinkFileSync} from './fs.js'
+import {runWithTimer} from './metadata.js'
 import {buildHeaders, httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {sanitizeURL} from '../../private/node/api/urls.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
@@ -33,7 +34,9 @@ export type Response = ReturnType<typeof nodeFetch>
  * @returns A promise that resolves with the response.
  */
 export async function fetch(url: RequestInfo, init?: RequestInit): Response {
-  return debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, init)})
+  return runWithTimer('cmd_all_timing_network_ms')(() =>
+    debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, init)}),
+  )
 }
 
 /**
@@ -59,7 +62,9 @@ export async function shopifyFetch(url: RequestInfo, init?: RequestInit): Respon
 With request headers:
 ${sanitizedHeadersOutput((options?.headers ?? {}) as {[header: string]: string})}
 `)
-  return debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, {...init, agent: await httpsAgent()})})
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    return debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, {...init, agent: await httpsAgent()})})
+  })
 }
 
 /**
@@ -73,30 +78,32 @@ export function downloadFile(url: string, to: string): Promise<string> {
   const sanitizedUrl = sanitizeURL(url)
   outputDebug(`Downloading ${sanitizedUrl} to ${to}`)
 
-  return new Promise<string>((resolve, reject) => {
-    if (!fileExistsSync(dirname(to))) {
-      mkdirSync(dirname(to))
-    }
+  return runWithTimer('cmd_all_timing_network_ms')(() => {
+    return new Promise<string>((resolve, reject) => {
+      if (!fileExistsSync(dirname(to))) {
+        mkdirSync(dirname(to))
+      }
 
-    const file = createFileWriteStream(to)
+      const file = createFileWriteStream(to)
 
-    file.on('finish', () => {
-      file.close()
-      resolve(to)
-    })
-
-    file.on('error', (err) => {
-      unlinkFileSync(to)
-      reject(err)
-    })
-
-    nodeFetch(url, {redirect: 'follow'})
-      .then((res) => {
-        res.body?.pipe(file)
+      file.on('finish', () => {
+        file.close()
+        resolve(to)
       })
-      .catch((err) => {
+
+      file.on('error', (err) => {
         unlinkFileSync(to)
         reject(err)
       })
+
+      nodeFetch(url, {redirect: 'follow'})
+        .then((res) => {
+          res.body?.pipe(file)
+        })
+        .catch((err) => {
+          unlinkFileSync(to)
+          reject(err)
+        })
+    })
   })
 }

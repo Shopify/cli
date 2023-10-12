@@ -172,7 +172,7 @@
     "@types/git-diff": "^2.0.3",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.195",
-    "@types/node": "14.18.56",
+    "@types/node": "16.18.57",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
     "@vitest/coverage-istanbul": "^0.34.3",
