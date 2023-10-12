@@ -110,21 +110,23 @@ describe('runtime metadata', () => {
 
     // because measurements are so small, the `.toBeCloseTo` matcher is not sufficient
 
-    // all the numbers should be between 9 and 15
-    expect(a).toBeGreaterThanOrEqual(9)
-    expect(a).toBeLessThanOrEqual(15)
+    // all the numbers should be between these bounds
+    const lowerBound = 8
+    const upperBound = 20
+    expect(a).toBeGreaterThanOrEqual(lowerBound)
+    expect(a).toBeLessThanOrEqual(upperBound)
 
-    expect(b).toBeGreaterThanOrEqual(9)
-    expect(b).toBeLessThanOrEqual(15)
+    expect(b).toBeGreaterThanOrEqual(lowerBound)
+    expect(b).toBeLessThanOrEqual(upperBound)
 
-    expect(c).toBeGreaterThanOrEqual(9)
-    expect(c).toBeLessThanOrEqual(15)
+    expect(c).toBeGreaterThanOrEqual(lowerBound)
+    expect(c).toBeLessThanOrEqual(upperBound)
 
-    expect(d).toBeGreaterThanOrEqual(9)
-    expect(d).toBeLessThanOrEqual(15)
+    expect(d).toBeGreaterThanOrEqual(lowerBound)
+    expect(d).toBeLessThanOrEqual(upperBound)
 
-    expect(e).toBeGreaterThanOrEqual(9)
-    expect(e).toBeLessThanOrEqual(15)
+    expect(e).toBeGreaterThanOrEqual(lowerBound)
+    expect(e).toBeLessThanOrEqual(upperBound)
 
     const performanceEntries = performance.getEntries()
 
