@@ -1,3 +1,5 @@
+# on windows linking to a local package causes errors in the CI environment
+@skip_windows
 Feature: Apps
 
 Background:
