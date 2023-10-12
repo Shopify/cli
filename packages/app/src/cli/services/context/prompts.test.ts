@@ -1,4 +1,4 @@
-import {deployConfirmationPrompt, matchConfirmationPrompt, SourceSummary} from './prompts.js'
+import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt, SourceSummary} from './prompts.js'
 import {RemoteSource, LocalSource, EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {testApp} from '../../models/app/app.test-data.js'
@@ -353,6 +353,61 @@ describe('matchConfirmationPrompt', () => {
       cancellationMessage: 'No, create as a new extension',
       confirmationMessage: 'Yes, match to existing extension',
       message: 'Match foo (local name) with bar (name on Shopify Partners, ID: )?',
+    })
+  })
+})
+
+describe('extensionMigrationPrompt', () => {
+  test('returns a renderConfirmationPrompt with unique migration types when includeRemoteType: true', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const local = {
+      localIdentifier: '',
+      graphQLType: '',
+      type: '',
+      handle: 'Foo',
+      configuration: {name: ''},
+      isConfigExtension: false,
+    }
+    const remote = {uuid: '', type: 'remote_type1', id: '', title: ''}
+    const localRemoteSources = [{local, remote}]
+
+    // When
+    const response = await extensionMigrationPrompt(localRemoteSources)
+
+    // Then
+    expect(response).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      cancellationMessage: 'No, cancel',
+      confirmationMessage: 'Yes, confirm migration from "remote_type1"',
+      message: 'Migrate "Foo"?',
+    })
+  })
+
+  test('returns a renderConfirmationPrompt without unique migration types when includeRemoteType: false', async () => {
+    // Given
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const local = {
+      localIdentifier: '',
+      graphQLType: '',
+      type: '',
+      handle: 'Foo',
+      configuration: {name: ''},
+      isConfigExtension: false,
+    }
+    const remote = {uuid: '', type: 'remote_type1', id: '', title: ''}
+    const localRemoteSources = [{local, remote}]
+    const includeRemoteType = false
+
+    // When
+    const response = await extensionMigrationPrompt(localRemoteSources, includeRemoteType)
+
+    // Then
+    expect(response).toBe(true)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      cancellationMessage: 'No, cancel',
+      confirmationMessage: 'Yes, confirm migration',
+      message: 'Migrate "Foo"?',
     })
   })
 })
