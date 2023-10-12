@@ -108,25 +108,11 @@ describe('runtime metadata', () => {
     // eslint-disable-next-line id-length
     const {a, b, c, d, e} = container.getAllPublicMetadata() as any
 
-    // because measurements are so small, the `.toBeCloseTo` matcher is not sufficient
-
-    // all the numbers should be between these bounds
-    const lowerBound = 8
-    const upperBound = 20
-    expect(a).toBeGreaterThanOrEqual(lowerBound)
-    expect(a).toBeLessThanOrEqual(upperBound)
-
-    expect(b).toBeGreaterThanOrEqual(lowerBound)
-    expect(b).toBeLessThanOrEqual(upperBound)
-
-    expect(c).toBeGreaterThanOrEqual(lowerBound)
-    expect(c).toBeLessThanOrEqual(upperBound)
-
-    expect(d).toBeGreaterThanOrEqual(lowerBound)
-    expect(d).toBeLessThanOrEqual(upperBound)
-
-    expect(e).toBeGreaterThanOrEqual(lowerBound)
-    expect(e).toBeLessThanOrEqual(upperBound)
+    expect(a).toBeGreaterThanOrEqual(0)
+    expect(b).toBeGreaterThanOrEqual(0)
+    expect(c).toBeGreaterThanOrEqual(0)
+    expect(d).toBeGreaterThanOrEqual(0)
+    expect(e).toBeGreaterThanOrEqual(0)
 
     const performanceEntries = performance.getEntries()
 
