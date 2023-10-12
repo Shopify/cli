@@ -138,9 +138,9 @@ export function createRuntimeMetadataContainer<
         end = Math.max(start, end)
 
         // The top of the stack is the total time for all nested timers
-        const wallClockDuration = end - start
+        const wallClockDuration = Math.max(end - start, 0)
         const childDurations = durationStack.pop() as number
-        const duration = wallClockDuration - childDurations
+        const duration = Math.max(wallClockDuration - childDurations, 0)
 
         // If this is the topmost timer, the stack will be empty.
         if (durationStack.length > 0) {
