@@ -158,7 +158,6 @@ describe('deploy', () => {
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI extension', async () => {
@@ -180,7 +179,6 @@ describe('deploy', () => {
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 theme extension', async () => {
@@ -209,7 +207,6 @@ describe('deploy', () => {
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 function', async () => {
@@ -258,7 +255,6 @@ describe('deploy', () => {
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
@@ -291,7 +287,6 @@ describe('deploy', () => {
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('shows a success message', async () => {

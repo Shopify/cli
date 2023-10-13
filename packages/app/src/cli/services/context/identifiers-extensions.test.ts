@@ -435,43 +435,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
   })
 })
 
-describe('ensureExtensionsIds: excludes functions when unifiedAppDeployment beta is not set', () => {
-  test('succeeds and returns all identifiers', async () => {
-    // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
-      identifiers: {EXTENSION_A: 'UUID_A'},
-      toCreate: [],
-      toConfirm: [],
-      toManualMatch: {
-        local: [],
-        remote: [],
-      },
-    })
-    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
-
-    // When
-    const got = await ensureExtensionsIds(options([EXTENSION_A], [FUNCTION_A], {}, testOrganizationApp()), {
-      extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
-      dashboardManagedExtensionRegistrations: [],
-    })
-
-    // Then
-    expect(automaticMatchmaking).toHaveBeenCalledWith(
-      [EXTENSION_A],
-      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
-      {},
-      'uuid',
-    )
-    expect(got).toEqual(
-      ok({
-        extensions: {EXTENSION_A: 'UUID_A'},
-        extensionIds: {EXTENSION_A: 'A'},
-      }),
-    )
-  })
-})
-
-describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta is set', () => {
+describe('ensureExtensionsIds: includes functions', () => {
   test('succeeds and returns all identifiers', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -529,61 +493,21 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     })
 
     // Then
-    expect(deployConfirmationPrompt).toBeCalledWith(
-      {
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      summary: {
         appTitle: 'app1',
         question: `Release a new version of ${testOrganizationApp().title}?`,
         identifiers: {
           EXTENSION_A: 'UUID_A',
           EXTENSION_A_2: 'UUID_A_2',
         },
-        onlyRemote: [],
         dashboardOnly: [DASHBOARD_REGISTRATION_A],
         toCreate: [],
       },
-      'unified',
-      opt.appId,
-      opt.token,
-    )
-  })
-
-  test('does not include dashboard managed extensions in confirmation prompt if the beta flag is off', async () => {
-    // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
-      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
-      toCreate: [],
-      toConfirm: [],
-      toManualMatch: {
-        local: [],
-        remote: [],
-      },
+      release: true,
+      apiKey: opt.appId,
+      token: opt.token,
     })
-    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
-    const opt = options([EXTENSION_A, EXTENSION_A_2], [], {}, testOrganizationApp())
-
-    // When
-    await ensureExtensionsIds(opt, {
-      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
-      dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
-    })
-
-    // Then
-    expect(deployConfirmationPrompt).toBeCalledWith(
-      {
-        appTitle: 'app1',
-        question: 'Make the following changes to your extensions in Shopify Partners?',
-        identifiers: {
-          EXTENSION_A: 'UUID_A',
-          EXTENSION_A_2: 'UUID_A_2',
-        },
-        onlyRemote: [],
-        dashboardOnly: [],
-        toCreate: [],
-      },
-      'legacy',
-      opt.appId,
-      opt.token,
-    )
   })
 
   test('skips confirmation prompt if --force is passed', async () => {

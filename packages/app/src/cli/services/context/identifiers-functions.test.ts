@@ -213,19 +213,18 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending to create
 
     // Then
     expect(got).toEqual(ok({}))
-    expect(deployConfirmationPrompt).toHaveBeenCalledWith(
-      {
+    expect(deployConfirmationPrompt).toHaveBeenCalledWith({
+      summary: {
         appTitle: 'my-app',
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: {},
-        onlyRemote: [],
         toCreate: [FUNCTION_A, FUNCTION_A_2],
         dashboardOnly: [],
       },
-      'legacy',
-      opts.appId,
-      opts.token,
-    )
+      release: true,
+      apiKey: opts.appId,
+      token: opts.token,
+    })
   })
 })
 
@@ -278,19 +277,18 @@ describe('ensureFunctionsIds: matchmaking returns ok with some pending confirmat
 
     // Then
     expect(got).toEqual(ok({}))
-    expect(deployConfirmationPrompt).toHaveBeenCalledWith(
-      {
+    expect(deployConfirmationPrompt).toHaveBeenCalledWith({
+      summary: {
         appTitle: 'my-app',
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: {},
-        onlyRemote: [],
         toCreate: [FUNCTION_B],
         dashboardOnly: [],
       },
-      'legacy',
-      opts.appId,
-      opts.token,
-    )
+      release: true,
+      apiKey: opts.appId,
+      token: opts.token,
+    })
   })
 })
 
@@ -340,22 +338,21 @@ describe('ensureFunctionsIds: asks user to confirm deploy', () => {
     await ensureFunctionsIds(opts, [REGISTRATION_A, REGISTRATION_A_2])
 
     // Then
-    expect(deployConfirmationPrompt).toBeCalledWith(
-      {
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      summary: {
         appTitle: 'my-app',
         question: 'Make the following changes to your functions in Shopify Partners?',
         identifiers: {
           FUNCTION_A: 'ID_A',
           FUNCTION_A_2: 'ID_A_2',
         },
-        onlyRemote: [],
         toCreate: [],
         dashboardOnly: [],
       },
-      'legacy',
-      opts.appId,
-      opts.token,
-    )
+      release: true,
+      apiKey: opts.appId,
+      token: opts.token,
+    })
   })
 
   test('skips confirmation prompt if --force is passed', async () => {

@@ -799,7 +799,7 @@ describe('uploadExtensionsBundle', () => {
           },
         ],
         uuid: 'random-uuid',
-        skipPublish: true,
+        skipPublish: false,
       })
     })
   })
@@ -885,7 +885,10 @@ describe('uploadExtensionsBundle', () => {
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
       apiKey: 'app-id',
       uuid: 'random-uuid',
-      skipPublish: true,
+      skipPublish: false,
+      message: undefined,
+      versionTag: undefined,
+      commitReferences: undefined,
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
   })

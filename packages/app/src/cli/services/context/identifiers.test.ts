@@ -139,8 +139,7 @@ beforeEach(() => {
 describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
   test('throw an invalid environment error if functions is invalid', async () => {
     // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(err('invalid-environment'))
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(err('invalid-environment'))
 
     // When
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
@@ -151,8 +150,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 
   test('throw an invalid environment error if there are pending remote matches', async () => {
     // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(err('pending-remote'))
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(err('pending-remote'))
 
     // When
     const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
@@ -175,25 +173,7 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 })
 
 describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
-  test('returns the combination of functions and extensions', async () => {
-    // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(ok({FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'}))
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(
-      ok({extensions: {EXTENSION_A: 'UUID_A'}, extensionIds: {EXTENSION_A: 'ID_A'}}),
-    )
-
-    // When
-    const got = await ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
-
-    // Then
-    await expect(got).toEqual({
-      app: 'appId',
-      extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'ID_A', FUNCTION_B: 'ID_B'},
-      extensionIds: {EXTENSION_A: 'ID_A'},
-    })
-  })
-
-  test('treats functions as extensions when unifiedAppDeployment beta is set', async () => {
+  test('treats functions as extensions', async () => {
     // Given
     vi.mocked(ensureExtensionsIds).mockResolvedValue(
       ok({
@@ -209,7 +189,7 @@ describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
 
     // Then
     expect(ensureFunctionsIds).not.toHaveBeenCalledOnce()
-    await expect(got).toEqual({
+    expect(got).toEqual({
       app: 'appId',
       extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_UUID_A'},
       extensionIds: {EXTENSION_A: 'ID_A', FUNCTION_A: 'FUNCTION_ID_A'},

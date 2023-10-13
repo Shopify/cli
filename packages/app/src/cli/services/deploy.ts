@@ -3,10 +3,8 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -64,7 +62,6 @@ export async function deploy(options: DeployOptions) {
 
   outputNewline()
 
-  let registrations: AllAppExtensionRegistrationsQuerySchema
   let uploadExtensionsBundleResult: UploadExtensionsBundleOutput
 
   await inTemporaryDirectory(async (tmpDir) => {
@@ -100,19 +97,17 @@ export async function deploy(options: DeployOptions) {
               options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
 
-            if (bundle) {
-              uploadExtensionsBundleResult = await uploadExtensionsBundle({
-                apiKey,
-                bundlePath,
-                appModules: getArrayRejectingUndefined(appModules),
-                release,
-                token,
-                extensionIds: identifiers.extensionIds,
-                message: options.message,
-                version: options.version,
-                commitReference: options.commitReference,
-              })
-            }
+            uploadExtensionsBundleResult = await uploadExtensionsBundle({
+              apiKey,
+              bundlePath,
+              appModules: getArrayRejectingUndefined(appModules),
+              release,
+              token,
+              extensionIds: identifiers.extensionIds,
+              message: options.message,
+              version: options.version,
+              commitReference: options.commitReference,
+            })
 
             if (!useThemebundling()) {
               const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
@@ -120,7 +115,6 @@ export async function deploy(options: DeployOptions) {
             }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
-            registrations = await fetchAppExtensionRegistrations({token, apiKey: identifiers.app})
           },
         },
       ]
