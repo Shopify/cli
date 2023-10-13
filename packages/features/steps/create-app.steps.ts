@@ -13,9 +13,21 @@ interface ExtensionConfiguration {
 }
 
 When(
-  /I create an app named (.+) with (.+) as package manager/,
+  /I create a (.+) app named (.+) with (.+) as package manager/,
   {timeout: 5 * 60 * 1000},
-  async function (appName: string, packageManager: string) {
+  async function (appType: string, appName: string, packageManager: string) {
+    let template
+    switch (appType) {
+      case 'remix':
+        template = 'https://github.com/Shopify/shopify-app-template-remix'
+        break
+      case 'extension-only':
+        template = 'https://github.com/Shopify/shopify-app-template-none'
+        break
+      default:
+        throw new Error(`Unknown app type: ${appType}`)
+    }
+
     const {stdout} = await exec(
       'node',
       [
@@ -28,12 +40,14 @@ When(
         packageManager,
         '--local',
         '--template',
-        'https://github.com/Shopify/shopify-app-template-remix',
+        template,
       ],
       {env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: '', FORCE_COLOR: '0'}},
     )
     const hyphenatedAppName = stdout?.match(/([\w-]+) is ready for you to build!/)?.[1] ?? appName
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
+    // we need to disable this on CI otherwise pnpm will crash complaining that there is no lockfile
+    await fs.appendFile(path.join(this.appDirectory, '.npmrc'), 'frozen-lockfile=false\n')
   },
 )
 
@@ -51,7 +65,7 @@ Then(/I build the app/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   await this.execCLI(['app', 'build', '--path', this.appDirectory])
 })
 
-Then(/The UI extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
+Then(/all the extensions are built/, {timeout: 2 * 60 * 1000 * 1000}, async function () {
   const appInfo = await this.appInfo()
   const extensionsMissingBuildFile = appInfo.allExtensions.filter((extension: ExtensionConfiguration) => {
     const buildFilePath = extension.outputPath
