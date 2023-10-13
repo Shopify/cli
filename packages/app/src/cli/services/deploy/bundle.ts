@@ -1,11 +1,11 @@
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
+import {installJavy} from '../function/build.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdirSync, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {exec} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
 export interface BundleOptions {
@@ -20,12 +20,9 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     await mkdirSync(bundleDirectory)
     await touchFile(joinPath(bundleDirectory, '.shopify'))
 
-    const javyRequired = options.app.allExtensions.some((ext) => ext.features.includes('function'))
-    if (javyRequired) {
-      // Force the download of the javy binary in advance to avoid later problems,
-      // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
-      await exec('npm', ['exec', '--', 'javy', '--version'], {cwd: options.app.directory})
-    }
+    // Force the download of the javy binary in advance to avoid later problems,
+    // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
+    await installJavy(options.app)
 
     await renderConcurrent({
       processes: options.app.allExtensions.map((extension) => {
