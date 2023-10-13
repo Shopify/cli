@@ -94,6 +94,16 @@ export function alwaysLogAnalytics(env = process.env): boolean {
 }
 
 /**
+ * Returns true if reporting metrics should always happen, regardless of DEBUG mode etc.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if SHOPIFY_CLI_ALWAYS_LOG_METRICS is truthy.
+ */
+export function alwaysLogMetrics(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.alwaysLogMetrics])
+}
+
+/**
  * Returns true if the CLI User is 1P.
  *
  * @param env - The environment variables from the environment of the current process.
@@ -256,6 +266,21 @@ export function ciPlatform(
  */
 export function macAddress(): Promise<string> {
   return macaddress.one()
+}
+
+/**
+ * Get the domain to send OTEL metrics to.
+ *
+ * It can be overridden via the OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns The domain to send OTEL metrics to.
+ */
+export function opentelemetryDomain(env = process.env): string | undefined {
+  if (isSet(env[environmentVariables.otelURL])) {
+    return env[environmentVariables.otelURL]
+  }
+  return 'https://otlp-http-production-cli.shopifysvc.com'
 }
 
 export type CIMetadata = Metadata

@@ -10,6 +10,7 @@ const cacheFolder = () => {
 
 export const environmentVariables = {
   alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
+  alwaysLogMetrics: 'SHOPIFY_CLI_ALWAYS_LOG_METRICS',
   deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
   enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
   env: 'SHOPIFY_CLI_ENV',
@@ -37,6 +38,7 @@ export const environmentVariables = {
   organization: 'SHOPIFY_CLI_ORGANIZATION',
   identityToken: 'SHOPIFY_CLI_IDENTITY_TOKEN',
   refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
+  otelURL: 'OTEL_EXPORTER_OTLP_ENDPOINT',
 }
 
 export const systemEnvironmentVariables = {
