@@ -46,6 +46,8 @@ When(
     )
     const hyphenatedAppName = stdout?.match(/([\w-]+) is ready for you to build!/)?.[1] ?? appName
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
+    // we need to disable this on CI otherwise pnpm will crash complaining that there is no lockfile
+    await fs.appendFile(path.join(this.appDirectory, '.npmrc'), 'frozen-lockfile=false\n')
   },
 )
 
