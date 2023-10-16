@@ -137,6 +137,8 @@ module ShopifyCLI
         end
 
         def visit_value(value)
+          return unless value.is_a?(Hash)
+
           # Reinsert settings to force the same ordering as in the backend
           settings = value.delete("settings") || {}
           value["settings"] = settings
