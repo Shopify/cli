@@ -212,6 +212,7 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
+          needs-ruby: ${{ matrix.node == '18.12.0' }}
       - name: Unit tests
         run: pnpm test:unit
       - name: Acceptance tests
