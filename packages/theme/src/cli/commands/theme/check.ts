@@ -19,7 +19,9 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {themeCheckRun} from '@shopify/theme-check-node'
-import themeCheckPackage from '@shopify/theme-check-node/package.json' assert {type: 'json'}
+import {findPathUp} from '@shopify/cli-kit/node/fs'
+import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
+import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
 
 export default class Check extends ThemeCommand {
   static description = 'Validate the theme.'
@@ -139,7 +141,17 @@ Excludes checks matching any category when specified more than once`,
       }
 
       if (flags.version) {
-        outputInfo(themeCheckPackage.version)
+        const pkgJsonPath = await findPathUp(joinPath('node_modules', '@shopify', 'theme-check-node', 'package.json'), {
+          type: 'file',
+          cwd: moduleDirectory(import.meta.url),
+        })
+
+        let version = 'unknown'
+        if (pkgJsonPath) {
+          version = (await getPackageVersion(pkgJsonPath)) || 'unknown'
+        }
+
+        outputInfo(version)
 
         // --version should not trigger full theme check operation
         return
