@@ -4,6 +4,9 @@ inputs:
   node-version:
     required: true
     description: 'Node version'
+  needs-ruby:
+    required: false
+    description: 'Whether this run requires to install ruby dependencies'
 runs:
   using: 'composite'
   steps:
