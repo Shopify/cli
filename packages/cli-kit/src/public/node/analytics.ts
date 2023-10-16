@@ -1,11 +1,13 @@
 import {version as rubyVersion} from './ruby.js'
-import {alwaysLogAnalytics, analyticsDisabled, isShopify} from './context/local.js'
+import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from './context/local.js'
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
+
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+import {recordMetrics} from '../../private/node/otel-metrics.js'
 import {Interfaces} from '@oclif/core'
 
 export type CommandExitMode =
@@ -35,14 +37,44 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       // Nothing to log
       return
     }
-    if (!alwaysLogAnalytics() && analyticsDisabled()) {
+
+    const skipMonorailAnalytics = !alwaysLogAnalytics() && analyticsDisabled()
+    const skipMetricAnalytics = !alwaysLogMetrics() && analyticsDisabled()
+    if (skipMonorailAnalytics || skipMetricAnalytics) {
       outputDebug(outputContent`Skipping command analytics, payload: ${outputToken.json(payload)}`)
-      return
     }
-    const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
-    if (response.type === 'error') {
-      outputDebug(response.message)
+
+    const doMonorail = async () => {
+      if (skipMonorailAnalytics) {
+        return
+      }
+      const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
+      if (response.type === 'error') {
+        outputDebug(response.message)
+      }
     }
+    const doOpenTelemetry = async () => {
+      const active = Math.floor(payload.public.cmd_all_timing_active_ms || 0)
+      const network = Math.floor(payload.public.cmd_all_timing_network_ms || 0)
+      const prompt = Math.floor(payload.public.cmd_all_timing_prompts_ms || 0)
+
+      return recordMetrics(
+        {
+          skipMetricAnalytics,
+          cliVersion: payload.public.cli_version,
+          owningPlugin: payload.public.cmd_all_plugin || '@shopify/cli',
+          command: payload.public.command,
+          exitMode: options.exitMode,
+        },
+        {
+          active,
+          network,
+          prompt,
+        },
+      )
+    }
+    await Promise.all([doMonorail(), doOpenTelemetry()])
+
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     let message = 'Failed to report usage analytics'
@@ -124,7 +156,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   return sanitizePayload(payload)
 }
 
-function sanitizePayload(payload: object) {
+function sanitizePayload<T>(payload: T): T {
   const payloadString = JSON.stringify(payload)
   // Remove Theme Access passwords from the payload
   const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
