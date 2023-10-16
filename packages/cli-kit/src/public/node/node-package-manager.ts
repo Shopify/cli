@@ -200,6 +200,15 @@ export async function getPackageName(packageJsonPath: string): Promise<string | 
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return packageJsonContent.name
 }
+/**
+ * Returns the version of the package configured in its package.json
+ * @param packageJsonPath - Path to the package.json file
+ * @returns A promise that resolves with the version.
+ */
+export async function getPackageVersion(packageJsonPath: string): Promise<string | undefined> {
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  return packageJsonContent.version
+}
 
 /**
  * Returns the list of production and dev dependencies of a package.json
