@@ -108,7 +108,7 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
 }
 
 function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
-  const env: {[variable: string]: string} = options.env
+  const env: {[variable: string]: string | undefined} = {...options.env, ...processEnv}
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,
