@@ -54,6 +54,7 @@ describe('bundleExtension()', () => {
       outputPath: extension.outputPath,
       minify: true,
       environment: 'production',
+      sourceMaps: true,
       stdin: {
         contents: 'console.log("mock stdin content")',
         resolveDir: 'mock/resolve/dir',
@@ -105,6 +106,9 @@ describe('bundleExtension()', () => {
     const plugins = options.plugins?.map(({name}) => name)
     expect(plugins).toContain('graphql-loader')
     expect(plugins).toContain('shopify:deduplicate-react')
+
+    expect(options.sourcemap).toBe(true)
+    expect(options.sourceRoot).toEqual('mock/resolve/dir/src')
   })
 
   test('can switch off React deduplication', async () => {
