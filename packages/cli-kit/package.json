@@ -85,7 +85,8 @@
                 "@oclif/core",
                 "../../private/node/constants.js",
                 "./path.js",
-                "./system.js"
+                "./system.js",
+                "./ui.js"
               ],
               "static": [
                 "@oclif/core",
