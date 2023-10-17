@@ -251,13 +251,12 @@ export const clearCollectedLogs = (): void => {
  * @param logger - The logging function to use to output to the user.
  */
 export function outputInfo(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
-  if (typeof content === 'string' || content instanceof TokenizedString) {
+  if (content instanceof TokenizedString) {
     const message = stringifyMessage(content)
     if (isUnitTest()) collectLog('info', content)
     outputWhereAppropriate('info', logger, message)
   } else {
     const result = renderToken({token: content, logger})
-    if (isUnitTest()) collectLog('info', result ?? '')
   }
 }
 
@@ -299,7 +298,7 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  */
 export function outputDebug(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
   const timestamp = new Date().toISOString()
-  if (typeof content === 'string' || content instanceof TokenizedString) {
+  if (content instanceof TokenizedString) {
     if (isUnitTest()) collectLog('debug', content)
     const message = colors.gray(stringifyMessage(content))
     outputWhereAppropriate('debug', logger, `${timestamp}: ${message}`)
