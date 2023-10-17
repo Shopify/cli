@@ -182,16 +182,38 @@ jobs:
       - name: Acceptance tests
         if: ${{ matrix.node == '18.12.0' }}
         run: pnpm test:features
+
+  pr-test-coverage:
+    name: '[PR] Run Test Coverage with Node ${{ matrix.node }} in ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    needs: pr-platform-agnostic
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+        node: ['18.12.0']
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
         with:
           branch-name: '${{ github.head_ref }}'
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
         with:
           base-branch-name: '${{ github.base_ref }}'
+
 
   manually-triggered:
     name: '[Manual] Test with Node ${{ inputs.node-version }} in ${{ inputs.os }}'
