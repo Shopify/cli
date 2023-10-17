@@ -11,6 +11,7 @@ export interface BundleOptions {
   app: AppInterface
   bundlePath?: string
   identifiers: Identifiers
+  sourceMaps?: boolean
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions) {
@@ -25,7 +26,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
           prefix: extension.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await extension.buildForBundle(
-              {stderr, stdout, signal, app: options.app},
+              {stderr, stdout, signal, app: options.app, sourceMaps: options.sourceMaps},
               options.identifiers,
               bundleDirectory,
             )

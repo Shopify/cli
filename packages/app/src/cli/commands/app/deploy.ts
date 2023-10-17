@@ -8,6 +8,7 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
+import {extensionFlags} from '../../extension-flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -18,6 +19,7 @@ export default class Deploy extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...extensionFlags,
     'api-key': Flags.string({
       hidden: true,
       description: 'The API key of your app.',
@@ -111,6 +113,7 @@ export default class Deploy extends Command {
       version: flags.version,
       commitReference: flags['source-control-url'],
       commandConfig: this.config,
+      sourceMaps: flags['source-maps'],
     })
   }
 }

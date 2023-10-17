@@ -52,6 +52,9 @@ interface DeployOptions {
 
   /** The config from the Oclif command */
   commandConfig: Config
+
+  /** Whether source maps are enabled if using esbuild */
+  sourceMaps?: boolean
 }
 
 interface TasksContext {
@@ -97,7 +100,12 @@ export async function deploy(options: DeployOptions) {
         bundlePath = joinPath(tmpDir, `bundle.zip`)
         await mkdir(dirname(bundlePath))
       }
-      await bundleAndBuildExtensions({app, bundlePath, identifiers})
+      await bundleAndBuildExtensions({
+        app,
+        bundlePath,
+        identifiers,
+        sourceMaps: options.sourceMaps,
+      })
 
       const uploadTaskTitle = (() => {
         switch (deploymentMode) {

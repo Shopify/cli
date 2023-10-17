@@ -38,6 +38,11 @@ export interface ExtensionBuildOptions {
    * The app that contains the extensions.
    */
   app: AppInterface
+
+  /**
+   * Whether to generate source maps. Applicable only to UI extensions.
+   */
+  sourceMaps?: boolean
 }
 
 /**
@@ -73,6 +78,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     env: options.app.dotenv?.variables ?? {},
     stderr: options.stderr,
     stdout: options.stdout,
+    sourceMaps: options.sourceMaps,
   })
 
   await extension.buildValidation()

@@ -5,6 +5,7 @@ import build from '../../services/build.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
+import {extensionFlags} from '../../extension-flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -15,6 +16,7 @@ export default class Build extends Command {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...extensionFlags,
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
       description: 'Skips the installation of dependencies. Deprecated, use workspaces instead.',
@@ -41,6 +43,7 @@ export default class Build extends Command {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] || flags['api-key']
+    const sourceMaps = flags['source-maps']
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -48,6 +51,6 @@ export default class Build extends Command {
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
-    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
+    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey, sourceMaps})
   }
 }

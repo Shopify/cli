@@ -9,6 +9,7 @@ interface BuildOptions {
   app: AppInterface
   skipDependenciesInstallation: boolean
   apiKey?: string
+  sourceMaps?: boolean
 }
 
 async function build(options: BuildOptions) {
@@ -35,7 +36,13 @@ async function build(options: BuildOptions) {
         return {
           prefix: ext.localIdentifier,
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-            await ext.build({stdout, stderr, signal, app: options.app})
+            await ext.build({
+              stdout,
+              stderr,
+              signal,
+              app: options.app,
+              sourceMaps: options.sourceMaps,
+            })
           },
         }
       }),
