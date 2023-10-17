@@ -17,7 +17,6 @@ export default function config(packagePath: string) {
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
       reporters: ['verbose', 'hanging-process'],
-      include: ['**/src/**/*.test.ts(x)?'],
       threads: false,
       coverage: {
         provider: 'istanbul',
