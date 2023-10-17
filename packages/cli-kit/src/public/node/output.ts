@@ -18,7 +18,7 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
-import {TokenItem, TokenizedText} from '../../private/node/ui/components/TokenizedText.js'
+import {Token, TokenItem, TokenizedText} from '../../private/node/ui/components/TokenizedText.js'
 import {renderToken} from './ui.js'
 import {recordUIEvent} from '../../private/node/demo-recorder.js'
 import stripAnsi from 'strip-ansi'
@@ -297,10 +297,19 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
-  if (isUnitTest()) collectLog('debug', content)
-  const message = colors.gray(stringifyMessage(content))
-  outputWhereAppropriate('debug', logger, `${new Date().toISOString()}: ${message}`)
+export function outputDebug(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
+  const timestamp = new Date().toISOString()
+  if (typeof content === 'string' || content instanceof TokenizedString) {
+    if (isUnitTest()) collectLog('debug', content)
+    const message = colors.gray(stringifyMessage(content))
+    outputWhereAppropriate('debug', logger, `${timestamp}: ${message}`)
+  } else {
+    if (shouldOutput('debug') || isUnitTest()) {
+      const token = [`${timestamp}:`, ...(Array.isArray(content) ? content : [content])]
+      const result = renderToken({token, logger})
+      if (isUnitTest()) collectLog('debug', result ?? '')
+    }
+  }
 }
 
 /**
