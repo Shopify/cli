@@ -17,10 +17,10 @@ runs:
       shell: bash
     - name: Install Ruby
       if: ${{ inputs.needs-ruby == 'true' }}
-      uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
+      uses: ruby/setup-ruby@679e23d4a31bcf7cd0a69acd348e5f79e8c6b443 # pin@v1
       with:
         ruby-version: ${{ env.RUBY_VERSION }}
-        bundler-cache: false
+        bundler-cache: true
     - name: Install Bundler
       if: ${{ inputs.needs-ruby == 'true' }}
       run: gem install bundler -v ${{ env.BUNDLER_VERSION }}
