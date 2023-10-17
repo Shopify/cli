@@ -124,17 +124,30 @@ function defaultOtelOptions(): Omit<DefaultOtelServiceOptions, 'env' | 'otelEndp
 function createMetricRecorder(options: CreateMetricRecorderOptions): MetricRecorder {
   let recorder: MetricRecorder = 'console'
   if (!(options.skipMetricAnalytics || isUnitTest() || isSpinEnvironment())) {
-    const otelEndpoint = `${opentelemetryDomain()}/v1/metrics`
     recorder = {
       type: 'otel',
-      otel: new DefaultOtelService({
-        ...options.otelOptions,
-        env: undefined,
-        otelEndpoint,
-      }),
+      otel: globalOtelService(options),
     }
   }
   return recorder
+}
+
+let _otelService: OtelService | undefined
+
+/**
+ * OTEL service singleton.
+ *
+ * The service is a singleton as it uses a global diagnostic logger that assumes its the only one in the process.
+ */
+function globalOtelService(options: CreateMetricRecorderOptions): OtelService {
+  if (!_otelService) {
+    _otelService = new DefaultOtelService({
+      ...options.otelOptions,
+      env: undefined,
+      otelEndpoint: `${opentelemetryDomain()}/v1/metrics`,
+    })
+  }
+  return _otelService
 }
 
 /**
