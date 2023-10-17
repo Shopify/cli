@@ -271,7 +271,7 @@ export function macAddress(): Promise<string> {
 /**
  * Get the domain to send OTEL metrics to.
  *
- * It can be overridden via the OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
+ * It can be overridden via the SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
  *
  * @param env - The environment variables from the environment of the current process.
  * @returns The domain to send OTEL metrics to.
