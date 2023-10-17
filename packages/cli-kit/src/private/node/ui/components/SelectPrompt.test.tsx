@@ -162,6 +162,8 @@ describe('SelectPrompt', async () => {
   })
 
   test('supports a git diff', async () => {
+    vi.stubGlobal('process', {...process, env: {...process.env, FORCE_COLOR: '1'}})
+
     const items = [
       {label: 'first', value: 'first'},
       {label: 'second', value: 'second'},
