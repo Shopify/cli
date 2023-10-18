@@ -697,7 +697,7 @@
         "editor": {
           "name": "editor",
           "type": "boolean",
-          "char": "e",
+          "char": "E",
           "description": "Open the theme editor for the specified theme in the browser.",
           "allowNo": false
         },

@@ -18,7 +18,7 @@ export default class Open extends ThemeCommand {
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
     editor: Flags.boolean({
-      char: 'e',
+      char: 'E',
       description: 'Open the theme editor for the specified theme in the browser.',
       env: 'SHOPIFY_FLAG_EDITOR',
     }),
