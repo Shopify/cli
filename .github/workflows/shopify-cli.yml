@@ -63,7 +63,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['18.12.0', '20.2.0']
+        node: ['16.17.0', '18.12.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -85,7 +85,7 @@ jobs:
       - name: Unit tests
         run: pnpm nx run-many --all --skip-nx-cache --target=test --exclude=features
       - name: Acceptance tests
-        if: ${{ matrix.node == '18.12.0'  }}
+        if: ${{ matrix.node == '18.12.0' }}
         run: pnpm nx run features:test
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
@@ -126,7 +126,7 @@ jobs:
       - name: ${{ matrix.target }}
         run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }}
 
-  oclif-manifests:
+  oclif-checks:
     name: '[PR] Check OCLIF manifests & readme & docs'
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
@@ -164,7 +164,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['18.12.0', '20.2.0']
+        node: ['16.17.0', '18.12.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         with:
