@@ -11,6 +11,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
+import {pickBy} from '@shopify/cli-kit/common/object'
 
 const require = createRequire(import.meta.url)
 
@@ -108,7 +109,9 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
 }
 
 function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
-  const env: {[variable: string]: string | undefined} = {...options.env, ...processEnv}
+  const validEnvs = pickBy(processEnv, (value, key) => key.startsWith('SHOPIFY_') && value)
+
+  const env: {[variable: string]: string | undefined} = {...options.env, ...validEnvs}
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,

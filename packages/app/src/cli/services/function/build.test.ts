@@ -74,14 +74,18 @@ describe('bundleExtension', () => {
       const shopifyFunction = await installShopifyLibrary(tmpDir)
 
       // When
-      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app}, {VAR_FROM_RUNTIME: 'runtime_var'})
+      const got = bundleExtension(
+        ourFunction,
+        {stdout, stderr, signal, app},
+        {VAR_FROM_RUNTIME: 'runtime_var', SHOPIFY_VAR_FROM_RUNTIME: 'runtime_var'},
+      )
 
       // Then
       await expect(got).resolves.toBeUndefined()
       expect(esBuild).toHaveBeenCalledWith({
         outfile: joinPath(tmpDir, 'dist/function.js'),
         define: {
-          'process.env.VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
+          'process.env.SHOPIFY_VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
           'process.env.VAR_FROM_ENV_FILE': JSON.stringify('env_file_var'),
         },
         entryPoints: [shopifyFunction],
@@ -264,14 +268,18 @@ describe('ExportJavyBuilder', () => {
         ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
 
         // When
-        const got = builder.bundle(ourFunction, {stdout, stderr, signal, app}, {VAR_FROM_RUNTIME: 'runtime_var'})
+        const got = builder.bundle(
+          ourFunction,
+          {stdout, stderr, signal, app},
+          {VAR_FROM_RUNTIME: 'runtime_var', SHOPIFY_VAR_FROM_RUNTIME: 'runtime_var'},
+        )
 
         // Then
         await expect(got).resolves.toBeUndefined()
         expect(esBuild).toHaveBeenCalledWith({
           outfile: joinPath(tmpDir, 'dist/function.js'),
           define: {
-            'process.env.VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
+            'process.env.SHOPIFY_VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
             'process.env.VAR_FROM_ENV_FILE': JSON.stringify('env_file_var'),
           },
           stdin: {

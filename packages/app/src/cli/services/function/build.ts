@@ -10,6 +10,7 @@ import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
+import {pickBy} from '@shopify/cli-kit/common/object'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
@@ -129,7 +130,9 @@ function getESBuildOptions(
   appEnv: {[variable: string]: string | undefined},
   processEnv = process.env,
 ): Parameters<typeof esBuild>[0] {
-  const env: {[variable: string]: string | undefined} = {...appEnv, ...processEnv}
+  const validEnvs = pickBy(processEnv, (value, key) => key.startsWith('SHOPIFY_') && value)
+
+  const env: {[variable: string]: string | undefined} = {...appEnv, ...validEnvs}
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,
