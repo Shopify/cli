@@ -256,7 +256,7 @@ export function outputInfo(content: OutputMessage | TokenItem, logger: Logger = 
     if (isUnitTest()) collectLog('info', content)
     outputWhereAppropriate('info', logger, message)
   } else {
-    const result = renderToken({token: content, logger})
+    renderToken({token: content, logger})
   }
 }
 
@@ -305,8 +305,7 @@ export function outputDebug(content: OutputMessage | TokenItem, logger: Logger =
   } else {
     if (shouldOutput('debug') || isUnitTest()) {
       const token = [`${timestamp}:`, ...(Array.isArray(content) ? content : [content])]
-      const result = renderToken({token, logger})
-      if (isUnitTest()) collectLog('debug', result ?? '')
+      renderToken({token, logger, logLevel: 'debug'})
     }
   }
 }
