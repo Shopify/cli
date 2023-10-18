@@ -180,7 +180,7 @@ jobs:
         run: pnpm test:unit
 
   pr-acceptance-tests:
-    name: '[PR] Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
+    name: '[PR] Accept. Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
