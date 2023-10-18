@@ -206,7 +206,6 @@ jobs:
     name: '[PR] Run Test Coverage with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
-    needs: pr-platform-agnostic
     timeout-minutes: 30
     strategy:
       matrix:
