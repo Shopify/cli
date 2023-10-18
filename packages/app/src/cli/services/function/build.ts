@@ -1,6 +1,7 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
+import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -9,9 +10,8 @@ import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {Writable} from 'stream'
 import {pickBy} from '@shopify/cli-kit/common/object'
-import {EsbuildEnvVarRegex} from '../../constants.js'
+import {Writable} from 'stream'
 
 interface JSFunctionBuildOptions {
   stdout: Writable

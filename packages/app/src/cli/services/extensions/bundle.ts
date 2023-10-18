@@ -8,10 +8,10 @@ import {copyFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {pickBy} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
-import {pickBy} from '@shopify/cli-kit/common/object'
 
 const require = createRequire(import.meta.url)
 
