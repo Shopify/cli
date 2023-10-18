@@ -28,15 +28,15 @@ export function exec(command: string, args: string[] = [], options?: ExecOptions
   }
   const shortCommand = command.split('/').slice(-1).pop() || ''
   const commandProcess = execa(command, args, _options)
-  // commandProcess.stdout?.on('data', (data: string) => {
-  //   if (isDebug) {
-  //     console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
-  //   }
-  // })
-  // commandProcess.stderr?.on('data', (data: string) => {
-  //   if (isDebug) {
-  //     console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
-  //   }
-  // })
+  commandProcess.stdout?.on('data', (data: string) => {
+    if (isDebug) {
+      console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
+    }
+  })
+  commandProcess.stderr?.on('data', (data: string) => {
+    if (isDebug) {
+      console.log(colors.gray(`${colors.bold(shortCommand)}: ${data}`))
+    }
+  })
   return commandProcess
 }
