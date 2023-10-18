@@ -31,3 +31,5 @@ export const blocks = {
 export const urlNamespaces = {
   devTools: '.shopify',
 } as const
+
+export const EsbuildEnvVarPrefix = 'SHOPIFY_'
