@@ -1,7 +1,7 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
-import {environmentVariableNames} from '../../constants.js'
+import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
 import {context as esContext, BuildResult, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile} from '@shopify/cli-kit/node/fs'
@@ -109,7 +109,7 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
 }
 
 function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
-  const validEnvs = pickBy(processEnv, (value, key) => key.startsWith('SHOPIFY_') && value)
+  const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
 
   const env: {[variable: string]: string | undefined} = {...options.env, ...validEnvs}
   const define = Object.keys(env || {}).reduce(

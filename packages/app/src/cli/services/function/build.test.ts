@@ -77,7 +77,7 @@ describe('bundleExtension', () => {
       const got = bundleExtension(
         ourFunction,
         {stdout, stderr, signal, app},
-        {VAR_FROM_RUNTIME: 'runtime_var', SHOPIFY_VAR_FROM_RUNTIME: 'runtime_var'},
+        {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID_(VAR)': 'invalid_var'},
       )
 
       // Then
@@ -85,7 +85,7 @@ describe('bundleExtension', () => {
       expect(esBuild).toHaveBeenCalledWith({
         outfile: joinPath(tmpDir, 'dist/function.js'),
         define: {
-          'process.env.SHOPIFY_VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
+          'process.env.VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
           'process.env.VAR_FROM_ENV_FILE': JSON.stringify('env_file_var'),
         },
         entryPoints: [shopifyFunction],
@@ -271,7 +271,7 @@ describe('ExportJavyBuilder', () => {
         const got = builder.bundle(
           ourFunction,
           {stdout, stderr, signal, app},
-          {VAR_FROM_RUNTIME: 'runtime_var', SHOPIFY_VAR_FROM_RUNTIME: 'runtime_var'},
+          {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID_(VAR)': 'invalid_var'},
         )
 
         // Then
@@ -279,7 +279,7 @@ describe('ExportJavyBuilder', () => {
         expect(esBuild).toHaveBeenCalledWith({
           outfile: joinPath(tmpDir, 'dist/function.js'),
           define: {
-            'process.env.SHOPIFY_VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
+            'process.env.VAR_FROM_RUNTIME': JSON.stringify('runtime_var'),
             'process.env.VAR_FROM_ENV_FILE': JSON.stringify('env_file_var'),
           },
           stdin: {

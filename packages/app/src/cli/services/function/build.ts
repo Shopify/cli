@@ -11,7 +11,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 import {pickBy} from '@shopify/cli-kit/common/object'
-import {EsbuildEnvVarPrefix} from '../../constants.js'
+import {EsbuildEnvVarRegex} from '../../constants.js'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
@@ -131,7 +131,7 @@ function getESBuildOptions(
   appEnv: {[variable: string]: string | undefined},
   processEnv = process.env,
 ): Parameters<typeof esBuild>[0] {
-  const validEnvs = pickBy(processEnv, (value, key) => key.startsWith(EsbuildEnvVarPrefix) && value)
+  const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
 
   const env: {[variable: string]: string | undefined} = {...appEnv, ...validEnvs}
   const define = Object.keys(env || {}).reduce(
