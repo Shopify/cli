@@ -1,6 +1,7 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppInterface} from '../../models/app/app.js'
+import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -9,6 +10,7 @@ import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {pickBy} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
 interface JSFunctionBuildOptions {
@@ -129,7 +131,9 @@ function getESBuildOptions(
   appEnv: {[variable: string]: string | undefined},
   processEnv = process.env,
 ): Parameters<typeof esBuild>[0] {
-  const env: {[variable: string]: string | undefined} = {...appEnv, ...processEnv}
+  const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
+
+  const env: {[variable: string]: string | undefined} = {...appEnv, ...validEnvs}
   const define = Object.keys(env || {}).reduce(
     (acc, key) => ({
       ...acc,

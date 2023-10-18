@@ -74,7 +74,11 @@ describe('bundleExtension', () => {
       const shopifyFunction = await installShopifyLibrary(tmpDir)
 
       // When
-      const got = bundleExtension(ourFunction, {stdout, stderr, signal, app}, {VAR_FROM_RUNTIME: 'runtime_var'})
+      const got = bundleExtension(
+        ourFunction,
+        {stdout, stderr, signal, app},
+        {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID_(VAR)': 'invalid_var'},
+      )
 
       // Then
       await expect(got).resolves.toBeUndefined()
@@ -264,7 +268,11 @@ describe('ExportJavyBuilder', () => {
         ourFunction.entrySourceFilePath = joinPath(tmpDir, 'src/index.ts')
 
         // When
-        const got = builder.bundle(ourFunction, {stdout, stderr, signal, app}, {VAR_FROM_RUNTIME: 'runtime_var'})
+        const got = builder.bundle(
+          ourFunction,
+          {stdout, stderr, signal, app},
+          {VAR_FROM_RUNTIME: 'runtime_var', 'INVALID_(VAR)': 'invalid_var'},
+        )
 
         // Then
         await expect(got).resolves.toBeUndefined()
