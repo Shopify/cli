@@ -159,7 +159,6 @@ jobs:
   pr-platform-dependent:
     name: '[PR] Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    needs: pr-platform-agnostic
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
     strategy:
