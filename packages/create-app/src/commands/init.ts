@@ -41,7 +41,7 @@ export default class Init extends Command {
       char: 'd',
       env: 'SHOPIFY_FLAG_PACKAGE_MANAGER',
       hidden: false,
-      options: ['npm', 'yarn', 'pnpm'],
+      options: ['npm', 'yarn', 'pnpm', 'bun'],
     }),
     local: Flags.boolean({
       char: 'l',
