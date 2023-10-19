@@ -62,14 +62,14 @@ describe('mapError', () => {
 describe('doOnOk', () => {
   test('when ok result should execute the command and continue', () => {
     // Given
-    const outpuMocker = mockAndCaptureOutput()
+    const outputMocker = mockAndCaptureOutput()
 
     // When
     const result = ok(123).doOnOk((value) => outputSuccess(`result ok ${value}`))
 
     // Then
     expect(!result.isErr() && result.value).toEqual(123)
-    expect(outpuMocker.success()).toMatchInlineSnapshot('"result ok 123"')
+    expect(outputMocker.info()).toMatchInlineSnapshot('"✅ Success! result ok 123"')
   })
 })
 

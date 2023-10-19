@@ -137,7 +137,8 @@ describe('resolveDeploymentMode', () => {
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
       [1] https://shopify.dev/docs/apps/deployment/simplified-deployment
-      "
+
+      ✔ Upgrade complete"
     `)
     expect(outputMock.warn()).toMatchInlineSnapshot(`
       "╭─ warning ────────────────────────────────────────────────────────────────────╮

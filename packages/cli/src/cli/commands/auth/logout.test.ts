@@ -15,6 +15,6 @@ describe('logs out', () => {
 
     // Then
     expect(logout).toHaveBeenCalledOnce()
-    expect(outputMock.success()).toMatchInlineSnapshot('"Logged out from Shopify"')
+    expect(outputMock.info()).toMatchInlineSnapshot('"✅ Success! Logged out from Shopify"')
   })
 })

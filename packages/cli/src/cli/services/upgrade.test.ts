@@ -60,10 +60,9 @@ describe('upgrade global CLI', () => {
         {stdio: 'inherit'},
       )
       expect(outputMock.info()).toMatchInlineSnapshot(`
-        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nAttempting to upgrade via npm install -g @shopify/cli@latest @shopify/theme@latest..."
-      `)
-      expect(outputMock.success()).toMatchInlineSnapshot(`
-        "Upgraded Shopify CLI to version ${currentCliVersion}"
+        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...
+        Attempting to upgrade via npm install -g @shopify/cli@latest \n@shopify/theme@latest...
+        ✅ Success! Upgraded Shopify CLI to version ${currentCliVersion}"
       `)
     })
   })
@@ -150,7 +149,8 @@ describe('upgrade local CLI', () => {
 
       // Then
       expect(outputMock.info()).toMatchInlineSnapshot(`
-        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
+        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...
+        ✅ Success! Upgraded Shopify CLI to version ${currentCliVersion}"
       `)
       expect(addNPMDependenciesMock).toHaveBeenCalledWith(
         [
@@ -166,9 +166,6 @@ describe('upgrade local CLI', () => {
           addToRootDirectory: false,
         },
       )
-      expect(outputMock.success()).toMatchInlineSnapshot(`
-        "Upgraded Shopify CLI to version ${currentCliVersion}"
-      `)
     })
   })
 
@@ -194,7 +191,8 @@ describe('upgrade local CLI', () => {
 
       // Then
       expect(outputMock.info()).toMatchInlineSnapshot(`
-        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}..."
+        "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...
+        ✅ Success! Upgraded Shopify CLI to version ${currentCliVersion}"
       `)
       expect(addNPMDependenciesMock).toHaveBeenCalledWith(
         [
@@ -210,9 +208,6 @@ describe('upgrade local CLI', () => {
           addToRootDirectory: false,
         },
       )
-      expect(outputMock.success()).toMatchInlineSnapshot(`
-        "Upgraded Shopify CLI to version ${currentCliVersion}"
-      `)
     })
   })
 })

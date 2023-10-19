@@ -301,12 +301,11 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  * @param logger - The logging function to use to output to the user.
  */
 export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
-  outputGeneric({
-    content: {subdued: detokenizeMessage(content)},
-    logger,
-    logLevel: 'debug',
-    includeTimestamp: true,
-  })
+  // Don't use outputGeneric as it ends up polluting test logs with timestamps
+  if (isUnitTest()) collectLog('debug', content)
+  const message = colors.gray(stringifyMessage(content))
+  const timestamp = new Date().toISOString()
+  outputWhereAppropriate('debug', logger, `${timestamp}: ${message}`)
 }
 
 /**
@@ -329,25 +328,16 @@ interface OutputGenericParameters {
   content: OutputMessage | TokenItem
   logger: Logger
   logLevel: LogLevel
-  includeTimestamp?: boolean
   preface?: string
 }
 
-function outputGeneric({content, logger, logLevel, includeTimestamp, preface}: OutputGenericParameters): void {
-  // Timestamps are applied differently from other prefaces, in that they're
-  // excluded from `collectLog` to make testing easier.
-  const timestamp = new Date().toISOString()
+function outputGeneric({content, logger, logLevel, preface}: OutputGenericParameters): void {
   if (content instanceof TokenizedString) {
     if (isUnitTest()) collectLog(logLevel, content)
-    outputWhereAppropriate(logLevel, logger, `${
-      includeTimestamp ? `${timestamp}: ` : ''
-    }${
-      preface ? `${preface} ` : ''
-    }${content}`)
+    outputWhereAppropriate(logLevel, logger, `${preface ? `${preface} ` : ''}${content}`)
   } else {
     let token = Array.isArray(content) ? content : [content]
     if (preface) token = [preface, ...token]
-    if (includeTimestamp) token = [`${timestamp}:`, ...token]
     renderToken({token, logger, logLevel})
   }
 }
