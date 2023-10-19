@@ -1147,12 +1147,12 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--no-color] [--verbose] [--password <value>] [-d] [-e] [-l] [-t <value>] [-s <value>]
+  $ shopify theme open [--no-color] [--verbose] [--password <value>] [-d] [-E] [-l] [-t <value>] [-s <value>]
     [-e <value>]
 
 FLAGS
+  -E, --editor               Open the theme editor for the specified theme in the browser.
   -d, --development          Open your development theme.
-  -e, --editor               Open the theme editor for the specified theme in the browser.
   -e, --environment=<value>  The environment to apply to the current command.
   -l, --live                 Open your live (published) theme.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
