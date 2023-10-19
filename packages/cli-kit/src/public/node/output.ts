@@ -251,13 +251,11 @@ export const clearCollectedLogs = (): void => {
  * @param logger - The logging function to use to output to the user.
  */
 export function outputInfo(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
-  if (content instanceof TokenizedString) {
-    const message = stringifyMessage(content)
-    if (isUnitTest()) collectLog('info', content)
-    outputWhereAppropriate('info', logger, message)
-  } else {
-    renderToken({token: content, logger})
-  }
+  outputGeneric({
+    content: detokenizeMessage(content),
+    logger,
+    logLevel: 'info',
+  })
 }
 
 /**
@@ -269,9 +267,12 @@ export function outputInfo(content: OutputMessage | TokenItem, logger: Logger = 
  * @param logger - The logging function to use to output to the user.
  */
 export function outputSuccess(content: OutputMessage, logger: Logger = consoleLog): void {
-  const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
-  if (isUnitTest()) collectLog('success', content)
-  outputWhereAppropriate('info', logger, message)
+  outputGeneric({
+    preface: '✅ Success!',
+    content: detokenizeMessage(content),
+    logger,
+    logLevel: 'info',
+  })
 }
 
 /**
@@ -283,9 +284,12 @@ export function outputSuccess(content: OutputMessage, logger: Logger = consoleLo
  * @param logger - The logging function to use to output to the user.
  */
 export function outputCompleted(content: OutputMessage, logger: Logger = consoleLog): void {
-  const message = `${colors.green('✔')} ${stringifyMessage(content)}`
-  if (isUnitTest()) collectLog('completed', content)
-  outputWhereAppropriate('info', logger, message)
+  outputGeneric({
+    preface: colors.green('✔'),
+    content: detokenizeMessage(content),
+    logger,
+    logLevel: 'info',
+  })
 }
 
 /**
@@ -296,18 +300,13 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  * @param content - The content to be output to the user.
  * @param logger - The logging function to use to output to the user.
  */
-export function outputDebug(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
-  const timestamp = new Date().toISOString()
-  if (content instanceof TokenizedString) {
-    if (isUnitTest()) collectLog('debug', content)
-    const message = colors.gray(stringifyMessage(content))
-    outputWhereAppropriate('debug', logger, `${timestamp}: ${message}`)
-  } else {
-    if (shouldOutput('debug') || isUnitTest()) {
-      const token = [`${timestamp}:`, ...(Array.isArray(content) ? content : [content])]
-      renderToken({token, logger, logLevel: 'debug'})
-    }
-  }
+export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
+  outputGeneric({
+    content: {subdued: detokenizeMessage(content)},
+    logger,
+    logLevel: 'debug',
+    includeTimestamp: true,
+  })
 }
 
 /**
@@ -319,9 +318,38 @@ export function outputDebug(content: OutputMessage | TokenItem, logger: Logger =
  * @param logger - The logging function to use to output to the user.
  */
 export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn): void {
-  if (isUnitTest()) collectLog('warn', content)
-  const message = colors.yellow(stringifyMessage(content))
-  outputWhereAppropriate('warn', logger, message)
+  outputGeneric({
+    content: {warn: detokenizeMessage(content)},
+    logger,
+    logLevel: 'warn',
+  })
+}
+
+interface OutputGenericParameters {
+  content: OutputMessage | TokenItem
+  logger: Logger
+  logLevel: LogLevel
+  includeTimestamp?: boolean
+  preface?: string
+}
+
+function outputGeneric({content, logger, logLevel, includeTimestamp, preface}: OutputGenericParameters): void {
+  // Timestamps are applied differently from other prefaces, in that they're
+  // excluded from `collectLog` to make testing easier.
+  const timestamp = new Date().toISOString()
+  if (content instanceof TokenizedString) {
+    if (isUnitTest()) collectLog(logLevel, content)
+    outputWhereAppropriate(logLevel, logger, `${
+      includeTimestamp ? `${timestamp}: ` : ''
+    }${
+      preface ? `${preface} ` : ''
+    }${content}`)
+  } else {
+    let token = Array.isArray(content) ? content : [content]
+    if (preface) token = [preface, ...token]
+    if (includeTimestamp) token = [`${timestamp}:`, ...token]
+    renderToken({token, logger, logLevel})
+  }
 }
 
 /**
@@ -338,6 +366,16 @@ export function outputNewline(): void {
  * @returns The string representation of the message.
  */
 export function stringifyMessage(message: OutputMessage): string {
+  if (message instanceof TokenizedString) {
+    return message.value
+  } else {
+    return message
+  }
+}
+
+function detokenizeMessage<T>(message: OutputMessage): string
+function detokenizeMessage<T>(message: T): T
+function detokenizeMessage<T>(message: OutputMessage | T): string | T {
   if (message instanceof TokenizedString) {
     return message.value
   } else {
