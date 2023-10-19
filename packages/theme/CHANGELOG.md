@@ -1,5 +1,29 @@
 # @shopify/theme
 
+## 3.50.0
+
+### Minor Changes
+
+- 3f36e9463: Fixed CI issue due to theme check --dev-preview --version implementation
+- 6095a8827: Added `--dev-preview` for `theme language-server`
+- fbab28e9e: Added --dev-preview flag for theme check 2.0
+
+### Patch Changes
+
+- a73bb1179: Add versioning to Liquid Console remote theme, allowing users to try different versions of Liquid Console in the same store without facing compatibility issues
+- e0b042e3c: Fix ambiguity between `--editor` and `--environment` flags in the `shopify theme open` command
+- 42aacb5f0: Enhance the `shopify theme dev` command banner by adding the preview URL next to the preview link, for easy copy/pasting in terminal emulators that support hyperlinks
+- b3e858038: The `shopify theme delete` command no longer fails when some flags (`-f`, `-d`, etc.) are passed without the `-t` flag
+- Updated dependencies [4bb8fff29]
+- Updated dependencies [3f36e9463]
+- Updated dependencies [cf5bbff61]
+- Updated dependencies [46a72a6b4]
+- Updated dependencies [3ed6ae88e]
+- Updated dependencies [d6b02afcf]
+- Updated dependencies [e0cd881e1]
+- Updated dependencies [20d667246]
+  - @shopify/cli-kit@3.50.0
+
 ## 3.49.1
 
 ### Patch Changes
