@@ -39,6 +39,11 @@ export const AppSchema = zod
         direct_api_offline_access: zod.boolean().optional(),
       })
       .optional(),
+    custom_data: zod
+      .object({
+        derp: zod.boolean().optional(),
+      })
+      .optional(),
     access_scopes: zod
       .object({
         scopes: zod.string().optional(),
