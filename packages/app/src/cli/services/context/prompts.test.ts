@@ -298,12 +298,12 @@ describe('deployConfirmationPrompt', () => {
 const identifier1 = {extension1: 'uuid1'}
 const identifier2 = {extension2: 'uuid2'}
 const identifier3 = {extension3: 'uuid3'}
-const createdExtension = {
+const createdExtension: LocalSource = {
   localIdentifier: 'id1',
   graphQLType: 'type1',
   type: 'type1',
   handle: 'handle1',
-  configuration: {name: 'name1'},
+  deployConfig: () => Promise.resolve({}),
 }
 const remoteOnlyExtension = {
   id: 'remote_id1',

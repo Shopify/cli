@@ -40,15 +40,15 @@ export async function updateExtensionDraft({
   }
 
   const configValue = (await extension.deployConfig({apiKey, token, unifiedDeployment})) || {}
-  const {handle, ...remainingConfigs} = configValue
+
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...remainingConfigs,
+      ...configValue,
       serialized_script: encodedFile,
     }),
     handle: extension.handle,
-    context: handle as string,
+    context: extension.configContext,
     registrationId,
   }
   const mutation = ExtensionUpdateDraftMutation

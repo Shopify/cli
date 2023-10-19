@@ -64,7 +64,7 @@ describe('updateExtensionDraft()', () => {
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config:
@@ -114,7 +114,7 @@ describe('updateExtensionDraft()', () => {
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',
@@ -221,7 +221,7 @@ another = "setting"
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config:

@@ -46,7 +46,6 @@ const flowTriggerSpecification = createExtensionSpecification({
   deployConfig: async (config, extensionPath) => {
     return {
       title: config.name,
-      handle: config.handle,
       description: config.description,
       fields: serializeFields('flow_trigger', config.settings?.fields),
       schema_patch: await loadSchemaFromPath(extensionPath, config.schema),

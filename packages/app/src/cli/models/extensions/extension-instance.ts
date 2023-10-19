@@ -101,6 +101,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
+  get configContext() {
+    if (this.specification.identifier.includes('flow')) {
+      return this.handle
+    }
+    return ''
+  }
+
   set usingExtensionsFramework(value: boolean) {
     this.useExtensionsFramework = value
   }
@@ -265,13 +272,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
     if (!configValue) return undefined
 
-    const {handle, ...remainingConfigs} = configValue
-    const contextValue = (handle as string) || ''
-
     return {
       uuid: identifiers.extensions[this.localIdentifier]!,
-      config: JSON.stringify(remainingConfigs),
-      context: contextValue,
+      config: JSON.stringify(configValue),
+      context: this.configContext,
       handle: this.handle,
     }
   }

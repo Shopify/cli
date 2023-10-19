@@ -1,5 +1,6 @@
 import {createExtension} from './create-extension.js'
 import {ExtensionCreateQuery} from '../../api/graphql/extension_create.js'
+import {LocalSource} from '../context/identifiers.js'
 import {describe, expect, vi, test} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -34,12 +35,21 @@ describe('createApp', () => {
       type: 'CHECKOUT_POST_PURCHASE',
       title: 'my-ext',
       config: '{}',
-      context: null,
+      context: '',
       handle: 'my-ext',
     }
 
+    const source: LocalSource = {
+      localIdentifier: '123',
+      graphQLType: 'CHECKOUT_POST_PURCHASE',
+      type: 'checkout_post_purchase',
+      handle: 'my-ext',
+      configContext: '',
+      deployConfig: () => Promise.resolve({}),
+    }
+
     // When
-    const got = await createExtension('123', 'CHECKOUT_POST_PURCHASE', 'my-ext', 'token')
+    const got = await createExtension('123', 'token', source)
 
     // Then
     expect(got).toEqual(EXTENSION)

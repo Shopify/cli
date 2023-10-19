@@ -35,6 +35,16 @@ export interface LocalSource {
   graphQLType: string
   type: string
   handle: string
+  configContext: string
+  deployConfig: ({
+    apiKey,
+    token,
+    unifiedDeployment,
+  }: {
+    apiKey: string
+    token: string
+    unifiedDeployment: boolean
+  }) => Promise<{[key: string]: unknown} | undefined>
 }
 
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'
