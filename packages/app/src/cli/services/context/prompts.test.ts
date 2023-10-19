@@ -303,6 +303,7 @@ const createdExtension: LocalSource = {
   graphQLType: 'type1',
   type: 'type1',
   handle: 'handle1',
+  configContext: '',
   deployConfig: () => Promise.resolve({}),
 }
 const remoteOnlyExtension = {
