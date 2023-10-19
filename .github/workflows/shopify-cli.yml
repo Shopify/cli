@@ -73,6 +73,7 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
+          needs-ruby: ${{ matrix.os != 'windows-latest' }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache  --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
