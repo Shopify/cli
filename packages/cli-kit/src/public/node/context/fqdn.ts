@@ -58,6 +58,7 @@ export async function businessPlatformFqdn(): Promise<string> {
  */
 export async function identityFqdn(): Promise<string> {
   const environment = serviceEnvironment()
+
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':

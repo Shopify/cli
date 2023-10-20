@@ -36,7 +36,7 @@ export async function graphqlRequest<T>(options: GraphQLRequestOptions<T>): Prom
   const {query, api, url, token, addedHeaders, variables, responseOptions} = options
   const headers = {
     ...addedHeaders,
-    ...buildHeaders(token),
+    ...buildHeaders(token, options.api === 'Partners'),
   }
 
   debugLogRequestInfo(api, query, variables, headers)

@@ -42,7 +42,7 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
     .join('\n')
 }
 
-export function buildHeaders(token?: string): {[key: string]: string} {
+export function buildHeaders(token?: string, allowEmployee = true): {[key: string]: string} {
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
 
   const headers: {[header: string]: string} = {
@@ -51,7 +51,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'Content-Type': 'application/json',
-    ...(firstPartyDev() && {'X-Shopify-Cli-Employee': '1'}),
+    ...(firstPartyDev() && allowEmployee && {'X-Shopify-Cli-Employee': '1'}),
   }
   if (token) {
     const authString = token.startsWith('shpat') ? token : `Bearer ${token}`

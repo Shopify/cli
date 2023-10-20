@@ -16,7 +16,7 @@ import * as secureStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {RequestClientError} from './api/headers.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
-import {firstPartyDev, useDeviceAuth} from '../../public/node/context/local.js'
+import {useDeviceAuth} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {normalizeStoreFqdn, partnersFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
@@ -98,8 +98,10 @@ export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
   forceRefresh = false,
+  isFirstPartyDev = false,
 ): Promise<OAuthSession> {
-  const fqdn = await identityFqdn()
+  const firstPartyDevFqdn = isFirstPartyDev ? '+employee' : ''
+  const fqdn = (await identityFqdn()) + firstPartyDevFqdn
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
   if (previousStoreFqdn) {
@@ -124,14 +126,14 @@ ${outputToken.json(applications)}
 
   if (validationResult === 'needs_full_auth') {
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications, fqdn)
+    newSession = await executeCompleteFlow(applications, fqdn, isFirstPartyDev)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        newSession = await executeCompleteFlow(applications, fqdn)
+        newSession = await executeCompleteFlow(applications, fqdn, isFirstPartyDev)
       } else if (error instanceof InvalidRequestError) {
         await secureStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -164,11 +166,15 @@ ${outputToken.json(applications)}
  * @param applications - An object containing the applications we need to be authenticated with.
  * @param identityFqdn - The identity FQDN.
  */
-async function executeCompleteFlow(applications: OAuthApplications, identityFqdn: string): Promise<Session> {
+async function executeCompleteFlow(
+  applications: OAuthApplications,
+  identityFqdn: string,
+  asEmployee: boolean,
+): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
-  if (firstPartyDev()) {
+  if (asEmployee) {
     outputDebug(outputContent`Authenticating as Shopify Employee...`)
     scopes.push('employee')
   }

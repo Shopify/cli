@@ -1,6 +1,7 @@
 import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
+import {firstPartyDev} from './context/local.js'
 import * as secureStore from '../../private/node/session/store.js'
 import {exchangeCustomPartnerToken} from '../../private/node/session/exchange.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
@@ -31,7 +32,8 @@ ${outputToken.json(scopes)}
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
-  const tokens = await ensureAuthenticated({partnersApi: {scopes}})
+  const isFirstPartyDev = await firstPartyDev()
+  const tokens = await ensureAuthenticated({partnersApi: {scopes}}, process.env, false, isFirstPartyDev)
   if (!tokens.partners) {
     throw new BugError('No partners token found after ensuring authenticated')
   }
@@ -56,7 +58,7 @@ export async function ensureAuthenticatedStorefront(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, forceRefresh)
+  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, forceRefresh, false)
   if (!tokens.storefront) {
     throw new BugError('No storefront token found after ensuring authenticated')
   }
@@ -81,7 +83,7 @@ export async function ensureAuthenticatedAdmin(
   )}:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh, false)
   if (!tokens.admin) {
     throw new BugError('No admin token found after ensuring authenticated')
   }
@@ -122,7 +124,7 @@ export async function ensureAuthenticatedBusinessPlatform(scopes: string[] = [])
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env)
+  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, false, false)
   if (!tokens.businessPlatform) {
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
