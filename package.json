@@ -35,6 +35,9 @@
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
     "@nrwl/tao": "16.7.4",
+    "@nx/eslint-plugin": "16.7.4",
+    "@nx/js": "16.7.4",
+    "@nx/workspace": "16.7.4",
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
@@ -58,6 +61,7 @@
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
     "nx": "16.7.4",
+    "nx-cloud": "^16.5.2",
     "oclif": "3.16.0",
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
@@ -71,10 +75,7 @@
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
-    "typescript": "5.2.2",
-    "@nx/workspace": "16.7.4",
-    "@nx/js": "16.7.4",
-    "@nx/eslint-plugin": "16.7.4"
+    "typescript": "5.2.2"
   },
   "workspaces": {
     "packages": [

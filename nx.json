@@ -41,7 +41,7 @@
   "npmScope": "@shopify",
   "tasksRunnerOptions": {
     "default": {
-      "runner": "@nx/workspace/tasks-runners/default",
+      "runner": "nx-cloud",
       "options": {
         "cacheableOperations": [
           "build"
