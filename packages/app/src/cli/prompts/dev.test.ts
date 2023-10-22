@@ -12,7 +12,12 @@ import {testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import colors from '@shopify/cli-kit/node/colors'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt, renderToken} from '@shopify/cli-kit/node/ui'
+import {
+  renderAutocompletePrompt,
+  renderConfirmationPrompt,
+  renderTextPrompt,
+  renderTokenItem,
+} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -156,12 +161,11 @@ describe('selectStore', () => {
     // Then
     expect(got).toEqual(STORE1)
     expect(renderAutocompletePrompt).not.toBeCalled()
-    expect(renderToken).toHaveBeenCalledWith(expect.objectContaining({
-      token: [
-        colors.green('✔'),
-        'Using your default dev store, store1, to preview your project.'
-      ]
-    }))
+    expect(renderTokenItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: [colors.green('✔'), 'Using your default dev store, store1, to preview your project.'],
+      }),
+    )
   })
 
   test('returns store if user selects one', async () => {

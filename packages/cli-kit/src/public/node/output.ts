@@ -4,6 +4,7 @@ import {PackageManager} from './node-package-manager.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
 import {isTruthy} from './context/utilities.js'
+import {renderTokenItem} from './ui.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -18,8 +19,7 @@ import {
   RawContentToken,
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
-import {Token, TokenItem, TokenizedText} from '../../private/node/ui/components/TokenizedText.js'
-import {renderToken} from './ui.js'
+import {TokenItem} from '../../private/node/ui/components/TokenizedText.js'
 import {recordUIEvent} from '../../private/node/demo-recorder.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
@@ -338,7 +338,7 @@ function outputGeneric({content, logger, logLevel, preface}: OutputGenericParame
   } else {
     let token = Array.isArray(content) ? content : [content]
     if (preface) token = [preface, ...token]
-    renderToken({token, logger, logLevel})
+    renderTokenItem({token, logger, logLevel})
   }
 }
 

@@ -14,7 +14,7 @@ import {
   renderTasks,
   renderText,
   renderTextPrompt,
-  renderToken,
+  renderTokenItem,
   renderWarning,
 } from '../../src/public/node/ui.js'
 import {unstyled} from '../../src/public/node/output.js'
@@ -613,10 +613,10 @@ export const examples: {[key in string]: Example} = {
       return stdout.lastFrame()!
     },
   },
-  renderToken: {
+  renderTokenItem: {
     type: 'static',
     basic: async () => {
-      return renderToken({
+      return renderTokenItem({
         token: [
           {bold: 'Hello'},
           {subdued: 'and welcome to'},

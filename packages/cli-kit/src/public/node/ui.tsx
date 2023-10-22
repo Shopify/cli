@@ -605,8 +605,7 @@ export function renderText({text, logLevel = 'info', logger = consoleLog}: Rende
   return textWithLineReturn
 }
 
-
-interface RenderTokenOptions {
+interface RenderTokenItemOptions {
   token: TokenItem
   logLevel?: LogLevel
   logger?: Logger
@@ -617,7 +616,7 @@ interface RenderTokenOptions {
  * @example
  * Hello and welcome to my website ( https://example.com )!
  */
-export function renderToken({token, logLevel = 'info', logger = consoleLog}: RenderTokenOptions): string {
+export function renderTokenItem({token, logLevel = 'info', logger = consoleLog}: RenderTokenItemOptions): string {
   return renderOnce(<TokenizedText item={token} />, {logLevel, logger})
 }
 
