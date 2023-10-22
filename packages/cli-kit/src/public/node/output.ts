@@ -251,8 +251,9 @@ export const clearCollectedLogs = (): void => {
  * @param logger - The logging function to use to output to the user.
  */
 export function outputInfo(content: OutputMessage | TokenItem, logger: Logger = consoleLog): void {
+  const toOutput: TokenItem = content instanceof TokenizedString ? stringifyMessage(content) : content
   outputGeneric({
-    content: detokenizeMessage(content),
+    content: detokenizeMessage(toOutput),
     logger,
     logLevel: 'info',
   })
@@ -331,7 +332,13 @@ interface OutputGenericParameters {
   preface?: string
 }
 
-function outputGeneric({content, logger, logLevel, preface}: OutputGenericParameters): void {
+/**
+ * Generic function to output messages to the user.
+ *
+ * @param options - The parameters for the output.
+ */
+function outputGeneric(options: OutputGenericParameters): void {
+  const {content, logger, logLevel, preface} = options
   if (content instanceof TokenizedString) {
     if (isUnitTest()) collectLog(logLevel, content)
     outputWhereAppropriate(logLevel, logger, `${preface ? `${preface} ` : ''}${content}`)
@@ -350,7 +357,7 @@ export function outputNewline(): void {
 }
 
 /**
- * Converts a Message to string.
+ * Converts an OutputMessage to string.
  *
  * @param message - The message to convert to string.
  * @returns The string representation of the message.
@@ -363,9 +370,19 @@ export function stringifyMessage(message: OutputMessage): string {
   }
 }
 
-function detokenizeMessage<T>(message: OutputMessage): string
-function detokenizeMessage<T>(message: T): T
-function detokenizeMessage<T>(message: OutputMessage | T): string | T {
+function detokenizeMessage(message: OutputMessage): string
+function detokenizeMessage(message: TokenItem): TokenItem
+/**
+ * Works the same as stringifyMessage but can accept other types. If the message
+ * is a TokenizedString, it will return the value of the TokenizedString.
+ * Otherwise, it will return the message as is.
+ *
+ * This is useful for preserving TokenItems.
+ *
+ * @param message - The message to detokenize.
+ * @returns The detokenized message, either a string or the original TokenItem.
+ */
+function detokenizeMessage(message: OutputMessage | TokenItem): TokenItem {
   if (message instanceof TokenizedString) {
     return message.value
   } else {
