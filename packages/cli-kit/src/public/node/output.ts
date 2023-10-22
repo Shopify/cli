@@ -302,11 +302,13 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  * @param logger - The logging function to use to output to the user.
  */
 export function outputDebug(content: OutputMessage, logger: Logger = consoleLog): void {
-  // Don't use outputGeneric as it ends up polluting test logs with timestamps
-  if (isUnitTest()) collectLog('debug', content)
-  const message = colors.gray(stringifyMessage(content))
-  const timestamp = new Date().toISOString()
-  outputWhereAppropriate('debug', logger, `${timestamp}: ${message}`)
+  const timestamp = isUnitTest() ? 'TIMESTAMP' : new Date().toISOString()
+  outputGeneric({
+    preface: `${timestamp}:`,
+    content: {subdued: detokenizeMessage(content)},
+    logger,
+    logLevel: 'debug',
+  })
 }
 
 /**
