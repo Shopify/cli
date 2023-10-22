@@ -615,10 +615,9 @@ interface RenderTokenOptions {
 /** Renders a text token to the console.
  * Using this function allows use of all text tokens
  * @example
- * Hello world!
- *
+ * Hello and welcome to my website ( https://example.com )!
  */
-export function renderToken({token, logLevel = 'info', logger = consoleLog}: RenderTokenOptions) {
+export function renderToken({token, logLevel = 'info', logger = consoleLog}: RenderTokenOptions): string {
   return renderOnce(<TokenizedText item={token} />, {logLevel, logger})
 }
 

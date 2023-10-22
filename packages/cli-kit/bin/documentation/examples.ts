@@ -14,6 +14,7 @@ import {
   renderTasks,
   renderText,
   renderTextPrompt,
+  renderToken,
   renderWarning,
 } from '../../src/public/node/ui.js'
 import {unstyled} from '../../src/public/node/output.js'
@@ -610,6 +611,22 @@ export const examples: {[key in string]: Example} = {
       )
 
       return stdout.lastFrame()!
+    },
+  },
+  renderToken: {
+    type: 'static',
+    basic: async () => {
+      return renderToken({
+        token: [
+          {bold: 'Hello'},
+          {subdued: 'and welcome to'},
+          {link: {
+            label: 'my website',
+            url: 'https://example.com',
+          }},
+          {char: '!'},
+        ],
+      })
     },
   },
   renderText: {

@@ -14,7 +14,7 @@ interface RenderOnceOptions {
 export function renderOnce(
   element: JSX.Element,
   {logLevel = 'info', logger = consoleLog, renderOptions}: RenderOnceOptions,
-) {
+): string {
   const {output, unmount} = renderString(element, renderOptions)
 
   if (output) {
@@ -24,7 +24,7 @@ export function renderOnce(
 
   unmount()
 
-  return output
+  return output ?? ''
 }
 
 export function render(element: JSX.Element, options?: RenderOptions) {
