@@ -16,7 +16,7 @@ import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
-import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
+import {handleCtrlC, render, renderOnce, Stdout} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
@@ -609,6 +609,7 @@ interface RenderTokenItemOptions {
   token: TokenItem
   logLevel?: LogLevel
   logger?: Logger
+  wideStdout?: boolean
 }
 
 /** Renders a text token to the console.
@@ -616,8 +617,15 @@ interface RenderTokenItemOptions {
  * @example
  * Hello and welcome to my website ( https://example.com )!
  */
-export function renderTokenItem({token, logLevel = 'info', logger = consoleLog}: RenderTokenItemOptions): string {
-  return renderOnce(<TokenizedText item={token} />, {logLevel, logger})
+export function renderTokenItem({
+  token,
+  logLevel = 'info',
+  logger = consoleLog,
+  wideStdout,
+}: RenderTokenItemOptions): string {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderOptions = wideStdout ? {stdout: new Stdout({columns: -1}) as any} : {}
+  return renderOnce(<TokenizedText item={token} />, {logLevel, logger, renderOptions})
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */

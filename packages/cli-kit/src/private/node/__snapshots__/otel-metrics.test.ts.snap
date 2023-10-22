@@ -68,10 +68,7 @@ TIMESTAMP: [OTEL] record cli_commands_duration_ms histogram 10ms {
     \\"cli_version\\": \\"nightly\\"
   }
 }
-TIMESTAMP: [OTEL] record cli_commands_wall_clock_elapsed_ms histogram 
-stage=\\"active\\" 10ms
-TIMESTAMP: [OTEL] record cli_commands_wall_clock_elapsed_ms histogram 
-stage=\\"network\\" 20ms
-TIMESTAMP: [OTEL] record cli_commands_wall_clock_elapsed_ms histogram 
-stage=\\"prompt\\" 30ms"
+TIMESTAMP: [OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage=\\"active\\" 10ms
+TIMESTAMP: [OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage=\\"network\\" 20ms
+TIMESTAMP: [OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage=\\"prompt\\" 30ms"
 `;

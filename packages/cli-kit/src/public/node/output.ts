@@ -347,7 +347,7 @@ function outputGeneric(options: OutputGenericParameters): void {
   } else {
     let token = Array.isArray(content) ? content : [content]
     if (preface) token = [preface, ...token]
-    renderTokenItem({token, logger, logLevel})
+    renderTokenItem({token, logger, logLevel, wideStdout: true})
   }
 }
 
