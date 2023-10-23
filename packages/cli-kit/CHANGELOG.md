@@ -1,5 +1,21 @@
 # @shopify/cli-kit
 
+## 3.50.0
+
+### Minor Changes
+
+- 4bb8fff29: Added InfoToken, WarnToken, and ErrorToken to cli-kit ui
+- 3f36e9463: Fixed CI issue due to theme check --dev-preview --version implementation
+
+### Patch Changes
+
+- cf5bbff61: Add verbose logs for Bugsnag reporting
+- 46a72a6b4: Fix NPM separator warning for negated flags
+- 3ed6ae88e: Dev component rethrow the exception to display error banner
+- d6b02afcf: Fix incorrect variables in getCIMetadata
+- e0cd881e1: Add monorail config for reliability metrics
+- 20d667246: Add OpenTelemetry helper library
+
 ## 3.49.1
 
 ## 3.49.0

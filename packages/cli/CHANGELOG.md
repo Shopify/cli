@@ -1,5 +1,25 @@
 # @shopify/cli
 
+## 3.50.0
+
+### Minor Changes
+
+- 6095a8827: Added `--dev-preview` for `theme language-server`
+
+### Patch Changes
+
+- 1eb27c05b: Show friendlier message when invalid json template format
+- Updated dependencies [4bb8fff29]
+- Updated dependencies [3f36e9463]
+- Updated dependencies [cf5bbff61]
+- Updated dependencies [46a72a6b4]
+- Updated dependencies [3ed6ae88e]
+- Updated dependencies [d6b02afcf]
+- Updated dependencies [e0cd881e1]
+- Updated dependencies [20d667246]
+  - @shopify/cli-kit@3.50.0
+  - @shopify/plugin-did-you-mean@3.50.0
+
 ## 3.49.1
 
 ### Patch Changes

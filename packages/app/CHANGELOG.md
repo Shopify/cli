@@ -1,5 +1,37 @@
 # @shopify/app
 
+## 3.50.0
+
+### Minor Changes
+
+- 0354bebfd: Add the GraphiQL Explorer to dev
+
+### Patch Changes
+
+- c5473d3ad: Javy must only be installed in case the app includes at least one js function
+- cf5bbff61: Do not report "not found" errors
+- 634df1e70: Running config commands works properly when they are run outside the app root folder
+- 5827664a3: Fix store not found error message
+- 83179cf42: Uuid is no longer generated during `app deploy` because it's generated in the backend, instead.
+- a3936e745: Adding support to test locales with functions in Dev mode.
+- e18d1c5d0: Retain previuos proxy url subpath
+- 66fe731e4: Allow enabling and disabling dev store preview mode with dashboard managed extensions.
+- 3ed6ae88e: Dev component rethrow the exception to display error banner
+- 1087f2b88: Add missing Manage app permission to the organization not found error banner
+- 9c9db3d55: Javascript functions/extensions now support environment variable sustitution.
+- e0cd881e1: Add monorail config for reliability metrics
+- Updated dependencies [4bb8fff29]
+- Updated dependencies [3f36e9463]
+- Updated dependencies [516893d44]
+- Updated dependencies [cf5bbff61]
+- Updated dependencies [46a72a6b4]
+- Updated dependencies [3ed6ae88e]
+- Updated dependencies [d6b02afcf]
+- Updated dependencies [e0cd881e1]
+- Updated dependencies [20d667246]
+  - @shopify/cli-kit@3.50.0
+  - @shopify/plugin-cloudflare@3.50.0
+
 ## 3.49.1
 
 ### Patch Changes
