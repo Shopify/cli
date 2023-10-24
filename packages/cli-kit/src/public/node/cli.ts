@@ -21,20 +21,17 @@ async function warnIfOldNodeVersion() {
   if (nodeMajorVersion < currentSupportedNodeVersion) {
     const {renderWarning} = await import('./ui.js')
     renderWarning({
-      headline: `Node ${nodeMajorVersion} is out of date.`,
+      headline: 'Upgrade to a supported Node version now.',
       body: [
-        `You are using Node ${nodeVersion}, which has reached end-of-life.
-
-An upcoming release of Shopify CLI will drop support for Node ${nodeMajorVersion}.
-
-Upgrade to a`,
-          {
-            link: {
-              url: 'https://nodejs.dev/en/about/releases/',
-              label: 'supported Node version',
-            },
+        `Node ${nodeMajorVersion} has reached end-of-life and poses security risks. When you upgrade to a`,
+        {
+          link: {
+            url: 'https://nodejs.dev/en/about/releases/',
+            label: 'supported version',
           },
-        'to continue using Shopify CLI without interruption.',
+        },
+        {char: ','},
+        "you'll be able to use Shopify CLI without interruption.",
       ],
     })
   }
