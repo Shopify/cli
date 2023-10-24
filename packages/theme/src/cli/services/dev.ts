@@ -84,7 +84,7 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
       [
         {
           link: {
-            label: `Share your theme preview`,
+            label: 'Share your theme preview',
             url: `https://${store}/?preview_theme_id=${themeId}`,
           },
         },
