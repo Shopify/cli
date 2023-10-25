@@ -194,6 +194,7 @@ program
             );
             break;
           case "pnpm":
+          case "bun":
             await execa(
               nodePackageManager,
               [
@@ -215,20 +216,7 @@ program
               ],
               defaultOpts
             );
-            break;
-          case "bun":
-            await execa(
-              nodePackageManager,
-              [
-                "create",
-                `@shopify/app@${options.install}`,
-                ...initArgs
-              ],
-              defaultOpts
-            );
-            break;
         }
-
         break;
       default:
         log(
