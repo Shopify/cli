@@ -899,7 +899,9 @@ USAGE
 
 FLAGS
   -C, --config=<value>            Use the config provided, overriding .theme-check.yml if present
-                                  Use :theme_app_extension to use default checks for theme app extensions
+                                  Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
+                                  theme-check:recommended, theme-check:all
+                                  For backwards compatibility, :theme_app_extension is also supported
   -a, --auto-correct              Automatically fix offenses
   -c, --category=<value>          Only run this category of checks
                                   Runs checks matching all categories when specified more than once
