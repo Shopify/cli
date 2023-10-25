@@ -4,6 +4,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {dev, refreshTokens, showDeprecationWarnings} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -103,6 +104,7 @@ export default class Dev extends ThemeCommand {
    * Every 110 minutes, it will refresh the session token.
    */
   async run(): Promise<void> {
+    showEmbeddedCLIWarning()
     showDeprecationWarnings(this.argv)
 
     let {flags} = await this.parse(Dev)

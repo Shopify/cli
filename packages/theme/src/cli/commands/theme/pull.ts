@@ -2,10 +2,12 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 
 export default class Pull extends ThemeCommand {
   static description = 'Download your remote theme files locally.'
@@ -56,6 +58,8 @@ export default class Pull extends ThemeCommand {
   static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
 
   async run(): Promise<void> {
+    showEmbeddedCLIWarning()
+
     const {flags} = await this.parse(Pull)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
@@ -67,7 +71,9 @@ export default class Pull extends ThemeCommand {
         flags.theme = `${theme.id}`
         flags.development = false
       }
-      flags['development-theme-id'] = theme.id
+      if (useEmbeddedThemeCLI()) {
+        flags['development-theme-id'] = theme.id
+      }
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})
