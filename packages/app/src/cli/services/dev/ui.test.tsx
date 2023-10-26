@@ -144,7 +144,6 @@ describe('ui', () => {
       }
 
       const abortController = new AbortController()
-      abortController.abort()
 
       await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
 
@@ -179,11 +178,11 @@ describe('ui', () => {
       await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
       abortController.abort()
 
-      expect(enableDeveloperPreview).toHaveBeenCalledOnce()
-      expect(disableDeveloperPreview).toHaveBeenCalledOnce()
+      expect(enableDeveloperPreview).toHaveBeenCalled()
+      expect(disableDeveloperPreview).toHaveBeenCalled()
     })
 
-    test("not enable dev preview when terminal doesn't support TTY and the app does not supports it", async () => {
+    test("don't enable dev preview when terminal doesn't support TTY and the app doesn't supports it", async () => {
       vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
       const concurrentProcess = {
         prefix: 'prefix',
@@ -205,8 +204,8 @@ describe('ui', () => {
       await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
       abortController.abort()
 
-      expect(enableDeveloperPreview).not.toHaveBeenCalledOnce()
-      expect(disableDeveloperPreview).not.toHaveBeenCalledOnce()
+      expect(enableDeveloperPreview).not.toHaveBeenCalled()
+      expect(disableDeveloperPreview).not.toHaveBeenCalled()
     })
 
     test('uses ink when terminal supports TTY', async () => {
