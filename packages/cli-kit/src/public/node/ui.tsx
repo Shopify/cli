@@ -4,6 +4,7 @@ import {
   collectLog,
   consoleError,
   consoleLog,
+  consoleWarn,
   Logger,
   LogLevel,
   outputContent,
@@ -16,7 +17,7 @@ import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
-import {handleCtrlC, render, renderOnce, Stdout} from '../../private/node/ui.js'
+import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
@@ -41,8 +42,10 @@ import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {recordUIEvent, resetRecordedSleep} from '../../private/node/demo-recorder.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
+import {RenderGenericTextOptions, renderGenericText} from '../../private/node/ui/render-text.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
+import figures from 'figures'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
@@ -585,7 +588,6 @@ export async function renderDangerousConfirmationPrompt({
 }
 
 interface RenderTextOptions {
-  text: string
   logLevel?: LogLevel
   logger?: Logger
 }
@@ -596,7 +598,8 @@ interface RenderTextOptions {
  * Hello world!
  *
  */
-export function renderText({text, logLevel = 'info', logger = consoleLog}: RenderTextOptions) {
+// eslint-disable-next-line max-params
+export function renderText(text: string, {logLevel = 'info', logger = consoleLog}: RenderTextOptions = {}) {
   let textWithLineReturn = text
   if (!text.endsWith('\n')) textWithLineReturn += '\n'
 
@@ -609,7 +612,6 @@ interface RenderTokenItemOptions {
   token: TokenItem
   logLevel?: LogLevel
   logger?: Logger
-  wideStdout?: boolean
 }
 
 /** Renders a text token to the console.
@@ -617,15 +619,66 @@ interface RenderTokenItemOptions {
  * @example
  * Hello and welcome to my website ( https://example.com )!
  */
-export function renderTokenItem({
-  token,
-  logLevel = 'info',
-  logger = consoleLog,
-  wideStdout,
-}: RenderTokenItemOptions): string {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const renderOptions = wideStdout ? {stdout: new Stdout({columns: -1}) as any} : {}
-  return renderOnce(<TokenizedText item={token} />, {logLevel, logger, renderOptions})
+export function renderTokenItem({token, logLevel = 'info', logger = consoleLog}: RenderTokenItemOptions): string {
+  return renderOnce(<TokenizedText item={token} />, {logLevel, logger})
+}
+
+type RenderSpecificTextOptions = Partial<Omit<RenderGenericTextOptions, 'preface' | 'prefaceColor'>>
+
+/** Renders an info text token to the console.
+ * Using this function sets off the text with a `ℹ` symbol.
+ * @example
+ * ℹ  Hello and welcome to my website ( https://example.com )!
+ *
+ */
+// eslint-disable-next-line max-params
+export function renderInfoText(
+  tokenItem: TokenItem,
+  {logLevel = 'info', logger = consoleLog}: RenderSpecificTextOptions = {},
+): string {
+  return renderGenericText(tokenItem, {logLevel, logger, preface: figures.info})
+}
+
+/** Renders a success text token to the console.
+ * Using this function sets off the text with a `✔` symbol.
+ * @example
+ * ✔  Operation completed successfully.
+ *
+ */
+// eslint-disable-next-line max-params
+export function renderSuccessText(
+  tokenItem: TokenItem,
+  {logLevel = 'info', logger = consoleLog}: RenderSpecificTextOptions = {},
+): string {
+  return renderGenericText(tokenItem, {logLevel, logger, preface: figures.tick, prefaceColor: 'green'})
+}
+
+/** Renders a warning text token to the console.
+ * Using this function sets off the text with a `⚠` symbol.
+ * @example
+ * ⚠  This operation may take a while.
+ *
+ */
+// eslint-disable-next-line max-params
+export function renderWarningText(
+  tokenItem: TokenItem,
+  {logLevel = 'warn', logger = consoleWarn}: RenderSpecificTextOptions = {},
+): string {
+  return renderGenericText(tokenItem, {logLevel, logger, preface: figures.warning, prefaceColor: 'yellow'})
+}
+
+/** Renders an error text token to the console.
+ * Using this function sets off the text with a `✘` symbol.
+ * @example
+ * ✘  Operation failed.
+ *
+ */
+// eslint-disable-next-line max-params
+export function renderErrorText(
+  tokenItem: TokenItem,
+  {logLevel = 'error', logger = consoleError}: RenderSpecificTextOptions = {},
+): string {
+  return renderGenericText(tokenItem, {logLevel, logger, preface: figures.cross, prefaceColor: 'red'})
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */

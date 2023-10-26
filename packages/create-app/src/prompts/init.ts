@@ -82,7 +82,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   let welcomed = false
 
   if (!name) {
-    renderText({text: '\nWelcome. Let’s get started by naming your app project. You can change it later.'})
+    renderText('\nWelcome. Let’s get started by naming your app project. You can change it later.')
     welcomed = true
     name = await renderTextPrompt({
       message: 'Your project name?',
@@ -103,7 +103,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
 
   if (!template) {
     if (!welcomed) {
-      renderText({text: '\nWelcome. Let’s get started by choosing a template for your app project.'})
+      renderText('\nWelcome. Let’s get started by choosing a template for your app project.')
       welcomed = true
     }
     template = await renderSelectPrompt({

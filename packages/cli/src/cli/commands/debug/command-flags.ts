@@ -52,7 +52,7 @@ export default class CommandFlags extends Command {
       const header = `${columns.join(',')}\n`
       const rows = data.map((obj) => columns.map((key) => obj[key]).join(',')).join('\n')
       const csvString = header + rows
-      renderText({text: csvString})
+      renderText(csvString)
     } else {
       renderTable({
         rows: data,

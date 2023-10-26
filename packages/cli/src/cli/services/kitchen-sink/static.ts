@@ -1,4 +1,5 @@
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputNewline} from '@shopify/cli-kit/node/output'
 import {
   renderError,
   renderFatalError,
@@ -6,6 +7,11 @@ import {
   renderSuccess,
   renderTable,
   renderWarning,
+  renderInfoText,
+  renderSuccessText,
+  renderWarningText,
+  renderErrorText,
+  renderText,
 } from '@shopify/cli-kit/node/ui'
 
 export async function staticService() {
@@ -199,4 +205,58 @@ export async function staticService() {
       email: {},
     },
   })
+
+  outputNewline()
+
+  renderInfoText([
+    'For more information, run',
+    {
+      command: 'shopify help',
+    },
+    'or visit the',
+    {
+      link: {
+        label: 'Dev docs',
+        url: 'https://shopify.dev',
+      },
+    },
+    {char: '.'},
+  ])
+
+  outputNewline()
+
+  renderSuccessText('Operation completed successfully.')
+
+  outputNewline()
+
+  renderWarningText([
+    'This is a warning. You can learn more about this warning in the',
+    {
+      link: {
+        label: 'Dev docs',
+        url: 'https://shopify.dev',
+      },
+    },
+    {char: '.'},
+  ])
+
+  outputNewline()
+
+  renderErrorText([
+    'This is an error. You can learn more about this error in the',
+    {
+      link: {
+        label: 'Dev docs',
+        url: 'https://shopify.dev',
+      },
+    },
+    {char: '.'},
+  ])
+
+  outputNewline()
+
+  renderText(`This is some raw text, which should be printed as-is, not line-wrapped.
+
+${JSON.stringify({someLongString: 'ThisIsAVeryLongString'.repeat(20)}, null, 2)}
+`)
 }

@@ -6,16 +6,20 @@ import {
   renderConfirmationPrompt,
   renderDangerousConfirmationPrompt,
   renderError,
+  renderErrorText,
   renderFatalError,
   renderInfo,
+  renderInfoText,
   renderSelectPrompt,
   renderSuccess,
+  renderSuccessText,
   renderTable,
   renderTasks,
   renderText,
   renderTextPrompt,
   renderTokenItem,
   renderWarning,
+  renderWarningText,
 } from '../../src/public/node/ui.js'
 import {unstyled} from '../../src/public/node/output.js'
 import {AbortError, BugError} from '../../src/public/node/error.js'
@@ -632,7 +636,42 @@ export const examples: {[key in string]: Example} = {
   renderText: {
     type: 'static',
     basic: async () => {
-      return renderText({text: 'Hello world!'})
+      return renderText('Hello world!')
+    },
+  },
+  renderInfoText: {
+    type: 'static',
+    basic: async () => {
+      return renderInfoText(
+        [
+          'Hello and welcome to',
+          {
+            link: {
+              label: 'my website',
+              url: 'https://example.com',
+            },
+          },
+          {char: '!'},
+        ],
+      )
+    },
+  },
+  renderWarningText: {
+    type: 'static',
+    basic: async () => {
+      return renderWarningText('This operation may take a while.')
+    },
+  },
+  renderSuccessText: {
+    type: 'static',
+    basic: async () => {
+      return renderSuccessText('Operation completed successfully.')
+    },
+  },
+  renderErrorText: {
+    type: 'static',
+    basic: async () => {
+      return renderErrorText('Operation failed.')
     },
   },
 }
