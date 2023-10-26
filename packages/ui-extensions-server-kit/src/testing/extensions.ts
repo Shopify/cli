@@ -50,10 +50,9 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
     // [see stackoverflow](https://stackoverflow.com/a/68699273) assume that
     // `DeepPartial<Array<T>> === Array<T | undefined>` while we are looking for
     // `DeepPartial<Array<T>> === Array<T> | undefined`.
-    // This is the case for extension points and also categories and seems hard to fix
+    // This is the case for extension points and seems hard to fix
     // in a generalized, non-surprising way
     extensionPoints: obj.extensionPoints as any,
-    categories: obj.categories as any,
     capabilities: obj.capabilities as any,
     localization: obj.localization as any,
     authenticatedRedirectStartUrl: obj.authenticatedRedirectStartUrl as any,

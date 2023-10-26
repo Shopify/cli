@@ -130,7 +130,6 @@ export interface ExtensionPayload {
   description?: string
   handle: string
   extensionPoints: ExtensionPoints
-  categories?: string[]
   capabilities?: Capabilities
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]

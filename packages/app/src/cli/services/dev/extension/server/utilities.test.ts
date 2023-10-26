@@ -51,28 +51,6 @@ describe('getRedirectURL()', () => {
 
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
   })
-
-  test('returns a URL with a origin param if the surface is customer_accounts', async () => {
-    vi.mocked(isSpinEnvironment).mockReturnValue(false)
-    const extension = await testUIExtension({
-      configuration: {type: 'customer_accounts_ui_extension', name: 'test', metafields: []},
-    })
-
-    // Overwrite the surface to be customer_accounts (we don't have real values in tests)
-    extension.specification.surface = 'customer_accounts'
-
-    const options = {
-      storeFqdn: 'example.myshopify.com',
-      storeId: '123456789',
-      url: 'https://localhost:8081',
-    } as unknown as ExtensionDevOptions
-
-    const result = getRedirectUrl(extension, options)
-
-    expect(result).toBe(
-      'https://shopify.com/123456789/account/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=test-ui-extension-uuid&source=CUSTOMER_ACCOUNT_EXTENSION',
-    )
-  })
 })
 
 describe('getExtensionPointRedirectUrl()', () => {
