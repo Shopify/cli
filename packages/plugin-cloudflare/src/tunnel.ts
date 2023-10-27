@@ -71,6 +71,9 @@ class TunnelClientInstance implements TunnelClient {
     }
 
     const args: string[] = ['tunnel', '--url', `http://localhost:${this.port}`, '--no-autoupdate']
+    if (process.env.SHOPIFY_CLI_CUSTOM_CLOUDFLARED_TUNNEL_NAME) {
+      args.push('run', process.env.SHOPIFY_CLI_CUSTOM_CLOUDFLARED_TUNNEL_NAME)
+    }
     const errors: string[] = []
 
     let connected = false
@@ -166,6 +169,9 @@ function whatToTry() {
 }
 
 function findUrl(data: Buffer): string | undefined {
+  if (process.env.SHOPIFY_CLI_CUSTOM_CLOUDFLARED_DOMAIN) {
+    return process.env.SHOPIFY_CLI_CUSTOM_CLOUDFLARED_DOMAIN
+  }
   const regex = new RegExp(`(https:\\/\\/[^\\s]+\\.${getTunnelDomain()})`)
   const match = data.toString().match(regex) ?? undefined
   return match && match[1]
