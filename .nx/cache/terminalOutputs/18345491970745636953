@@ -1,0 +1,3 @@
+src/public/node/ruby.ts(136,12): error TS2339: Property 'offenses' does not exist on type 'Offense[]'.
+src/public/node/ruby.ts(136,22): error TS2339: Property 'theme' does not exist on type 'Offense[]'.
+Warning: run-commands command "pnpm tsc -b ./tsconfig.build.json" exited with non-zero status code

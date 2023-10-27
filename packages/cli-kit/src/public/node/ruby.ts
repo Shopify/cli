@@ -13,6 +13,7 @@ import {pathConstants} from '../../private/node/constants.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import envPaths from 'env-paths'
+import {check, themeCheckRun} from '@shopify/theme-check-node'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
@@ -107,7 +108,7 @@ interface ExecThemeCheckCLIOptions {
  * @returns A promise that resolves or rejects depending on the result of the underlying theme-check process.
  */
 export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Promise<void[]> {
-  await installThemeCheckCLIDependencies(options.stdout)
+  // await installThemeCheckCLIDependencies(options.stdout)
 
   const processes = options.directories.map(async (directory): Promise<void> => {
     // Check that there are files aside from the extension TOML config file,
@@ -128,11 +129,19 @@ export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Prom
         }
       },
     })
-    await runBundler(['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
-      stdout: options.stdout,
-      stderr: customStderr,
-      cwd: themeCheckDirectory(),
-    })
+
+    const configPath =
+      '/Users/isaac/src/github.com/Shopify/cli/node_modules/.pnpm/@shopify+theme-check-node@1.18.1/node_modules/@shopify/theme-check-node/configs/theme-app-extension.yml'
+    console.log('RUNNING THEME CHECK on: ', directory)
+    const result = await themeCheckRun(directory, configPath)
+    const result2 = await check(directory, configPath)
+    // console.log(JSON.stringify(result, null, 2))
+    console.log(result2)
+    // await runBundler(['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
+    //   stdout: options.stdout,
+    //   stderr: customStderr,
+    //   cwd: themeCheckDirectory(),
+    // })
   })
   return Promise.all(processes)
 }
