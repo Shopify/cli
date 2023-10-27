@@ -31,13 +31,13 @@ beforeEach(() => {
   vi.mocked(isUnitTest).mockReturnValue(true)
 })
 
-describe('errorHandler', () => {
+describe('errorHandler', async () => {
   test('finishes the execution without exiting the proccess when cancel execution exception is raised', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)
 
     // When
-    errorHandler(new error.CancelExecution())
+    await errorHandler(new error.CancelExecution())
 
     // Then
     expect(process.exit).toBeCalledTimes(0)
@@ -49,7 +49,7 @@ describe('errorHandler', () => {
     const outputMock = mockAndCaptureOutput()
 
     // When
-    errorHandler(new error.CancelExecution('Custom message'))
+    await errorHandler(new error.CancelExecution('Custom message'))
 
     // Then
     expect(outputMock.info()).toMatch('✨  Custom message')
