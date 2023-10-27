@@ -15,6 +15,7 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
     module: zod.string(),
     require_app: zod.boolean(),
     discoverable: zod.boolean(),
+    allow_one_click_activate: zod.boolean(),
     enabled: zod.boolean(),
   }),
 })
@@ -32,6 +33,7 @@ const spec = createExtensionSpecification({
       categories: config.template.categories,
       require_app: config.template.require_app,
       discoverable: config.template.discoverable,
+      allow_one_click_activate: config.template.allow_one_click_activate,
       enabled: config.template.enabled,
       definition: await loadWorkflow(extensionPath, config.template.module),
       localization: await loadLocalesConfig(extensionPath, config.name),
