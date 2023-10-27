@@ -21,7 +21,6 @@ const ThemeCheckVersion = '1.15.0'
 const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
 export const MinWdmWindowsVersion = '0.1.0'
-const shopifyGems = envPaths('shopify-gems')
 
 interface ExecCLI2Options {
   // Contains store to pass to CLI 2.0 as environment variable
@@ -451,12 +450,6 @@ async function getSpinEnvironmentVariables() {
  * @param directory - Directory where the Gemfile is located.
  */
 async function shopifyBundleInstall(directory: string): Promise<void> {
-  await runBundler(['config', 'set', '--local', 'path', shopifyGems.cache], {
-    cwd: directory,
-  })
-  await runBundler(['config', 'set', '--local', 'without', 'development:test'], {
-    cwd: directory,
-  })
   await runBundler(['install'], {cwd: directory})
 }
 
@@ -481,5 +474,13 @@ export function bundleUserHome(): string | undefined {
  * @param options - Options to pass to the exec function.
  */
 async function runBundler(args: string[], options: ExecOptions) {
-  return exec(bundleExecutable(), args, {...options, env: {...options.env, BUNDLE_USER_HOME: bundleUserHome()}})
+  return exec(bundleExecutable(), args, {
+    ...options,
+    env: {
+      ...options.env,
+      BUNDLE_USER_HOME: bundleUserHome(),
+      BUNDLE_WITHOUT: 'development:test',
+      BUNDLE_APP_CONFIG: envPaths('shopify-gems').cache,
+    },
+  })
 }
