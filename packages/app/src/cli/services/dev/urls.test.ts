@@ -17,7 +17,7 @@ import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isSpin, spinFqdn, appPort, appHost} from '@shopify/cli-kit/node/context/spin'
@@ -507,6 +507,7 @@ describe('generateFrontendURL', () => {
     vi.mocked(isSpin).mockReturnValue(true)
     vi.mocked(appPort).mockReturnValue(1234)
     vi.mocked(appHost).mockReturnValue('1p-app-host.spin.domain.dev')
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
 
     // When
     const got = await generateFrontendURL(defaultOptions)
@@ -515,6 +516,26 @@ describe('generateFrontendURL', () => {
     expect(got).toEqual({
       frontendUrl: 'https://1p-app-host.spin.domain.dev',
       frontendPort: 1234,
+      usingLocalhost: false,
+    })
+    expect(setCachedAppInfo).not.toBeCalled()
+    expect(renderSelectPrompt).not.toBeCalled()
+  })
+
+  test('Returns a cli spin url if we are in a spin environment but a 1p app backend is running without the cli', async () => {
+    // Given
+    vi.mocked(isSpin).mockReturnValue(true)
+    vi.mocked(appPort).mockReturnValue(1234)
+    vi.mocked(spinFqdn).mockResolvedValue('spin.domain.dev')
+    vi.mocked(checkPortAvailability).mockResolvedValue(false)
+
+    // When
+    const got = await generateFrontendURL(defaultOptions)
+
+    // Then
+    expect(got).toEqual({
+      frontendUrl: 'https://cli.spin.domain.dev',
+      frontendPort: 4040,
       usingLocalhost: false,
     })
     expect(setCachedAppInfo).not.toBeCalled()
