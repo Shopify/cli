@@ -97,7 +97,7 @@ export interface OAuthSession {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  forceRefresh = false,
+  {forceRefresh = false, noPrompt = false}: {forceRefresh?: boolean; noPrompt?: boolean} = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -123,6 +123,9 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
+    if (noPrompt) {
+      throw new AbortError('Authentication required but prompting is disallowed')
+    }
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {

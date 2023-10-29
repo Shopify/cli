@@ -8,8 +8,9 @@ import {
   startTunnelPlugin,
   updateURLs,
 } from './dev/urls.js'
-import {ensureDevContext} from './context.js'
+import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
@@ -33,7 +34,7 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -288,16 +289,37 @@ async function launchDevProcesses({
     return outputProcess
   })
 
+  const apiKey = config.remoteApp.apiKey
+  const token = config.token
   const app = {
     canEnablePreviewMode: await canEnablePreviewMode({
       remoteApp: config.remoteApp,
       localApp: config.localApp,
-      token: config.token,
-      apiKey: config.remoteApp.apiKey,
+      token,
+      apiKey,
     }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
-    apiKey: config.remoteApp.apiKey,
-    token: config.token,
+    apiKey,
+    token,
+  }
+
+  let currentToken = config.token
+  const refreshToken = async () => {
+    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+    if (newToken) currentToken = newToken
+  }
+  const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
+    try {
+      return fn(currentToken)
+    } catch (_err) {
+      try {
+        await refreshToken()
+        return fn(currentToken)
+      } catch (err) {
+        outputDebug('Failed to refresh token')
+        throw err
+      }
+    }
   }
 
   return renderDev({
@@ -306,6 +328,20 @@ async function launchDevProcesses({
     graphiqlUrl,
     app,
     abortController,
+    developerPreview: {
+      fetchMode: async () =>
+        withRefreshToken(async (token: string) => Boolean(await fetchAppPreviewMode(apiKey, token))),
+      enable: async () =>
+        withRefreshToken(async (token: string) => {
+          await enableDeveloperPreview({apiKey, token})
+        }),
+      disable: async () =>
+        withRefreshToken(async (token: string) => {
+          await disableDeveloperPreview({apiKey, token})
+        }),
+      update: async (state: boolean) =>
+        withRefreshToken(async (token: string) => developerPreviewUpdate({apiKey, token, enabled: state})),
+    },
   })
 }
 

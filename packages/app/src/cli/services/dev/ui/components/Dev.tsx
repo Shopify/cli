@@ -1,6 +1,4 @@
 import metadata from '../../../../metadata.js'
-import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
-import {fetchAppPreviewMode} from '../../fetch.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -26,6 +24,12 @@ export interface DevProps {
     token: string
   }
   pollingTime?: number
+  developerPreview: {
+    fetchMode: () => Promise<boolean>
+    enable: () => Promise<void>
+    disable: () => Promise<void>
+    update: (state: boolean) => Promise<boolean>
+  }
 }
 
 const Dev: FunctionComponent<DevProps> = ({
@@ -35,8 +39,9 @@ const Dev: FunctionComponent<DevProps> = ({
   graphiqlUrl,
   app,
   pollingTime = 5000,
+  developerPreview,
 }) => {
-  const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
+  const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
@@ -54,7 +59,7 @@ const Dev: FunctionComponent<DevProps> = ({
       }, 2000)
     }
     clearInterval(pollingInterval.current)
-    await disableDeveloperPreview({apiKey, token})
+    await developerPreview.disable()
   })
 
   const [devPreviewEnabled, setDevPreviewEnabled] = useState<boolean>(true)
@@ -79,7 +84,7 @@ const Dev: FunctionComponent<DevProps> = ({
   useEffect(() => {
     const pollDevPreviewMode = async () => {
       try {
-        const enabled = await fetchAppPreviewMode(apiKey, token)
+        const enabled = await developerPreview.fetchMode()
         setDevPreviewEnabled(enabled ?? false)
         setError('')
         // eslint-disable-next-line no-catch-all/no-catch-all
@@ -91,7 +96,7 @@ const Dev: FunctionComponent<DevProps> = ({
     const enablePreviewMode = async () => {
       // Enable dev preview on app dev start
       try {
-        await enableDeveloperPreview({apiKey, token})
+        await developerPreview.enable()
         setError('')
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (_) {
@@ -149,11 +154,7 @@ const Dev: FunctionComponent<DevProps> = ({
             const newDevPreviewEnabled = !devPreviewEnabled
             setDevPreviewEnabled(newDevPreviewEnabled)
             try {
-              const developerPreviewUpdateSucceded = await developerPreviewUpdate({
-                apiKey,
-                token,
-                enabled: newDevPreviewEnabled,
-              })
+              const developerPreviewUpdateSucceded = await developerPreview.update(newDevPreviewEnabled)
               if (!developerPreviewUpdateSucceded) {
                 throw new Error(`Failed to turn ${newDevPreviewEnabled ? 'on' : 'off'} development store preview.`)
               }

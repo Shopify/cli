@@ -8,7 +8,6 @@ import {
   testUIExtension,
 } from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
-import {disableDeveloperPreview, enableDeveloperPreview} from '../context.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -18,6 +17,13 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('./ui/components/Dev.js')
 vi.mock('../context.js')
+
+const developerPreview = {
+  fetchMode: vi.fn(async () => true),
+  enable: vi.fn(async () => {}),
+  disable: vi.fn(async () => {}),
+  update: vi.fn(async (_state: boolean) => true),
+}
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -145,7 +151,7 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
 
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
@@ -175,11 +181,11 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
       abortController.abort()
 
-      expect(enableDeveloperPreview).toHaveBeenCalled()
-      expect(disableDeveloperPreview).toHaveBeenCalled()
+      expect(developerPreview.enable).toHaveBeenCalled()
+      expect(developerPreview.disable).toHaveBeenCalled()
     })
 
     test("don't enable dev preview when terminal doesn't support TTY and the app doesn't supports it", async () => {
@@ -201,11 +207,11 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
       abortController.abort()
 
-      expect(enableDeveloperPreview).not.toHaveBeenCalled()
-      expect(disableDeveloperPreview).not.toHaveBeenCalled()
+      expect(developerPreview.enable).not.toHaveBeenCalled()
+      expect(developerPreview.disable).not.toHaveBeenCalled()
     })
 
     test('uses ink when terminal supports TTY', async () => {
@@ -228,7 +234,7 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
+      renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 
