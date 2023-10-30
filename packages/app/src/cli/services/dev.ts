@@ -20,7 +20,7 @@ import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {mergeAppConfiguration} from './app/config/link.js'
 import {rewriteConfiguration} from './app/write-app-configuration-file.js'
-import {getMutationVars} from './app/config/push.js'
+import {pushConfig} from './app/config/push.js'
 import {loadApp} from '../models/app/loader.js'
 import {
   Web,
@@ -34,7 +34,6 @@ import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
-import {PushConfigSchema, PushConfig} from '../api/graphql/push_config.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -48,7 +47,6 @@ import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {deepDifference} from '@shopify/cli-kit/common/object'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface DevOptions {
   directory: string
@@ -427,14 +425,7 @@ async function checkForUnpushedChanges(
       })
 
       if (shouldPush) {
-        const result: PushConfigSchema = await partnersRequest(
-          PushConfig,
-          token,
-          getMutationVars(remoteApp, remoteConfigObj as CurrentAppConfiguration),
-        )
-
-        // eslint-disable-next-line no-console
-        console.log({result})
+        const result = await pushConfig({configuration: localApp, force: true})
       }
     }
   }
