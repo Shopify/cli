@@ -12,14 +12,23 @@ import {ensureDevContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
-import {frontAndBackendConfig} from './dev/processes/utils.js'
+import {UnknownObject, flattenObject, frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {DeploymentMode} from './deploy/mode.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {mergeAppConfiguration} from './app/config/link.js'
+import {rewriteConfiguration} from './app/write-app-configuration-file.js'
 import {loadApp} from '../models/app/loader.js'
-import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
+import {
+  Web,
+  isCurrentAppSchema,
+  getAppScopesArray,
+  AppInterface,
+  CurrentAppConfiguration,
+  AppSchema,
+} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -31,11 +40,12 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {deepDifference} from '@shopify/cli-kit/common/object'
 
 export interface DevOptions {
   directory: string
@@ -90,6 +100,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
+  }
+
+  if (isCurrentAppSchema(localApp.configuration)) {
+    await checkForUnpushedChanges(localApp.configuration, remoteApp)
   }
 
   const {webs, ...network} = await setupNetworkingOptions(
@@ -359,4 +373,54 @@ export async function validateCustomPorts(webConfigs: Web[]) {
 
 export function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
+}
+
+async function checkForUnpushedChanges(
+  localApp: CurrentAppConfiguration,
+  remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>,
+) {
+  const mergedRemoteConfig = mergeAppConfiguration(localApp, remoteApp as OrganizationApp)
+
+  const remoteConfigObj = rewriteConfiguration(AppSchema, mergedRemoteConfig)
+  const localConfigObj = rewriteConfiguration(AppSchema, localApp)
+
+  if (typeof remoteConfigObj === 'object' && typeof localConfigObj === 'object') {
+    const [upstreamConfig, localConfig] = deepDifference(remoteConfigObj!, localConfigObj!)
+
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    delete localConfig.build
+
+    const flatUpstream = Object.entries(flattenObject(upstreamConfig as UnknownObject))
+    const flatLocal = Object.entries(flattenObject(localConfig as UnknownObject))
+
+    if (flatUpstream.length) {
+      renderWarning({
+        headline: 'You have unpushed changes to your configuration file.',
+        body: 'This could cause errors when installing and testing your app.',
+      })
+
+      await renderConfirmationPrompt({
+        message: 'Push your local changes up to Shopify? These updates will go live immediately',
+        gitDiff: {
+          baselineContent: flatUpstream
+            .map((tuple) => `${tuple[0].toString()}: ${tuple[1]!.toString()}`)
+            .toString()
+            .replaceAll(',', '\n'),
+          updatedContent: flatLocal
+            .map((tuple) => `${tuple[0].toString()}: ${tuple[1]!.toString()}`)
+            .toString()
+            .replaceAll(',', '\n'),
+        },
+        // infoTable: flatLocal.map((tuple, index) => {
+        //   return {
+        //     header: tuple[0]?.toString().replace('.', ' ').replace('_', ' ') ?? '',
+        //     items: [`${flatUpstream[index]![1]} -> ${tuple[1]?.toString()}` ?? ''],
+        //   }
+        // }),
+        confirmationMessage: 'Yes, push my changes now',
+        cancellationMessage: 'No, I still need to update my configuration',
+      })
+    }
+  }
 }

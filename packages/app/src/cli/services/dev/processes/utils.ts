@@ -7,14 +7,14 @@ export function frontAndBackendConfig(webs: Web[]) {
   return {frontendConfig, backendConfig}
 }
 
-interface Obj {
+export interface UnknownObject {
   [key: string]: {[key: string]: string} | string | undefined
 }
 
-export function flattenObject(obj: Obj) {
-  const result: Obj = {}
+export function flattenObject(obj: UnknownObject) {
+  const result: UnknownObject = {}
 
-  function recurse(current: Obj, path = '') {
+  function recurse(current: UnknownObject, path = '') {
     for (const key in current) {
       if (key) {
         const value = current[key]
