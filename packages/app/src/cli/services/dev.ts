@@ -20,6 +20,7 @@ import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {mergeAppConfiguration} from './app/config/link.js'
 import {rewriteConfiguration} from './app/write-app-configuration-file.js'
+import {getMutationVars} from './app/config/push.js'
 import {loadApp} from '../models/app/loader.js'
 import {
   Web,
@@ -33,6 +34,7 @@ import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
+import {PushConfigSchema, PushConfig} from '../api/graphql/push_config.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -46,6 +48,7 @@ import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {deepDifference} from '@shopify/cli-kit/common/object'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface DevOptions {
   directory: string
@@ -103,7 +106,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   if (isCurrentAppSchema(localApp.configuration)) {
-    await checkForUnpushedChanges(localApp.configuration, remoteApp)
+    await checkForUnpushedChanges(localApp.configuration, remoteApp, token)
   }
 
   const {webs, ...network} = await setupNetworkingOptions(
@@ -378,6 +381,7 @@ export function setPreviousAppId(directory: string, apiKey: string) {
 async function checkForUnpushedChanges(
   localApp: CurrentAppConfiguration,
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'>,
+  token: string,
 ) {
   const mergedRemoteConfig = mergeAppConfiguration(localApp, remoteApp as OrganizationApp)
 
@@ -400,7 +404,7 @@ async function checkForUnpushedChanges(
         body: 'This could cause errors when installing and testing your app.',
       })
 
-      await renderConfirmationPrompt({
+      const shouldPush = await renderConfirmationPrompt({
         message: 'Push your local changes up to Shopify? These updates will go live immediately',
         gitDiff: {
           baselineContent: flatUpstream
@@ -421,6 +425,17 @@ async function checkForUnpushedChanges(
         confirmationMessage: 'Yes, push my changes now',
         cancellationMessage: 'No, I still need to update my configuration',
       })
+
+      if (shouldPush) {
+        const result: PushConfigSchema = await partnersRequest(
+          PushConfig,
+          token,
+          getMutationVars(remoteApp, remoteConfigObj as CurrentAppConfiguration),
+        )
+
+        // eslint-disable-next-line no-console
+        console.log({result})
+      }
     }
   }
 }

@@ -12,6 +12,7 @@ import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_pro
 import {confirmPushChanges} from '../../../prompts/config.js'
 import {logMetadataForLoadedContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
+import {OrganizationApp} from '../../../models/organization.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -104,7 +105,10 @@ export async function pushConfig(options: PushOptions) {
   }
 }
 
-const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
+export const getMutationVars = (
+  app: App | Omit<OrganizationApp, 'apiSecretKeys'>,
+  configuration: CurrentAppConfiguration,
+) => {
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
