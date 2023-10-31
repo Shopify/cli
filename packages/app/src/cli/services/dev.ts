@@ -169,7 +169,7 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
     storeFqdn: config.storeFqdn,
   })
 
-  await reportAnalyticsEvent({config: config.commandOptions.commandConfig})
+  await reportAnalyticsEvent({config: config.commandOptions.commandConfig, exitMode: 'ok'})
 }
 
 function getDevUUIDsForAllExtensions(localApp: AppInterface, apiKey: string) {

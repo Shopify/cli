@@ -52,6 +52,10 @@ program
     "-t, --template <template>",
     "template to be used for the app",
   )
+  .option(
+    "-f, --flavor <flavor>",
+    "flavor to be used for the template",
+  )
   .option("--cleanup", "delete temp app afterwards", false)
   .option("--deploy", "deploy the app to Shopify", false)
   .option("--config-as-code", "enable config as code", false)
@@ -71,6 +75,7 @@ program
 
     const appName = options.name;
     const template = options.template || "remix";
+    const flavor = options.flavor || "javascript";
     const appPath = path.join(homeDir, "Desktop", appName);
 
     switch (options.packageManager) {
@@ -145,6 +150,8 @@ program
       }
     }
 
+    const flavorFlag = template === 'remix' ? `--flavor=${flavor}` : '';
+
     switch (options.install) {
       case "local":
         log("Building latest release...");
@@ -156,6 +163,7 @@ program
           [
             "--local",
             `--template=${template}`,
+            flavorFlag,
             `--name=${appName}`,
             `--path=${path.join(homeDir, "Desktop")}`,
             `--package-manager=${nodePackageManager}`,
@@ -174,7 +182,7 @@ program
         break;
       case "nightly":
         log(`Creating new app in '${appPath}'...`);
-        let initArgs = [`--template=${template}`, `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
+        let initArgs = [`--template=${template}`, flavorFlag, `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
         switch (nodePackageManager) {
           case "yarn":
             // yarn doesn't support 'create @shopify/app@nightly' syntax
@@ -264,7 +272,8 @@ program
         "--flavor=typescript",
       ]);
       await appExec(nodePackageManager, ["run", "build"], { cwd: functionDir });
-      const previewProcess = execa(nodePackageManager, ["run", "preview"], {
+      const separator = nodePackageManager === "npm" ? "--" : "";
+      const previewProcess = execa(nodePackageManager, ["run", "preview", separator, "--export", "run"], {
         cwd: functionDir,
         stdout: "inherit",
       });

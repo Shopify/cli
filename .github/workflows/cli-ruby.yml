@@ -38,7 +38,7 @@ jobs:
           git config --global user.name "CLI Foundations"
 
       - name: Set up Ruby ${{ matrix.version }}
-        uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
+        uses: ruby/setup-ruby@679e23d4a31bcf7cd0a69acd348e5f79e8c6b443 # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
           bundler: 'latest'
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Set up Ruby ${{ matrix.version }}
-        uses: ruby/setup-ruby@d3c9825d67b0d8720afdfdde5af56c79fdb38d16 # pin@v1
+        uses: ruby/setup-ruby@679e23d4a31bcf7cd0a69acd348e5f79e8c6b443 # pin@v1
         with:
           ruby-version: ${{ matrix.version }}
           bundler: 'latest'

@@ -3,7 +3,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import * as path from 'pathe'
-import {defineConfig} from 'vite'
+import {defineConfig} from 'vitest/config'
 
 export default function config(packagePath: string) {
   return defineConfig({
@@ -16,8 +16,8 @@ export default function config(packagePath: string) {
       clearMocks: true,
       mockReset: true,
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
-      threads: false,
       reporters: ['verbose', 'hanging-process'],
+      threads: false,
       coverage: {
         provider: 'istanbul',
         include: ['**/src/**'],

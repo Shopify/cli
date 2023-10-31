@@ -1,8 +1,8 @@
-import {MonorailEventPublic} from './monorail.js'
-import {sendErrorToBugsnag} from './error-handler.js'
 import {isUnitTest} from './context/local.js'
-import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
-import {AnyJson} from '../../private/common/json.js'
+import {performance} from 'node:perf_hooks'
+import type {PickByPrefix} from '../common/ts/pick-by-prefix.js'
+import type {AnyJson} from '../../private/common/json.js'
+import type {MonorailEventPublic} from './monorail.js'
 
 type ProvideMetadata<T> = () => Partial<T> | Promise<Partial<T>>
 
@@ -26,6 +26,13 @@ function getMetadataErrorHandlingStrategy(): 'mute-and-report' | 'bubble' {
   return 'mute-and-report'
 }
 
+/**
+ * Any key in T that has a numeric value.
+ */
+type NumericKeyOf<T> = {
+  [K in keyof T]: T[K] extends number ? (K extends string ? K : never) : never
+}[keyof T]
+
 export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive extends AnyJson> {
   /** Add some public metadata -- this should not contain any PII. */
   addPublicMetadata: (getData: ProvideMetadata<TPublic>, onError?: MetadataErrorHandling) => Promise<void>
@@ -38,6 +45,8 @@ export interface RuntimeMetadataManager<TPublic extends AnyJson, TSensitive exte
   getAllPublicMetadata: () => Partial<TPublic>
   /** Get a snapshot of the tracked sensitive data. */
   getAllSensitiveMetadata: () => Partial<TSensitive>
+  /** Run a function, monitoring how long it takes, and adding the elapsed time to a running total. */
+  runWithTimer: (field: NumericKeyOf<TPublic>) => <T>(fn: () => Promise<T>) => Promise<T>
 }
 
 export type PublicSchema<T> = T extends RuntimeMetadataManager<infer TPublic, infer _TSensitive> ? TPublic : never
@@ -85,10 +94,15 @@ export function createRuntimeMetadataContainer<
         await getAndSet()
         // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        await sendErrorToBugsnag(error)
+        // This is very prone to becoming a circular dependency, so we import it dynamically
+        const {sendErrorToBugsnag} = await import('./error-handler.js')
+        await sendErrorToBugsnag(error, 'unexpected_error')
       }
     }
   }
+
+  // See `runWithTimer` below.
+  const durationStack: number[] = []
 
   return {
     getAllPublicMetadata: () => {
@@ -102,6 +116,57 @@ export function createRuntimeMetadataContainer<
     },
     addSensitiveMetadata: async (getData: ProvideMetadata<TSensitive>, onError: MetadataErrorHandling = 'auto') => {
       return addMetadata(addSensitive, getData, onError)
+    },
+    runWithTimer: (field: NumericKeyOf<TPublic>): (<T>(fn: () => Promise<T>) => Promise<T>) => {
+      return async (fn) => {
+        /**
+         * For nested timers, we subtract the inner timer's duration from the outer timer's. We use a stack to track the
+         * cumulative durations of nested timers. On starting a timer, we push a zero onto the stack to initialize the total
+         * duration for subsequent nested timers. Before logging, we pop the stack to get the total nested timers' duration.
+         * We subtract this from the current timer's actual duration to get its measurable duration. We then add the current
+         * timer's actual duration to the stack's top, allowing any parent timer to deduct it from its own duration.
+         */
+
+        // Initialise the running total duration for all nested timers
+        durationStack.push(0)
+
+        // Do the work, and time it
+        const start = performance.now()
+        const result = await fn()
+        let end = performance.now()
+        // For very short durations, the end time can be before the start time(!) - we flatten this out to zero.
+        end = Math.max(start, end)
+
+        // The top of the stack is the total time for all nested timers
+        const wallClockDuration = Math.max(end - start, 0)
+        const childDurations = durationStack.pop() as number
+        const duration = Math.max(wallClockDuration - childDurations, 0)
+
+        // If this is the topmost timer, the stack will be empty.
+        if (durationStack.length > 0) {
+          durationStack[durationStack.length - 1] += wallClockDuration
+        }
+
+        // Log it -- we include it in the metadata, but also log via the standard performance API. The TS types for this library are not quite right, so we have to cast to `any` here.
+        performance.measure(`${field}#measurable`, {
+          start,
+          duration,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+        performance.measure(`${field}#wall`, {
+          start,
+          end,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } as any)
+
+        // There might not be a value set, yet
+        let currentValue = (raw.public[field] || 0) as number
+        currentValue += duration
+
+        // TS is not quite smart enough to realise that raw.public[field] must be a numeric type
+        raw.public[field] = currentValue as TPublic[NumericKeyOf<TPublic>]
+        return result
+      }
     },
   }
 }
@@ -122,9 +187,10 @@ const coreData = createRuntimeMetadataContainer<
       startArgs: string[]
     }
   } & {environmentFlags: string}
->()
+>({cmd_all_timing_network_ms: 0, cmd_all_timing_prompts_ms: 0})
 
-export const {getAllPublicMetadata, getAllSensitiveMetadata, addPublicMetadata, addSensitiveMetadata} = coreData
+export const {getAllPublicMetadata, getAllSensitiveMetadata, addPublicMetadata, addSensitiveMetadata, runWithTimer} =
+  coreData
 
 export type Public = PublicSchema<typeof coreData>
 export type Sensitive = SensitiveSchema<typeof coreData>

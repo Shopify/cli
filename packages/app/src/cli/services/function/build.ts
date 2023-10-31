@@ -1,5 +1,7 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {AppInterface} from '../../models/app/app.js'
+import {EsbuildEnvVarRegex} from '../../constants.js'
 import {hyphenate, camelize} from '@shopify/cli-kit/common/string'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -8,12 +10,14 @@ import {build as esBuild, BuildResult, BuildOptions} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {pickBy} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
 interface JSFunctionBuildOptions {
   stdout: Writable
   stderr: Writable
   signal?: AbortSignal
+  app: AppInterface
   // we want to use tasks when this is a primary command, i.e. 'shopify app function build',
   // but we don't want the fancy UI when this is running as part of 'shopify app build'.
   useTasks?: boolean
@@ -95,7 +99,11 @@ export async function buildGraphqlTypes(
   })
 }
 
-export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>, _options: JSFunctionBuildOptions) {
+export async function bundleExtension(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: JSFunctionBuildOptions,
+  processEnv = process.env,
+) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
     cwd: fun.directory,
@@ -110,18 +118,36 @@ export async function bundleExtension(fun: ExtensionInstance<FunctionConfigType>
   }
 
   const esbuildOptions = {
-    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath),
+    ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}, processEnv),
     entryPoints: [entryPoint],
   }
+
   return esBuild(esbuildOptions)
 }
 
-function getESBuildOptions(directory: string, userFunction: string): Parameters<typeof esBuild>[0] {
+function getESBuildOptions(
+  directory: string,
+  userFunction: string,
+  appEnv: {[variable: string]: string | undefined},
+  processEnv = process.env,
+): Parameters<typeof esBuild>[0] {
+  const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
+
+  const env: {[variable: string]: string | undefined} = {...appEnv, ...validEnvs}
+  const define = Object.keys(env || {}).reduce(
+    (acc, key) => ({
+      ...acc,
+      [`process.env.${key}`]: JSON.stringify(env[key]),
+    }),
+    {},
+  )
+
   const esbuildOptions: Parameters<typeof esBuild>[0] = {
     outfile: joinPath(directory, 'dist/function.js'),
     alias: {
       'user-function': userFunction,
     },
+    define,
     logLevel: 'silent',
     bundle: true,
     legalComments: 'none',
@@ -144,6 +170,13 @@ export async function runJavy(
     stderr: 'inherit',
     signal: options.signal,
   })
+}
+
+export async function installJavy(app: AppInterface) {
+  const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
+  if (javyRequired) {
+    await exec('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+  }
 }
 
 interface FunctionRunnerOptions {
@@ -194,7 +227,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     this.exports = exports
   }
 
-  async bundle(fun: ExtensionInstance<FunctionConfigType>, _options: JSFunctionBuildOptions) {
+  async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions, processEnv = process.env) {
     if (!fun.entrySourceFilePath) {
       throw new Error('Could not find your function entry point. It must be in src/index.js or src/index.ts')
     }
@@ -204,14 +237,13 @@ export class ExportJavyBuilder implements JavyBuilder {
     outputDebug(contents)
 
     const esbuildOptions: Parameters<typeof esBuild>[0] = {
-      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath),
+      ...getESBuildOptions(fun.directory, fun.entrySourceFilePath, options.app.dotenv?.variables ?? {}, processEnv),
       stdin: {
         contents,
         loader: 'ts',
         resolveDir: fun.directory,
       },
     }
-
     return esBuild(esbuildOptions)
   }
 

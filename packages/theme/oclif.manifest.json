@@ -1,5 +1,5 @@
 {
-  "version": "3.49.1",
+  "version": "3.50.0",
   "commands": {
     "theme:check": {
       "id": "theme:check",
@@ -77,10 +77,14 @@
           "required": false,
           "multiple": false,
           "options": [
+            "crash",
             "error",
             "suggestion",
-            "style"
-          ]
+            "style",
+            "warning",
+            "info"
+          ],
+          "default": "error"
         },
         "update-docs": {
           "name": "update-docs",
@@ -693,7 +697,7 @@
         "editor": {
           "name": "editor",
           "type": "boolean",
-          "char": "e",
+          "char": "E",
           "description": "Open the theme editor for the specified theme in the browser.",
           "allowNo": false
         },

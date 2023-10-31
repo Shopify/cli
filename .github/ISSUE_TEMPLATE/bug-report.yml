@@ -55,6 +55,14 @@ body:
     validations:
       required: true
   - type: textarea
+    id: verbose_output
+    attributes:
+      label: Verbose output
+      description: If you're using npm rerun the command with `-- --verbose` or if you're using yarn or pnpm rerun the command with `--verbose`
+      render: shell
+    validations:
+      required: true
+  - type: textarea
     id: repro_steps
     attributes:
       label: Reproduction steps

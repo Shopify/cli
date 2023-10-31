@@ -3,7 +3,6 @@ import {gql} from 'graphql-request'
 export const AppDeploy = gql`
   mutation AppDeploy(
     $apiKey: String!
-    $uuid: String!
     $bundleUrl: String
     $appModules: [AppModuleSettings!]
     $skipPublish: Boolean
@@ -14,7 +13,6 @@ export const AppDeploy = gql`
     appDeploy(
       input: {
         apiKey: $apiKey
-        uuid: $uuid
         bundleUrl: $bundleUrl
         appModules: $appModules
         skipPublish: $skipPublish
@@ -57,7 +55,6 @@ export interface AppModuleSettings {
 
 export interface AppDeployVariables {
   apiKey: string
-  uuid: string
   bundleUrl?: string
   appModules?: AppModuleSettings[]
   skipPublish?: boolean

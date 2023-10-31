@@ -1,4 +1,4 @@
-import {reportAnalyticsEvent} from './analytics.js'
+import {CommandExitMode, reportAnalyticsEvent} from './analytics.js'
 import * as path from './path.js'
 import {fanoutHooks} from './plugins.js'
 import * as metadata from './metadata.js'
@@ -46,11 +46,15 @@ export function errorHandler(error: Error & {exitCode?: number | undefined}, con
 }
 
 const reportError = async (error: unknown, config?: Interfaces.Config): Promise<void> => {
+  // categorise the error first
+  let exitMode: CommandExitMode = 'expected_error'
+  if (shouldReportError(error)) exitMode = 'unexpected_error'
+
   if (config !== undefined) {
     // Log an analytics event when there's an error
-    await reportAnalyticsEvent({config, errorMessage: error instanceof Error ? error.message : undefined})
+    await reportAnalyticsEvent({config, errorMessage: error instanceof Error ? error.message : undefined, exitMode})
   }
-  await sendErrorToBugsnag(error)
+  await sendErrorToBugsnag(error, exitMode)
 }
 
 /**
@@ -60,14 +64,15 @@ const reportError = async (error: unknown, config?: Interfaces.Config): Promise<
  */
 export async function sendErrorToBugsnag(
   error: unknown,
+  exitMode: Omit<CommandExitMode, 'ok'>,
 ): Promise<{reported: false; error: unknown; unhandled: unknown} | {error: Error; reported: true; unhandled: boolean}> {
   if (settings.debug) {
     outputDebug(`Skipping Bugsnag report`)
     return {reported: false, error, unhandled: undefined}
   }
 
-  let unhandled = false
-  if (shouldReportError(error)) unhandled = true
+  // If the error was unexpected, we flag it as "unhandled" in Bugsnag. This is a helpful distinction.
+  const unhandled = exitMode === 'unexpected_error'
 
   let reportableError: Error
   let stacktrace: string | undefined

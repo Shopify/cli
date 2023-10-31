@@ -14,6 +14,7 @@ import {
 import {isUnitTest} from './context/local.js'
 import {terminalSupportsRawMode} from './system.js'
 import {AbortController} from './abort.js'
+import {runWithTimer} from './metadata.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
@@ -291,14 +292,17 @@ export async function renderSelectPrompt<T>({
   if (!isConfirmationPrompt) {
     recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
   }
-  // eslint-disable-next-line max-params
-  return new Promise((resolve, reject) => {
-    render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
-      ...renderOptions,
-      exitOnCtrlC: false,
+
+  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
+    // eslint-disable-next-line max-params
+    return new Promise((resolve, reject) => {
+      render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      })
+        .catch(reject)
+        .finally(resetRecordedSleep)
     })
-      .catch(reject)
-      .finally(resetRecordedSleep)
   })
 }
 
@@ -432,14 +436,16 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
     ...props,
   }
 
-  // eslint-disable-next-line max-params
-  return new Promise((resolve, reject) => {
-    render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
-      ...renderOptions,
-      exitOnCtrlC: false,
+  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
+    // eslint-disable-next-line max-params
+    return new Promise((resolve, reject) => {
+      render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      })
+        .catch(reject)
+        .finally(resetRecordedSleep)
     })
-      .catch(reject)
-      .finally(resetRecordedSleep)
   })
 }
 
@@ -515,14 +521,16 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 
-  // eslint-disable-next-line max-params
-  return new Promise((resolve, reject) => {
-    render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
-      ...renderOptions,
-      exitOnCtrlC: false,
+  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
+    // eslint-disable-next-line max-params
+    return new Promise((resolve, reject) => {
+      render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      })
+        .catch(reject)
+        .finally(resetRecordedSleep)
     })
-      .catch(reject)
-      .finally(resetRecordedSleep)
   })
 }
 
@@ -562,14 +570,16 @@ export async function renderDangerousConfirmationPrompt({
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
 
-  // eslint-disable-next-line max-params
-  return new Promise((resolve, reject) => {
-    render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
-      ...renderOptions,
-      exitOnCtrlC: false,
+  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
+    // eslint-disable-next-line max-params
+    return new Promise((resolve, reject) => {
+      render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
+        ...renderOptions,
+        exitOnCtrlC: false,
+      })
+        .catch(reject)
+        .finally(resetRecordedSleep)
     })
-      .catch(reject)
-      .finally(resetRecordedSleep)
   })
 }
 
@@ -598,24 +608,26 @@ export function renderText({text, logLevel = 'info', logger = consoleLog}: Rende
 export const keypress = async () => {
   throwInNonTTY({message: 'Press any key'})
 
-  // eslint-disable-next-line max-params
-  return new Promise((resolve, reject) => {
-    const handler = (buffer: Buffer) => {
-      process.stdin.setRawMode(false)
-      process.stdin.pause()
+  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
+    // eslint-disable-next-line max-params
+    return new Promise((resolve, reject) => {
+      const handler = (buffer: Buffer) => {
+        process.stdin.setRawMode(false)
+        process.stdin.pause()
 
-      const bytes = Array.from(buffer)
+        const bytes = Array.from(buffer)
 
-      if (bytes.length && bytes[0] === 3) {
-        outputDebug('Canceled keypress, User pressed CTRL+C')
-        reject(new AbortSilentError())
+        if (bytes.length && bytes[0] === 3) {
+          outputDebug('Canceled keypress, User pressed CTRL+C')
+          reject(new AbortSilentError())
+        }
+        process.nextTick(resolve)
       }
-      process.nextTick(resolve)
-    }
 
-    process.stdin.resume()
-    process.stdin.setRawMode(true)
-    process.stdin.once('data', handler)
+      process.stdin.resume()
+      process.stdin.setRawMode(true)
+      process.stdin.once('data', handler)
+    })
   })
 }
 

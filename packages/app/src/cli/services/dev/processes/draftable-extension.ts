@@ -5,6 +5,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
+import {installJavy} from '../../function/build.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface DraftableExtensionOptions {
@@ -24,6 +25,10 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   {stderr, stdout, abortSignal: signal},
   {extensions, token, apiKey, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
 ) => {
+  // Force the download of the javy binary in advance to avoid later problems,
+  // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
+  await installJavy(app)
+
   // Functions will only be passed to this target if unified deployments are enabled
   // ESBuild will take care of triggering an initial build & upload for the extensions with ESBUILD feature.
   // For the rest we need to manually upload an initial draft.

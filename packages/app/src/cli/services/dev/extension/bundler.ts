@@ -9,6 +9,8 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {FSWatcher} from 'chokidar'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -237,9 +239,10 @@ export async function setupFunctionWatcher({
 }: SetupFunctionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
-  outputDebug(`Starting watcher for function extension ${extension.devUUID}`, stdout)
-  const watchPaths = extension.watchPaths
-  if (!watchPaths) {
+  const rebuildAndRedeployWatchPaths = extension.watchPaths
+  const redeployWatchPaths: string[] = []
+
+  if (!rebuildAndRedeployWatchPaths) {
     outputWarn(
       `Function extension ${extension.localIdentifier} is missing the 'build.watch' setting, automatic builds are disabled.`,
       stdout,
@@ -247,10 +250,43 @@ export async function setupFunctionWatcher({
     return
   }
 
-  outputDebug(`Watching paths for function extension ${extension.localIdentifier}: ${watchPaths}`, stdout)
+  if (await fileExists(joinPath(extension.directory, 'locales'))) {
+    redeployWatchPaths.push(joinPath(extension.directory, 'locales', '**.json'))
+  }
+
+  outputDebug(
+    `
+Watching function extension: ${extension.localIdentifier} for:
+Rebuild and Redeploy Paths:
+\t${rebuildAndRedeployWatchPaths.join('\n\t')}
+
+Redeploy Paths:
+\t${redeployWatchPaths.join('\n\t')}
+`.trim(),
+    stdout,
+  )
+
+  const listenForAbortOnWatcher = (watcher: FSWatcher) => {
+    signal.addEventListener('abort', () => {
+      outputDebug(`Closing function file watching for extension with ID ${extension.devUUID}`, stdout)
+      watcher
+        .close()
+        .then(() => {
+          outputDebug(`Function file watching closed for extension with ${extension.devUUID}`, stdout)
+        })
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .catch((error: any) => {
+          outputDebug(
+            `Function file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
+            stderr,
+          )
+        })
+    })
+  }
+
   let buildController: AbortController | null
 
-  const functionWatcher = chokidar.watch(watchPaths).on('change', (path) => {
+  const functionRebuildAndRedeployWatcher = chokidar.watch(rebuildAndRedeployWatchPaths).on('change', (path) => {
     outputDebug(`Function extension file at path ${path} changed`, stdout)
     if (buildController) {
       // terminate any existing builds
@@ -274,20 +310,26 @@ export async function setupFunctionWatcher({
         outputWarn(`Error while deploying updated extension draft: ${JSON.stringify(updateError, null, 2)}`, stdout)
       })
   })
+  listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
 
-  signal.addEventListener('abort', () => {
-    outputDebug(`Closing function file watching for extension with ID ${extension.devUUID}`, stdout)
-    functionWatcher
-      .close()
-      .then(() => {
-        outputDebug(`Function file watching closed for extension with ${extension.devUUID}`, stdout)
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((error: any) => {
-        outputDebug(
-          `Function file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
-          stderr,
+  if (redeployWatchPaths.length > 0) {
+    const functionRedeployWatcher = chokidar.watch(redeployWatchPaths).on('change', (path) => {
+      outputDebug(`File at path ${path} changed`, stdout)
+      updateExtensionConfig({
+        extension,
+        token,
+        apiKey,
+        registrationId,
+        stdout,
+        stderr,
+        unifiedDeployment,
+      }).catch((error: unknown) => {
+        outputWarn(
+          `Error while deploying updated extension config: ${JSON.stringify(error, null, 2)} at path ${path}`,
+          stdout,
         )
       })
-  })
+    })
+    listenForAbortOnWatcher(functionRedeployWatcher)
+  }
 }

@@ -12,7 +12,7 @@ const mockedGetLog = vi.fn(async () => ({}))
 const mockedCommit = vi.fn(async () => ({}))
 const mockedRaw = vi.fn(async () => '')
 const mockedCheckout = vi.fn(async () => ({}))
-const mockedGitStatus = vi.fn(async () => ({isClean: false}))
+const mockedGitStatus = vi.fn(async (): Promise<{isClean: () => boolean}> => ({isClean: () => false}))
 const simpleGitProperties = {
   clone: mockedClone,
   init: mockedInit,
@@ -313,7 +313,7 @@ describe('ensureInsideGitDirectory()', () => {
 describe('ensureIsClean()', () => {
   test('throws an error if git directory is not clean', async () => {
     // Given
-    mockedGitStatus.mockResolvedValue({isClean: false})
+    mockedGitStatus.mockResolvedValue({isClean: () => false})
 
     // Then
     await expect(() => git.ensureIsClean()).rejects.toThrowError(/is not a clean Git directory/)
@@ -321,7 +321,7 @@ describe('ensureIsClean()', () => {
 
   test("doesn't throw an error if git directory is clean", async () => {
     // Given
-    mockedGitStatus.mockResolvedValue({isClean: true})
+    mockedGitStatus.mockResolvedValue({isClean: () => true})
 
     // Then
     await expect(git.ensureIsClean()).resolves.toBeUndefined()
@@ -331,7 +331,7 @@ describe('ensureIsClean()', () => {
 describe('isGitClean()', () => {
   test('return false if git directory is not clean', async () => {
     // Given
-    mockedGitStatus.mockResolvedValue({isClean: false})
+    mockedGitStatus.mockResolvedValue({isClean: () => false})
 
     // Then
     await expect(git.isClean()).resolves.toBe(false)
@@ -339,7 +339,7 @@ describe('isGitClean()', () => {
 
   test('return true if git directory is not clean', async () => {
     // Given
-    mockedGitStatus.mockResolvedValue({isClean: true})
+    mockedGitStatus.mockResolvedValue({isClean: () => true})
 
     // Then
     await expect(git.isClean()).resolves.toBe(true)
@@ -347,7 +347,7 @@ describe('isGitClean()', () => {
 
   test('passes the directory option to simple git', async () => {
     // Given
-    mockedGitStatus.mockResolvedValue({isClean: true})
+    mockedGitStatus.mockResolvedValue({isClean: () => true})
     const directory = '/test/directory'
 
     // When

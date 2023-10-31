@@ -41,6 +41,14 @@ describe('create app command', () => {
     expect(initService).toHaveBeenCalledOnce()
   })
 
+  test('executes correctly when using a flavor for the remix template', async () => {
+    // When
+    await Init.run(['--template', 'remix', '--flavor', 'javascript'])
+
+    // Then
+    expect(initService).toHaveBeenCalledOnce()
+  })
+
   test('executes correctly when using a non-visible template alias name', async () => {
     // When
     await Init.run(['--template', 'node'])
@@ -83,6 +91,18 @@ describe('create app command', () => {
     const expectedError = new AbortError(
       'Only GitHub repository references are supported, ' +
         'e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]',
+    )
+    expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
+  })
+
+  test('throw an error when using a flavor for a template that has no branches set up', async () => {
+    // When
+    await Init.run(['--template', 'node', '--flavor', 'javascript'])
+
+    // Then
+    const anyConfig = expect.any(Config)
+    const expectedError = new AbortError(
+      outputContent`The ${outputToken.yellow('node')} template does not support flavors`,
     )
     expect(errorHandler).toHaveBeenCalledWith(expectedError, anyConfig)
   })

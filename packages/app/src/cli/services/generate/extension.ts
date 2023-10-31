@@ -165,7 +165,7 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
     taskList.push({
       title: `Building GraphQL types`,
       task: async () => {
-        await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr})
+        await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr, app})
       },
     })
   }
