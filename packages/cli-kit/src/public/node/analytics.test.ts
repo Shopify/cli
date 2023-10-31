@@ -67,9 +67,9 @@ describe('event tracking', () => {
       const commandContent = {command: 'dev', topic: 'app', alias: 'alias'}
       await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
 
-      // Log some timings from the command
+      // Log some timings from the command, confirm that submitted timings are always rounded down
       await addPublicMetadata(() => ({
-        cmd_all_timing_network_ms: 30,
+        cmd_all_timing_network_ms: 30.00001,
         cmd_all_timing_prompts_ms: 20,
       }))
 
@@ -106,7 +106,7 @@ describe('event tracking', () => {
         env_device_id: 'hashed-macaddress',
         env_cloud: 'spin',
         cmd_all_exit: 'ok',
-        cmd_all_timing_active_ms: 50,
+        cmd_all_timing_active_ms: 49,
         cmd_all_timing_network_ms: 30,
         cmd_all_timing_prompts_ms: 20,
       }
