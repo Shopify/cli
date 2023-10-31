@@ -1,11 +1,13 @@
 import {AppErrors, isWebType} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
+import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const LegacyAppSchema = zod
   .object({
@@ -194,6 +196,8 @@ export interface AppInterface extends AppConfigurationInterface {
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
+  updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
+  preDeployValidation: () => Promise<void>
 }
 
 export class App implements AppInterface {
@@ -241,6 +245,21 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
   }
 
+  async preDeployValidation() {
+    const functionExtensionsWithUiHandle = this.allExtensions.filter(
+      (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
+    ) as ExtensionInstance<FunctionConfigType>[]
+
+    if (functionExtensionsWithUiHandle.length > 0) {
+      const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
+      if (errors) {
+        throw new AbortError('Invalid function configuration', errors.join('\n'))
+      }
+    }
+
+    await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
+  }
+
   hasExtensions(): boolean {
     return this.allExtensions.length > 0
   }
@@ -250,6 +269,38 @@ export class App implements AppInterface {
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }
+
+  updateExtensionUUIDS(uuids: {[key: string]: string}) {
+    this.allExtensions.forEach((extension) => {
+      extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
+    })
+  }
+}
+
+export function validateFunctionExtensionsWithUiHandle(
+  functionExtensionsWithUiHandle: ExtensionInstance<FunctionConfigType>[],
+  allExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+
+  functionExtensionsWithUiHandle.forEach((extension) => {
+    const uiHandle = extension.configuration.ui!.handle!
+
+    const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
+    if (!matchingExtension) {
+      errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
+    } else if (matchingExtension.configuration.type !== 'ui_extension') {
+      errors.push(
+        `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
+      )
+    }
+  })
+
+  return errors.length > 0 ? errors : undefined
+}
+
+function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
+  return allExtensions.find((ext) => ext.handle === handle)
 }
 
 export class EmptyApp extends App {

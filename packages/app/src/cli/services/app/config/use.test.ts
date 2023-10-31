@@ -1,20 +1,31 @@
 import use, {UseOptions} from './use.js'
-import {testApp, testAppWithConfig} from '../../../models/app/app.test-data.js'
+import {testApp, testAppWithConfig, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {describe, expect, test, vi} from 'vitest'
+import {logMetadataForLoadedContext} from '../../context.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {err, ok} from '@shopify/cli-kit/node/result'
-
-const LOCAL_APP = testApp()
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('../../context.js')
+
+const REMOTE_APP = testOrganizationApp()
+
+beforeEach(() => {
+  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mocked(partnersRequest).mockResolvedValue({app: REMOTE_APP})
+})
 
 describe('use', () => {
   test('clears currentConfiguration when reset is true', async () => {
@@ -239,6 +250,22 @@ describe('use', () => {
       // Then
       expect(renderSuccess).not.toHaveBeenCalled()
       expect(setCachedAppInfo).toHaveBeenCalledWith({directory, configFile: 'shopify.app.something.toml'})
+    })
+  })
+
+  test('logs metadata', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      // Given
+      const {configuration} = testApp({}, 'current')
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration})
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
+      createConfigFile(directory, 'shopify.app.something.toml')
+
+      // When
+      await use({directory, configName: 'something'})
+
+      // Then
+      expect(logMetadataForLoadedContext).toHaveBeenNthCalledWith(1, REMOTE_APP)
     })
   })
 })

@@ -12,6 +12,7 @@ import {AbortController} from '../../../../public/node/abort.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {useStdout} from 'ink'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 vi.mock('ink', async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -223,7 +224,9 @@ describe('AutocompletePrompt', async () => {
     `)
   })
 
-  test('supports a git diff', async () => {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test.skipIf(runningOnWindows)('supports a git diff', async () => {
     const items = [
       {label: 'first', value: 'first'},
       {label: 'second', value: 'second'},

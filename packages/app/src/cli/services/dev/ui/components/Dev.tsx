@@ -1,3 +1,4 @@
+import metadata from '../../../../metadata.js'
 import {developerPreviewUpdate, disableDeveloperPreview, enableDeveloperPreview} from '../../../context.js'
 import {fetchAppPreviewMode} from '../../fetch.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
@@ -27,7 +28,14 @@ export interface DevProps {
   pollingTime?: number
 }
 
-const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUrl, graphiqlUrl, app, pollingTime = 5000}) => {
+const Dev: FunctionComponent<DevProps> = ({
+  abortController,
+  processes,
+  previewUrl,
+  graphiqlUrl,
+  app,
+  pollingTime = 5000,
+}) => {
   const {apiKey, token, canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
@@ -123,12 +131,21 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
           setError('')
 
           if (input === 'p' && previewUrl) {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_preview_url_opened: true,
+            }))
             await openURL(previewUrl)
           } else if (input === 'g' && graphiqlUrl) {
-            openURL(graphiqlUrl)
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_graphiql_opened: true,
+            }))
+            await openURL(graphiqlUrl)
           } else if (input === 'q') {
             abortController.abort()
           } else if (input === 'd' && canEnablePreviewMode) {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_dev_preview_toggle_used: true,
+            }))
             const newDevPreviewEnabled = !devPreviewEnabled
             setDevPreviewEnabled(newDevPreviewEnabled)
             try {
@@ -189,7 +206,8 @@ const Dev: FunctionComponent<DevProps> = ({abortController, processes, previewUr
               ) : null}
               {graphiqlUrl ? (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in your browser
+                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in
+                  your browser
                 </Text>
               ) : null}
               <Text>

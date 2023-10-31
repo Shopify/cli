@@ -1,5 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
+import {installJavy} from '../function/build.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -18,6 +19,10 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     const bundleDirectory = joinPath(tmpDir, 'bundle')
     await mkdirSync(bundleDirectory)
     await touchFile(joinPath(bundleDirectory, '.shopify'))
+
+    // Force the download of the javy binary in advance to avoid later problems,
+    // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
+    await installJavy(options.app)
 
     await renderConcurrent({
       processes: options.app.allExtensions.map((extension) => {

@@ -74,10 +74,24 @@ export interface UIExtensionPayload {
   name: string
   description?: string
   approvalScopes: string[]
+  settings?: {
+    fields?: {
+      type: string
+      key?: string
+      name?: string
+      description?: string
+      required?: boolean
+      validations?: unknown[]
+    }[]
+  }
 }
 
 export type ExtensionAssetBuildStatus = 'success' | 'error' | ''
 
-export interface Capabilities {
+interface Capability {
   [key: string]: boolean | undefined
+}
+
+export interface Capabilities {
+  [key: string]: Capability | boolean | undefined
 }

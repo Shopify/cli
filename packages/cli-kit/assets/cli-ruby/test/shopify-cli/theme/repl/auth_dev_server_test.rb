@@ -78,7 +78,7 @@ module ShopifyCLI
         def dev_server
           AuthDevServer.instance.tap do |server|
             server.stubs(:ctx).returns(ctx)
-            server.stubs(:theme_identifier).returns(AuthDevServer::REPL_THEME)
+            server.stubs(:theme_identifier).returns("liquid-console-repl")
           end
         end
 

@@ -68,7 +68,7 @@ describe('deploy', () => {
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
-      appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: ''}],
+      appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle}],
       bundlePath: expect.stringMatching(/bundle.zip$/),
       token: 'api-token',
       extensionIds: {},
@@ -254,7 +254,7 @@ describe('deploy', () => {
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
-      appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: ''}],
+      appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle}],
       token: 'api-token',
       extensionIds: {},
       deploymentMode: 'legacy',
@@ -276,7 +276,14 @@ describe('deploy', () => {
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
-      appModules: [{uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''}],
+      appModules: [
+        {
+          uuid: themeExtension.localIdentifier,
+          config: '{"theme_extension":{"files":{}}}',
+          context: '',
+          handle: themeExtension.handle,
+        },
+      ],
       token: 'api-token',
       extensionIds: {},
       deploymentMode: 'legacy',
@@ -337,6 +344,7 @@ describe('deploy', () => {
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
+      localization: {},
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
@@ -351,6 +359,7 @@ describe('deploy', () => {
           uuid: functionExtension.localIdentifier,
           config: JSON.stringify(mockedFunctionConfiguration),
           context: '',
+          handle: functionExtension.handle,
         },
       ],
       token: 'api-token',
@@ -378,6 +387,7 @@ describe('deploy', () => {
       api_type: functionExtension.configuration.type,
       api_version: functionExtension.configuration.api_version,
       enable_creation_ui: true,
+      localization: {},
     }
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
@@ -392,6 +402,7 @@ describe('deploy', () => {
           uuid: functionExtension.localIdentifier,
           config: JSON.stringify(mockedFunctionConfiguration),
           context: '',
+          handle: functionExtension.handle,
         },
       ],
       token: 'api-token',
@@ -421,8 +432,13 @@ describe('deploy', () => {
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [
-        {uuid: uiExtension.localIdentifier, config: '{}', context: ''},
-        {uuid: themeExtension.localIdentifier, config: '{"theme_extension":{"files":{}}}', context: ''},
+        {uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle},
+        {
+          uuid: themeExtension.localIdentifier,
+          config: '{"theme_extension":{"files":{}}}',
+          context: '',
+          handle: themeExtension.handle,
+        },
       ],
       token: 'api-token',
       extensionIds: {},

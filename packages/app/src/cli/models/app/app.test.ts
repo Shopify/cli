@@ -6,8 +6,11 @@ import {
   getUIExtensionRendererVersion,
   isCurrentAppSchema,
   isLegacyAppSchema,
+  validateFunctionExtensionsWithUiHandle,
 } from './app.js'
-import {DEFAULT_CONFIG, testApp, testUIExtension} from './app.test-data.js'
+import {DEFAULT_CONFIG, testApp, testUIExtension, testFunctionExtension} from './app.test-data.js'
+import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -197,6 +200,93 @@ describe('getAppScopesArray', () => {
   test('returns the access_scopes.scopes key when schema is current', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+  })
+})
+
+describe('validateFunctionExtensionsWithUiHandle', () => {
+  const generateFunctionConfig = ({type, uiHandle}: {type?: string; uiHandle?: string}): FunctionConfigType => ({
+    description: 'description',
+    build: {
+      command: 'echo "hello world"',
+    },
+    api_version: '2022-07',
+    configuration_ui: true,
+    metafields: [],
+    name: 'test function extension',
+    type: type || 'product_discounts',
+    ui: {
+      handle: uiHandle || 'test-ui-handle',
+    },
+  })
+
+  describe('returns errors when app configuration is invalid', () => {
+    test("when a function's ui handle does not match any local ui extension", async () => {
+      // Given
+      const validFunctionWithUiExtension = await testFunctionExtension({
+        config: generateFunctionConfig({uiHandle: 'test-ui-extension'}),
+      })
+      const allExtensions: ExtensionInstance[] = [validFunctionWithUiExtension]
+      const app = await testApp({
+        allExtensions,
+      })
+
+      // When
+      const expectedErrors = [
+        "[test function extension] - Local app must contain a ui_extension with handle 'test-ui-extension'",
+      ]
+      const result = validateFunctionExtensionsWithUiHandle([validFunctionWithUiExtension], app.allExtensions)
+
+      // Then
+      expect(result).toStrictEqual(expectedErrors)
+    })
+
+    test('returns error when a functions matching extension, and not of type ui extension', async () => {
+      // Given
+      const functionWithUiHandle = await testFunctionExtension({
+        config: {
+          ...generateFunctionConfig({type: 'product_discounts', uiHandle: 'product_discounts-test'}),
+          handle: 'product_discounts',
+        },
+      })
+      const functionWithMatchingHandle = await testFunctionExtension({
+        config: {
+          ...generateFunctionConfig({type: 'product_discounts'}),
+          handle: 'product-discounts-test',
+        },
+      })
+
+      const allExtensions: ExtensionInstance[] = [functionWithUiHandle, functionWithMatchingHandle]
+      const app = await testApp({
+        allExtensions,
+      })
+
+      // When
+      const expectedErrors = [
+        "[test function extension] - Local app must contain a ui_extension with handle 'product_discounts-test'",
+      ]
+      const result = validateFunctionExtensionsWithUiHandle([functionWithUiHandle], app.allExtensions)
+
+      // Then
+      expect(result).toStrictEqual(expectedErrors)
+    })
+
+    test('returns undefined when validation passes', async () => {
+      // Given
+      const validUiExtension = await testUIExtension({type: 'ui_extension'})
+      const validFunctionWithUiExtension = await testFunctionExtension({
+        config: generateFunctionConfig({uiHandle: 'test-ui-extension'}),
+      })
+      const allExtensions: ExtensionInstance[] = [validUiExtension, validFunctionWithUiExtension]
+      const app = await testApp({
+        allExtensions,
+      })
+
+      // When
+      const result = validateFunctionExtensionsWithUiHandle([validFunctionWithUiExtension], app.allExtensions)
+
+      // Then
+      expect(result).toBeUndefined()
+    })
   })
 })
 

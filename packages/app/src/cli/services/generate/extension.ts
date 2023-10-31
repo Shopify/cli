@@ -137,7 +137,7 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
 
       if (templateLanguage === 'javascript') {
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value || 'rust')
-        await changeIndexFileExtension(directory, srcFileExtension)
+        await changeIndexFileExtension(directory, srcFileExtension, '!(*.graphql)')
       }
     },
   })
@@ -165,7 +165,7 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
     taskList.push({
       title: `Building GraphQL types`,
       task: async () => {
-        await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr})
+        await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr, app})
       },
     })
   }
@@ -251,8 +251,8 @@ export function getFunctionRuntimeDependencies(templateLanguage: string): Depend
   return dependencies
 }
 
-async function changeIndexFileExtension(extensionDirectory: string, fileExtension: SrcFileExtension) {
-  const srcFilePaths = await glob(joinPath(extensionDirectory, 'src', '*'))
+async function changeIndexFileExtension(extensionDirectory: string, fileExtension: SrcFileExtension, renameGlob = '*') {
+  const srcFilePaths = await glob(joinPath(extensionDirectory, 'src', renameGlob))
   const srcFileExensionsToChange = []
 
   for (const srcFilePath of srcFilePaths) {

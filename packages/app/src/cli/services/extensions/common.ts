@@ -2,6 +2,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {blocks} from '../../constants.js'
 import {ExtensionFlavor} from '../../models/app/template.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, findPathUp, mkdir} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -47,7 +48,19 @@ export async function ensureExtensionDirectoryExists({name, app}: {name: string;
   return extensionDirectory
 }
 
-export function canEnablePreviewMode(remoteApp: Partial<OrganizationApp>, localApp: AppInterface) {
+export async function canEnablePreviewMode({
+  remoteApp,
+  localApp,
+  token,
+  apiKey,
+}: {
+  remoteApp: Partial<OrganizationApp>
+  localApp: AppInterface
+  token: string
+  apiKey: string
+}) {
+  const {dashboardManagedExtensionRegistrations} = (await fetchAppExtensionRegistrations({token, apiKey})).app
+  if (dashboardManagedExtensionRegistrations.length > 0) return true
   const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length > 0) return true
 

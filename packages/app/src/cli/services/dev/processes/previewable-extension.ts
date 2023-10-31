@@ -1,8 +1,10 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {devUIExtensions} from '../extension.js'
-import {MANIFEST_VERSION, buildCartURLIfNeeded} from '../../dev.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+
+export const MANIFEST_VERSION = '3'
 
 export interface PreviewableExtensionOptions {
   apiKey: string

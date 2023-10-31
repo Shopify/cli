@@ -3,10 +3,13 @@ import {render} from '../../../testing/ui.js'
 import {unstyled} from '../../../../../public/node/output.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 afterEach(async () => {
   await vi.unstubAllGlobals()
 })
+
+const runningOnWindows = platformAndArch().platform === 'windows'
 
 describe('GitDiff', async () => {
   test('renders correctly when no changes exist', async () => {
@@ -36,8 +39,8 @@ describe('GitDiff', async () => {
 
   test('renders correctly when changes exist and are several lines long', async () => {
     const gitDiff = {
-      baselineContent: 'hello\nworld\n',
-      updatedContent: 'world\nhello\n',
+      baselineContent: 'hello\nworld\nfoobar\n',
+      updatedContent: 'world\nfoobar\nhello\n',
     }
 
     const {lastFrame} = render(<GitDiff gitDiff={gitDiff} />)
@@ -45,11 +48,12 @@ describe('GitDiff', async () => {
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "- hello
         world
+        foobar
       + hello"
     `)
   })
 
-  test('displays color correctly', async () => {
+  test.skipIf(runningOnWindows)('displays color correctly', async () => {
     const gitDiff = {
       baselineContent: 'hello\nworld\n',
       updatedContent: 'world\nhello\n',
@@ -64,7 +68,7 @@ describe('GitDiff', async () => {
     `)
   })
 
-  test('respects no-color mode', async () => {
+  test.skipIf(runningOnWindows)('respects no-color mode', async () => {
     vi.stubGlobal('process', {...process, env: {...process.env, FORCE_COLOR: '0'}})
     const gitDiff = {
       baselineContent: 'hello\nworld\n',
@@ -80,16 +84,17 @@ describe('GitDiff', async () => {
       `)
   })
 
-  test('ignores newline changes', async () => {
+  test.skipIf(runningOnWindows)('ignores newline changes', async () => {
     const expectedDiff = `
       "- hello
         world
+        foobar
       + hello"
     `
 
     const gitDiff = {
-      baselineContent: 'hello\nworld\n',
-      updatedContent: 'world\nhello',
+      baselineContent: 'hello\nworld\nfoobar\n',
+      updatedContent: 'world\nfoobar\nhello',
     }
 
     // Removing a newline
@@ -101,9 +106,10 @@ describe('GitDiff', async () => {
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(expectedDiff)
   })
 
-  test('renders correctly when changes exist in multiple areas of a file', async () => {
+  test.skipIf(runningOnWindows)('renders correctly when changes exist in multiple areas of a file', async () => {
     const baselineContent = `hello
 world
+foobar
 lorem
 ipsum
 dolor
@@ -113,6 +119,7 @@ foo
 bar
 `
     const updatedContent = `world
+foobar
 hello
 lorem
 ipsum
@@ -132,10 +139,11 @@ qux`
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "- hello
         world
+        foobar
       + hello
         lorem
 
-        @@ -8,2 +8,2 @@ amet
+        @@ -9,2 +9,2 @@ amet
         foo
       - bar
       + qux"

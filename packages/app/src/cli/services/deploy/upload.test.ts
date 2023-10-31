@@ -15,7 +15,6 @@ import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/http')
@@ -760,7 +759,7 @@ describe('uploadExtensionsBundle', () => {
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
       vi.mocked(partnersRequest)
         .mockResolvedValueOnce({
-          deploymentGenerateSignedUploadUrl: {
+          appVersionGenerateSignedUploadUrl: {
             signedUploadUrl: 'signed-upload-url',
           },
         })
@@ -774,13 +773,12 @@ describe('uploadExtensionsBundle', () => {
         })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
-      vi.mocked(randomUUID).mockReturnValue('random-uuid')
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        appModules: [{uuid: '123', config: '{}', context: ''}],
+        appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         token: 'api-token',
         extensionIds: {},
         deploymentMode: 'legacy',
@@ -795,9 +793,9 @@ describe('uploadExtensionsBundle', () => {
             config: '{}',
             context: '',
             uuid: '123',
+            handle: 'handle',
           },
         ],
-        uuid: 'random-uuid',
         skipPublish: true,
       })
     })
@@ -809,7 +807,7 @@ describe('uploadExtensionsBundle', () => {
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
       vi.mocked(partnersRequest)
         .mockResolvedValueOnce({
-          deploymentGenerateSignedUploadUrl: {
+          appVersionGenerateSignedUploadUrl: {
             signedUploadUrl: 'signed-upload-url',
           },
         })
@@ -823,13 +821,12 @@ describe('uploadExtensionsBundle', () => {
         })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
-      vi.mocked(randomUUID).mockReturnValue('random-uuid')
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
-        appModules: [{uuid: '123', config: '{}', context: ''}],
+        appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
         token: 'api-token',
         extensionIds: {},
         deploymentMode: 'unified',
@@ -846,9 +843,9 @@ describe('uploadExtensionsBundle', () => {
             config: '{}',
             context: '',
             uuid: '123',
+            handle: 'handle',
           },
         ],
-        uuid: 'random-uuid',
         skipPublish: false,
         message: 'test',
         versionTag: '1.0.0',
@@ -868,7 +865,6 @@ describe('uploadExtensionsBundle', () => {
     })
     const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
-    vi.mocked(randomUUID).mockReturnValue('random-uuid')
     // When
     await uploadExtensionsBundle({
       apiKey: 'app-id',
@@ -882,7 +878,6 @@ describe('uploadExtensionsBundle', () => {
     // Then
     expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
       apiKey: 'app-id',
-      uuid: 'random-uuid',
       skipPublish: true,
     })
     expect(partnersRequest).toHaveBeenCalledOnce()
@@ -894,7 +889,7 @@ describe('uploadExtensionsBundle', () => {
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
       vi.mocked(partnersRequest)
         .mockResolvedValueOnce({
-          deploymentGenerateSignedUploadUrl: {
+          appVersionGenerateSignedUploadUrl: {
             signedUploadUrl: 'signed-upload-url',
           },
         })
@@ -961,7 +956,6 @@ describe('uploadExtensionsBundle', () => {
         })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
-      vi.mocked(randomUUID).mockReturnValue('random-uuid')
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
 
@@ -971,8 +965,8 @@ describe('uploadExtensionsBundle', () => {
           apiKey: 'app-id',
           bundlePath: joinPath(tmpDir, 'test.zip'),
           appModules: [
-            {uuid: '123', config: '{}', context: ''},
-            {uuid: '456', config: '{}', context: ''},
+            {uuid: '123', config: '{}', context: '', handle: 'handle'},
+            {uuid: '456', config: '{}', context: '', handle: 'handle'},
           ],
           token: 'api-token',
           extensionIds: {
@@ -1035,7 +1029,7 @@ describe('uploadExtensionsBundle', () => {
       vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
       vi.mocked(partnersRequest)
         .mockResolvedValueOnce({
-          deploymentGenerateSignedUploadUrl: {
+          appVersionGenerateSignedUploadUrl: {
             signedUploadUrl: 'signed-upload-url',
           },
         })
@@ -1065,7 +1059,6 @@ describe('uploadExtensionsBundle', () => {
         })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
-      vi.mocked(randomUUID).mockReturnValue('random-uuid')
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
 
       // When
@@ -1073,8 +1066,8 @@ describe('uploadExtensionsBundle', () => {
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [
-          {uuid: '123', config: '{}', context: ''},
-          {uuid: '456', config: '{}', context: ''},
+          {uuid: '123', config: '{}', context: '', handle: 'handle'},
+          {uuid: '456', config: '{}', context: '', handle: 'handle'},
         ],
         token: 'api-token',
         extensionIds: {

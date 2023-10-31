@@ -1,10 +1,27 @@
 import {BaseProcess} from './types.js'
 import {frontAndBackendConfig} from './utils.js'
-import {LaunchWebOptions, launchWebProcess} from '../../dev.js'
 import {Web, WebType} from '../../../models/app/app.js'
 import {isWebType} from '../../../models/app/loader.js'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {exec} from '@shopify/cli-kit/node/system'
+import {Writable} from 'stream'
+
+export interface LaunchWebOptions {
+  port: number
+  apiKey: string
+  apiSecret?: string
+  hostname?: string
+  backendPort: number
+  frontendServerPort?: number
+  directory: string
+  devCommand: string
+  scopes?: string
+  shopCustomDomain?: string
+  hmrServerOptions?: {port: number; httpPaths: string[]}
+  portFromConfig?: number
+}
 
 export interface WebProcess extends BaseProcess<LaunchWebOptions> {
   type: 'web'
@@ -83,4 +100,57 @@ async function getWebProcessPort({
   } else {
     return getAvailableTCPPort()
   }
+}
+
+export async function launchWebProcess(
+  {stdout, stderr, abortSignal}: {stdout: Writable; stderr: Writable; abortSignal: AbortSignal},
+  {
+    port,
+    apiKey,
+    apiSecret,
+    hostname,
+    backendPort,
+    frontendServerPort,
+    directory,
+    devCommand,
+    scopes,
+    shopCustomDomain,
+    hmrServerOptions,
+  }: LaunchWebOptions,
+) {
+  const hmrServerPort = hmrServerOptions?.port
+  const [cmd, ...args] = devCommand.split(' ')
+
+  const env = {
+    SHOPIFY_API_KEY: apiKey,
+    SHOPIFY_API_SECRET: apiSecret,
+    HOST: hostname,
+    SCOPES: scopes,
+    NODE_ENV: `development`,
+    ...(shopCustomDomain && {
+      SHOP_CUSTOM_DOMAIN: shopCustomDomain,
+    }),
+    BACKEND_PORT: `${backendPort}`,
+    FRONTEND_PORT: `${frontendServerPort}`,
+    ...(hmrServerPort && {
+      HMR_SERVER_PORT: `${hmrServerPort}`,
+    }),
+    APP_URL: hostname,
+    APP_ENV: 'development',
+    // Note: These are Remix-specific variables
+    REMIX_DEV_ORIGIN: hostname,
+  }
+
+  await exec(cmd!, args, {
+    cwd: directory,
+    stdout,
+    stderr,
+    signal: abortSignal,
+    env: {
+      ...env,
+      PORT: `${port}`,
+      // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
+      SERVER_PORT: `${port}`,
+    },
+  })
 }

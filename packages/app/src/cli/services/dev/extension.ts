@@ -1,4 +1,3 @@
-import {getCartPathFromExtensions} from './extension/utilities.js'
 import {setupWebsocketConnection} from './extension/websocket.js'
 import {setupBundlerAndFileWatcher} from './extension/bundler.js'
 import {setupHTTPServer} from './extension/server.js'
@@ -100,25 +99,20 @@ export interface ExtensionDevOptions {
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
-  const devOptions: ExtensionDevOptions = {
-    ...options,
-    checkoutCartUrl: await getCartPathFromExtensions(options.extensions, options.storeFqdn, options.checkoutCartUrl),
-  }
-
   const payloadStoreOptions = {
-    ...devOptions,
+    ...options,
     websocketURL: getWebSocketUrl(options.url),
   }
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadStoreOptions)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadStoreOptions)
 
   outputDebug(`Setting up the UI extensions HTTP server...`, options.stdout)
-  const httpServer = setupHTTPServer({devOptions, payloadStore})
+  const httpServer = setupHTTPServer({devOptions: options, payloadStore})
 
   outputDebug(`Setting up the UI extensions Websocket server...`, options.stdout)
   const websocketConnection = setupWebsocketConnection({...options, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, options.stdout)
-  const fileWatcher = await setupBundlerAndFileWatcher({devOptions, payloadStore})
+  const fileWatcher = await setupBundlerAndFileWatcher({devOptions: options, payloadStore})
 
   options.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')

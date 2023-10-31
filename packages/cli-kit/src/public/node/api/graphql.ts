@@ -1,6 +1,7 @@
 import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {debugLogResponseInfo} from '../../../private/node/api.js'
+import {runWithTimer} from '../metadata.js'
 import {GraphQLClient, rawRequest, RequestDocument, Variables} from 'graphql-request'
 
 export interface GraphQLVariables {
@@ -41,14 +42,17 @@ export async function graphqlRequest<T>(options: GraphQLRequestOptions<T>): Prom
   debugLogRequestInfo(api, query, variables, headers)
   const clientOptions = {agent: await httpsAgent(), headers}
   const client = new GraphQLClient(url, clientOptions)
-  const response = await debugLogResponseInfo(
-    {request: client.rawRequest<T>(query as string, variables), url},
-    responseOptions?.handleErrors === false ? undefined : errorHandler(api),
-  )
 
-  if (responseOptions?.onResponse) {
-    responseOptions.onResponse(response)
-  }
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    const response = await debugLogResponseInfo(
+      {request: client.rawRequest<T>(query as string, variables), url},
+      responseOptions?.handleErrors === false ? undefined : errorHandler(api),
+    )
 
-  return response.data
+    if (responseOptions?.onResponse) {
+      responseOptions.onResponse(response)
+    }
+
+    return response.data
+  })
 }

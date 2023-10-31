@@ -10,7 +10,7 @@ import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {Command} from '@oclif/core'
+import {Command, Errors} from '@oclif/core'
 import {FlagOutput, Input, ParserOutput, FlagInput, ArgOutput} from '@oclif/core/lib/interfaces/parser.js'
 
 interface EnvironmentFlags {
@@ -29,6 +29,7 @@ abstract class BaseCommand extends Command {
 
   async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
     errorHandler(error, this.config)
+    return Errors.handle(error)
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -48,9 +49,9 @@ abstract class BaseCommand extends Command {
   protected showNpmFlagWarning(): void {
     const commandVariables = this.constructor as unknown as {_flags: JsonMap}
     const commandFlags = Object.keys(commandVariables._flags || {})
-    const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key)}`)
+    const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key).replace(/^no_/, '')}`)
 
-    if (possibleNpmEnvVars.some((flag) => process.env[flag])) {
+    if (possibleNpmEnvVars.some((flag) => process.env[flag] !== undefined)) {
       renderWarning({
         body: [
           'NPM scripts require an extra',

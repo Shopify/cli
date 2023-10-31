@@ -64,7 +64,7 @@ class TunnelClientInstance implements TunnelClient {
       resolved = true
       this.currentStatus = {
         status: 'error',
-        message: 'Could not start Cloudflare tunnel, max retries reached.',
+        message: 'Could not start Cloudflare tunnel: max retries reached.',
         tryMessage: whatToTry(),
       }
       return
@@ -80,8 +80,16 @@ class TunnelClientInstance implements TunnelClient {
     setTimeout(() => {
       if (!resolved) {
         resolved = true
-        const lastErrors = errors.slice(-5).join('\n')
-        this.currentStatus = {status: 'error', message: lastErrors}
+        const lastErrors = [...new Set(errors)].slice(-5).join('\n')
+        if (lastErrors === '') {
+          this.currentStatus = {
+            status: 'error',
+            message: 'Could not start Cloudflare tunnel: unknown error.',
+            tryMessage: whatToTry(),
+          }
+        } else {
+          this.currentStatus = {status: 'error', message: lastErrors, tryMessage: whatToTry()}
+        }
         this.abortController?.abort()
       }
     }, TUNNEL_TIMEOUT * 1000)
@@ -99,7 +107,7 @@ class TunnelClientInstance implements TunnelClient {
             resolved = true
             self.currentStatus = {status: 'connected', url}
           } else {
-            self.currentStatus = {status: 'error', message: 'Could not find tunnel url'}
+            self.currentStatus = {status: 'error', message: 'Could not start Cloudflare tunnel: URL not found.'}
           }
         }
         const errorMessage = findError(chunk)
@@ -119,7 +127,7 @@ class TunnelClientInstance implements TunnelClient {
           // Cloudflare crashed because Rosetta 2 is not installed
           this.currentStatus = {
             status: 'error',
-            message: `Error starting cloudflared tunnel: Missing Rosetta 2.`,
+            message: `Could not start Cloudflare tunnel: Missing Rosetta 2.`,
             tryMessage: "Install it by running 'softwareupdate --install-rosetta' and try again",
           }
           return
@@ -127,10 +135,13 @@ class TunnelClientInstance implements TunnelClient {
         // If already resolved, means that the CLI already received the tunnel URL.
         // Can't retry because the CLI is running with an invalid URL
         if (resolved) {
-          throw new BugError(`Tunnel process crashed after stablishing a connection: ${error.message}`, whatToTry())
+          throw new BugError(
+            `Could not start Cloudflare tunnel: process crashed after stablishing a connection: ${error.message}`,
+            whatToTry(),
+          )
         }
 
-        outputDebug(`Cloudflared tunnel crashed: ${error.message}, restarting...`)
+        outputDebug(`Cloudflare tunnel crashed: ${error.message}, restarting...`)
 
         // wait 1 second before restarting the tunnel, to avoid rate limiting
         if (!isUnitTest()) await sleep(1)
@@ -168,9 +179,18 @@ function findError(data: Buffer): string | undefined {
     /failed to provision routing/,
     /ERR Couldn't start tunnel/,
     /ERR Failed to serve quic connection/,
+    /ERR Failed to create new quic connection error/,
   ]
   const match = knownErrors.some((error) => error.test(data.toString()))
-  return match ? data.toString() : undefined
+  if (!match) return undefined
+
+  return `Could not start Cloudflare tunnel: ${cleanCloudflareLog(data.toString())}`
+}
+
+function cleanCloudflareLog(input: string): string {
+  const prefixRegex = /^[0-9TZ:-]+ (ERR )?/g
+  const suffixRegex = /connIndex.*/g
+  return input.replace(prefixRegex, '').replace(suffixRegex, '')
 }
 
 function findConnection(data: Buffer): string | undefined {

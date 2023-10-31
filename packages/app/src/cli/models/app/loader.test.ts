@@ -1101,6 +1101,9 @@ automatically_update_urls_on_dev = true
         block_progress = true
         api_access = true
 
+        [extensions.capabilities.collect_buyer_consent]
+        sms_marketing = true
+
         [extensions.settings]
           [[extensions.settings.fields]]
           key = "field_key"
@@ -1165,6 +1168,9 @@ automatically_update_urls_on_dev = true
           network_access: true,
           block_progress: true,
           api_access: true,
+          collect_buyer_consent: {
+            sms_marketing: true,
+          },
         },
         settings: {
           fields: [
@@ -1361,6 +1367,10 @@ automatically_update_urls_on_dev = true
       benchmark_api_base_url = "https://benchmark.example.com"
       calculate_taxes_api_endpoint = "/calculate-taxes"
 
+      [input.metafield_identifiers]
+      namespace = "taxy-tax"
+      key = "metafield-config"
+
       [[metafields]]
       namespace = "my-namespace"
       key = "my-key"
@@ -1390,6 +1400,12 @@ automatically_update_urls_on_dev = true
             key: 'my-key',
           },
         ],
+        input: {
+          metafield_identifiers: {
+            namespace: 'taxy-tax',
+            key: 'metafield-config',
+          },
+        },
       })
     }
   })
@@ -1484,6 +1500,9 @@ automatically_update_urls_on_dev = true
       block_progress = true
       api_access = true
 
+      [capabilities.collect_buyer_consent]
+      sms_marketing = true
+
       [settings]
         [[settings.fields]]
         key = "field_key"
@@ -1517,6 +1536,9 @@ automatically_update_urls_on_dev = true
           api_access: true,
           block_progress: true,
           network_access: true,
+          collect_buyer_consent: {
+            sms_marketing: true,
+          },
         },
         settings: {
           fields: [
@@ -1762,7 +1784,7 @@ automatically_update_urls_on_dev = true
       cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': '1234567890'}),
       cmd_app_linked_config_name: 'shopify.app.toml',
       cmd_app_linked_config_git_tracked: true,
-      cmd_app_linked_config_source: 'default',
+      cmd_app_linked_config_source: 'cached',
     })
   })
 

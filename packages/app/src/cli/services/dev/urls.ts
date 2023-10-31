@@ -7,7 +7,7 @@ import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {appHost, appPort, isSpin, spinFqdn} from '@shopify/cli-kit/node/context/spin'
@@ -66,8 +66,9 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
 
   if (isSpin() && !options.tunnelUrl) {
     frontendUrl = `https://cli.${await spinFqdn()}`
-    if (appPort() !== undefined) {
-      frontendPort = appPort() ?? frontendPort
+    const cliMainServicePort = appPort()
+    if (cliMainServicePort !== undefined && (await checkPortAvailability(cliMainServicePort))) {
+      frontendPort = cliMainServicePort
       frontendUrl = `https://${appHost()}`
     }
     return {frontendUrl, frontendPort, usingLocalhost}
@@ -147,7 +148,13 @@ export function generatePartnersURLs(
   }
 
   const appProxy = proxyFields
-    ? {appProxy: {proxyUrl: baseURL, proxySubPath: proxyFields.subpath, proxySubPathPrefix: proxyFields.prefix}}
+    ? {
+        appProxy: {
+          proxyUrl: replaceHost(proxyFields.url, baseURL),
+          proxySubPath: proxyFields.subpath,
+          proxySubPathPrefix: proxyFields.prefix,
+        },
+      }
     : {}
 
   return {
@@ -155,6 +162,13 @@ export function generatePartnersURLs(
     redirectUrlWhitelist,
     ...appProxy,
   }
+}
+
+function replaceHost(oldUrl: string, newUrl: string): string {
+  const oldUrlObject = new URL(oldUrl)
+  const newUrlObject = new URL(newUrl)
+  oldUrlObject.host = newUrlObject.host
+  return oldUrlObject.toString().replace(/\/$/, '')
 }
 
 export async function updateURLs(

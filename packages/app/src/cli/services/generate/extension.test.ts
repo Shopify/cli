@@ -381,6 +381,47 @@ describe('initialize a extension', async () => {
     )
   })
 
+  test('does not rename graphql files in src', async () => {
+    await withTemporaryApp(
+      async (tmpDir) => {
+        // Given
+        const name = 'my-fun-1'
+        const specification = allFunctionTemplates.find((spec) => spec.identifier === 'order_discounts')!
+        const extensionFlavor = 'vanilla-js'
+
+        vi.spyOn(git, 'downloadGitRepository').mockResolvedValue()
+        vi.spyOn(extensionsCommon, 'ensureDownloadedExtensionFlavorExists').mockImplementationOnce(async () => tmpDir)
+        vi.spyOn(template, 'recursiveLiquidTemplateCopy').mockImplementationOnce(async (_origin, destination) => {
+          await file.writeFile(
+            joinPath(destination, 'shopify.extension.toml'),
+            `name = "my-fun-1"
+          type = "function"
+          api_version = "2023-10"
+          [build]
+          path = "dist/function.wasm"`,
+          )
+          await file.mkdir(joinPath(destination, 'src'))
+          await file.writeFile(joinPath(destination, 'src', 'index'), '')
+          await file.writeFile(joinPath(destination, 'src', 'run.graphql'), '')
+        })
+
+        // When
+        const extensionDir = await createFromTemplate({
+          name,
+          extensionTemplate: specification,
+          extensionFlavor,
+          appDirectory: tmpDir,
+          specifications,
+        })
+
+        // Then
+        expect(file.fileExistsSync(joinPath(extensionDir, 'src', 'run.graphql'))).toBeTruthy()
+        expect(file.fileExistsSync(joinPath(extensionDir, 'src', 'index.js'))).toBeTruthy()
+      },
+      {useWorkspaces: true},
+    )
+  })
+
   test('throws an error if there is no folder for selected flavor', async () => {
     await withTemporaryApp(async (tmpDir) => {
       // Given

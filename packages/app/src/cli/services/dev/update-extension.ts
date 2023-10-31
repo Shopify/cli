@@ -47,6 +47,7 @@ export async function updateExtensionDraft({
       ...remainingConfigs,
       serialized_script: encodedFile,
     }),
+    handle: extension.handle,
     context: handle as string,
     registrationId,
   }

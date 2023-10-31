@@ -358,7 +358,6 @@ describe('ensureDevContext', async () => {
         storeFqdn: STORE1.shopDomain,
         remoteAppUpdated: true,
         updateURLs: true,
-        configName: CACHED1_WITH_CONFIG.configFile,
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -426,7 +425,6 @@ dev_store_url = "domain1"
         storeFqdn: STORE1.shopDomain,
         remoteAppUpdated: true,
         updateURLs: true,
-        configName: CACHED1_WITH_CONFIG.configFile,
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -465,7 +463,6 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          configName: 'dev',
           commandConfig: COMMAND_CONFIG,
         },
         'token',
@@ -474,7 +471,6 @@ dev_store_url = "domain1"
       // Then
       expect(loadAppConfiguration).toHaveBeenCalledWith({
         directory: 'app_directory',
-        configName: 'dev',
       })
     })
   })
@@ -497,7 +493,6 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          configName: 'dev',
           commandConfig: COMMAND_CONFIG,
         },
         'token',
@@ -546,7 +541,6 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          configName: 'dev',
           commandConfig: COMMAND_CONFIG,
         },
         'token',
@@ -621,7 +615,6 @@ dev_store_url = "domain1"
       storeFqdn: STORE1.shopDomain,
       remoteAppUpdated: true,
       updateURLs: undefined,
-      configName: CACHED1_WITH_CONFIG.configFile,
     })
   })
 
@@ -754,7 +747,6 @@ dev_store_url = "domain1"
       // Then
       expect(link).toBeCalled()
       expect(got.remoteApp).toEqual({...APP2, apiSecret: 'secret2'})
-      expect(got.configName).toEqual('shopify.app.dev.toml')
     })
   })
 
@@ -793,7 +785,6 @@ dev_store_url = "domain1"
       // Then
       expect(link).toBeCalled()
       expect(got.remoteApp).toEqual({...APP2, apiSecret: 'secret2'})
-      expect(got.configName).toEqual('shopify.app.toml')
     })
   })
 })

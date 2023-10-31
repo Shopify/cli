@@ -6,13 +6,11 @@ module ShopifyCLI
       class AuthDevServer < ShopifyCLI::Theme::DevServer
         attr_accessor :app, :repl
 
-        REPL_THEME = "liquid-console-repl"
-
         class << self
-          def start(ctx, repl, port)
+          def start(ctx, repl, port, theme = "liquid-console-repl")
             instance.repl = repl
 
-            super(ctx, nil, port: port, theme: REPL_THEME)
+            super(ctx, nil, port: port, theme: theme)
           end
         end
 

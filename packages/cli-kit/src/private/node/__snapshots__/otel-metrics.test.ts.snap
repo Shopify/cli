@@ -1,0 +1,74 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`otel-metrics > logs metrics when activated 1`] = `
+[
+  [
+    "cli_commands_total",
+    1,
+    {
+      "cli_version": "pre",
+      "exit": "ok",
+      "job": "@shopify/app::app dev",
+    },
+  ],
+  [
+    "cli_commands_duration_ms",
+    10,
+    {
+      "cli_version": "pre",
+      "exit": "ok",
+      "job": "@shopify/app::app dev",
+    },
+  ],
+  [
+    "cli_commands_wall_clock_elapsed_ms",
+    10,
+    {
+      "cli_version": "pre",
+      "exit": "ok",
+      "job": "@shopify/app::app dev",
+      "stage": "active",
+    },
+  ],
+  [
+    "cli_commands_wall_clock_elapsed_ms",
+    20,
+    {
+      "cli_version": "pre",
+      "exit": "ok",
+      "job": "@shopify/app::app dev",
+      "stage": "network",
+    },
+  ],
+  [
+    "cli_commands_wall_clock_elapsed_ms",
+    30,
+    {
+      "cli_version": "pre",
+      "exit": "ok",
+      "job": "@shopify/app::app dev",
+      "stage": "prompt",
+    },
+  ],
+]
+`;
+
+exports[`otel-metrics > outputs debug information when deactivated 1`] = `
+"[OTEL] record cli_commands_total counter {
+  \\"labels\\": {
+    \\"exit\\": \\"ok\\",
+    \\"job\\": \\"@shopify/app::app dev\\",
+    \\"cli_version\\": \\"nightly\\"
+  }
+}
+[OTEL] record cli_commands_duration_ms histogram 10ms {
+  \\"labels\\": {
+    \\"exit\\": \\"ok\\",
+    \\"job\\": \\"@shopify/app::app dev\\",
+    \\"cli_version\\": \\"nightly\\"
+  }
+}
+[OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage=\\"active\\" 10ms
+[OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage=\\"network\\" 20ms
+[OTEL] record cli_commands_wall_clock_elapsed_ms histogram stage=\\"prompt\\" 30ms"
+`;

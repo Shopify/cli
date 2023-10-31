@@ -114,7 +114,7 @@ export async function deploy(options: DeployOptions) {
         {
           title: 'Running validation',
           task: async () => {
-            await Promise.all([app.allExtensions.map((ext) => ext.preDeployValidation())])
+            await app.preDeployValidation()
           },
         },
         {

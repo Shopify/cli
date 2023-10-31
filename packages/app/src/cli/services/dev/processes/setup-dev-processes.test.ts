@@ -1,6 +1,6 @@
 import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
 import {sendWebhook} from './uninstall-webhook.js'
-import {WebProcess} from './web.js'
+import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {GraphiQLServerProcess, launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
@@ -11,7 +11,6 @@ import {
   testThemeExtensions,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
-import {launchWebProcess} from '../../dev.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {urlNamespaces} from '../../../constants.js'

@@ -55,18 +55,6 @@ describe('errorHandler', () => {
     expect(outputMock.info()).toMatch('✨  Custom message')
     expect(process.exit).toBeCalledTimes(0)
   })
-
-  test('finishes the execution gracefully and exits the proccess when abort silent exception', async () => {
-    // Given
-    vi.spyOn(process, 'exit').mockResolvedValue(null as never)
-
-    // When
-    errorHandler(new error.AbortSilentError())
-
-    // Then
-    expect(process.exit).toBeCalledTimes(1)
-    expect(process.exit).toBeCalledWith(1)
-  })
 })
 
 describe('bugsnag stack cleaning', () => {
@@ -123,7 +111,7 @@ describe('bugsnag metadata', () => {
 describe('send to Bugsnag', () => {
   test('processes Error instances as unhandled', async () => {
     const toThrow = new Error('In test')
-    const res = await sendErrorToBugsnag(toThrow)
+    const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
     expect(res.reported).toEqual(true)
     expect(res.unhandled).toEqual(true)
 
@@ -135,7 +123,7 @@ describe('send to Bugsnag', () => {
   })
 
   test('processes string instances', async () => {
-    const res = await sendErrorToBugsnag('In test' as any)
+    const res = await sendErrorToBugsnag('In test' as any, 'unexpected_error')
     expect(res.reported).toEqual(true)
     const {error} = res as any
     expect(error.stack).toMatch(/^Error: In test/)
@@ -143,14 +131,14 @@ describe('send to Bugsnag', () => {
   })
 
   test('processes AbortErrors as handled', async () => {
-    const res = await sendErrorToBugsnag(new error.AbortError('In test'))
+    const res = await sendErrorToBugsnag(new error.AbortError('In test'), 'expected_error')
     expect(res.reported).toEqual(true)
     expect(res.unhandled).toEqual(false)
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
   test.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {
-    const res = await sendErrorToBugsnag(throwable)
+    const res = await sendErrorToBugsnag(throwable, 'unexpected_error')
     expect(res.reported).toEqual(false)
     expect(onNotify).not.toHaveBeenCalled()
   })

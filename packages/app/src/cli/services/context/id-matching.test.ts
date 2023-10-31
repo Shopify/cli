@@ -99,7 +99,14 @@ beforeAll(async () => {
       name: 'EXTENSION A',
       type: 'checkout_post_purchase',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -111,7 +118,14 @@ beforeAll(async () => {
       name: 'EXTENSION A 2',
       type: 'checkout_post_purchase',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -123,7 +137,14 @@ beforeAll(async () => {
       name: 'EXTENSION B',
       type: 'product_subscription',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -135,7 +156,14 @@ beforeAll(async () => {
       name: 'EXTENSION B 2',
       type: 'product_subscription',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -147,7 +175,14 @@ beforeAll(async () => {
       name: 'EXTENSION C',
       type: 'theme',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     entrySourceFilePath: '',
     devUUID: 'devUUID',
@@ -159,7 +194,14 @@ beforeAll(async () => {
       name: 'EXTENSION D',
       type: 'web_pixel_extension',
       metafields: [],
-      capabilities: {network_access: false, block_progress: false, api_access: false},
+      capabilities: {
+        network_access: false,
+        block_progress: false,
+        api_access: false,
+        collect_buyer_consent: {
+          sms_marketing: false,
+        },
+      },
     },
     outputPath: '',
     entrySourceFilePath: '',
@@ -249,7 +291,7 @@ describe('automaticMatchmaking: some local of the same type, only one remote', (
   })
 })
 
-describe('automaticMatchmaking: some local of the same type, a remote with same type but different name', () => {
+describe('automaticMatchmaking: some local of the same type, a remote with same type but a remote name that doesnt match a local handle', () => {
   test('prompts for manual matching', async () => {
     // When
     const got = await automaticMatchmaking([EXTENSION_A, EXTENSION_A_2], [REGISTRATION_A_3], {}, 'uuid')

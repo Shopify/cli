@@ -2,4 +2,4 @@
 '@shopify/cli-kit': patch
 ---
 
-Fix local font urls
+Fix TAE hot code reloading in spin

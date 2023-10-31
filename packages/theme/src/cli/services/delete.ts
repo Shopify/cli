@@ -53,18 +53,14 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
 }
 
 async function findThemesByDeleteOptions(adminSession: AdminSession, options: DeleteOptions) {
-  const isSingleThemeSelection = options.selectTheme || options.themes.length <= 1
-
-  if (!isSingleThemeSelection) {
+  if (options.selectTheme || options.themes.length > 0) {
     return findThemes(adminSession, options)
   }
 
   const store = adminSession.storeFqdn
   const theme = await findOrSelectTheme(adminSession, {
     header: `Select a theme to delete from ${store}`,
-    filter: {
-      ...options,
-    },
+    filter: {development: options.development},
   })
 
   return [theme]

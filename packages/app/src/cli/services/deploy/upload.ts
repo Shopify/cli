@@ -24,7 +24,6 @@ import {
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
@@ -64,6 +63,7 @@ export async function uploadThemeExtensions(
         config: JSON.stringify(themeExtensionConfig),
         context: undefined,
         registrationId: themeId,
+        handle: themeExtension.handle,
       }
       const mutation = ExtensionUpdateDraftMutation
       const result: ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
@@ -132,12 +132,11 @@ interface ErrorCustomSection extends AlertCustomSection {
 export async function uploadExtensionsBundle(
   options: UploadExtensionsBundleOptions,
 ): Promise<UploadExtensionsBundleOutput> {
-  const appVersionUUID = randomUUID()
   let signedURL
   let deployError
 
   if (options.bundlePath) {
-    signedURL = await getExtensionUploadURL(options.apiKey, appVersionUUID)
+    signedURL = await getExtensionUploadURL(options.apiKey)
 
     const form = formData()
     const buffer = readFileSync(options.bundlePath)
@@ -151,7 +150,6 @@ export async function uploadExtensionsBundle(
 
   const variables: AppDeployVariables = {
     apiKey: options.apiKey,
-    uuid: appVersionUUID,
     skipPublish: !(options.deploymentMode === 'unified'),
     message: options.message,
     versionTag: options.version,
@@ -369,14 +367,12 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
 /**
  * It generates a URL to upload an app bundle.
  * @param apiKey - The application API key
- * @param appVersionUUID - The unique identifier of the app version.
  */
-export async function getExtensionUploadURL(apiKey: string, appVersionUUID: string) {
+export async function getExtensionUploadURL(apiKey: string) {
   const mutation = GenerateSignedUploadUrl
   const token = await ensureAuthenticatedPartners()
   const variables: GenerateSignedUploadUrlVariables = {
     apiKey,
-    appVersionUuid: appVersionUUID,
     bundleFormat: 1,
   }
 
@@ -384,12 +380,12 @@ export async function getExtensionUploadURL(apiKey: string, appVersionUUID: stri
     partnersRequest(mutation, token, variables),
   )
 
-  if (result.deploymentGenerateSignedUploadUrl?.userErrors?.length > 0) {
-    const errors = result.deploymentGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
+  if (result.appVersionGenerateSignedUploadUrl?.userErrors?.length > 0) {
+    const errors = result.appVersionGenerateSignedUploadUrl.userErrors.map((error) => error.message).join(', ')
     throw new AbortError(errors)
   }
 
-  return result.deploymentGenerateSignedUploadUrl.signedUploadUrl
+  return result.appVersionGenerateSignedUploadUrl.signedUploadUrl
 }
 
 interface UploadFunctionExtensionsOptions {
