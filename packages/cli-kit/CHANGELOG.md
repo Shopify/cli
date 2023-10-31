@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.50.1
+
+### Patch Changes
+
+- 6e90982b0: Warn when using EoL'ed Node
+
 ## 3.50.0
 
 ### Minor Changes
