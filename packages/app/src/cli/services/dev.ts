@@ -314,7 +314,7 @@ async function launchDevProcesses({
   })
 }
 
-function developerPreviewController(apiKey: string, originalToken: string): DeveloperPreviewController {
+export function developerPreviewController(apiKey: string, originalToken: string): DeveloperPreviewController {
   let currentToken = originalToken
 
   const refreshToken = async () => {
@@ -324,7 +324,8 @@ function developerPreviewController(apiKey: string, originalToken: string): Deve
 
   const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
     try {
-      return fn(currentToken)
+      const result = await fn(currentToken)
+      return result
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_err) {
       try {
