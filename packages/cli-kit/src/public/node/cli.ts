@@ -13,6 +13,30 @@ interface RunCLIOptions {
   development: boolean
 }
 
+async function warnIfOldNodeVersion() {
+  const nodeVersion = process.versions.node
+  const nodeMajorVersion = Number(nodeVersion.split('.')[0])
+
+  const currentSupportedNodeVersion = 18
+  if (nodeMajorVersion < currentSupportedNodeVersion) {
+    const {renderWarning} = await import('./ui.js')
+    renderWarning({
+      headline: 'Upgrade to a supported Node version now.',
+      body: [
+        `Node ${nodeMajorVersion} has reached end-of-life and poses security risks. When you upgrade to a`,
+        {
+          link: {
+            url: 'https://nodejs.dev/en/about/releases/',
+            label: 'supported version',
+          },
+        },
+        {char: ','},
+        "you'll be able to use Shopify CLI without interruption.",
+      ],
+    })
+  }
+}
+
 function setupEnvironmentVariables(options: Pick<RunCLIOptions, 'development'>) {
   /**
    * By setting DEBUG=* when --verbose is passed we are increasing the
@@ -46,6 +70,7 @@ function forceNoColor() {
 export async function runCLI(options: RunCLIOptions): Promise<void> {
   setupEnvironmentVariables(options)
   forceNoColor()
+  await warnIfOldNodeVersion()
   /**
    * These imports need to be dynamic because if they are static
    * they are loaded before we set the DEBUG=* environment variable
