@@ -47,6 +47,7 @@
     "@shopify/function-runner": "4.1.1",
     "@shopify/plugin-cloudflare": "3.50.0",
     "@shopify/shopify-api": "7.5.0",
+    "@shopify/theme-check-node": "1.18.1",
     "abort-controller": "3.0.0",
     "body-parser": "1.20.2",
     "chokidar": "3.5.3",

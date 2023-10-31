@@ -109,7 +109,6 @@
     "@opentelemetry/sdk-metrics": "1.17.1",
     "@opentelemetry/semantic-conventions": "1.17.1",
     "@types/archiver": "5.3.2",
-    "@shopify/theme-check-node": "1.18.1",
     "abort-controller": "3.0.0",
     "ansi-escapes": "6.2.0",
     "archiver": "5.3.2",

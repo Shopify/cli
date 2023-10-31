@@ -171,7 +171,7 @@ Excludes checks matching any category when specified more than once`,
         return
       }
 
-      const {offenses, theme} = await themeCheckRun(path, flags.config)
+      const {offenses, theme} = await themeCheckRun(path, flags.conffig)
 
       const offensesByFile = sortOffenses(offenses)
 
