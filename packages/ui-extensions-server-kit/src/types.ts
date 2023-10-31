@@ -97,6 +97,17 @@ export interface ExtensionPoint {
 
 export type ExtensionPoints = string[] | ExtensionPoint[] | null
 
+interface CollectBuyerConsentCapabilities {
+  smsMarketing: boolean
+}
+
+interface Capabilities {
+  apiAccess: boolean
+  blockProgress: boolean
+  networkAccess: boolean
+  collectBuyerConsent: CollectBuyerConsentCapabilities
+}
+
 export interface ExtensionPayload {
   type: string
   externalType: string
@@ -120,14 +131,20 @@ export interface ExtensionPayload {
   handle: string
   extensionPoints: ExtensionPoints
   categories?: string[]
-  capabilities?: {
-    apiAccess: boolean
-    blockProgress: boolean
-    networkAccess: boolean
-  }
+  capabilities?: Capabilities
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   localization?: FlattenedLocalization | Localization | null
+  settings?: {
+    fields?: {
+      type: string
+      key?: string
+      name?: string
+      description?: string
+      required?: boolean
+      validations?: any[]
+    }[]
+  }
 }
 
 export enum Status {

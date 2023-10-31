@@ -1,5 +1,5 @@
 {
-  "version": "3.49.1",
+  "version": "3.50.0",
   "commands": {
     "init": {
       "id": "init",
@@ -44,6 +44,12 @@
           "name": "template",
           "type": "option",
           "description": "The app template. Accepts one of the following:\n       - <remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
+          "multiple": false
+        },
+        "flavor": {
+          "name": "flavor",
+          "type": "option",
+          "description": "Which flavor of the given template to use.",
           "multiple": false
         },
         "package-manager": {

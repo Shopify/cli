@@ -88,6 +88,9 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
             url: `https://${store}/?preview_theme_id=${themeId}`,
           },
         },
+        {
+          subdued: `(https://${store}/?preview_theme_id=${themeId})`,
+        },
       ],
     ],
   })

@@ -3,8 +3,8 @@ import {ExtensionFlavor} from '../app/template.js'
 export function uiFlavors(path: string): ExtensionFlavor[] {
   return [
     {
-      name: 'TypeScript',
-      value: 'typescript',
+      name: 'JavaScript React',
+      value: 'react',
       path,
     },
     {
@@ -18,8 +18,8 @@ export function uiFlavors(path: string): ExtensionFlavor[] {
       path,
     },
     {
-      name: 'JavaScript React',
-      value: 'react',
+      name: 'TypeScript',
+      value: 'typescript',
       path,
     },
   ]

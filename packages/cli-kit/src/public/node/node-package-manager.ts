@@ -3,6 +3,7 @@ import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
+import {runWithTimer} from './metadata.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {Version} from '../../private/node/semver.js'
 import latestVersion from 'latest-version'
@@ -185,7 +186,9 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
   if (options.args) {
     args = args.concat(options.args)
   }
-  await exec(options.packageManager, args, execOptions)
+  await runWithTimer('cmd_all_timing_network_ms')(async () => {
+    await exec(options.packageManager, args, execOptions)
+  })
 }
 
 /**
@@ -196,6 +199,15 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
 export async function getPackageName(packageJsonPath: string): Promise<string | undefined> {
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
   return packageJsonContent.name
+}
+/**
+ * Returns the version of the package configured in its package.json
+ * @param packageJsonPath - Path to the package.json file
+ * @returns A promise that resolves with the version.
+ */
+export async function getPackageVersion(packageJsonPath: string): Promise<string | undefined> {
+  const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+  return packageJsonContent.version
 }
 
 /**
@@ -599,7 +611,9 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
  */
 async function getLatestNPMPackageVersion(name: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
-  return latestVersion(name)
+  return runWithTimer('cmd_all_timing_network_ms')(() => {
+    return latestVersion(name)
+  })
 }
 
 /**

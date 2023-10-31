@@ -1,5 +1,20 @@
 # @shopify/plugin-cloudflare
 
+## 3.50.0
+
+### Patch Changes
+
+- 516893d44: Unify Cloudflare errors
+- Updated dependencies [4bb8fff29]
+- Updated dependencies [3f36e9463]
+- Updated dependencies [cf5bbff61]
+- Updated dependencies [46a72a6b4]
+- Updated dependencies [3ed6ae88e]
+- Updated dependencies [d6b02afcf]
+- Updated dependencies [e0cd881e1]
+- Updated dependencies [20d667246]
+  - @shopify/cli-kit@3.50.0
+
 ## 3.49.1
 
 ### Patch Changes

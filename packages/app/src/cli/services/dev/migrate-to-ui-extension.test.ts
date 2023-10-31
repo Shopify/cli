@@ -47,6 +47,18 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
     })
 
+    test('returns extensions where local.type is ui_extension but remote.type is CUSTOMER_ACCOUNTS_UI_EXTENSION', () => {
+      // Given
+      const localExtension = getLocalExtension({type: 'ui_extension'})
+      const remoteExtension = getRemoteExtension({type: 'CUSTOMER_ACCOUNTS_UI_EXTENSION'})
+
+      // When
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+
+      // Then
+      expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
+    })
+
     test('does not return extensions where local.type is not ui_extension', () => {
       // Given
       const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
@@ -59,7 +71,7 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([])
     })
 
-    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
+    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION or CUSTOMER_ACCOUNTS_UI_EXTENSION', () => {
       // Given
       const localExtension = {...getLocalExtension(), type: 'ui_extension'}
       const remoteExtension = {...getRemoteExtension(), type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION'}
@@ -85,6 +97,18 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
     })
 
+    test('returns extensions where local.type is ui_extension but remote.type is CUSTOMER_ACCOUNTS_UI_EXTENSION', () => {
+      // Given
+      const localExtension = getLocalExtension({type: 'ui_extension'})
+      const remoteExtension = getRemoteExtension({type: 'CUSTOMER_ACCOUNTS_UI_EXTENSION', title: 'my-extension'})
+
+      // When
+      const toMigrate = getUIExtensionsToMigrate([localExtension], [remoteExtension], defaultIds)
+
+      // Then
+      expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
+    })
+
     test('does not return extensions where local.type is not ui_extension', () => {
       // Given
       const localExtension = getLocalExtension({type: 'checkout_ui_extension'})
@@ -97,7 +121,7 @@ describe('getExtensionsToMigrate()', () => {
       expect(toMigrate).toStrictEqual([])
     })
 
-    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION', () => {
+    test('does not return extensions where remote.type is not CHECKOUT_UI_EXTENSION or CUSTOMER_ACCOUNTS_UI_EXTENSION', () => {
       // Given
       const localExtension = getLocalExtension({type: 'ui_extension'})
       const remoteExtension = getRemoteExtension({type: 'PRODUCT_SUBSCRIPTION_UI_EXTENSION', title: 'my-extension'})
@@ -115,7 +139,7 @@ describe('getExtensionsToMigrate()', () => {
       // Given
       const localExtension = getLocalExtension({
         type: 'ui_extension',
-        configuration: {name: 'a-different-extension'},
+        handle: 'a-different-extension',
       })
       const remoteExtension = getRemoteExtension({type: 'CHECKOUT_UI_EXTENSION', title: 'does-not-match', uuid: '5678'})
 

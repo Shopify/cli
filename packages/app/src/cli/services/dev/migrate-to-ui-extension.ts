@@ -17,13 +17,13 @@ export function getUIExtensionsToMigrate(
   identifiers: IdentifiersExtensions,
 ) {
   const ids = getExtensionIds(localSources, identifiers)
-  const remoteExtensionTypesToMigrate = ['CHECKOUT_UI_EXTENSION']
+  const remoteExtensionTypesToMigrate = ['CHECKOUT_UI_EXTENSION', 'CUSTOMER_ACCOUNTS_UI_EXTENSION']
 
   return localSources.reduce<LocalRemoteSource[]>((accumulator, localSource) => {
     if (localSource.type === 'ui_extension') {
       const remoteSource = remoteSources.find((source) => {
         const matchesId = source.uuid === ids[localSource.localIdentifier]
-        const matchesTitle = slugify(source.title) === slugify(localSource.configuration.name)
+        const matchesTitle = slugify(source.title) === slugify(localSource.handle)
 
         return matchesId || matchesTitle
       })

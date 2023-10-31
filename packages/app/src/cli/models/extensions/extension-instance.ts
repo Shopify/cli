@@ -272,6 +272,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       uuid: identifiers.extensions[this.localIdentifier]!,
       config: JSON.stringify(remainingConfigs),
       context: contextValue,
+      handle: this.handle,
     }
   }
 }

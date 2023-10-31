@@ -17,12 +17,13 @@ require_relative "repl/snippet"
 module ShopifyCLI
   module Theme
     class Repl
-      attr_reader :ctx, :url, :port, :session, :storefront_digest, :secure_session_id
+      attr_reader :ctx, :url, :port, :theme, :session, :storefront_digest, :secure_session_id
 
-      def initialize(ctx, url, port)
+      def initialize(ctx, url, port, theme)
         @ctx = ctx
         @url = url
         @port = port
+        @theme = theme
         @session = []
       end
 
@@ -76,7 +77,7 @@ module ShopifyCLI
       def authenticate!
         # Currently, Shopify CLI can't bypass the store password, so the
         # `AuthDevServer` gets the session to perform requests at the SFR.
-        ShopifyCLI::Theme::Repl::AuthDevServer.start(ctx, self, port)
+        ShopifyCLI::Theme::Repl::AuthDevServer.start(ctx, self, port, theme)
       end
 
       def api

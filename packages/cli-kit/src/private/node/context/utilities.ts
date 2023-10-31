@@ -15,12 +15,11 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
   switch (envName) {
     case 'bitbucket':
       return {
-        actor: envs.BITBUCKET_COMMIT_AUTHOR,
         branch: envs.BITBUCKET_BRANCH,
         build: envs.BITBUCKET_BUILD_NUMBER,
         commitSha: envs.BITBUCKET_COMMIT,
         run: envs.BITBUCKET_BUILD_NUMBER,
-        url: envs.BITBUCKET_BUILD_URL,
+        url: `https://bitbucket.org/${envs.BITBUCKET_WORKSPACE}/${envs.BITBUCKET_REPO_SLUG}/pipelines/results/${envs.BITBUCKET_BUILD_NUMBER}`,
       }
     case 'circleci':
       return {
@@ -50,7 +49,7 @@ export function getCIMetadata(envName: string, envs: NodeJS.ProcessEnv): Metadat
         commitSha: envs.CI_COMMIT_SHA,
         commitMessage: envs.CI_COMMIT_MESSAGE,
         run: envs.CI_RUNNER_ID,
-        url: envs.CI_PROJECT_URL,
+        url: envs.CI_PIPELINE_URL,
       }
     default:
       return {}

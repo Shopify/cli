@@ -42,7 +42,7 @@ describe('deleteThemes', () => {
     const confirmed = true
 
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
-    vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
+    vi.mocked(findThemes).mockResolvedValue([theme1])
 
     // When
     await deleteThemes(session, {...options, development: true})

@@ -31,3 +31,5 @@ export const blocks = {
 export const urlNamespaces = {
   devTools: '.shopify',
 } as const
+
+export const EsbuildEnvVarRegex = /^([a-zA-Z0-9_])*$/

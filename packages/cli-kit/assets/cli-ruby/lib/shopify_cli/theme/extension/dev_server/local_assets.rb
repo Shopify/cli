@@ -8,13 +8,13 @@ module ShopifyCLI
       class DevServer < ShopifyCLI::Theme::DevServer
         class LocalAssets < ShopifyCLI::Theme::DevServer::LocalAssets
           SUPPORTED_EXTENSIONS = [:js, :css].join("|")
-          TAE_ASSET_REGEX = %r{(http:|https:)?//cdn\.shopify\.com/extensions/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
+          TAE_ASSET_REGEX = %r{(http:|https:)?//cdn\..*?(shopify\.com|spin\.dev)(/[^/]+)*?/extensions/.+?/(assets/.+?\.(?:#{SUPPORTED_EXTENSIONS}))}
 
           private
 
           def replace_asset_urls(body)
             replaced_body = body.join.gsub(TAE_ASSET_REGEX) do |match|
-              path = Regexp.last_match[2]
+              path = Regexp.last_match[4]
               if @target.static_asset_paths.include?(path)
                 "/#{path}"
               else

@@ -1,5 +1,5 @@
 {
-  "version": "3.49.1",
+  "version": "3.50.0",
   "commands": {
     "theme:check": {
       "id": "theme:check",
@@ -22,6 +22,13 @@
           "type": "boolean",
           "description": "Increase the verbosity of the logs.",
           "hidden": false,
+          "allowNo": false
+        },
+        "dev-preview": {
+          "name": "dev-preview",
+          "type": "boolean",
+          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
+          "required": false,
           "allowNo": false
         },
         "path": {
@@ -70,10 +77,14 @@
           "required": false,
           "multiple": false,
           "options": [
+            "crash",
             "error",
             "suggestion",
-            "style"
-          ]
+            "style",
+            "warning",
+            "info"
+          ],
+          "default": "error"
         },
         "update-docs": {
           "name": "update-docs",
@@ -567,6 +578,13 @@
           "description": "Increase the verbosity of the logs.",
           "hidden": false,
           "allowNo": false
+        },
+        "dev-preview": {
+          "name": "dev-preview",
+          "type": "boolean",
+          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
+          "required": false,
+          "allowNo": false
         }
       },
       "args": {}
@@ -679,7 +697,7 @@
         "editor": {
           "name": "editor",
           "type": "boolean",
-          "char": "e",
+          "char": "E",
           "description": "Open the theme editor for the specified theme in the browser.",
           "allowNo": false
         },

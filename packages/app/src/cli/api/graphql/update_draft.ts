@@ -1,9 +1,15 @@
 import {gql} from 'graphql-request'
 
 export const ExtensionUpdateDraftMutation = gql`
-  mutation ExtensionUpdateDraft($apiKey: String!, $registrationId: ID!, $config: JSON!, $context: String) {
+  mutation ExtensionUpdateDraft(
+    $apiKey: String!
+    $registrationId: ID!
+    $config: JSON!
+    $context: String
+    $handle: String
+  ) {
     extensionUpdateDraft(
-      input: {apiKey: $apiKey, registrationId: $registrationId, config: $config, context: $context}
+      input: {apiKey: $apiKey, registrationId: $registrationId, config: $config, context: $context, handle: $handle}
     ) {
       userErrors {
         field
@@ -18,6 +24,7 @@ export interface ExtensionUpdateDraftInput {
   config: string
   // not all extensions require configs, e.g. subscription
   context: string | undefined
+  handle: string
   registrationId: string
 }
 

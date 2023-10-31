@@ -25,16 +25,17 @@ export interface ExtensionRegistration {
 export async function createExtension(
   apiKey: string,
   graphQLType: string,
-  name: string,
+  handle: string,
   token: string,
 ): Promise<ExtensionRegistration> {
   const query = ExtensionCreateQuery
   const variables: ExtensionCreateVariables = {
     apiKey,
     type: graphQLType,
-    title: name,
+    title: handle,
     config: JSON.stringify({}),
     context: null,
+    handle,
   }
   const result: ExtensionCreateSchema = await partnersRequest(query, token, variables)
 

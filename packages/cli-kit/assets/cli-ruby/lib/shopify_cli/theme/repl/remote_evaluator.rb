@@ -72,9 +72,14 @@ module ShopifyCLI
 
           error = body.gsub(/ \(snippets\/eval line \d+\)/, "")
 
-          ctx.puts("{{red:#{error}}}")
+          print_syntax_error(error)
+        end
 
-          nil
+        def print_syntax_error(error)
+          error_message = "Unknown object, property, tag, or filter: '#{input}'"
+          error_message = error unless error.include?("Unknown tag")
+
+          ctx.puts("{{red:#{error_message}}}")
         end
 
         def json_from_response(response)
@@ -131,6 +136,9 @@ module ShopifyCLI
 
         def extract_body(response)
           response.body.lines[1..-2].join.strip
+        rescue StandardError
+          # Handle malformed body gracefully
+          "{}"
         end
 
         def not_found?(response)

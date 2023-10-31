@@ -45,6 +45,24 @@ module ShopifyCLI
             assert_equal(expected_html, serve(original_html).body)
           end
 
+          def test_replace_local_assets_in_reponse_body_http_in_spin
+            original_html = <<~HTML
+              <html>
+                <head>
+                  <link rel="stylesheet" href="http://cdn.shopify.spin.fqdn.eu.spin.dev/s/extensions/some-alphanumeric-id/0.0.0/assets/block1.js?v=1657160440" />
+                </head>
+              </html>
+            HTML
+            expected_html = <<~HTML
+              <html>
+                <head>
+                  <link rel="stylesheet" href="/assets/block1.js?v=1657160440" />
+                </head>
+              </html>
+            HTML
+            assert_equal(expected_html, serve(original_html).body)
+          end
+
           def test_replace_local_assets_on_same_line
             original_html = <<~HTML
               <html>

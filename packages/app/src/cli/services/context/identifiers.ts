@@ -35,7 +35,6 @@ export interface LocalSource {
   graphQLType: string
   type: string
   handle: string
-  configuration: {name: string}
 }
 
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'

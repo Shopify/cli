@@ -131,6 +131,17 @@ module ShopifyCLI
         assert_equal(expected_warnings, actual_warnings)
       end
 
+      def test_value_when_it_is_not_a_hash
+        invalid_template = { "sections": { "layout": "alt-layout" }, "order": [] }.to_json
+
+        file = fixture_file("templates/blog.json")
+        file.stubs(read: invalid_template)
+
+        assert_nothing_raised do
+          file.checksum
+        end
+      end
+
       private
 
       def fixture_file(file_path)

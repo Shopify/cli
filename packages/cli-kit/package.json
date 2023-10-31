@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.49.1",
+  "version": "3.50.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -65,6 +65,9 @@
     "extends": [
       "../../.eslintrc.cjs"
     ],
+    "ignorePatterns": [
+      "**/vendor/otel-js/**/*.ts"
+    ],
     "overrides": [
       {
         "files": [
@@ -82,7 +85,8 @@
                 "@oclif/core",
                 "../../private/node/constants.js",
                 "./path.js",
-                "./system.js"
+                "./system.js",
+                "./ui.js"
               ],
               "static": [
                 "@oclif/core",
@@ -99,6 +103,12 @@
     "@bugsnag/js": "7.21.0",
     "@iarna/toml": "2.2.5",
     "@oclif/core": "2.11.7",
+    "@opentelemetry/api": "1.6.0",
+    "@opentelemetry/core": "1.17.1",
+    "@opentelemetry/exporter-metrics-otlp-http": "0.43.0",
+    "@opentelemetry/resources": "1.17.1",
+    "@opentelemetry/sdk-metrics": "1.17.1",
+    "@opentelemetry/semantic-conventions": "1.17.1",
     "@types/archiver": "5.3.2",
     "abort-controller": "3.0.0",
     "ansi-escapes": "6.2.0",
@@ -126,7 +136,7 @@
     "get-port-please": "3.0.1",
     "git-diff": "2.0.6",
     "gradient-string": "2.0.2",
-    "graphql": "16.4.0",
+    "graphql": "16.8.1",
     "graphql-request": "5.2.0",
     "ink": "4.4.1",
     "is-interactive": "2.0.0",
@@ -163,7 +173,7 @@
     "@types/git-diff": "^2.0.3",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.195",
-    "@types/node": "14.18.56",
+    "@types/node": "16.18.57",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
     "@vitest/coverage-istanbul": "^0.34.3",
