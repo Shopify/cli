@@ -322,7 +322,6 @@ Redeploy Paths:
         registrationId,
         stdout,
         stderr,
-        unifiedDeployment,
       }).catch((error: unknown) => {
         outputWarn(
           `Error while deploying updated extension config: ${JSON.stringify(error, null, 2)} at path ${path}`,
