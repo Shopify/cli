@@ -118,6 +118,7 @@
           "tax_calculation",
           "fulfillment_constraints",
           "local_pickup_delivery_option_generator",
+          "delivery_options_reducer",
         ],
         "default": "checkout_ui_extension",
     },
