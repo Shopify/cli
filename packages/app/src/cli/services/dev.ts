@@ -15,6 +15,7 @@ import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
+import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {DeploymentMode} from './deploy/mode.js'
 import {setCachedAppInfo} from './local-storage.js'
@@ -303,46 +304,54 @@ async function launchDevProcesses({
     token,
   }
 
-  let currentToken = config.token
-  const refreshToken = async () => {
-    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
-    if (newToken) currentToken = newToken
-  }
-  const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
-    try {
-      return fn(currentToken)
-    } catch (_err) {
-      try {
-        await refreshToken()
-        return fn(currentToken)
-      } catch (err) {
-        outputDebug('Failed to refresh token')
-        throw err
-      }
-    }
-  }
-
   return renderDev({
     processes: processesForTaskRunner,
     previewUrl,
     graphiqlUrl,
     app,
     abortController,
-    developerPreview: {
-      fetchMode: async () =>
-        withRefreshToken(async (token: string) => Boolean(await fetchAppPreviewMode(apiKey, token))),
-      enable: async () =>
-        withRefreshToken(async (token: string) => {
-          await enableDeveloperPreview({apiKey, token})
-        }),
-      disable: async () =>
-        withRefreshToken(async (token: string) => {
-          await disableDeveloperPreview({apiKey, token})
-        }),
-      update: async (state: boolean) =>
-        withRefreshToken(async (token: string) => developerPreviewUpdate({apiKey, token, enabled: state})),
-    },
+    developerPreview: developerPreviewController(apiKey, token),
   })
+}
+
+function developerPreviewController(apiKey: string, originalToken: string): DeveloperPreviewController {
+  let currentToken = originalToken
+
+  const refreshToken = async () => {
+    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+    if (newToken) currentToken = newToken
+  }
+
+  const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
+    try {
+      return fn(currentToken)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (_err) {
+      try {
+        await refreshToken()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (_err) {
+        outputDebug('Failed to refresh token')
+        // Swallow the error, this isn't important enough to crash the process
+      }
+      return fn(currentToken)
+      // If it fails after refresh, let it crash the process
+    }
+  }
+
+  return {
+    fetchMode: async () => withRefreshToken(async (token: string) => Boolean(await fetchAppPreviewMode(apiKey, token))),
+    enable: async () =>
+      withRefreshToken(async (token: string) => {
+        await enableDeveloperPreview({apiKey, token})
+      }),
+    disable: async () =>
+      withRefreshToken(async (token: string) => {
+        await disableDeveloperPreview({apiKey, token})
+      }),
+    update: async (state: boolean) =>
+      withRefreshToken(async (token: string) => developerPreviewUpdate({apiKey, token, enabled: state})),
+  }
 }
 
 export async function logMetadataForDev(options: {

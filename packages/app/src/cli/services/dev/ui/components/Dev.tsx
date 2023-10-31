@@ -12,6 +12,13 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
 import {Writable} from 'stream'
 
+export interface DeveloperPreviewController {
+  fetchMode: () => Promise<boolean>
+  enable: () => Promise<void>
+  disable: () => Promise<void>
+  update: (state: boolean) => Promise<boolean>
+}
+
 export interface DevProps {
   processes: OutputProcess[]
   abortController: AbortController
@@ -24,12 +31,7 @@ export interface DevProps {
     token: string
   }
   pollingTime?: number
-  developerPreview: {
-    fetchMode: () => Promise<boolean>
-    enable: () => Promise<void>
-    disable: () => Promise<void>
-    update: (state: boolean) => Promise<boolean>
-  }
+  developerPreview: DeveloperPreviewController
 }
 
 const Dev: FunctionComponent<DevProps> = ({
