@@ -124,7 +124,12 @@ ${outputToken.json(applications)}
 
   if (validationResult === 'needs_full_auth') {
     if (noPrompt) {
-      throw new AbortError('Authentication required but prompting is disallowed')
+      throw new AbortError(
+        `The currently available CLI credentials are invalid.
+
+The CLI is currently unable to prompt for reauthentication.`,
+        'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment.',
+      )
     }
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)

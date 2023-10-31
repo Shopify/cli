@@ -133,7 +133,9 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     // When
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow(
-      'Authentication required but prompting is disallowed',
+      `The currently available CLI credentials are invalid.
+
+The CLI is currently unable to prompt for reauthentication.`,
     )
 
     // Then
