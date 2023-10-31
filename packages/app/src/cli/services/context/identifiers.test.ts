@@ -25,13 +25,6 @@ const REGISTRATION_B = {
   type: 'SUBSCRIPTION_MANAGEMENT',
 }
 
-const REGISTRATION_C = {
-  uuid: 'UUID_C',
-  id: 'C',
-  title: 'C',
-  type: 'PRODUCT_DISCOUNTS',
-}
-
 const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: ExtensionInstance[] = []): AppInterface => {
   return testApp({
     name: 'my-app',
@@ -131,7 +124,6 @@ beforeEach(() => {
     app: {
       extensionRegistrations: [REGISTRATION_A, REGISTRATION_B],
       dashboardManagedExtensionRegistrations: [],
-      functions: [REGISTRATION_C],
     },
   })
 })

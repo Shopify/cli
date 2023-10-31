@@ -44,7 +44,6 @@ beforeEach(() => {
         },
       ],
       dashboardManagedExtensionRegistrations: [],
-      functions: [],
     },
   })
 })
