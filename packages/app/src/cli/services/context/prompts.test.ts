@@ -32,7 +32,7 @@ describe('deployConfirmationPrompt', () => {
       // Then
       expect(response).toBe(true)
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderConfirmationPromptContent({
+        renderConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -46,6 +46,47 @@ describe('deployConfirmationPrompt', () => {
               bullet: '+',
             },
           ],
+        }),
+      )
+    })
+
+    test('renders confirmation prompt with the comparison between source summary and active version with a custom message when release is false', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent({noDelete: true}))
+
+      // When
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: false,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
+
+      // Then
+      expect(response).toBe(true)
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(
+        renderConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
+          infoTable: [
+            {
+              header: 'Includes:',
+              items: [
+                ['extension1', {subdued: '(new)'}],
+                ['id1', {subdued: '(new)'}],
+                'extension2',
+                ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+              ],
+              bullet: '+',
+            },
+          ],
+          confirmationMessage: 'Yes, create this new version',
         }),
       )
     })
@@ -72,7 +113,7 @@ describe('deployConfirmationPrompt', () => {
       // Then
       expect(response).toBe(true)
       expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderDangerousConfirmationPromptContent({
+        renderDangerousConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -125,7 +166,7 @@ describe('deployConfirmationPrompt', () => {
       // Then
       expect(response).toBe(true)
       expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderDangerousConfirmationPromptContent({
+        renderDangerousConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -174,7 +215,7 @@ describe('deployConfirmationPrompt', () => {
       // Then
       expect(response).toBe(true)
       expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderDangerousConfirmationPromptContent({
+        renderDangerousConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -216,7 +257,7 @@ describe('deployConfirmationPrompt', () => {
       // Then
       expect(response).toBe(true)
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderConfirmationPromptContent({
+        renderConfirmationPromptContent({
           infoTable: [
             {
               header: 'Includes:',
@@ -243,7 +284,7 @@ describe('deployConfirmationPrompt', () => {
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(renderConfirmationPromptContent({infoTable: []}))
     })
 
     test('renders confirmation prompt with empty infoTable when no changes are being released to users', async () => {
@@ -261,7 +302,7 @@ describe('deployConfirmationPrompt', () => {
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(renderConfirmationPromptContent({infoTable: []}))
     })
 
     test('renders confirmation prompt with empty infoTable when remote only extensions exist but are missing locally', async () => {
@@ -279,7 +320,7 @@ describe('deployConfirmationPrompt', () => {
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(renderConfirmationPromptContent({infoTable: []}))
     })
   })
 })
@@ -377,12 +418,13 @@ function activeVersionContent({noDelete = false} = {}) {
   }
 }
 
-interface UnifiedRenderConfirmationPromptContentOptions {
+interface RenderConfirmationPromptContentOptions {
   infoTable?: InfoTableSection[]
   appTitle?: string
+  confirmationMessage?: string
 }
 
-function unifiedRenderDangerousConfirmationPromptContent(options: UnifiedRenderConfirmationPromptContentOptions = {}) {
+function renderDangerousConfirmationPromptContent(options: RenderConfirmationPromptContentOptions = {}) {
   const {appTitle, infoTable} = options
 
   return {
@@ -392,12 +434,12 @@ function unifiedRenderDangerousConfirmationPromptContent(options: UnifiedRenderC
   }
 }
 
-function unifiedRenderConfirmationPromptContent(options: UnifiedRenderConfirmationPromptContentOptions = {}) {
-  const {infoTable} = options
+function renderConfirmationPromptContent(options: RenderConfirmationPromptContentOptions = {}) {
+  const {infoTable, confirmationMessage} = options
 
   return {
     cancellationMessage: 'No, cancel',
-    confirmationMessage: 'Yes, release this new version',
+    confirmationMessage: confirmationMessage ? confirmationMessage : 'Yes, release this new version',
     infoTable,
     message: 'question',
   }

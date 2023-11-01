@@ -472,7 +472,7 @@ describe('ensureExtensionsIds: includes functions', () => {
 })
 
 describe('ensureExtensionsIds: asks user to confirm deploy', () => {
-  test('shows confirmation prompt', async () => {
+  test('shows confirmation prompt when release is true', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -505,6 +505,44 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
         toCreate: [],
       },
       release: true,
+      apiKey: opt.appId,
+      token: opt.token,
+    })
+  })
+
+  test('shows confirmation prompt when release is false', async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+    const opt = options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, false)
+
+    // When
+    await ensureExtensionsIds(opt, {
+      extensionRegistrations: [REGISTRATION_A, REGISTRATION_A_2],
+      dashboardManagedExtensionRegistrations: [DASHBOARD_REGISTRATION_A],
+    })
+
+    // Then
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      summary: {
+        appTitle: 'app1',
+        question: `Create a new version of ${testOrganizationApp().title}?`,
+        identifiers: {
+          EXTENSION_A: 'UUID_A',
+          EXTENSION_A_2: 'UUID_A_2',
+        },
+        dashboardOnly: [DASHBOARD_REGISTRATION_A],
+        toCreate: [],
+      },
+      release: false,
       apiKey: opt.appId,
       token: opt.token,
     })
