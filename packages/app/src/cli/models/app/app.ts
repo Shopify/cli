@@ -43,11 +43,26 @@ export const AppSchema = zod
       .object({
         metafield_definitions: zod.array(
           zod.object({
-            name: zod.string(),
             namespace: zod.string(),
             key: zod.string(),
             type: zod.string(),
             owner_type: zod.string(),
+            name: zod.string(),
+            description: zod.string(),
+          }),
+        ),
+        metaobject_definitions: zod.array(
+          zod.object({
+            name: zod.string(),
+            type: zod.string(),
+            fields: zod.array(
+              zod.object({
+                key: zod.string(),
+                type: zod.string(),
+                name: zod.string(),
+                description: zod.string(),
+              }),
+            ),
           }),
         ),
       })
