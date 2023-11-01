@@ -2,6 +2,7 @@ import {AppInterface} from '../app/app.js'
 import type {ExtensionSpecification} from './specification.js'
 
 export const APP_ACCESS_IDENTIFIER = 'app_access'
+export const CUSTOM_DATA_IDENTIFIER = 'custom_data'
 
 export function getAppConfiguration(configObject: unknown, specification: ExtensionSpecification) {
   return {

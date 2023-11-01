@@ -39,6 +39,19 @@ export const AppSchema = zod
         direct_api_offline_access: zod.boolean().optional(),
       })
       .optional(),
+    custom_data: zod
+      .object({
+        metafield_definitions: zod.array(
+          zod.object({
+            name: zod.string(),
+            namespace: zod.string(),
+            key: zod.string(),
+            type: zod.string(),
+            owner_type: zod.string(),
+          }),
+        ),
+      })
+      .optional(),
     access_scopes: zod
       .object({
         scopes: zod.string().optional(),
