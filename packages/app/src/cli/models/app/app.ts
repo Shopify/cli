@@ -20,12 +20,153 @@ export const LegacyAppSchema = zod
   .strict()
 
 // adding http or https presence and absence of new lines to url validation
-const validateUrl = (zodType: zod.ZodString) => {
+const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
+  const regex = httpsOnly ? /^(https:\/\/)/ : /^(https?:\/\/)/
   return zodType
     .url()
-    .refine((value) => Boolean(value.match(/^(https?:\/\/)/)), {message: 'Invalid url'})
-    .refine((value) => !value.includes('\n'), {message: 'Invalid url'})
+    .refine((value) => Boolean(value.match(regex)), {message})
+    .refine((value) => !value.includes('\n'), {message})
 }
+
+const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
+const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
+  httpsOnly: true,
+  message: 'Only https urls are allowed',
+})
+
+const SubscriptionEndpointUrlValidation = ensureHttpsOnlyUrl.optional()
+const PubSubProjectValidation = zod.string().optional()
+const PubSubTopicValidation = zod.string().optional()
+const ArnValidation = zod
+  .string()
+  .regex(
+    /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/,
+  )
+  .optional()
+
+const WebhookSubscriptionSchema = zod.object({
+  topic: zod.string(),
+  sub_topic: zod.string().optional(),
+  format: zod.enum(['json', 'xml']).optional(),
+  include_fields: zod.array(zod.string()).optional(),
+  metafield_namespaces: zod.array(zod.string()).optional(),
+  subscription_endpoint_url: SubscriptionEndpointUrlValidation,
+  path: zod
+    .string()
+    .refine((path) => path.startsWith('/'), {message: 'Path must start with a forward slash'})
+    .optional(),
+  pubsub_project: PubSubProjectValidation,
+  pubsub_topic: PubSubTopicValidation,
+  arn: ArnValidation,
+})
+
+const WebhooksSchema = zod
+  .object({
+    api_version: zod.string(),
+    privacy_compliance: zod
+      .object({
+        customer_deletion_url: ensureHttpsOnlyUrl.optional(),
+        customer_data_request_url: ensureHttpsOnlyUrl.optional(),
+        shop_deletion_url: ensureHttpsOnlyUrl.optional(),
+      })
+      .optional(),
+    subscription_endpoint_url: SubscriptionEndpointUrlValidation,
+    pubsub_project: PubSubProjectValidation,
+    pubsub_topic: PubSubTopicValidation,
+    arn: ArnValidation,
+    topics: zod.array(zod.string()).optional(),
+    subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
+  })
+  .superRefine(
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    ({subscription_endpoint_url, pubsub_project, pubsub_topic, arn, topics = [], subscriptions = []}, ctx) => {
+      const topLevelDestinations = [subscription_endpoint_url, pubsub_project && pubsub_topic, arn].filter(Boolean)
+      const pubSubValidationErrMsg = 'You must declare both pubsub_project and pubsub_topic if you wish to use'
+      const tooManyDestinationsErrMsg =
+        'You are only allowed to declare one (1) of subscription_endpoint_url, pubsub_project & pubsub_topic, or arn'
+
+      if ([pubsub_project, pubsub_topic].filter(Boolean).length === 1) {
+        ctx.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message: `${pubSubValidationErrMsg} a top-level pub sub destination`,
+          fatal: true,
+        })
+        return zod.NEVER
+      }
+
+      if (topLevelDestinations.length > 1) {
+        ctx.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message: `${tooManyDestinationsErrMsg} at the top level`,
+          fatal: true,
+        })
+        return zod.NEVER
+      }
+
+      if (topLevelDestinations.length && !topics.length && !subscriptions.length) {
+        ctx.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message:
+            'To use a top-level destination, you must also provide a `topics` array or `subscriptions` configuration',
+          fatal: true,
+        })
+        return zod.NEVER
+      }
+
+      // validate individual subscriptions
+      if (subscriptions.length) {
+        for (const [i, subscription] of subscriptions.entries()) {
+          const subscriptionDestinations = [
+            subscription.subscription_endpoint_url,
+            subscription.pubsub_project && subscription.pubsub_topic,
+            subscription.arn,
+          ].filter(Boolean)
+          const path = ['subscriptions', i]
+
+          if ([subscription.pubsub_project, subscription.pubsub_topic].filter(Boolean).length === 1) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: `${pubSubValidationErrMsg} a pub sub destination`,
+              fatal: true,
+              path,
+            })
+            return zod.NEVER
+          }
+
+          if (subscriptionDestinations.length > 1) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: `${tooManyDestinationsErrMsg} per subscription`,
+              fatal: true,
+              path,
+            })
+            return zod.NEVER
+          }
+
+          // If no top-level destinations are provided, ensure each subscription has at least one destination
+          if (!topLevelDestinations.length && subscriptionDestinations.length === 0) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'You must declare either a top-level destination or a destination per subscription',
+              fatal: true,
+              path,
+            })
+            return zod.NEVER
+          }
+
+          if (!subscription_endpoint_url && !subscription.subscription_endpoint_url && subscription.path) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'You must declare a subscription_endpoint_url if you wish to use a relative path',
+              fatal: true,
+              path,
+            })
+            return zod.NEVER
+          }
+        }
+      }
+    },
+  )
 
 export const AppSchema = zod
   .object({
@@ -44,16 +185,7 @@ export const AppSchema = zod
         redirect_urls: zod.array(validateUrl(zod.string())),
       })
       .optional(),
-    webhooks: zod.object({
-      api_version: zod.string(),
-      privacy_compliance: zod
-        .object({
-          customer_deletion_url: validateUrl(zod.string()).optional(),
-          customer_data_request_url: validateUrl(zod.string()).optional(),
-          shop_deletion_url: validateUrl(zod.string()).optional(),
-        })
-        .optional(),
-    }),
+    webhooks: WebhooksSchema,
     app_proxy: zod
       .object({
         url: validateUrl(zod.string()),
@@ -140,8 +272,6 @@ export enum WebType {
   Backend = 'backend',
   Background = 'background',
 }
-
-const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
 
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
