@@ -2,6 +2,7 @@ import {hasGit, isTerminalInteractive} from './context/local.js'
 import {appendFileSync} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd} from './path.js'
+import {runWithTimer} from './metadata.js'
 import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
 
@@ -83,57 +84,59 @@ export interface GitCloneOptions {
  * @returns A promise that resolves when the clone is complete.
  */
 export async function downloadGitRepository(cloneOptions: GitCloneOptions): Promise<void> {
-  const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
-  outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
-  await ensureGitIsPresentOrAbort()
-  const [repository, branch] = repoUrl.split('#')
-  const options: TaskOptions = {'--recurse-submodules': null}
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
+    outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
+    await ensureGitIsPresentOrAbort()
+    const [repository, branch] = repoUrl.split('#')
+    const options: TaskOptions = {'--recurse-submodules': null}
 
-  if (branch && latestTag) {
-    throw new AbortError("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
-  }
-  if (branch) {
-    options['--branch'] = branch
-  }
+    if (branch && latestTag) {
+      throw new AbortError("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
+    }
+    if (branch) {
+      options['--branch'] = branch
+    }
 
-  if (shallow && latestTag) {
-    throw new AbortError(
-      "Error cloning the repository. Git can't clone the latest release with the 'shallow' property.",
-    )
-  }
-  if (shallow) {
-    options['--depth'] = 1
-  }
+    if (shallow && latestTag) {
+      throw new AbortError(
+        "Error cloning the repository. Git can't clone the latest release with the 'shallow' property.",
+      )
+    }
+    if (shallow) {
+      options['--depth'] = 1
+    }
 
-  const progress = ({stage, progress, processed, total}: SimpleGitProgressEvent) => {
-    const updateString = `${stage}, ${processed}/${total} objects (${progress}% complete)`
-    if (progressUpdater) progressUpdater(updateString)
-  }
+    const progress = ({stage, progress, processed, total}: SimpleGitProgressEvent) => {
+      const updateString = `${stage}, ${processed}/${total} objects (${progress}% complete)`
+      if (progressUpdater) progressUpdater(updateString)
+    }
 
-  const simpleGitOptions = {
-    progress,
-    ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
-  }
-  try {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    await git(simpleGitOptions).clone(repository!, destination, options)
-
-    if (latestTag) {
+    const simpleGitOptions = {
+      progress,
+      ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
+    }
+    try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      const localGitRepository = git(destination)
-      const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
-      await localGitRepository.checkout(latestTag)
+      await git(simpleGitOptions).clone(repository!, destination, options)
+
+      if (latestTag) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const localGitRepository = git(destination)
+        const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
+        await localGitRepository.checkout(latestTag)
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        const abortError = new AbortError(err.message)
+        abortError.stack = err.stack
+        throw abortError
+      }
+      throw err
     }
-  } catch (err) {
-    if (err instanceof Error) {
-      const abortError = new AbortError(err.message)
-      abortError.stack = err.stack
-      throw abortError
-    }
-    throw err
-  }
+  })
 }
 
 /**

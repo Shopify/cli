@@ -474,11 +474,13 @@ export async function addNPMDependencies(
 }
 
 async function installDependencies(options: AddNPMDependenciesIfNeededOptions, args: string[]) {
-  return exec(options.packageManager, args, {
-    cwd: options.directory,
-    stdout: options.stdout,
-    stderr: options.stderr,
-    signal: options.signal,
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    return exec(options.packageManager, args, {
+      cwd: options.directory,
+      stdout: options.stdout,
+      stderr: options.stderr,
+      signal: options.signal,
+    })
   })
 }
 
