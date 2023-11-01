@@ -242,7 +242,6 @@ export async function testFunctionExtension(
     directory,
     specification,
   })
-  extension.usingExtensionsFramework = opts.usingExtensionFramework ?? false
   return extension
 }
 

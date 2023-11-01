@@ -24,12 +24,7 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
-
-  const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
-  functionExtensions.forEach((ext) => (ext.usingExtensionsFramework = true))
-  localExtensions = localExtensions.concat(functionExtensions)
-
+  const localExtensions = options.app.allExtensions
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
 

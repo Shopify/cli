@@ -23,24 +23,11 @@ describe('allLocalSpecs', () => {
 })
 
 describe('graphQLType', () => {
-  test('returns type when not using extensions framework', async () => {
+  test('returns FUNCTION', async () => {
     // Given
     const functionA = await testFunctionExtension()
 
     // When
-    functionA.usingExtensionsFramework = false
-    const got = functionA.graphQLType
-
-    // Then
-    expect(got).toEqual('PRODUCT_DISCOUNTS')
-  })
-
-  test('returns FUNCTION when using extensions framework', async () => {
-    // Given
-    const functionA = await testFunctionExtension()
-
-    // When
-    functionA.usingExtensionsFramework = true
     const got = functionA.graphQLType
 
     // Then
