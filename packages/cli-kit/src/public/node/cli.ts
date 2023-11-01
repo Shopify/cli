@@ -84,13 +84,15 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
     settings.debug = true
   }
 
-  run(undefined, options.moduleURL)
-    .then(() => flush())
-    .then(printEventsJson)
-    .catch((error) => {
-      errorHandler(error)
-      return Errors.handle(error)
-    })
+  try {
+    await run(undefined, options.moduleURL)
+    await flush()
+    printEventsJson()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    await errorHandler(error as Error)
+    return Errors.handle(error as Error)
+  }
 }
 
 /**
