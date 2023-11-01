@@ -26,7 +26,7 @@ async function warnIfOldNodeVersion() {
         `Node ${nodeMajorVersion} has reached end-of-life and poses security risks. When you upgrade to a`,
         {
           link: {
-            url: 'https://nodejs.dev/en/about/releases/',
+            url: 'https://nodejs.dev/en/about/previous-releases',
             label: 'supported version',
           },
         },
