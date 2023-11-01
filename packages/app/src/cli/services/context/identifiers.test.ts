@@ -1,6 +1,5 @@
 /* eslint-disable @shopify/prefer-module-scope-constants */
 import {ensureDeploymentIdsPresence, RemoteSource} from './identifiers.js'
-import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppInterface} from '../../models/app/app.js'
@@ -153,7 +152,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 
   test('throw an invalid environment error if extensions is invalid', async () => {
     // Given
-    vi.mocked(ensureFunctionsIds).mockResolvedValue(ok({}))
     vi.mocked(ensureExtensionsIds).mockResolvedValue(err('invalid-environment'))
 
     // When
@@ -161,31 +159,6 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 
     // Then
     await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
-  })
-})
-
-describe('ensureDeploymentIdsPresence: matchmaking is valid', () => {
-  test('treats functions as extensions', async () => {
-    // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(
-      ok({
-        extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_UUID_A'},
-        extensionIds: {EXTENSION_A: 'ID_A', FUNCTION_A: 'FUNCTION_ID_A'},
-      }),
-    )
-
-    // When
-    const got = await ensureDeploymentIdsPresence(
-      options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C], {}, testOrganizationApp(), true),
-    )
-
-    // Then
-    expect(ensureFunctionsIds).not.toHaveBeenCalledOnce()
-    expect(got).toEqual({
-      app: 'appId',
-      extensions: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_UUID_A'},
-      extensionIds: {EXTENSION_A: 'ID_A', FUNCTION_A: 'FUNCTION_ID_A'},
-    })
   })
 })
 

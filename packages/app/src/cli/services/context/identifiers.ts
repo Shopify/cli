@@ -1,6 +1,6 @@
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
-import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {Identifiers} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -40,14 +40,12 @@ export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-can
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
 
-  const functions: IdentifiersExtensions = {}
-
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app)
   if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
-    extensions: {...functions, ...extensions.value.extensions},
+    extensions: extensions.value.extensions,
     extensionIds: extensions.value.extensionIds,
   }
 }
