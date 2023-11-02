@@ -42,9 +42,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   specification: ExtensionSpecification
 
   get graphQLType() {
-    if (this.features.includes('function')) {
-      return 'FUNCTION'
-    }
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
@@ -121,6 +118,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const config = this.configuration as unknown as FunctionConfigType
       this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
     }
+  }
+
+  isDraftable() {
+    return !this.isThemeExtension
   }
 
   async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {

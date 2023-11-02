@@ -59,9 +59,13 @@ export async function canEnablePreviewMode({
   token: string
   apiKey: string
 }) {
-  if (localApp.allExtensions.length > 0) return true
   const {dashboardManagedExtensionRegistrations} = (await fetchAppExtensionRegistrations({token, apiKey})).app
   if (dashboardManagedExtensionRegistrations.length > 0) return true
+  const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
+  if (themeExtensions.length > 0) return true
+
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable())
+  if (draftableExtensions.length > 0) return true
 
   return false
 }

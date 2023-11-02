@@ -35,13 +35,12 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
 
 const options = (
   uiExtensions: ExtensionInstance[],
-  functionExtensions: ExtensionInstance[],
   identifiers: any = {},
   partnersApp?: OrganizationApp,
   release = true,
 ) => {
   return {
-    app: LOCAL_APP(uiExtensions, functionExtensions),
+    app: LOCAL_APP(uiExtensions),
     token: 'token',
     appId: 'appId',
     appName: 'appName',
@@ -59,7 +58,6 @@ let FUNCTION_C: ExtensionInstance
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('../dev/fetch')
 vi.mock('./identifiers-extensions')
-vi.mock('./identifiers-functions')
 
 beforeAll(async () => {
   EXTENSION_A = await testUIExtension({
@@ -168,7 +166,7 @@ describe('app has no local extensions', () => {
     vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
 
     // When
-    const got = await ensureDeploymentIdsPresence(options([], [], {}, testOrganizationApp(), true))
+    const got = await ensureDeploymentIdsPresence(options([], {}, testOrganizationApp(), true))
 
     // Then
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
@@ -181,7 +179,7 @@ describe('app has no local extensions', () => {
     vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
 
     // When
-    const got = await ensureDeploymentIdsPresence(options([], [], {}, testOrganizationApp(), false))
+    const got = await ensureDeploymentIdsPresence(options([], {}, testOrganizationApp(), false))
 
     // Then
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
