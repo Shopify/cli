@@ -61,7 +61,7 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl}: DevProps) {
+export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl, developerPreview}: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
     return render(
       <Dev
@@ -70,13 +70,14 @@ export async function renderDev({processes, previewUrl, app, abortController, gr
         previewUrl={previewUrl}
         app={app}
         graphiqlUrl={graphiqlUrl}
+        developerPreview={developerPreview}
       />,
       {
         exitOnCtrlC: false,
       },
     )
   } else {
-    await renderDevNonInteractive({processes, app, abortController})
+    await renderDevNonInteractive({processes, app, abortController, developerPreview})
   }
 }
 
@@ -91,13 +92,14 @@ async function partnersURL(organizationId: string, appId: string) {
 
 async function renderDevNonInteractive({
   processes,
-  app: {apiKey, token, canEnablePreviewMode},
+  app: {canEnablePreviewMode},
   abortController,
+  developerPreview,
 }: Omit<DevProps, 'previewUrl'>) {
   if (canEnablePreviewMode) {
-    await enableDeveloperPreview({apiKey, token})
+    await developerPreview.enable()
     abortController?.signal.addEventListener('abort', async () => {
-      await disableDeveloperPreview({apiKey, token})
+      await developerPreview.disable()
     })
   }
   return Promise.all(
