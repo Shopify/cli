@@ -22,7 +22,7 @@ export const FindAppQuery = gql`
       embedded
       posEmbedded
       preferencesUrl
-      gdprWebhooks {
+      privacyWebhooks {
         customerDeletionUrl
         customerDataRequestUrl
         shopDeletionUrl
@@ -58,7 +58,7 @@ export interface FindAppQuerySchema {
     embedded: boolean
     posEmbedded?: boolean
     preferencesUrl?: string
-    gdprWebhooks?: {
+    privacyWebhooks?: {
       customerDeletionUrl?: string
       customerDataRequestUrl?: string
       shopDeletionUrl?: string

@@ -30,10 +30,10 @@ const FIELD_NAMES: {[key: string]: string} = {
   redirect_url_whitelist: 'auth > redirect_urls',
   requested_access_scopes: 'access_scopes > scopes',
   webhook_api_version: 'webhooks > api_version',
-  gdpr_webhooks: 'webhooks.privacy_compliance',
-  'gdpr_webhooks,customer_deletion_url': 'webhooks.privacy_compliance > customer_deletion_url',
-  'gdpr_webhooks,customer_data_request_url': 'webhooks.privacy_compliance > customer_data_request_url',
-  'gdpr_webhooks,shop_deletion_url': 'webhooks.privacy_compliance > shop_deletion_url',
+  privacy_webhooks: 'webhooks.privacy_compliance',
+  'privacy_webhooks,customer_deletion_url': 'webhooks.privacy_compliance > customer_deletion_url',
+  'privacy_webhooks,customer_data_request_url': 'webhooks.privacy_compliance > customer_data_request_url',
+  'privacy_webhooks,shop_deletion_url': 'webhooks.privacy_compliance > shop_deletion_url',
   proxy_sub_path: 'app_proxy > subpath',
   proxy_sub_path_prefix: 'app_proxy > prefix',
   proxy_url: 'app_proxy > url',
@@ -112,7 +112,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     webhookApiVersion: configuration.webhooks?.api_version,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
-    gdprWebhooks: {
+    privacyWebhooks: {
       customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url ?? undefined,
       customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
       shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,

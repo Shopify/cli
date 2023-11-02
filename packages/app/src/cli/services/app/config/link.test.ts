@@ -466,7 +466,7 @@ embedded = false
       vi.mocked(loadApp).mockRejectedValue('App not found')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...REMOTE_APP,
-        gdprWebhooks: {customerDataRequestUrl: 'https://example.com/customer-data'},
+        privacyWebhooks: {customerDataRequestUrl: 'https://example.com/customer-data'},
       })
 
       // When

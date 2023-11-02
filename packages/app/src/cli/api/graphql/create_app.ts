@@ -39,7 +39,7 @@ export const CreateAppQuery = gql`
         embedded
         posEmbedded
         preferencesUrl
-        gdprWebhooks {
+        privacyWebhooks {
           customerDeletionUrl
           customerDataRequestUrl
           shopDeletionUrl
@@ -89,7 +89,7 @@ export interface CreateAppQuerySchema {
       embedded: boolean
       posEmbedded?: boolean
       preferencesUrl?: string
-      gdprWebhooks?: {
+      privacyWebhooks?: {
         customerDeletionUrl?: string
         customerDataRequestUrl?: string
         shopDeletionUrl?: string

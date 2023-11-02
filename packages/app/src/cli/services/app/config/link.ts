@@ -146,15 +146,15 @@ export function mergeAppConfiguration(
   }
 
   const hasAnyPrivacyWebhook =
-    remoteApp.gdprWebhooks?.customerDataRequestUrl ||
-    remoteApp.gdprWebhooks?.customerDeletionUrl ||
-    remoteApp.gdprWebhooks?.shopDeletionUrl
+    remoteApp.privacyWebhooks?.customerDataRequestUrl ||
+    remoteApp.privacyWebhooks?.customerDeletionUrl ||
+    remoteApp.privacyWebhooks?.shopDeletionUrl
 
   if (hasAnyPrivacyWebhook) {
     result.webhooks.privacy_compliance = {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
+      customer_data_request_url: remoteApp.privacyWebhooks?.customerDataRequestUrl,
+      customer_deletion_url: remoteApp.privacyWebhooks?.customerDeletionUrl,
+      shop_deletion_url: remoteApp.privacyWebhooks?.shopDeletionUrl,
     }
   }
 

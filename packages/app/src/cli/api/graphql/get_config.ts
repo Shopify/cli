@@ -16,7 +16,7 @@ export const GetConfig = gql`
       embedded
       posEmbedded
       requestedAccessScopes
-      gdprWebhooks {
+      privacyWebhooks {
         customerDeletionUrl
         customerDataRequestUrl
         shopDeletionUrl
@@ -44,7 +44,7 @@ export interface App {
   posEmbedded?: boolean
   preferencesUrl?: string
   requestedAccessScopes?: string[]
-  gdprWebhooks?: {
+  privacyWebhooks?: {
     customerDeletionUrl?: string
     customerDataRequestUrl?: string
     shopDeletionUrl?: string

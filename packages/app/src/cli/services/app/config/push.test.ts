@@ -50,7 +50,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       embedded: true,
-      gdprWebhooks: {
+      privacyWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
@@ -99,7 +99,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       embedded: true,
-      gdprWebhooks: {
+      privacyWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
@@ -144,7 +144,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       embedded: true,
-      gdprWebhooks: {
+      privacyWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
@@ -189,7 +189,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       embedded: true,
-      gdprWebhooks: {
+      privacyWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
@@ -233,7 +233,7 @@ describe('pushConfig', () => {
       apiKey: '12345',
       applicationUrl: 'https://myapp.com',
       embedded: true,
-      gdprWebhooks: {
+      privacyWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,
@@ -303,10 +303,10 @@ describe('pushConfig', () => {
           {message: 'suspicious', field: ['input', 'redirect_url_whitelist']},
           {message: 'invalid scope: read_minds', field: ['input', 'requested_access_scopes']},
           {message: 'no.', field: ['input', 'webhook_api_version']},
-          {message: 'funny object', field: ['input', 'gdpr_webhooks']},
-          {message: 'this url is blocked 2', field: ['input', 'gdpr_webhooks', 'customer_deletion_url']},
-          {message: 'this url is blocked 3', field: ['input', 'gdpr_webhooks', 'customer_data_request_url']},
-          {message: 'this url is blocked 4', field: ['input', 'gdpr_webhooks', 'shop_deletion_url']},
+          {message: 'funny object', field: ['input', 'privacy_webhooks']},
+          {message: 'this url is blocked 2', field: ['input', 'privacy_webhooks', 'customer_deletion_url']},
+          {message: 'this url is blocked 3', field: ['input', 'privacy_webhooks', 'customer_data_request_url']},
+          {message: 'this url is blocked 4', field: ['input', 'privacy_webhooks', 'shop_deletion_url']},
           {message: 'subpath needs to be good', field: ['input', 'proxy_sub_path']},
           {message: 'prefix is invalid', field: ['input', 'proxy_sub_path_prefix']},
           {message: 'this url is blocked 5', field: ['input', 'proxy_url']},
@@ -366,7 +366,7 @@ app_preferences > url: this url is blocked 6`)
       apiKey: '12345',
       title: 'my app',
       applicationUrl: 'https://myapp.com',
-      gdprWebhooks: {
+      privacyWebhooks: {
         customerDataRequestUrl: undefined,
         customerDeletionUrl: undefined,
         shopDeletionUrl: undefined,

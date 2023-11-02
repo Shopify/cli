@@ -8,7 +8,7 @@ export const PushConfig = gql`
     $redirectUrlAllowlist: [Url]
     $requestedAccessScopes: [String!]
     $webhookApiVersion: String!
-    $gdprWebhooks: GdprWebhooksInput
+    $privacyWebhooks: PrivacyWebhooksInput
     $appProxy: AppProxyInput
     $posEmbedded: Boolean
     $embedded: Boolean
@@ -22,7 +22,7 @@ export const PushConfig = gql`
         redirectUrlWhitelist: $redirectUrlAllowlist
         requestedAccessScopes: $requestedAccessScopes
         webhookApiVersion: $webhookApiVersion
-        gdprWebhooks: $gdprWebhooks
+        privacyWebhooks: $privacyWebhooks
         appProxy: $appProxy
         posEmbedded: $posEmbedded
         embedded: $embedded
@@ -37,7 +37,7 @@ export const PushConfig = gql`
   }
 `
 
-interface GdprWebhooks {
+interface PrivacyWebhooks {
   customerDeletionUrl?: string
   customerDataRequestUrl?: string
   shopDeletionUrl?: string
@@ -56,7 +56,7 @@ export interface PushConfigVariables {
   redirectUrlAllowlist?: string[] | null
   requestedAccessScopes?: string[]
   webhookApiVersion?: string
-  gdprWebhooks?: GdprWebhooks
+  privacyWebhooks?: PrivacyWebhooks
   appProxy?: AppProxy
   posEmbedded?: boolean
   embedded?: boolean

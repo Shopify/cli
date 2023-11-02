@@ -28,7 +28,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   embedded?: boolean
   posEmbedded?: boolean
   preferencesUrl?: string
-  gdprWebhooks?: {
+  privacyWebhooks?: {
     customerDeletionUrl?: string
     customerDataRequestUrl?: string
     shopDeletionUrl?: string
