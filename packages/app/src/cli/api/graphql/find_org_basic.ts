@@ -7,6 +7,9 @@ export const FindOrganizationBasicQuery = gql`
         id
         businessName
         website
+        betas {
+          declarativeWebhooks
+        }
       }
     }
   }
@@ -18,6 +21,9 @@ export interface FindOrganizationBasicQuerySchema {
       id: string
       businessName: string
       website: string
+      betas?: {
+        declarativeWebhooks: boolean
+      }
     }[]
   }
 }

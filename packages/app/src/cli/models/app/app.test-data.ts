@@ -25,6 +25,25 @@ export const DEFAULT_CONFIG = {
   },
 }
 
+export const EXISTING_APP_CONFIG = {
+  path: '/tmp/project/shopify.app.toml',
+  application_url: 'https://myapp.com',
+  client_id: '12345',
+  name: 'my app',
+  webhooks: {
+    api_version: '2023-04',
+    gdprWebhooks: {
+      customerDataRequestUrl: undefined,
+      customerDeletionUrl: undefined,
+      shopDeletionUrl: undefined,
+    },
+  },
+  embedded: true,
+  access_scopes: {
+    scopes: 'read_products',
+  },
+}
+
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
   const getConfig = () => {
     if (schemaType === 'legacy') {

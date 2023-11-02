@@ -1,6 +1,12 @@
 import {PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {DEFAULT_CONFIG, testPartnersUserSession, testApp} from '../../../models/app/app.test-data.js'
+import {
+  DEFAULT_CONFIG,
+  EXISTING_APP_CONFIG,
+  testApp,
+  testPartnersUserSession,
+  testAppWithConfig,
+} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
@@ -20,6 +26,14 @@ const ORG1: Organization = {
   id: '1',
   businessName: 'name of org 1',
   website: '',
+  betas: {declarativeWebhooks: false},
+}
+
+const orgWithDeclarativeWebhookBeta: Organization = {
+  id: '2',
+  businessName: 'name of org 2',
+  website: '',
+  betas: {declarativeWebhooks: true},
 }
 
 describe('pushConfig', () => {
@@ -413,5 +427,54 @@ app_preferences > url: this url is blocked 6`)
 
     expect(confirmPushChanges).toHaveBeenCalled()
     expect(renderSuccess).not.toHaveBeenCalled()
+  })
+
+  test('does not update webhooks configurations if they already exist when declarative webhooks beta is toggled', async () => {
+    vi.mocked(fetchOrgFromId).mockResolvedValue(orgWithDeclarativeWebhookBeta)
+
+    // app already exists with the following config
+    const app = testAppWithConfig({config: EXISTING_APP_CONFIG})
+
+    // user tries to push up new webhook api version
+    app.configuration = {
+      ...app.configuration,
+      webhooks: {
+        api_version: '2023-01',
+      },
+    }
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+    }
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+        webhookApiVersion: '2023-04',
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      apiKey: '12345',
+      applicationUrl: 'https://myapp.com',
+      embedded: true,
+      gdprWebhooks: undefined,
+      posEmbedded: false,
+      preferencesUrl: null,
+      redirectUrlAllowlist: null,
+      title: 'my app',
+      webhookApiVersion: '2023-04',
+      requestedAccessScopes: ['read_products'],
+    })
+
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
+    })
   })
 })

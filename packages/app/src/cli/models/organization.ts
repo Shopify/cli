@@ -2,6 +2,9 @@ export interface Organization {
   id: string
   businessName: string
   website?: string
+  betas?: {
+    declarativeWebhooks?: boolean
+  }
 }
 
 export interface MinimalOrganizationApp {
