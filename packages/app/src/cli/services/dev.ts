@@ -77,15 +77,11 @@ export async function dev(commandOptions: DevOptions) {
     {
       title: 'Configuring dev processes',
       task: async (ctx: DevTasksContext) => {
-        await actionsBeforeSettingUpDevProcesses(ctx.config!)
-        const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(ctx.config!)
+        const devConfig = ctx.config!
+        await actionsBeforeSettingUpDevProcesses(devConfig)
+        const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(devConfig)
         Object.assign(ctx, {processes, graphiqlUrl, previewUrl})
-      },
-    },
-    {
-      title: 'Preparing to launch',
-      task: async (ctx: DevTasksContext) => {
-        await actionsBeforeLaunchingDevProcesses(ctx.config!)
+        await actionsBeforeLaunchingDevProcesses(devConfig)
       },
     },
   ])
