@@ -46,32 +46,34 @@ async function fetchAppVersions(
     }
   })
 
-  const maxLineLength = (process.stdout.columns ?? 75) - TABLE_FORMATTING_CHARS
-  let maxMessageLength = maxLineLength
+  if (!json) {
+    const maxLineLength = (process.stdout.columns ?? 75) - TABLE_FORMATTING_CHARS
+    let maxMessageLength = maxLineLength
 
-  // Calculate the max allowed length for the message column
-  appVersions.forEach((appVersion) => {
-    const combinedLength =
-      appVersion.message.length +
-      appVersion.versionTag.length +
-      unstyled(appVersion.status).length +
-      appVersion.createdAt.length +
-      appVersion.createdBy.length
-    if (combinedLength > maxLineLength) {
-      const combinedWithoutMessageLength = combinedLength - appVersion.message.length
-      const newMaxLength = Math.max(maxLineLength - combinedWithoutMessageLength, 10)
-      if (newMaxLength < maxMessageLength) {
-        maxMessageLength = newMaxLength
+    // Calculate the max allowed length for the message column
+    appVersions.forEach((appVersion) => {
+      const combinedLength =
+        appVersion.message.length +
+        appVersion.versionTag.length +
+        unstyled(appVersion.status).length +
+        appVersion.createdAt.length +
+        appVersion.createdBy.length
+      if (combinedLength > maxLineLength) {
+        const combinedWithoutMessageLength = combinedLength - appVersion.message.length
+        const newMaxLength = Math.max(maxLineLength - combinedWithoutMessageLength, 10)
+        if (newMaxLength < maxMessageLength) {
+          maxMessageLength = newMaxLength
+        }
       }
-    }
-  })
+    })
 
-  // Update the message column to fit the max length
-  appVersions.forEach((appVersion) => {
-    if (appVersion.message.length > maxMessageLength) {
-      appVersion.message = `${appVersion.message.slice(0, maxMessageLength - 3)}...`
-    }
-  })
+    // Update the message column to fit the max length
+    appVersions.forEach((appVersion) => {
+      if (appVersion.message.length > maxMessageLength) {
+        appVersion.message = `${appVersion.message.slice(0, maxMessageLength - 3)}...`
+      }
+    })
+  }
 
   return {
     appVersions,

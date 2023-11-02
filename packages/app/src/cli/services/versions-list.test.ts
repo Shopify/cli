@@ -64,6 +64,7 @@ describe('versions-list', () => {
       app,
       reset: false,
       commandConfig,
+      json: false,
     })
 
     // Then
@@ -71,6 +72,7 @@ describe('versions-list', () => {
       app,
       reset: false,
       commandConfig,
+      json: false,
     })
   })
 
@@ -85,6 +87,7 @@ describe('versions-list', () => {
       app,
       reset: false,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      json: false,
     })
 
     // Then
@@ -101,6 +104,7 @@ describe('versions-list', () => {
       app,
       reset: false,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      json: false,
     })
 
     // Then
@@ -121,6 +125,7 @@ describe('versions-list', () => {
       app,
       reset: false,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      json: false,
     })
 
     // Then
@@ -173,6 +178,7 @@ describe('versions-list', () => {
       apiKey: 'apiKey',
       reset: false,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      json: false,
     })
 
     // Then
@@ -184,5 +190,69 @@ versionTag 2  released  message 2      2021-01-01 00:00:00  createdBy 2
 versionTag 3  released  long messa...  2021-01-01 00:00:00  createdBy 3
 
 View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com/org-id/apps/app-id/versions )"`)
+  })
+
+  test('render json when there are app versions', async () => {
+    // Given
+    const app = await testApp({})
+    const mockOutput = mockAndCaptureOutput()
+    vi.mocked(partnersRequest).mockResolvedValueOnce({
+      app: {
+        id: 'appId',
+        appVersions: {
+          nodes: [
+            {
+              message: 'message',
+              versionTag: 'versionTag',
+              status: 'active',
+              createdAt: '2021-01-01',
+              createdBy: {displayName: 'createdBy'},
+              distributionPercentage: 100,
+            },
+            {
+              message: 'long message with more than 15 characters',
+              versionTag: 'versionTag 3',
+              status: 'released',
+              createdAt: '2021-01-01',
+              createdBy: {displayName: 'createdBy 3'},
+              distributionPercentage: 0,
+            },
+          ],
+          pageInfo: {totalResults: 31},
+        },
+        organizationId: 'orgId',
+      },
+    })
+
+    // When
+    await versionList({
+      app,
+      apiKey: 'apiKey',
+      reset: false,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      json: true,
+    })
+
+    // Then
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+      "[
+        {
+          \\"message\\": \\"message\\",
+          \\"versionTag\\": \\"versionTag\\",
+          \\"status\\": \\"active\\",
+          \\"createdAt\\": \\"2021-01-01 00:00:00\\",
+          \\"createdBy\\": \\"createdBy\\",
+          \\"distributionPercentage\\": 100
+        },
+        {
+          \\"message\\": \\"long message with more than 15 characters\\",
+          \\"versionTag\\": \\"versionTag 3\\",
+          \\"status\\": \\"released\\",
+          \\"createdAt\\": \\"2021-01-01 00:00:00\\",
+          \\"createdBy\\": \\"createdBy 3\\",
+          \\"distributionPercentage\\": 0
+        }
+      ]"
+    `)
   })
 })
