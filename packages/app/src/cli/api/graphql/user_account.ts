@@ -1,4 +1,4 @@
-import {businessPlatformRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const CurrentUserAccountQuery = `#graphql
@@ -18,7 +18,7 @@ export interface UserAccountSchema {
 }
 
 export async function getUserAccount(token: string) {
-  const {currentUserAccount} = await businessPlatformRequest<UserAccountSchema>(CurrentUserAccountQuery, token)
+  const {currentUserAccount} = await partnersRequest<UserAccountSchema>(CurrentUserAccountQuery, token)
 
   if (!currentUserAccount) {
     throw new AbortError('Unable to get current user account')
