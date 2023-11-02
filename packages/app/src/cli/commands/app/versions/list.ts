@@ -27,6 +27,11 @@ export default class VersionsList extends Command {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
+    json: Flags.boolean({
+      description: 'Output the versions list as JSON.',
+      default: false,
+      env: 'SHOPIFY_FLAG_JSON',
+    }),
   }
 
   static args = {
@@ -42,6 +47,12 @@ export default class VersionsList extends Command {
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
-    await versionList({app, apiKey, reset: false, commandConfig: this.config})
+    await versionList({
+      app,
+      apiKey,
+      reset: false,
+      commandConfig: this.config,
+      json: flags.json,
+    })
   }
 }
