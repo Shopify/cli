@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.50.2
+
+### Patch Changes
+
+- 0fb4cc585: Fix node site link, which was just changed
+
 ## 3.50.1
 
 ### Patch Changes
