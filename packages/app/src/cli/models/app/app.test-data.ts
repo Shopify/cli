@@ -16,6 +16,7 @@ export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
   client_id: '12345',
   name: 'my app',
+  handle: 'my-app',
   webhooks: {
     api_version: '2023-04',
   },
@@ -104,6 +105,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   const defaultApp = {
     id: '1',
     title: 'app1',
+    handle: 'app1',
     apiKey: 'api-key',
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',

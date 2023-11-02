@@ -22,6 +22,7 @@ export const CreateAppQuery = gql`
       app {
         id
         title
+        handle
         apiKey
         organizationId
         apiSecretKeys {
@@ -69,6 +70,7 @@ export interface CreateAppQuerySchema {
     app: {
       id: string
       title: string
+      handle: string
       apiKey: string
       organizationId: string
       apiSecretKeys: {

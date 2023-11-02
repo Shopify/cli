@@ -19,6 +19,7 @@ export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
     name: zod.string().optional(),
+    handle: zod.string().optional(),
     scopes: zod.string().default(''),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
@@ -103,6 +104,7 @@ const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
 export const AppSchema = zod
   .object({
     name: zod.string().max(30),
+    handle: zod.string().max(30),
     client_id: zod.string(),
     application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),

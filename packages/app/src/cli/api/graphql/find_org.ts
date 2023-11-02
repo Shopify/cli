@@ -14,6 +14,7 @@ export const FindOrganizationQuery = gql`
           nodes {
             id
             title
+            handle
             apiKey
           }
         }
@@ -35,6 +36,7 @@ export interface FindOrganizationQuerySchema {
         nodes: {
           id: string
           title: string
+          handle: string
           apiKey: string
         }[]
       }

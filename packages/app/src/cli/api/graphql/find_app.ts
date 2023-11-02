@@ -5,6 +5,7 @@ export const FindAppQuery = gql`
     app(apiKey: $apiKey) {
       id
       title
+      handle
       apiKey
       organizationId
       apiSecretKeys {
@@ -38,6 +39,7 @@ export interface FindAppQuerySchema {
   app: {
     id: string
     title: string
+    handle: string
     apiKey: string
     organizationId: string
     apiSecretKeys: {

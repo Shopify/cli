@@ -7,6 +7,7 @@ export interface Organization {
 export interface MinimalOrganizationApp {
   id: string
   title: string
+  handle: string
   apiKey: string
 }
 
