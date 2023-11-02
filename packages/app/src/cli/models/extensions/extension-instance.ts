@@ -41,7 +41,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   handle: string
   specification: ExtensionSpecification
 
+  private useExtensionsFramework: boolean
+
   get graphQLType() {
+    if (this.features.includes('function')) {
+      if (this.useExtensionsFramework) return 'FUNCTION'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const functionConfig: any = this.configuration
+      return functionConfig.type.toUpperCase()
+    }
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
@@ -93,6 +101,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
+  set usingExtensionsFramework(value: boolean) {
+    this.useExtensionsFramework = value
+  }
+
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -108,6 +120,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.handle = this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
+    this.useExtensionsFramework = false
     this.outputPath = this.directory
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
