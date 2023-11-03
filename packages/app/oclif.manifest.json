@@ -508,6 +508,16 @@
       },
       "args": {}
     },
+    "app:test": {
+      "id": "app:test",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
     "app:update-url": {
       "id": "app:update-url",
       "description": "Update your app and redirect URLs in the Partners Dashboard.",
@@ -1486,6 +1496,12 @@
           "exclusive": [
             "config"
           ]
+        },
+        "json": {
+          "name": "json",
+          "type": "boolean",
+          "description": "Output the versions list as JSON.",
+          "allowNo": false
         }
       },
       "args": {

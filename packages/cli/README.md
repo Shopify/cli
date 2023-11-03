@@ -17,6 +17,7 @@
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app release`](#shopify-app-release)
+* [`shopify app test`](#shopify-app-test)
 * [`shopify app update-url`](#shopify-app-update-url)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -457,6 +458,15 @@ DESCRIPTION
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.50.0/dist/cli/commands/app/release.js)_
 
+## `shopify app test`
+
+```
+USAGE
+  $ shopify app test
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.50.0/dist/cli/commands/app/test.js)_
+
 ## `shopify app update-url`
 
 Update your app and redirect URLs in the Partners Dashboard.
@@ -489,10 +499,12 @@ List deployed versions of your app.
 ```
 USAGE
   $ shopify app versions list [FILE] [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>]
+    [--json]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
   --client-id=<value>   The Client ID to fetch versions for.
+  --json                Output the versions list as JSON.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your app directory.
   --verbose             Increase the verbosity of the logs.
@@ -1121,13 +1133,14 @@ Lists your remote themes.
 ```
 USAGE
   $ shopify theme list [--no-color] [--verbose] [--password <value>] [-s <value>] [--role
-    live|unpublished|development] [--name <value>] [--id <value>] [-e <value>]
+    live|unpublished|development] [--name <value>] [--id <value>] [--json] [-e <value>]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   --id=<value>               Only list theme with the given ID.
+  --json                     Output the theme list as JSON.
   --name=<value>             Only list themes that contain the given name.
   --no-color                 Disable color output.
   --password=<value>         Password generated from the Theme Access app.
