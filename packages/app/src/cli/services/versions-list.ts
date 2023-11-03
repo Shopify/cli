@@ -113,10 +113,6 @@ export default async function versionList(options: VersionListOptions) {
     return
   }
 
-  if (options.json) {
-    outputInfo(JSON.stringify(appVersions, null, 2))
-  }
-
   renderTable({
     rows: appVersions,
     columns: {
