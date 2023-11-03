@@ -2,4 +2,4 @@
 '@shopify/cli-kit': minor
 ---
 
-Adds `startize` function which wraps the `capitalCase` function from change-case package
+Adds `pascalize` function which wraps the `pascalCase` function from change-case package

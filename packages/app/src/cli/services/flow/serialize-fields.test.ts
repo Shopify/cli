@@ -125,7 +125,7 @@ describe('serializeCommerceObjectField', () => {
     expect(serializedField).toEqual({
       name: 'company_contact_id',
       uiType: 'commerce-object-id',
-      label: 'Company Contact ID',
+      label: 'CompanyContact ID',
       description: 'This is my field',
       required: true,
     })

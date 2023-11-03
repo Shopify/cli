@@ -1,7 +1,7 @@
 import {takeRandomFromArray} from './array.js'
 import {unstyled} from '../../public/node/output.js'
 import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
-import {camelCase, capitalCase, constantCase, paramCase, snakeCase} from 'change-case'
+import {camelCase, constantCase, paramCase, snakeCase, pascalCase} from 'change-case'
 
 const SAFE_RANDOM_BUSINESS_ADJECTIVES = [
   'commercial',
@@ -367,12 +367,12 @@ export function joinWithAnd(items: string[]): string {
 }
 
 /**
- * Given a string, it returns it with the all the first letter of words capitalized.
- * Eg: "start_case" returns "Start Case".
+ * Given a string, it returns the PascalCase form of it.
+ * Eg: "pascal_case" returns "PascalCase".
  *
- * @param str - String to startCase.
- * @returns String with all the first letter capitalized.
+ * @param str - String to PascalCase.
+ * @returns String with all the first letter capitalized with no spaces.
  */
-export function startize(str: string): string {
-  return capitalCase(str)
+export function pascalize(str: string): string {
+  return pascalCase(str)
 }
