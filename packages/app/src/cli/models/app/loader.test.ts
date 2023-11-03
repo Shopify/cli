@@ -25,7 +25,6 @@ import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from 
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
-
 import {zod} from '@shopify/cli-kit/node/schema'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
@@ -2345,7 +2344,7 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('using a top level destination is invalid without a topics array', async () => {
+  test('using a top level destination is invalid without a topics array and without sub webhook subscriptions', async () => {
     const webhookConfig: WebhookConfig = {
       subscription_endpoint_url: 'https://example.com',
     }
@@ -2372,7 +2371,7 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('using a top level destination is valid with subscriptions config', async () => {
+  test('using a top level destination is valid with sub webhook subscriptions', async () => {
     const webhookConfig: WebhookConfig = {
       pubsub_project: 'my-project-123',
       pubsub_topic: 'my-topic',
@@ -2382,6 +2381,89 @@ describe('WebhooksSchema', () => {
           format: 'xml',
         },
       ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('throws an error if we have duplicate top level topics with top level subscription_endpoint_url', async () => {
+    const webhookConfig: WebhookConfig = {
+      subscription_endpoint_url: 'https://example.com',
+      topics: ['products/create', 'products/create'],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: "You can't have duplicate subscriptions with the exact same topic and destination",
+      fatal: true,
+      path: ['webhooks', 'topics', 'products/create'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('allows unique top level topics with top level subscription_endpoint_url', async () => {
+    const webhookConfig: WebhookConfig = {
+      subscription_endpoint_url: 'https://example.com',
+      topics: ['products/create', 'products/update'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('throws an error if we have duplicate top level topics with top level pub sub config', async () => {
+    const webhookConfig: WebhookConfig = {
+      pubsub_project: 'my-project-123',
+      pubsub_topic: 'my-topic',
+      topics: ['products/create', 'products/create'],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: "You can't have duplicate subscriptions with the exact same topic and destination",
+      fatal: true,
+      path: ['webhooks', 'topics', 'products/create'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('allows unique top level topics with top level pub sub config', async () => {
+    const webhookConfig: WebhookConfig = {
+      pubsub_project: 'my-project-123',
+      pubsub_topic: 'my-topic',
+      topics: ['products/create', 'products/update'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('throws an error if we have duplicate top level topics with top level arn', async () => {
+    const webhookConfig: WebhookConfig = {
+      arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+      topics: ['products/create', 'products/create'],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: "You can't have duplicate subscriptions with the exact same topic and destination",
+      fatal: true,
+      path: ['webhooks', 'topics', 'products/create'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('allows unique top level topics with top level arn', async () => {
+    const webhookConfig: WebhookConfig = {
+      arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+      topics: ['products/create', 'products/update'],
     }
 
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
@@ -2442,7 +2524,34 @@ describe('WebhooksSchema', () => {
       const errorObj = [
         {
           code: zod.ZodIssueCode.custom,
-          message: 'Path must start with a forward slash',
+          message: 'Path must start with a forward slash and be longer than 1 character',
+          path: ['webhooks', 'subscriptions', 0, 'path'],
+        },
+        {
+          code: 'custom',
+          message: 'You must declare either a top-level destination or a destination per subscription',
+          fatal: true,
+          path: ['webhooks', 'subscriptions', 0],
+        },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path is only forward slash', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            path: '/',
+          },
+        ],
+      }
+      const errorObj = [
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'Path must start with a forward slash and be longer than 1 character',
           path: ['webhooks', 'subscriptions', 0, 'path'],
         },
         {
@@ -2780,6 +2889,235 @@ describe('WebhooksSchema', () => {
             topic: 'products/create',
             subscription_endpoint_url: 'https://example.com',
             path: '/my-webhook-path',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using subscription_endpoint_url', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            subscription_endpoint_url: 'https://example.com',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited subscription_endpoint_url', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using subscription_endpoint_url with path', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com/path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            subscription_endpoint_url: 'https://example.com',
+            path: '/path',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('allows unique top level topics and unique inner subscription config using subscription_endpoint_url', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/delete',
+            subscription_endpoint_url: 'https://example.com',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('allows same top level topics and same inner subscription config with unique paths using subscription_endpoint_url', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            path: '/path-1',
+          },
+          {
+            topic: 'products/create',
+            path: '/path-2',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        pubsub_project: 'my-project-123',
+        pubsub_topic: 'my-topic',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            pubsub_project: 'my-project-123',
+            pubsub_topic: 'my-topic',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        pubsub_project: 'my-project-123',
+        pubsub_topic: 'my-topic',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('allows unique top level topics and unique inner subscription config using pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        pubsub_project: 'my-project-123',
+        pubsub_topic: 'my-topic',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/delete',
+            pubsub_project: 'my-project-123',
+            pubsub_topic: 'my-topic',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using arn', async () => {
+      const webhookConfig: WebhookConfig = {
+        arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited arn', async () => {
+      const webhookConfig: WebhookConfig = {
+        arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('allows unique top level topics and unique inner subscription config using arn', async () => {
+      const webhookConfig: WebhookConfig = {
+        arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/delete',
+            arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           },
         ],
       }

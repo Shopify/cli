@@ -53,7 +53,9 @@ const WebhookSubscriptionSchema = zod.object({
   subscription_endpoint_url: SubscriptionEndpointUrlValidation,
   path: zod
     .string()
-    .refine((path) => path.startsWith('/'), {message: 'Path must start with a forward slash'})
+    .refine((path) => path.startsWith('/') && path.length > 1, {
+      message: 'Path must start with a forward slash and be longer than 1 character',
+    })
     .optional(),
   pubsub_project: PubSubProjectValidation,
   pubsub_topic: PubSubTopicValidation,
@@ -113,6 +115,32 @@ const WebhooksSchema = zod
         return zod.NEVER
       }
 
+      // a unique subscription URI is keyed on `${topic}::${destinationURI}`
+      const delimiter = '::'
+      const topLevelDestination = [subscription_endpoint_url, pubsub_project, pubsub_topic, arn]
+        .filter(Boolean)
+        .join(delimiter)
+      const subscriptionDestinationsSet = new Set()
+
+      // if we have a top level destination and top level topics, add them
+      if (topLevelDestination && topics.length) {
+        for (const topic of topics) {
+          const key = `${topic}${delimiter}${topLevelDestination}`
+
+          if (subscriptionDestinationsSet.has(key)) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: "You can't have duplicate subscriptions with the exact same topic and destination",
+              fatal: true,
+              path: ['topics', topic],
+            })
+            return zod.NEVER
+          }
+
+          subscriptionDestinationsSet.add(key)
+        }
+      }
+
       // validate individual subscriptions
       if (subscriptions.length) {
         for (const [i, subscription] of subscriptions.entries()) {
@@ -163,6 +191,39 @@ const WebhooksSchema = zod
             })
             return zod.NEVER
           }
+
+          let destination = [
+            subscription.subscription_endpoint_url,
+            subscription.pubsub_project,
+            subscription.pubsub_topic,
+            subscription.arn,
+          ]
+            .filter(Boolean)
+            .join(delimiter)
+
+          // if there is no destination override, use top level destination
+          if (!destination) {
+            destination = topLevelDestination
+          }
+
+          // concat the path to the destination if it exists to ensure uniqueness
+          if (subscription.path) {
+            destination = `${destination}${subscription.path}`
+          }
+
+          const key = `${subscription.topic}${delimiter}${destination}`
+
+          if (subscriptionDestinationsSet.has(key)) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: "You can't have duplicate subscriptions with the exact same topic and destination",
+              fatal: true,
+              path: [...path, subscription.topic],
+            })
+            return zod.NEVER
+          }
+
+          subscriptionDestinationsSet.add(key)
         }
       }
     },
