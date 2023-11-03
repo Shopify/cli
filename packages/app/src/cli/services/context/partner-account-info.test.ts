@@ -1,36 +1,50 @@
-import {fetchPartnersSession} from './partner-account-info.js'
-import {getUserAccount} from '../../api/graphql/user_account.js'
-import {PARTNERS_SESSION} from '../../models/app/app.test-data.js'
+import {ServiceAccountInfo, UserAccountInfo, fetchPartnersSession} from './partner-account-info.js'
+import {PARTNERS_SERVICE_SESSION, PARTNERS_USER_SESSION} from '../../models/app/app.test-data.js'
+import {geCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/session')
-vi.mock('../../api/graphql/user_account.js')
+vi.mock('../../api/graphql/current_account_info.js')
 vi.mock('@shopify/cli-kit/node/environment')
 
 describe('fetchPartnersSession', () => {
-  test('when no errors returns complete partner info', async () => {
+  test('when user token no errors returns complete user account info', async () => {
     // Given
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-    vi.mocked(getUserAccount).mockResolvedValue({email: 'partner@shopify.com'})
+    const userAccountInfo = new UserAccountInfo('partner@shopify.com')
+    vi.mocked(geCurrentAccountInfo).mockResolvedValue(userAccountInfo)
 
     // When
     const got = await fetchPartnersSession()
 
     // Then
-    expect(got).toEqual(PARTNERS_SESSION)
+    expect(got).toEqual(PARTNERS_USER_SESSION)
   })
 
-  test('when error fetching user account returns incomplete partner info', async () => {
+  test('when partners token no errors returns complete user account info', async () => {
     // Given
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-    vi.mocked(getUserAccount).mockRejectedValue(new AbortError('Error'))
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('partnersToken')
+    const serviceAccountInfo = new ServiceAccountInfo('organization')
+    vi.mocked(geCurrentAccountInfo).mockResolvedValue(serviceAccountInfo)
 
     // When
     const got = await fetchPartnersSession()
 
     // Then
-    expect(got).toEqual({token: 'token', accountInfo: {email: ''}})
+    expect(got).toEqual(PARTNERS_SERVICE_SESSION)
+  })
+
+  test('when error fetching account info returns unkonwn partner info', async () => {
+    // Given
+    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+    vi.mocked(geCurrentAccountInfo).mockRejectedValue(new AbortError('Error'))
+
+    // When
+    const got = await fetchPartnersSession()
+
+    // Then
+    expect(got).toEqual({token: 'token', accountInfo: {}})
   })
 })

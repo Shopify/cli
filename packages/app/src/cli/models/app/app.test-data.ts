@@ -9,6 +9,7 @@ import {OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
+import {ServiceAccountInfo, UserAccountInfo} from '../../services/context/partner-account-info.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -498,9 +499,12 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   webPixelUIExtension,
 ]
 
-export const PARTNERS_SESSION = {
+export const PARTNERS_USER_SESSION = {
   token: 'token',
-  accountInfo: {
-    email: 'partner@shopify.com',
-  },
+  accountInfo: new UserAccountInfo('partner@shopify.com'),
+}
+
+export const PARTNERS_SERVICE_SESSION = {
+  token: 'partnersToken',
+  accountInfo: new ServiceAccountInfo('organization'),
 }

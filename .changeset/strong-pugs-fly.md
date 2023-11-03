@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Fetch user account info. Display used user account in the info command output. Add user account information inside the no org found error banner
+Fetch partners account info regarding using an user or a service account. Display used partners account in the info command output. Add partners account information inside the no org found error banner

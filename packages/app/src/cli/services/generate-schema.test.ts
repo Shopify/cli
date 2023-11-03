@@ -2,7 +2,12 @@ import {generateSchemaService} from './generate-schema.js'
 import * as localEnvironment from './context.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
 import * as identifiers from '../models/app/identifiers.js'
-import {PARTNERS_SESSION, testApp, testFunctionExtension, testOrganizationApp} from '../models/app/app.test-data.js'
+import {
+  PARTNERS_USER_SESSION,
+  testApp,
+  testFunctionExtension,
+  testOrganizationApp,
+} from '../models/app/app.test-data.js'
 import {ApiSchemaDefinitionQuery} from '../api/graphql/functions/api_schema_definition.js'
 import {TargetSchemaDefinitionQuery} from '../api/graphql/functions/target_schema_definition.js'
 import {beforeEach, describe, expect, MockedFunction, vi, test} from 'vitest'
@@ -39,7 +44,7 @@ describe('generateSchemaService', () => {
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
 
   beforeEach(() => {
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 

@@ -96,6 +96,13 @@ class AppInfo {
       updateUrls = cachedInfo.updateURLs ? 'Yes' : 'No'
     }
 
+    let partnersAccountInfo = ['Partners account', 'unkown']
+    if (partnersSession.accountInfo.isServiceAccount()) {
+      partnersAccountInfo = ['Service account', partnersSession.accountInfo.orgName]
+    } else if (partnersSession.accountInfo.isUserAccount()) {
+      partnersAccountInfo = ['Partners account', partnersSession.accountInfo.email]
+    }
+
     const lines = [
       ['Configuration file', cachedInfo?.configFile || configurationFileNames.app],
       ['App name', cachedInfo?.title || NOT_CONFIGURED_TEXT],
@@ -103,7 +110,7 @@ class AppInfo {
       ['Access scopes', getAppScopes(this.app.configuration)],
       ['Dev store', cachedInfo?.storeFqdn || NOT_CONFIGURED_TEXT],
       ['Update URLs', updateUrls],
-      ['Partners account', partnersSession.accountInfo.email],
+      partnersAccountInfo,
     ]
     return [title, `${linesToColumns(lines)}\n\n${postscript}`]
   }

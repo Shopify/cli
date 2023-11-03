@@ -1,6 +1,6 @@
 import link, {LinkOptions} from './link.js'
 import {saveCurrentConfig} from './use.js'
-import {PARTNERS_SESSION, testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {PARTNERS_USER_SESSION, testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
@@ -300,7 +300,7 @@ embedded = false
         apiKey: 'api-key',
       }
       vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
-      vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+      vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
@@ -326,7 +326,7 @@ embedded = false
         apiKey: '1234-5678',
       }
       vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
-      vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+      vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 

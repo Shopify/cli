@@ -27,7 +27,7 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
-  PARTNERS_SESSION,
+  PARTNERS_USER_SESSION,
   testApp,
   testAppWithConfig,
   testOrganizationApp,
@@ -60,7 +60,7 @@ vi.mock('./app/config/link.js')
 vi.mock('./context/partner-account-info.js')
 
 beforeEach(() => {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
   vi.mocked(isWebType).mockReturnValue(true)
 
   // this is needed because using importActual to mock the ui module
@@ -195,7 +195,7 @@ describe('ensureGenerateContext', () => {
       apiKey: 'key2',
       directory: '/app',
       reset: false,
-      partnersSession: PARTNERS_SESSION,
+      partnersSession: PARTNERS_USER_SESSION,
       commandConfig: COMMAND_CONFIG,
     }
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -209,7 +209,12 @@ describe('ensureGenerateContext', () => {
 
   test('returns the cached api key', async () => {
     // Given
-    const input = {directory: '/app', reset: false, partnersSession: PARTNERS_SESSION, commandConfig: COMMAND_CONFIG}
+    const input = {
+      directory: '/app',
+      reset: false,
+      partnersSession: PARTNERS_USER_SESSION,
+      commandConfig: COMMAND_CONFIG,
+    }
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
 
@@ -222,7 +227,12 @@ describe('ensureGenerateContext', () => {
 
   test('returns the api key from the current config', async () => {
     // Given
-    const input = {directory: '/app', reset: false, partnersSession: PARTNERS_SESSION, commandConfig: COMMAND_CONFIG}
+    const input = {
+      directory: '/app',
+      reset: false,
+      partnersSession: PARTNERS_USER_SESSION,
+      commandConfig: COMMAND_CONFIG,
+    }
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
@@ -242,7 +252,12 @@ describe('ensureGenerateContext', () => {
 
   test('links an app on first command run', async () => {
     // Given
-    const input = {directory: '/app', reset: false, partnersSession: PARTNERS_SESSION, commandConfig: COMMAND_CONFIG}
+    const input = {
+      directory: '/app',
+      reset: false,
+      partnersSession: PARTNERS_USER_SESSION,
+      commandConfig: COMMAND_CONFIG,
+    }
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
@@ -263,7 +278,12 @@ describe('ensureGenerateContext', () => {
 
   test('links an app on reset if already opted into config in code', async () => {
     // Given
-    const input = {directory: '/app', reset: true, partnersSession: PARTNERS_SESSION, commandConfig: COMMAND_CONFIG}
+    const input = {
+      directory: '/app',
+      reset: true,
+      partnersSession: PARTNERS_USER_SESSION,
+      commandConfig: COMMAND_CONFIG,
+    }
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
@@ -284,7 +304,12 @@ describe('ensureGenerateContext', () => {
 
   test('selects a new app and returns the api key', async () => {
     // Given
-    const input = {directory: '/app', reset: true, partnersSession: PARTNERS_SESSION, commandConfig: COMMAND_CONFIG}
+    const input = {
+      directory: '/app',
+      reset: true,
+      partnersSession: PARTNERS_USER_SESSION,
+      commandConfig: COMMAND_CONFIG,
+    }
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(loadAppName).mockResolvedValueOnce('my-app')
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
@@ -298,7 +323,7 @@ describe('ensureGenerateContext', () => {
       'my-app',
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
-      PARTNERS_SESSION,
+      PARTNERS_USER_SESSION,
     )
     expect(setCachedAppInfo).toHaveBeenCalledWith({
       appId: APP1.apiKey,
@@ -349,7 +374,7 @@ describe('ensureDevContext', async () => {
           reset: false,
           commandConfig: COMMAND_CONFIG,
         },
-        PARTNERS_SESSION,
+        PARTNERS_USER_SESSION,
       )
 
       // Then
@@ -416,7 +441,7 @@ dev_store_url = "domain1"
           commandConfig: COMMAND_CONFIG,
           apiKey: APP2.apiKey,
         },
-        PARTNERS_SESSION,
+        PARTNERS_USER_SESSION,
       )
 
       // Then
@@ -465,7 +490,7 @@ dev_store_url = "domain1"
           reset: false,
           commandConfig: COMMAND_CONFIG,
         },
-        PARTNERS_SESSION,
+        PARTNERS_USER_SESSION,
       )
 
       // Then
@@ -495,7 +520,7 @@ dev_store_url = "domain1"
           reset: false,
           commandConfig: COMMAND_CONFIG,
         },
-        PARTNERS_SESSION,
+        PARTNERS_USER_SESSION,
       )
 
       // Then
@@ -543,7 +568,7 @@ dev_store_url = "domain1"
           reset: false,
           commandConfig: COMMAND_CONFIG,
         },
-        PARTNERS_SESSION,
+        PARTNERS_USER_SESSION,
       )
 
       // Then
@@ -576,7 +601,7 @@ dev_store_url = "domain1"
     vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
 
     // When
-    const got = await ensureDevContext(INPUT, PARTNERS_SESSION)
+    const got = await ensureDevContext(INPUT, PARTNERS_USER_SESSION)
 
     // Then
     expect(got).toEqual({
@@ -607,7 +632,7 @@ dev_store_url = "domain1"
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const got = await ensureDevContext(INPUT, PARTNERS_SESSION)
+    const got = await ensureDevContext(INPUT, PARTNERS_USER_SESSION)
 
     // Then
     expect(got).toEqual({
@@ -625,7 +650,7 @@ dev_store_url = "domain1"
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const got = await ensureDevContext(INPUT, PARTNERS_SESSION)
+    const got = await ensureDevContext(INPUT, PARTNERS_USER_SESSION)
 
     // Then
     expect(got).toEqual({
@@ -675,7 +700,7 @@ dev_store_url = "domain1"
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const got = await ensureDevContext(INPUT_WITH_DATA, PARTNERS_SESSION)
+    const got = await ensureDevContext(INPUT_WITH_DATA, PARTNERS_USER_SESSION)
 
     // Then
     expect(got).toEqual({
@@ -705,7 +730,7 @@ dev_store_url = "domain1"
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: undefined})
 
     // When
-    const got = ensureDevContext(BAD_INPUT_WITH_DATA, PARTNERS_SESSION)
+    const got = ensureDevContext(BAD_INPUT_WITH_DATA, PARTNERS_USER_SESSION)
 
     await expect(got).rejects.toThrow(/Could not find invalid_store_domain/)
   })
@@ -715,7 +740,7 @@ dev_store_url = "domain1"
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1)
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
 
-    await ensureDevContext({...INPUT, reset: true}, PARTNERS_SESSION)
+    await ensureDevContext({...INPUT, reset: true}, PARTNERS_USER_SESSION)
 
     // Then
     expect(clearCachedAppInfo).toHaveBeenCalledWith(BAD_INPUT_WITH_DATA.directory)
@@ -742,7 +767,7 @@ dev_store_url = "domain1"
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
       // When
-      const got = await ensureDevContext({...INPUT, reset: true}, PARTNERS_SESSION)
+      const got = await ensureDevContext({...INPUT, reset: true}, PARTNERS_USER_SESSION)
 
       // Then
       expect(link).toBeCalled()
@@ -755,7 +780,7 @@ dev_store_url = "domain1"
     const mockOutput = mockAndCaptureOutput()
 
     // When
-    await ensureDevContext(INPUT, PARTNERS_SESSION)
+    await ensureDevContext(INPUT, PARTNERS_USER_SESSION)
 
     // Then
     expect(link).toBeCalled()
@@ -780,7 +805,7 @@ dev_store_url = "domain1"
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
       // When
-      const got = await ensureDevContext({...INPUT}, PARTNERS_SESSION)
+      const got = await ensureDevContext({...INPUT}, PARTNERS_USER_SESSION)
 
       // Then
       expect(link).toBeCalled()
@@ -884,12 +909,12 @@ describe('ensureDeployContext', () => {
     const got = await ensureDeployContext(options(app))
 
     // Then
-    expect(fetchOrganizations).toHaveBeenCalledWith(PARTNERS_SESSION)
+    expect(fetchOrganizations).toHaveBeenCalledWith(PARTNERS_USER_SESSION)
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
-      PARTNERS_SESSION,
+      PARTNERS_USER_SESSION,
       DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
@@ -935,12 +960,12 @@ describe('ensureDeployContext', () => {
     const got = await ensureDeployContext(opts)
 
     // Then
-    expect(fetchOrganizations).toHaveBeenCalledWith(PARTNERS_SESSION)
+    expect(fetchOrganizations).toHaveBeenCalledWith(PARTNERS_USER_SESSION)
     expect(selectOrCreateApp).toHaveBeenCalledWith(
       app.name,
       {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
       ORG1,
-      PARTNERS_SESSION,
+      PARTNERS_USER_SESSION,
       DEFAULT_SELECT_APP_OPTIONS,
     )
     expect(updateAppIdentifiers).toBeCalledWith({
@@ -1069,7 +1094,7 @@ describe('ensureVersionsListContext', () => {
     // Then
     expect(got).toEqual({
       partnersApp: APP2,
-      partnersSession: PARTNERS_SESSION,
+      partnersSession: PARTNERS_USER_SESSION,
     })
   })
 })

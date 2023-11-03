@@ -12,8 +12,9 @@ import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
-import {PARTNERS_SESSION, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {describe, expect, test, vi} from 'vitest'
+import {PARTNERS_SERVICE_SESSION, PARTNERS_USER_SESSION, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {UnknownAccountInfo} from '../context/partner-account-info.js'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -68,13 +69,17 @@ const FETCH_STORE_RESPONSE_VALUE = {
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 
+afterEach(() => {
+  mockAndCaptureOutput().clear()
+})
+
 describe('fetchOrganizations', async () => {
   test('returns fetched organizations', async () => {
     // Given
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
 
     // When
-    const got = await fetchOrganizations(PARTNERS_SESSION)
+    const got = await fetchOrganizations(PARTNERS_USER_SESSION)
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
@@ -86,10 +91,10 @@ describe('fetchOrganizations', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = fetchOrganizations(PARTNERS_SESSION)
+    const got = fetchOrganizations(PARTNERS_USER_SESSION)
 
     // Then
-    await expect(got).rejects.toThrow(new NoOrgError('partner@shopify.com'))
+    await expect(got).rejects.toThrow(new NoOrgError(PARTNERS_USER_SESSION.accountInfo))
     expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 })
@@ -100,7 +105,7 @@ describe('fetchApp', async () => {
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await fetchOrgAndApps(ORG1.id, PARTNERS_SESSION)
+    const got = await fetchOrgAndApps(ORG1.id, PARTNERS_USER_SESSION)
 
     // Then
     expect(got).toEqual({organization: ORG1, apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}}, stores: []})
@@ -112,10 +117,10 @@ describe('fetchApp', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = () => fetchOrgAndApps(ORG1.id, PARTNERS_SESSION)
+    const got = () => fetchOrgAndApps(ORG1.id, PARTNERS_USER_SESSION)
 
     // Then
-    await expect(got).rejects.toThrowError(new NoOrgError('partner@shopify.com'))
+    await expect(got).rejects.toThrowError(new NoOrgError(PARTNERS_USER_SESSION.accountInfo))
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
@@ -185,10 +190,10 @@ describe('fetchAppExtensionRegistrations', () => {
 })
 
 describe('NoOrgError', () => {
-  test('renders correctly', () => {
+  test('renders correctly for user account', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError('partner@shopify.com', '3')
+    const subject = new NoOrgError(PARTNERS_USER_SESSION.accountInfo, '3')
 
     // When
     renderFatalError(subject)
@@ -201,8 +206,76 @@ describe('NoOrgError', () => {
       │                                                                              │
       │  Next steps                                                                  │
       │    • Your current active session is asscociated with the                     │
-      │      partner@shopify.com account. To start a new session with a different    │
-      │      account, run \`shopify auth logout\`                                      │
+      │      partner@shopify.com user account. To start a new session with a         │
+      │      different account, run \`shopify auth logout\`                            │
+      │    • Have you created a Shopify Partners organization [1]?                   │
+      │    • Does your account include Manage app permissions?, please contact the   │
+      │      owner of the organization to grant you access.                          │
+      │    • Have you confirmed your accounts from the emails you received?          │
+      │    • Need to connect to a different App or organization? Run the command     │
+      │      again with \`--reset\`                                                    │
+      │    • Do you have access to the right Shopify Partners organization? The CLI  │
+      │      is loading this organization [2]                                        │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://partners.shopify.com/signup
+      [2] https://partner.shopify.com/3
+      "
+    `)
+  })
+
+  test('renders correctly for service account', () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const subject = new NoOrgError(PARTNERS_SERVICE_SESSION.accountInfo, '3')
+
+    // When
+    renderFatalError(subject)
+
+    // Then
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No Organization found                                                       │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • Your current active session is asscociated with the organization        │
+      │      service account. To start a new session with a different account, run   │
+      │      \`shopify auth logout\`                                                   │
+      │    • Have you created a Shopify Partners organization [1]?                   │
+      │    • Does your account include Manage app permissions?, please contact the   │
+      │      owner of the organization to grant you access.                          │
+      │    • Have you confirmed your accounts from the emails you received?          │
+      │    • Need to connect to a different App or organization? Run the command     │
+      │      again with \`--reset\`                                                    │
+      │    • Do you have access to the right Shopify Partners organization? The CLI  │
+      │      is loading this organization [2]                                        │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      [1] https://partners.shopify.com/signup
+      [2] https://partner.shopify.com/3
+      "
+    `)
+  })
+
+  test('renders correctly for unknown account type', () => {
+    // Given
+    const mockOutput = mockAndCaptureOutput()
+    const subject = new NoOrgError(new UnknownAccountInfo(), '3')
+
+    // When
+    renderFatalError(subject)
+
+    // Then
+    expect(mockOutput.error()).toMatchInlineSnapshot(`
+      "╭─ error ──────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No Organization found                                                       │
+      │                                                                              │
+      │  Next steps                                                                  │
+      │    • Your current active session is asscociated with the unkonwn account.    │
+      │      To start a new session with a different account, run \`shopify auth      │
+      │      logout\`                                                                 │
       │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Does your account include Manage app permissions?, please contact the   │
       │      owner of the organization to grant you access.                          │

@@ -1,6 +1,6 @@
 import {PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {DEFAULT_CONFIG, PARTNERS_SESSION, testApp} from '../../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, PARTNERS_USER_SESSION, testApp} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
@@ -26,7 +26,7 @@ describe('pushConfig', () => {
   beforeEach(() => {
     vi.mocked(confirmPushChanges).mockResolvedValue(true)
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
   })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {

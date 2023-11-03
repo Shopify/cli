@@ -2,10 +2,10 @@ import {InfoOptions, info} from './info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
+import * as accountInfo from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {PARTNERS_SESSION, testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
+import {PARTNERS_USER_SESSION, testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -18,7 +18,6 @@ vi.mock('./dev/fetch.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
-vi.mock('./context/partner-account-info.js')
 
 const infoOptions: InfoOptions = {
   format: 'text',
@@ -26,7 +25,7 @@ const infoOptions: InfoOptions = {
 }
 
 beforeEach(() => {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_SESSION)
+  vi.spyOn(accountInfo, 'fetchPartnersSession').mockResolvedValue(PARTNERS_USER_SESSION)
 })
 
 describe('info', () => {
