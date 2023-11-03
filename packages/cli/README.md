@@ -17,7 +17,6 @@
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app release`](#shopify-app-release)
-* [`shopify app test`](#shopify-app-test)
 * [`shopify app update-url`](#shopify-app-update-url)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -457,15 +456,6 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.50.0/dist/cli/commands/app/release.js)_
-
-## `shopify app test`
-
-```
-USAGE
-  $ shopify app test
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.50.0/dist/cli/commands/app/test.js)_
 
 ## `shopify app update-url`
 
