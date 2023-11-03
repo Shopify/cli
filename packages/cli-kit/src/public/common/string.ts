@@ -368,7 +368,7 @@ export function joinWithAnd(items: string[]): string {
 
 /**
  * Given a string, it returns it with the all the first letter of words capitalized.
- * Eg: start_case -> Start Case.
+ * Eg: "start_case" returns "Start Case".
  *
  * @param str - String to startCase.
  * @returns String with all the first letter capitalized.
