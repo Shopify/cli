@@ -130,4 +130,43 @@ describe('runtime metadata', () => {
       'e#measurable': e,
     })
   })
+
+  test('can handle when a nested timer fails', async () => {
+    const container = createRuntimeMetadataContainer<{a: number; b: number}, {}>()
+    performance.clearMeasures()
+
+    let errorOccurred = false
+
+    // timings for these sections should still be captured despite the error being thrown -- e.g. if a command exits
+    // inside a timed section, we wouldn't want that to count as active time
+    try {
+      await container.runWithTimer('a')(async () => {
+        await sleep(0.01)
+        await container.runWithTimer('b')(async () => {
+          await sleep(0.01)
+          throw new Error('error inside a nested timed section')
+        })
+      })
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      errorOccurred = true
+    }
+
+    expect(errorOccurred).toBe(true)
+
+    // eslint-disable-next-line id-length
+    const {a, b} = container.getAllPublicMetadata() as any
+    expect(a).toBeGreaterThanOrEqual(0)
+    expect(b).toBeGreaterThanOrEqual(0)
+
+    const performanceEntries = performance.getEntries()
+
+    const entries = Object.fromEntries(performanceEntries.map((entry) => [entry.name, entry.duration]))
+    expect(entries).toMatchObject({
+      'a#wall': a + b,
+      'a#measurable': a,
+      'b#wall': b,
+      'b#measurable': b,
+    })
+  })
 })

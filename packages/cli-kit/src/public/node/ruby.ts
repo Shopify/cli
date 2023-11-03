@@ -9,6 +9,7 @@ import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {firstPartyDev, useEmbeddedThemeCLI} from './context/local.js'
 import {outputContent, outputToken} from './output.js'
 import {isTruthy} from './context/utilities.js'
+import {runWithTimer} from './metadata.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -450,7 +451,9 @@ async function getSpinEnvironmentVariables() {
  * @param directory - Directory where the Gemfile is located.
  */
 async function shopifyBundleInstall(directory: string): Promise<void> {
-  await runBundler(['install'], {cwd: directory})
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    await runBundler(['install'], {cwd: directory})
+  })
 }
 
 /**

@@ -125,6 +125,23 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(got).toEqual(validTokens)
   })
 
+  test('throws an error if there is no session and prompting is disabled', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(secureFetch).mockResolvedValue(undefined)
+
+    // When
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+    expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow(
+      `The currently available CLI credentials are invalid.
+
+The CLI is currently unable to prompt for reauthentication.`,
+    )
+
+    // Then
+    expect(authorize).not.toHaveBeenCalled()
+  })
+
   test('executes complete auth flow if session is for a different fqdn', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
@@ -202,7 +219,7 @@ describe('when existing session is valid', () => {
     vi.mocked(secureFetch).mockResolvedValue(validSession)
 
     // When
-    const got = await ensureAuthenticated(defaultApplications, process.env, true)
+    const got = await ensureAuthenticated(defaultApplications, process.env, {forceRefresh: true})
 
     // Then
     expect(authorize).not.toHaveBeenCalledOnce()

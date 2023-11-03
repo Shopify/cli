@@ -132,40 +132,43 @@ export function createRuntimeMetadataContainer<
 
         // Do the work, and time it
         const start = performance.now()
-        const result = await fn()
-        let end = performance.now()
-        // For very short durations, the end time can be before the start time(!) - we flatten this out to zero.
-        end = Math.max(start, end)
+        try {
+          const result = await fn()
+          return result
+        } finally {
+          let end = performance.now()
+          // For very short durations, the end time can be before the start time(!) - we flatten this out to zero.
+          end = Math.max(start, end)
 
-        // The top of the stack is the total time for all nested timers
-        const wallClockDuration = Math.max(end - start, 0)
-        const childDurations = durationStack.pop() as number
-        const duration = Math.max(wallClockDuration - childDurations, 0)
+          // The top of the stack is the total time for all nested timers
+          const wallClockDuration = Math.max(end - start, 0)
+          const childDurations = durationStack.pop() as number
+          const duration = Math.max(wallClockDuration - childDurations, 0)
 
-        // If this is the topmost timer, the stack will be empty.
-        if (durationStack.length > 0) {
-          durationStack[durationStack.length - 1] += wallClockDuration
+          // If this is the topmost timer, the stack will be empty.
+          if (durationStack.length > 0) {
+            durationStack[durationStack.length - 1] += wallClockDuration
+          }
+
+          // Log it -- we include it in the metadata, but also log via the standard performance API. The TS types for this library are not quite right, so we have to cast to `any` here.
+          performance.measure(`${field}#measurable`, {
+            start,
+            duration,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
+          performance.measure(`${field}#wall`, {
+            start,
+            end,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } as any)
+
+          // There might not be a value set, yet
+          let currentValue = (raw.public[field] || 0) as number
+          currentValue += duration
+
+          // TS is not quite smart enough to realise that raw.public[field] must be a numeric type
+          raw.public[field] = currentValue as TPublic[NumericKeyOf<TPublic>]
         }
-
-        // Log it -- we include it in the metadata, but also log via the standard performance API. The TS types for this library are not quite right, so we have to cast to `any` here.
-        performance.measure(`${field}#measurable`, {
-          start,
-          duration,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-        performance.measure(`${field}#wall`, {
-          start,
-          end,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
-
-        // There might not be a value set, yet
-        let currentValue = (raw.public[field] || 0) as number
-        currentValue += duration
-
-        // TS is not quite smart enough to realise that raw.public[field] must be a numeric type
-        raw.public[field] = currentValue as TPublic[NumericKeyOf<TPublic>]
-        return result
       }
     },
   }

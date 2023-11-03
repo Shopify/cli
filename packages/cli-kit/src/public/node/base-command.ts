@@ -28,7 +28,7 @@ abstract class BaseCommand extends Command {
   }
 
   async catch(error: Error & {exitCode?: number | undefined}): Promise<void> {
-    errorHandler(error, this.config)
+    await errorHandler(error, this.config)
     return Errors.handle(error)
   }
 

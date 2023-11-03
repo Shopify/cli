@@ -14,16 +14,25 @@ export interface AdminSession {
   storeFqdn: string
 }
 
+interface EnsureAuthenticatedPartnersOptions {
+  noPrompt?: boolean
+}
+
 /**
  * Ensure that we have a valid session to access the Partners API.
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
  * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @param _env - Optional environment variables to use.
+ * @param env - Optional environment variables to use.
+ * @param options - Optional extra options to use.
  * @returns The access token for the Partners API.
  */
-export async function ensureAuthenticatedPartners(scopes: string[] = [], _env = process.env): Promise<string> {
+export async function ensureAuthenticatedPartners(
+  scopes: string[] = [],
+  env = process.env,
+  options: EnsureAuthenticatedPartnersOptions = {},
+): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
@@ -31,7 +40,7 @@ ${outputToken.json(scopes)}
   if (envToken) {
     return (await exchangeCustomPartnerToken(envToken)).accessToken
   }
-  const tokens = await ensureAuthenticated({partnersApi: {scopes}})
+  const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
   if (!tokens.partners) {
     throw new BugError('No partners token found after ensuring authenticated')
   }
@@ -56,7 +65,7 @@ export async function ensureAuthenticatedStorefront(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, forceRefresh)
+  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, {forceRefresh})
   if (!tokens.storefront) {
     throw new BugError('No storefront token found after ensuring authenticated')
   }
@@ -81,7 +90,7 @@ export async function ensureAuthenticatedAdmin(
   )}:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, forceRefresh)
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {forceRefresh})
   if (!tokens.admin) {
     throw new BugError('No admin token found after ensuring authenticated')
   }
