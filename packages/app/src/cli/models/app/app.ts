@@ -41,30 +41,36 @@ export const AppSchema = zod
       .optional(),
     custom_data: zod
       .object({
-        metafield_definitions: zod.array(
-          zod.object({
-            namespace: zod.string(),
-            key: zod.string(),
-            type: zod.string(),
-            owner_type: zod.string(),
-            name: zod.string(),
-            description: zod.string(),
-          }),
-        ),
-        metaobject_definitions: zod.array(
-          zod.object({
-            name: zod.string(),
-            type: zod.string(),
-            fields: zod.array(
-              zod.object({
-                key: zod.string(),
-                type: zod.string(),
-                name: zod.string(),
-                description: zod.string(),
-              }),
-            ),
-          }),
-        ),
+        metafield_definitions: zod
+          .array(
+            zod.object({
+              namespace: zod.string(),
+              key: zod.string(),
+              type: zod.string(),
+              owner_type: zod.string(),
+              name: zod.string(),
+              description: zod.string().optional(),
+            }),
+          )
+          .optional(),
+        metaobject_definitions: zod
+          .array(
+            zod.object({
+              name: zod.string(),
+              type: zod.string(),
+              field_definitions: zod
+                .array(
+                  zod.object({
+                    key: zod.string(),
+                    type: zod.string(),
+                    name: zod.string(),
+                    description: zod.string().optional(),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .optional(),
       })
       .optional(),
     access_scopes: zod
