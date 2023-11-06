@@ -23,7 +23,7 @@ jobs:
       - uses: actions/stale@v4
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          days-before-issue-stale: 21
+          days-before-issue-stale: 42
           days-before-pr-stale: 30
           days-before-close: 7
           stale-issue-message: |-
