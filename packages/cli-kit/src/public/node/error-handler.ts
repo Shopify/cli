@@ -21,12 +21,10 @@ import StackTracey from 'stacktracey'
 import {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
-export function errorHandler(
-  error: (CancelExecution | AbortSilentError) & {exitCode?: number | undefined},
+export async function errorHandler(
+  error: Error & {exitCode?: number | undefined},
   config?: Interfaces.Config,
-): void
-export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): Promise<void>
-export function errorHandler(error: Error & {exitCode?: number | undefined}, config?: Interfaces.Config): unknown {
+): Promise<void> {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
       outputInfo(`✨  ${error.message}`)

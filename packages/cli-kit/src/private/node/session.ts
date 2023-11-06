@@ -97,7 +97,7 @@ export interface OAuthSession {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  forceRefresh = false,
+  {forceRefresh = false, noPrompt = false}: {forceRefresh?: boolean; noPrompt?: boolean} = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -123,6 +123,14 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
+    if (noPrompt) {
+      throw new AbortError(
+        `The currently available CLI credentials are invalid.
+
+The CLI is currently unable to prompt for reauthentication.`,
+        'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment.',
+      )
+    }
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {

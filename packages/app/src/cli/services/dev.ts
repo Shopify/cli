@@ -8,12 +8,14 @@ import {
   startTunnelPlugin,
   updateURLs,
 } from './dev/urls.js'
-import {ensureDevContext} from './context.js'
+import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
+import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
@@ -30,9 +32,9 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -55,12 +57,34 @@ export interface DevOptions {
   notify?: string
 }
 
+interface DevTasksContext {
+  config?: DevConfig
+  processes?: DevProcesses
+  previewUrl?: string
+  graphiqlUrl?: string
+}
+
 export async function dev(commandOptions: DevOptions) {
-  const config = await prepareForDev(commandOptions)
-  await actionsBeforeSettingUpDevProcesses(config)
-  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
-  await actionsBeforeLaunchingDevProcesses(config)
-  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
+  await ensureAuthenticatedPartners()
+  const devContext = await renderTasks<DevTasksContext>([
+    {
+      title: 'Preparing environment',
+      task: async (ctx: DevTasksContext) => {
+        ctx.config = await prepareForDev(commandOptions)
+      },
+    },
+    {
+      title: 'Configuring dev processes',
+      task: async (ctx: DevTasksContext) => {
+        const devConfig = ctx.config!
+        await actionsBeforeSettingUpDevProcesses(devConfig)
+        const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(devConfig)
+        Object.assign(ctx, {processes, graphiqlUrl, previewUrl})
+        await actionsBeforeLaunchingDevProcesses(devConfig)
+      },
+    },
+  ])
+  await launchDevProcesses(devContext as Required<DevTasksContext>)
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -285,16 +309,18 @@ async function launchDevProcesses({
     return outputProcess
   })
 
+  const apiKey = config.remoteApp.apiKey
+  const token = config.token
   const app = {
     canEnablePreviewMode: await canEnablePreviewMode({
       remoteApp: config.remoteApp,
       localApp: config.localApp,
-      token: config.token,
-      apiKey: config.remoteApp.apiKey,
+      token,
+      apiKey,
     }),
     developmentStorePreviewEnabled: config.remoteApp.developmentStorePreviewEnabled,
-    apiKey: config.remoteApp.apiKey,
-    token: config.token,
+    apiKey,
+    token,
   }
 
   return renderDev({
@@ -303,7 +329,49 @@ async function launchDevProcesses({
     graphiqlUrl,
     app,
     abortController,
+    developerPreview: developerPreviewController(apiKey, token),
   })
+}
+
+export function developerPreviewController(apiKey: string, originalToken: string): DeveloperPreviewController {
+  let currentToken = originalToken
+
+  const refreshToken = async () => {
+    const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+    if (newToken) currentToken = newToken
+  }
+
+  const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
+    try {
+      const result = await fn(currentToken)
+      return result
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (_err) {
+      try {
+        await refreshToken()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (_err) {
+        outputDebug('Failed to refresh token')
+        // Swallow the error, this isn't important enough to crash the process
+      }
+      return fn(currentToken)
+      // If it fails after refresh, let it crash the process
+    }
+  }
+
+  return {
+    fetchMode: async () => withRefreshToken(async (token: string) => Boolean(await fetchAppPreviewMode(apiKey, token))),
+    enable: async () =>
+      withRefreshToken(async (token: string) => {
+        await enableDeveloperPreview({apiKey, token})
+      }),
+    disable: async () =>
+      withRefreshToken(async (token: string) => {
+        await disableDeveloperPreview({apiKey, token})
+      }),
+    update: async (state: boolean) =>
+      withRefreshToken(async (token: string) => developerPreviewUpdate({apiKey, token, enabled: state})),
+  }
 }
 
 export async function logMetadataForDev(options: {

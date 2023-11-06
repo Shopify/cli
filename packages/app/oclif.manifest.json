@@ -1486,6 +1486,12 @@
           "exclusive": [
             "config"
           ]
+        },
+        "json": {
+          "name": "json",
+          "type": "boolean",
+          "description": "Output the versions list as JSON.",
+          "allowNo": false
         }
       },
       "args": {

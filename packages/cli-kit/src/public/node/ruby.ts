@@ -9,6 +9,7 @@ import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {firstPartyDev, useEmbeddedThemeCLI} from './context/local.js'
 import {outputContent, outputToken} from './output.js'
 import {isTruthy} from './context/utilities.js'
+import {runWithTimer} from './metadata.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -21,7 +22,6 @@ const ThemeCheckVersion = '1.15.0'
 const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
 export const MinWdmWindowsVersion = '0.1.0'
-const shopifyGems = envPaths('shopify-gems')
 
 interface ExecCLI2Options {
   // Contains store to pass to CLI 2.0 as environment variable
@@ -448,13 +448,9 @@ async function getSpinEnvironmentVariables() {
  * @param directory - Directory where the Gemfile is located.
  */
 async function shopifyBundleInstall(directory: string): Promise<void> {
-  await runBundler(['config', 'set', '--local', 'path', shopifyGems.cache], {
-    cwd: directory,
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    await runBundler(['install'], {cwd: directory})
   })
-  await runBundler(['config', 'set', '--local', 'without', 'development:test'], {
-    cwd: directory,
-  })
-  await runBundler(['install'], {cwd: directory})
 }
 
 /**
@@ -478,5 +474,13 @@ export function bundleUserHome(): string | undefined {
  * @param options - Options to pass to the exec function.
  */
 async function runBundler(args: string[], options: ExecOptions) {
-  return exec(bundleExecutable(), args, {...options, env: {...options.env, BUNDLE_USER_HOME: bundleUserHome()}})
+  return exec(bundleExecutable(), args, {
+    ...options,
+    env: {
+      ...options.env,
+      BUNDLE_USER_HOME: bundleUserHome(),
+      BUNDLE_WITHOUT: 'development:test',
+      BUNDLE_APP_CONFIG: envPaths('shopify-gems').cache,
+    },
+  })
 }

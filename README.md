@@ -27,6 +27,7 @@ Initialize your project using one of the following commands:
 - `npm init @shopify/app@latest` (installed by default with Node)
 - `pnpm create @shopify/create-app@latest`
 - `yarn create @shopify/app`
+- `bun create @shopify/app@latest` (experimental)
 
 Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started/create)
 

@@ -54,9 +54,9 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       }
     }
     const doOpenTelemetry = async () => {
-      const active = Math.floor(payload.public.cmd_all_timing_active_ms || 0)
-      const network = Math.floor(payload.public.cmd_all_timing_network_ms || 0)
-      const prompt = Math.floor(payload.public.cmd_all_timing_prompts_ms || 0)
+      const active = payload.public.cmd_all_timing_active_ms || 0
+      const network = payload.public.cmd_all_timing_network_ms || 0
+      const prompt = payload.public.cmd_all_timing_prompts_ms || 0
 
       return recordMetrics(
         {
@@ -149,6 +149,15 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       }),
     },
   }
+
+  // round down timing metrics
+  const timingMetrics = ['cmd_all_timing_active_ms', 'cmd_all_timing_network_ms', 'cmd_all_timing_prompts_ms'] as const
+  timingMetrics.forEach((metric) => {
+    const current = payload.public[metric]
+    if (current !== undefined) {
+      payload.public[metric] = Math.floor(current)
+    }
+  })
 
   // strip undefined fields -- they make up the majority of payloads due to wide metadata structure.
   payload = JSON.parse(JSON.stringify(payload))

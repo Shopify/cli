@@ -26,7 +26,7 @@ async function warnIfOldNodeVersion() {
         `Node ${nodeMajorVersion} has reached end-of-life and poses security risks. When you upgrade to a`,
         {
           link: {
-            url: 'https://nodejs.dev/en/about/releases/',
+            url: 'https://nodejs.dev/en/about/previous-releases',
             label: 'supported version',
           },
         },
@@ -84,13 +84,15 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
     settings.debug = true
   }
 
-  run(undefined, options.moduleURL)
-    .then(() => flush())
-    .then(printEventsJson)
-    .catch((error) => {
-      errorHandler(error)
-      return Errors.handle(error)
-    })
+  try {
+    await run(undefined, options.moduleURL)
+    await flush()
+    printEventsJson()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    await errorHandler(error as Error)
+    return Errors.handle(error as Error)
+  }
 }
 
 /**

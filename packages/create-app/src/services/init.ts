@@ -88,6 +88,7 @@ async function init(options: InitOptions) {
           switch (packageManager) {
             case 'npm':
             case 'yarn':
+            case 'bun':
               packageJSON.workspaces = workspacesFolders
               break
             case 'pnpm': {
