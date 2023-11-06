@@ -27,12 +27,13 @@ const MACOS_URL = {
 const WINDOWS_URL = {
   x64: 'cloudflared-windows-amd64.exe',
   ia32: 'cloudflared-windows-386.exe',
+  arm64: 'cloudflared-windows-amd64.exe',
 }
 
 const URL = {
-  linux: CLOUDFLARE_REPO + LINUX_URL[process.arch],
-  darwin: CLOUDFLARE_REPO + MACOS_URL[process.arch],
-  win32: CLOUDFLARE_REPO + WINDOWS_URL[process.arch],
+  linux: LINUX_URL[process.arch],
+  darwin: MACOS_URL[process.arch],
+  win32: WINDOWS_URL[process.arch],
 }
 
 /**
@@ -52,11 +53,12 @@ function getBinPathTarget() {
 }
 
 export default async function install() {
-  const fileUrlPath = URL[process.platform]
-  if (fileUrlPath === undefined) {
+  const fileName = URL[process.platform]
+  if (fileName === undefined) {
     throw new Error(`Unsupported system platform: ${process.platform} or arch: ${process.arch}`)
   }
 
+  const fileUrlPath = CLOUDFLARE_REPO + fileName;
   const binTarget = getBinPathTarget()
 
   if (existsSync(binTarget)) {
@@ -104,7 +106,7 @@ async function downloadFile(url, to) {
   }
   const streamPipeline = util.promisify(pipeline)
   const response = await fetch(url, {redirect: 'follow'})
-  if (!response.ok) throw new Error("Couldn't download file")
+  if (!response.ok) throw new Error(`Couldn't download file ${url} (${response.status} ${response.statusText})`)
   const fileObject = createWriteStream(to)
   await streamPipeline(response.body, fileObject)
   return to
