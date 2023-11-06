@@ -105,10 +105,10 @@
   "devDependencies": {
     "@shopify/app": "3.50.0",
     "@shopify/theme": "3.50.0",
-    "@types/node": "16.18.57",
-    "@vitest/coverage-istanbul": "^0.34.3",
-    "vite": "^4.4.9",
-    "vitest": "^0.34.3"
+    "@types/node": "16.18.60",
+    "@vitest/coverage-istanbul": "^0.34.6",
+    "vite": "^4.5.0",
+    "vitest": "^0.34.6"
   },
   "engines": {
     "node": ">=14.17.0"
