@@ -266,7 +266,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal,
-      unifiedDeployment: true,
     })
 
     expect(chokidar.watch).toHaveBeenCalledWith(mockExtension.configuration.path)
@@ -290,7 +289,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal: abortController.signal,
-      unifiedDeployment: true,
     })
 
     chokidarOnSpy.mock.calls[0][1]()
@@ -302,7 +300,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       token: 'mock-token',
-      unifiedDeployment: true,
     })
     expect(outputInfo).toHaveBeenCalledWith(`Config file at path ${mockExtension.configuration.path} changed`, stdout)
   })
@@ -328,7 +325,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal: abortController.signal,
-      unifiedDeployment: true,
     })
 
     abortController.abort()
@@ -358,7 +354,6 @@ describe('setupConfigWatcher()', async () => {
       stdout,
       stderr,
       signal: abortController.signal,
-      unifiedDeployment: true,
     })
 
     abortController.abort()
@@ -411,7 +406,6 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       stderr,
       stdout,
       signal: abortController.signal,
-      unifiedDeployment: true,
     })
 
     expect(bundle.bundleExtension).toHaveBeenCalledWith(
@@ -446,7 +440,6 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       stderr,
       stdout,
       signal: abortController.signal,
-      unifiedDeployment: true,
     })
 
     const bundleExtensionFn = bundle.bundleExtension as any
@@ -459,7 +452,6 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       registrationId,
       stdout,
       stderr,
-      unifiedDeployment: true,
     })
     expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has changed`, stdout)
   })
@@ -475,7 +467,6 @@ describe('setupNonPreviewableExtensionBundler()', async () => {
       stderr,
       stdout,
       signal: abortController.signal,
-      unifiedDeployment: true,
     })
 
     const buildFailure = {
@@ -517,7 +508,6 @@ describe('setupFunctionWatcher', () => {
       apiKey: 'mock-api-key',
       registrationId: 'mock-registration-id',
       token: 'mock-token',
-      unifiedDeployment: true,
     }
   }
 
@@ -626,7 +616,6 @@ describe('setupFunctionWatcher', () => {
       registrationId: watchOptions.registrationId,
       stdout: watchOptions.stdout,
       stderr: watchOptions.stderr,
-      unifiedDeployment: watchOptions.unifiedDeployment,
     })
   })
 

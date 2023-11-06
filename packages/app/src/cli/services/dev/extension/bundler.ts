@@ -123,7 +123,6 @@ interface SetupDraftableExtensionBundlerOptions {
   stderr: Writable
   stdout: Writable
   signal: AbortSignal
-  unifiedDeployment: boolean
 }
 
 export async function setupDraftableExtensionBundler({
@@ -136,7 +135,6 @@ export async function setupDraftableExtensionBundler({
   stderr,
   stdout,
   signal,
-  unifiedDeployment,
 }: SetupDraftableExtensionBundlerOptions) {
   return bundleExtension({
     minify: false,
@@ -163,7 +161,7 @@ export async function setupDraftableExtensionBundler({
       )
       if (error) return
 
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
+      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
     },
   })
 }
@@ -176,7 +174,6 @@ interface SetupConfigWatcherOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
-  unifiedDeployment: boolean
 }
 
 export async function setupConfigWatcher({
@@ -187,7 +184,6 @@ export async function setupConfigWatcher({
   stdout,
   stderr,
   signal,
-  unifiedDeployment,
 }: SetupConfigWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -200,7 +196,6 @@ export async function setupConfigWatcher({
       registrationId,
       stdout,
       stderr,
-      unifiedDeployment,
     }).catch((_: unknown) => {})
   })
 
@@ -230,7 +225,6 @@ export interface SetupFunctionWatcherOptions {
   token: string
   apiKey: string
   registrationId: string
-  unifiedDeployment: boolean
 }
 
 export async function setupFunctionWatcher({
@@ -242,7 +236,6 @@ export async function setupFunctionWatcher({
   token,
   apiKey,
   registrationId,
-  unifiedDeployment,
 }: SetupFunctionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -310,7 +303,7 @@ Redeploy Paths:
     })
       .then(() => {
         if (!buildSignal.aborted) {
-          return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
+          return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
         }
       })
       .catch((updateError: unknown) => {
@@ -329,7 +322,6 @@ Redeploy Paths:
         registrationId,
         stdout,
         stderr,
-        unifiedDeployment,
       }).catch((error: unknown) => {
         outputWarn(
           `Error while deploying updated extension config: ${JSON.stringify(error, null, 2)} at path ${path}`,

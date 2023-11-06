@@ -27,12 +27,6 @@ export const AllAppExtensionRegistrationsQuery = gql`
           config
         }
       }
-      functions {
-        id
-        uuid
-        title
-        type: apiType
-      }
     }
   }
 `
@@ -58,6 +52,5 @@ export interface AllAppExtensionRegistrationsQuerySchema {
   app: {
     extensionRegistrations: ExtensionRegistration[]
     dashboardManagedExtensionRegistrations: ExtensionRegistration[]
-    functions: ExtensionRegistration[]
   }
 }

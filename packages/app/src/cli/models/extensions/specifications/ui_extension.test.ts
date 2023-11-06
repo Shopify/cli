@@ -226,7 +226,6 @@ Please check the configuration in ${uiExtension.configuration.path}`),
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
           token: 'token',
-          unifiedDeployment: true,
         })
 
         // Then

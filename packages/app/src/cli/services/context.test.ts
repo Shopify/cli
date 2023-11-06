@@ -21,7 +21,6 @@ import {
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
-import {resolveDeploymentMode} from './deploy/mode.js'
 import link from './app/config/link.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -36,7 +35,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderError, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {Config} from '@oclif/core'
 
 vi.mock('./local-storage.js')
@@ -67,7 +66,6 @@ beforeEach(() => {
       await task.task({}, task)
     }
   })
-  vi.mocked(resolveDeploymentMode).mockResolvedValue('legacy')
 })
 
 afterEach(() => {
@@ -87,17 +85,7 @@ const APP2 = testOrganizationApp({
   title: 'app2',
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
-  betas: {
-    unifiedAppDeployment: false,
-  },
 })
-
-const APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA: OrganizationApp = {
-  ...APP2,
-  betas: {
-    unifiedAppDeployment: true,
-  },
-}
 
 const ORG1: Organization = {
   id: '1',
@@ -811,7 +799,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
+    expect(got.release).toEqual(true)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
@@ -840,7 +828,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
+    expect(got.release).toEqual(true)
   })
 
   test("fetches the app from the partners' API and returns it alongside the id when config as code is enabled", async () => {
@@ -866,7 +854,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP2.title)
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
-    expect(got.deploymentMode).toEqual('legacy')
+    expect(got.release).toEqual(true)
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -901,7 +889,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
-    expect(got.deploymentMode).toEqual('legacy')
+    expect(got.release).toEqual(true)
   })
 
   test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
@@ -952,79 +940,16 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
-    expect(got.deploymentMode).toEqual('legacy')
-  })
-
-  test('throws an error using legacy deployments and source control url flag', async () => {
-    // Given
-    const app = testApp()
-    const identifiers = {
-      app: APP1.apiKey,
-      extensions: {},
-      extensionIds: {},
-    }
-
-    // There is a cached app but it will be ignored
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-
-    const opts = options(app)
-    opts.reset = true
-    opts.commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
-
-    // When/ Then
-    await expect(ensureDeployContext(opts)).rejects.toThrowErrorMatchingInlineSnapshot(
-      '"The `source-control-url` flag is not supported for this app."',
-    )
-
-    expect(fetchOrganizations).toHaveBeenCalledWith('token')
-    expect(selectOrCreateApp).toHaveBeenCalledWith(
-      app.name,
-      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
-      ORG1,
-      'token',
-      DEFAULT_SELECT_APP_OPTIONS,
-    )
+    expect(got.release).toEqual(true)
   })
 })
 
 describe('ensureReleaseContext', () => {
-  test('throws an error if the beta flag is turned off', async () => {
+  test('updates app identifiers', async () => {
     // Given
     const app = testApp()
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
-
-    // When/Then
-    await expect(() =>
-      ensureReleaseContext({
-        app,
-        apiKey: 'key1',
-        reset: false,
-        force: false,
-        commandConfig: COMMAND_CONFIG,
-      }),
-    ).rejects.toThrowError('')
-
-    expect(renderError).toHaveBeenCalledWith({
-      headline: 'The `app release` command is only available for apps that have upgraded to use simplified deployment.',
-      reference: [
-        {
-          link: {
-            label: 'Simplified extension deployment',
-            url: 'https://shopify.dev/docs/apps/deployment/extension',
-          },
-        },
-      ],
-    })
-  })
-
-  test('updates app identifiers if the beta flag is turned on', async () => {
-    // Given
-    const app = testApp()
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey})
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
 
     // When
@@ -1040,13 +965,13 @@ describe('ensureReleaseContext', () => {
     expect(updateAppIdentifiers).toBeCalledWith({
       app,
       identifiers: {
-        app: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.apiKey,
+        app: APP2.apiKey,
       },
       command: 'release',
     })
 
     expect(got.app).toEqual(app)
-    expect(got.partnersApp).toEqual(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    expect(got.partnersApp).toEqual(APP2)
     expect(got.token).toEqual('token')
   })
 })
@@ -1075,7 +1000,6 @@ describe('ensureThemeExtensionDevContext', () => {
           },
         ],
         dashboardManagedExtensionRegistrations: [],
-        functions: [],
       },
     })
 
@@ -1096,7 +1020,7 @@ describe('ensureThemeExtensionDevContext', () => {
     const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},
+      app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
     })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',
@@ -1120,7 +1044,7 @@ describe('ensureVersionsListContext', () => {
   test('returns the partners token and app', async () => {
     // Given
     const app = testApp()
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
 
     // When
     const got = await ensureVersionsListContext({
@@ -1133,36 +1057,7 @@ describe('ensureVersionsListContext', () => {
     // Then
     expect(got).toEqual({
       token: 'token',
-      partnersApp: APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
-    })
-  })
-
-  test('throws an error if the deployments beta is disabled', async () => {
-    // Given
-    const app = testApp()
-    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1)
-
-    // When/Then
-    await expect(() =>
-      ensureVersionsListContext({
-        app,
-        apiKey: 'key1',
-        reset: false,
-        commandConfig: COMMAND_CONFIG,
-      }),
-    ).rejects.toThrowError('')
-
-    expect(renderError).toHaveBeenCalledWith({
-      headline:
-        'The `app versions list` command is only available for apps that have upgraded to use simplified deployment.',
-      reference: [
-        {
-          link: {
-            label: 'Simplified extension deployment',
-            url: 'https://shopify.dev/docs/apps/deployment/extension',
-          },
-        },
-      ],
+      partnersApp: APP2,
     })
   })
 })

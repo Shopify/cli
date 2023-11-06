@@ -64,9 +64,8 @@ export async function canEnablePreviewMode({
   const themeExtensions = localApp.allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length > 0) return true
 
-  const unifiedDeployment = remoteApp?.betas?.unifiedAppDeployment ?? false
-  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
-  if (unifiedDeployment && draftableExtensions.length > 0) return true
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable())
+  if (draftableExtensions.length > 0) return true
 
   return false
 }

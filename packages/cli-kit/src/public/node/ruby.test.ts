@@ -305,7 +305,6 @@ function validateBundleExec(
       BUNDLE_GEMFILE: gemfilePath,
       BUNDLE_WITHOUT: 'development:test',
       SHOPIFY_CLI_1P_DEV: '0',
-      SHOPIFY_CLI_UNIFIED_DEPLOYMENT: '0',
       SHOPIFY_CLI_VERSION: '3.x.x',
       ...(bundled && {SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}),
       BUNDLE_APP_CONFIG,

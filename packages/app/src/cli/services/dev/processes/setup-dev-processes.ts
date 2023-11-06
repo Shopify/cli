@@ -51,7 +51,6 @@ export interface DevConfig {
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
-  usesUnifiedDeployment: boolean
 }
 
 export async function setupDevProcesses({
@@ -62,7 +61,6 @@ export async function setupDevProcesses({
   storeFqdn,
   commandOptions,
   network,
-  usesUnifiedDeployment,
   partnerUrlsUpdated,
 }: DevConfig): Promise<{
   processes: DevProcesses
@@ -118,7 +116,6 @@ export async function setupDevProcesses({
       apiKey,
       token,
       proxyUrl: network.proxyUrl,
-      unifiedDeployment: usesUnifiedDeployment,
     }),
     await setupPreviewThemeAppExtensionsProcess({
       allExtensions: localApp.allExtensions,
@@ -128,7 +125,6 @@ export async function setupDevProcesses({
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
       notify: commandOptions.notify,
-      usesUnifiedDeployment,
     }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,
