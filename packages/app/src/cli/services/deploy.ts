@@ -5,6 +5,18 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
+import {fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {DeploymentMode} from './deploy/mode.js'
+import {AppInterface} from '../models/app/app.js'
+import {Identifiers, updateAppIdentifiers} from '../models/app/identifiers.js'
+import {OrganizationApp} from '../models/organization.js'
+import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {FunctionConfigType} from '../models/extensions/specifications/function.js'
+import {
+  fakedWebhookSubscriptionsMutation,
+  type NormalizedWebhookSubscriptions,
+} from '../utilities/app/config/webhooks.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -13,6 +25,8 @@ import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import type {Task} from '@shopify/cli-kit/node/ui'
+import {pickBy} from '@shopify/cli-kit/common/object'
+import type {AlertCustomSection, Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
   /** The app to be built and uploaded */
@@ -118,6 +132,68 @@ export async function deploy(options: DeployOptions) {
           },
         },
       ]
+
+      // should this be included in the above app deploy task? split out into its own task? still technically part of an app version
+      if (partnersApp.betas?.declarativeWebhooks) {
+        tasks.push({
+          // again, todo title based on if it will be part of above task
+          title: 'Releasing webhooks',
+          task: async () => {
+            if (!('webhooks' in app.configuration)) return
+
+            // normalize webhook config with the top level config
+            const webhookSubscriptions: NormalizedWebhookSubscriptions = []
+            const {topics, subscriptions, ...webhookConfig} = app.configuration.webhooks
+            const topLevelDestination = pickBy(
+              webhookConfig,
+              (value, key) =>
+                ['subscription_endpoint_url', 'arn', 'pubsub_project', 'pubsub_topic'].includes(key) && value,
+            )
+
+            // top level subscriptions
+            if (Object.keys(topLevelDestination).length && topics?.length) {
+              for (const topic of topics) {
+                webhookSubscriptions.push({
+                  topic,
+                  ...topLevelDestination,
+                })
+                // we could add the defaults here as well (include_fields: [], metafield_namespaces: [], format: 'json)
+                // but I think thats better suited for server side / info over the wire
+              }
+            }
+
+            // inner subscriptions
+            if (subscriptions?.length) {
+              for (const {path, ...subscription} of subscriptions) {
+                const hasLocalDestination = Boolean(
+                  [
+                    subscription.subscription_endpoint_url,
+                    subscription.arn,
+                    subscription.pubsub_project && subscription.pubsub_topic,
+                  ].filter(Boolean).length,
+                )
+
+                // we can assume this is valid from validation earlier, and local config will overwrite top level if there is any
+                const subscriptionConfig = {
+                  ...(hasLocalDestination ? {} : topLevelDestination),
+                  ...subscription,
+                }
+
+                if (path && subscriptionConfig.subscription_endpoint_url) {
+                  subscriptionConfig.subscription_endpoint_url = `${subscriptionConfig.subscription_endpoint_url}${path}`
+                }
+
+                webhookSubscriptions.push(subscriptionConfig)
+              }
+            }
+
+            // eslint-disable-next-line no-warning-comments
+            // TODO - make request with webhookSubscriptions
+            fakedWebhookSubscriptionsMutation(webhookSubscriptions)
+            // console.log('~~Normalized Subscriptions~~', webhookSubscriptions)
+          },
+        })
+      }
 
       await renderTasks(tasks)
 

@@ -32,11 +32,12 @@ const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && 
 const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   httpsOnly: true,
   message: 'Only https urls are allowed',
-})
+}).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
 const SubscriptionEndpointUrlValidation = ensureHttpsOnlyUrl.optional()
 const PubSubProjectValidation = zod.string().optional()
 const PubSubTopicValidation = zod.string().optional()
+// example Eventbridge ARN - arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/webhooks_path
 const ArnValidation = zod
   .string()
   .regex(
@@ -44,7 +45,7 @@ const ArnValidation = zod
   )
   .optional()
 
-const WebhookSubscriptionSchema = zod.object({
+export const WebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
   sub_topic: zod.string().optional(),
   format: zod.enum(['json', 'xml']).optional(),
@@ -76,7 +77,7 @@ const WebhooksSchema = zod
     pubsub_project: PubSubProjectValidation,
     pubsub_topic: PubSubTopicValidation,
     arn: ArnValidation,
-    topics: zod.array(zod.string()).optional(),
+    topics: zod.array(zod.string()).nonempty().optional(),
     subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
   })
   .superRefine(
@@ -115,6 +116,17 @@ const WebhooksSchema = zod
         return zod.NEVER
       }
 
+      if (!topLevelDestinations.length && topics.length) {
+        ctx.addIssue({
+          code: zod.ZodIssueCode.custom,
+          message:
+            'To use top-level topics, you must also provide a top-level destination of either subscription_endpoint_url, pubsub_project & pubsub_topic, or arn',
+          fatal: true,
+          path: ['topics'],
+        })
+        return zod.NEVER
+      }
+
       // a unique subscription URI is keyed on `${topic}::${destinationURI}`
       const delimiter = '::'
       const topLevelDestination = [subscription_endpoint_url, pubsub_project, pubsub_topic, arn]
@@ -130,7 +142,7 @@ const WebhooksSchema = zod
           if (subscriptionDestinationsSet.has(key)) {
             ctx.addIssue({
               code: zod.ZodIssueCode.custom,
-              message: "You can't have duplicate subscriptions with the exact same topic and destination",
+              message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
               fatal: true,
               path: ['topics', topic],
             })
@@ -192,6 +204,16 @@ const WebhooksSchema = zod
             return zod.NEVER
           }
 
+          if ((subscription.arn || subscription.pubsub_project) && subscription.path) {
+            ctx.addIssue({
+              code: zod.ZodIssueCode.custom,
+              message: 'You can’t define a path when using arn or pubsub',
+              fatal: true,
+              path,
+            })
+            return zod.NEVER
+          }
+
           let destination = [
             subscription.subscription_endpoint_url,
             subscription.pubsub_project,
@@ -216,7 +238,7 @@ const WebhooksSchema = zod
           if (subscriptionDestinationsSet.has(key)) {
             ctx.addIssue({
               code: zod.ZodIssueCode.custom,
-              message: "You can't have duplicate subscriptions with the exact same topic and destination",
+              message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
               fatal: true,
               path: [...path, subscription.topic],
             })
@@ -362,6 +384,7 @@ export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: 
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
+export type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
 
 export interface Web {
   directory: string

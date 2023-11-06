@@ -5,8 +5,8 @@ import {
   loadDotEnv,
   parseConfigurationObject,
 } from './loader.js'
-import {AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
-import {DEFAULT_CONFIG} from './app.test-data.js'
+import {AppSchema, LegacyAppSchema, WebConfigurationSchema, WebhookConfig} from './app.js'
+import {DEFAULT_CONFIG, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -2206,6 +2206,21 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
+  test('throws an error if subscription_endpoint_url ends with a forward slash', async () => {
+    const webhookConfig: WebhookConfig = {
+      subscription_endpoint_url: 'https://example.com/',
+      topics: ['products/create'],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'URL can’t end with a forward slash',
+      path: ['webhooks', 'subscription_endpoint_url'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
   test('throws an error if arn is not a valid Shopify formatted Eventbridge ARN', async () => {
     const webhookConfig: WebhookConfig = {
       arn: 'my::eventbridge::Shopfiy::123',
@@ -2395,7 +2410,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "You can't have duplicate subscriptions with the exact same topic and destination",
+      message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
       fatal: true,
       path: ['webhooks', 'topics', 'products/create'],
     }
@@ -2423,7 +2438,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "You can't have duplicate subscriptions with the exact same topic and destination",
+      message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
       fatal: true,
       path: ['webhooks', 'topics', 'products/create'],
     }
@@ -2451,7 +2466,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: "You can't have duplicate subscriptions with the exact same topic and destination",
+      message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
       fatal: true,
       path: ['webhooks', 'topics', 'products/create'],
     }
@@ -2472,6 +2487,47 @@ describe('WebhooksSchema', () => {
   })
 
   describe('WebhookSubscriptionSchema', () => {
+    test('throws an error if subscription_endpoint_url ends with a forward slash', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            subscription_endpoint_url: 'https://example.com/',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'URL can’t end with a forward slash',
+        path: ['webhooks', 'subscriptions', 0, 'subscription_endpoint_url'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if topics and subscriptions are defined, but no top level destination is provided', async () => {
+      const webhookConfig: WebhookConfig = {
+        topics: ['products/create', 'products/update'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            subscription_endpoint_url: 'https://example.com',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message:
+          'To use top-level topics, you must also provide a top-level destination of either subscription_endpoint_url, pubsub_project & pubsub_topic, or arn',
+        fatal: true,
+        path: ['webhooks', 'topics'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
     test('throws an error if format is not json or xml', async () => {
       const webhookConfig: WebhookConfig = {
         subscriptions: [
@@ -2516,6 +2572,7 @@ describe('WebhooksSchema', () => {
       const webhookConfig: WebhookConfig = {
         subscriptions: [
           {
+            subscription_endpoint_url: 'https://example.com',
             topic: 'products/create',
             path: 'my-neat-new-path',
           },
@@ -2527,12 +2584,6 @@ describe('WebhooksSchema', () => {
           message: 'Path must start with a forward slash and be longer than 1 character',
           path: ['webhooks', 'subscriptions', 0, 'path'],
         },
-        {
-          code: 'custom',
-          message: 'You must declare either a top-level destination or a destination per subscription',
-          fatal: true,
-          path: ['webhooks', 'subscriptions', 0],
-        },
       ]
 
       const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2543,6 +2594,7 @@ describe('WebhooksSchema', () => {
       const webhookConfig: WebhookConfig = {
         subscriptions: [
           {
+            subscription_endpoint_url: 'https://example.com',
             topic: 'products/create',
             path: '/',
           },
@@ -2554,9 +2606,52 @@ describe('WebhooksSchema', () => {
           message: 'Path must start with a forward slash and be longer than 1 character',
           path: ['webhooks', 'subscriptions', 0, 'path'],
         },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path is used with pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com',
+        subscriptions: [
+          {
+            pubsub_project: 'my-project-123',
+            pubsub_topic: 'my-topic',
+            topic: 'products/create',
+            path: '/test_path',
+          },
+        ],
+      }
+      const errorObj = [
         {
-          code: 'custom',
-          message: 'You must declare either a top-level destination or a destination per subscription',
+          code: zod.ZodIssueCode.custom,
+          message: 'You can’t define a path when using arn or pubsub',
+          fatal: true,
+          path: ['webhooks', 'subscriptions', 0],
+        },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path is used with arn', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscription_endpoint_url: 'https://example.com',
+        subscriptions: [
+          {
+            arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+            topic: 'products/create',
+            path: '/test_path',
+          },
+        ],
+      }
+      const errorObj = [
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'You can’t define a path when using arn or pubsub',
           fatal: true,
           path: ['webhooks', 'subscriptions', 0],
         },
@@ -2911,7 +3006,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2932,7 +3027,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2955,7 +3050,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -3017,7 +3112,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -3039,7 +3134,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -3080,7 +3175,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -3101,7 +3196,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: "You can't have duplicate subscriptions with the exact same topic and destination",
+        message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -3128,21 +3223,12 @@ describe('WebhooksSchema', () => {
     })
   })
 
-  type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhookConfig) {
-    const configurationObject = {
-      ...DEFAULT_CONFIG,
-      webhooks: {
-        ...DEFAULT_CONFIG.webhooks,
-        ...webhookConfigOverrides,
-      },
-    }
-
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
     const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(err, null, 2)}`
     const abortOrReport = vi.fn()
 
-    const {path, ...toParse} = configurationObject
+    const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)
     const parsedConfiguration = await parseConfigurationObject(AppSchema, 'tmp', toParse, abortOrReport)
     return {abortOrReport, expectedFormatted, parsedConfiguration}
   }
