@@ -239,7 +239,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const extensionId = identifiers.extensions[this.localIdentifier]!
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
-    if (!this.features.includes('function')) {
+    if (this.features.includes('bundling')) {
       // Only functions build to a specific file, all other extensions build to a directory
       this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
     }
