@@ -32,7 +32,7 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -57,34 +57,12 @@ export interface DevOptions {
   notify?: string
 }
 
-interface DevTasksContext {
-  config?: DevConfig
-  processes?: DevProcesses
-  previewUrl?: string
-  graphiqlUrl?: string
-}
-
 export async function dev(commandOptions: DevOptions) {
-  await ensureAuthenticatedPartners()
-  const devContext = await renderTasks<DevTasksContext>([
-    {
-      title: 'Preparing environment',
-      task: async (ctx: DevTasksContext) => {
-        ctx.config = await prepareForDev(commandOptions)
-      },
-    },
-    {
-      title: 'Configuring dev processes',
-      task: async (ctx: DevTasksContext) => {
-        const devConfig = ctx.config!
-        await actionsBeforeSettingUpDevProcesses(devConfig)
-        const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(devConfig)
-        Object.assign(ctx, {processes, graphiqlUrl, previewUrl})
-        await actionsBeforeLaunchingDevProcesses(devConfig)
-      },
-    },
-  ])
-  await launchDevProcesses(devContext as Required<DevTasksContext>)
+  const config = await prepareForDev(commandOptions)
+  await actionsBeforeSettingUpDevProcesses(config)
+  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  await actionsBeforeLaunchingDevProcesses(config)
+  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
