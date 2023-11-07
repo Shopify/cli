@@ -27,7 +27,6 @@ export async function ensureExtensionsIds(
   let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
 
   const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
-  functionExtensions.forEach((ext) => (ext.usingExtensionsFramework = true))
   localExtensions = localExtensions.concat(functionExtensions)
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
