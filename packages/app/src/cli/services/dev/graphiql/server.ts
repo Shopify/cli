@@ -10,6 +10,9 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {encode as queryStringEncode} from 'node:querystring'
 import {Server} from 'http'
 import {Writable} from 'stream'
+import {createRequire} from 'node:module'
+
+const require = createRequire(import.meta.url)
 
 class TokenRefreshError extends AbortError {
   constructor() {
@@ -86,6 +89,12 @@ export function setupGraphiQLServer({
   app.get('/graphiql/ping', (_req, res) => {
     res.send('pong')
   })
+
+  const stylePath = require.resolve('@shopify/cli-kit/assets/style.css')
+  app.get('/graphiql/simple.css', async (_req, res) => {
+    res.sendFile(stylePath)
+  })
+
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     let apiVersions: string[]
