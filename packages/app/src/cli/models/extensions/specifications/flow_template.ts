@@ -23,7 +23,7 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
 const spec = createExtensionSpecification({
   identifier: 'flow_template',
   schema: FlowTemplateExtensionSchema,
-  appModuleFeatures: (_) => ['bundling'],
+  appModuleFeatures: (_) => [],
   deployConfig: async (config, extensionPath) => {
     return {
       template_handle: config.handle,

@@ -15,7 +15,6 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 /**
@@ -240,14 +239,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const extensionId = identifiers.extensions[this.localIdentifier]!
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
-    if (this.features.includes('bundling')) {
-      // Modules that are going to be inclued in the bundle should be built in the bundle directory
+    if (!this.features.includes('function')) {
+      // Only functions build to a specific file, all other extensions build to a directory
       this.outputPath = joinPath(bundleDirectory, extensionId, outputFile)
     }
 
     await this.build(options)
 
-    if (this.isThemeExtension && useThemebundling()) {
+    if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
     }
   }

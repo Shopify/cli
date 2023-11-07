@@ -36,7 +36,7 @@ const spec = createExtensionSpecification({
   dependency,
   schema: UIExtensionSchema,
   appModuleFeatures: (config) => {
-    const basic: ExtensionFeature[] = ['ui_preview', 'bundling', 'esbuild']
+    const basic: ExtensionFeature[] = ['ui_preview', 'esbuild']
     const needsCart =
       config?.extension_points?.find((extensionPoint) => {
         return getExtensionPointTargetSurface(extensionPoint.target) === 'checkout'

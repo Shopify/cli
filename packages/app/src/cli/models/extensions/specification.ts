@@ -5,14 +5,7 @@ import {blocks} from '../../constants.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 
-export type ExtensionFeature =
-  | 'ui_preview'
-  | 'function'
-  | 'theme'
-  | 'bundling'
-  | 'cart_url'
-  | 'esbuild'
-  | 'single_js_entry_path'
+export type ExtensionFeature = 'ui_preview' | 'function' | 'theme' | 'cart_url' | 'esbuild' | 'single_js_entry_path'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

@@ -14,7 +14,6 @@ import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
@@ -447,7 +446,6 @@ async function testDeployBundle({app, partnersApp, options, released = true, com
     release: !options?.noRelease,
   })
 
-  vi.mocked(useThemebundling).mockReturnValue(true)
   vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],

@@ -1,5 +1,5 @@
 /* eslint-disable require-atomic-updates */
-import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upload.js'
+import {uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upload.js'
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
@@ -9,7 +9,6 @@ import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import type {Task} from '@shopify/cli-kit/node/ui'
@@ -66,7 +65,7 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
+      const bundle = app.allExtensions.some((ext) => !ext.features.includes('function'))
       let bundlePath: string | undefined
 
       if (bundle) {
@@ -108,11 +107,6 @@ export async function deploy(options: DeployOptions) {
               version: options.version,
               commitReference: options.commitReference,
             })
-
-            if (!useThemebundling()) {
-              const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
-              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
-            }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
           },
