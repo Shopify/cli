@@ -46,7 +46,8 @@ const Dev: FunctionComponent<DevProps> = ({
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
-  const [statusMessage, setStatusMessage] = useState(`Preview URL: ${previewUrl}`)
+  const defaultStatusMessage = `Preview URL: ${previewUrl}${graphiqlUrl ? `\nGraphiQL URL: ${graphiqlUrl}` : ''}`
+  const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
     if (err) {
