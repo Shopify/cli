@@ -10,7 +10,6 @@ interface GraphiQLServerProcessOptions {
   storeFqdn: string
   url: string
   port: number
-  scopes: string[]
 }
 
 export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcessOptions> {

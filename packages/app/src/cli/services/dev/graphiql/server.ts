@@ -29,7 +29,6 @@ interface SetupGraphiQLServerOptions {
   apiSecret: string
   url: string
   storeFqdn: string
-  scopes: string[]
 }
 
 export function setupGraphiQLServer({
@@ -41,7 +40,6 @@ export function setupGraphiQLServer({
   apiSecret,
   url,
   storeFqdn,
-  scopes,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
   const namespacedShopifyUrl = `https://${url}/${urlNamespaces.devTools}`
@@ -141,7 +139,6 @@ export function setupGraphiQLServer({
         versions: [...apiVersions, 'unstable'],
         appName,
         appUrl,
-        scopes,
       }),
     )
   })
