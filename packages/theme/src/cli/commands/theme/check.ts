@@ -18,7 +18,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {themeCheckRun} from '@shopify/theme-check-node'
+import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
 import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -173,10 +173,9 @@ Excludes checks matching any category when specified more than once`,
         return
       }
 
-      // To support backwards compatibility for :theme_app_extension
-      const isLegacyTAEConfig = flags.config === ':theme_app_extension'
-      const config = isLegacyTAEConfig ? 'theme-check:theme-app-extension' : flags.config
-
+      // To support backwards compatibility for legacy configs
+      const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
+      const config = isLegacyConfig ? LegacyIdentifiers.get(flags.config!.slice(1)) : flags.config
       const {offenses, theme} = await themeCheckRun(path, config)
 
       const offensesByFile = sortOffenses(offenses)
@@ -216,7 +215,7 @@ Excludes checks matching any category when specified more than once`,
         await performAutoFixes(theme, offenses)
       }
 
-      handleExit(offenses, flags['fail-level'] as FailLevel)
+      return handleExit(offenses, flags['fail-level'] as FailLevel)
     }
 
     await execCLI2(['theme', 'check', path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {
