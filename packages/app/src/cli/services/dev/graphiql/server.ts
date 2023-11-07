@@ -41,6 +41,7 @@ export function setupGraphiQLServer({
   scopes,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
+  const namespacedShopifyUrl = `https://${url}/${urlNamespaces.devTools}`
 
   const app = express()
     // Make the app accept all routes starting with /.shopify/xxx as /xxx
@@ -86,31 +87,49 @@ export function setupGraphiQLServer({
     res.send('pong')
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/graphiql', async (_req, res) => {
-    outputDebug('Handling /graphiql request', stdout)
+  async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     let apiVersions: string[]
     try {
       apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
     } catch (err) {
       // Retry once with a new token, in case the token expired or was revoked
-      try {
-        await refreshToken()
-        apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
-      } catch (err) {
-        if (err instanceof TokenRefreshError) {
-          return res.send(
-            await renderLiquidTemplate(unauthorizedTemplate, {
-              previewUrl: appUrl,
-            }),
-          )
-        }
-        throw err
-      }
+      await refreshToken()
+      apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
     }
+    return apiVersions
+  }
+
+  app.get('/graphiql/status', async (_req, res) => {
+    try {
+      await fetchApiVersionsWithTokenRefresh()
+      return res.send({status: 'OK'})
+    } catch (_err) {
+      return res.send({status: 'UNAUTHENTICATED'})
+    }
+  })
+
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  app.get('/graphiql', async (_req, res) => {
+    outputDebug('Handling /graphiql request', stdout)
+    let apiVersions: string[]
+    try {
+      apiVersions = await fetchApiVersionsWithTokenRefresh()
+    } catch (err) {
+      if (err instanceof TokenRefreshError) {
+        return res.send(
+          await renderLiquidTemplate(unauthorizedTemplate, {
+            previewUrl: appUrl,
+            url: namespacedShopifyUrl,
+          }),
+        )
+      }
+      throw err
+    }
+
     res.send(
       await renderLiquidTemplate(template, {
-        url: `https://${url}/${urlNamespaces.devTools}`,
+        url: namespacedShopifyUrl,
         defaultQueries: [{query: defaultQuery}],
         apiVersion: apiVersions.sort().reverse()[0]!,
         storeFqdn,

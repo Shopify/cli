@@ -212,7 +212,25 @@ export const unauthorizedTemplate = `
 <html>
   <head>
     <title>GraphiQL Explorer - App Not Installed</title>
-    <meta http-equiv="refresh" content="5">
+    <script type="text/javascript">
+      let appInstalled = false
+      let newTab = null
+
+      setInterval(function() {
+        fetch('{{ url }}/graphiql/status')
+          .then(async function(response) {
+            const body = await response.json()
+            if (body.status === 'OK') {
+              if (newTab) newTab.close()
+              window.location.href = window.location.href
+            }
+          })
+      }, 3000)
+
+      function openAppInstallTab() {
+        newTab = window.open('{{ previewUrl }}', '_blank')
+      }
+    </script>
   </head>
   <body>
     <h1>App Not Installed</h1>
@@ -220,7 +238,7 @@ export const unauthorizedTemplate = `
       The GraphiQL Explorer is only available for apps that have been installed on the store.
     </p>
     <p>
-      <a href="{{ previewUrl }}" target="_blank">Install the app</a> and try again.
+      <a href="#" onclick="openAppInstallTab(); return false;">Install the app</a> and try again.
     </p>
   </body>
 </html>
