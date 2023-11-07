@@ -84,14 +84,15 @@ const WebhooksSchema = zod
     // eslint-disable-next-line @typescript-eslint/naming-convention
     ({subscription_endpoint_url, pubsub_project, pubsub_topic, arn, topics = [], subscriptions = []}, ctx) => {
       const topLevelDestinations = [subscription_endpoint_url, pubsub_project && pubsub_topic, arn].filter(Boolean)
-      const pubSubValidationErrMsg = 'You must declare both pubsub_project and pubsub_topic if you wish to use'
-      const tooManyDestinationsErrMsg =
-        'You are only allowed to declare one (1) of subscription_endpoint_url, pubsub_project & pubsub_topic, or arn'
+      const getFullPubSubValidationError = (suffix: string) =>
+        `You must declare both pubsub_project and pubsub_topic if you wish to use ${suffix}`
+      const getTooManyDesignationsError = (suffix: string) =>
+        `You are only allowed to declare one (1) of subscription_endpoint_url, pubsub_project & pubsub_topic, or arn ${suffix}`
 
       if ([pubsub_project, pubsub_topic].filter(Boolean).length === 1) {
         ctx.addIssue({
           code: zod.ZodIssueCode.custom,
-          message: `${pubSubValidationErrMsg} a top-level pub sub destination`,
+          message: getFullPubSubValidationError('a top-level pub sub destination'),
           fatal: true,
         })
         return zod.NEVER
@@ -100,7 +101,7 @@ const WebhooksSchema = zod
       if (topLevelDestinations.length > 1) {
         ctx.addIssue({
           code: zod.ZodIssueCode.custom,
-          message: `${tooManyDestinationsErrMsg} at the top level`,
+          message: getTooManyDesignationsError('at the top level'),
           fatal: true,
         })
         return zod.NEVER
@@ -166,7 +167,7 @@ const WebhooksSchema = zod
           if ([subscription.pubsub_project, subscription.pubsub_topic].filter(Boolean).length === 1) {
             ctx.addIssue({
               code: zod.ZodIssueCode.custom,
-              message: `${pubSubValidationErrMsg} a pub sub destination`,
+              message: getFullPubSubValidationError('a pub sub destination'),
               fatal: true,
               path,
             })
@@ -176,7 +177,7 @@ const WebhooksSchema = zod
           if (subscriptionDestinations.length > 1) {
             ctx.addIssue({
               code: zod.ZodIssueCode.custom,
-              message: `${tooManyDestinationsErrMsg} per subscription`,
+              message: getTooManyDesignationsError('per subscription'),
               fatal: true,
               path,
             })
