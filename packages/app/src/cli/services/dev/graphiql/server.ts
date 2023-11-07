@@ -91,15 +91,15 @@ export function setupGraphiQLServer({
   })
 
   const stylePath = require.resolve('@shopify/cli-kit/assets/style.css')
-  app.get('/graphiql/simple.css', async (_req, res) => {
+  app.get('/graphiql/simple.css', (_req, res) => {
     res.sendFile(stylePath)
   })
-
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     let apiVersions: string[]
     try {
       apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (err) {
       // Retry once with a new token, in case the token expired or was revoked
       await refreshToken()
@@ -108,15 +108,11 @@ export function setupGraphiQLServer({
     return apiVersions
   }
 
-  app.get('/graphiql/status', async (_req, res) => {
-    try {
-      await fetchApiVersionsWithTokenRefresh()
-      return res.send({status: 'OK'})
-    } catch (_err) {
-      return res.send({status: 'UNAUTHENTICATED'})
-    }
+  app.get('/graphiql/status', (_req, res) => {
+    fetchApiVersionsWithTokenRefresh()
+      .then(() => res.send({status: 'OK'}))
+      .catch(() => res.send({status: 'UNAUTHENTICATED'}))
   })
-
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (_req, res) => {
