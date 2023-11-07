@@ -73,8 +73,7 @@ export async function setupDevProcesses({
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const scopesArray = getAppScopesArray(localApp.configuration)
   const shouldRenderGraphiQL =
-    scopesArray.length > 0 &&
-    (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
+    isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
 
   const processes = [
     ...(await setupWebProcesses({
