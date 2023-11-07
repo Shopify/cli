@@ -8,7 +8,7 @@ import {
 } from './constants.js'
 import {isSchemaTypeReference} from './validation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {capitalize} from '@shopify/cli-kit/common/string'
+import {pascalize} from '@shopify/cli-kit/common/string'
 
 const actionTypesToUiTypes = new Map<string, string>(actionUiTypesMap)
 const triggerTypesToUiTypes = new Map<string, string>(triggerUiTypesMap)
@@ -66,7 +66,7 @@ export const serializeCommerceObjectField = (field: ConfigField, type: FlowExten
   }
 
   if (type === 'flow_action') {
-    serializedField.label = `${capitalize(commerceObject)} ID`
+    serializedField.label = `${pascalize(commerceObject)} ID`
     serializedField.required = field.required
   }
 
