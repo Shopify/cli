@@ -61,7 +61,7 @@ describe('getRedirectURL()', () => {
     const result = getRedirectUrl(extension, options)
 
     expect(result).toBe(
-      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=test-ui-extension-uuid',
+      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=test-ui-extension-uuid&source=CUSTOMER_ACCOUNT_EXTENSION',
     )
   })
 })
@@ -118,7 +118,7 @@ describe('getExtensionPointRedirectUrl()', () => {
     const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
 
     expect(result).toBe(
-      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc',
+      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&target=customer-account.page.render',
     )
   })
 
@@ -135,7 +135,7 @@ describe('getExtensionPointRedirectUrl()', () => {
     const result = getExtensionPointRedirectUrl('CustomerAccount::FullPage::RenderWithin', extension, options)
 
     expect(result).toBe(
-      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc',
+      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&target=CustomerAccount%3A%3AFullPage%3A%3ARenderWithin',
     )
   })
 
