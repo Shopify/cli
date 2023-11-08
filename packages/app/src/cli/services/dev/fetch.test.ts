@@ -243,8 +243,8 @@ describe('NoOrgError', () => {
       │                                                                              │
       │  Next steps                                                                  │
       │    • Your current active session is associated with the organization         │
-      │      service account. To start a new session with a different account, run   │
-      │      \`shopify auth logout\`                                                   │
+      │      organization account. To start a new session with a different account,  │
+      │      run \`shopify auth logout\`                                               │
       │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Does your account include Manage app permissions?, please contact the   │
       │      owner of the organization to grant you access.                          │
@@ -276,9 +276,9 @@ describe('NoOrgError', () => {
       │  No Organization found                                                       │
       │                                                                              │
       │  Next steps                                                                  │
-      │    • Your current active session is associated with the unknown account. To  │
-      │      start a new session with a different account, run \`shopify auth logout\` │
-      │                                                                              │
+      │    • Your current active session is associated with an unknown account. To   │
+      │      start a new session with a different account, run \`shopify auth         │
+      │      logout\`                                                                 │
       │    • Have you created a Shopify Partners organization [1]?                   │
       │    • Does your account include Manage app permissions?, please contact the   │
       │      owner of the organization to grant you access.                          │

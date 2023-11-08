@@ -22,17 +22,22 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
     let accountIdentifier = 'unknown'
+    let identifierMessage = (formattedIdentifier: string) => `an ${formattedIdentifier}`
     if (isServiceAccount(partnersAccount)) {
-      accountIdentifier = `${partnersAccount.orgName} service`
+      accountIdentifier = partnersAccount.orgName
+      identifierMessage = (formattedIdentifier: string) => `the ${formattedIdentifier} organization`
     } else if (isUserAccount(partnersAccount)) {
-      accountIdentifier = `${partnersAccount.email} user`
+      accountIdentifier = partnersAccount.email
+      identifierMessage = (formattedIdentifier: string) => `the ${formattedIdentifier} user`
     }
+
+    const formattedIdentifier = outputContent`${outputToken.yellow(accountIdentifier)}`.value
 
     const nextSteps = [
       [
-        `Your current active session is associated with the ${
-          outputContent`${outputToken.yellow(accountIdentifier)}`.value
-        } account. To start a new session with a different account, run`,
+        `Your current active session is associated with ${identifierMessage(
+          formattedIdentifier,
+        )} account. To start a new session with a different account, run`,
         {command: 'shopify auth logout'},
       ],
       [
