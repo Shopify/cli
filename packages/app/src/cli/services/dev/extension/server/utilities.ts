@@ -46,7 +46,7 @@ export function getExtensionPointRedirectUrl(
       rawUrl.searchParams.append('target', requestedTarget)
       break
     case 'customer-accounts':
-      rawUrl = getCustomerAccountsRedirectUrl(extension, options)
+      rawUrl = getCustomerAccountsRedirectUrl(extension, options, requestedTarget)
       break
     default:
       return undefined
@@ -55,7 +55,11 @@ export function getExtensionPointRedirectUrl(
   return rawUrl.toString()
 }
 
-function getCustomerAccountsRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): URL {
+function getCustomerAccountsRedirectUrl(
+  extension: ExtensionInstance,
+  options: ExtensionDevOptions,
+  requestedTarget = '',
+): URL {
   const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
   const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
   const origin = `${options.url}/extensions`
@@ -63,6 +67,10 @@ function getCustomerAccountsRedirectUrl(extension: ExtensionInstance, options: E
   const rawUrl = new URL(`https://${accountsUrl}/extensions-development`)
   rawUrl.searchParams.append('origin', origin)
   rawUrl.searchParams.append('extensionId', extension.devUUID)
+  rawUrl.searchParams.append('source', 'CUSTOMER_ACCOUNT_EXTENSION')
+  if (requestedTarget !== '') {
+    rawUrl.searchParams.append('target', requestedTarget)
+  }
   return rawUrl
 }
 
