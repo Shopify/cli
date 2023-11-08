@@ -21,7 +21,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
-    let accountIdentifier = 'unkonwn'
+    let accountIdentifier = 'unknown'
     if (isServiceAccount(partnersAccount)) {
       accountIdentifier = `${partnersAccount.orgName} service`
     } else if (isUserAccount(partnersAccount)) {
@@ -30,7 +30,7 @@ export class NoOrgError extends AbortError {
 
     const nextSteps = [
       [
-        `Your current active session is asscociated with the ${
+        `Your current active session is associated with the ${
           outputContent`${outputToken.yellow(accountIdentifier)}`.value
         } account. To start a new session with a different account, run`,
         {command: 'shopify auth logout'},

@@ -96,7 +96,7 @@ class AppInfo {
       updateUrls = cachedInfo.updateURLs ? 'Yes' : 'No'
     }
 
-    let partnersAccountInfo = ['Partners account', 'unkown']
+    let partnersAccountInfo = ['Partners account', 'unknown']
     if (isServiceAccount(partnersSession.accountInfo)) {
       partnersAccountInfo = ['Service account', partnersSession.accountInfo.orgName]
     } else if (isUserAccount(partnersSession.accountInfo)) {
