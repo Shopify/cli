@@ -1,18 +1,19 @@
-import {ServiceAccountInfo, UnknownAccountInfo, UserAccountInfo} from '../../services/context/partner-account-info.js'
+import {AccountInfo} from '../../services/context/partner-account-info.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {gql} from 'graphql-request'
 
-const CurrentAccountInfoQuery = `#graphql
+const CurrentAccountInfoQuery = gql`
   query currentAccountInfo {
     currentAccountInfo {
-    __typename
-    ... on ServiceAccount {
-      orgName
+      __typename
+      ... on ServiceAccount {
+        orgName
+      }
+      ... on UserAccount {
+        email
+      }
     }
-    ... on UserAccount {
-      email
-    }
-   }
   }
 `
 interface AccountInfoSchema {
@@ -35,12 +36,18 @@ export async function geCurrentAccountInfo(token: string) {
   return mapAccountInfo(currentAccountInfo)
 }
 
-function mapAccountInfo(accountInfo: AccountInfoSchema) {
+function mapAccountInfo(accountInfo: AccountInfoSchema): AccountInfo {
   if (accountInfo.__typename === 'UserAccount') {
-    return new UserAccountInfo(accountInfo.email!)
+    return {
+      type: 'UserAccount',
+      email: accountInfo.email!,
+    }
   } else if (accountInfo.__typename === 'ServiceAccount') {
-    return new ServiceAccountInfo(accountInfo.orgName!)
+    return {
+      type: 'ServiceAccount',
+      orgName: accountInfo.orgName!,
+    }
   } else {
-    return new UnknownAccountInfo()
+    return {type: 'UnknownAccount'}
   }
 }

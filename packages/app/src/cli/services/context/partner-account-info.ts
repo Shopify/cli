@@ -7,54 +7,32 @@ export interface PartnersSession {
   accountInfo: AccountInfo
 }
 
-export abstract class AccountInfo {
-  isUserAccount(): this is UserAccountInfo {
-    return false
-  }
+export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountInfo
 
-  isServiceAccount(): this is ServiceAccountInfo {
-    return false
-  }
-
-  isUnknownAccount(): this is UnknownAccountInfo {
-    return false
-  }
-}
-
-export class UserAccountInfo extends AccountInfo {
+interface UserAccountInfo {
+  type: 'UserAccount'
   email: string
-
-  constructor(email: string) {
-    super()
-    this.email = email
-  }
-
-  isUserAccount() {
-    return true
-  }
 }
 
-export class ServiceAccountInfo extends AccountInfo {
+interface ServiceAccountInfo {
+  type: 'ServiceAccount'
   orgName: string
-
-  constructor(orgName: string) {
-    super()
-    this.orgName = orgName
-  }
-
-  isServiceAccount(): this is ServiceAccountInfo {
-    return true
-  }
 }
 
-export class UnknownAccountInfo extends AccountInfo {
-  constructor() {
-    super()
-  }
+interface UnknownAccountInfo {
+  type: 'UnknownAccount'
+}
 
-  isUnknownAccount(): this is UnknownAccountInfo {
-    return true
-  }
+export function isUserAccount(account: AccountInfo): account is UserAccountInfo {
+  return account.type === 'UserAccount'
+}
+
+export function isServiceAccount(account: AccountInfo): account is ServiceAccountInfo {
+  return account.type === 'ServiceAccount'
+}
+
+export function isUnknownAccount(account: AccountInfo): account is UnknownAccountInfo {
+  return account.type === 'UnknownAccount'
 }
 
 export async function fetchPartnersSession(): Promise<PartnersSession> {
@@ -65,12 +43,12 @@ export async function fetchPartnersSession(): Promise<PartnersSession> {
   }
 }
 
-async function fetchCurrentAccountInformation(token: string) {
+async function fetchCurrentAccountInformation(token: string): Promise<AccountInfo> {
   try {
     return await geCurrentAccountInfo(token)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug('Error fetching user account info')
-    return new UnknownAccountInfo()
+    return {type: 'UnknownAccount'}
   }
 }

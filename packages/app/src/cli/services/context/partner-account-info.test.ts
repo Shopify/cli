@@ -1,4 +1,4 @@
-import {ServiceAccountInfo, UserAccountInfo, fetchPartnersSession} from './partner-account-info.js'
+import {AccountInfo, fetchPartnersSession} from './partner-account-info.js'
 import {PARTNERS_SERVICE_SESSION, PARTNERS_USER_SESSION} from '../../models/app/app.test-data.js'
 import {geCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -13,7 +13,10 @@ describe('fetchPartnersSession', () => {
   test('when user token no errors returns complete user account info', async () => {
     // Given
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-    const userAccountInfo = new UserAccountInfo('partner@shopify.com')
+    const userAccountInfo: AccountInfo = {
+      type: 'UserAccount',
+      email: 'partner@shopify.com',
+    }
     vi.mocked(geCurrentAccountInfo).mockResolvedValue(userAccountInfo)
 
     // When
@@ -26,7 +29,10 @@ describe('fetchPartnersSession', () => {
   test('when partners token no errors returns complete user account info', async () => {
     // Given
     vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('partnersToken')
-    const serviceAccountInfo = new ServiceAccountInfo('organization')
+    const serviceAccountInfo: AccountInfo = {
+      type: 'ServiceAccount',
+      orgName: 'organization',
+    }
     vi.mocked(geCurrentAccountInfo).mockResolvedValue(serviceAccountInfo)
 
     // When
@@ -45,6 +51,6 @@ describe('fetchPartnersSession', () => {
     const got = await fetchPartnersSession()
 
     // Then
-    expect(got).toEqual({token: 'token', accountInfo: {}})
+    expect(got).toEqual({token: 'token', accountInfo: {type: 'UnknownAccount'}})
   })
 })

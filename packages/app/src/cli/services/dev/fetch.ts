@@ -14,7 +14,7 @@ import {
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
-import {AccountInfo, PartnersSession} from '../context/partner-account-info.js'
+import {AccountInfo, PartnersSession, isServiceAccount, isUserAccount} from '../context/partner-account-info.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -22,9 +22,9 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {
     let accountIdentifier = 'unkonwn'
-    if (partnersAccount.isServiceAccount()) {
+    if (isServiceAccount(partnersAccount)) {
       accountIdentifier = `${partnersAccount.orgName} service`
-    } else if (partnersAccount.isUserAccount()) {
+    } else if (isUserAccount(partnersAccount)) {
       accountIdentifier = `${partnersAccount.email} user`
     }
 

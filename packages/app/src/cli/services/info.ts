@@ -1,6 +1,6 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
+import {fetchPartnersSession, isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -97,9 +97,9 @@ class AppInfo {
     }
 
     let partnersAccountInfo = ['Partners account', 'unkown']
-    if (partnersSession.accountInfo.isServiceAccount()) {
+    if (isServiceAccount(partnersSession.accountInfo)) {
       partnersAccountInfo = ['Service account', partnersSession.accountInfo.orgName]
-    } else if (partnersSession.accountInfo.isUserAccount()) {
+    } else if (isUserAccount(partnersSession.accountInfo)) {
       partnersAccountInfo = ['Partners account', partnersSession.accountInfo.email]
     }
 

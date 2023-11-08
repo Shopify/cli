@@ -13,7 +13,6 @@ import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
 import {PARTNERS_SERVICE_SESSION, PARTNERS_USER_SESSION, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {UnknownAccountInfo} from '../context/partner-account-info.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -261,7 +260,7 @@ describe('NoOrgError', () => {
   test('renders correctly for unknown account type', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError(new UnknownAccountInfo(), '3')
+    const subject = new NoOrgError({type: 'UnknownAccount'}, '3')
 
     // When
     renderFatalError(subject)
