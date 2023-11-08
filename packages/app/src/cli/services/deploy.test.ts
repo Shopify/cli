@@ -436,7 +436,6 @@ describe('deploy', () => {
           redirectUrlWhitelist: ['https://my-app.com/auth'],
           title: 'app-title',
           grantedScopes: [],
-          betas: {unifiedAppDeployment: true},
         },
       })
 
@@ -870,7 +869,7 @@ async function testWebhooks(app: AppInterface) {
       redirectUrlWhitelist: ['https://my-app.com/auth'],
       title: 'app-title',
       grantedScopes: [],
-      betas: {unifiedAppDeployment: true, declarativeWebhooks: true},
+      betas: {declarativeWebhooks: true},
     },
   })
 }

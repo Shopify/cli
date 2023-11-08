@@ -19,7 +19,6 @@ export type OrganizationApp = MinimalOrganizationApp & {
   newApp?: boolean
   grantedScopes: string[]
   betas?: {
-    unifiedAppDeployment?: boolean
     declarativeWebhooks?: boolean
   }
   applicationUrl: string

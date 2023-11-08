@@ -2,6 +2,11 @@ import {AppErrors, isWebType} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {
+  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA,
+  validateInnerSubscriptions,
+  validateTopLevelSubscriptions,
+} from '../../utilities/app/config/webhooks.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -63,194 +68,41 @@ export const WebhookSubscriptionSchema = zod.object({
   arn: ArnValidation,
 })
 
-const WebhooksSchema = zod
-  .object({
-    api_version: zod.string(),
-    privacy_compliance: zod
-      .object({
-        customer_deletion_url: ensureHttpsOnlyUrl.optional(),
-        customer_data_request_url: ensureHttpsOnlyUrl.optional(),
-        shop_deletion_url: ensureHttpsOnlyUrl.optional(),
-      })
-      .optional(),
-    subscription_endpoint_url: SubscriptionEndpointUrlValidation,
-    pubsub_project: PubSubProjectValidation,
-    pubsub_topic: PubSubTopicValidation,
-    arn: ArnValidation,
-    topics: zod.array(zod.string()).nonempty().optional(),
-    subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-  })
-  .superRefine(
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    ({subscription_endpoint_url, pubsub_project, pubsub_topic, arn, topics = [], subscriptions = []}, ctx) => {
-      const topLevelDestinations = [subscription_endpoint_url, pubsub_project && pubsub_topic, arn].filter(Boolean)
-      const getFullPubSubValidationError = (suffix: string) =>
-        `You must declare both pubsub_project and pubsub_topic if you wish to use ${suffix}`
-      const getTooManyDesignationsError = (suffix: string) =>
-        `You are only allowed to declare one (1) of subscription_endpoint_url, pubsub_project & pubsub_topic, or arn ${suffix}`
+const WebhooksSchema = zod.object({
+  api_version: zod.string(),
+  privacy_compliance: zod
+    .object({
+      customer_deletion_url: ensureHttpsOnlyUrl.optional(),
+      customer_data_request_url: ensureHttpsOnlyUrl.optional(),
+      shop_deletion_url: ensureHttpsOnlyUrl.optional(),
+    })
+    .optional(),
+})
 
-      if ([pubsub_project, pubsub_topic].filter(Boolean).length === 1) {
-        ctx.addIssue({
-          code: zod.ZodIssueCode.custom,
-          message: getFullPubSubValidationError('a top-level pub sub destination'),
-          fatal: true,
-        })
-        return zod.NEVER
-      }
+const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
+  subscription_endpoint_url: SubscriptionEndpointUrlValidation,
+  pubsub_project: PubSubProjectValidation,
+  pubsub_topic: PubSubTopicValidation,
+  arn: ArnValidation,
+  topics: zod.array(zod.string()).nonempty().optional(),
+  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
+}).superRefine((schema, ctx) => {
+  // eslint-disable-next-line no-warning-comments
+  // TODO - remove once declarative webhooks are live, don't validate properties we are not using yet
+  if (TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA) return
 
-      if (topLevelDestinations.length > 1) {
-        ctx.addIssue({
-          code: zod.ZodIssueCode.custom,
-          message: getTooManyDesignationsError('at the top level'),
-          fatal: true,
-        })
-        return zod.NEVER
-      }
+  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema)
+  if (topLevelSubscriptionErrors) {
+    ctx.addIssue(topLevelSubscriptionErrors)
+    return zod.NEVER
+  }
 
-      if (topLevelDestinations.length && !topics.length && !subscriptions.length) {
-        ctx.addIssue({
-          code: zod.ZodIssueCode.custom,
-          message:
-            'To use a top-level destination, you must also provide a `topics` array or `subscriptions` configuration',
-          fatal: true,
-        })
-        return zod.NEVER
-      }
-
-      if (!topLevelDestinations.length && topics.length) {
-        ctx.addIssue({
-          code: zod.ZodIssueCode.custom,
-          message:
-            'To use top-level topics, you must also provide a top-level destination of either subscription_endpoint_url, pubsub_project & pubsub_topic, or arn',
-          fatal: true,
-          path: ['topics'],
-        })
-        return zod.NEVER
-      }
-
-      // a unique subscription URI is keyed on `${topic}::${destinationURI}`
-      const delimiter = '::'
-      const topLevelDestination = [subscription_endpoint_url, pubsub_project, pubsub_topic, arn]
-        .filter(Boolean)
-        .join(delimiter)
-      const subscriptionDestinationsSet = new Set()
-
-      // if we have a top level destination and top level topics, add them
-      if (topLevelDestination && topics.length) {
-        for (const topic of topics) {
-          const key = `${topic}${delimiter}${topLevelDestination}`
-
-          if (subscriptionDestinationsSet.has(key)) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
-              fatal: true,
-              path: ['topics', topic],
-            })
-            return zod.NEVER
-          }
-
-          subscriptionDestinationsSet.add(key)
-        }
-      }
-
-      // validate individual subscriptions
-      if (subscriptions.length) {
-        for (const [i, subscription] of subscriptions.entries()) {
-          const subscriptionDestinations = [
-            subscription.subscription_endpoint_url,
-            subscription.pubsub_project && subscription.pubsub_topic,
-            subscription.arn,
-          ].filter(Boolean)
-          const path = ['subscriptions', i]
-
-          if ([subscription.pubsub_project, subscription.pubsub_topic].filter(Boolean).length === 1) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: getFullPubSubValidationError('a pub sub destination'),
-              fatal: true,
-              path,
-            })
-            return zod.NEVER
-          }
-
-          if (subscriptionDestinations.length > 1) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: getTooManyDesignationsError('per subscription'),
-              fatal: true,
-              path,
-            })
-            return zod.NEVER
-          }
-
-          // If no top-level destinations are provided, ensure each subscription has at least one destination
-          if (!topLevelDestinations.length && subscriptionDestinations.length === 0) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: 'You must declare either a top-level destination or a destination per subscription',
-              fatal: true,
-              path,
-            })
-            return zod.NEVER
-          }
-
-          if (!subscription_endpoint_url && !subscription.subscription_endpoint_url && subscription.path) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: 'You must declare a subscription_endpoint_url if you wish to use a relative path',
-              fatal: true,
-              path,
-            })
-            return zod.NEVER
-          }
-
-          if ((subscription.arn || subscription.pubsub_project) && subscription.path) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: 'You can’t define a path when using arn or pubsub',
-              fatal: true,
-              path,
-            })
-            return zod.NEVER
-          }
-
-          let destination = [
-            subscription.subscription_endpoint_url,
-            subscription.pubsub_project,
-            subscription.pubsub_topic,
-            subscription.arn,
-          ]
-            .filter(Boolean)
-            .join(delimiter)
-
-          // if there is no destination override, use top level destination
-          if (!destination) {
-            destination = topLevelDestination
-          }
-
-          // concat the path to the destination if it exists to ensure uniqueness
-          if (subscription.path) {
-            destination = `${destination}${subscription.path}`
-          }
-
-          const key = `${subscription.topic}${delimiter}${destination}`
-
-          if (subscriptionDestinationsSet.has(key)) {
-            ctx.addIssue({
-              code: zod.ZodIssueCode.custom,
-              message: 'You can’t have duplicate subscriptions with the exact same topic and destination',
-              fatal: true,
-              path: [...path, subscription.topic],
-            })
-            return zod.NEVER
-          }
-
-          subscriptionDestinationsSet.add(key)
-        }
-      }
-    },
-  )
+  const innerSubscriptionErrors = validateInnerSubscriptions(schema)
+  if (innerSubscriptionErrors) {
+    ctx.addIssue(innerSubscriptionErrors)
+    return zod.NEVER
+  }
+})
 
 export const AppSchema = zod
   .object({
@@ -269,7 +121,7 @@ export const AppSchema = zod
         redirect_urls: zod.array(validateUrl(zod.string())),
       })
       .optional(),
-    webhooks: WebhooksSchema,
+    webhooks: WebhooksSchemaWithDeclarative,
     app_proxy: zod
       .object({
         url: validateUrl(zod.string()),
@@ -386,6 +238,7 @@ export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 export type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
+export type NormalizedWebhookSubscriptions = Partial<zod.infer<typeof WebhookSubscriptionSchema>>[]
 
 export interface Web {
   directory: string
