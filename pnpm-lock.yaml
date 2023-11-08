@@ -277,7 +277,7 @@ importers:
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.21.4
-        version: 3.21.4(zod@3.22.2)
+        version: 3.21.4(zod@3.22.3)
     devDependencies:
       '@shopify/app':
         specifier: 3.50.0
@@ -490,8 +490,8 @@ importers:
         specifier: 3.0.0
         version: 3.0.0
       zod:
-        specifier: 3.22.2
-        version: 3.22.2
+        specifier: 3.22.3
+        version: 3.22.3
     devDependencies:
       '@types/commondir':
         specifier: ^1.0.0
@@ -14597,16 +14597,16 @@ packages:
       readable-stream: 3.6.2
     dev: false
 
-  /zod-to-json-schema@3.21.4(zod@3.22.2):
+  /zod-to-json-schema@3.21.4(zod@3.22.3):
     resolution: {integrity: sha512-fjUZh4nQ1s6HMccgIeE0VP4QG/YRGPmyjO9sAh890aQKPEk3nqbfUXhMFaC+Dr5KvYBm8BCyvfpZf2jY9aGSsw==}
     peerDependencies:
       zod: ^3.21.4
     dependencies:
-      zod: 3.22.2
+      zod: 3.22.3
     dev: false
 
-  /zod@3.22.2:
-    resolution: {integrity: sha512-wvWkphh5WQsJbVk1tbx1l1Ly4yg+XecD+Mq280uBGt9wa5BKSWf4Mhp6GmrkPixhMxmabYY7RbzlwVP32pbGCg==}
+  /zod@3.22.3:
+    resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
     dev: false
 
   file:packages/eslint-plugin-cli(eslint@8.49.0)(prettier@2.8.8)(typescript@5.2.2)(vitest@0.34.4):
