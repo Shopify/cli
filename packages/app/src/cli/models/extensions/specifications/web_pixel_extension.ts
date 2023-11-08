@@ -14,6 +14,14 @@ const WebPixelSchema = BaseSchema.extend({
   runtime_context: zod.string(),
   version: zod.string().optional(),
   configuration: zod.any(),
+  privacy_settings: zod
+    .object({
+      analytics: zod.boolean().optional(),
+      preferences: zod.boolean().optional(),
+      marketing: zod.boolean().optional(),
+      sale_of_data: zod.boolean().optional(),
+    })
+    .optional(),
   settings: zod.any(),
 })
 
@@ -26,6 +34,7 @@ const spec = createExtensionSpecification({
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtime_context,
+      privacy_settings: config.privacy_settings,
       runtime_configuration_definition: config.settings,
     }
   },
