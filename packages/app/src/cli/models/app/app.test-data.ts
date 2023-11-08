@@ -499,7 +499,7 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   webPixelUIExtension,
 ]
 
-export const PARTNERS_USER_SESSION: PartnersSession = {
+export const testPartnersUserSession: PartnersSession = {
   token: 'token',
   accountInfo: {
     type: 'UserAccount',
@@ -507,7 +507,7 @@ export const PARTNERS_USER_SESSION: PartnersSession = {
   },
 }
 
-export const PARTNERS_SERVICE_SESSION: PartnersSession = {
+export const testPartnersServiceSession: PartnersSession = {
   token: 'partnersToken',
   accountInfo: {
     type: 'ServiceAccount',

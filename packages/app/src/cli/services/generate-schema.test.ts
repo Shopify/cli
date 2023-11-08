@@ -3,7 +3,7 @@ import * as localEnvironment from './context.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
 import * as identifiers from '../models/app/identifiers.js'
 import {
-  PARTNERS_USER_SESSION,
+  testPartnersUserSession,
   testApp,
   testFunctionExtension,
   testOrganizationApp,
@@ -44,7 +44,7 @@ describe('generateSchemaService', () => {
   const request = partnersRequest as MockedFunction<typeof partnersRequest>
 
   beforeEach(() => {
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     request.mockImplementation(() => Promise.resolve({definition: 'schema'}))
   })
 

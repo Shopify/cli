@@ -2,7 +2,7 @@ import {importFlowExtensions} from './import-flow-legacy-extensions.js'
 import {fetchAppAndIdentifiers} from './context.js'
 import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
-import {PARTNERS_USER_SESSION, testApp} from '../models/app/app.test-data.js'
+import {testPartnersUserSession, testApp} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -51,7 +51,7 @@ describe('import-flow-legacy-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
     const commandConfig = new Config({root: '/tmp'})
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
     vi.mocked(renderSelectPrompt).mockResolvedValue('uuidA')
@@ -79,7 +79,7 @@ describe('import-flow-legacy-extensions', () => {
   test('selecting All imports all extensions', async () => {
     // Given
     const commandConfig = new Config({root: '/tmp'})
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
     vi.mocked(renderSelectPrompt).mockResolvedValue('All')
@@ -107,7 +107,7 @@ describe('import-flow-legacy-extensions', () => {
   test('Show message if there are not extensions to migrate', async () => {
     // Given
     const commandConfig = new Config({root: '/tmp'})
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([])
 

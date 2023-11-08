@@ -5,7 +5,7 @@ import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.
 import * as accountInfo from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {PARTNERS_USER_SESSION, testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
+import {testPartnersUserSession, testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -25,7 +25,7 @@ const infoOptions: InfoOptions = {
 }
 
 beforeEach(() => {
-  vi.spyOn(accountInfo, 'fetchPartnersSession').mockResolvedValue(PARTNERS_USER_SESSION)
+  vi.spyOn(accountInfo, 'fetchPartnersSession').mockResolvedValue(testPartnersUserSession)
 })
 
 describe('info', () => {

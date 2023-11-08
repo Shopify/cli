@@ -1,5 +1,5 @@
 import {AccountInfo, fetchPartnersSession} from './partner-account-info.js'
-import {PARTNERS_SERVICE_SESSION, PARTNERS_USER_SESSION} from '../../models/app/app.test-data.js'
+import {testPartnersServiceSession, testPartnersUserSession} from '../../models/app/app.test-data.js'
 import {geCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {describe, expect, test, vi} from 'vitest'
@@ -23,7 +23,7 @@ describe('fetchPartnersSession', () => {
     const got = await fetchPartnersSession()
 
     // Then
-    expect(got).toEqual(PARTNERS_USER_SESSION)
+    expect(got).toEqual(testPartnersUserSession)
   })
 
   test('when partners token no errors returns complete user account info', async () => {
@@ -39,7 +39,7 @@ describe('fetchPartnersSession', () => {
     const got = await fetchPartnersSession()
 
     // Then
-    expect(got).toEqual(PARTNERS_SERVICE_SESSION)
+    expect(got).toEqual(testPartnersServiceSession)
   })
 
   test('when error fetching account info returns unkonwn partner info', async () => {

@@ -6,7 +6,7 @@ import {WebhookTriggerFlags} from './trigger-flags.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {findApiKey, findInEnv} from './find-app-info.js'
 import {fetchPartnersSession} from '../context/partner-account-info.js'
-import {PARTNERS_USER_SESSION} from '../../models/app/app.test-data.js'
+import {testPartnersUserSession} from '../../models/app/app.test-data.js'
 import {outputSuccess, consoleError, outputInfo} from '@shopify/cli-kit/node/output'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -51,7 +51,7 @@ const aFullLocalAddress = `http://localhost:${aPort}${aUrlPath}`
 
 describe('webhookTriggerService', () => {
   beforeEach(async () => {
-    vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
   })
 
   test('notifies about request errors', async () => {

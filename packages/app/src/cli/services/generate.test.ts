@@ -10,7 +10,7 @@ import {
   testRemoteSpecifications,
   testRemoteExtensionTemplates,
   testThemeExtensions,
-  PARTNERS_USER_SESSION,
+  testPartnersUserSession,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
@@ -166,7 +166,7 @@ describe('generate', () => {
 })
 
 async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
 
   const appRoot = '/'
   const app = testAppWithConfig({

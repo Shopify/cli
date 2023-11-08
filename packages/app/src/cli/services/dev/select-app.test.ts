@@ -3,7 +3,7 @@ import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {
-  PARTNERS_USER_SESSION,
+  testPartnersUserSession,
   testApp,
   testAppWithLegacyConfig,
   testOrganizationApp,
@@ -56,7 +56,7 @@ const APP_LIST = {
 }
 
 beforeEach(() => {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(PARTNERS_USER_SESSION)
+  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
 })
 
 describe('createApp', () => {
@@ -126,11 +126,11 @@ describe('selectOrCreateApp', () => {
     vi.mocked(partnersRequest).mockResolvedValueOnce({app: APP1})
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, PARTNERS_USER_SESSION)
+    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, testPartnersUserSession)
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, PARTNERS_USER_SESSION, {directory: undefined})
+    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, testPartnersUserSession, {directory: undefined})
   })
 
   test('prompts user to create if chooses to create', async () => {
@@ -148,7 +148,7 @@ describe('selectOrCreateApp', () => {
     }
 
     // When
-    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, PARTNERS_USER_SESSION)
+    const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, testPartnersUserSession)
 
     // Then
     expect(got).toEqual(APP1)

@@ -12,7 +12,11 @@ import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {AllDevStoresByOrganizationQuery} from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery} from '../../api/graphql/find_store_by_domain.js'
 import {AllAppExtensionRegistrationsQuery} from '../../api/graphql/all_app_extension_registrations.js'
-import {PARTNERS_SERVICE_SESSION, PARTNERS_USER_SESSION, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {
+  testPartnersServiceSession,
+  testPartnersUserSession,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -78,7 +82,7 @@ describe('fetchOrganizations', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: [ORG1, ORG2]}})
 
     // When
-    const got = await fetchOrganizations(PARTNERS_USER_SESSION)
+    const got = await fetchOrganizations(testPartnersUserSession)
 
     // Then
     expect(got).toEqual([ORG1, ORG2])
@@ -90,10 +94,10 @@ describe('fetchOrganizations', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = fetchOrganizations(PARTNERS_USER_SESSION)
+    const got = fetchOrganizations(testPartnersUserSession)
 
     // Then
-    await expect(got).rejects.toThrow(new NoOrgError(PARTNERS_USER_SESSION.accountInfo))
+    await expect(got).rejects.toThrow(new NoOrgError(testPartnersUserSession.accountInfo))
     expect(partnersRequest).toHaveBeenCalledWith(AllOrganizationsQuery, 'token')
   })
 })
@@ -104,7 +108,7 @@ describe('fetchApp', async () => {
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
 
     // When
-    const got = await fetchOrgAndApps(ORG1.id, PARTNERS_USER_SESSION)
+    const got = await fetchOrgAndApps(ORG1.id, testPartnersUserSession)
 
     // Then
     expect(got).toEqual({organization: ORG1, apps: {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}}, stores: []})
@@ -116,10 +120,10 @@ describe('fetchApp', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
-    const got = () => fetchOrgAndApps(ORG1.id, PARTNERS_USER_SESSION)
+    const got = () => fetchOrgAndApps(ORG1.id, testPartnersUserSession)
 
     // Then
-    await expect(got).rejects.toThrowError(new NoOrgError(PARTNERS_USER_SESSION.accountInfo))
+    await expect(got).rejects.toThrowError(new NoOrgError(testPartnersUserSession.accountInfo))
     expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id})
   })
 })
@@ -192,7 +196,7 @@ describe('NoOrgError', () => {
   test('renders correctly for user account', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError(PARTNERS_USER_SESSION.accountInfo, '3')
+    const subject = new NoOrgError(testPartnersUserSession.accountInfo, '3')
 
     // When
     renderFatalError(subject)
@@ -226,7 +230,7 @@ describe('NoOrgError', () => {
   test('renders correctly for service account', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError(PARTNERS_SERVICE_SESSION.accountInfo, '3')
+    const subject = new NoOrgError(testPartnersServiceSession.accountInfo, '3')
 
     // When
     renderFatalError(subject)
