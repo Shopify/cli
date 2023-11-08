@@ -223,7 +223,6 @@ interface TestFunctionExtensionOptions {
   dir?: string
   config?: FunctionConfigType
   entryPath?: string
-  usingExtensionFramework?: boolean
 }
 
 export async function testFunctionExtension(
@@ -242,7 +241,6 @@ export async function testFunctionExtension(
     directory,
     specification,
   })
-  extension.usingExtensionsFramework = opts.usingExtensionFramework ?? false
   return extension
 }
 
