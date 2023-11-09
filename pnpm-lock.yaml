@@ -170,8 +170,8 @@ importers:
         specifier: 7.5.0
         version: 7.5.0
       '@shopify/theme-check-node':
-        specifier: 1.18.1
-        version: 1.18.1
+        specifier: 1.20.1
+        version: 1.20.1
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0
@@ -4617,13 +4617,6 @@ packages:
     engines: {node: '>=12.14.0'}
     dev: false
 
-  /@shopify/liquid-html-parser@1.1.0:
-    resolution: {integrity: sha512-6CiBpZsWfz6JJ54f+R2ln67MxukVqm0X9VIzDniwLpsn7NSTzfDRcr2ttuxX695aUFTixO97soCbW8ac0F4Olg==}
-    dependencies:
-      line-column: 1.0.2
-      ohm-js: 16.6.0
-    dev: false
-
   /@shopify/liquid-html-parser@1.1.1:
     resolution: {integrity: sha512-nGTkGTu5UWwd9OcM6q5/8ZDWe5U8VTlKeCprwhBAQ/qWV57tBcOIT5+UeTc1tIPVnHMD/S9nkhXY04api3/HqQ==}
     dependencies:
@@ -4719,20 +4712,6 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-common@1.18.1:
-    resolution: {integrity: sha512-p4pTc/yCpqOJqL+AASBwGcS2JUjX6uyQy2qSFPIrs7h/ObTVydtwJxB2q/QmMm8NiOXLKWGbJlKQvTPOu5BwGw==}
-    dependencies:
-      '@shopify/liquid-html-parser': 1.1.0
-      cross-fetch: 4.0.0
-      json-to-ast: 2.1.0
-      line-column: 1.0.2
-      lodash.set: 4.3.2
-      lodash.unset: 4.5.2
-      minimatch: 9.0.3
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
   /@shopify/theme-check-common@1.20.1:
     resolution: {integrity: sha512-M8176CVIDM9kZ8G991lN+HXefavMdk++UlaxgVBjVKLCtx0cn/z013KHFZTusUvcO+OyApZlcqMawN1zonT2LQ==}
     dependencies:
@@ -4747,18 +4726,6 @@ packages:
       - encoding
     dev: false
 
-  /@shopify/theme-check-docs-updater@1.18.1:
-    resolution: {integrity: sha512-Iq0zXQPMPRcCobsD61M3qQz0KilbJmK4z4zMO/Rqyi2C2HiAAtDlBwST69QDa8o7cx/wKewXTZ+RYCYgmVqEuQ==}
-    hasBin: true
-    dependencies:
-      '@shopify/theme-check-common': 1.18.1
-      ajv: 8.12.0
-      env-paths: 2.2.1
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
   /@shopify/theme-check-docs-updater@1.20.1:
     resolution: {integrity: sha512-AIqRwMQZZ2vWrdVZqQ9YXbqrPoY+ctG/yaIE/NK5+uESpy6AO/GJrCN2iT0lNaWvDYXb3ISyuMQpv4iL0z8kww==}
     hasBin: true
@@ -4767,17 +4734,6 @@ packages:
       ajv: 8.12.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
-    dev: false
-
-  /@shopify/theme-check-node@1.18.1:
-    resolution: {integrity: sha512-UMvGd0DFeyOFROv1krM2YWb/5iFt+mts8WxGJnwNkJKRdRY6xNnmUU1+5Jvj+RVTHLoUoiGYRWyrUe6Aumf++A==}
-    dependencies:
-      '@shopify/theme-check-common': 1.18.1
-      '@shopify/theme-check-docs-updater': 1.18.1
-      glob: 8.1.0
-      yaml: 2.3.2
     transitivePeerDependencies:
       - encoding
     dev: false
