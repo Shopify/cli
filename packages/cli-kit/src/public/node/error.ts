@@ -24,6 +24,7 @@ export abstract class FatalError extends Error {
   nextSteps?: TokenItem<InlineToken>[]
   formattedMessage?: TokenItem
   customSections?: AlertCustomSection[]
+  skipOclifErrorHandling: boolean
   /**
    * Creates a new FatalError error.
    *
@@ -58,6 +59,7 @@ export abstract class FatalError extends Error {
     this.type = type
     this.nextSteps = nextSteps
     this.customSections = customSections
+    this.skipOclifErrorHandling = true
 
     if (!messageIsOutputMessage) {
       this.formattedMessage = message
@@ -72,6 +74,7 @@ export abstract class FatalError extends Error {
 export class AbortError extends FatalError {
   nextSteps?: TokenItem<InlineToken>[]
   customSections?: AlertCustomSection[]
+
   constructor(
     message: TokenItem | OutputMessage,
     tryMessage: TokenItem | OutputMessage | null = null,
