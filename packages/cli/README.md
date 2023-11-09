@@ -489,10 +489,12 @@ List deployed versions of your app.
 ```
 USAGE
   $ shopify app versions list [FILE] [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>]
+    [--json]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
   --client-id=<value>   The Client ID to fetch versions for.
+  --json                Output the versions list as JSON.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your app directory.
   --verbose             Increase the verbosity of the logs.
@@ -899,7 +901,9 @@ USAGE
 
 FLAGS
   -C, --config=<value>            Use the config provided, overriding .theme-check.yml if present
-                                  Use :theme_app_extension to use default checks for theme app extensions
+                                  Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
+                                  theme-check:recommended, theme-check:all
+                                  For backwards compatibility, :theme_app_extension is also supported
   -a, --auto-correct              Automatically fix offenses
   -c, --category=<value>          Only run this category of checks
                                   Runs checks matching all categories when specified more than once
@@ -1121,13 +1125,14 @@ Lists your remote themes.
 ```
 USAGE
   $ shopify theme list [--no-color] [--verbose] [--password <value>] [-s <value>] [--role
-    live|unpublished|development] [--name <value>] [--id <value>] [-e <value>]
+    live|unpublished|development] [--name <value>] [--id <value>] [--json] [-e <value>]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   --id=<value>               Only list theme with the given ID.
+  --json                     Output the theme list as JSON.
   --name=<value>             Only list themes that contain the given name.
   --no-color                 Disable color output.
   --password=<value>         Password generated from the Theme Access app.

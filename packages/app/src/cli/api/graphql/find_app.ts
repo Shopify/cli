@@ -12,9 +12,6 @@ export const FindAppQuery = gql`
       }
       appType
       grantedScopes
-      betas {
-        unifiedAppDeployment
-      }
       applicationUrl
       redirectUrlWhitelist
       requestedAccessScopes
@@ -48,9 +45,6 @@ export interface FindAppQuerySchema {
     }[]
     appType: string
     grantedScopes: string[]
-    betas?: {
-      unifiedAppDeployment?: boolean
-    }
     applicationUrl: string
     redirectUrlWhitelist: string[]
     requestedAccessScopes?: string[]

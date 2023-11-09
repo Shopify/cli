@@ -105,6 +105,7 @@ export function formatPackageManagerCommand(
 ): string {
   switch (packageManager) {
     case 'pnpm':
+    case 'bun':
     case 'yarn': {
       const pieces = [packageManager, scriptName, ...scriptArgs]
       return pieces.join(' ')

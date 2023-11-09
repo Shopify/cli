@@ -1,5 +1,6 @@
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
+import {PartnersSession} from '../context/partner-account-info.js'
 import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, cwd} from '@shopify/cli-kit/node/path'
@@ -35,10 +36,10 @@ export async function findInEnv(): Promise<AppCredentials> {
  * @param token - partners token
  * @returns apiKey
  */
-export async function findApiKey(token: string): Promise<string | undefined> {
-  const orgs = await fetchOrganizations(token)
+export async function findApiKey(partnersSession: PartnersSession): Promise<string | undefined> {
+  const orgs = await fetchOrganizations(partnersSession)
   const org = await selectOrganizationPrompt(orgs)
-  const {apps} = await fetchOrgAndApps(org.id, token)
+  const {apps} = await fetchOrgAndApps(org.id, partnersSession)
 
   if (apps.nodes.length === 0) {
     return
@@ -52,7 +53,7 @@ export async function findApiKey(token: string): Promise<string | undefined> {
     if (apps.nodes.length === 1 && apps.nodes[0]?.apiKey) {
       apiKey = apps.nodes[0].apiKey
     } else {
-      apiKey = await selectAppPrompt(apps, org.id, token)
+      apiKey = await selectAppPrompt(apps, org.id, partnersSession)
     }
   } else {
     apiKey = appFromDir.apiKey

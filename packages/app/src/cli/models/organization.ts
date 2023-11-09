@@ -18,9 +18,6 @@ export type OrganizationApp = MinimalOrganizationApp & {
   appType?: string
   newApp?: boolean
   grantedScopes: string[]
-  betas?: {
-    unifiedAppDeployment?: boolean
-  }
   applicationUrl: string
   redirectUrlWhitelist: string[]
   requestedAccessScopes?: string[]

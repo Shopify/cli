@@ -3,13 +3,13 @@ import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuery, AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {renderTable} from '@shopify/cli-kit/node/ui'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
 import {formatDate} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
+import {renderTable} from '@shopify/cli-kit/node/ui'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type AppVersionLine = {
@@ -25,6 +25,7 @@ const TABLE_FORMATTING_CHARS = 12
 async function fetchAppVersions(
   token: string,
   apiKey: string,
+  json: boolean,
 ): Promise<{
   appVersions: AppVersionLine[]
   totalResults: number
@@ -38,39 +39,41 @@ async function fetchAppVersions(
     const message = appVersion.message ?? ''
     return {
       ...appVersion,
-      status: appVersion.status === 'active' ? colors.green(`★ ${appVersion.status}`) : appVersion.status,
+      status: appVersion.status === 'active' && !json ? colors.green(`★ ${appVersion.status}`) : appVersion.status,
       createdBy: appVersion.createdBy?.displayName ?? '',
       createdAt: formatDate(new Date(appVersion.createdAt)),
       message,
     }
   })
 
-  const maxLineLength = (process.stdout.columns ?? 75) - TABLE_FORMATTING_CHARS
-  let maxMessageLength = maxLineLength
+  if (!json) {
+    const maxLineLength = (process.stdout.columns ?? 75) - TABLE_FORMATTING_CHARS
+    let maxMessageLength = maxLineLength
 
-  // Calculate the max allowed length for the message column
-  appVersions.forEach((appVersion) => {
-    const combinedLength =
-      appVersion.message.length +
-      appVersion.versionTag.length +
-      unstyled(appVersion.status).length +
-      appVersion.createdAt.length +
-      appVersion.createdBy.length
-    if (combinedLength > maxLineLength) {
-      const combinedWithoutMessageLength = combinedLength - appVersion.message.length
-      const newMaxLength = Math.max(maxLineLength - combinedWithoutMessageLength, 10)
-      if (newMaxLength < maxMessageLength) {
-        maxMessageLength = newMaxLength
+    // Calculate the max allowed length for the message column
+    appVersions.forEach((appVersion) => {
+      const combinedLength =
+        appVersion.message.length +
+        appVersion.versionTag.length +
+        unstyled(appVersion.status).length +
+        appVersion.createdAt.length +
+        appVersion.createdBy.length
+      if (combinedLength > maxLineLength) {
+        const combinedWithoutMessageLength = combinedLength - appVersion.message.length
+        const newMaxLength = Math.max(maxLineLength - combinedWithoutMessageLength, 10)
+        if (newMaxLength < maxMessageLength) {
+          maxMessageLength = newMaxLength
+        }
       }
-    }
-  })
+    })
 
-  // Update the message column to fit the max length
-  appVersions.forEach((appVersion) => {
-    if (appVersion.message.length > maxMessageLength) {
-      appVersion.message = `${appVersion.message.slice(0, maxMessageLength - 3)}...`
-    }
-  })
+    // Update the message column to fit the max length
+    appVersions.forEach((appVersion) => {
+      if (appVersion.message.length > maxMessageLength) {
+        appVersion.message = `${appVersion.message.slice(0, maxMessageLength - 3)}...`
+      }
+    })
+  }
 
   return {
     appVersions,
@@ -84,15 +87,21 @@ interface VersionListOptions {
   apiKey?: string
   reset: false
   commandConfig: Config
+  json: boolean
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const {token, partnersApp} = await ensureVersionsListContext(options)
+  const {partnersSession, partnersApp} = await ensureVersionsListContext(options)
   const {id: appId, organizationId, title, apiKey} = partnersApp
 
-  const {appVersions, totalResults} = await fetchAppVersions(token, apiKey)
+  const {appVersions, totalResults} = await fetchAppVersions(partnersSession.token, apiKey, options.json)
 
-  const {businessName: org} = await fetchOrgFromId(organizationId, token)
+  const {businessName: org} = await fetchOrgFromId(organizationId, partnersSession)
+
+  if (options.json) {
+    return outputInfo(JSON.stringify(appVersions, null, 2))
+  }
+
   renderCurrentlyUsedConfigInfo({
     org,
     appName: title,

@@ -10,7 +10,6 @@ export interface PreviewThemeAppExtensionsOptions {
   themeExtensionServerArgs: string[]
   storefrontToken: string
   token: string
-  usesUnifiedDeployment: boolean
 }
 
 export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThemeAppExtensionsOptions> {
@@ -19,7 +18,7 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
 
 export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
-  {adminSession, themeExtensionServerArgs: args, storefrontToken, token, usesUnifiedDeployment},
+  {adminSession, themeExtensionServerArgs: args, storefrontToken, token},
 ) => {
   await execCLI2(['extension', 'serve', ...args], {
     store: adminSession.storeFqdn,
@@ -29,7 +28,6 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
     stdout,
     stderr,
     signal: abortSignal,
-    unifiedDeployment: usesUnifiedDeployment,
   })
 }
 
@@ -40,9 +38,8 @@ export async function setupPreviewThemeAppExtensionsProcess({
   theme,
   themeExtensionPort,
   notify,
-  usesUnifiedDeployment,
   token,
-}: Pick<PreviewThemeAppExtensionsOptions, 'token' | 'usesUnifiedDeployment'> & {
+}: Pick<PreviewThemeAppExtensionsOptions, 'token'> & {
   allExtensions: ExtensionInstance[]
   apiKey: string
   storeFqdn: string
@@ -83,7 +80,6 @@ export async function setupPreviewThemeAppExtensionsProcess({
       adminSession,
       themeExtensionServerArgs: args,
       storefrontToken,
-      usesUnifiedDeployment,
       token,
     },
   }

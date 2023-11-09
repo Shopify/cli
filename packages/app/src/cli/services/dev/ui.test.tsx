@@ -16,6 +16,14 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('./ui/components/Dev.js')
+vi.mock('../context.js')
+
+const developerPreview = {
+  fetchMode: vi.fn(async () => true),
+  enable: vi.fn(async () => {}),
+  disable: vi.fn(async () => {}),
+  update: vi.fn(async (_state: boolean) => true),
+}
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -143,7 +151,7 @@ describe('ui', () => {
 
       const abortController = new AbortController()
 
-      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
 
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
@@ -152,6 +160,58 @@ describe('ui', () => {
         process.stderr,
         abortController.signal,
       )
+    })
+
+    test("enable dev preview when terminal doesn't support TTY and the app supports it", async () => {
+      vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+      const concurrentProcess = {
+        prefix: 'prefix',
+        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+      }
+
+      const processes = [concurrentProcess]
+      const previewUrl = 'https://lala.cloudflare.io/'
+      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
+      const app = {
+        canEnablePreviewMode: true,
+        developmentStorePreviewEnabled: false,
+        apiKey: '123',
+        token: '123',
+      }
+
+      const abortController = new AbortController()
+
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
+      abortController.abort()
+
+      expect(developerPreview.enable).toHaveBeenCalled()
+      expect(developerPreview.disable).toHaveBeenCalled()
+    })
+
+    test("don't enable dev preview when terminal doesn't support TTY and the app doesn't supports it", async () => {
+      vi.mocked(terminalSupportsRawMode).mockReturnValue(false)
+      const concurrentProcess = {
+        prefix: 'prefix',
+        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+      }
+
+      const processes = [concurrentProcess]
+      const previewUrl = 'https://lala.cloudflare.io/'
+      const graphiqlUrl = 'https://lala.cloudflare.io/graphiql'
+      const app = {
+        canEnablePreviewMode: false,
+        developmentStorePreviewEnabled: false,
+        apiKey: '123',
+        token: '123',
+      }
+
+      const abortController = new AbortController()
+
+      await renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
+      abortController.abort()
+
+      expect(developerPreview.enable).not.toHaveBeenCalled()
+      expect(developerPreview.disable).not.toHaveBeenCalled()
     })
 
     test('uses ink when terminal supports TTY', async () => {
@@ -174,7 +234,7 @@ describe('ui', () => {
       const abortController = new AbortController()
 
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      renderDev({processes, previewUrl, graphiqlUrl, app, abortController})
+      renderDev({processes, previewUrl, graphiqlUrl, app, abortController, developerPreview})
 
       await new Promise((resolve) => setTimeout(resolve, 100))
 

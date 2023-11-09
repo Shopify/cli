@@ -3,6 +3,7 @@ import {Dev, DevProps} from './ui/components/Dev.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
+import {disableDeveloperPreview, enableDeveloperPreview} from '../context.js'
 import React from 'react'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -60,17 +61,23 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl}: DevProps) {
+export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl, developerPreview}: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
-    return render(<Dev processes={processes} abortController={abortController} previewUrl={previewUrl} app={app} graphiqlUrl={graphiqlUrl} />, {
-      exitOnCtrlC: false,
-    })
-  } else {
-    return Promise.all(
-      processes.map(async (concurrentProcess) => {
-        await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
-      }),
+    return render(
+      <Dev
+        processes={processes}
+        abortController={abortController}
+        previewUrl={previewUrl}
+        app={app}
+        graphiqlUrl={graphiqlUrl}
+        developerPreview={developerPreview}
+      />,
+      {
+        exitOnCtrlC: false,
+      },
     )
+  } else {
+    await renderDevNonInteractive({processes, app, abortController, developerPreview})
   }
 }
 
@@ -81,4 +88,23 @@ async function partnersURL(organizationId: string, appId: string) {
       url: `https://${await partnersFqdn()}/${organizationId}/apps/${appId}/edit`,
     },
   }
+}
+
+async function renderDevNonInteractive({
+  processes,
+  app: {canEnablePreviewMode},
+  abortController,
+  developerPreview,
+}: Omit<DevProps, 'previewUrl'>) {
+  if (canEnablePreviewMode) {
+    await developerPreview.enable()
+    abortController?.signal.addEventListener('abort', async () => {
+      await developerPreview.disable()
+    })
+  }
+  return Promise.all(
+    processes.map(async (concurrentProcess) => {
+      await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
+    }),
+  )
 }

@@ -15,10 +15,10 @@ import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
+import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
@@ -91,11 +91,11 @@ async function loadRemoteApp(
   apiKey: string | undefined,
   directory?: string,
 ): Promise<OrganizationApp> {
-  const token = await ensureAuthenticatedPartners()
+  const partnersSession = await fetchPartnersSession()
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, token, directory)
+    return fetchOrCreateOrganizationApp(localApp, partnersSession, directory)
   }
-  const app = await fetchAppDetailsFromApiKey(apiKey, token)
+  const app = await fetchAppDetailsFromApiKey(apiKey, partnersSession.token)
   if (!app) {
     const errorMessage = InvalidApiKeyErrorMessage(apiKey)
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)

@@ -6,6 +6,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {describe, expect, vi, test} from 'vitest'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../utilities/theme-selector/fetch.js')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -31,7 +32,7 @@ describe('list', () => {
     vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
     vi.mocked(getHostTheme).mockReturnValue(hostThemeId.toString())
 
-    await list(session, {})
+    await list(session, {json: false})
 
     expect(renderTable).toBeCalledWith({
       rows: [
@@ -53,11 +54,37 @@ describe('list', () => {
       {id: 5, name: 'Theme 5', role: 'development'},
     ] as Theme[])
 
-    await list(session, {role: 'live', name: 'eMe 3'})
+    await list(session, {role: 'live', name: 'eMe 3', json: false})
 
     expect(renderTable).toBeCalledWith({
       rows: [{id: '#3', name: 'Theme 3', role: '[live]'}],
       columns,
     })
+  })
+
+  test('should output in json format', async () => {
+    const mockOutput = mockAndCaptureOutput()
+
+    vi.mocked(fetchStoreThemes).mockResolvedValue([
+      {id: 1, name: 'Theme 1', role: 'live'},
+      {id: 2, name: 'Theme 2', role: ''},
+    ] as Theme[])
+
+    await list(session, {json: true})
+
+    expect(mockOutput.info()).toMatchInlineSnapshot(`
+    "[
+      {
+        \\"id\\": 1,
+        \\"name\\": \\"Theme 1\\",
+        \\"role\\": \\"live\\"
+      },
+      {
+        \\"id\\": 2,
+        \\"name\\": \\"Theme 2\\",
+        \\"role\\": \\"\\"
+      }
+    ]"
+  `)
   })
 })

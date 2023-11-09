@@ -85,7 +85,8 @@
                 "@oclif/core",
                 "../../private/node/constants.js",
                 "./path.js",
-                "./system.js"
+                "./system.js",
+                "./ui.js"
               ],
               "static": [
                 "@oclif/core",
@@ -162,7 +163,7 @@
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",
     "unique-string": "3.0.0",
-    "zod": "3.22.2"
+    "zod": "3.22.3"
   },
   "devDependencies": {
     "@types/commondir": "^1.0.0",

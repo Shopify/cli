@@ -18,9 +18,9 @@ const __dirname = path.dirname(__filename);
 const homeDir = os.homedir();
 const today = new Date().toISOString().split("T")[0];
 
-const installationTypes = ["local", "nightly"];
+const installationTypes = ["local", "nightly", "experimental"];
 const extensionTypes = ["ui", "theme", "function"];
-const packageManagers = ["npm", "yarn", "pnpm"];
+const packageManagers = ["npm", "yarn", "pnpm", "bun"];
 
 program
   .description("Creates a test app.")
@@ -82,12 +82,13 @@ program
       case "npm":
       case "yarn":
       case "pnpm":
+      case "bun":
         nodePackageManager = options.packageManager;
         break;
       case undefined:
         if (options.install === "local") {
           nodePackageManager = "pnpm";
-        } else if (options.install === "nightly") {
+        } else if (options.install === "nightly" || options.install === "experimental") {
           nodePackageManager = "npm";
         }
         break;
@@ -104,6 +105,7 @@ program
       switch (nodePackageManager) {
         case "yarn":
         case "pnpm":
+        case "bun":
           return execa(
             nodePackageManager,
             ["run", ...commands, ...args],
@@ -172,7 +174,7 @@ program
         );
 
         // there are some bugs with lockfiles and local references
-        ["package-lock.json", "pnpm-lock.yaml", "yarn.lock"].forEach((lockFile) => {
+        ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"].forEach((lockFile) => {
           let lockFilePath = path.join(appPath, lockFile);
           if (fs.existsSync(lockFilePath)) {
             fs.rmSync(lockFilePath);
@@ -181,6 +183,7 @@ program
 
         break;
       case "nightly":
+      case "experimental":
         log(`Creating new app in '${appPath}'...`);
         let initArgs = [`--template=${template}`, flavorFlag, `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
         switch (nodePackageManager) {
@@ -190,7 +193,7 @@ program
               "npm",
               [
                 "init",
-                "@shopify/app@nightly",
+                `@shopify/app@${options.install}`,
                 "--package-manager=yarn",
                 "--",
                 ...initArgs
@@ -199,11 +202,12 @@ program
             );
             break;
           case "pnpm":
+          case "bun":
             await execa(
               nodePackageManager,
               [
                 "create",
-                "@shopify/app@nightly",
+                `@shopify/app@${options.install}`,
                 ...initArgs
               ],
               defaultOpts
@@ -214,14 +218,13 @@ program
               "npm",
               [
                 "init",
-                "@shopify/app@nightly",
+                `@shopify/app@${options.install}`,
                 "--",
                 ...initArgs
               ],
               defaultOpts
             );
         }
-
         break;
       default:
         log(

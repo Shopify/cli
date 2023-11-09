@@ -12,7 +12,6 @@ export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
   token: string
   apiKey: string
-  unifiedDeployment: boolean
   remoteExtensionIds: {[key: string]: string}
   proxyUrl: string
   localApp: AppInterface
@@ -24,7 +23,7 @@ export interface DraftableExtensionProcess extends BaseProcess<DraftableExtensio
 
 export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExtensionOptions> = async (
   {stderr, stdout, abortSignal: signal},
-  {extensions, token, apiKey, unifiedDeployment, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
+  {extensions, token, apiKey, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
 ) => {
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
@@ -39,7 +38,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
       await extension.build({app, stdout, stderr, useTasks: false, signal})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
+      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
     }),
   )
 
@@ -58,7 +57,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
             stdout,
             stderr,
             signal,
-            unifiedDeployment,
           }),
         ]
 
@@ -75,7 +73,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
               stderr,
               stdout,
               signal,
-              unifiedDeployment,
             }),
           )
         }
@@ -92,7 +89,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
               token,
               apiKey,
               registrationId,
-              unifiedDeployment,
             }),
           )
         }
@@ -104,7 +100,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 }
 
 export async function setupDraftableExtensionsProcess({
-  unifiedDeployment,
   localApp,
   apiKey,
   token,
@@ -114,12 +109,10 @@ export async function setupDraftableExtensionsProcess({
   remoteApp: PartnersAppForIdentifierMatching
 }): Promise<DraftableExtensionProcess | undefined> {
   // it would be good if this process didn't require the full local & remote app instances
-  const allExtensions = localApp.allExtensions
-  const draftableExtensions = allExtensions.filter((ext) => ext.isDraftable(unifiedDeployment))
+  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable())
   if (draftableExtensions.length === 0) {
     return
   }
-  const deploymentMode = unifiedDeployment ? 'unified' : 'legacy'
   const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
 
   const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({
@@ -128,7 +121,7 @@ export async function setupDraftableExtensionsProcess({
     appId: apiKey,
     appName: remoteApp.title,
     force: true,
-    deploymentMode,
+    release: true,
     token,
     envIdentifiers: prodEnvIdentifiers,
   })
@@ -143,7 +136,6 @@ export async function setupDraftableExtensionsProcess({
     prefix: 'extensions',
     function: pushUpdatesForDraftableExtensions,
     options: {
-      unifiedDeployment,
       localApp,
       apiKey,
       token,

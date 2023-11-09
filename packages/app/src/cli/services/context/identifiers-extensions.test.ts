@@ -9,7 +9,6 @@ import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/m
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
-import {DeploymentMode} from '../deploy/mode.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ok} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
@@ -70,18 +69,12 @@ const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: Extens
   })
 }
 
-const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
-  betas: {unifiedAppDeployment: true},
-})
-
-const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp()
-
 const options = (
   uiExtensions: ExtensionInstance[],
   functionExtensions: ExtensionInstance[] = [],
   identifiers: any = {},
-  partnersApp: OrganizationApp = PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA,
-  deploymentMode: DeploymentMode = 'legacy',
+  partnersApp: OrganizationApp = testOrganizationApp(),
+  release = true,
 ) => {
   return {
     app: LOCAL_APP(uiExtensions, functionExtensions),
@@ -91,7 +84,7 @@ const options = (
     envIdentifiers: {extensions: identifiers},
     force: false,
     partnersApp,
-    deploymentMode,
+    release,
   }
 }
 
@@ -442,46 +435,7 @@ describe('ensureExtensionsIds: matchmaking returns ok with nothing pending', () 
   })
 })
 
-describe('ensureExtensionsIds: excludes functions when unifiedAppDeployment beta is not set', () => {
-  test('succeeds and returns all identifiers', async () => {
-    // Given
-    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
-      identifiers: {EXTENSION_A: 'UUID_A'},
-      toCreate: [],
-      toConfirm: [],
-      toManualMatch: {
-        local: [],
-        remote: [],
-      },
-    })
-    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
-
-    // When
-    const got = await ensureExtensionsIds(
-      options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA),
-      {
-        extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
-        dashboardManagedExtensionRegistrations: [],
-      },
-    )
-
-    // Then
-    expect(automaticMatchmaking).toHaveBeenCalledWith(
-      [EXTENSION_A],
-      [REGISTRATION_A, FUNCTION_REGISTRATION_A],
-      {},
-      'uuid',
-    )
-    expect(got).toEqual(
-      ok({
-        extensions: {EXTENSION_A: 'UUID_A'},
-        extensionIds: {EXTENSION_A: 'A'},
-      }),
-    )
-  })
-})
-
-describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta is set', () => {
+describe('ensureExtensionsIds: includes functions', () => {
   test('succeeds and returns all identifiers', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
@@ -496,13 +450,10 @@ describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureExtensionsIds(
-      options([EXTENSION_A], [FUNCTION_A], {}, PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA, 'unified'),
-      {
-        extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
-        dashboardManagedExtensionRegistrations: [],
-      },
-    )
+    const got = await ensureExtensionsIds(options([EXTENSION_A], [FUNCTION_A], {}, testOrganizationApp(), true), {
+      extensionRegistrations: [REGISTRATION_A, FUNCTION_REGISTRATION_A],
+      dashboardManagedExtensionRegistrations: [],
+    })
 
     // Then
     expect(automaticMatchmaking).toHaveBeenCalledWith(
@@ -521,7 +472,7 @@ describe('ensureExtensionsIds: includes functions when unifiedAppDeployment beta
 })
 
 describe('ensureExtensionsIds: asks user to confirm deploy', () => {
-  test('shows confirmation prompt', async () => {
+  test('shows confirmation prompt when release is true', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -533,7 +484,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
-    const opt = options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, 'unified')
+    const opt = options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, true)
 
     // When
     await ensureExtensionsIds(opt, {
@@ -542,25 +493,24 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     })
 
     // Then
-    expect(deployConfirmationPrompt).toBeCalledWith(
-      {
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      summary: {
         appTitle: 'app1',
-        question: `Release a new version of ${PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA.title}?`,
+        question: `Release a new version of ${testOrganizationApp().title}?`,
         identifiers: {
           EXTENSION_A: 'UUID_A',
           EXTENSION_A_2: 'UUID_A_2',
         },
-        onlyRemote: [],
         dashboardOnly: [DASHBOARD_REGISTRATION_A],
         toCreate: [],
       },
-      'unified',
-      opt.appId,
-      opt.token,
-    )
+      release: true,
+      apiKey: opt.appId,
+      token: opt.token,
+    })
   })
 
-  test('does not include dashboard managed extensions in confirmation prompt if the beta flag is off', async () => {
+  test('shows confirmation prompt when release is false', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {EXTENSION_A: 'UUID_A', EXTENSION_A_2: 'UUID_A_2'},
@@ -572,7 +522,7 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
       },
     })
     vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
-    const opt = options([EXTENSION_A, EXTENSION_A_2], [], {}, PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA)
+    const opt = options([EXTENSION_A, EXTENSION_A_2], [], null, undefined, false)
 
     // When
     await ensureExtensionsIds(opt, {
@@ -581,22 +531,21 @@ describe('ensureExtensionsIds: asks user to confirm deploy', () => {
     })
 
     // Then
-    expect(deployConfirmationPrompt).toBeCalledWith(
-      {
+    expect(deployConfirmationPrompt).toBeCalledWith({
+      summary: {
         appTitle: 'app1',
-        question: 'Make the following changes to your extensions in Shopify Partners?',
+        question: `Create a new version of ${testOrganizationApp().title}?`,
         identifiers: {
           EXTENSION_A: 'UUID_A',
           EXTENSION_A_2: 'UUID_A_2',
         },
-        onlyRemote: [],
-        dashboardOnly: [],
+        dashboardOnly: [DASHBOARD_REGISTRATION_A],
         toCreate: [],
       },
-      'legacy',
-      opt.appId,
-      opt.token,
-    )
+      release: false,
+      apiKey: opt.appId,
+      token: opt.token,
+    })
   })
 
   test('skips confirmation prompt if --force is passed', async () => {

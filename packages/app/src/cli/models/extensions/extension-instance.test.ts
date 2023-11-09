@@ -90,52 +90,34 @@ describe('watchPaths', async () => {
 })
 
 describe('isDraftable', () => {
-  test('returns true for ui extensions when using unified deploys', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable(true)
-
-    expect(got).toBe(true)
-  })
-
-  test('returns false for ui extensions when not using unified deploys', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(false)
-  })
-
   test('returns false for theme extensions', async () => {
     const extensionInstance = await testThemeExtensions()
 
-    const got1 = extensionInstance.isDraftable(true)
-    const got2 = extensionInstance.isDraftable(false)
+    const got1 = extensionInstance.isDraftable()
 
     expect(got1).toBe(false)
-    expect(got2).toBe(false)
-  })
-
-  test('returns false for functions when not using unified deploys', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(false)
-  })
-
-  test('returns true for functions when using unified deploys', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable(true)
-
-    expect(got).toBe(true)
   })
 
   test('returns true for web pixel extensions', async () => {
     const extensionInstance = await testWebPixelExtension()
 
-    const got = extensionInstance.isDraftable(false)
+    const got = extensionInstance.isDraftable()
+
+    expect(got).toBe(true)
+  })
+
+  test('returns true for ui extensions', async () => {
+    const extensionInstance = await testUIExtension()
+
+    const got = extensionInstance.isDraftable()
+
+    expect(got).toBe(true)
+  })
+
+  test('returns true for functions', async () => {
+    const extensionInstance = await testFunctionExtension()
+
+    const got = extensionInstance.isDraftable()
 
     expect(got).toBe(true)
   })
