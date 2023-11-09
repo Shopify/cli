@@ -136,33 +136,34 @@ export async function setupDraftableExtensionBundler({
   stdout,
   signal,
 }: SetupDraftableExtensionBundlerOptions) {
-  return bundleExtension({
-    minify: false,
-    outputPath: extension.outputPath,
-    environment: 'development',
-    env: {
-      ...(app.dotenv?.variables ?? {}),
-      APP_URL: url,
-    },
-    stdin: {
-      contents: extension.getBundleExtensionStdinContent(),
-      resolveDir: extension.directory,
-      loader: 'tsx',
-    },
-    stderr,
-    stdout,
-    watchSignal: signal,
+  const {default: chokidar} = await import('chokidar')
 
-    watch: async (result) => {
-      const error = (result?.errors?.length ?? 0) > 0
-      outputInfo(
-        `The Javascript bundle of the extension with ID ${extension.devUUID} has ${error ? 'an error' : 'changed'}`,
-        error ? stderr : stdout,
-      )
-      if (error) return
+  const configWatcher = chokidar.watch(extension.directory).on('change', (path, stats) => {
+    if (path.includes('extension.toml')) return
+    outputInfo(`File change detected: ${path}`, stdout)
+    outputInfo(`Change detected for ${extension.handle}`, stdout)
+    updateExtensionConfig({
+      extension,
+      token,
+      apiKey,
+      registrationId,
+      stdout,
+      stderr,
+    }).catch((_: unknown) => {})
+  })
 
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
-    },
+  signal.addEventListener('abort', () => {
+    outputDebug(`Closing file watching for ${extension.handle}`, stdout)
+
+    configWatcher
+      .close()
+      .then(() => {
+        outputDebug(`File watching closed for ${extension.handle}`, stdout)
+      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .catch((error: any) => {
+        outputDebug(`File watching failed to close for ${extension.handle}: ${error.message}`, stderr)
+      })
   })
 }
 
