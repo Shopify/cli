@@ -4,9 +4,6 @@ inputs:
   node-version:
     required: true
     description: 'Node version'
-  needs-ruby:
-    required: false
-    description: 'Whether this run requires to install ruby dependencies'
 runs:
   using: 'composite'
   steps:
@@ -14,18 +11,6 @@ runs:
       run: |
         git config --global user.email "cli-foundations@shopify.com"
         git config --global user.name "CLI Foundations"
-      shell: bash
-    - name: Install Ruby
-      if: ${{ inputs.needs-ruby == 'true' }}
-      uses: ruby/setup-ruby@679e23d4a31bcf7cd0a69acd348e5f79e8c6b443 # pin@v1
-      with:
-        ruby-version: ${{ env.RUBY_VERSION }}
-        bundler: 'latest'
-        bundler-cache: true
-    - name: Install Bundler dependencies
-      if: ${{ inputs.needs-ruby == 'true' }}
-      working-directory: packages/cli-kit/assets/cli-ruby
-      run: bundle install
       shell: bash
     - name: Install pnpm
       uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # pin@v2.2.4
