@@ -26,6 +26,9 @@ export const GetConfig = gql`
         subPathPrefix
         url
       }
+      betas {
+        declarativeWebhooks
+      }
     }
   }
 `
@@ -53,6 +56,9 @@ export interface App {
     proxySubPath: string
     proxySubPathPrefix: string
     proxyUrl: string
+  }
+  betas?: {
+    declarativeWebhooks?: boolean
   }
 }
 

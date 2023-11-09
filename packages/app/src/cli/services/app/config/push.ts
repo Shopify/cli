@@ -54,12 +54,12 @@ export async function pushConfig(options: PushOptions) {
   if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
   const {app} = queryResult
 
-  const {businessName: org, betas} = await fetchOrgFromId(app.organizationId, partnersSession)
+  const {businessName: org} = await fetchOrgFromId(app.organizationId, partnersSession)
   renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
 
   if (!(await confirmPushChanges(options, app))) return
 
-  const variables = getMutationVars(betas?.declarativeWebhooks, app, configuration)
+  const variables = getMutationVars(app, configuration)
 
   const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
 
@@ -105,24 +105,20 @@ export async function pushConfig(options: PushOptions) {
   })
 }
 
-const getMutationVars = (
-  declarativeWebhooksBeta: boolean | undefined,
-  app: App,
-  configuration: CurrentAppConfiguration,
-) => {
+const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   let webhookApiVersion
   let gdprWebhooks
 
-  if (declarativeWebhooksBeta) {
+  if (app.betas?.declarativeWebhooks) {
     // These fields will be updated by the deploy command
     webhookApiVersion = app.webhookApiVersion
     gdprWebhooks = app.gdprWebhooks
   } else {
     webhookApiVersion = configuration.webhooks?.api_version
     gdprWebhooks = {
-      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url ?? undefined,
-      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
-      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,
+      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url,
+      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url,
+      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url,
     }
   }
 

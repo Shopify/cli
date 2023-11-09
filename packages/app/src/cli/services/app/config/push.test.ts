@@ -1,12 +1,6 @@
 import {PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {
-  DEFAULT_CONFIG,
-  EXISTING_APP_CONFIG,
-  testApp,
-  testPartnersUserSession,
-  testAppWithConfig,
-} from '../../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, testApp, testAppWithConfig, testPartnersUserSession} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
@@ -26,14 +20,6 @@ const ORG1: Organization = {
   id: '1',
   businessName: 'name of org 1',
   website: '',
-  betas: {declarativeWebhooks: false},
-}
-
-const orgWithDeclarativeWebhookBeta: Organization = {
-  id: '2',
-  businessName: 'name of org 2',
-  website: '',
-  betas: {declarativeWebhooks: true},
 }
 
 describe('pushConfig', () => {
@@ -429,24 +415,55 @@ app_preferences > url: this url is blocked 6`)
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
-  test('does not update webhooks configurations if they already exist when declarative webhooks beta is toggled', async () => {
-    vi.mocked(fetchOrgFromId).mockResolvedValue(orgWithDeclarativeWebhookBeta)
-
-    // app already exists with the following config
-    const app = testAppWithConfig({config: EXISTING_APP_CONFIG})
-
-    // user tries to push up new webhook api version
-    app.configuration = {
-      ...app.configuration,
-      webhooks: {
-        api_version: '2023-01',
+  test('does not update webhooks configurations when declarative webhooks beta is true', async () => {
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+        webhookApiVersion: '2023-04',
+        betas: {
+          declarativeWebhooks: true,
+        },
       },
-    }
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    const app = testAppWithConfig({
+      config: {
+        webhooks: {
+          api_version: '2023-11',
+          privacy_compliance: {
+            customer_data_request_url: 'https://myapp.com/customer-data-request',
+            customer_deletion_url: 'https://myapp.com/customer-deletion',
+            shop_deletion_url: 'https://myapp.com/shop-deletion',
+          },
+        },
+      },
+    })
+
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
     }
 
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual(
+      expect.objectContaining({
+        apiKey: '12345',
+        gdprWebhooks: undefined,
+        webhookApiVersion: '2023-04',
+      }),
+    )
+
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
+    })
+  })
+
+  test('it does update webhooks configurations when declarative webhooks beta is false', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
@@ -457,20 +474,37 @@ app_preferences > url: this url is blocked 6`)
       },
     })
 
+    const app = testAppWithConfig({
+      config: {
+        webhooks: {
+          api_version: '2023-11',
+          privacy_compliance: {
+            customer_data_request_url: 'https://myapp.com/customer-data-request',
+            customer_deletion_url: 'https://myapp.com/customer-deletion',
+            shop_deletion_url: 'https://myapp.com/shop-deletion',
+          },
+        },
+      },
+    })
+
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+    }
+
     await pushConfig(options)
 
-    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
-      apiKey: '12345',
-      applicationUrl: 'https://myapp.com',
-      embedded: true,
-      gdprWebhooks: undefined,
-      posEmbedded: false,
-      preferencesUrl: null,
-      redirectUrlAllowlist: null,
-      title: 'my app',
-      webhookApiVersion: '2023-04',
-      requestedAccessScopes: ['read_products'],
-    })
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual(
+      expect.objectContaining({
+        apiKey: '12345',
+        gdprWebhooks: {
+          customerDataRequestUrl: 'https://myapp.com/customer-data-request',
+          customerDeletionUrl: 'https://myapp.com/customer-deletion',
+          shopDeletionUrl: 'https://myapp.com/shop-deletion',
+        },
+        webhookApiVersion: '2023-11',
+      }),
+    )
 
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Updated your app config for my app',
