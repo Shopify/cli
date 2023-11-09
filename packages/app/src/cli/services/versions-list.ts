@@ -91,12 +91,12 @@ interface VersionListOptions {
 }
 
 export default async function versionList(options: VersionListOptions) {
-  const {token, partnersApp} = await ensureVersionsListContext(options)
+  const {partnersSession, partnersApp} = await ensureVersionsListContext(options)
   const {id: appId, organizationId, title, apiKey} = partnersApp
 
-  const {appVersions, totalResults} = await fetchAppVersions(token, apiKey, options.json)
+  const {appVersions, totalResults} = await fetchAppVersions(partnersSession.token, apiKey, options.json)
 
-  const {businessName: org} = await fetchOrgFromId(organizationId, token)
+  const {businessName: org} = await fetchOrgFromId(organizationId, partnersSession)
 
   if (options.json) {
     return outputInfo(JSON.stringify(appVersions, null, 2))

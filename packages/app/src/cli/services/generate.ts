@@ -1,6 +1,7 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadApp} from '../models/app/loader.js'
 import generateExtensionPrompts, {
@@ -18,7 +19,6 @@ import {ExtensionTemplate, TemplateType} from '../models/app/template.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Config} from '@oclif/core'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -39,8 +39,9 @@ export interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const token = await ensureAuthenticatedPartners()
-  const apiKey = await ensureGenerateContext({...options, token})
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
+  const apiKey = await ensureGenerateContext({...options, partnersSession})
   const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
   const app: AppInterface = await loadApp({
     directory: options.directory,

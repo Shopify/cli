@@ -3,6 +3,7 @@ import {Organization, OrganizationApp} from '../../models/organization.js'
 import {fetchAppDetailsFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema} from '../../api/graphql/create_app.js'
 import {getCachedCommandInfo, setCachedCommandInfo} from '../local-storage.js'
+import {PartnersSession} from '../context/partner-account-info.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -20,7 +21,7 @@ export async function selectOrCreateApp(
   localAppName: string,
   apps: OrganizationAppsResponse,
   org: Organization,
-  token: string,
+  partnersSession: PartnersSession,
   options?: {
     isLaunchable?: boolean
     scopesArray?: string[]
@@ -33,16 +34,16 @@ export async function selectOrCreateApp(
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    return createApp(org, localAppName, token, options)
+    return createApp(org, localAppName, partnersSession.token, options)
   } else {
-    const selectedAppApiKey = await selectAppPrompt(apps, org.id, token, {directory: options?.directory})
+    const selectedAppApiKey = await selectAppPrompt(apps, org.id, partnersSession, {directory: options?.directory})
 
     const data = getCachedCommandInfo()
     const tomls = (data?.tomls as {[key: string]: unknown}) ?? {}
 
     if (tomls[selectedAppApiKey]) setCachedCommandInfo({selectedToml: tomls[selectedAppApiKey], askConfigName: false})
 
-    const fullSelectedApp = await fetchAppDetailsFromApiKey(selectedAppApiKey, token)
+    const fullSelectedApp = await fetchAppDetailsFromApiKey(selectedAppApiKey, partnersSession.token)
     return fullSelectedApp!
   }
 }

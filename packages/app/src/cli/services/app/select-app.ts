@@ -1,14 +1,14 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
+import {fetchPartnersSession} from '../context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export async function selectApp(): Promise<OrganizationApp> {
-  const token = await ensureAuthenticatedPartners()
-  const orgs = await fetchOrganizations(token)
+  const partnersSession = await fetchPartnersSession()
+  const orgs = await fetchOrganizations(partnersSession)
   const org = await selectOrganizationPrompt(orgs)
-  const {apps} = await fetchOrgAndApps(org.id, token)
-  const selectedAppApiKey = await selectAppPrompt(apps, org.id, token)
-  const fullSelectedApp = await fetchAppDetailsFromApiKey(selectedAppApiKey, token)
+  const {apps} = await fetchOrgAndApps(org.id, partnersSession)
+  const selectedAppApiKey = await selectAppPrompt(apps, org.id, partnersSession)
+  const fullSelectedApp = await fetchAppDetailsFromApiKey(selectedAppApiKey, partnersSession.token)
   return fullSelectedApp!
 }
