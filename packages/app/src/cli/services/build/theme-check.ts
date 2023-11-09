@@ -65,8 +65,7 @@ function formatOffenses(offenses: Offense[]): TokenItem {
 }
 
 export async function runThemeCheck(directory: string): Promise<string> {
-  const configPath =
-    '/Users/isaac/src/github.com/Shopify/cli/node_modules/.pnpm/@shopify+theme-check-node@1.18.1/node_modules/@shopify/theme-check-node/configs/theme-app-extension.yml'
+  const configPath = 'theme-check:theme-app-extension'
   const offenses = await check(directory, configPath)
   const formattedOffenses = formatOffenses(offenses)
   return itemToString(formattedOffenses)
