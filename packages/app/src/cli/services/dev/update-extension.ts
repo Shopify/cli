@@ -6,11 +6,15 @@ import {
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
+import {AppInterface} from '../../models/app/app.js'
+import {bundleAndBuildExtensionsInConcurrent} from '../deploy/bundle.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
-import {relativizePath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, mkdir, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
+import {OutputMessage, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {dirname, joinPath, relativizePath} from '@shopify/cli-kit/node/path'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -112,4 +116,80 @@ export async function updateExtensionConfig({
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = newConfig
   return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+}
+
+export interface UpdateAppModulesOptions {
+  app: AppInterface
+  extensions: ExtensionInstance[]
+  adminSession: AdminSession
+  token: string
+  apiKey: string
+  stdout?: Writable
+}
+
+export async function updateAppModules({
+  app,
+  extensions,
+  adminSession,
+  token,
+  apiKey,
+  stdout,
+}: UpdateAppModulesOptions) {
+  await inTemporaryDirectory(async (tmpDir) => {
+    try {
+      // const signedUrlResult: DevSessionGenerateUrlSchema = await adminRequest(
+      //   DevSessionGenerateUrlMutation,
+      //   adminSession,
+      //   {
+      //     apiKey,
+      //   },
+      // )
+      const signedUrl = ''
+
+      const bundlePath = joinPath(tmpDir, `bundle.zip`)
+      await mkdir(dirname(bundlePath))
+      const identifiers = {app: apiKey, extensionIds: {}, extensions: {}}
+      await bundleAndBuildExtensionsInConcurrent({
+        app,
+        identifiers,
+        extensions,
+        bundlePath,
+        stdout:
+          stdout ??
+          new Writable({
+            write(chunk, ...args) {
+              // Do nothing if there is stdout
+            },
+          }),
+      })
+
+      const form = formData()
+      const buffer = readFileSync(bundlePath)
+      form.append('my_upload', buffer)
+      await fetch(signedUrl, {
+        method: 'put',
+        body: buffer,
+        headers: form.getHeaders(),
+      })
+
+      const appModules = await Promise.all(extensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})))
+
+      // await adminRequest(DevSessionUpdateMutation, adminSession, {
+      //   apiKey,
+      //   appModules,
+      //   bundleUrl: signedUrlResult.generateDevSessionSignedUrl.signedUrl,
+      // })
+
+      const names = extensions.map((ext) => ext.localIdentifier).join(', ')
+
+      if (stdout) {
+        outputInfo(`Updated app modules: ${names}`, stdout)
+      } else {
+        outputSuccess(`Ephemeral dev session is ready`)
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      outputInfo(`Failed to update app modules: ${error}`, stdout)
+    }
+  })
 }
