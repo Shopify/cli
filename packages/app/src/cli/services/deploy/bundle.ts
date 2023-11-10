@@ -13,7 +13,7 @@ export interface BundleOptions {
   app: AppInterface
   bundlePath?: string
   extensions?: ExtensionInstance[]
-  stdout: Writable
+  stdout?: Writable
   identifiers: Identifiers
 }
 
@@ -60,7 +60,7 @@ export async function bundleAndBuildExtensionsInConcurrent(options: BundleOption
 
     const promises = (options.extensions ?? []).map((extension) => {
       return extension.buildForBundle(
-        {stderr: options.stdout, stdout: options.stdout, app: options.app},
+        {stderr: options.stdout!, stdout: options.stdout!, app: options.app},
         options.identifiers,
         bundleDirectory,
       )

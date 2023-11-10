@@ -1,10 +1,10 @@
 import {
   FileWatcherOptions,
-  SetupFunctionWatcherOptions,
+  SetupExtensionWatcherOptions,
   setupBundlerAndFileWatcher,
   setupConfigWatcher,
   setupDraftableExtensionBundler,
-  setupFunctionWatcher,
+  setupExtensionWatcher,
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
@@ -490,7 +490,10 @@ describe('setupFunctionWatcher', () => {
     signal?: AbortSignal | undefined
   }
 
-  async function mockWatcherOptions({watchPath, signal}: MockWatcherOptionsArgs): Promise<SetupFunctionWatcherOptions> {
+  async function mockWatcherOptions({
+    watchPath,
+    signal,
+  }: MockWatcherOptionsArgs): Promise<SetupExtensionWatcherOptions> {
     const config = functionConfiguration()
     config.build = {
       watch: watchPath,
@@ -522,7 +525,7 @@ describe('setupFunctionWatcher', () => {
     })
     const chokidarSpy = vi.spyOn(chokidar, 'watch')
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
 
     expect(chokidarSpy).not.toHaveBeenCalled()
     expect(outputWarn).toHaveBeenCalledWith(
@@ -540,7 +543,7 @@ describe('setupFunctionWatcher', () => {
       on: chokidarOnSpy,
     } as any)
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
 
     expect(chokidarWatchSpy).toHaveBeenCalledWith(expect.arrayContaining<string>([joinPath('foo', '*.rs')]))
     expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
@@ -573,7 +576,7 @@ describe('setupFunctionWatcher', () => {
 
     const updateExtensionConfigSpy = vi.spyOn(updateExtension, 'updateExtensionConfig').mockResolvedValue()
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     // Then
@@ -595,7 +598,7 @@ describe('setupFunctionWatcher', () => {
     } as any)
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockResolvedValue()
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     expect(chokidarOnSpy).toHaveBeenCalled()
@@ -632,7 +635,7 @@ describe('setupFunctionWatcher', () => {
     } as any)
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockRejectedValue('error')
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     expect(buildSpy).toHaveBeenCalled()
@@ -664,7 +667,7 @@ describe('setupFunctionWatcher', () => {
       )
       .mockResolvedValue()
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     expect(signal).toBeDefined()
@@ -687,7 +690,7 @@ describe('setupFunctionWatcher', () => {
       on: chokidarOnSpy,
     } as any)
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     abortController.abort()
 
     expect(chokidarCloseSpy).toHaveBeenCalled()
@@ -713,7 +716,7 @@ describe('setupFunctionWatcher', () => {
       on: chokidarOnSpy,
     } as any)
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     abortController.abort()
 
     await expect(chokidarCloseSpy).rejects.toThrow(new Error('fail'))

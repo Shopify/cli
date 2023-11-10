@@ -4,11 +4,10 @@ import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
 import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {FSWatcher} from 'chokidar'
 import {Writable} from 'stream'
@@ -113,111 +112,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
   }
 }
 
-interface SetupDraftableExtensionBundlerOptions {
-  extension: ExtensionInstance
-  app: AppInterface
-  url: string
-  token: string
-  apiKey: string
-  registrationId: string
-  stderr: Writable
-  stdout: Writable
-  signal: AbortSignal
-}
-
-export async function setupDraftableExtensionBundler({
-  extension,
-  app,
-  url,
-  token,
-  apiKey,
-  registrationId,
-  stderr,
-  stdout,
-  signal,
-}: SetupDraftableExtensionBundlerOptions) {
-  const {default: chokidar} = await import('chokidar')
-
-  const configWatcher = chokidar.watch(extension.directory).on('change', (path, stats) => {
-    if (path.includes('extension.toml')) return
-    outputInfo(`File change detected: ${path}`, stdout)
-    outputInfo(`Change detected for ${extension.handle}`, stdout)
-    updateExtensionConfig({
-      extension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-    }).catch((_: unknown) => {})
-  })
-
-  signal.addEventListener('abort', () => {
-    outputDebug(`Closing file watching for ${extension.handle}`, stdout)
-
-    configWatcher
-      .close()
-      .then(() => {
-        outputDebug(`File watching closed for ${extension.handle}`, stdout)
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((error: any) => {
-        outputDebug(`File watching failed to close for ${extension.handle}: ${error.message}`, stderr)
-      })
-  })
-}
-
-interface SetupConfigWatcherOptions {
-  extension: ExtensionInstance
-  token: string
-  apiKey: string
-  registrationId: string
-  stdout: Writable
-  stderr: Writable
-  signal: AbortSignal
-}
-
-export async function setupConfigWatcher({
-  extension,
-  token,
-  apiKey,
-  registrationId,
-  stdout,
-  stderr,
-  signal,
-}: SetupConfigWatcherOptions) {
-  const {default: chokidar} = await import('chokidar')
-
-  const configWatcher = chokidar.watch(extension.configuration.path).on('change', (_event, _path) => {
-    outputInfo(`Config file at path ${extension.configuration.path} changed`, stdout)
-    updateExtensionConfig({
-      extension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-    }).catch((_: unknown) => {})
-  })
-
-  signal.addEventListener('abort', () => {
-    outputDebug(`Closing config file watching for extension with ID ${extension.devUUID}`, stdout)
-    configWatcher
-      .close()
-      .then(() => {
-        outputDebug(`Config file watching closed for extension with ${extension.devUUID}`, stdout)
-      })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((error: any) => {
-        outputDebug(
-          `Config file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
-          stderr,
-        )
-      })
-  })
-}
-
-export interface SetupFunctionWatcherOptions {
+export interface SetupExtensionWatcherOptions {
   extension: ExtensionInstance
   app: AppInterface
   stdout: Writable
@@ -228,7 +123,7 @@ export interface SetupFunctionWatcherOptions {
   registrationId: string
 }
 
-export async function setupFunctionWatcher({
+export async function setupExtensionWatcher({
   extension,
   app,
   stdout,
@@ -237,7 +132,7 @@ export async function setupFunctionWatcher({
   token,
   apiKey,
   registrationId,
-}: SetupFunctionWatcherOptions) {
+}: SetupExtensionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
   const rebuildAndRedeployWatchPaths = extension.watchPaths
@@ -245,7 +140,7 @@ export async function setupFunctionWatcher({
 
   if (!rebuildAndRedeployWatchPaths) {
     outputWarn(
-      `Function extension ${extension.localIdentifier} is missing the 'build.watch' setting, automatic builds are disabled.`,
+      `Extension ${extension.localIdentifier} is missing the 'build.watch' setting, automatic builds are disabled.`,
       stdout,
     )
     return
@@ -254,10 +149,11 @@ export async function setupFunctionWatcher({
   if (await fileExists(joinPath(extension.directory, 'locales'))) {
     redeployWatchPaths.push(joinPath(extension.directory, 'locales', '**.json'))
   }
+  redeployWatchPaths.push(joinPath(extension.directory, '**.toml'))
 
   outputDebug(
     `
-Watching function extension: ${extension.localIdentifier} for:
+Watching extension: ${extension.localIdentifier} for:
 Rebuild and Redeploy Paths:
 \t${rebuildAndRedeployWatchPaths.join('\n\t')}
 
@@ -269,18 +165,15 @@ Redeploy Paths:
 
   const listenForAbortOnWatcher = (watcher: FSWatcher) => {
     signal.addEventListener('abort', () => {
-      outputDebug(`Closing function file watching for extension with ID ${extension.devUUID}`, stdout)
+      outputDebug(`Closing file watching for extension with ID ${extension.devUUID}`, stdout)
       watcher
         .close()
         .then(() => {
-          outputDebug(`Function file watching closed for extension with ${extension.devUUID}`, stdout)
+          outputDebug(`File watching closed for extension with ${extension.devUUID}`, stdout)
         })
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .catch((error: any) => {
-          outputDebug(
-            `Function file watching failed to close for extension with ${extension.devUUID}: ${error.message}`,
-            stderr,
-          )
+          outputDebug(`File watching failed to close for extension with ${extension.devUUID}: ${error.message}`, stderr)
         })
     })
   }
@@ -288,20 +181,21 @@ Redeploy Paths:
   let buildController: AbortController | null
 
   const functionRebuildAndRedeployWatcher = chokidar.watch(rebuildAndRedeployWatchPaths).on('change', (path) => {
-    outputDebug(`Function extension file at path ${path} changed`, stdout)
+    outputDebug(`Extension file at path ${path} changed`, stdout)
     if (buildController) {
       // terminate any existing builds
       buildController.abort()
     }
     buildController = new AbortController()
     const buildSignal = buildController.signal
-    buildFunctionExtension(extension, {
-      app,
-      stdout,
-      stderr,
-      useTasks: false,
-      signal: buildSignal,
-    })
+    extension
+      .build({
+        app,
+        stdout,
+        stderr,
+        useTasks: false,
+        signal: buildSignal,
+      })
       .then(() => {
         if (!buildSignal.aborted) {
           return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})

@@ -1,6 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {updateExtensionDraft} from '../update-extension.js'
-import {setupConfigWatcher, setupDraftableExtensionBundler, setupFunctionWatcher} from '../extension/bundler.js'
+import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -29,73 +29,26 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
   await installJavy(app)
 
-  // Functions will only be passed to this target if unified deployments are enabled
-  // ESBuild will take care of triggering an initial build & upload for the extensions with ESBUILD feature.
-  // For the rest we need to manually upload an initial draft.
-  const initialDraftExtensions = extensions.filter((ext) => !ext.isESBuildExtension)
+  // CONSISTENT-DEV-TODO: This should not use drafts
   await Promise.all(
-    initialDraftExtensions.map(async (extension) => {
+    extensions.map(async (extension) => {
       await extension.build({app, stdout, stderr, useTasks: false, signal})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+      // Initial draft for each extension
       await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
-    }),
-  )
-
-  await Promise.all(
-    extensions
-      .map((extension) => {
-        const registrationId = remoteExtensions[extension.localIdentifier]
-        if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-
-        const actions = [
-          setupConfigWatcher({
-            extension,
-            token,
-            apiKey,
-            registrationId,
-            stdout,
-            stderr,
-            signal,
-          }),
-        ]
-
-        // Only extensions with esbuild feature should be watched using esbuild
-        if (extension.features.includes('esbuild')) {
-          actions.push(
-            setupDraftableExtensionBundler({
-              extension,
-              app,
-              url: proxyUrl,
-              token,
-              apiKey,
-              registrationId,
-              stderr,
-              stdout,
-              signal,
-            }),
-          )
-        }
-
-        // watch for function changes that require a build and push
-        if (extension.isFunctionExtension) {
-          actions.push(
-            setupFunctionWatcher({
-              extension,
-              app,
-              stdout,
-              stderr,
-              signal,
-              token,
-              apiKey,
-              registrationId,
-            }),
-          )
-        }
-
-        return actions
+      // Watch for changes
+      return setupExtensionWatcher({
+        extension,
+        app,
+        stdout,
+        stderr,
+        signal,
+        token,
+        apiKey,
+        registrationId,
       })
-      .flat(),
+    }),
   )
 }
 
