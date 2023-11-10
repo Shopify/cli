@@ -192,19 +192,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
       const watchPaths: string[] = configuredPaths ?? []
       if (this.isJavaScript && configuredPaths.length === 0) {
-        watchPaths.push(joinPath('src', '**', '*.js'))
-        watchPaths.push(joinPath('src', '**', '*.ts'))
+        watchPaths.push(joinPath('src', '**', '*.{js,ts}'))
       }
       watchPaths.push(joinPath('**', '!(.)*.graphql'))
 
       return watchPaths.map((path) => joinPath(this.directory, path))
     } else if (this.isESBuildExtension) {
-      return [
-        joinPath(this.directory, 'src', '**', '*.ts'),
-        joinPath(this.directory, 'src', '**', '*.tsx'),
-        joinPath(this.directory, 'src', '**', '*.js'),
-        joinPath(this.directory, 'src', '**', '*.jsx'),
-      ]
+      return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
     } else {
       return []
     }

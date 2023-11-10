@@ -3,13 +3,15 @@ import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
-import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
+import {updateExtensionConfig} from '../update-extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionBuildOptions} from '../../build/extension.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {FSWatcher} from 'chokidar'
+import micromatch from 'micromatch'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -181,7 +183,8 @@ Redeploy Paths:
   }
 
   let buildController: AbortController | null
-  const functionRebuildAndRedeployWatcher = chokidar.watch(rebuildAndRedeployWatchPaths).on('change', (path) => {
+  const allPaths = [...rebuildAndRedeployWatchPaths, ...redeployWatchPaths]
+  const functionRebuildAndRedeployWatcher = chokidar.watch(allPaths).on('change', (path) => {
     outputDebug(`Extension file at path ${path} changed`, stdout)
     if (buildController) {
       // terminate any existing builds
@@ -189,19 +192,19 @@ Redeploy Paths:
     }
     buildController = new AbortController()
     const buildSignal = buildController.signal
-    extension
-      .build({
-        app,
-        stdout,
-        stderr,
-        useTasks: false,
-        signal: buildSignal,
-        environment: 'development',
-        appURL: url,
-      })
+    const shouldBuild = micromatch.isMatch(path, rebuildAndRedeployWatchPaths)
+    buildIfNecessary(extension, shouldBuild, {
+      app,
+      stdout,
+      stderr,
+      useTasks: false,
+      signal: buildSignal,
+      environment: 'development',
+      appURL: url,
+    })
       .then(() => {
         if (!buildSignal.aborted) {
-          return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+          return updateExtensionConfig({extension, token, apiKey, registrationId, stdout, stderr})
         }
       })
       .catch((updateError: unknown) => {
@@ -209,24 +212,9 @@ Redeploy Paths:
       })
   })
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
+}
 
-  if (redeployWatchPaths.length > 0) {
-    const functionRedeployWatcher = chokidar.watch(redeployWatchPaths).on('change', (path) => {
-      outputDebug(`File at path ${path} changed`, stdout)
-      updateExtensionConfig({
-        extension,
-        token,
-        apiKey,
-        registrationId,
-        stdout,
-        stderr,
-      }).catch((error: unknown) => {
-        outputWarn(
-          `Error while deploying updated extension config: ${JSON.stringify(error, null, 2)} at path ${path}`,
-          stdout,
-        )
-      })
-    })
-    listenForAbortOnWatcher(functionRedeployWatcher)
-  }
+export async function buildIfNecessary(extension: ExtensionInstance, build: boolean, options: ExtensionBuildOptions) {
+  if (!build) return
+  return extension.build(options)
 }

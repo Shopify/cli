@@ -35,7 +35,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
       await extension.build({app, stdout, stderr, useTasks: false, signal})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
-      // Initial draft for each extension
+      // Initial draft update for each extension
       await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
       // Watch for changes
       return setupExtensionWatcher({
