@@ -11,7 +11,7 @@ import {fileURLToPath} from 'url'
  * Load all specifications from the local file system AND plugins
  */
 export async function loadLocalExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
-  const local = await loadFSExtensionsSpecifications()
+  const local = (await loadFSExtensionsSpecifications()).filter((spec) => spec !== undefined)
   const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return [...local, ...plugins]
 }
@@ -41,7 +41,11 @@ async function loadSpecifications(directoryName: string) {
   }
 
   const promises = files.map((file) => import(file))
-  const modules = await Promise.all(promises)
-  const specs = modules.map((module) => module.default)
-  return specs
+  return Promise.allSettled(promises).then((modules) =>
+    modules.map((module) => {
+      if (module.status === 'fulfilled') {
+        return module.value.default
+      }
+    }),
+  )
 }

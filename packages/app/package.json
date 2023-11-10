@@ -16,6 +16,10 @@
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
+    },
+    "./*": {
+      "import": "./dist/cli/public/*.js",
+      "require": "./dist/cli/public/*.d.ts"
     }
   },
   "files": [
