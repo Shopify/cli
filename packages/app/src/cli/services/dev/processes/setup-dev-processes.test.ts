@@ -52,6 +52,7 @@ describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
     const token = 'token'
     const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
     const remoteAppUpdated = true
     const commandOptions: DevConfig['commandOptions'] = {
       subscriptionProductUrl: '/products/999999',
@@ -120,6 +121,7 @@ describe('setup-dev-processes', () => {
       remoteApp,
       remoteAppUpdated,
       storeFqdn,
+      storeId,
       token,
       partnerUrlsUpdated: true,
     })
