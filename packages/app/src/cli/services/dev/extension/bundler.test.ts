@@ -6,8 +6,7 @@ import {
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
-import {updateExtensionDraft} from '../update-extension.js'
-import * as updateExtension from '../update-extension.js'
+import {updateExtensionConfig} from '../update-extension.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -322,18 +321,18 @@ describe('setupExtensionWatcher', () => {
       } as any
     })
 
-    const updateExtensionConfigSpy = vi.spyOn(updateExtension, 'updateExtensionConfig').mockResolvedValue()
-
     await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     // Then
     expect(chokidarOnSpy).toHaveBeenCalled()
     expect(chokidarWatchSpy).toHaveBeenCalledWith([
+      `${watchOptions.extension.directory}/*.rs`,
+      `${watchOptions.extension.directory}/**/!(.)*.graphql`,
       `${watchOptions.extension.directory}/locales/**.json`,
       `${watchOptions.extension.directory}/**.toml`,
     ])
-    expect(updateExtensionConfigSpy).toHaveBeenCalled()
+    expect(updateExtensionConfig).toHaveBeenCalled()
   })
 
   test('builds and deploys the function on file change', async () => {
@@ -342,12 +341,9 @@ describe('setupExtensionWatcher', () => {
     })
     const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
       // call the file watch handler immediately
-      handler('/src/main.rs')
+      handler('foo/main.rs')
     })
     vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
-      if (path.toString().includes('toml')) {
-        return {on: vi.fn()} as any
-      }
       return {on: chokidarOnSpy} as any
     })
 
@@ -357,7 +353,7 @@ describe('setupExtensionWatcher', () => {
     await flushPromises()
 
     expect(chokidarOnSpy).toHaveBeenCalled()
-    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('/src/main.rs'), watchOptions.stdout)
+    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('foo/main.rs'), watchOptions.stdout)
     expect(buildSpy).toHaveBeenCalledWith(
       watchOptions.extension,
       expect.objectContaining({
@@ -367,7 +363,7 @@ describe('setupExtensionWatcher', () => {
         useTasks: false,
       }),
     )
-    expect(updateExtensionDraft).toHaveBeenCalledWith({
+    expect(updateExtensionConfig).toHaveBeenCalledWith({
       extension: watchOptions.extension,
       token: watchOptions.token,
       apiKey: watchOptions.apiKey,
@@ -383,14 +379,11 @@ describe('setupExtensionWatcher', () => {
     })
     const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
       // call the file watch handler immediately
-      handler('/src/main.rs')
+      handler('foo/main.rs')
     })
-    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
-      if (path.toString().includes('toml')) {
-        return {on: vi.fn()} as any
-      }
-      return {on: chokidarOnSpy} as any
-    })
+    vi.spyOn(chokidar, 'watch').mockReturnValue({
+      on: chokidarOnSpy,
+    } as any)
 
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockRejectedValue('error')
 
@@ -398,7 +391,7 @@ describe('setupExtensionWatcher', () => {
     await flushPromises()
 
     expect(buildSpy).toHaveBeenCalled()
-    expect(updateExtensionDraft).not.toHaveBeenCalled()
+    expect(updateExtensionConfig).not.toHaveBeenCalled()
   })
 
   test('terminates existing builds on concurrent file change', async () => {
@@ -407,16 +400,13 @@ describe('setupExtensionWatcher', () => {
     })
     const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
       // call the file watch handler twice
-      handler('/src/main.rs')
-      handler('/src/main.rs')
+      handler('foo/main.rs')
+      handler('foo/main.rs')
     })
 
-    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
-      if (path.toString().includes('toml')) {
-        return {on: vi.fn()} as any
-      }
-      return {on: chokidarOnSpy} as any
-    })
+    vi.spyOn(chokidar, 'watch').mockReturnValue({
+      on: chokidarOnSpy,
+    } as any)
 
     let signal: AbortSignal | undefined
     vi.spyOn(extensionBuild, 'buildFunctionExtension')
