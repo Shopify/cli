@@ -181,7 +181,6 @@ Redeploy Paths:
   }
 
   let buildController: AbortController | null
-
   const functionRebuildAndRedeployWatcher = chokidar.watch(rebuildAndRedeployWatchPaths).on('change', (path) => {
     outputDebug(`Extension file at path ${path} changed`, stdout)
     if (buildController) {

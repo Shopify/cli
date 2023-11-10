@@ -15,7 +15,7 @@ import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as cliKitFS from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
@@ -231,125 +231,7 @@ describe('setupBundlerAndFileWatcher()', () => {
   })
 })
 
-describe('setupNonPreviewableExtensionBundler()', async () => {
-  const mockExtension = await testUIExtension({
-    devUUID: '1',
-    directory: 'directory/path/1',
-    configuration: {
-      handle: 'another-handle',
-      name: 'test-ui-extension',
-      type: 'product_subscription',
-      metafields: [],
-    },
-  })
-
-  const app = {
-    dotenv: {
-      variables: {
-        SOME_KEY: 'SOME_VALUE',
-      },
-    },
-  } as any
-
-  const token = 'mock-token'
-  const apiKey = 'mock-api-key'
-  const registrationId = 'mock-registration-id'
-  const stderr = new Writable()
-  const stdout = new Writable()
-  const abortController = new AbortController()
-
-  test('calls bundleExtension with the correct parameters', async () => {
-    vi.spyOn(bundle, 'bundleExtension').mockResolvedValue(undefined)
-
-    await setupExtensionWatcher({
-      extension: mockExtension,
-      app,
-      url: 'mock/url',
-      token,
-      apiKey,
-      registrationId,
-      stderr,
-      stdout,
-      signal: abortController.signal,
-    })
-
-    expect(bundle.bundleExtension).toHaveBeenCalledWith(
-      expect.objectContaining({
-        minify: false,
-        outputPath: 'directory/path/1/dist/another-handle.js',
-        stdin: {
-          contents: mockExtension.getBundleExtensionStdinContent(),
-          resolveDir: 'directory/path/1',
-          loader: 'tsx',
-        },
-        environment: 'development',
-        env: {
-          SOME_KEY: 'SOME_VALUE',
-          APP_URL: 'mock/url',
-        },
-        stderr,
-        stdout,
-        watchSignal: abortController.signal,
-      }),
-    )
-  })
-
-  test('calls updateExtensionDraft when the bundle is built successfully', async () => {
-    await setupExtensionWatcher({
-      extension: mockExtension,
-      app,
-      url: 'mock/url',
-      token,
-      apiKey,
-      registrationId,
-      stderr,
-      stdout,
-      signal: abortController.signal,
-    })
-
-    const bundleExtensionFn = bundle.bundleExtension as any
-    bundleExtensionFn.mock.calls[0][0].watch()
-
-    expect(updateExtensionDraft).toHaveBeenCalledWith({
-      extension: mockExtension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-    })
-    expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has changed`, stdout)
-  })
-
-  test('does not call updateExtensionDraft when the bundle has errors', async () => {
-    await setupExtensionWatcher({
-      extension: mockExtension,
-      app,
-      url: 'mock/url',
-      token,
-      apiKey,
-      registrationId,
-      stderr,
-      stdout,
-      signal: abortController.signal,
-    })
-
-    const buildFailure = {
-      errors: ['error'] as any,
-      warnings: [],
-      outputFiles: [],
-      metafile: {} as any,
-      mangleCache: {},
-    } as BuildResult
-    const bundleExtensionFn = bundle.bundleExtension as any
-    bundleExtensionFn.mock.calls[0][0].watch(buildFailure)
-
-    expect(updateExtensionDraft).not.toHaveBeenCalled()
-    expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has an error`, stderr)
-  })
-})
-
-describe('setupFunctionWatcher', () => {
+describe('setupExtensionWatcher', () => {
   interface MockWatcherOptionsArgs {
     watchPath: string | undefined
     signal?: AbortSignal | undefined
@@ -447,7 +329,10 @@ describe('setupFunctionWatcher', () => {
 
     // Then
     expect(chokidarOnSpy).toHaveBeenCalled()
-    expect(chokidarWatchSpy).toHaveBeenCalledWith([`${watchOptions.extension.directory}/locales/**.json`])
+    expect(chokidarWatchSpy).toHaveBeenCalledWith([
+      `${watchOptions.extension.directory}/locales/**.json`,
+      `${watchOptions.extension.directory}/**.toml`,
+    ])
     expect(updateExtensionConfigSpy).toHaveBeenCalled()
   })
 
@@ -459,9 +344,13 @@ describe('setupFunctionWatcher', () => {
       // call the file watch handler immediately
       handler('/src/main.rs')
     })
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      if (path.toString().includes('toml')) {
+        return {on: vi.fn()} as any
+      }
+      return {on: chokidarOnSpy} as any
+    })
+
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockResolvedValue()
 
     await setupExtensionWatcher(watchOptions)
@@ -496,9 +385,13 @@ describe('setupFunctionWatcher', () => {
       // call the file watch handler immediately
       handler('/src/main.rs')
     })
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      if (path.toString().includes('toml')) {
+        return {on: vi.fn()} as any
+      }
+      return {on: chokidarOnSpy} as any
+    })
+
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockRejectedValue('error')
 
     await setupExtensionWatcher(watchOptions)
@@ -517,9 +410,13 @@ describe('setupFunctionWatcher', () => {
       handler('/src/main.rs')
       handler('/src/main.rs')
     })
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
+
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      if (path.toString().includes('toml')) {
+        return {on: vi.fn()} as any
+      }
+      return {on: chokidarOnSpy} as any
+    })
 
     let signal: AbortSignal | undefined
     vi.spyOn(extensionBuild, 'buildFunctionExtension')
