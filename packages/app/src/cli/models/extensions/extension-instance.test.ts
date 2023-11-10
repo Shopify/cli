@@ -50,11 +50,27 @@ describe('watchPaths', async () => {
 
     const got = extensionInstance.watchPaths
 
-    expect(got).toEqual([
-      joinPath('foo', 'src', '**', '*.js'),
-      joinPath('foo', 'src', '**', '*.ts'),
-      joinPath('foo', '**', '!(.)*.graphql'),
-    ])
+    expect(got).toEqual([joinPath('foo', 'src', '**', '*.{js,ts}'), joinPath('foo', '**', '!(.)*.graphql')])
+  })
+
+  test('returns js and ts paths for esbuild extensions', async () => {
+    const config = functionConfiguration()
+    config.build = {}
+    const extensionInstance = await testUIExtension({directory: 'foo'})
+
+    const got = extensionInstance.watchPaths
+
+    expect(got).toEqual([joinPath('foo', 'src', '**', '*.{ts,tsx,js,jsx}')])
+  })
+
+  test('return empty array for non-function non-esbuild extensions', async () => {
+    const config = functionConfiguration()
+    config.build = {}
+    const extensionInstance = await testTaxCalculationExtension('foo')
+
+    const got = extensionInstance.watchPaths
+
+    expect(got).toEqual([])
   })
 
   test('returns configured paths and input query', async () => {
