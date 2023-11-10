@@ -381,6 +381,7 @@ describe('ensureDevContext', async () => {
       expect(got).toEqual({
         remoteApp: {...APP2, apiSecret: 'secret2'},
         storeFqdn: STORE1.shopDomain,
+        storeId: STORE1.shopId,
         remoteAppUpdated: true,
         updateURLs: true,
       })
@@ -448,6 +449,7 @@ dev_store_url = "domain1"
       expect(got).toEqual({
         remoteApp: {...APP2, apiSecret: 'secret2'},
         storeFqdn: STORE1.shopDomain,
+        storeId: STORE1.shopId,
         remoteAppUpdated: true,
         updateURLs: true,
       })
@@ -607,6 +609,7 @@ dev_store_url = "domain1"
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
+      storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
     })
@@ -638,6 +641,7 @@ dev_store_url = "domain1"
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
+      storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
     })
@@ -656,6 +660,7 @@ dev_store_url = "domain1"
     expect(got).toEqual({
       remoteApp: {...APP1, apiSecret: 'secret1'},
       storeFqdn: STORE1.shopDomain,
+      storeId: STORE1.shopId,
       remoteAppUpdated: false,
       updateURLs: undefined,
     })
@@ -706,6 +711,7 @@ dev_store_url = "domain1"
     expect(got).toEqual({
       remoteApp: {...APP2, apiSecret: 'secret2'},
       storeFqdn: STORE1.shopDomain,
+      storeId: STORE1.shopId,
       remoteAppUpdated: true,
       updateURLs: undefined,
     })

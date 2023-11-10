@@ -78,6 +78,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const token = partnersSession.token
   const {
     storeFqdn,
+    storeId,
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
@@ -125,6 +126,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   return {
     storeFqdn,
+    storeId,
     remoteApp,
     remoteAppUpdated,
     localApp,

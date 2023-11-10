@@ -48,6 +48,7 @@ export interface DevConfig {
   }
   token: string
   storeFqdn: string
+  storeId: string
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
@@ -59,6 +60,7 @@ export async function setupDevProcesses({
   token,
   remoteApp,
   storeFqdn,
+  storeId,
   commandOptions,
   network,
   partnerUrlsUpdated,
@@ -100,6 +102,7 @@ export async function setupDevProcesses({
     await setupPreviewableExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,
+      storeId,
       apiKey,
       subscriptionProductUrl: commandOptions.subscriptionProductUrl,
       checkoutCartUrl: commandOptions.checkoutCartUrl,
