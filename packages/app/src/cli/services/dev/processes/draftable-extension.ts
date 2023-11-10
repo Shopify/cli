@@ -41,6 +41,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
       return setupExtensionWatcher({
         extension,
         app,
+        url: proxyUrl,
         stdout,
         stderr,
         signal,

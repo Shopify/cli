@@ -115,6 +115,7 @@ export async function setupBundlerAndFileWatcher(options: FileWatcherOptions) {
 export interface SetupExtensionWatcherOptions {
   extension: ExtensionInstance
   app: AppInterface
+  url: string
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
@@ -126,6 +127,7 @@ export interface SetupExtensionWatcherOptions {
 export async function setupExtensionWatcher({
   extension,
   app,
+  url,
   stdout,
   stderr,
   signal,
@@ -195,6 +197,8 @@ Redeploy Paths:
         stderr,
         useTasks: false,
         signal: buildSignal,
+        environment: 'development',
+        appURL: url,
       })
       .then(() => {
         if (!buildSignal.aborted) {
