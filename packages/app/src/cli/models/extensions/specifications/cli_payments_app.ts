@@ -2,16 +2,16 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const PaymentsAppRedeemableSchema = BaseSchema.extend({
-  production_api_base_url: zod.string(),
-  benchmark_api_base_url: zod.string().optional(),
+const PaymentsAppSchema = BaseSchema.extend({
+  // production_api_base_url: zod.string(),
+  // benchmark_api_base_url: zod.string().optional(),
   // Extension inputs as defined here:
   // https://shopify.dev/docs/apps/payments/create-a-payments-app#credit-card-payments-app-extension
-  payment_session_url: zod.string(),
-  refund_session_url: zod.string(),
-  capture_session_url: zod.string(),
-  void_session_url: zod.string(),
-  confirm_session_url: zod.string().optional(),
+  payment_session_url: zod.string().url(),
+  refund_session_url: zod.string().url(),
+  capture_session_url: zod.string().url(),
+  void_session_url: zod.string().url(),
+  confirm_session_url: zod.string().url().optional(),
   input: zod
     .object({
       metafield_identifiers: zod
@@ -24,14 +24,14 @@ const PaymentsAppRedeemableSchema = BaseSchema.extend({
     .optional(),
 })
 
-const spec = createExtensionSpecification({
-  identifier: 'payments_app_redeemable',
-  schema: PaymentsAppRedeemableSchema,
+const cliPaymentsAppSpecfication = createExtensionSpecification({
+  identifier: 'cli_payments_app',
+  schema: PaymentsAppSchema,
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, _) => {
     return {
-      production_api_base_url: config.production_api_base_url,
-      benchmark_api_base_url: config.benchmark_api_base_url,
+      // production_api_base_url: config.production_api_base_url,
+      // benchmark_api_base_url: config.benchmark_api_base_url,
       payment_session_url: config.payment_session_url,
       refund_session_url: config.refund_session_url,
       capture_session_url: config.capture_session_url,
@@ -44,4 +44,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default cliPaymentsAppSpecfication
