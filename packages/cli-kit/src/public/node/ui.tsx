@@ -605,15 +605,14 @@ export function renderText({text, logLevel = 'info', logger = consoleLog}: Rende
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
-export const keypress = async () => {
+export const keypress = async (stdin = process.stdin) => {
   throwInNonTTY({message: 'Press any key'})
 
   return runWithTimer('cmd_all_timing_prompts_ms')(() => {
     // eslint-disable-next-line max-params
     return new Promise((resolve, reject) => {
       const handler = (buffer: Buffer) => {
-        process.stdin.setRawMode(false)
-        process.stdin.pause()
+        stdin.setRawMode(false)
 
         const bytes = Array.from(buffer)
 
@@ -621,12 +620,16 @@ export const keypress = async () => {
           outputDebug('Canceled keypress, User pressed CTRL+C')
           reject(new AbortSilentError())
         }
+        stdin.unref()
         process.nextTick(resolve)
       }
 
-      process.stdin.resume()
-      process.stdin.setRawMode(true)
-      process.stdin.once('data', handler)
+      stdin.setRawMode(true)
+      stdin.once('data', handler)
+
+      // We want to indicate that we're still using stdin, so that the process
+      // doesn't exit early.
+      stdin.ref()
     })
   })
 }
