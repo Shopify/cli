@@ -189,63 +189,91 @@ const validationSchemas = {
 const listMinMax = [validationSchemas.listMinimumInteger, validationSchemas.listMaximumInteger] as const
 
 const fieldValidations = {
-  date_time: zod.union([validationSchemas.minimumDateTime, validationSchemas.maximumDateTime]),
-  date: zod.union([validationSchemas.minimumDate, validationSchemas.maximumDate]),
-  dimension: zod.union([validationSchemas.minimumDimension, validationSchemas.maximumDimension]),
+  date_time: zod.discriminatedUnion('name', [validationSchemas.minimumDateTime, validationSchemas.maximumDateTime]),
+  date: zod.discriminatedUnion('name', [validationSchemas.minimumDate, validationSchemas.maximumDate]),
+  dimension: zod.discriminatedUnion('name', [validationSchemas.minimumDimension, validationSchemas.maximumDimension]),
   json: validationSchemas.jsonSchema,
-  'list.color': zod.union(listMinMax),
-  'list.date_time': zod.union([validationSchemas.minimumDateTime, validationSchemas.maximumDateTime, ...listMinMax]),
-  'list.date': zod.union([validationSchemas.minimumDate, validationSchemas.maximumDate, ...listMinMax]),
-  'list.dimension': zod.union([validationSchemas.minimumDimension, validationSchemas.maximumDimension, ...listMinMax]),
-  'list.number_decimal': zod.union([
+  'list.color': zod.discriminatedUnion('name', [...listMinMax]),
+  'list.date_time': zod.discriminatedUnion('name', [
+    validationSchemas.minimumDateTime,
+    validationSchemas.maximumDateTime,
+    ...listMinMax,
+  ]),
+  'list.date': zod.discriminatedUnion('name', [
+    validationSchemas.minimumDate,
+    validationSchemas.maximumDate,
+    ...listMinMax,
+  ]),
+  'list.dimension': zod.discriminatedUnion('name', [
+    validationSchemas.minimumDimension,
+    validationSchemas.maximumDimension,
+    ...listMinMax,
+  ]),
+  'list.number_decimal': zod.discriminatedUnion('name', [
     validationSchemas.minimumDecimal,
     validationSchemas.maximumDecimal,
     validationSchemas.maximumPrecision,
     ...listMinMax,
   ]),
-  'list.number_integer': zod.union([validationSchemas.minimumInteger, validationSchemas.maximumInteger, ...listMinMax]),
-  'list.rating': zod.union([validationSchemas.minimumScale, validationSchemas.maximumScale, ...listMinMax]),
-  'list.single_line_text_field': zod.union([
+  'list.number_integer': zod.discriminatedUnion('name', [
+    validationSchemas.minimumInteger,
+    validationSchemas.maximumInteger,
+    ...listMinMax,
+  ]),
+  'list.rating': zod.discriminatedUnion('name', [
+    validationSchemas.minimumScale,
+    validationSchemas.maximumScale,
+    ...listMinMax,
+  ]),
+  'list.single_line_text_field': zod.discriminatedUnion('name', [
     validationSchemas.minimumInteger,
     validationSchemas.maximumInteger,
     validationSchemas.regex,
     validationSchemas.choices,
     ...listMinMax,
   ]),
-  'list.url': zod.union([validationSchemas.allowedDomains, ...listMinMax]),
-  'list.volume': zod.union([validationSchemas.minimumVolume, validationSchemas.maximumVolume, ...listMinMax]),
-  'list.weight': zod.union([validationSchemas.minimumWeight, validationSchemas.maximumWeight, ...listMinMax]),
-  multi_line_text_field: zod.union([
+  'list.url': zod.discriminatedUnion('name', [validationSchemas.allowedDomains, ...listMinMax]),
+  'list.volume': zod.discriminatedUnion('name', [
+    validationSchemas.minimumVolume,
+    validationSchemas.maximumVolume,
+    ...listMinMax,
+  ]),
+  'list.weight': zod.discriminatedUnion('name', [
+    validationSchemas.minimumWeight,
+    validationSchemas.maximumWeight,
+    ...listMinMax,
+  ]),
+  multi_line_text_field: zod.discriminatedUnion('name', [
     validationSchemas.minimumInteger,
     validationSchemas.maximumInteger,
     validationSchemas.regex,
   ]),
-  number_decimal: zod.union([
+  number_decimal: zod.discriminatedUnion('name', [
     validationSchemas.minimumDecimal,
     validationSchemas.maximumDecimal,
     validationSchemas.maximumPrecision,
   ]),
-  number_integer: zod.union([validationSchemas.minimumInteger, validationSchemas.maximumInteger]),
-  rating: zod.union([validationSchemas.minimumScale, validationSchemas.maximumScale]),
-  single_line_text_field: zod.union([
+  number_integer: zod.discriminatedUnion('name', [validationSchemas.minimumInteger, validationSchemas.maximumInteger]),
+  rating: zod.discriminatedUnion('name', [validationSchemas.minimumScale, validationSchemas.maximumScale]),
+  single_line_text_field: zod.discriminatedUnion('name', [
     validationSchemas.minimumInteger,
     validationSchemas.maximumInteger,
     validationSchemas.regex,
     validationSchemas.choices,
   ]),
   url: validationSchemas.allowedDomains,
-  volume: zod.union([validationSchemas.minimumVolume, validationSchemas.maximumVolume]),
-  weight: zod.union([validationSchemas.minimumWeight, validationSchemas.maximumWeight]),
-  'list.product_reference': zod.union(listMinMax),
-  'list.collection_reference': zod.union(listMinMax),
-  'list.variant_reference': zod.union(listMinMax),
+  volume: zod.discriminatedUnion('name', [validationSchemas.minimumVolume, validationSchemas.maximumVolume]),
+  weight: zod.discriminatedUnion('name', [validationSchemas.minimumWeight, validationSchemas.maximumWeight]),
+  'list.product_reference': zod.discriminatedUnion('name', [...listMinMax]),
+  'list.collection_reference': zod.discriminatedUnion('name', [...listMinMax]),
+  'list.variant_reference': zod.discriminatedUnion('name', [...listMinMax]),
   file_reference: validationSchemas.fileTypeOptions,
-  'list.file_reference': zod.union([validationSchemas.fileTypeOptions, ...listMinMax]),
+  'list.file_reference': zod.discriminatedUnion('name', [validationSchemas.fileTypeOptions, ...listMinMax]),
   metaobject_reference: validationSchemas.metaobjectDefinition,
-  'list.metaobject_reference': zod.union([validationSchemas.metaobjectDefinition, ...listMinMax]),
+  'list.metaobject_reference': zod.discriminatedUnion('name', [validationSchemas.metaobjectDefinition, ...listMinMax]),
   mixed_reference: validationSchemas.metaobjectDefinition,
-  'list.mixed_reference': zod.union([validationSchemas.metaobjectDefinition, ...listMinMax]),
-  'list.page_reference': zod.union(listMinMax),
+  'list.mixed_reference': zod.discriminatedUnion('name', [validationSchemas.metaobjectDefinition, ...listMinMax]),
+  'list.page_reference': zod.discriminatedUnion('name', [...listMinMax]),
 }
 
 function commonFields(extraFields = {}) {
