@@ -196,7 +196,7 @@ export const template = `
         </div>
 
         <p class="top-bar-section align-right">
-          GraphiQL runs on the same access scopes you’ve defined in the toml file for your app.
+          GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
         </p>
       </div>
       <div id="graphiql-explorer">Loading...</div>
