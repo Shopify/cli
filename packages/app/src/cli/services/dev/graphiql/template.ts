@@ -62,16 +62,32 @@ export const graphiqlTopBarStyles = `
     margin: 0;
     display: grid;
     grid-template-columns: minmax(auto, max-content) minmax(auto, max-content) minmax(max-content, 1fr) minmax(auto, max-content);
+    grid-template-rows: 1fr;
     align-items: center;
   }
 
   .top-bar-section {
     border-right: 1px solid var(--border-border-subdued, #EBEBEB);
     padding: 0.5rem;
+    align-self: stretch;
+    display: flex;
+    flex-grow: 1;
+    justify-content: left;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .top-bar-section.expand {
+    flex-grow: 2;
   }
 
   .top-bar a {
     text-decoration: none;
+  }
+
+  .app-links {
+    display: flex;
+    gap: 4px;
   }
 
   .status-pill {
@@ -186,16 +202,16 @@ export const template = `
         </div>
 
         <div class="top-bar-section">
-          <span class="link-label-group">Store:
+          <div class="link-label-group">Store:
             <span class="link-pill"> <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a></span>
-          </span>
+          </div>
 
-          <span class="link-label-group">App:
+          <div class="link-label-group">App:
             <span class="link-pill"> <a href="{{ appUrl }}" target="_blank">{{ appName }}</a></span>
-          </span>
+          </div>
         </div>
 
-        <p class="top-bar-section align-right">
+        <p class="top-bar-section expand align-right">
           GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
         </p>
       </div>
