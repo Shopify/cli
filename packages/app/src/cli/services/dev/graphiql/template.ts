@@ -136,7 +136,7 @@ export const template = `
         margin: 0;
         width: 100%;
         overflow: hidden;
-        font-family: Inter, -apple-system, "system-ui", "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif
+        font-family: Inter, -apple-system, "system-ui", "San Francisco", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
         font-size: 0.85em;
         color: #666;
       }
