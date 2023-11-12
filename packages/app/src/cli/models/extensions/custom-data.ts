@@ -177,9 +177,7 @@ const validationSchemas = {
   }),
   multipleMetaobjectDefinitions: zod.object({
     name: zod.literal('metaobject_definition_ids'),
-    value: zod.array(
-      zod.string().regex(new RegExp('gid://shopify/MetaobjectDefinition/\\d+')),
-    ),
+    value: zod.array(zod.string().regex(new RegExp('gid://shopify/MetaobjectDefinition/\\d+'))),
   }),
   jsonSchema: zod.object({
     name: zod.literal('schema'),
@@ -188,57 +186,25 @@ const validationSchemas = {
   }),
 } as const
 
-const listMinMax = [
-  validationSchemas.listMinimumInteger,
-  validationSchemas.listMaximumInteger,
-] as const
+const listMinMax = [validationSchemas.listMinimumInteger, validationSchemas.listMaximumInteger] as const
 
 const fieldValidations = {
-  date_time: zod.union([
-    validationSchemas.minimumDateTime,
-    validationSchemas.maximumDateTime,
-  ]),
-  date: zod.union([
-    validationSchemas.minimumDate,
-    validationSchemas.maximumDate,
-  ]),
-  dimension: zod.union([
-    validationSchemas.minimumDimension,
-    validationSchemas.maximumDimension,
-  ]),
+  date_time: zod.union([validationSchemas.minimumDateTime, validationSchemas.maximumDateTime]),
+  date: zod.union([validationSchemas.minimumDate, validationSchemas.maximumDate]),
+  dimension: zod.union([validationSchemas.minimumDimension, validationSchemas.maximumDimension]),
   json: validationSchemas.jsonSchema,
   'list.color': zod.union(listMinMax),
-  'list.date_time': zod.union([
-    validationSchemas.minimumDateTime,
-    validationSchemas.maximumDateTime,
-    ...listMinMax,
-  ]),
-  'list.date': zod.union([
-    validationSchemas.minimumDate,
-    validationSchemas.maximumDate,
-    ...listMinMax,
-  ]),
-  'list.dimension': zod.union([
-    validationSchemas.minimumDimension,
-    validationSchemas.maximumDimension,
-    ...listMinMax,
-  ]),
+  'list.date_time': zod.union([validationSchemas.minimumDateTime, validationSchemas.maximumDateTime, ...listMinMax]),
+  'list.date': zod.union([validationSchemas.minimumDate, validationSchemas.maximumDate, ...listMinMax]),
+  'list.dimension': zod.union([validationSchemas.minimumDimension, validationSchemas.maximumDimension, ...listMinMax]),
   'list.number_decimal': zod.union([
     validationSchemas.minimumDecimal,
     validationSchemas.maximumDecimal,
     validationSchemas.maximumPrecision,
     ...listMinMax,
   ]),
-  'list.number_integer': zod.union([
-    validationSchemas.minimumInteger,
-    validationSchemas.maximumInteger,
-    ...listMinMax,
-  ]),
-  'list.rating': zod.union([
-    validationSchemas.minimumScale,
-    validationSchemas.maximumScale,
-    ...listMinMax,
-  ]),
+  'list.number_integer': zod.union([validationSchemas.minimumInteger, validationSchemas.maximumInteger, ...listMinMax]),
+  'list.rating': zod.union([validationSchemas.minimumScale, validationSchemas.maximumScale, ...listMinMax]),
   'list.single_line_text_field': zod.union([
     validationSchemas.minimumInteger,
     validationSchemas.maximumInteger,
@@ -246,20 +212,9 @@ const fieldValidations = {
     validationSchemas.choices,
     ...listMinMax,
   ]),
-  'list.url': zod.union([
-    validationSchemas.allowedDomains,
-    ...listMinMax,
-  ]),
-  'list.volume': zod.union([
-    validationSchemas.minimumVolume,
-    validationSchemas.maximumVolume,
-    ...listMinMax,
-  ]),
-  'list.weight': zod.union([
-    validationSchemas.minimumWeight,
-    validationSchemas.maximumWeight,
-    ...listMinMax,
-  ]),
+  'list.url': zod.union([validationSchemas.allowedDomains, ...listMinMax]),
+  'list.volume': zod.union([validationSchemas.minimumVolume, validationSchemas.maximumVolume, ...listMinMax]),
+  'list.weight': zod.union([validationSchemas.minimumWeight, validationSchemas.maximumWeight, ...listMinMax]),
   multi_line_text_field: zod.union([
     validationSchemas.minimumInteger,
     validationSchemas.maximumInteger,
@@ -270,14 +225,8 @@ const fieldValidations = {
     validationSchemas.maximumDecimal,
     validationSchemas.maximumPrecision,
   ]),
-  number_integer: zod.union([
-    validationSchemas.minimumInteger,
-    validationSchemas.maximumInteger,
-  ]),
-  rating: zod.union([
-    validationSchemas.minimumScale,
-    validationSchemas.maximumScale,
-  ]),
+  number_integer: zod.union([validationSchemas.minimumInteger, validationSchemas.maximumInteger]),
+  rating: zod.union([validationSchemas.minimumScale, validationSchemas.maximumScale]),
   single_line_text_field: zod.union([
     validationSchemas.minimumInteger,
     validationSchemas.maximumInteger,
@@ -285,37 +234,22 @@ const fieldValidations = {
     validationSchemas.choices,
   ]),
   url: validationSchemas.allowedDomains,
-  volume: zod.union([
-    validationSchemas.minimumVolume,
-    validationSchemas.maximumVolume,
-  ]),
-  weight: zod.union([
-    validationSchemas.minimumWeight,
-    validationSchemas.maximumWeight,
-  ]),
+  volume: zod.union([validationSchemas.minimumVolume, validationSchemas.maximumVolume]),
+  weight: zod.union([validationSchemas.minimumWeight, validationSchemas.maximumWeight]),
   'list.product_reference': zod.union(listMinMax),
   'list.collection_reference': zod.union(listMinMax),
   'list.variant_reference': zod.union(listMinMax),
   file_reference: validationSchemas.fileTypeOptions,
-  'list.file_reference': zod.union([
-    validationSchemas.fileTypeOptions,
-    ...listMinMax,
-  ]),
+  'list.file_reference': zod.union([validationSchemas.fileTypeOptions, ...listMinMax]),
   metaobject_reference: validationSchemas.metaobjectDefinition,
-  'list.metaobject_reference': zod.union([
-    validationSchemas.metaobjectDefinition,
-    ...listMinMax,
-  ]),
+  'list.metaobject_reference': zod.union([validationSchemas.metaobjectDefinition, ...listMinMax]),
   mixed_reference: validationSchemas.metaobjectDefinition,
-  'list.mixed_reference': zod.union([
-    validationSchemas.metaobjectDefinition,
-    ...listMinMax,
-  ]),
+  'list.mixed_reference': zod.union([validationSchemas.metaobjectDefinition, ...listMinMax]),
   'list.page_reference': zod.union(listMinMax),
 }
 
 function commonFields(extraFields = {}) {
-  const fieldsWithValidations = allTypes.map((type: typeof allTypes[number]) => {
+  const fieldsWithValidations = allTypes.map((type: (typeof allTypes)[number]) => {
     const rawObj = {
       key: zod.string(),
       type: zod.literal(type),
@@ -324,13 +258,19 @@ function commonFields(extraFields = {}) {
       ...extraFields,
     }
     if (type in fieldValidations) {
-      return zod.object({...rawObj, validations: zod.array(fieldValidations[type as keyof typeof fieldValidations]).optional()})
+      return zod.object({
+        ...rawObj,
+        validations: zod.array(fieldValidations[type as keyof typeof fieldValidations]).optional(),
+      })
     } else {
       return zod.object(rawObj)
     }
   })
   // Nonsense to force TS to realize there is at least 1 element in the array
-  const fieldsWithValidationsWithAtLeastOneElement = [fieldsWithValidations[0]!, ...fieldsWithValidations.slice(1)] as [typeof fieldsWithValidations[number], ...(typeof fieldsWithValidations[number])[]]
+  const fieldsWithValidationsWithAtLeastOneElement = [fieldsWithValidations[0]!, ...fieldsWithValidations.slice(1)] as [
+    (typeof fieldsWithValidations)[number],
+    ...(typeof fieldsWithValidations)[number][],
+  ]
   return zod.discriminatedUnion('type', fieldsWithValidationsWithAtLeastOneElement)
 }
 
