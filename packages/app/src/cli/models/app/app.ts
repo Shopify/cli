@@ -1,6 +1,7 @@
 import {AppErrors, isWebType} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
+import {CustomDataSchema} from '../extensions/custom-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -39,40 +40,7 @@ export const AppSchema = zod
         direct_api_offline_access: zod.boolean().optional(),
       })
       .optional(),
-    custom_data: zod
-      .object({
-        metafield_definitions: zod
-          .array(
-            zod.object({
-              namespace: zod.string(),
-              key: zod.string(),
-              type: zod.string(),
-              owner_type: zod.string(),
-              name: zod.string(),
-              description: zod.string().optional(),
-            }),
-          )
-          .optional(),
-        metaobject_definitions: zod
-          .array(
-            zod.object({
-              name: zod.string(),
-              type: zod.string(),
-              field_definitions: zod
-                .array(
-                  zod.object({
-                    key: zod.string(),
-                    type: zod.string(),
-                    name: zod.string(),
-                    description: zod.string().optional(),
-                  }),
-                )
-                .optional(),
-            }),
-          )
-          .optional(),
-      })
-      .optional(),
+    custom_data: CustomDataSchema.optional(),
     access_scopes: zod
       .object({
         scopes: zod.string().optional(),
