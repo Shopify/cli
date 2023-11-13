@@ -103,14 +103,16 @@ export const graphiqlTopBarStyles = `
     background: var(--caution-surface-l-3, #FFD6A4);
   }
 
+  .status-pill::before {
+    margin-right: 0.5rem;
+  }
+
   .status-pill.connected::before {
     content: ${runningIconSvgAsEncodedCssUrl};
-    margin-right: 0.5rem;
   }
 
   .status-pill.disconnected::before {
     content: ${disconnectedIconSvgAsEncodedCssUrl};
-    margin-right: 0.5rem;
   }
 
   #version-select {
@@ -123,6 +125,7 @@ export const graphiqlTopBarStyles = `
   .link-pill::before {
     content: ${linkIconSvgAsEncodedCssUrl};
     margin-right: 0.5rem;
+    vertical-align: middle;
   }
 
   .link-pill {
