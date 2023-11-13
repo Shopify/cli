@@ -68,7 +68,7 @@ export const graphiqlTopBarStyles = `
 
   .top-bar-section {
     border-right: 1px solid var(--border-border-subdued, #EBEBEB);
-    padding: 0.5rem;
+    padding: 0.2rem 0.5rem;
     align-self: stretch;
     display: flex;
     flex-grow: 1;
@@ -132,12 +132,63 @@ export const graphiqlTopBarStyles = `
     margin-left: 0.5rem;
   }
 
+  .link-pill .link-pill-contents {
+    display: inline-block;
+    max-width: max(12vw, 250px);
+    text-overflow: ellipsis;
+    overflow: hidden;
+    text-wrap: nowrap;
+    vertical-align: sub;
+  }
+
   .link-pill a {
     color: var(--global-azure-10, #006AFF);
   }
 
   .align-right {
     text-align: right;
+  }
+
+  @media only screen and (max-width: 1600px) {
+    .top-bar {
+      font-size: 0.9em
+    }
+  }
+
+  @media only screen and (max-width: 1250px) {
+    .top-bar {
+      font-size: 0.8em;
+    }
+  }
+
+  @media only screen and (max-width: 1120px) {
+    .top-bar-section-label {
+      display: none;
+    }
+
+    .link-pill .link-pill-contents {
+      max-width: max(8vw, 200px);
+    }
+  }
+
+  @media only screen and (max-width: 940px) {
+    .top-bar {
+      grid-template-columns: minmax(max-content, auto) minmax(auto, max-content) minmax(max-content, 1fr);
+    }
+
+    .top-bar-section {
+      border-right: none;
+    }
+
+    .top-bar-section.expand {
+      grid-column: 1 / span 3;
+    }
+  }
+
+  @media only screen and (max-width: 650px) {
+    .link-pill .link-pill-contents {
+      max-width: max(7vw, 90px);
+    }
   }
 `
 
@@ -188,12 +239,13 @@ export const template = `
       <div class="top-bar">
         <div class="top-bar-section">
           <p>
-            Status: <span class="status-pill connected" id="status">Running</span>
+            <span class="top-bar-section-label">Status: </span>
+            <span class="status-pill connected" id="status">Running</span>
           </p>
         </div>
 
         <div class="top-bar-section">
-          <span>API version: </span>
+          <span class="top-bar-section-label">API version: </span>
           <select id="version-select">
             {% for version in versions %}
               <option value="{{ version }}" {% if version == apiVersion %}selected{% endif %}>{{ version }}</option>
@@ -202,18 +254,28 @@ export const template = `
         </div>
 
         <div class="top-bar-section">
-          <div class="link-label-group">Store:
-            <span class="link-pill"> <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a></span>
+          <div class="link-label-group">
+            <span class="top-bar-section-label">Store: </span>
+            <span class="link-pill">
+              <span class="link-pill-contents">
+                <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a>
+              </span>
+            </span>
           </div>
 
-          <div class="link-label-group">App:
-            <span class="link-pill"> <a href="{{ appUrl }}" target="_blank">{{ appName }}</a></span>
+          <div class="link-label-group">
+            <span class="top-bar-section-label">App: </span>
+            <span class="link-pill">
+              <span class="link-pill-contents">
+                <a href="{{ appUrl }}" target="_blank">{{ appName }}</a></span>
+              </span>
+            </span>
           </div>
         </div>
 
-        <p class="top-bar-section expand align-right">
+        <div class="top-bar-section expand align-right">
           GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
-        </p>
+        </div>
       </div>
       <div id="graphiql-explorer">Loading...</div>
     </div>
