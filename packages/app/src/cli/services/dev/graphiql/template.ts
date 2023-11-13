@@ -215,7 +215,7 @@ export const unauthorizedTemplate = `
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url }}/graphiql/simple.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.1.1/build/esm/styles.css" />
     <script type="text/javascript">
       let appInstalled = false
       let newTab = null
@@ -236,7 +236,16 @@ export const unauthorizedTemplate = `
         newTab = window.open('{{ previewUrl }}', '_blank')
       }
     </script>
+    <style>
+      .vertical-center {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 100%;
+      }
+    </style>
   </head>
+  <!--
   <body class="body-error">
     <div class="app-error">
       <div id="container" class="container">
@@ -247,6 +256,41 @@ export const unauthorizedTemplate = `
         <p>
           <a href="#" onclick="openAppInstallTab(); return false;">Install the app</a> to continue.
         </p>
+      </div>
+    </div>
+  </body>
+  -->
+  <body>
+    <div class="vertical-center">
+      <div class="Polaris-Page Polaris-Page--fullWidth">
+        <div class="Polaris-Page__Content"><div class="Polaris-Grid">
+          <div class="Polaris-Grid-Cell Polaris-Grid-Cell--cell_3ColumnXs Polaris-Grid-Cell--cell_1ColumnSm Polaris-Grid-Cell--cell_1ColumnMd Polaris-Grid-Cell--cell_2ColumnLg Polaris-Grid-Cell--cell_2ColumnXl"></div>
+
+          <div class="Polaris-Grid-Cell Polaris-Grid-Cell--cell_6ColumnXs Polaris-Grid-Cell--cell_4ColumnSm Polaris-Grid-Cell--cell_4ColumnMd Polaris-Grid-Cell--cell_8ColumnLg Polaris-Grid-Cell--cell_8ColumnXl">
+              <div class="Polaris-LegacyCard">
+                <div class="Polaris-CalloutCard__Container">
+                  <div class="Polaris-LegacyCard__Header Polaris-LegacyCard__FirstSectionPadding Polaris-LegacyCard__LastSectionPadding">
+                    <div class="Polaris-CalloutCard__Title">
+                      <h1 class="Polaris-Text--root Polaris-Text--headingLg">App Not Installed</h1>
+                    </div>
+
+                    <div class="Polaris-TextContainer Polaris-Text--bodyLg">
+                      <p>
+                        The GraphiQL Explorer is only available for apps that have been installed on your dev store.
+                      </p>
+                      <div class="Polaris-CalloutCard__Buttons">
+                        <button onclick="openAppInstallTab(); return false;" class="Polaris-Button Polaris-Button--sizeLarge" type="button">
+                          <span class="Polaris-Button__Content">
+                            <span class="Polaris-Button__Text">Install the app to continue</span>
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        </div>
       </div>
     </div>
   </body>
