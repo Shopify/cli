@@ -231,7 +231,7 @@ export const unauthorizedTemplate = `
               window.location.href = window.location.href
             }
           })
-      }, 3000)
+      }, 5000)
 
       function openAppInstallTab() {
         newTab = window.open('{{ previewUrl }}', '_blank')
