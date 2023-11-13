@@ -103,6 +103,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -177,6 +178,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -405,6 +407,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -498,6 +501,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -516,6 +520,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -564,6 +569,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -617,6 +623,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
@@ -643,6 +650,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -662,6 +670,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -709,6 +718,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       Failed to turn off development store preview.
       "
     `)
@@ -757,6 +767,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       Failed to turn off development store preview.
       "
     `)
@@ -781,6 +792,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -813,6 +825,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       Failed to turn on development store preview automatically.
       Try turning it on manually by pressing \`d\`.
       "
@@ -839,6 +852,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       "
     `)
 
@@ -855,6 +869,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
+      GraphiQL URL: https://graphiql.shopify.com
       Failed to handle your input.
       "
     `)

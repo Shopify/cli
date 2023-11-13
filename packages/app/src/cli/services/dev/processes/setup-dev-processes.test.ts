@@ -158,7 +158,6 @@ describe('setup-dev-processes', () => {
         apiSecret: 'api-secret',
         port: expect.any(Number),
         appUrl: 'https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key',
-        scopes: ['read_products'],
         storeFqdn: 'store.myshopify.io',
         url: 'example.com/proxy',
       },

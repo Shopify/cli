@@ -6,7 +6,7 @@ import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
 import {environmentVariableNames, urlNamespaces} from '../../../constants.js'
-import {AppInterface, getAppScopes, getAppScopesArray} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
@@ -63,7 +63,6 @@ export async function setupDevProcesses({
   storeId,
   commandOptions,
   network,
-  partnerUrlsUpdated,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -72,11 +71,8 @@ export async function setupDevProcesses({
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  const scopesArray = getAppScopesArray(localApp.configuration)
   const shouldRenderGraphiQL =
-    scopesArray.length > 0 &&
-    partnerUrlsUpdated &&
-    (isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer]))
+    isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
 
   const processes = [
     ...(await setupWebProcesses({
@@ -96,7 +92,6 @@ export async function setupDevProcesses({
           apiSecret,
           storeFqdn,
           url: network.proxyUrl.replace(/^https?:\/\//, ''),
-          scopes: scopesArray,
         })
       : undefined,
     await setupPreviewableExtensionsProcess({

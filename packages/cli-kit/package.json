@@ -26,6 +26,7 @@
       "node": "./dist/public/*.js",
       "types": "./dist/public/*.d.ts"
     },
+    "./assets/*": "./assets/*",
     "./testing/*": {
       "node": "./dist/testing/*.js",
       "types": "./dist/testing/*.d.ts"
