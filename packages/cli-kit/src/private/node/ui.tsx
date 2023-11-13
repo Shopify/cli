@@ -27,9 +27,11 @@ export function renderOnce(
   return output
 }
 
-export function render(element: JSX.Element, options?: RenderOptions) {
+export async function render(element: JSX.Element, options?: RenderOptions) {
   const {waitUntilExit} = inkRender(element, options)
-  return waitUntilExit()
+  await waitUntilExit()
+  // We need to wait for other pending tasks -- unmounting of the ink component -- to complete
+  await Promise.resolve()
 }
 
 interface Instance {

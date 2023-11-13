@@ -524,10 +524,20 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   return runWithTimer('cmd_all_timing_prompts_ms')(() => {
     // eslint-disable-next-line max-params
     return new Promise((resolve, reject) => {
-      render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
+      let enteredText = ''
+      render(
+        <TextPrompt
+          {...props}
+          onSubmit={(value: string) => {
+            enteredText = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+        .then(() => resolve(enteredText))
         .catch(reject)
         .finally(resetRecordedSleep)
     })
