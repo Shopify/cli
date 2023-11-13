@@ -226,7 +226,8 @@ export const unauthorizedTemplate = `
             const body = await response.json()
             if (body.status === 'OK') {
               if (newTab) newTab.close()
-              document.getElementById('container').innerHTML = "Loading..."
+              document.getElementById('card-heading').innerHTML = "Loading GraphiQL..."
+              document.getElementById('card-body').innerHTML = \`If you're not redirected automatically, <a href="$\{window.location.href}">click here</a>.\`
               window.location.href = window.location.href
             }
           })
@@ -271,17 +272,17 @@ export const unauthorizedTemplate = `
                 <div class="Polaris-CalloutCard__Container">
                   <div class="Polaris-LegacyCard__Header Polaris-LegacyCard__FirstSectionPadding Polaris-LegacyCard__LastSectionPadding">
                     <div class="Polaris-CalloutCard__Title">
-                      <h1 class="Polaris-Text--root Polaris-Text--headingLg">App Not Installed</h1>
+                      <h1 id="card-heading" class="Polaris-Text--root Polaris-Text--headingLg">Install your app to access GraphiQL</h1>
                     </div>
 
-                    <div class="Polaris-TextContainer Polaris-Text--bodyLg">
+                    <div id="card-body" class="Polaris-TextContainer Polaris-Text--bodyLg">
                       <p>
-                        The GraphiQL Explorer is only available for apps that have been installed on your dev store.
+                        You must install your app on your development store to access the GraphiQL Explorer.
                       </p>
                       <div class="Polaris-CalloutCard__Buttons">
                         <button onclick="openAppInstallTab(); return false;" class="Polaris-Button Polaris-Button--sizeLarge" type="button">
                           <span class="Polaris-Button__Content">
-                            <span class="Polaris-Button__Text">Install the app to continue</span>
+                            <span class="Polaris-Button__Text">Install your app</span>
                           </span>
                         </button>
                       </div>
