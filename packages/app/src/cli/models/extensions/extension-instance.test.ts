@@ -54,8 +54,6 @@ describe('watchPaths', async () => {
   })
 
   test('returns js and ts paths for esbuild extensions', async () => {
-    const config = functionConfiguration()
-    config.build = {}
     const extensionInstance = await testUIExtension({directory: 'foo'})
 
     const got = extensionInstance.watchPaths
@@ -64,8 +62,6 @@ describe('watchPaths', async () => {
   })
 
   test('return empty array for non-function non-esbuild extensions', async () => {
-    const config = functionConfiguration()
-    config.build = {}
     const extensionInstance = await testTaxCalculationExtension('foo')
 
     const got = extensionInstance.watchPaths

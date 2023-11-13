@@ -29,7 +29,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
   await installJavy(app)
 
-  // CONSISTENT-DEV-TODO: This should not use drafts
   await Promise.all(
     extensions.map(async (extension) => {
       await extension.build({app, stdout, stderr, useTasks: false, signal})
