@@ -214,8 +214,21 @@ export const unauthorizedTemplate = `
     <title>GraphiQL Explorer - App Not Installed</title>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.1.1/build/esm/styles.css" />
+    <style>
+      .vertical-center {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        height: 100%;
+      }
+      #card {
+        max-width: 480px;
+      }
+    </style>
+
     <script type="text/javascript">
       let appInstalled = false
       let newTab = null
@@ -227,7 +240,7 @@ export const unauthorizedTemplate = `
             if (body.status === 'OK') {
               if (newTab) newTab.close()
               document.getElementById('card-heading').innerHTML = "Loading GraphiQL..."
-              document.getElementById('card-body').innerHTML = \`If you're not redirected automatically, <a href="$\{window.location.href}">click here</a>.\`
+              document.getElementById('card-body').innerHTML = \`If you're not redirected automatically, <a href="$\{window.location.href}" class="Polaris-Link">click here</a>.\`
               window.location.href = window.location.href
             }
           })
@@ -237,14 +250,6 @@ export const unauthorizedTemplate = `
         newTab = window.open('{{ previewUrl }}', '_blank')
       }
     </script>
-    <style>
-      .vertical-center {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        height: 100%;
-      }
-    </style>
   </head>
   <!--
   <body class="body-error">
@@ -268,7 +273,7 @@ export const unauthorizedTemplate = `
           <div class="Polaris-Grid-Cell Polaris-Grid-Cell--cell_3ColumnXs Polaris-Grid-Cell--cell_1ColumnSm Polaris-Grid-Cell--cell_1ColumnMd Polaris-Grid-Cell--cell_2ColumnLg Polaris-Grid-Cell--cell_2ColumnXl"></div>
 
           <div class="Polaris-Grid-Cell Polaris-Grid-Cell--cell_6ColumnXs Polaris-Grid-Cell--cell_4ColumnSm Polaris-Grid-Cell--cell_4ColumnMd Polaris-Grid-Cell--cell_8ColumnLg Polaris-Grid-Cell--cell_8ColumnXl">
-              <div class="Polaris-LegacyCard">
+              <div id="card" class="Polaris-LegacyCard">
                 <div class="Polaris-CalloutCard__Container">
                   <div class="Polaris-LegacyCard__Header Polaris-LegacyCard__FirstSectionPadding Polaris-LegacyCard__LastSectionPadding">
                     <div class="Polaris-CalloutCard__Title">
