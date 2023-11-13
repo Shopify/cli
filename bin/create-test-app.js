@@ -152,7 +152,8 @@ program
       }
     }
 
-    const flavorFlag = template === 'remix' ? `--flavor=${flavor}` : '';
+    let initArgs = [`--template=${template}`, `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
+    if (template === 'remix') initArgs.push(`--flavor=${flavor}`);
 
     switch (options.install) {
       case "local":
@@ -160,18 +161,8 @@ program
         await nodeExec(["build"]);
 
         log(`Creating new app in '${appPath}'...`);
-        await nodeExec(
-          ["create-app"],
-          [
-            "--local",
-            `--template=${template}`,
-            flavorFlag,
-            `--name=${appName}`,
-            `--path=${path.join(homeDir, "Desktop")}`,
-            `--package-manager=${nodePackageManager}`,
-          ],
-          defaultOpts
-        );
+        initArgs.push("--local");
+        await nodeExec(["create-app"], initArgs, defaultOpts);
 
         // there are some bugs with lockfiles and local references
         ["package-lock.json", "pnpm-lock.yaml", "yarn.lock", "bun.lockb"].forEach((lockFile) => {
@@ -185,7 +176,6 @@ program
       case "nightly":
       case "experimental":
         log(`Creating new app in '${appPath}'...`);
-        let initArgs = [`--template=${template}`, flavorFlag, `--name=${appName}`, `--path=${path.join(homeDir, "Desktop")}`];
         switch (nodePackageManager) {
           case "yarn":
             // yarn doesn't support 'create @shopify/app@nightly' syntax
