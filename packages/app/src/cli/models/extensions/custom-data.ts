@@ -1,5 +1,7 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 
+type ArrayNonEmpty<T> = [T, ...T[]]
+
 const metafieldTypes = [
   'boolean',
   'color',
@@ -186,10 +188,9 @@ const validationSchemas = {
   }),
 } as const
 
-const listMinMax = [validationSchemas.listMinimumInteger, validationSchemas.listMaximumInteger] satisfies [
-  zod.ZodDiscriminatedUnionOption<'name'>,
-  ...zod.ZodDiscriminatedUnionOption<'name'>[],
-]
+const listMinMax = [validationSchemas.listMinimumInteger, validationSchemas.listMaximumInteger] satisfies ArrayNonEmpty<
+  (typeof validationSchemas)[keyof typeof validationSchemas]
+>
 
 const fieldValidations = {
   date_time: zod.discriminatedUnion('name', [validationSchemas.minimumDateTime, validationSchemas.maximumDateTime]),
@@ -297,12 +298,7 @@ function commonFields(extraFields = {}) {
       return zod.object(rawObj)
     }
   })
-  // Nonsense to force TS to realize there is at least 1 element in the array
-  const fieldsWithValidationsWithAtLeastOneElement = [fieldsWithValidations[0]!, ...fieldsWithValidations.slice(1)] as [
-    (typeof fieldsWithValidations)[number],
-    ...(typeof fieldsWithValidations)[number][],
-  ]
-  return zod.discriminatedUnion('type', fieldsWithValidationsWithAtLeastOneElement)
+  return zod.discriminatedUnion('type', fieldsWithValidations as ArrayNonEmpty<(typeof fieldsWithValidations)[number]>)
 }
 
 const metafieldDefinitionSchema = commonFields({
