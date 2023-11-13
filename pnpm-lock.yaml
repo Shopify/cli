@@ -203,7 +203,7 @@ importers:
         specifier: 0.1.8
         version: 0.1.8
       micromatch:
-        specifier: ^4.0.5
+        specifier: 4.0.5
         version: 4.0.5
       react:
         specifier: 18.2.0

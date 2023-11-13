@@ -58,7 +58,7 @@
     "http-proxy": "1.18.1",
     "ink": "4.4.1",
     "javy-cli": "0.1.8",
-    "micromatch": "^4.0.5",
+    "micromatch": "4.0.5",
     "react": "18.2.0",
     "serve-static": "1.15.0",
     "ws": "8.13.0"
