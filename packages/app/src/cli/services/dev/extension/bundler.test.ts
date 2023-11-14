@@ -1,15 +1,12 @@
 import {
   FileWatcherOptions,
-  SetupFunctionWatcherOptions,
+  SetupExtensionWatcherOptions,
   setupBundlerAndFileWatcher,
-  setupConfigWatcher,
-  setupDraftableExtensionBundler,
-  setupFunctionWatcher,
+  setupExtensionWatcher,
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
-import {updateExtensionConfig, updateExtensionDraft} from '../update-extension.js'
-import * as updateExtension from '../update-extension.js'
+import {updateExtensionConfig} from '../update-extension.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -17,7 +14,7 @@ import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputDebug, outputInfo, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as cliKitFS from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
@@ -233,264 +230,16 @@ describe('setupBundlerAndFileWatcher()', () => {
   })
 })
 
-describe('setupConfigWatcher()', async () => {
-  const mockExtension = await testUIExtension({
-    devUUID: '1',
-    directory: 'directory/path/1',
-  })
-  const token = 'mock-token'
-  const apiKey = 'mock-api-key'
-  const registrationId = 'mock-registration-id'
-  const stdout = new Writable()
-  const stderr = new Writable()
-
-  test('starts watching the configuration file', async () => {
-    const chokidarCloseSpy = vi.fn()
-    const chokidarOnSpy = vi.fn(() => {
-      return {
-        close: chokidarCloseSpy,
-      }
-    })
-
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
-
-    const signal = new AbortController().signal
-
-    await setupConfigWatcher({
-      extension: mockExtension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-      signal,
-    })
-
-    expect(chokidar.watch).toHaveBeenCalledWith(mockExtension.configuration.path)
-    expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
-  })
-
-  test('when config file changes, it updates the drafts', async () => {
-    const abortController = new AbortController()
-    const chokidarOnSpy = vi.fn() as any
-    vi.mocked(updateExtensionConfig).mockResolvedValue(undefined)
-
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
-
-    await setupConfigWatcher({
-      extension: mockExtension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-      signal: abortController.signal,
-    })
-
-    chokidarOnSpy.mock.calls[0][1]()
-
-    expect(updateExtensionConfig).toHaveBeenCalledWith({
-      apiKey: 'mock-api-key',
-      extension: mockExtension,
-      registrationId: 'mock-registration-id',
-      stdout,
-      stderr,
-      token: 'mock-token',
-    })
-    expect(outputInfo).toHaveBeenCalledWith(`Config file at path ${mockExtension.configuration.path} changed`, stdout)
-  })
-
-  test('stops watching the config file when the signal aborts and close resolves', async () => {
-    const abortController = new AbortController()
-    const chokidarCloseSpy = vi.fn(() => Promise.resolve())
-    const chokidarOnSpy = vi.fn(() => {
-      return {
-        close: chokidarCloseSpy,
-      }
-    })
-
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
-
-    await setupConfigWatcher({
-      extension: mockExtension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-      signal: abortController.signal,
-    })
-
-    abortController.abort()
-
-    expect(chokidarCloseSpy).toHaveBeenCalled()
-    expect(outputDebug).toHaveBeenCalledWith('Closing config file watching for extension with ID 1', stdout)
-  })
-
-  test('stops watching the config file when the signal aborts and close rejects', async () => {
-    const abortController = new AbortController()
-    const chokidarCloseSpy = vi.fn(() => Promise.reject(new Error('fail')))
-    const chokidarOnSpy = vi.fn(() => {
-      return {
-        close: chokidarCloseSpy,
-      }
-    })
-
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
-
-    await setupConfigWatcher({
-      extension: mockExtension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-      signal: abortController.signal,
-    })
-
-    abortController.abort()
-
-    await expect(chokidarCloseSpy).rejects.toThrow(new Error('fail'))
-    expect(outputDebug).toHaveBeenLastCalledWith(
-      'Config file watching failed to close for extension with 1: fail',
-      stderr,
-    )
-  })
-})
-
-describe('setupNonPreviewableExtensionBundler()', async () => {
-  const mockExtension = await testUIExtension({
-    devUUID: '1',
-    directory: 'directory/path/1',
-    configuration: {
-      handle: 'another-handle',
-      name: 'test-ui-extension',
-      type: 'product_subscription',
-      metafields: [],
-    },
-  })
-
-  const app = {
-    dotenv: {
-      variables: {
-        SOME_KEY: 'SOME_VALUE',
-      },
-    },
-  } as any
-
-  const token = 'mock-token'
-  const apiKey = 'mock-api-key'
-  const registrationId = 'mock-registration-id'
-  const stderr = new Writable()
-  const stdout = new Writable()
-  const abortController = new AbortController()
-
-  test('calls bundleExtension with the correct parameters', async () => {
-    vi.spyOn(bundle, 'bundleExtension').mockResolvedValue(undefined)
-
-    await setupDraftableExtensionBundler({
-      extension: mockExtension,
-      app,
-      url: 'mock/url',
-      token,
-      apiKey,
-      registrationId,
-      stderr,
-      stdout,
-      signal: abortController.signal,
-    })
-
-    expect(bundle.bundleExtension).toHaveBeenCalledWith(
-      expect.objectContaining({
-        minify: false,
-        outputPath: 'directory/path/1/dist/another-handle.js',
-        stdin: {
-          contents: mockExtension.getBundleExtensionStdinContent(),
-          resolveDir: 'directory/path/1',
-          loader: 'tsx',
-        },
-        environment: 'development',
-        env: {
-          SOME_KEY: 'SOME_VALUE',
-          APP_URL: 'mock/url',
-        },
-        stderr,
-        stdout,
-        watchSignal: abortController.signal,
-      }),
-    )
-  })
-
-  test('calls updateExtensionDraft when the bundle is built successfully', async () => {
-    await setupDraftableExtensionBundler({
-      extension: mockExtension,
-      app,
-      url: 'mock/url',
-      token,
-      apiKey,
-      registrationId,
-      stderr,
-      stdout,
-      signal: abortController.signal,
-    })
-
-    const bundleExtensionFn = bundle.bundleExtension as any
-    bundleExtensionFn.mock.calls[0][0].watch()
-
-    expect(updateExtensionDraft).toHaveBeenCalledWith({
-      extension: mockExtension,
-      token,
-      apiKey,
-      registrationId,
-      stdout,
-      stderr,
-    })
-    expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has changed`, stdout)
-  })
-
-  test('does not call updateExtensionDraft when the bundle has errors', async () => {
-    await setupDraftableExtensionBundler({
-      extension: mockExtension,
-      app,
-      url: 'mock/url',
-      token,
-      apiKey,
-      registrationId,
-      stderr,
-      stdout,
-      signal: abortController.signal,
-    })
-
-    const buildFailure = {
-      errors: ['error'] as any,
-      warnings: [],
-      outputFiles: [],
-      metafile: {} as any,
-      mangleCache: {},
-    } as BuildResult
-    const bundleExtensionFn = bundle.bundleExtension as any
-    bundleExtensionFn.mock.calls[0][0].watch(buildFailure)
-
-    expect(updateExtensionDraft).not.toHaveBeenCalled()
-    expect(outputInfo).toHaveBeenCalledWith(`The Javascript bundle of the extension with ID 1 has an error`, stderr)
-  })
-})
-
-describe('setupFunctionWatcher', () => {
+describe('setupExtensionWatcher', () => {
   interface MockWatcherOptionsArgs {
     watchPath: string | undefined
     signal?: AbortSignal | undefined
   }
 
-  async function mockWatcherOptions({watchPath, signal}: MockWatcherOptionsArgs): Promise<SetupFunctionWatcherOptions> {
+  async function mockWatcherOptions({
+    watchPath,
+    signal,
+  }: MockWatcherOptionsArgs): Promise<SetupExtensionWatcherOptions> {
     const config = functionConfiguration()
     config.build = {
       watch: watchPath,
@@ -502,6 +251,7 @@ describe('setupFunctionWatcher', () => {
         config,
         dir: 'foo',
       }),
+      url: 'mock/url',
       stdout: new Writable(),
       stderr: new Writable(),
       signal: signal ?? new AbortController().signal,
@@ -522,7 +272,7 @@ describe('setupFunctionWatcher', () => {
     })
     const chokidarSpy = vi.spyOn(chokidar, 'watch')
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
 
     expect(chokidarSpy).not.toHaveBeenCalled()
     expect(outputWarn).toHaveBeenCalledWith(
@@ -540,7 +290,7 @@ describe('setupFunctionWatcher', () => {
       on: chokidarOnSpy,
     } as any)
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
 
     expect(chokidarWatchSpy).toHaveBeenCalledWith(expect.arrayContaining<string>([joinPath('foo', '*.rs')]))
     expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
@@ -571,15 +321,18 @@ describe('setupFunctionWatcher', () => {
       } as any
     })
 
-    const updateExtensionConfigSpy = vi.spyOn(updateExtension, 'updateExtensionConfig').mockResolvedValue()
-
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     // Then
     expect(chokidarOnSpy).toHaveBeenCalled()
-    expect(chokidarWatchSpy).toHaveBeenCalledWith([`${watchOptions.extension.directory}/locales/**.json`])
-    expect(updateExtensionConfigSpy).toHaveBeenCalled()
+    expect(chokidarWatchSpy).toHaveBeenCalledWith([
+      `${watchOptions.extension.directory}/*.rs`,
+      `${watchOptions.extension.directory}/**/!(.)*.graphql`,
+      `${watchOptions.extension.directory}/locales/**.json`,
+      `${watchOptions.extension.directory}/**.toml`,
+    ])
+    expect(updateExtensionConfig).toHaveBeenCalled()
   })
 
   test('builds and deploys the function on file change', async () => {
@@ -588,18 +341,19 @@ describe('setupFunctionWatcher', () => {
     })
     const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
       // call the file watch handler immediately
-      handler('/src/main.rs')
+      handler('foo/main.rs')
     })
-    vi.spyOn(chokidar, 'watch').mockReturnValue({
-      on: chokidarOnSpy,
-    } as any)
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      return {on: chokidarOnSpy} as any
+    })
+
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockResolvedValue()
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     expect(chokidarOnSpy).toHaveBeenCalled()
-    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('/src/main.rs'), watchOptions.stdout)
+    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('foo/main.rs'), watchOptions.stdout)
     expect(buildSpy).toHaveBeenCalledWith(
       watchOptions.extension,
       expect.objectContaining({
@@ -609,7 +363,7 @@ describe('setupFunctionWatcher', () => {
         useTasks: false,
       }),
     )
-    expect(updateExtensionDraft).toHaveBeenCalledWith({
+    expect(updateExtensionConfig).toHaveBeenCalledWith({
       extension: watchOptions.extension,
       token: watchOptions.token,
       apiKey: watchOptions.apiKey,
@@ -625,18 +379,19 @@ describe('setupFunctionWatcher', () => {
     })
     const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
       // call the file watch handler immediately
-      handler('/src/main.rs')
+      handler('foo/main.rs')
     })
     vi.spyOn(chokidar, 'watch').mockReturnValue({
       on: chokidarOnSpy,
     } as any)
+
     const buildSpy = vi.spyOn(extensionBuild, 'buildFunctionExtension').mockRejectedValue('error')
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     expect(buildSpy).toHaveBeenCalled()
-    expect(updateExtensionDraft).not.toHaveBeenCalled()
+    expect(updateExtensionConfig).not.toHaveBeenCalled()
   })
 
   test('terminates existing builds on concurrent file change', async () => {
@@ -645,9 +400,10 @@ describe('setupFunctionWatcher', () => {
     })
     const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
       // call the file watch handler twice
-      handler('/src/main.rs')
-      handler('/src/main.rs')
+      handler('foo/main.rs')
+      handler('foo/main.rs')
     })
+
     vi.spyOn(chokidar, 'watch').mockReturnValue({
       on: chokidarOnSpy,
     } as any)
@@ -664,7 +420,7 @@ describe('setupFunctionWatcher', () => {
       )
       .mockResolvedValue()
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     await flushPromises()
 
     expect(signal).toBeDefined()
@@ -687,7 +443,7 @@ describe('setupFunctionWatcher', () => {
       on: chokidarOnSpy,
     } as any)
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     abortController.abort()
 
     expect(chokidarCloseSpy).toHaveBeenCalled()
@@ -713,7 +469,7 @@ describe('setupFunctionWatcher', () => {
       on: chokidarOnSpy,
     } as any)
 
-    await setupFunctionWatcher(watchOptions)
+    await setupExtensionWatcher(watchOptions)
     abortController.abort()
 
     await expect(chokidarCloseSpy).rejects.toThrow(new Error('fail'))
