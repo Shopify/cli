@@ -126,17 +126,25 @@ export const graphiqlTopBarStyles = `
     padding: 0.5rem 0.75rem 0.5rem 0.5rem;
   }
 
-  .link-pill::before {
-    content: ${linkIconSvgAsEncodedCssUrl};
-    vertical-align: middle;
-    margin-right: 0.15rem;
+  .link-label-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .link-pill {
     border-radius: 8px;
     background: var(--global-azure-04, #E0F0FF);
-    padding: 0.25rem 0.5rem 0.35rem 0.25rem;
-    margin-left: 0.5rem;
+    padding: 2px 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .link-pill-pill {
+    content: ${linkIconSvgAsEncodedCssUrl};
+    height: 12px;
+    width: 12px;
   }
 
   .link-pill .link-pill-contents {
@@ -263,14 +271,14 @@ export const template = `
         <div class="top-bar-section">
           <div class="link-label-group">
             <span class="top-bar-section-label">Store: </span>
-            <span class="link-pill"><span class="link-pill-contents">
+            <span class="link-pill"><span class="link-pill-pill"></span><span class="link-pill-contents">
               <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a>
             </span></span>
           </div>
 
           <div class="link-label-group">
             <span class="top-bar-section-label">App: </span>
-            <span class="link-pill"><span class="link-pill-contents">
+            <span class="link-pill"><span class="link-pill-pill"></span><span class="link-pill-contents">
               <a href="{{ appUrl }}" target="_blank">{{ appName }}</a></span>
             </span></span>
           </div>
