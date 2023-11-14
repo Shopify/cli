@@ -233,10 +233,6 @@ const shopifySvg = <svg width="102" height="28" viewBox="0 0 102 28" fill="none"
   <path d="M95.3288 10.837C95.3288 10.837 93.2349 16.0836 92.2947 18.9475H92.2459C92.1819 18.0252 91.4207 10.837 91.4207 10.837H87.9012L89.9166 21.675C89.9653 21.916 89.9409 22.0615 89.8434 22.2305C89.4548 22.9785 88.7995 23.703 88.0231 24.2343C87.3922 24.6928 86.6881 24.9823 86.1304 25.1755L87.0523 28C87.732 27.8553 89.1394 27.2998 90.3288 26.1895C91.858 24.7655 93.2654 22.5685 94.7215 19.575L98.8231 10.8362H95.3288V10.837Z" fill="black"/>
 </svg>
 
-
-// function to avoid TS error; this will be made available in the DOM
-const openAppInstallTab = () => {}
-
 const polarisUnauthorizedContent = renderToStaticMarkup(
   <AppProvider i18n={{}}>
     <Page narrowWidth>
@@ -327,21 +323,6 @@ export const unauthorizedTemplate = `
       })
     </script>
   </head>
-  <!--
-  <body class="body-error">
-    <div class="app-error">
-      <div id="container" class="container">
-        <h1>App Not Installed</h1>
-        <p>
-          The GraphiQL Explorer is only available for apps that have been installed on your dev store.
-        </p>
-        <p>
-          <a href="#" onclick="openAppInstallTab(); return false;">Install the app</a> to continue.
-        </p>
-      </div>
-    </div>
-  </body>
-  -->
   <body>
     <div class="vertical-center">
       ${polarisUnauthorizedContent}
