@@ -24,7 +24,6 @@
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
-* [`shopify debug stdin`](#shopify-debug-stdin)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
 * [`shopify kitchen-sink async`](#shopify-kitchen-sink-async)
 * [`shopify kitchen-sink prompts`](#shopify-kitchen-sink-prompts)
@@ -590,15 +589,6 @@ USAGE
 DESCRIPTION
   Check autocorrect current status.
 ```
-
-## `shopify debug stdin`
-
-```
-USAGE
-  $ shopify debug stdin
-```
-
-_See code: [dist/cli/commands/debug/stdin.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.50.0/dist/cli/commands/debug/stdin.js)_
 
 ## `shopify help [COMMANDS]`
 

@@ -22,7 +22,6 @@
  config autocorrect off            @shopify/plugin-did-you-mean 
  config autocorrect on             @shopify/plugin-did-you-mean 
  config autocorrect status         @shopify/plugin-did-you-mean 
- debug stdin                       @shopify/cli                 
  help                              @oclif/plugin-help           
  kitchen-sink async                @shopify/cli                 
  kitchen-sink prompts              @shopify/cli                 

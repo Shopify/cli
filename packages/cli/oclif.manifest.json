@@ -77,16 +77,6 @@
       },
       "args": {}
     },
-    "debug:stdin": {
-      "id": "debug:stdin",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
     "demo:catalog": {
       "id": "demo:catalog",
       "description": "Browse the catalog for steps",
