@@ -99,6 +99,7 @@ describe('buildFunctionExtension', () => {
       stderr,
       signal,
       app,
+      environment: 'production',
     })
   })
 
