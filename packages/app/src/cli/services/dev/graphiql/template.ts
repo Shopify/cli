@@ -124,8 +124,8 @@ export const graphiqlTopBarStyles = `
 
   .link-pill::before {
     content: ${linkIconSvgAsEncodedCssUrl};
-    margin-right: 0.5rem;
     vertical-align: middle;
+    margin-right: 0.15rem;
   }
 
   .link-pill {
@@ -259,20 +259,16 @@ export const template = `
         <div class="top-bar-section">
           <div class="link-label-group">
             <span class="top-bar-section-label">Store: </span>
-            <span class="link-pill">
-              <span class="link-pill-contents">
-                <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a>
-              </span>
-            </span>
+            <span class="link-pill"><span class="link-pill-contents">
+              <a href="https://{{ storeFqdn }}/admin" target="_blank">{{ storeFqdn }}</a>
+            </span></span>
           </div>
 
           <div class="link-label-group">
             <span class="top-bar-section-label">App: </span>
-            <span class="link-pill">
-              <span class="link-pill-contents">
-                <a href="{{ appUrl }}" target="_blank">{{ appName }}</a></span>
-              </span>
-            </span>
+            <span class="link-pill"><span class="link-pill-contents">
+              <a href="{{ appUrl }}" target="_blank">{{ appName }}</a></span>
+            </span></span>
           </div>
         </div>
 
