@@ -293,16 +293,25 @@ export async function renderSelectPrompt<T>({
     recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
   }
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let selectedValue: T
+    try {
+      await render(
+        <SelectPrompt
+          {...props}
+          onSubmit={(value: T) => {
+            selectedValue = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return selectedValue!
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -436,16 +445,25 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
     ...props,
   }
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let selectedValue: T
+    try {
+      await render(
+        <AutocompletePrompt
+          {...newProps}
+          onSubmit={(value: T) => {
+            selectedValue = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return selectedValue!
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -521,11 +539,10 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      let enteredText = ''
-      render(
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let enteredText = ''
+    try {
+      await render(
         <TextPrompt
           {...props}
           onSubmit={(value: string) => {
@@ -537,10 +554,10 @@ export async function renderTextPrompt({renderOptions, ...props}: RenderTextProm
           exitOnCtrlC: false,
         },
       )
-        .then(() => resolve(enteredText))
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+      return enteredText
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -580,16 +597,25 @@ export async function renderDangerousConfirmationPrompt({
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let confirmed: boolean
+    try {
+      await render(
+        <DangerousConfirmationPrompt
+          {...props}
+          onSubmit={(value: boolean) => {
+            confirmed = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return confirmed!
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
