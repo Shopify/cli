@@ -162,6 +162,7 @@ program
 
         log(`Creating new app in '${appPath}'...`);
         initArgs.push("--local");
+        initArgs.push(`--package-manager=${nodePackageManager}`);
         await nodeExec(["create-app"], initArgs, defaultOpts);
 
         // there are some bugs with lockfiles and local references
