@@ -55,6 +55,7 @@ describe('getUIExtensionPayload', () => {
         port: 123,
         url: 'http://tunnel-url.com',
         storeFqdn: 'my-domain.com',
+        storeId: '123456789',
         buildDirectory: tmpDir,
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',

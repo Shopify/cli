@@ -75,6 +75,11 @@ export interface ExtensionDevOptions {
   storeFqdn: string
 
   /**
+   * Id of the store where the extension wants to be previewed
+   */
+  storeId: string
+
+  /**
    * List of granted approval scopes belonging to the parent app
    */
   grantedScopes: string[]

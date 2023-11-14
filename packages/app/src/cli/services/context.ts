@@ -66,6 +66,7 @@ interface DevContextOutput {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {apiSecret?: string}
   remoteAppUpdated: boolean
   storeFqdn: string
+  storeId: string
   updateURLs: boolean | undefined
 }
 
@@ -244,6 +245,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
     },
     remoteAppUpdated: app.apiKey !== cachedInfo?.previousAppId,
     storeFqdn: store.shopDomain,
+    storeId: store.shopId,
     updateURLs: cachedInfo?.updateURLs,
   }
 }

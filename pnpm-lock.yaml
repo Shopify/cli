@@ -158,13 +158,13 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@16.18.57)(typescript@5.2.2)
       '@shopify/cli-kit':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../plugin-cloudflare
       '@shopify/shopify-api':
         specifier: 7.5.0
@@ -273,20 +273,20 @@ importers:
         specifier: 3.1.8
         version: 3.1.8(@types/node@16.18.57)(typescript@5.2.2)
       '@shopify/cli-kit':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../plugin-did-you-mean
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
     devDependencies:
       '@shopify/app':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../app
       '@shopify/theme':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../theme
       '@types/node':
         specifier: 16.18.57
@@ -554,7 +554,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@16.18.57)(typescript@5.2.2)
       '@shopify/cli-kit':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../cli-kit
     devDependencies:
       '@types/node':
@@ -676,7 +676,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@16.18.57)(typescript@5.2.2)
       '@shopify/cli-kit':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../cli-kit
       node-fetch:
         specifier: 3.3.2
@@ -698,7 +698,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@16.18.57)(typescript@5.2.2)
       '@shopify/cli-kit':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -717,7 +717,7 @@ importers:
         specifier: 2.11.7
         version: 2.11.7(@types/node@16.18.57)(typescript@5.2.2)
       '@shopify/cli-kit':
-        specifier: 3.50.0
+        specifier: 3.51.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
         specifier: 1.20.1
@@ -732,9 +732,6 @@ importers:
       '@types/node':
         specifier: 16.18.57
         version: 16.18.57
-      json-schema-to-zod:
-        specifier: 0.6.3
-        version: 0.6.3
       node-stream-zip:
         specifier: ^1.15.0
         version: 1.15.0
@@ -962,15 +959,6 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.3
       '@jridgewell/trace-mapping': 0.3.18
-
-  /@apidevtools/json-schema-ref-parser@9.1.2:
-    resolution: {integrity: sha512-r1w81DpR+KyRWd3f+rk6TNqMgedmAxZP5v5KWlXQWlgMUUtyEJch0DKEci1SorPMiSeM8XPl7MZ3miJ60JIpQg==}
-    dependencies:
-      '@jsdevtools/ono': 7.1.3
-      '@types/json-schema': 7.0.12
-      call-me-maybe: 1.0.2
-      js-yaml: 4.1.0
-    dev: true
 
   /@apollo/client@3.7.17(graphql@16.8.1)(react@17.0.2):
     resolution: {integrity: sha512-0EErSHEtKPNl5wgWikHJbKFAzJ/k11O0WO2QyqZSHpdxdAnw7UWHY4YiLbHCFG7lhrD+NTQ3Z/H9Jn4rcikoJA==}
@@ -3311,10 +3299,6 @@ packages:
       '@jridgewell/resolve-uri': 3.1.1
       '@jridgewell/sourcemap-codec': 1.4.15
 
-  /@jsdevtools/ono@7.1.3:
-    resolution: {integrity: sha512-4JQNk+3mVzK3xh2rqd6RB4J46qUR19azEHBneZyTZM+c456qOrbbM/5xcR8huNCCcbVt7+UmizG6GuUvPvKUYg==}
-    dev: true
-
   /@kwsites/file-exists@1.1.1:
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
     dependencies:
@@ -4703,10 +4687,10 @@ packages:
     dependencies:
       '@shopify/network': 3.2.1
       compare-versions: 5.0.3
-      isbot: 3.6.13
-      jose: 4.14.4
-      node-fetch: 2.6.11
-      tslib: 2.6.0
+      isbot: 3.7.1
+      jose: 4.15.4
+      node-fetch: 2.7.0
+      tslib: 2.6.2
       uuid: 9.0.0
     transitivePeerDependencies:
       - encoding
@@ -5006,10 +4990,6 @@ packages:
     resolution: {integrity: sha512-c3mAZEuK0lvBp8tmuL74XRKn1+y2dcwOUpH7x4WrF6gk1GIgiluDRgMYQtw2OFcBvAJWlt6ASU3tSqxp0Uu0Aw==}
     dependencies:
       '@types/istanbul-lib-report': 3.0.0
-    dev: true
-
-  /@types/json-schema@7.0.11:
-    resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
     dev: true
 
   /@types/json-schema@7.0.12:
@@ -5996,8 +5976,8 @@ packages:
     resolution: {integrity: sha512-sCXXUhA+cljomZ3ZAwb8i1p3oOlkABzPy08ZDAoGcYuvtBPlQ1Ytde129ArXyHWDhfeewq7rlx9F+cUx2SSlkg==}
     engines: {node: '>=4'}
 
-  /axios@1.4.0:
-    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
+  /axios@1.6.1:
+    resolution: {integrity: sha512-vfBmhDpKafglh0EldBEbVuoe7DyAavGSLWhuSm5ZSEKQnHhBf0xAAwybbNH1IkrJNGnS/VG4I5yxig1pCEXE4g==}
     dependencies:
       follow-redirects: 1.15.2
       form-data: 4.0.0
@@ -6376,10 +6356,6 @@ packages:
     dependencies:
       function-bind: 1.1.1
       get-intrinsic: 1.2.1
-
-  /call-me-maybe@1.0.2:
-    resolution: {integrity: sha512-HpX65o1Hnr9HH25ojC1YGs7HCQLq0GCOibSaWER0eNpgJ/Z1MZv2mTc7+xh6WOPxbRVcmgbv4hGU+uSQ/2xFZQ==}
-    dev: true
 
   /callsites@3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
@@ -9508,8 +9484,8 @@ packages:
     engines: {node: '>= 14.0.0'}
     dev: true
 
-  /isbot@3.6.13:
-    resolution: {integrity: sha512-uoP4uK5Dc2CrabmK+Gue1jTL+scHiCc1c9rblRpJwG8CPxjLIv8jmGyyGRGkbPOweayhkskdZsEQXG6p+QCQrg==}
+  /isbot@3.7.1:
+    resolution: {integrity: sha512-JfqOaY3O1lcWt2nc+D6Mq231CNpwZrBboLa59Go0J8hjGH+gY/Sy0CA/YLUSIScINmAVwTdJZIsOTk4PfBtRuw==}
     engines: {node: '>=12'}
     dev: false
 
@@ -9664,8 +9640,8 @@ packages:
     engines: {node: '>= 0.6.0'}
     dev: true
 
-  /jose@4.14.4:
-    resolution: {integrity: sha512-j8GhLiKmUAh+dsFXlX1aJCbt5KMibuKb+d7j1JaOJG6s2UjX1PQlW+OKB/sD4a/5ZYF4RcmYmLSndOoU3Lt/3g==}
+  /jose@4.15.4:
+    resolution: {integrity: sha512-W+oqK4H+r5sITxfxpSU+MMdr/YSWGvgZMQDIsNoBDGGy4i7GBPTtvFKibQzW06n3U3TqHjhvBJsirShsEJ6eeQ==}
     dev: false
 
   /js-tokens@4.0.0:
@@ -9751,15 +9727,6 @@ packages:
   /json-parse-even-better-errors@3.0.0:
     resolution: {integrity: sha512-iZbGHafX/59r39gPwVPRBGw0QQKnA7tte5pSMrhWOW7swGsVvVTjmfyAV9pNqk8YGT7tRCdxRu8uzcgZwoDooA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
-    dev: true
-
-  /json-schema-to-zod@0.6.3:
-    resolution: {integrity: sha512-G/B51WWBeY1+ozbE4ZOPHblY8CJ5Frk5f4wUPynWfzkD0ysB2nXsrEnkRlx5UFNOe/WKFErMP/NAUhwK3nd4jg==}
-    hasBin: true
-    dependencies:
-      '@apidevtools/json-schema-ref-parser': 9.1.2
-      '@types/json-schema': 7.0.11
-      prettier: 2.8.8
     dev: true
 
   /json-schema-traverse@0.4.1:
@@ -11009,7 +10976,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.6.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -11072,7 +11039,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.4.0
+      axios: 1.6.1
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
