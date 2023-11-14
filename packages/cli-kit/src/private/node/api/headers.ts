@@ -2,7 +2,8 @@ import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
 import {ExtendableError} from '../../../public/node/error.js'
-import https from 'https'
+import https, {AgentOptions} from 'https'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 
 export class RequestClientError extends ExtendableError {
   statusCode: number
@@ -70,10 +71,15 @@ export function buildHeaders(token?: string): {[key: string]: string} {
  * set to false
  */
 export async function httpsAgent(): Promise<https.Agent> {
-  return new https.Agent({
+  const options: AgentOptions = {
     rejectUnauthorized: await shouldRejectUnauthorizedRequests(),
     keepAlive: true,
-  })
+  }
+  // try to use https_proxy if present
+  if (process.env.https_proxy) {
+     return new HttpsProxyAgent(process.env.https_proxy, options);
+  }
+  return new https.Agent(options)
 }
 
 /**

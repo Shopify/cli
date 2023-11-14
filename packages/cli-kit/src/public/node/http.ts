@@ -34,14 +34,14 @@ export type Response = ReturnType<typeof nodeFetch>
  * @returns A promise that resolves with the response.
  */
 export async function fetch(url: RequestInfo, init?: RequestInit): Response {
-  return runWithTimer('cmd_all_timing_network_ms')(() =>
-    debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, init)}),
+  return runWithTimer('cmd_all_timing_network_ms')(async () =>
+    debugLogResponseInfo({url: url.toString(), request: nodeFetch(url, {...init, agent: await httpsAgent()})}),
   )
 }
 
 /**
  * A fetch function to use with Shopify services. The function ensures the right
- * TLS configuragion is used based on the environment in which the service is running
+ * TLS configuration is used based on the environment in which the service is running
  * (e.g. Spin).
  *
  * @param url - This defines the resource that you wish to fetch.

@@ -55,6 +55,7 @@
     "fs-extra": "^11.1.0",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
+    "https-proxy-agent": "^7.0.2",
     "liquidjs": "^10.9.2",
     "node-fetch": "^3.3.2",
     "nx": "16.8.1",
