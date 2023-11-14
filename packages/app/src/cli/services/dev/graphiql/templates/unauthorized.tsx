@@ -28,9 +28,9 @@ const shopifySvg = <svg width="102" height="28" viewBox="0 0 102 28" fill="none"
 const polarisUnauthorizedContent = renderToStaticMarkup(
   <AppProvider i18n={{}}>
     <Page narrowWidth>
-      <div className="max-width-400px">
-        <Card>
-          <BlockStack gap="400">
+      <div className="max-width-480px">
+        <Card padding="600">
+          <BlockStack gap="500">
             {shopifySvg}
             <div id="pre-install">
               <BlockStack gap="200">
@@ -49,13 +49,15 @@ const polarisUnauthorizedContent = renderToStaticMarkup(
             </div>
 
             <div id="post-install">
-              <Text variant="headingMd" as="h2">
-                Loading GraphiQL...
-              </Text>
-              <p>
-                If you're not redirected automatically,{' '}
-                <Link url="{{url}}/graphiql">click here</Link>.
-              </p>
+              <BlockStack gap="200">
+                <Text variant="headingMd" as="h2">
+                  Loading GraphiQL...
+                </Text>
+                <p>
+                  If you're not redirected automatically,{' '}
+                  <Link url="{{url}}/graphiql">click here</Link>.
+                </p>
+              </BlockStack>
             </div>
           </BlockStack>
         </Card>
@@ -81,8 +83,8 @@ export const unauthorizedTemplate = `
         align-items: center;
         height: 100%;
       }
-      .max-width-400px {
-        max-width: 400px;
+      .max-width-480px {
+        max-width: 480px;
       }
       #post-install {
         display: none;
