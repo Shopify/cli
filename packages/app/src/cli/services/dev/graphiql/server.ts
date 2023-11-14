@@ -1,4 +1,5 @@
-import {defaultQuery, template, unauthorizedTemplate} from './template.js'
+import {defaultQuery, template} from './template.js'
+import {unauthorizedTemplate} from './templates/unauthorized.js'
 import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
