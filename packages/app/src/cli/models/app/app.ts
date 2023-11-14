@@ -6,6 +6,7 @@ import {
   TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA,
   validateInnerSubscriptions,
   validateTopLevelSubscriptions,
+  httpsRegex,
 } from '../../utilities/app/config/webhooks.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -24,9 +25,15 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
+// example PubSub URI - pubsub://{project}:{topic}
+const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
+// example Eventbridge ARN - arn:aws:events:{region}::event-source/aws.partner/shopify.com/{app_id}/{path}
+const arnRegex =
+  /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/
+
 // adding http or https presence and absence of new lines to url validation
 const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
-  const regex = httpsOnly ? /^(https:\/\/)/ : /^(https?:\/\/)/
+  const regex = httpsOnly ? httpsRegex : /^(https?:\/\/)/
   return zodType
     .url()
     .refine((value) => Boolean(value.match(regex)), {message})
@@ -34,20 +41,15 @@ const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Inva
 }
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
+const removeTrailingSlash = (arg: unknown) =>
+  typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
 const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   httpsOnly: true,
   message: 'Only https urls are allowed',
 }).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-const SubscriptionEndpointUrlValidation = ensureHttpsOnlyUrl.optional()
-const PubSubProjectValidation = zod.string().optional()
-const PubSubTopicValidation = zod.string().optional()
-// example Eventbridge ARN - arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/webhooks_path
-const ArnValidation = zod
-  .string()
-  .regex(
-    /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/,
-  )
+const EndpointValidation = zod
+  .union([zod.string().regex(httpsRegex), zod.string().regex(pubSubRegex), zod.string().regex(arnRegex)])
   .optional()
 
 export const WebhookSubscriptionSchema = zod.object({
@@ -56,16 +58,13 @@ export const WebhookSubscriptionSchema = zod.object({
   format: zod.enum(['json', 'xml']).optional(),
   include_fields: zod.array(zod.string()).optional(),
   metafield_namespaces: zod.array(zod.string()).optional(),
-  subscription_endpoint_url: SubscriptionEndpointUrlValidation,
+  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
   path: zod
     .string()
     .refine((path) => path.startsWith('/') && path.length > 1, {
       message: 'Path must start with a forward slash and be longer than 1 character',
     })
     .optional(),
-  pubsub_project: PubSubProjectValidation,
-  pubsub_topic: PubSubTopicValidation,
-  arn: ArnValidation,
 })
 
 const WebhooksSchema = zod.object({
@@ -80,11 +79,8 @@ const WebhooksSchema = zod.object({
 })
 
 const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
-  subscription_endpoint_url: SubscriptionEndpointUrlValidation,
-  pubsub_project: PubSubProjectValidation,
-  pubsub_topic: PubSubTopicValidation,
-  arn: ArnValidation,
   topics: zod.array(zod.string()).nonempty().optional(),
+  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 }).superRefine((schema, ctx) => {
   // eslint-disable-next-line no-warning-comments

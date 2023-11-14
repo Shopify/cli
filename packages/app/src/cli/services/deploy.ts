@@ -5,7 +5,7 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface, type NormalizedWebhookSubscriptions} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {fakedWebhookSubscriptionsMutation, filterFalsey} from '../utilities/app/config/webhooks.js'
+import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -13,7 +13,6 @@ import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/c
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
-import {pickBy} from '@shopify/cli-kit/common/object'
 import type {Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -129,40 +128,27 @@ export async function deploy(options: DeployOptions) {
 
             // normalize webhook config with the top level config
             const webhookSubscriptions: NormalizedWebhookSubscriptions = []
-            const {topics, subscriptions, ...webhookConfig} = app.configuration.webhooks
-            const topLevelDestination = pickBy(
-              webhookConfig,
-              (value, key) =>
-                ['subscription_endpoint_url', 'arn', 'pubsub_project', 'pubsub_topic'].includes(key) && value,
-            )
+            const {topics, subscriptions, endpoint} = app.configuration.webhooks
 
-            if (Object.keys(topLevelDestination).length && topics?.length) {
+            if (endpoint && topics?.length) {
               for (const topic of topics) {
                 webhookSubscriptions.push({
                   topic,
-                  ...topLevelDestination,
+                  endpoint,
                 })
               }
             }
 
             if (subscriptions?.length) {
-              for (const {path, ...subscription} of subscriptions) {
-                const hasLocalDestination = Boolean(
-                  filterFalsey([
-                    subscription.subscription_endpoint_url,
-                    subscription.arn,
-                    subscription.pubsub_project && subscription.pubsub_topic,
-                  ]).length,
-                )
-
-                // we can assume this is valid from earlier validation, and local config will overwrite top level if there is any
+              for (const {path, endpoint: localEndpoint, ...subscription} of subscriptions) {
+                // we can assume this is valid from earlier validation, and local endpoint will overwrite top level if there is any
                 const subscriptionConfig = {
-                  ...(hasLocalDestination ? {} : topLevelDestination),
+                  endpoint: localEndpoint || endpoint,
                   ...subscription,
                 }
 
-                if (path && subscriptionConfig.subscription_endpoint_url) {
-                  subscriptionConfig.subscription_endpoint_url = `${subscriptionConfig.subscription_endpoint_url}${path}`
+                if (path) {
+                  subscriptionConfig.endpoint = `${subscriptionConfig.endpoint}${path}`
                 }
 
                 webhookSubscriptions.push(subscriptionConfig)

@@ -422,7 +422,7 @@ describe('deploy', () => {
     test('does not run the webhook subscription task if the declarativeWebhooks beta is disabled', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topics: ['products/create'],
         }),
       })
@@ -463,7 +463,7 @@ describe('deploy', () => {
     test('runs the webhook subscription task if the declarativeWebhooks beta is enabled', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topics: ['products/create'],
         }),
       })
@@ -472,7 +472,7 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/create',
         },
       ])
@@ -483,10 +483,10 @@ describe('deploy', () => {
       )
     })
 
-    test('normalizes top level http subscriptions', async () => {
+    test('normalizes top level subscriptions', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topics: ['products/create', 'products/update'],
         }),
       })
@@ -495,68 +495,11 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/create',
         },
         {
-          subscription_endpoint_url: 'https://example.com',
-          topic: 'products/update',
-        },
-      ])
-      expect(renderSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headline: 'New version released to users.',
-        }),
-      )
-    })
-
-    test('normalizes top level arn subscriptions', async () => {
-      const app = testApp({
-        configuration: getWebhookConfig({
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-          topics: ['products/create', 'products/update'],
-        }),
-      })
-
-      await testWebhooks(app)
-
-      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
-        {
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-          topic: 'products/create',
-        },
-        {
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-          topic: 'products/update',
-        },
-      ])
-      expect(renderSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({
-          headline: 'New version released to users.',
-        }),
-      )
-    })
-
-    test('normalizes top level pub sub subscriptions', async () => {
-      const app = testApp({
-        configuration: getWebhookConfig({
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
-          topics: ['products/create', 'products/update'],
-        }),
-      })
-
-      await testWebhooks(app)
-
-      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
-        {
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
-          topic: 'products/create',
-        },
-        {
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
+          endpoint: 'https://example.com',
           topic: 'products/update',
         },
       ])
@@ -570,16 +513,15 @@ describe('deploy', () => {
     test('top level http config is overwritten by subscription specific config', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topics: ['products/create'],
           subscriptions: [
             {
-              subscription_endpoint_url: 'https://example2.com',
+              endpoint: 'https://example2.com',
               topic: 'products/create',
             },
             {
-              pubsub_project: 'my-project-123',
-              pubsub_topic: 'my-topic',
+              endpoint: 'pubsub://my-project-123:my-topic',
               topic: 'products/create',
             },
             {
@@ -594,20 +536,19 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/create',
         },
         {
-          subscription_endpoint_url: 'https://example2.com',
+          endpoint: 'https://example2.com',
           topic: 'products/create',
         },
         {
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
+          endpoint: 'pubsub://my-project-123:my-topic',
           topic: 'products/create',
         },
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/delete',
           format: 'xml',
         },
@@ -622,16 +563,15 @@ describe('deploy', () => {
     test('top level arn config is overwritten by subscription specific config', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           topics: ['products/create'],
           subscriptions: [
             {
-              arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
+              endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
               topic: 'products/create',
             },
             {
-              pubsub_project: 'my-project-123',
-              pubsub_topic: 'my-topic',
+              endpoint: 'pubsub://my-project-123:my-topic',
               topic: 'products/create',
             },
             {
@@ -646,20 +586,19 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           topic: 'products/create',
         },
         {
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
           topic: 'products/create',
         },
         {
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
+          endpoint: 'pubsub://my-project-123:my-topic',
           topic: 'products/create',
         },
         {
-          arn: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           topic: 'products/delete',
           format: 'xml',
         },
@@ -674,17 +613,15 @@ describe('deploy', () => {
     test('top level pub sub config is overwritten by subscription specific config', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
+          endpoint: 'pubsub://my-project-123:my-topic',
           topics: ['products/create'],
           subscriptions: [
             {
-              pubsub_project: 'my-project-456',
-              pubsub_topic: 'my-new-topic',
+              endpoint: 'pubsub://my-project-456:my-new-topic',
               topic: 'products/create',
             },
             {
-              subscription_endpoint_url: 'https://example.com',
+              endpoint: 'https://example.com',
               topic: 'products/create',
             },
             {
@@ -699,22 +636,19 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
+          endpoint: 'pubsub://my-project-123:my-topic',
           topic: 'products/create',
         },
         {
-          pubsub_project: 'my-project-456',
-          pubsub_topic: 'my-new-topic',
+          endpoint: 'pubsub://my-project-456:my-new-topic',
           topic: 'products/create',
         },
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/create',
         },
         {
-          pubsub_project: 'my-project-123',
-          pubsub_topic: 'my-topic',
+          endpoint: 'pubsub://my-project-123:my-topic',
           topic: 'products/delete',
           format: 'xml',
         },
@@ -726,10 +660,10 @@ describe('deploy', () => {
       )
     })
 
-    test('subscription level path is appended to top level subscription_endpoint_url', async () => {
+    test('subscription level path is appended to top level endpoint', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topics: ['products/create'],
           subscriptions: [
             {
@@ -745,11 +679,11 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/create',
         },
         {
-          subscription_endpoint_url: 'https://example.com/delete',
+          endpoint: 'https://example.com/delete',
           topic: 'products/delete',
           include_fields: ['id'],
         },
@@ -761,15 +695,15 @@ describe('deploy', () => {
       )
     })
 
-    test('subscription level path is appended to inner level subscription_endpoint_url', async () => {
+    test('subscription level path is appended to inner level endpoint', async () => {
       const app = testApp({
         configuration: getWebhookConfig({
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topics: ['products/create'],
           subscriptions: [
             {
               topic: 'products/delete',
-              subscription_endpoint_url: 'https://example2.com',
+              endpoint: 'https://example2.com',
               path: '/delete',
               include_fields: ['id'],
             },
@@ -781,11 +715,11 @@ describe('deploy', () => {
 
       expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
         {
-          subscription_endpoint_url: 'https://example.com',
+          endpoint: 'https://example.com',
           topic: 'products/create',
         },
         {
-          subscription_endpoint_url: 'https://example2.com/delete',
+          endpoint: 'https://example2.com/delete',
           topic: 'products/delete',
           include_fields: ['id'],
         },
