@@ -39,8 +39,15 @@ export interface ExtensionBuildOptions {
    */
   app: AppInterface
 
-  environment?: 'production' | 'development'
+  /**
+   * The environment to build the extension.
+   * Default value: production
+   */
+  environment: 'production' | 'development'
 
+  /**
+   * The URL where the app is running.
+   */
   appURL?: string
 }
 

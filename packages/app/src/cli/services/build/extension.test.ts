@@ -48,6 +48,7 @@ describe('buildFunctionExtension', () => {
         stderr,
         signal,
         app,
+        environment: 'production',
       }),
     ).resolves.toBeUndefined()
 
@@ -71,6 +72,7 @@ describe('buildFunctionExtension', () => {
         stderr,
         signal,
         app,
+        environment: 'production',
       }),
     ).rejects.toThrow()
   })
@@ -87,6 +89,7 @@ describe('buildFunctionExtension', () => {
         stderr,
         signal,
         app,
+        environment: 'production',
       }),
     ).resolves.toBeUndefined()
 
@@ -111,6 +114,7 @@ describe('buildFunctionExtension', () => {
         stderr,
         signal,
         app,
+        environment: 'production',
       }),
     ).resolves.toBeUndefined()
 

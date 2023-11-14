@@ -7,6 +7,7 @@ import {
   testWebPixelExtension,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
@@ -140,10 +141,11 @@ describe('build', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const extensionInstance = await testTaxCalculationExtension(tmpDir)
-      const options = {
+      const options: ExtensionBuildOptions = {
         stdout: new Writable(),
         stderr: new Writable(),
         app: testApp(),
+        environment: 'production',
       }
 
       const outputFilePath = joinPath(tmpDir, `dist/${extensionInstance.outputFileName}`)

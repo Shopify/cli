@@ -36,7 +36,6 @@ function createShopify({
       level: LogSeverity.Debug,
       timestamps: false,
       httpRequests: true,
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
       log: async (severity, message) => {
         if (severity === LogSeverity.Debug) {
           outputDebug(message, stdout)

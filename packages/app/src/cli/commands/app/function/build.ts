@@ -21,7 +21,13 @@ export default class FunctionBuild extends Command {
       path: flags.path,
       configName: flags.config,
       callback: async (app, ourFunction) => {
-        await buildFunctionExtension(ourFunction, {app, stdout: process.stdout, stderr: process.stderr, useTasks: true})
+        await buildFunctionExtension(ourFunction, {
+          app,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          useTasks: true,
+          environment: 'production',
+        })
         renderSuccess({headline: 'Function built successfully.'})
       },
     })

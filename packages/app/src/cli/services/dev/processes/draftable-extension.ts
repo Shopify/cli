@@ -31,7 +31,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 
   await Promise.all(
     extensions.map(async (extension) => {
-      await extension.build({app, stdout, stderr, useTasks: false, signal})
+      await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
       // Initial draft update for each extension
