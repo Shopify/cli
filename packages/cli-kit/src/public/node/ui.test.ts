@@ -381,7 +381,7 @@ describe('keypress', async () => {
       unref: vi.fn(),
     } as any
 
-    const promise = keypress(mockStdin)
+    const promise = keypress(mockStdin, {skipTTYCheck: true})
     expect(mockStdin.ref).toBeCalled()
     expect(mockStdin.setRawMode).toHaveBeenLastCalledWith(true)
     // create a buffer representing pressing the enter key
@@ -403,7 +403,7 @@ describe('keypress', async () => {
       unref: vi.fn(),
     } as any
 
-    const promise = keypress(mockStdin)
+    const promise = keypress(mockStdin, {skipTTYCheck: true})
 
     // create a buffer representing pressing ctrl+c
     registeredListener(Buffer.from([3]))
