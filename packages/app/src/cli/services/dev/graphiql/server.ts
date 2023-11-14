@@ -1,4 +1,4 @@
-import {defaultQuery, template} from './template.js'
+import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
@@ -132,7 +132,7 @@ export function setupGraphiQLServer({
     }
 
     res.send(
-      await renderLiquidTemplate(template, {
+      await renderLiquidTemplate(graphiqlTemplate, {
         url: namespacedShopifyUrl,
         defaultQueries: [{query: defaultQuery}],
         apiVersion: apiVersions.sort().reverse()[0]!,

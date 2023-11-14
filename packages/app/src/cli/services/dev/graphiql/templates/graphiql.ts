@@ -42,7 +42,7 @@ export const defaultQuery = `query shopInfo {
 }
 `.replace(/\n/g, '\\n')
 
-export const template = `
+export const graphiqlTemplate = `
 <!DOCTYPE html>
 <html lang="en">
   <head>
