@@ -106,18 +106,30 @@ export async function pushConfig(options: PushOptions) {
 }
 
 const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
+  let webhookApiVersion
+  let gdprWebhooks
+
+  if (app.betas?.declarativeWebhooks) {
+    // These fields will be updated by the deploy command
+    webhookApiVersion = app.webhookApiVersion
+    gdprWebhooks = app.gdprWebhooks
+  } else {
+    webhookApiVersion = configuration.webhooks?.api_version
+    gdprWebhooks = {
+      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url,
+      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url,
+      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url,
+    }
+  }
+
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
     applicationUrl: configuration.application_url,
-    webhookApiVersion: configuration.webhooks?.api_version,
+    webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
-    gdprWebhooks: {
-      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url ?? undefined,
-      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
-      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,
-    },
+    gdprWebhooks,
     posEmbedded: configuration.pos?.embedded ?? false,
     preferencesUrl: configuration.app_preferences?.url ?? null,
   }
