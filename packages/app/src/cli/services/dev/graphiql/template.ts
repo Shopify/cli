@@ -52,7 +52,7 @@ url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' hei
 `
 
 export const runningIconSvgAsEncodedCssUrl = `
-url("data:image/svg+xml,%3Csvg width='8' height='9' viewBox='0 0 8 9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect y='0.5' width='8' height='8' rx='3' fill='%2329845A'/%3E%3C/svg%3E");
+url("data:image/svg+xml,%3Csvg width='8' height='8' viewBox='0 0 8 9' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect y='0.5' width='8' height='8' rx='3' fill='%2329845A'/%3E%3C/svg%3E");
 `
 
 export const graphiqlTopBarStyles = `
@@ -91,8 +91,11 @@ export const graphiqlTopBarStyles = `
   }
 
   .status-pill {
-    padding: 4px 8px 4px 4px;
+    padding: 2px 6px;
     border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .status-pill.connected {
@@ -103,15 +106,16 @@ export const graphiqlTopBarStyles = `
     background: var(--caution-surface-l-3, #FFD6A4);
   }
 
-  .status-pill::before {
-    margin-right: 0.5rem;
+  .status-pill-icon {
+    height: 8px;
+    width: 8px;
   }
 
-  .status-pill.connected::before {
+  .status-pill.connected .status-pill-icon {
     content: ${runningIconSvgAsEncodedCssUrl};
   }
 
-  .status-pill.disconnected::before {
+  .status-pill.disconnected .status-pill-icon {
     content: ${disconnectedIconSvgAsEncodedCssUrl};
   }
 
@@ -243,7 +247,7 @@ export const template = `
         <div class="top-bar-section">
           <p>
             <span class="top-bar-section-label">Status: </span>
-            <span class="status-pill connected" id="status">Running</span>
+            <span class="status-pill connected"><span class="status-pill-icon"></span><span id="status">Running</span></span>
           </p>
         </div>
 
@@ -312,9 +316,11 @@ export const template = `
 
       // Warn when the server has been stopped
       const pingInterval = setInterval(function() {
-        const statusSpan = document.querySelector('#graphiql #status')
+        const statusSpan = document.querySelector('#graphiql .status-pill')
+        const statusIconSpan = statusSpan.querySelector('.status-pill-icon')
+        const statusTextSpan = statusSpan.querySelector('#status')
         const displayErrorServerStopped = function() {
-          statusSpan.innerText = 'Disconnected'
+          statusTextSpan.innerText = 'Disconnected'
           statusSpan.classList.remove('connected')
           statusSpan.classList.add('disconnected')
         }
@@ -323,7 +329,7 @@ export const template = `
           .then(function(response) {
             if (response.status === 200) {
               clearTimeout(displayErrorServerStoppedTimeout)
-              statusSpan.innerText = 'Running'
+              statusTextSpan.innerText = 'Running'
               statusSpan.classList.remove('disconnected')
               statusSpan.classList.add('connected')
             } else {
