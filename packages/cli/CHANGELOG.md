@@ -1,5 +1,27 @@
 # @shopify/cli
 
+## 3.51.0
+
+### Minor Changes
+
+- 2145d7a46: Added fix to support `:theme_app_extension` for dev-preview theme check.
+
+### Patch Changes
+
+- f5caf4da4: Add new --json flag to theme list and app versions list commands
+- Updated dependencies [533c66492]
+- Updated dependencies [a8c8b1e6b]
+- Updated dependencies [8b7ce36b1]
+- Updated dependencies [b90f24b2e]
+- Updated dependencies [8c979a621]
+- Updated dependencies [7802bffa9]
+- Updated dependencies [28e629078]
+- Updated dependencies [0b8b97993]
+- Updated dependencies [64b49598b]
+- Updated dependencies [e72b4f1c8]
+  - @shopify/cli-kit@3.51.0
+  - @shopify/plugin-did-you-mean@3.51.0
+
 ## 3.50.0
 
 ### Minor Changes

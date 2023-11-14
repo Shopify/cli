@@ -60,11 +60,10 @@ function getCustomerAccountsRedirectUrl(
   options: ExtensionDevOptions,
   requestedTarget = '',
 ): URL {
-  const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
-  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
   const origin = `${options.url}/extensions`
+  const storeId = options.storeId
 
-  const rawUrl = new URL(`https://${accountsUrl}/extensions-development`)
+  const rawUrl = new URL(`https://shopify.com/${storeId}/account/extensions-development`)
   rawUrl.searchParams.append('origin', origin)
   rawUrl.searchParams.append('extensionId', extension.devUUID)
   rawUrl.searchParams.append('source', 'CUSTOMER_ACCOUNT_EXTENSION')

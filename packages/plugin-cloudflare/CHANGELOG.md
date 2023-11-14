@@ -1,5 +1,25 @@
 # @shopify/plugin-cloudflare
 
+## 3.51.0
+
+### Minor Changes
+
+- ac74bbc13: Added cloudflared download support for Windows ARM, and improved error messaging for download failures.
+
+### Patch Changes
+
+- Updated dependencies [533c66492]
+- Updated dependencies [a8c8b1e6b]
+- Updated dependencies [8b7ce36b1]
+- Updated dependencies [b90f24b2e]
+- Updated dependencies [8c979a621]
+- Updated dependencies [7802bffa9]
+- Updated dependencies [28e629078]
+- Updated dependencies [0b8b97993]
+- Updated dependencies [64b49598b]
+- Updated dependencies [e72b4f1c8]
+  - @shopify/cli-kit@3.51.0
+
 ## 3.50.0
 
 ### Patch Changes
