@@ -131,16 +131,27 @@ export function setupGraphiQLServer({
       throw err
     }
 
+    const apiVersion = apiVersions.sort().reverse()[0]!
+
     res.send(
-      await renderLiquidTemplate(graphiqlTemplate, {
-        url: namespacedShopifyUrl,
-        defaultQueries: [{query: defaultQuery}],
-        apiVersion: apiVersions.sort().reverse()[0]!,
-        storeFqdn,
-        versions: [...apiVersions, 'unstable'],
-        appName,
-        appUrl,
-      }),
+      await renderLiquidTemplate(
+        graphiqlTemplate({
+          apiVersion,
+          apiVersions: [...apiVersions, 'unstable'],
+          appName,
+          appUrl,
+          storeFqdn,
+        }),
+        {
+          url: namespacedShopifyUrl,
+          defaultQueries: [{query: defaultQuery}],
+          apiVersion,
+          storeFqdn,
+          versions: [...apiVersions, 'unstable'],
+          appName,
+          appUrl,
+        },
+      ),
     )
   })
 

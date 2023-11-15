@@ -169,6 +169,9 @@ importers:
       '@shopify/polaris':
         specifier: 12.1.1
         version: 12.1.1(react-dom@18.2.0)(react@18.2.0)
+      '@shopify/polaris-icons':
+        specifier: 7.9.0
+        version: 7.9.0
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0

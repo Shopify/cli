@@ -47,6 +47,7 @@
     "@shopify/function-runner": "4.1.1",
     "@shopify/plugin-cloudflare": "3.51.0",
     "@shopify/polaris": "12.1.1",
+    "@shopify/polaris-icons": "7.9.0",
     "abort-controller": "3.0.0",
     "body-parser": "1.20.2",
     "chokidar": "3.5.3",
