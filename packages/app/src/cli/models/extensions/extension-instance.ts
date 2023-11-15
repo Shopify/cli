@@ -1,7 +1,6 @@
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
-import {APP_CONFIG_FEATURE} from './specifications/app_access.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -83,7 +82,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isConfigExtension() {
-    return this.features.includes(APP_CONFIG_FEATURE)
+    return this.features.includes('app_config')
   }
 
   get isESBuildExtension() {

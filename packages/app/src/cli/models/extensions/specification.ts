@@ -1,6 +1,5 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
-import {APP_CONFIG_FEATURE} from './specifications/app_access.js'
 import {blocks} from '../../constants.js'
 
 import {Result} from '@shopify/cli-kit/node/result'
@@ -14,7 +13,7 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
-  | typeof APP_CONFIG_FEATURE
+  | 'app_config'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.

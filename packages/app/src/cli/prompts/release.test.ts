@@ -1,7 +1,6 @@
 import {confirmReleasePrompt} from './release.js'
 import {testApp} from '../models/app/app.test-data.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
-import {APP_CONFIG_FEATURE} from '../models/extensions/specifications/app_access.js'
 import {describe, expect, vi, test} from 'vitest'
 import {renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -31,13 +30,13 @@ describe('confirmReleasePrompt', () => {
     {
       identifier: 'app_access',
       appModuleFeatures() {
-        return [APP_CONFIG_FEATURE]
+        return ['app_config']
       },
     } as unknown as ExtensionSpecification,
     {
       identifier: 'another_app_config',
       appModuleFeatures() {
-        return [APP_CONFIG_FEATURE]
+        return ['app_config']
       },
     } as unknown as ExtensionSpecification,
   ])

@@ -19,7 +19,6 @@ import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {APP_ACCESS_IDENTIFIER, getAppConfiguration} from '../extensions/app-config.js'
-import {APP_CONFIG_FEATURE} from '../extensions/specifications/app_access.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -323,7 +322,7 @@ class AppLoader {
     }
 
     let customConfigurationObject = configurationObject
-    if (specification.appModuleFeatures().includes(APP_CONFIG_FEATURE)) {
+    if (specification.appModuleFeatures().includes('app_config')) {
       customConfigurationObject = getAppConfiguration(configurationObject, specification)
     }
 
@@ -436,7 +435,7 @@ class AppLoader {
     })
 
     const appConfigSpecifications = this.specifications.filter((specification) =>
-      specification.appModuleFeatures().includes(APP_CONFIG_FEATURE),
+      specification.appModuleFeatures().includes('app_config'),
     )
 
     const appConfigModules: ExtensionInstance[] = []

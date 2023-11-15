@@ -1,4 +1,3 @@
-import {APP_CONFIG_FEATURE} from './specifications/app_access.js'
 import {AppInterface} from '../app/app.js'
 import type {ExtensionSpecification} from './specification.js'
 
@@ -14,5 +13,5 @@ export function getAppConfiguration(configObject: unknown, specification: Extens
 
 export function isAppConfigSpecification(app: AppInterface, identifier: string) {
   const specification = app.specificationForIdentifier(identifier)
-  return specification?.appModuleFeatures().includes(APP_CONFIG_FEATURE)
+  return specification?.appModuleFeatures().includes('app_config')
 }
