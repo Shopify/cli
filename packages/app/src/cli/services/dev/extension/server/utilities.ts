@@ -3,6 +3,7 @@ import {getUIExtensionResourceURL} from '../../../../utilities/extensions/config
 import {ExtensionDevOptions} from '../../extension.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
 import {createError, H3Error, ServerResponse, sendError as h3SendError} from 'h3'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 
 export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
@@ -62,8 +63,10 @@ function getCustomerAccountsRedirectUrl(
 ): URL {
   const origin = `${options.url}/extensions`
   const storeId = options.storeId
+  const [_, ...storeDomainParts] = options.storeFqdn.split('.')
+  const customerAccountHost = isSpinEnvironment() ? storeDomainParts.join('.') : 'shopify.com'
+  const rawUrl = new URL(`https://${customerAccountHost}/${storeId}/account/extensions-development`)
 
-  const rawUrl = new URL(`https://shopify.com/${storeId}/account/extensions-development`)
   rawUrl.searchParams.append('origin', origin)
   rawUrl.searchParams.append('extensionId', extension.devUUID)
   rawUrl.searchParams.append('source', 'CUSTOMER_ACCOUNT_EXTENSION')
