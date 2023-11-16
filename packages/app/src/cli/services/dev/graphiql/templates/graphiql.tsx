@@ -115,6 +115,9 @@ export function graphiqlTemplate({
         flex-grow: 1;
         overflow: auto;
       }
+      #top-bar #outbound-links a:hover .Polaris-Text--root {
+        text-decoration: underline;
+      }
       @media only screen and (max-width: 1450px) {
         .top-bar-section-title {
           display: none;
