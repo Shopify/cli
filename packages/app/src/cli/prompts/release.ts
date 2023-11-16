@@ -12,9 +12,7 @@ export async function confirmReleasePrompt(
 ) {
   const infoTable = []
   // Filter out app config extensions in the prompt
-  const extensions = [...versionsDiff.added, ...versionsDiff.updated].filter(
-    (extension) => !isAppConfigSpecification(app, extension.specification.identifier),
-  )
+  const extensions = [...versionsDiff.added, ...versionsDiff.updated].filter(isNonAppConfigExtension(app))
 
   if (extensions.length > 0) {
     infoTable.push({
@@ -25,9 +23,7 @@ export async function confirmReleasePrompt(
   }
 
   // Filter out app config extensions in the prompt
-  const removed = versionsDiff.removed.filter(
-    (extension) => !isAppConfigSpecification(app, extension.specification.identifier),
-  )
+  const removed = versionsDiff.removed.filter(isNonAppConfigExtension(app))
 
   if (removed.length > 0) {
     infoTable.push({
@@ -57,4 +53,13 @@ export async function confirmReleasePrompt(
   if (!confirm) {
     throw new AbortSilentError()
   }
+}
+function isNonAppConfigExtension(
+  app: AppInterface,
+): (
+  value: {uuid: string; registrationTitle: string; specification: {identifier: string}},
+  index: number,
+  array: {uuid: string; registrationTitle: string; specification: {identifier: string}}[],
+) => unknown {
+  return (extension) => !isAppConfigSpecification(app, extension.specification.identifier)
 }
