@@ -262,6 +262,7 @@ export function graphiqlTemplate({
         const displayServerRunning = function() {
           disconnectedBadgeDiv.style.display = 'none'
           runningBadgeDiv.style.display = 'block'
+          topErrorBar.style.display = 'none'
         }
         const displayErrorServerStoppedTimeout = setTimeout(displayErrorServerStopped, 3000)
         fetch('{{url}}/graphiql/ping')
