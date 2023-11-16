@@ -189,7 +189,14 @@ describe('Dev', () => {
   test('opens the previewUrl when p is pressed', async () => {
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     await waitForInputsToBeReady()
@@ -207,7 +214,14 @@ describe('Dev', () => {
 
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={abortController}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     const promise = renderInstance.waitUntilExit()
@@ -227,7 +241,14 @@ describe('Dev', () => {
 
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={abortController}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     const promise = renderInstance.waitUntilExit()
@@ -637,7 +658,14 @@ describe('Dev', () => {
     vi.mocked(developerPreview.update).mockResolvedValueOnce(true)
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -779,7 +807,14 @@ describe('Dev', () => {
   test('enables preview mode at startup', async () => {
     // Given
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -810,7 +845,14 @@ describe('Dev', () => {
     vi.mocked(developerPreview.enable).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
@@ -839,7 +881,14 @@ describe('Dev', () => {
     vi.mocked(openURL).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`

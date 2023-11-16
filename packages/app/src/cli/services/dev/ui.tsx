@@ -3,7 +3,6 @@ import {Dev, DevProps} from './ui/components/Dev.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
-import {disableDeveloperPreview, enableDeveloperPreview} from '../context.js'
 import React from 'react'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -61,7 +60,14 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl, developerPreview}: DevProps) {
+export async function renderDev({
+  processes,
+  previewUrl,
+  app,
+  abortController,
+  graphiqlUrl,
+  developerPreview,
+}: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
     return render(
       <Dev
