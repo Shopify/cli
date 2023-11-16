@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, WebType} from './app.js'
+import {App, AppConfiguration, AppInterface, WebType, WebhookConfig} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -88,6 +88,16 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   }
 
   return app
+}
+
+export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+  return {
+    ...DEFAULT_CONFIG,
+    webhooks: {
+      ...DEFAULT_CONFIG.webhooks,
+      ...webhookConfigOverrides,
+    },
+  }
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {

@@ -3,8 +3,9 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, type NormalizedWebhookSubscriptions} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
+import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -118,6 +119,48 @@ export async function deploy(options: DeployOptions) {
           },
         },
       ]
+
+      if (partnersApp.betas?.declarativeWebhooks) {
+        tasks.push({
+          title: 'Releasing webhooks',
+          task: async () => {
+            if (!('webhooks' in app.configuration)) return
+
+            // normalize webhook config with the top level config
+            const webhookSubscriptions: NormalizedWebhookSubscriptions = []
+            const {topics, subscriptions, endpoint} = app.configuration.webhooks
+
+            if (endpoint && topics?.length) {
+              for (const topic of topics) {
+                webhookSubscriptions.push({
+                  topic,
+                  endpoint,
+                })
+              }
+            }
+
+            if (subscriptions?.length) {
+              for (const {path, endpoint: localEndpoint, ...subscription} of subscriptions) {
+                // we can assume this is valid from earlier validation, and local endpoint will overwrite top level if there is any
+                const subscriptionConfig = {
+                  endpoint: localEndpoint || endpoint,
+                  ...subscription,
+                }
+
+                if (path) {
+                  subscriptionConfig.endpoint = `${subscriptionConfig.endpoint}${path}`
+                }
+
+                webhookSubscriptions.push(subscriptionConfig)
+              }
+            }
+
+            // eslint-disable-next-line no-warning-comments
+            // TODO - make request with webhookSubscriptions
+            fakedWebhookSubscriptionsMutation(webhookSubscriptions)
+          },
+        })
+      }
 
       await renderTasks(tasks)
 

@@ -9,10 +9,12 @@ import {
   testThemeExtensions,
   testUIExtension,
   testOrganizationApp,
+  getWebhookConfig,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
+import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
@@ -21,6 +23,10 @@ import {Config} from '@oclif/core'
 
 const versionTag = 'unique-version-tag'
 
+vi.mock('../utilities/app/config/webhooks.js', async () => ({
+  ...((await vi.importActual('../utilities/app/config/webhooks.js')) as any),
+  fakedWebhookSubscriptionsMutation: vi.fn(),
+}))
 vi.mock('./context.js')
 vi.mock('./deploy/upload.js')
 vi.mock('./deploy/bundle.js')
@@ -411,6 +417,320 @@ describe('deploy', () => {
       ],
     })
   })
+
+  describe('declarative webhook subscription config', () => {
+    test('does not run the webhook subscription task if the declarativeWebhooks beta is disabled', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+        }),
+      })
+
+      await testDeployBundle({
+        app,
+        partnersApp: {
+          id: 'app-id',
+          organizationId: 'org-id',
+          applicationUrl: 'https://my-app.com',
+          redirectUrlWhitelist: ['https://my-app.com/auth'],
+          title: 'app-title',
+          grantedScopes: [],
+        },
+      })
+
+      expect(fakedWebhookSubscriptionsMutation).not.toHaveBeenCalled()
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('does not run the webhook subscription task if there is no webhooks config', async () => {
+      const app = testApp()
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).not.toHaveBeenCalled()
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('runs the webhook subscription task if the declarativeWebhooks beta is enabled', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('normalizes top level subscriptions', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create', 'products/update'],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/update',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('top level http config is overwritten by subscription specific config', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              endpoint: 'https://example2.com',
+              topic: 'products/create',
+            },
+            {
+              endpoint: 'pubsub://my-project-123:my-topic',
+              topic: 'products/create',
+            },
+            {
+              topic: 'products/delete',
+              format: 'xml',
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example2.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/delete',
+          format: 'xml',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('top level arn config is overwritten by subscription specific config', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
+              topic: 'products/create',
+            },
+            {
+              endpoint: 'pubsub://my-project-123:my-topic',
+              topic: 'products/create',
+            },
+            {
+              topic: 'products/delete',
+              format: 'xml',
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          topic: 'products/delete',
+          format: 'xml',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('top level pub sub config is overwritten by subscription specific config', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              endpoint: 'pubsub://my-project-456:my-new-topic',
+              topic: 'products/create',
+            },
+            {
+              endpoint: 'https://example.com',
+              topic: 'products/create',
+            },
+            {
+              topic: 'products/delete',
+              format: 'xml',
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-456:my-new-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/delete',
+          format: 'xml',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('subscription level path is appended to top level endpoint', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              topic: 'products/delete',
+              path: '/delete',
+              include_fields: ['id'],
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com/delete',
+          topic: 'products/delete',
+          include_fields: ['id'],
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('subscription level path is appended to inner level endpoint', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              topic: 'products/delete',
+              endpoint: 'https://example2.com',
+              path: '/delete',
+              include_fields: ['id'],
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example2.com/delete',
+          topic: 'products/delete',
+          include_fields: ['id'],
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+  })
 })
 
 interface TestDeployBundleInput {
@@ -470,5 +790,20 @@ async function testDeployBundle({app, partnersApp, options, released = true, com
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
     commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+  })
+}
+
+async function testWebhooks(app: AppInterface) {
+  return testDeployBundle({
+    app,
+    partnersApp: {
+      id: 'app-id',
+      organizationId: 'org-id',
+      applicationUrl: 'https://my-app.com',
+      redirectUrlWhitelist: ['https://my-app.com/auth'],
+      title: 'app-title',
+      grantedScopes: [],
+      betas: {declarativeWebhooks: true},
+    },
   })
 }
