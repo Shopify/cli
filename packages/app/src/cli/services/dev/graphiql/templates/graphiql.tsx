@@ -1,7 +1,7 @@
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {AppProvider, Badge, Banner, BlockStack, Box, InlineStack, Link, Select, Text} from '@shopify/polaris'
+import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'
 import {LinkMinor} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
@@ -95,15 +95,13 @@ export function graphiqlTemplate({
         align-items: center;
         gap: 8px;
       }
-      #top-bar .align-right {
-        flex-grow: 0;
-        margin-right: auto;
-      }
-      #top-bar .spacer {
-        flex-grow: 2;
+      #top-bar .Polaris-Grid-Cell:nth-child(2) {
+        justify-self: right;
       }
       #top-bar #scopes-note {
-        width: clamp(300px, 35vw, 542px);
+        display: inline-flex;
+        align-items: center;
+        height: 100%;
       }
       #top-bar #status-badge-disconnected {
         display: none;
@@ -122,7 +120,7 @@ export function graphiqlTemplate({
           display: none;
         }
       }
-      @media only screen and (max-width: 800px) {
+      @media only screen and (max-width: 1150px) {
         #top-bar #outbound-links a span.Polaris-Text--root {
           max-width: max(12vw, 150px);
           text-overflow: ellipsis;
@@ -130,9 +128,14 @@ export function graphiqlTemplate({
           text-wrap: nowrap;
         }
       }
+      @media only screen and (max-width: 1039px) {
+        #top-bar .Polaris-Grid-Cell:nth-child(2) {
+          justify-self: left;
+        }
+      }
       @media only screen and (max-width: 650px) {
         #top-bar #outbound-links a span.Polaris-Text--root {
-          max-width: 15vw;
+          max-width: 18vw;
         }
       }
     </style>
@@ -163,52 +166,57 @@ export function graphiqlTemplate({
                     onDismiss={() => {}}
                   ></Banner>
                 </div>
-                <InlineStack gap="400">
-                  <div id="status-badge" className="top-bar-section">
-                    <div id="status-badge-running">
-                      <span className="top-bar-section-title">Status: </span>
-                      <Badge tone="success" progress="complete">
-                        Running
-                      </Badge>
+                <Grid columns={{xs: 3, sm: 3, md: 3}}>
+                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 7, xl: 7}}>
+                    <InlineStack gap="400">
+                      <div id="status-badge" className="top-bar-section">
+                        <div id="status-badge-running">
+                          <span className="top-bar-section-title">Status: </span>
+                          <Badge tone="success" progress="complete">
+                            Running
+                          </Badge>
+                        </div>
+                        <div id="status-badge-disconnected">
+                          <span className="top-bar-section-title">Status: </span>
+                          <Badge tone="warning" progress="partiallyComplete">
+                            Disconnected
+                          </Badge>
+                        </div>
+                      </div>
+                      <div id="version-select" className="top-bar-section">
+                        <span className="top-bar-section-title">API version: </span>
+                        <Select
+                          label="API version"
+                          labelHidden
+                          options={apiVersions}
+                          value={apiVersion}
+                          onChange={() => {}}
+                        />
+                      </div>
+                      <div id="outbound-links" className="top-bar-section">
+                        <span className="top-bar-section-title">Store: </span>
+                        <Link url={`https://${storeFqdn}/admin`} target="_blank">
+                          <Badge tone="info" icon={LinkMinor}>
+                            {storeFqdn}
+                          </Badge>
+                        </Link>
+                        <span className="top-bar-section-title">App: </span>
+                        <Link url={appUrl} target="_blank">
+                          <Badge tone="info" icon={LinkMinor}>
+                            {appName}
+                          </Badge>
+                        </Link>
+                      </div>
+                    </InlineStack>
+                  </Grid.Cell>
+                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 5, xl: 5}}>
+                    <div id="scopes-note" className="top-bar-section">
+                      <Text as="span" tone="subdued">
+                        GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
+                      </Text>
                     </div>
-                    <div id="status-badge-disconnected">
-                      <span className="top-bar-section-title">Status: </span>
-                      <Badge tone="warning" progress="partiallyComplete">
-                        Disconnected
-                      </Badge>
-                    </div>
-                  </div>
-                  <div id="version-select" className="top-bar-section">
-                    <span className="top-bar-section-title">API version: </span>
-                    <Select
-                      label="API version"
-                      labelHidden
-                      options={apiVersions}
-                      value={apiVersion}
-                      onChange={() => {}}
-                    />
-                  </div>
-                  <div id="outbound-links" className="top-bar-section">
-                    <span className="top-bar-section-title">Store: </span>
-                    <Link url={`https://${storeFqdn}/admin`} target="_blank">
-                      <Badge tone="info" icon={LinkMinor}>
-                        {storeFqdn}
-                      </Badge>
-                    </Link>
-                    <span className="top-bar-section-title">App: </span>
-                    <Link url={appUrl} target="_blank">
-                      <Badge tone="info" icon={LinkMinor}>
-                        {appName}
-                      </Badge>
-                    </Link>
-                  </div>
-                  <div className="top-bar-section spacer"></div>
-                  <div id="scopes-note" className="top-bar-section align-right">
-                    <Text as="span" tone="subdued">
-                      GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
-                    </Text>
-                  </div>
-                </InlineStack>
+                  </Grid.Cell>
+                </Grid>
               </BlockStack>
             </Box>
           </div>
