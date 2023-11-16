@@ -59,7 +59,7 @@ describe('watchPaths', async () => {
 
     const got = extensionInstance.watchPaths
 
-    expect(got).toEqual([joinPath('foo', '**', '*.{ts,tsx,js,jsx}')])
+    expect(got).toEqual([joinPath('foo', 'src', '**', '*.{ts,tsx,js,jsx}')])
   })
 
   test('return empty array for non-function non-esbuild extensions', async () => {

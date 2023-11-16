@@ -292,7 +292,9 @@ describe('setupExtensionWatcher', () => {
 
     await setupExtensionWatcher(watchOptions)
 
-    expect(chokidarWatchSpy).toHaveBeenCalledWith(expect.arrayContaining<string>([joinPath('foo', '*.rs')]))
+    expect(chokidarWatchSpy).toHaveBeenCalledWith(expect.arrayContaining<string>([joinPath('foo', '*.rs')]), {
+      ignored: '**/*.test.*',
+    })
     expect(chokidarOnSpy).toHaveBeenCalledWith('change', expect.any(Function))
   })
 
@@ -326,12 +328,17 @@ describe('setupExtensionWatcher', () => {
 
     // Then
     expect(chokidarOnSpy).toHaveBeenCalled()
-    expect(chokidarWatchSpy).toHaveBeenCalledWith([
-      `${watchOptions.extension.directory}/*.rs`,
-      `${watchOptions.extension.directory}/**/!(.)*.graphql`,
-      `${watchOptions.extension.directory}/locales/**.json`,
-      `${watchOptions.extension.directory}/**.toml`,
-    ])
+    expect(chokidarWatchSpy).toHaveBeenCalledWith(
+      [
+        `${watchOptions.extension.directory}/*.rs`,
+        `${watchOptions.extension.directory}/**/!(.)*.graphql`,
+        `${watchOptions.extension.directory}/locales/**.json`,
+        `${watchOptions.extension.directory}/**.toml`,
+      ],
+      {
+        ignored: '**/*.test.*',
+      },
+    )
     expect(updateExtensionConfig).toHaveBeenCalled()
   })
 
