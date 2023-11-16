@@ -145,11 +145,6 @@ export function setupGraphiQLServer({
         {
           url: namespacedShopifyUrl,
           defaultQueries: [{query: defaultQuery}],
-          apiVersion,
-          storeFqdn,
-          versions: [...apiVersions, 'unstable'],
-          appName,
-          appUrl,
         },
       ),
     )

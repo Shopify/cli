@@ -249,7 +249,7 @@ export function graphiqlTemplate({
           document.getElementById('graphiql-explorer'),
         )
       }
-      renderGraphiQL('{{apiVersion}}')
+      renderGraphiQL('${apiVersion}')
 
       // Update the version when the select changes
       document.getElementById('version-select').addEventListener('change', function(event) {
