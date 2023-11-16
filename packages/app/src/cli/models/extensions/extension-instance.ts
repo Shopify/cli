@@ -198,7 +198,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
       return watchPaths.map((path) => joinPath(this.directory, path))
     } else if (this.isESBuildExtension) {
-      return [joinPath(this.directory, '**', '*.{ts,tsx,js,jsx}')]
+      return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
     } else {
       return []
     }
