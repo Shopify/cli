@@ -184,7 +184,7 @@ Redeploy Paths:
 
   let buildController: AbortController | null
   const allPaths = [...rebuildAndRedeployWatchPaths, ...redeployWatchPaths]
-  const functionRebuildAndRedeployWatcher = chokidar.watch(allPaths).on('change', (path) => {
+  const functionRebuildAndRedeployWatcher = chokidar.watch(allPaths, {ignored: '**/*.test.*'}).on('change', (path) => {
     outputDebug(`Extension file at path ${path} changed`, stdout)
     if (buildController) {
       // terminate any existing builds
