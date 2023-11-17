@@ -2,11 +2,14 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {updateExtensionDraft} from '../update-extension.js'
 import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {AppInterface} from '../../../models/app/app.js'
+import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
+import {DevSessionCreateMutation, DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {adminRequest} from '@shopify/cli-kit/node/api/admin'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
@@ -15,6 +18,7 @@ export interface DraftableExtensionOptions {
   remoteExtensionIds: {[key: string]: string}
   proxyUrl: string
   localApp: AppInterface
+  adminSession: AdminSession
 }
 
 export interface DraftableExtensionProcess extends BaseProcess<DraftableExtensionOptions> {
@@ -23,11 +27,18 @@ export interface DraftableExtensionProcess extends BaseProcess<DraftableExtensio
 
 export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExtensionOptions> = async (
   {stderr, stdout, abortSignal: signal},
-  {extensions, token, apiKey, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
+  {extensions, token, adminSession, apiKey, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
 ) => {
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
   await installJavy(app)
+
+  // Start dev session
+  const result: DevSessionCreateSchema = await adminRequest(DevSessionCreateMutation, adminSession, {
+    title: 'dev-app',
+    scopes: getAppScopes(app.configuration),
+    applicationUrl: proxyUrl,
+  })
 
   await Promise.all(
     extensions.map(async (extension) => {

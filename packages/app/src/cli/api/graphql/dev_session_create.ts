@@ -9,6 +9,7 @@ export const DevSessionCreateMutation = gql`
         id
         sharedSecret
       }
+      url
     }
   }
 `
@@ -27,6 +28,7 @@ export interface DevSessionCreateSchema {
       id: string
       sharedSecret: string
     }
+    url: string
     userErrors: {
       field: string[]
       message: string

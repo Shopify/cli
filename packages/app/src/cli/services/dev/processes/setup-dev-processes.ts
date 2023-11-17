@@ -16,6 +16,7 @@ import {PartnersURLs} from '../urls.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -47,6 +48,7 @@ export interface DevConfig {
     apiSecret?: string | undefined
   }
   token: string
+  adminSession: AdminSession
   storeFqdn: string
   storeId: string
   commandOptions: DevOptions
@@ -58,6 +60,7 @@ export async function setupDevProcesses({
   localApp,
   remoteAppUpdated,
   token,
+  adminSession,
   remoteApp,
   storeFqdn,
   storeId,
@@ -114,6 +117,7 @@ export async function setupDevProcesses({
       apiKey,
       token,
       proxyUrl: network.proxyUrl,
+      adminSession,
     }),
     await setupPreviewThemeAppExtensionsProcess({
       allExtensions: localApp.allExtensions,
