@@ -1,14 +1,16 @@
-import {DeployDraftOptions, enableDeveloperPreview, ensureDeployDraftContext} from './context.js'
-import {installJavy} from './function/build.js'
-import {updateExtensionDraft} from './dev/update-extension.js'
+import {DraftExtensionsPushOptions, enableDeveloperPreview, ensureDraftExtensionsPushContext} from '../context.js'
+import {installJavy} from '../function/build.js'
+import {updateExtensionDraft} from '../dev/update-extension.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputSuccess} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
-export async function deployDraft(deployDraftOptions: DeployDraftOptions) {
-  const {app, partnersSession, remoteExtensionIds, remoteApp} = await ensureDeployDraftContext(deployDraftOptions)
+export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
+  const {app, partnersSession, remoteExtensionIds, remoteApp} = await ensureDraftExtensionsPushContext(
+    draftExtensionsPushOptions,
+  )
 
   await installJavy(app)
 
@@ -36,7 +38,7 @@ export async function deployDraft(deployDraftOptions: DeployDraftOptions) {
     showTimestamps: false,
   })
 
-  if (deployDraftOptions.enableDeveloperPreview) {
+  if (draftExtensionsPushOptions.enableDeveloperPreview) {
     await enableDeveloperPreview({token: partnersSession.token, apiKey: remoteApp.apiKey})
     outputSuccess(`Enabled dev preview`)
   }

@@ -1,21 +1,26 @@
-import {deployDraft} from './deploy-draft.js'
-import {DeployDraftOptions, enableDeveloperPreview, ensureDeployDraftContext} from './context.js'
-import {updateExtensionDraft} from './dev/update-extension.js'
-import {buildFunctionExtension, buildUIExtension} from './build/extension.js'
-import {testApp, testUIExtension, testPartnersUserSession, testFunctionExtension} from '../models/app/app.test-data.js'
-import {AppInterface} from '../models/app/app.js'
+import {draftExtensionsPush} from './push.js'
+import {DraftExtensionsPushOptions, enableDeveloperPreview, ensureDraftExtensionsPushContext} from '../context.js'
+import {updateExtensionDraft} from '../dev/update-extension.js'
+import {buildFunctionExtension, buildUIExtension} from '../build/extension.js'
+import {
+  testApp,
+  testUIExtension,
+  testPartnersUserSession,
+  testFunctionExtension,
+} from '../../models/app/app.test-data.js'
+import {AppInterface} from '../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {exec} from '@shopify/cli-kit/node/system'
 
-vi.mock('./context.js')
-vi.mock('./build/extension.js')
-vi.mock('./dev/update-extension.js')
+vi.mock('../context.js')
+vi.mock('../build/extension.js')
+vi.mock('../dev/update-extension.js')
 vi.mock('@shopify/cli-kit/node/system')
 
 const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
-const deployDraftOptions = (app: AppInterface): DeployDraftOptions => {
+const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptions => {
   return {
     directory: app.directory,
     reset: false,
@@ -56,13 +61,13 @@ const remoteApp = {
   apiSecretKeys: [],
 }
 
-describe('deployDraft', () => {
+describe('draftExtensionsPush', () => {
   test("do nothing if the app doesn't include any extension", async () => {
     // Given
     const app = testApp({
       allExtensions: [],
     })
-    vi.mocked(ensureDeployDraftContext).mockResolvedValue({
+    vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
       partnersSession: testPartnersUserSession,
       remoteExtensionIds,
@@ -70,7 +75,7 @@ describe('deployDraft', () => {
     })
 
     // When
-    await deployDraft(deployDraftOptions(app))
+    await draftExtensionsPush(draftExtensionsPushOptions(app))
 
     // Then
     expect(updateExtensionDraft).not.toHaveBeenCalledOnce()
@@ -82,7 +87,7 @@ describe('deployDraft', () => {
     const app = testApp({
       allExtensions: [validUiExtension],
     })
-    vi.mocked(ensureDeployDraftContext).mockResolvedValue({
+    vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
       partnersSession: testPartnersUserSession,
       remoteExtensionIds,
@@ -92,7 +97,7 @@ describe('deployDraft', () => {
     vi.mocked(updateExtensionDraft).mockResolvedValue()
 
     // When
-    await deployDraft(deployDraftOptions(app))
+    await draftExtensionsPush(draftExtensionsPushOptions(app))
 
     // Then
     expect(updateExtensionDraft).toHaveBeenCalledOnce()
@@ -104,7 +109,7 @@ describe('deployDraft', () => {
     const app = testApp({
       allExtensions: [validFunctionExtension],
     })
-    vi.mocked(ensureDeployDraftContext).mockResolvedValue({
+    vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
       partnersSession: testPartnersUserSession,
       remoteExtensionIds,
@@ -114,7 +119,7 @@ describe('deployDraft', () => {
     vi.mocked(updateExtensionDraft).mockResolvedValue()
 
     // When
-    await deployDraft(deployDraftOptions(app))
+    await draftExtensionsPush(draftExtensionsPushOptions(app))
 
     // Then
     expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
@@ -127,7 +132,7 @@ describe('deployDraft', () => {
     const app = testApp({
       allExtensions: [],
     })
-    vi.mocked(ensureDeployDraftContext).mockResolvedValue({
+    vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
       partnersSession: testPartnersUserSession,
       remoteExtensionIds,
@@ -135,7 +140,7 @@ describe('deployDraft', () => {
     })
 
     // When
-    await deployDraft({...deployDraftOptions(app), enableDeveloperPreview: true})
+    await draftExtensionsPush({...draftExtensionsPushOptions(app), enableDeveloperPreview: true})
 
     // Then
     expect(updateExtensionDraft).not.toHaveBeenCalledOnce()

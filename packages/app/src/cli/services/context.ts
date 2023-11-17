@@ -388,7 +388,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   return result
 }
 
-export interface DeployDraftOptions {
+export interface DraftExtensionsPushOptions {
   directory: string
   apiKey?: string
   reset: boolean
@@ -397,18 +397,18 @@ export interface DeployDraftOptions {
   enableDeveloperPreview: boolean
 }
 
-export async function ensureDeployDraftContext(deployDraftOptions: DeployDraftOptions) {
+export async function ensureDraftExtensionsPushContext(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
 
-  const specifications = await loadLocalExtensionsSpecifications(deployDraftOptions.commandConfig)
+  const specifications = await loadLocalExtensionsSpecifications(draftExtensionsPushOptions.commandConfig)
   const app: AppInterface = await loadApp({
     specifications,
-    directory: deployDraftOptions.directory,
-    configName: deployDraftOptions.config,
+    directory: draftExtensionsPushOptions.directory,
+    configName: draftExtensionsPushOptions.config,
   })
 
-  const [partnersApp] = await fetchAppAndIdentifiers({...deployDraftOptions, app}, partnersSession)
+  const [partnersApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, partnersSession)
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
   showReusedDeployValues(org.businessName, app, partnersApp)

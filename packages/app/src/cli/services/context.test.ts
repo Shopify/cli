@@ -18,8 +18,8 @@ import {
   DeployContextOptions,
   ensureReleaseContext,
   ensureVersionsListContext,
-  ensureDeployDraftContext,
-  DeployDraftOptions,
+  ensureDraftExtensionsPushContext,
+  DraftExtensionsPushOptions,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -176,7 +176,7 @@ const options = (app: AppInterface): DeployContextOptions => {
   }
 }
 
-const deployDraftOptions = (app: AppInterface): DeployDraftOptions => {
+const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptions => {
   return {
     directory: app.directory,
     reset: false,
@@ -1005,7 +1005,7 @@ describe('ensureDeployContext', () => {
   })
 })
 
-describe('ensureDeployDraftContext', () => {
+describe('ensureDraftExtensionsPushContext', () => {
   test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
     // Given
     const app = testApp()
@@ -1022,7 +1022,7 @@ describe('ensureDeployDraftContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+    const got = await ensureDraftExtensionsPushContext(draftExtensionsPushOptions(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -1051,7 +1051,7 @@ describe('ensureDeployDraftContext', () => {
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
 
     // When
-    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+    const got = await ensureDraftExtensionsPushContext(draftExtensionsPushOptions(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -1077,7 +1077,7 @@ describe('ensureDeployDraftContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
     // When
-    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+    const got = await ensureDraftExtensionsPushContext(draftExtensionsPushOptions(app))
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -1103,7 +1103,7 @@ describe('ensureDeployDraftContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     // When
-    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+    const got = await ensureDraftExtensionsPushContext(draftExtensionsPushOptions(app))
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith(testPartnersUserSession)
@@ -1128,7 +1128,7 @@ describe('ensureDeployDraftContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(undefined)
 
     // When
-    await expect(ensureDeployDraftContext(deployDraftOptions(app))).rejects.toThrow(
+    await expect(ensureDraftExtensionsPushContext(draftExtensionsPushOptions(app))).rejects.toThrow(
       /Couldn't find the app with Client ID key1/,
     )
   })
@@ -1149,11 +1149,11 @@ describe('ensureDeployDraftContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
 
-    const opts = deployDraftOptions(app)
+    const opts = draftExtensionsPushOptions(app)
     opts.reset = true
 
     // When
-    const got = await ensureDeployDraftContext(opts)
+    const got = await ensureDraftExtensionsPushContext(opts)
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith(testPartnersUserSession)

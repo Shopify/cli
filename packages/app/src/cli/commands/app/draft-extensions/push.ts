@@ -1,11 +1,10 @@
-import Command from '../../utilities/app-command.js'
-import {deployDraft} from '../../services/deploy-draft.js'
-import {DeployDraftOptions} from '../../services/context.js'
+import Command from '../../../utilities/app-command.js'
+import {draftExtensionsPush} from '../../../services/draft-extensions/push.js'
+import {DraftExtensionsPushOptions} from '../../../services/context.js'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
-export default class DeployDraft extends Command {
-  static aliases = ['app deploy-draft']
+export default class DraftExtensionsPush extends Command {
   static description = 'Updates the content of the app draft version.'
   static hidden = true
 
@@ -48,11 +47,11 @@ export default class DeployDraft extends Command {
   }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(DeployDraft)
+    const {flags} = await this.parse(DraftExtensionsPush)
 
     const commandConfig = this.config
 
-    const deployDraftOptions: DeployDraftOptions = {
+    const pushDraftExtensionsOptions: DraftExtensionsPushOptions = {
       directory: flags.path,
       apiKey: flags['client-id'],
       reset: flags.reset,
@@ -61,6 +60,6 @@ export default class DeployDraft extends Command {
       enableDeveloperPreview: flags['enable-dev-preview'],
     }
 
-    await deployDraft(deployDraftOptions)
+    await draftExtensionsPush(pushDraftExtensionsOptions)
   }
 }
