@@ -17,7 +17,7 @@ export async function deployDraft(deployDraftOptions: DeployDraftOptions) {
       return {
         prefix: extension.localIdentifier,
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          await extension.build({stderr, stdout, signal, app})
+          await extension.build({stderr, stdout, signal, app, environment: 'development'})
           const registrationId = remoteExtensionIds[extension.localIdentifier]
           if (!registrationId) {
             throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
