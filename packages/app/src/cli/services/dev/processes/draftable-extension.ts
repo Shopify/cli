@@ -7,9 +7,19 @@ import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DevSessionCreateMutation, DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
+import {
+  DevSessionGenerateUrlMutation,
+  DevSessionGenerateUrlSchema,
+} from '../../../api/graphql/dev_session_generate_url.js'
+import {DevSessionUpdateMutation} from '../../../api/graphql/dev_session_update.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {inTemporaryDirectory, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {fetch, formData} from '@shopify/cli-kit/node/http'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {Writable} from 'stream'
 
 export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
@@ -108,4 +118,79 @@ export async function setupDraftableExtensionsProcess({
       remoteExtensionIds,
     },
   }
+}
+
+export interface UpdateAppModulesOptions {
+  app: AppInterface
+  extensions: ExtensionInstance[]
+  adminSession: AdminSession
+  token: string
+  apiKey: string
+  stdout?: Writable
+}
+
+export async function updateAppModules({
+  app,
+  extensions,
+  adminSession,
+  token,
+  apiKey,
+  stdout,
+}: UpdateAppModulesOptions) {
+  await inTemporaryDirectory(async (tmpDir) => {
+    try {
+      const signedUrlResult: DevSessionGenerateUrlSchema = await adminRequest(
+        DevSessionGenerateUrlMutation,
+        adminSession,
+        {
+          apiKey,
+        },
+      )
+
+      const bundlePath = joinPath(tmpDir, `bundle.zip`)
+      await mkdir(dirname(bundlePath))
+      const identifiers = {app: apiKey, extensionIds: {}, extensions: {}}
+      await bundleAndBuildExtensionsInConcurrent({
+        app,
+        identifiers,
+        extensions,
+        bundlePath,
+        stdout:
+          stdout ??
+          new Writable({
+            write(chunk, ...args) {
+              // Do nothing if there is stdout
+            },
+          }),
+      })
+
+      const form = formData()
+      const buffer = readFileSync(bundlePath)
+      form.append('my_upload', buffer)
+      await fetch(signedUrlResult.generateDevSessionSignedUrl.signedUrl, {
+        method: 'put',
+        body: buffer,
+        headers: form.getHeaders(),
+      })
+
+      const appModules = await Promise.all(extensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})))
+
+      await adminRequest(DevSessionUpdateMutation, adminSession, {
+        apiKey,
+        appModules,
+        bundleUrl: signedUrlResult.generateDevSessionSignedUrl.signedUrl,
+      })
+
+      const names = extensions.map((ext) => ext.localIdentifier).join(', ')
+
+      if (stdout) {
+        outputInfo(`Updated app modules: ${names}`, stdout)
+      } else {
+        outputSuccess(`Ephemeral dev session is ready`)
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      outputInfo(`Failed to update app modules: ${error}`, stdout)
+    }
+  })
 }
