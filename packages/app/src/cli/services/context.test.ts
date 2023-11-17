@@ -18,6 +18,8 @@ import {
   DeployContextOptions,
   ensureReleaseContext,
   ensureVersionsListContext,
+  ensureDeployDraftContext,
+  DeployDraftOptions,
 } from './context.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
@@ -34,8 +36,15 @@ import {
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {getAppConfigurationFileName, isWebType, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {
+  getAppConfigurationFileName,
+  isWebType,
+  loadApp,
+  loadAppConfiguration,
+  loadAppName,
+} from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
+import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -164,6 +173,15 @@ const options = (app: AppInterface): DeployContextOptions => {
     force: false,
     noRelease: false,
     commandConfig: COMMAND_CONFIG,
+  }
+}
+
+const deployDraftOptions = (app: AppInterface): DeployDraftOptions => {
+  return {
+    directory: app.directory,
+    reset: false,
+    commandConfig: COMMAND_CONFIG,
+    enableDeveloperPreview: false,
   }
 }
 
@@ -984,6 +1002,172 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
     expect(got.release).toEqual(true)
+  })
+})
+
+describe('ensureDeployDraftContext', () => {
+  test("fetches the app from the partners' API and returns it alongside the id when identifiers are available locally and the app has no extensions", async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+
+    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(getAppIdentifiers).mockReturnValueOnce({app: APP2.apiKey})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    // When
+    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
+    expect(got.remoteExtensionIds).toEqual(identifiers.extensionIds)
+
+    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
+  })
+
+  test("fetches the app from the partners' API and returns it alongside the id when there are no identifiers but user chooses to reuse dev store.cliKitStore()", async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
+
+    // When
+    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(reuseDevConfigPrompt).toHaveBeenCalled()
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
+    expect(got.remoteExtensionIds).toEqual(identifiers.extensionIds)
+  })
+
+  test("fetches the app from the partners' API and returns it alongside the id when config as code is enabled", async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    // When
+    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(reuseDevConfigPrompt).not.toHaveBeenCalled()
+    expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith(APP2.apiKey, 'token')
+    expect(got.remoteApp.id).toEqual(APP2.id)
+    expect(got.remoteApp.title).toEqual(APP2.title)
+    expect(got.remoteApp.appType).toEqual(APP2.appType)
+    expect(got.remoteExtensionIds).toEqual(identifiers.extensionIds)
+  })
+
+  test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    // When
+    const got = await ensureDeployDraftContext(deployDraftOptions(app))
+
+    // Then
+    expect(fetchOrganizations).toHaveBeenCalledWith(testPartnersUserSession)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      testPartnersUserSession,
+      DEFAULT_SELECT_APP_OPTIONS,
+    )
+    expect(got.remoteApp.id).toEqual(APP1.id)
+    expect(got.remoteApp.title).toEqual(APP1.title)
+    expect(got.remoteApp.appType).toEqual(APP1.appType)
+  })
+
+  test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
+    // Given
+    const app = testApp()
+    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(undefined)
+
+    // When
+    await expect(ensureDeployDraftContext(deployDraftOptions(app))).rejects.toThrow(
+      /Couldn't find the app with Client ID key1/,
+    )
+  })
+
+  test('prompts the user to create or select an app if reset is true', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP1.apiKey,
+      extensions: {},
+      extensionIds: {},
+    }
+
+    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.mocked(loadApp).mockResolvedValue(app)
+    // There is a cached app but it will be ignored
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+
+    const opts = deployDraftOptions(app)
+    opts.reset = true
+
+    // When
+    const got = await ensureDeployDraftContext(opts)
+
+    // Then
+    expect(fetchOrganizations).toHaveBeenCalledWith(testPartnersUserSession)
+    expect(selectOrCreateApp).toHaveBeenCalledWith(
+      app.name,
+      {nodes: [APP1, APP2], pageInfo: {hasNextPage: false}},
+      ORG1,
+      testPartnersUserSession,
+      DEFAULT_SELECT_APP_OPTIONS,
+    )
+    expect(got.remoteApp.id).toEqual(APP1.id)
+    expect(got.remoteApp.title).toEqual(APP1.title)
+    expect(got.remoteApp.appType).toEqual(APP1.appType)
+    expect(got.remoteExtensionIds).toEqual(identifiers.extensionIds)
   })
 })
 
