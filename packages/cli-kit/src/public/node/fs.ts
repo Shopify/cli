@@ -9,6 +9,7 @@ import {
   remove as fsRemove,
   removeSync as fsRemoveSync,
   move as fsMove,
+  emptyDir as fsEmptyDir,
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
 } from 'fs-extra/esm'
@@ -382,6 +383,14 @@ interface MoveFileOptions {
  */
 export async function moveFile(src: string, dest: string, options: MoveFileOptions = {}): Promise<void> {
   await fsMove(src, dest, options)
+}
+
+/**
+ * Empties a directory without removing it
+ * @param path - Path to the directory to be emptied.
+ */
+export async function emptyDir(path: string): Promise<void> {
+  await fsEmptyDir(path)
 }
 
 /**

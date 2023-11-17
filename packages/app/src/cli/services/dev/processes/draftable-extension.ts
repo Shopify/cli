@@ -1,5 +1,4 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {updateExtensionDraft} from '../update-extension.js'
 import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
@@ -7,19 +6,16 @@ import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DevSessionCreateMutation, DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
-import {
-  DevSessionGenerateUrlMutation,
-  DevSessionGenerateUrlSchema,
-} from '../../../api/graphql/dev_session_generate_url.js'
+
 import {DevSessionUpdateMutation} from '../../../api/graphql/dev_session_update.js'
 import {bundleForDev} from '../../deploy/bundle.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {inTemporaryDirectory, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
+import {emptyDir, fileExistsSync, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
-import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export interface DraftableExtensionOptions {
@@ -34,6 +30,16 @@ export interface DraftableExtensionOptions {
 
 export interface DraftableExtensionProcess extends BaseProcess<DraftableExtensionOptions> {
   type: 'draftable-extension'
+}
+
+async function prepareDevFolder(directory: string) {
+  const path = joinPath(directory, '.shopify-dev')
+  if (fileExistsSync(path)) {
+    await emptyDir(path)
+  } else {
+    await mkdir(path)
+  }
+  return path
 }
 
 export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExtensionOptions> = async (
@@ -51,13 +57,20 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
     applicationUrl: proxyUrl,
   })
 
+  // Folder where we are going to store all shopify built extensions
+  const devFolder = await prepareDevFolder(app.directory)
+
+  const signedUrl = result.devSessionCreate.url
+  // Initial update of all modules
+  await updateAppModules({app, extensions, adminSession, token, signedUrl, stdout, devFolder})
+
   await Promise.all(
     extensions.map(async (extension) => {
       await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
       const registrationId = remoteExtensions[extension.localIdentifier]
       if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
       // Initial draft update for each extension
-      await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+      // await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
       // Watch for changes
       return setupExtensionWatcher({
         extension,
@@ -123,75 +136,54 @@ export async function setupDraftableExtensionsProcess({
 
 export interface UpdateAppModulesOptions {
   app: AppInterface
+  devFolder: string
   extensions: ExtensionInstance[]
   adminSession: AdminSession
   token: string
-  apiKey: string
-  stdout?: Writable
+  signedUrl: string
+  stdout: Writable
 }
 
 export async function updateAppModules({
   app,
+  devFolder,
   extensions,
   adminSession,
   token,
-  apiKey,
+  signedUrl,
   stdout,
 }: UpdateAppModulesOptions) {
-  await inTemporaryDirectory(async (tmpDir) => {
-    try {
-      const signedUrlResult: DevSessionGenerateUrlSchema = await adminRequest(
-        DevSessionGenerateUrlMutation,
-        adminSession,
-        {
-          apiKey,
-        },
-      )
+  // Consider creating an empty `.shopify-dev` folder to reuse results
+  // await inTemporaryDirectory(async (tmpDir) => {
+  try {
+    const bundlePath = joinPath(devFolder, `bundle.zip`)
+    await mkdir(dirname(bundlePath))
+    await bundleForDev({app, extensions, bundlePath, directory: devFolder, stdout})
 
-      const bundlePath = joinPath(tmpDir, `bundle.zip`)
-      await mkdir(dirname(bundlePath))
-      const identifiers = {app: apiKey, extensionIds: {}, extensions: {}}
-      await bundleForDev({
-        app,
-        identifiers,
-        extensions,
-        bundlePath,
-        stdout:
-          stdout ??
-          new Writable({
-            write(chunk, ...args) {
-              // Do nothing if there is no stdout
-            },
-          }),
-      })
+    const form = formData()
+    const buffer = readFileSync(bundlePath)
+    form.append('my_upload', buffer)
+    await fetch(signedUrl, {
+      method: 'put',
+      body: buffer,
+      headers: form.getHeaders(),
+    })
 
-      const form = formData()
-      const buffer = readFileSync(bundlePath)
-      form.append('my_upload', buffer)
-      await fetch(signedUrlResult.generateDevSessionSignedUrl.signedUrl, {
-        method: 'put',
-        body: buffer,
-        headers: form.getHeaders(),
-      })
+    const appModules = await Promise.all(
+      extensions.flatMap((ext) => ext.bundleConfig({identifiers: {}, token, apiKey: 'dev-apiKey'})),
+    )
 
-      const appModules = await Promise.all(extensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})))
+    await adminRequest(DevSessionUpdateMutation, adminSession, {
+      appModules,
+      bundleUrl: signedUrl,
+    })
 
-      await adminRequest(DevSessionUpdateMutation, adminSession, {
-        apiKey,
-        appModules,
-        bundleUrl: signedUrlResult.generateDevSessionSignedUrl.signedUrl,
-      })
+    const names = extensions.map((ext) => ext.localIdentifier).join(', ')
 
-      const names = extensions.map((ext) => ext.localIdentifier).join(', ')
-
-      if (stdout) {
-        outputInfo(`Updated app modules: ${names}`, stdout)
-      } else {
-        outputSuccess(`Ephemeral dev session is ready`)
-      }
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      outputInfo(`Failed to update app modules: ${error}`, stdout)
-    }
-  })
+    outputInfo(`Updated app modules: ${names}`, stdout)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputInfo(`Failed to update app modules: ${error}`, stdout)
+  }
+  // })
 }

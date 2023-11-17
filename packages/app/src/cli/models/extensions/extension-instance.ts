@@ -8,7 +8,7 @@ import {
   buildUIExtension,
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
-import {Identifiers} from '../app/identifiers.js'
+import {IdentifiersExtensions} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
@@ -228,8 +228,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, identifiers: Identifiers, bundleDirectory: string) {
-    const extensionId = identifiers.extensions[this.localIdentifier]!
+  async buildForBundle(options: ExtensionBuildOptions, identifiers: IdentifiersExtensions, bundleDirectory: string) {
+    const extensionId = identifiers[this.localIdentifier] ?? this.handle
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', `${this.outputFileName}`)
 
     if (this.features.includes('bundling')) {
@@ -252,7 +252,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const contextValue = (handle as string) || ''
 
     return {
-      uuid: identifiers.extensions[this.localIdentifier]!,
+      uuid: identifiers[this.localIdentifier] ?? this.devUUID,
       config: JSON.stringify(remainingConfigs),
       context: contextValue,
       handle: this.handle,
@@ -266,7 +266,7 @@ export interface ExtensionDeployConfigOptions {
 }
 
 export interface ExtensionBundleConfigOptions {
-  identifiers: Identifiers
+  identifiers: IdentifiersExtensions
   token: string
   apiKey: string
 }

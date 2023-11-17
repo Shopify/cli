@@ -32,7 +32,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
           action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
             await extension.buildForBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
-              options.identifiers,
+              options.identifiers.extensions,
               bundleDirectory,
             )
           },
@@ -53,32 +53,32 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
 export interface BundleDevOptions {
   app: AppInterface
   bundlePath?: string
-  identifiers: Identifiers
   extensions: ExtensionInstance[]
   stdout: Writable
+  directory: string
 }
 
 export async function bundleForDev(options: BundleDevOptions) {
-  await inTemporaryDirectory(async (tmpDir) => {
-    const bundleDirectory = joinPath(tmpDir, 'bundle')
-    await mkdirSync(bundleDirectory)
-    await touchFile(joinPath(bundleDirectory, '.shopify'))
+  // await inTemporaryDirectory(async (tmpDir) => {
+  const bundleDirectory = joinPath(options.directory, 'bundle')
+  await mkdirSync(bundleDirectory)
+  await touchFile(joinPath(bundleDirectory, '.shopify'))
 
-    const promises = (options.extensions ?? []).map((extension) => {
-      return extension.buildForBundle(
-        {stderr: options.stdout, stdout: options.stdout, app: options.app, environment: 'development'},
-        options.identifiers,
-        bundleDirectory,
-      )
-    })
-
-    await Promise.all(promises)
-
-    if (options.bundlePath) {
-      await zip({
-        inputDirectory: bundleDirectory,
-        outputZipPath: options.bundlePath,
-      })
-    }
+  const promises = (options.extensions ?? []).map((extension) => {
+    return extension.buildForBundle(
+      {stderr: options.stdout, stdout: options.stdout, app: options.app, environment: 'development'},
+      {},
+      bundleDirectory,
+    )
   })
+
+  await Promise.all(promises)
+
+  if (options.bundlePath) {
+    await zip({
+      inputDirectory: bundleDirectory,
+      outputZipPath: options.bundlePath,
+    })
+  }
+  // })
 }
