@@ -12,6 +12,7 @@ import {
   DevSessionGenerateUrlSchema,
 } from '../../../api/graphql/dev_session_generate_url.js'
 import {DevSessionUpdateMutation} from '../../../api/graphql/dev_session_update.js'
+import {bundleForDev} from '../../deploy/bundle.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -150,7 +151,7 @@ export async function updateAppModules({
       const bundlePath = joinPath(tmpDir, `bundle.zip`)
       await mkdir(dirname(bundlePath))
       const identifiers = {app: apiKey, extensionIds: {}, extensions: {}}
-      await bundleAndBuildExtensionsInConcurrent({
+      await bundleForDev({
         app,
         identifiers,
         extensions,
@@ -159,7 +160,7 @@ export async function updateAppModules({
           stdout ??
           new Writable({
             write(chunk, ...args) {
-              // Do nothing if there is stdout
+              // Do nothing if there is no stdout
             },
           }),
       })
