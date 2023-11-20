@@ -110,7 +110,6 @@ async function getInfoBreakdown(
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
-  app: AppInterface,
 ): Promise<{
   toCreate: string[]
   toUpdate: string[]
@@ -119,9 +118,12 @@ async function getInfoBreakdown(
 }> {
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  const appModuleVersions = activeAppVersion.app.activeAppVersion?.appModuleVersions || []
+  const appModuleVersionsNonConfig =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+      (module) => module.specification.options.managementExperience !== 'app_config',
+    ) || []
   const nonDashboardRemoteRegistrationUuids =
-    appModuleVersions
+    appModuleVersionsNonConfig
       .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
       .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
@@ -146,7 +148,7 @@ async function getInfoBreakdown(
     ...dashboardOnly.map((source) => source.uuid),
   ]
   const onlyRemote =
-    appModuleVersions
+    appModuleVersionsNonConfig
       .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
       .map((module) => module.registrationTitle) ?? []
 
@@ -166,7 +168,7 @@ async function buildInfoPrompt(
   dashboardOnly: RemoteSource[],
   app: AppInterface,
 ) {
-  const breakdown = await getInfoBreakdown(apiKey, token, localRegistration, toCreate, dashboardOnly, app)
+  const breakdown = await getInfoBreakdown(apiKey, token, localRegistration, toCreate, dashboardOnly)
   if (breakdown === null) return {infoTable: [], removesExtension: false}
 
   const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = breakdown

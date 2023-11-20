@@ -21,10 +21,12 @@ import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 export class ConfigExtensionInstance<TConfiguration = unknown> {
   configuration: TConfiguration
   specification: ConfigExtensionSpecification
+  idEnvironmentVariableName: string
 
   constructor(options: {configuration: TConfiguration; specification: ConfigExtensionSpecification}) {
     this.configuration = options.configuration
     this.specification = options.specification
+    this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
   }
 
   get graphQLType() {
@@ -44,7 +46,7 @@ export class ConfigExtensionInstance<TConfiguration = unknown> {
   }
 
   deployConfig() {
-    return this.configuration
+    return this.getContentWithoutSectionName(this.configuration as {[key: string]: unknown})
   }
 
   bundleConfig(identifiers: Identifiers) {
@@ -54,6 +56,11 @@ export class ConfigExtensionInstance<TConfiguration = unknown> {
       context: 'context',
       handle: this.handle,
     }
+  }
+
+  private getContentWithoutSectionName(content: {[key: string]: unknown}): {[key: string]: unknown} {
+    const firstKey = Object.keys(content)[0]
+    return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
   }
 }
 

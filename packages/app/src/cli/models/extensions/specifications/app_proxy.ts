@@ -1,17 +1,19 @@
 import {createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const PosEmbedmentSchema = zod.object({
-  pos: zod
+const AppProxySchema = zod.object({
+  app_proxy: zod
     .object({
-      embedded: zod.boolean(),
+      sub_path_prefix: zod.string(),
+      sub_path: zod.string(),
+      proxy_url: zod.string(),
     })
     .optional(),
 })
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'pos_embedment',
-  schema: PosEmbedmentSchema,
+  identifier: 'app_proxy',
+  schema: AppProxySchema,
 })
 
 export default spec
