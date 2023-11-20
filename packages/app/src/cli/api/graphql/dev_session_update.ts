@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const DevSessionUpdateMutation = gql`
-  mutation devSessionUpdate($bundleUrl: String, $appModules: [AppModuleSettings!]) {
-    devSessionUpdate(bundleUrl: $bundleUrl, appModules: $appModules) {
+  mutation devSessionUpdate($apiKey: String!, $bundleUrl: String, $appModules: [AppModuleSettings!]) {
+    devSessionUpdate(apiKey: $apiKey, bundleUrl: $bundleUrl, appModules: $appModules) {
       appPackageUuids
       userErrors {
         field
@@ -14,6 +14,7 @@ export const DevSessionUpdateMutation = gql`
 
 export interface DevSessionUpdateVariables {
   bundleUrl: string
+  apiKey: string
   appModules: {
     uuid: string
     config: string

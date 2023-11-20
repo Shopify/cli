@@ -1,7 +1,7 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
@@ -56,9 +56,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
 
   // Start dev session
   await adminRequest(DevSessionCreateMutation, adminSession, {
-    title: 'dev-app',
-    scopes: getAppScopes(app.configuration),
-    applicationUrl: proxyUrl,
+    apiKey,
   })
 
   // Folder where we are going to store all shopify built extensions
@@ -83,8 +81,10 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
         stderr,
         signal,
         token,
+        adminSession,
         apiKey,
         registrationId,
+        devFolder,
       })
     }),
   )
@@ -169,7 +169,7 @@ export async function updateAppModules({
       {apiKey},
     )
 
-    const signedUrl = signedUrlResult.generateDevSessionSignedUrl.signedUrl
+    const signedUrl = signedUrlResult.devSessionSignedUrlGenerate.signedUrl
 
     const form = formData()
     const buffer = readFileSync(bundlePath)
@@ -184,6 +184,8 @@ export async function updateAppModules({
       extensions.flatMap((ext) => ext.bundleConfig({identifiers: {}, token, apiKey: 'dev-apiKey'})),
     )
 
+    console.log(appModules)
+    console.log(apiKey)
     await adminRequest(DevSessionUpdateMutation, adminSession, {
       appModules,
       bundleUrl: signedUrl,

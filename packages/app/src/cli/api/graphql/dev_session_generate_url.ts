@@ -1,8 +1,8 @@
 import {gql} from 'graphql-request'
 
 export const DevSessionGenerateUrlMutation = gql`
-  mutation generateDevSessionSignedUrl($apiKey: String!) {
-    generateDevSessionSignedUrl(apiKey: $apiKey) {
+  mutation DevSessionSignedUrlGenerate($apiKey: String!) {
+    devSessionSignedUrlGenerate(apiKey: $apiKey) {
       signedUrl
       userErrors {
         field
@@ -17,7 +17,7 @@ export interface DevSessionGenerateUrlVariables {
 }
 
 export interface DevSessionGenerateUrlSchema {
-  generateDevSessionSignedUrl: {
+  devSessionSignedUrlGenerate: {
     signedUrl: string
     userErrors: {
       field: string[]

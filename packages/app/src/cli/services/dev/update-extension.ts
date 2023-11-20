@@ -1,3 +1,4 @@
+import {updateAppModules} from './processes/draftable-extension.js'
 import {
   ExtensionUpdateDraftInput,
   ExtensionUpdateDraftMutation,
@@ -6,11 +7,13 @@ import {
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
+import {AppInterface} from '../../models/app/app.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
 import {relativizePath} from '@shopify/cli-kit/node/path'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -63,8 +66,11 @@ export async function updateExtensionDraft({
 interface UpdateExtensionConfigOptions {
   extension: ExtensionInstance
   token: string
+  adminSession: AdminSession
+  app: AppInterface
   apiKey: string
   registrationId: string
+  devFolder: string
   stdout: Writable
   stderr: Writable
 }
@@ -72,8 +78,11 @@ interface UpdateExtensionConfigOptions {
 export async function updateExtensionConfig({
   extension,
   token,
+  adminSession,
+  app,
   apiKey,
   registrationId,
+  devFolder,
   stdout,
   stderr,
 }: UpdateExtensionConfigOptions) {
@@ -111,5 +120,6 @@ export async function updateExtensionConfig({
 
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = newConfig
+  return updateAppModules({app, extensions: [extension], token, apiKey, stdout, adminSession, devFolder})
   return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
 }

@@ -12,6 +12,7 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -122,8 +123,10 @@ export interface SetupExtensionWatcherOptions {
   stderr: Writable
   signal: AbortSignal
   token: string
+  adminSession: AdminSession
   apiKey: string
   registrationId: string
+  devFolder: string
 }
 
 export async function setupExtensionWatcher({
@@ -133,9 +136,11 @@ export async function setupExtensionWatcher({
   stdout,
   stderr,
   signal,
+  adminSession,
   token,
   apiKey,
   registrationId,
+  devFolder,
 }: SetupExtensionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -204,7 +209,17 @@ Redeploy Paths:
     })
       .then(() => {
         if (!buildSignal.aborted) {
-          return updateExtensionConfig({extension, token, apiKey, registrationId, stdout, stderr})
+          return updateExtensionConfig({
+            app,
+            extension,
+            token,
+            apiKey,
+            registrationId,
+            stdout,
+            stderr,
+            adminSession,
+            devFolder,
+          })
         }
       })
       .catch((updateError: unknown) => {
