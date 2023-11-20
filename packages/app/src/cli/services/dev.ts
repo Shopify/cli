@@ -40,26 +40,33 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
+  apiKey?: string
+  checkoutCartUrl?: string
+  commandConfig: Config
+  configName?: string
+  devPreview: boolean
   directory: string
   id?: number
-  configName?: string
-  apiKey?: string
-  storeFqdn?: string
-  reset: boolean
-  update: boolean
-  commandConfig: Config
-  skipDependenciesInstallation: boolean
-  subscriptionProductUrl?: string
-  checkoutCartUrl?: string
-  tunnelUrl?: string
+  notify?: string
   noTunnel: boolean
+  reset: boolean
+  skipDependenciesInstallation: boolean
+  storeFqdn?: string
+  subscriptionProductUrl?: string
   theme?: string
   themeExtensionPort?: number
-  notify?: string
+  tunnelUrl?: string
+  update: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
+
+  if (commandOptions.devPreview) {
+    console.log('new functionality!', config)
+    return
+  }
+
   await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
   await actionsBeforeLaunchingDevProcesses(config)

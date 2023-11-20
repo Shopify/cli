@@ -1,11 +1,11 @@
+import {Flags} from '@oclif/core'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {appFlags} from '../../flags.js'
+import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {dev} from '../../services/dev.js'
 import Command from '../../utilities/app-command.js'
-import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends Command {
   static description = 'Run the app.'
@@ -91,6 +91,12 @@ export default class Dev extends Command {
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
+    'dev-preview': Flags.boolean({
+      description:
+        'Uses the new implementation of app dev implemented in typescript. This is a developer preview feature and may change in the future.',
+      env: 'SHOPIFY_FLAG_DEV_PREVIEW',
+      required: false,
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -119,21 +125,22 @@ export default class Dev extends Command {
     const commandConfig = this.config
 
     const devOptions = {
-      directory: flags.path,
-      configName: flags.config,
       apiKey,
-      storeFqdn: flags.store,
-      reset: flags.reset,
-      update: !flags['no-update'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig,
-      subscriptionProductUrl: flags['subscription-product-url'],
       checkoutCartUrl: flags['checkout-cart-url'],
-      tunnelUrl: flags['tunnel-url'],
+      commandConfig,
+      configName: flags.config,
+      devPreview: flags['dev-preview'],
+      directory: flags.path,
+      notify: flags.notify,
       noTunnel: flags['no-tunnel'],
+      reset: flags.reset,
+      skipDependenciesInstallation: flags['skip-dependencies-installation'],
+      storeFqdn: flags.store,
+      subscriptionProductUrl: flags['subscription-product-url'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
-      notify: flags.notify,
+      tunnelUrl: flags['tunnel-url'],
+      update: !flags['no-update'],
     }
 
     await dev(devOptions)
