@@ -112,7 +112,7 @@ describe('webhookTriggerService', () => {
     expectCalls(aVersion)
     expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'http', anAddress, aSecret)
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
-    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery.')
   })
 
   test("won't send to event-bridge if api-key not found", async () => {
@@ -146,7 +146,7 @@ describe('webhookTriggerService', () => {
       aSecret,
       anApiKey,
     )
-    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery.')
     expect(outputInfo).toHaveBeenCalledWith('Using api-key from app settings in Partners')
   })
 
@@ -165,7 +165,7 @@ describe('webhookTriggerService', () => {
       expectCalls(aVersion)
       expect(getWebhookSample).toHaveBeenCalledWith(aToken, aTopic, aVersion, 'localhost', aFullLocalAddress, aSecret)
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
+      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful.')
     })
 
     test('shows an error if localhost is not ready', async () => {

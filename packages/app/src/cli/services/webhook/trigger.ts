@@ -129,7 +129,7 @@ async function sendSample(token: string, options: WebhookTriggerOptions) {
     const result = await triggerLocalWebhook(options.address, sample.samplePayload, sample.headers)
 
     if (result) {
-      outputSuccess('Localhost delivery sucessful')
+      outputSuccess('Localhost delivery sucessful.')
       return
     }
 
@@ -138,7 +138,7 @@ async function sendSample(token: string, options: WebhookTriggerOptions) {
   }
 
   if (sample.samplePayload === JSON.stringify({})) {
-    outputSuccess('Webhook has been enqueued for delivery')
+    outputSuccess('Webhook has been enqueued for delivery.')
   }
 }
 

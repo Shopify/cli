@@ -43,7 +43,7 @@ export async function upgrade(
   }
 
   if (newestVersion) {
-    outputSuccess(`Upgraded Shopify CLI to version ${newestVersion}`)
+    outputSuccess(`Upgraded Shopify CLI to version ${newestVersion}.`)
   }
 }
 

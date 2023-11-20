@@ -61,7 +61,7 @@ export default class GenerateFile extends Command {
         ),
       ),
     ])
-    outputSuccess(outputContent`Created ${outputToken.path(demoFilePath)} and ${outputToken.path(demoSchemaPath)}`)
+    outputSuccess(outputContent`Created ${outputToken.path(demoFilePath)} and ${outputToken.path(demoSchemaPath)}.`)
   }
 }
 

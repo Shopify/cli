@@ -140,5 +140,5 @@ export async function convertStoreToTest(store: OrganizationStore, orgId: string
       'This store might not be compatible with draft apps, please try a different store',
     )
   }
-  outputSuccess(`Converted ${store.shopDomain} to a Test store`)
+  outputSuccess(`Converted ${store.shopDomain} to a Test store.`)
 }

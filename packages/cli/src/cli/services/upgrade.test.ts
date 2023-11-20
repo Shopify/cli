@@ -63,7 +63,7 @@ describe('upgrade global CLI', () => {
         "Upgrading CLI from ${oldCliVersion} to ${currentCliVersion}...\nAttempting to upgrade via npm install -g @shopify/cli@latest @shopify/theme@latest..."
       `)
       expect(outputMock.success()).toMatchInlineSnapshot(`
-        "Upgraded Shopify CLI to version ${currentCliVersion}"
+        "Upgraded Shopify CLI to version ${currentCliVersion}."
       `)
     })
   })
@@ -167,7 +167,7 @@ describe('upgrade local CLI', () => {
         },
       )
       expect(outputMock.success()).toMatchInlineSnapshot(`
-        "Upgraded Shopify CLI to version ${currentCliVersion}"
+        "Upgraded Shopify CLI to version ${currentCliVersion}."
       `)
     })
   })
@@ -211,7 +211,7 @@ describe('upgrade local CLI', () => {
         },
       )
       expect(outputMock.success()).toMatchInlineSnapshot(`
-        "Upgraded Shopify CLI to version ${currentCliVersion}"
+        "Upgraded Shopify CLI to version ${currentCliVersion}."
       `)
     })
   })
