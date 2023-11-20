@@ -15,11 +15,25 @@ export type ExtensionFeature =
   | 'single_js_entry_path'
   | 'app_config'
 
+export type ConfigExtensionFeature = 'app_config'
+
+export type ExtensionSpecificationManagementExperience = 'cli' | 'app_config'
+
+interface ExtensionSpecificationCommon {
+  identifier: string
+
+  managementExperience: ExtensionSpecificationManagementExperience
+}
+
+export interface ConfigExtensionSpecification<TConfiguration = unknown> extends ExtensionSpecificationCommon {
+  schema: ZodSchemaType<TConfiguration>
+}
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
-  identifier: string
+export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>
+  extends ExtensionSpecificationCommon {
   externalIdentifier: string
   externalName: string
   group?: string
@@ -98,6 +112,18 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
+    managementExperience: 'cli' as ExtensionSpecificationManagementExperience,
   }
   return {...defaults, ...spec}
+}
+
+export function createConfigExtensionSpecification<TConfiguration = unknown>(spec: {
+  identifier: string
+  schema: TConfiguration
+}): ConfigExtensionSpecification<TConfiguration> {
+  return {
+    identifier: spec.identifier,
+    schema: spec.schema as ZodSchemaType<TConfiguration>,
+    managementExperience: 'app_config' as ExtensionSpecificationManagementExperience,
+  }
 }

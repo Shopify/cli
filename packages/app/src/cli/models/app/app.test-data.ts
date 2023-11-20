@@ -56,8 +56,8 @@ export function testApp(
       },
     ],
     app.allExtensions ?? [],
+    app.configExtensions ?? [],
     app.usesWorkspaces ?? false,
-    specifications,
     app.dotenv,
     app.errors,
   )
@@ -66,9 +66,6 @@ export function testApp(
   }
   if (app.extensionsForType) {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
-  }
-  if (app.specificationForIdentifier) {
-    Object.getPrototypeOf(newApp).specificationForIdentifier = app.specificationForIdentifier
   }
   return newApp
 }
@@ -146,7 +143,7 @@ export async function testUIExtension(
   const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = (await loadFSExtensionsSpecifications()) as ExtensionSpecification[]
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
@@ -167,7 +164,7 @@ export async function testAppAccessModule(
   configurationPath: string,
   directory: string,
 ): Promise<ExtensionInstance> {
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = (await loadFSExtensionsSpecifications()) as ExtensionSpecification[]
   const specification = allSpecs.find((spec) => spec.identifier === 'app_access')!
 
   const extension = new ExtensionInstance({
@@ -190,7 +187,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
     metafields: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = (await loadFSExtensionsSpecifications()) as ExtensionSpecification[]
   const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
   const extension = new ExtensionInstance({
@@ -212,7 +209,7 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
     settings: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = (await loadFSExtensionsSpecifications()) as ExtensionSpecification[]
   const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
   const parsed = specification.schema.parse(configuration)
   const extension = new ExtensionInstance({
@@ -233,7 +230,7 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     runtime_context: 'strict',
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = (await loadFSExtensionsSpecifications()) as ExtensionSpecification[]
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
 
   const extension = new ExtensionInstance({
@@ -272,7 +269,7 @@ export async function testFunctionExtension(
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = (await loadFSExtensionsSpecifications()) as ExtensionSpecification[]
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
 
   const extension = new ExtensionInstance({

@@ -24,10 +24,7 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
-
-  const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
-  localExtensions = localExtensions.concat(functionExtensions)
+  const localExtensions = options.app.allExtensions
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
@@ -100,6 +97,16 @@ export async function ensureExtensionsIds(
     if (!confirmed) return err('user-cancelled')
   }
 
+  // Add existing or toCreate config extensions
+  const matchConfigExtensions = await automaticMatchmaking(
+    options.app.configExtensions,
+    remoteExtensions,
+    validIdentifiers,
+    'uuid',
+  )
+  validMatches = {...validMatches, ...matchConfigExtensions.identifiers}
+  extensionsToCreate.push(...matchConfigExtensions.toCreate)
+
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
@@ -127,10 +134,7 @@ async function createExtensions(extensions: LocalSource[], appId: string) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.graphQLType, extension.handle, token)
-    // Don't output a log message for app config extensions
-    if (!extension.isConfigExtension) {
-      outputCompleted(`Created extension ${extension.handle}.`)
-    }
+    outputCompleted(`Created extension ${extension.handle}.`)
     result[extension.localIdentifier] = registration
   }
   return result

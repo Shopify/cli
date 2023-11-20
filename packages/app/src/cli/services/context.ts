@@ -36,6 +36,7 @@ import {
   DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -622,10 +623,11 @@ export async function getAppContext({
   }
 
   let cachedInfo = getCachedAppInfo(directory)
-
+  const {configSpecs} = await loadLocalExtensionsSpecifications(commandConfig!)
   const {configuration} = await loadAppConfiguration({
     directory,
     configName,
+    configSpecs,
   })
 
   let remoteApp

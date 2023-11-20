@@ -3,6 +3,7 @@ import updateURL, {UpdateURLOptions} from '../../services/app/update-url.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {appFlags} from '../../flags.js'
 import {loadAppConfiguration} from '../../models/app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
@@ -43,9 +44,11 @@ export default class UpdateURL extends Command {
     }
     const apiKey = flags['client-id'] || flags['api-key']
 
+    const {configSpecs} = await loadLocalExtensionsSpecifications(this.config)
     const app = await loadAppConfiguration({
       configName: flags.config,
       directory: flags.path,
+      configSpecs,
     })
 
     const options: UpdateURLOptions = {

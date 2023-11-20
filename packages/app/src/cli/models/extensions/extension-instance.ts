@@ -1,6 +1,6 @@
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
-import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {ConfigExtensionSpecification, ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -17,6 +17,45 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+
+export class ConfigExtensionInstance<TConfiguration = unknown> {
+  configuration: TConfiguration
+  specification: ConfigExtensionSpecification
+
+  constructor(options: {configuration: TConfiguration; specification: ConfigExtensionSpecification}) {
+    this.configuration = options.configuration
+    this.specification = options.specification
+  }
+
+  get graphQLType() {
+    return this.specification.identifier.toUpperCase()
+  }
+
+  get localIdentifier() {
+    return this.specification.identifier
+  }
+
+  get handle() {
+    return slugify(this.specification.identifier)
+  }
+
+  get type() {
+    return this.specification.identifier
+  }
+
+  deployConfig() {
+    return this.configuration
+  }
+
+  bundleConfig(identifiers: Identifiers) {
+    return {
+      uuid: identifiers.extensions[this.specification.identifier]!,
+      config: JSON.stringify(this.deployConfig()),
+      context: 'context',
+      handle: this.handle,
+    }
+  }
+}
 
 /**
  * Class that represents an instance of a local extension
@@ -81,10 +120,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('function')
   }
 
-  get isConfigExtension() {
-    return this.features.includes('app_config')
-  }
-
   get isESBuildExtension() {
     return this.features.includes('esbuild')
   }
@@ -125,7 +160,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension && !this.isConfigExtension
+    return !this.isThemeExtension
   }
 
   async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {

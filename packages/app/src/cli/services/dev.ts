@@ -88,7 +88,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
   let localApp = await loadApp({
     directory: commandOptions.directory,
-    specifications,
+    ...specifications,
     configName: commandOptions.configName,
   })
 

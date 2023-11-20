@@ -1,5 +1,6 @@
 import {appFlags} from '../../../flags.js'
 import {loadAppConfiguration} from '../../../models/app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import use from '../../../services/app/config/use.js'
 import Command from '../../../utilities/app-command.js'
 import {Args, Flags} from '@oclif/core'
@@ -33,11 +34,13 @@ export default class ConfigUse extends Command {
 
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(ConfigUse)
+    const {configSpecs} = await loadLocalExtensionsSpecifications(this.config)
     // eslint-disable-next-line @shopify/cli/required-fields-when-loading-app
     const localApp = await loadAppConfiguration({
       directory: flags.path,
+      configSpecs,
     })
 
-    await use({directory: localApp.directory, configName: args.config, reset: flags.reset})
+    await use({directory: localApp.directory, configName: args.config, reset: flags.reset, configSpecs})
   }
 }
