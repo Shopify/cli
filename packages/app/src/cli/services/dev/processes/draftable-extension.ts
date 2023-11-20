@@ -5,10 +5,14 @@ import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
-import {DevSessionCreateMutation, DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
+import {DevSessionCreateMutation} from '../../../api/graphql/dev_session_create.js'
 
 import {DevSessionUpdateMutation} from '../../../api/graphql/dev_session_update.js'
 import {bundleForDev} from '../../deploy/bundle.js'
+import {
+  DevSessionGenerateUrlMutation,
+  DevSessionGenerateUrlSchema,
+} from '../../../api/graphql/dev_session_generate_url.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -51,7 +55,7 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   await installJavy(app)
 
   // Start dev session
-  const result: DevSessionCreateSchema = await adminRequest(DevSessionCreateMutation, adminSession, {
+  await adminRequest(DevSessionCreateMutation, adminSession, {
     title: 'dev-app',
     scopes: getAppScopes(app.configuration),
     applicationUrl: proxyUrl,
@@ -60,9 +64,8 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   // Folder where we are going to store all shopify built extensions
   const devFolder = await prepareDevFolder(app.directory)
 
-  const signedUrl = result.devSessionCreate.url
   // Initial update of all modules
-  await updateAppModules({app, extensions, adminSession, token, signedUrl, stdout, devFolder})
+  await updateAppModules({app, extensions, adminSession, token, apiKey, stdout, devFolder})
 
   await Promise.all(
     extensions.map(async (extension) => {
@@ -140,7 +143,7 @@ export interface UpdateAppModulesOptions {
   extensions: ExtensionInstance[]
   adminSession: AdminSession
   token: string
-  signedUrl: string
+  apiKey: string
   stdout: Writable
 }
 
@@ -150,8 +153,8 @@ export async function updateAppModules({
   extensions,
   adminSession,
   token,
-  signedUrl,
   stdout,
+  apiKey,
 }: UpdateAppModulesOptions) {
   // Consider creating an empty `.shopify-dev` folder to reuse results
   // await inTemporaryDirectory(async (tmpDir) => {
@@ -159,6 +162,14 @@ export async function updateAppModules({
     const bundlePath = joinPath(devFolder, `bundle.zip`)
     await mkdir(dirname(bundlePath))
     await bundleForDev({app, extensions, bundlePath, directory: devFolder, stdout})
+
+    const signedUrlResult: DevSessionGenerateUrlSchema = await adminRequest(
+      DevSessionGenerateUrlMutation,
+      adminSession,
+      {apiKey},
+    )
+
+    const signedUrl = signedUrlResult.generateDevSessionSignedUrl.signedUrl
 
     const form = formData()
     const buffer = readFileSync(bundlePath)
@@ -176,6 +187,7 @@ export async function updateAppModules({
     await adminRequest(DevSessionUpdateMutation, adminSession, {
       appModules,
       bundleUrl: signedUrl,
+      apiKey,
     })
 
     const names = extensions.map((ext) => ext.localIdentifier).join(', ')
