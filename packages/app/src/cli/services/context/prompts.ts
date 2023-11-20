@@ -3,7 +3,6 @@ import {LocalRemoteSource} from './id-matching.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
 import metadata from '../../metadata.js'
-import {isAppConfigSpecification} from '../../models/extensions/app-config.js'
 import {AppInterface} from '../../models/app/app.js'
 import {
   InfoTableSection,
@@ -131,18 +130,10 @@ async function getInfoBreakdown(
   let dashboardOnlyFinal = dashboardOnly
 
   for (const [identifier, uuid] of Object.entries(localRegistration)) {
-    // Filter out app config extensions in the prompt
-    const localExtension = app.allExtensions.find((extension) => {
-      return extension.localIdentifier === identifier
-    })
-    const shouldExclude = localExtension?.isConfigExtension
-
-    if (!shouldExclude) {
-      if (nonDashboardRemoteRegistrationUuids.includes(uuid)) {
-        toUpdate.push(identifier)
-      } else {
-        toCreateFinal.push(identifier)
-      }
+    if (nonDashboardRemoteRegistrationUuids.includes(uuid)) {
+      toUpdate.push(identifier)
+    } else {
+      toCreateFinal.push(identifier)
     }
 
     dashboardOnlyFinal = dashboardOnlyFinal.filter((dashboardOnly) => dashboardOnly.uuid !== uuid)
@@ -157,8 +148,6 @@ async function getInfoBreakdown(
   const onlyRemote =
     appModuleVersions
       .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
-      // Filter out app config extensions in the prompts
-      .filter((module) => !isAppConfigSpecification(app, module.specification.identifier))
       .map((module) => module.registrationTitle) ?? []
 
   return {

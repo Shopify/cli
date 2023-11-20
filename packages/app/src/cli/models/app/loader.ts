@@ -4,21 +4,19 @@ import {
   App,
   AppInterface,
   WebType,
-  isCurrentAppSchema,
   getAppScopesArray,
   AppConfigurationInterface,
   AppSchema,
   LegacyAppSchema,
-  CurrentAppConfiguration,
+  getAppVersionedSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ConfigExtensionInstance, ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ConfigExtensionSpecification, ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {APP_ACCESS_IDENTIFIER, getAppConfiguration} from '../extensions/app-config.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -76,6 +74,11 @@ export async function loadConfigurationFile(
       throw err
     }
   }
+}
+
+const isVersionedAppConfigurationSchema = (content: {[key: string]: unknown}) => {
+  if (content.version && content.version === '3') return true
+  return false
 }
 
 const isCurrentSchema = (schema: unknown) => {
@@ -162,7 +165,8 @@ interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
   configName?: string
-  specifications: ExtensionSpecification[]
+  specs: ExtensionSpecification[]
+  configSpecs: ConfigExtensionSpecification[]
 }
 
 /**
@@ -194,11 +198,13 @@ class AppLoader {
   private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
+  private configSpecifications: ConfigExtensionSpecification[]
 
-  constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specs, configSpecs}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
-    this.specifications = specifications
+    this.specifications = specs
+    this.configSpecifications = configSpecs
     this.configName = configName
   }
 
@@ -219,13 +225,14 @@ class AppLoader {
     const configurationLoader = new AppConfigurationLoader({
       directory: this.directory,
       configName: this.configName,
+      configSpecs: this.configSpecifications,
     })
     const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
 
-    const {allExtensions, usedCustomLayout} = await this.loadExtensions(
+    const {allExtensions, configExtensions, usedCustomLayout} = await this.loadExtensions(
       appDirectory,
       configuration.extension_directories,
     )
@@ -249,8 +256,8 @@ class AppLoader {
       nodeDependencies,
       webs,
       allExtensions,
+      configExtensions,
       usesWorkspaces,
-      this.specifications,
       dotenv,
     )
 
@@ -306,6 +313,18 @@ class AppLoader {
     }
   }
 
+  async createConfigExtensionInstance(type: string, configurationObject: unknown, configurationPath: string) {
+    const specification = this.configSpecifications.find((spec) => spec.identifier === type)
+    if (!specification) {
+      return this.abortOrReport(
+        outputContent`Invalid config extension type "${type}" in "${relativizePath(configurationPath)}"`,
+        undefined,
+        configurationPath,
+      )
+    }
+    return new ConfigExtensionInstance({configuration: configurationObject, specification})
+  }
+
   async createExtensionInstance(
     type: string,
     configurationObject: unknown,
@@ -321,15 +340,10 @@ class AppLoader {
       )
     }
 
-    let customConfigurationObject = configurationObject
-    if (specification.appModuleFeatures().includes('app_config')) {
-      customConfigurationObject = getAppConfiguration(configurationObject, specification)
-    }
-
     const configuration = await parseConfigurationObject(
       specification.schema,
       configurationPath,
-      customConfigurationObject,
+      configurationObject,
       this.abortOrReport.bind(this),
     )
 
@@ -353,7 +367,11 @@ class AppLoader {
   async loadExtensions(
     appDirectory: string,
     extensionDirectories?: string[],
-  ): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
+  ): Promise<{
+    allExtensions: ExtensionInstance[]
+    configExtensions: ConfigExtensionInstance[]
+    usedCustomLayout: boolean
+  }> {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
@@ -425,37 +443,34 @@ class AppLoader {
     // Load app config modules
     const appConfigModules = await this.loadAppConfigModules(appDirectory)
 
-    return {allExtensions: allExtensions.concat(appConfigModules), usedCustomLayout: extensionDirectories !== undefined}
+    return {allExtensions, configExtensions: appConfigModules, usedCustomLayout: extensionDirectories !== undefined}
   }
 
   async loadAppConfigModules(directory: string) {
     const {configuration} = await loadAppConfiguration({
       configName: undefined,
       directory,
+      configSpecs: this.configSpecifications,
     })
 
-    const appConfigSpecifications = this.specifications.filter((specification) =>
-      specification.appModuleFeatures().includes('app_config'),
-    )
-
-    const appConfigModules: ExtensionInstance[] = []
+    const appConfigModules: ConfigExtensionInstance[] = []
 
     await Promise.all(
-      appConfigSpecifications
+      this.configSpecifications
         .map(async (specification) => {
-          // Skip creating an app access module unless `access` is configured
-          if (
-            specification.identifier === APP_ACCESS_IDENTIFIER &&
-            !(configuration as CurrentAppConfiguration).access
-          ) {
-            return
-          }
-
-          const promise = this.createExtensionInstance(
-            specification.identifier,
-            configuration,
+          const specConfiguration = await parseConfigurationObject(
+            specification.schema,
             configuration.path,
-            directory,
+            configuration,
+            this.abortOrReport.bind(this),
+          )
+
+          if (!specConfiguration) return
+
+          const promise = this.createConfigExtensionInstance(
+            specification.identifier,
+            specConfiguration,
+            configuration.path,
           ).then((module) => {
             if (module) {
               appConfigModules.push(module)
@@ -528,6 +543,7 @@ export async function loadAppConfiguration(
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
+  configSpecs?: ConfigExtensionSpecification[]
 }
 
 type LinkedConfigurationSource =
@@ -554,10 +570,12 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
+  private configSpecs: ConfigExtensionSpecification[]
 
-  constructor({directory, configName}: AppConfigurationLoaderConstructorArgs) {
+  constructor({directory, configName, configSpecs}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
     this.configName = configName
+    this.configSpecs = configSpecs ?? []
   }
 
   async loaded() {
@@ -573,14 +591,24 @@ class AppConfigurationLoader {
           "If you have multiple config files, select a new one. If you only have one config file, it's been selected as your default.",
         ],
       }
-      this.configName = await use({directory: appDirectory, warningContent, shouldRenderSuccess: false})
+      this.configName = await use({
+        directory: appDirectory,
+        warningContent,
+        shouldRenderSuccess: false,
+        configSpecs: this.configSpecs,
+      })
     }
 
     this.configName = this.configName ?? cachedCurrentConfig
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
-    const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
+    let appSchema
+    if (isVersionedAppConfigurationSchema(file as {[key: string]: unknown})) {
+      appSchema = getAppVersionedSchema(this.configSpecs)
+    } else {
+      appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
+    }
     const configuration = await parseConfigurationFile(appSchema, configurationPath)
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
@@ -589,7 +617,7 @@ class AppConfigurationLoader {
       allClientIdsByConfigName,
     }
 
-    if (isCurrentAppSchema(configuration)) {
+    if (appSchema === AppSchema) {
       let gitTracked = false
       try {
         gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
@@ -604,7 +632,7 @@ class AppConfigurationLoader {
         name: configurationFileName,
         gitTracked,
         source: configSource,
-        usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
+        // usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
       }
     }
 

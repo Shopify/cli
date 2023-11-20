@@ -2,22 +2,15 @@ import {createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppAccessSchema = zod.object({
-  access: zod
+  pos: zod
     .object({
-      api_access: zod
-        .union([
-          zod.literal(true),
-          zod.object({
-            mode: zod.enum(['online', 'offline']),
-          }),
-        ])
-        .optional(),
+      embedded: zod.boolean(),
     })
     .optional(),
 })
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'app_access',
+  identifier: 'pos_embedment',
   schema: AppAccessSchema,
 })
 

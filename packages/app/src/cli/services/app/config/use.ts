@@ -4,6 +4,7 @@ import {selectConfigFile} from '../../../prompts/config.js'
 import {AppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {GetConfigQuerySchema, GetConfig} from '../../../api/graphql/get_config.js'
+import {ConfigExtensionSpecification} from '../../../models/extensions/specification.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -20,6 +21,7 @@ export interface UseOptions {
   reset?: boolean
   warningContent?: RenderAlertOptions
   shouldRenderSuccess?: boolean
+  configSpecs?: ConfigExtensionSpecification[]
 }
 
 export default async function use({
@@ -28,6 +30,7 @@ export default async function use({
   warningContent,
   shouldRenderSuccess = true,
   reset = false,
+  configSpecs = [],
 }: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
@@ -49,7 +52,7 @@ export default async function use({
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
-  const configuration = await saveCurrentConfig({configFileName, directory})
+  const configuration = await saveCurrentConfig({configFileName, directory, configSpecs})
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -65,10 +68,11 @@ export default async function use({
 interface SaveCurrentConfigOptions {
   configFileName: string
   directory: string
+  configSpecs?: ConfigExtensionSpecification[]
 }
 
-export async function saveCurrentConfig({configFileName, directory}: SaveCurrentConfigOptions) {
-  const {configuration} = await loadAppConfiguration({configName: configFileName, directory})
+export async function saveCurrentConfig({configFileName, directory, configSpecs}: SaveCurrentConfigOptions) {
+  const {configuration} = await loadAppConfiguration({configName: configFileName, directory, configSpecs})
 
   if (isCurrentAppSchema(configuration) && configuration.client_id) {
     setCachedAppInfo({

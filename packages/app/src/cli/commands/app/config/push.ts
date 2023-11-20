@@ -2,6 +2,7 @@ import {appFlags} from '../../../flags.js'
 import Command from '../../../utilities/app-command.js'
 import {loadAppConfiguration} from '../../../models/app/loader.js'
 import {pushConfig} from '../../../services/app/config/push.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
@@ -22,9 +23,11 @@ export default class ConfigPush extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(ConfigPush)
+    const {configSpecs} = await loadLocalExtensionsSpecifications(this.config)
     const {configuration} = await loadAppConfiguration({
       configName: flags.config,
       directory: flags.path,
+      configSpecs,
     })
 
     await pushConfig({configuration, force: flags.force})

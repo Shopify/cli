@@ -18,7 +18,6 @@ import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
-import {APP_ACCESS_IDENTIFIER} from '../../../models/extensions/app-config.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -41,10 +40,13 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
   // Get remote app configuration from app modules
-  const remoteAppConfig = await getRemoteAppConfig(remoteApp.apiKey)
+  //const remoteAppConfig = await getRemoteAppConfig(remoteApp.apiKey)
   const configuration = mergeAppConfiguration(
     {...localApp.configuration, path: configFilePath},
-    {...remoteApp, ...remoteAppConfig},
+    {
+      ...remoteApp,
+      //  ...remoteAppConfig
+    },
   )
 
   await writeAppConfigurationFile(configuration)
@@ -82,7 +84,7 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
   try {
     const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
     const app = await loadApp({
-      specifications,
+      ...specifications,
       directory: options.directory,
       mode: 'report',
       configName: configurationFileNames.app,
@@ -151,7 +153,6 @@ export function mergeAppConfiguration(
     pos: {
       embedded: remoteApp.posEmbedded || false,
     },
-    access: remoteApp.access,
   }
 
   const hasAnyPrivacyWebhook =
@@ -217,23 +218,23 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
   }
 }
 
-export async function getRemoteAppConfig(apiKey: string): Promise<Partial<CurrentAppConfiguration>> {
-  const token = await ensureAuthenticatedPartners()
-  const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
-  const appAccessModule = remoteSpecifications.app.extensionRegistrations.find((extension) => {
-    return extension.type.toLowerCase() === APP_ACCESS_IDENTIFIER
-  })
-  const appConfig: Partial<CurrentAppConfiguration> = {}
+// export async function getRemoteAppConfig(apiKey: string): Promise<Partial<CurrentAppConfiguration>> {
+//   const token = await ensureAuthenticatedPartners()
+//   const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
+//   const appAccessModule = remoteSpecifications.app.extensionRegistrations.find((extension) => {
+//     return extension..toLowerCase() === APP_ACCESS_IDENTIFIER
+//   })
+//   const appConfig: Partial<CurrentAppConfiguration> = {}
 
-  if (appAccessModule?.activeVersion?.config) {
-    try {
-      const appAccessConfig = JSON.parse(appAccessModule.activeVersion.config)
-      appConfig.access = appAccessConfig.access
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      // Ignore errors
-    }
-  }
+//   if (appAccessModule?.activeVersion?.config) {
+//     try {
+//       const appAccessConfig = JSON.parse(appAccessModule.activeVersion.config)
+//       appConfig.access = appAccessConfig.access
+//       // eslint-disable-next-line no-catch-all/no-catch-all
+//     } catch (error) {
+//       // Ignore errors
+//     }
+//   }
 
-  return appConfig
-}
+//   return appConfig
+// }

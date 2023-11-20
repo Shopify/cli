@@ -1,5 +1,5 @@
-import {AppErrors, findSpecificationForType, isWebType} from './loader.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {AppErrors, isWebType} from './loader.js'
+import {ConfigExtensionInstance, ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {
@@ -8,7 +8,7 @@ import {
   validateTopLevelSubscriptions,
   httpsRegex,
 } from '../../utilities/app/config/webhooks.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ConfigExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -100,24 +100,27 @@ const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
   }
 })
 
+export const AppVersionedBaseSchema = zod.object({
+  version: zod.string(),
+  name: zod.string().max(30),
+  client_id: zod.string(),
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
+})
+
+export function getAppVersionedSchema(specs: ConfigExtensionSpecification[]) {
+  return specs.reduce((schema, spec) => {
+    return schema.merge(spec.schema)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }, AppVersionedBaseSchema as any)
+}
+
 export const AppSchema = zod
   .object({
     name: zod.string().max(30),
     client_id: zod.string(),
     application_url: validateUrl(zod.string()),
     embedded: zod.boolean(),
-    access: zod
-      .object({
-        api_access: zod
-          .union([
-            zod.literal(true),
-            zod.object({
-              mode: zod.enum(['online', 'offline']),
-            }),
-          ])
-          .optional(),
-      })
-      .optional(),
     access_scopes: zod
       .object({
         scopes: zod.string().optional(),
@@ -158,7 +161,7 @@ export const AppSchema = zod
   })
   .strict()
 
-export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema, AppVersionedBaseSchema])
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
@@ -185,9 +188,10 @@ export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppCo
 export function getAppScopes(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) {
     return config.scopes
-  } else {
+  } else if (isCurrentAppSchema(config)) {
     return config.access_scopes?.scopes ?? ''
   }
+  return ''
 }
 
 /**
@@ -201,7 +205,8 @@ export function getAppScopesArray(config: AppConfiguration) {
 
 export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
-  return Boolean(config.access_scopes?.use_legacy_install_flow)
+  if (isCurrentAppSchema(config)) return Boolean(config.access_scopes?.use_legacy_install_flow)
+  return false
 }
 
 export function appIsLaunchable(app: AppInterface) {
@@ -268,13 +273,13 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  configExtensions: ConfigExtensionInstance[]
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
-  specificationForIdentifier: (identifier: string) => ExtensionSpecification | undefined
 }
 
 export class App implements AppInterface {
@@ -289,8 +294,7 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
-
-  private specifications: ExtensionSpecification[]
+  configExtensions: ConfigExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -302,8 +306,8 @@ export class App implements AppInterface {
     nodeDependencies: {[key: string]: string},
     webs: Web[],
     extensions: ExtensionInstance[],
+    configExtensions: ConfigExtensionInstance[],
     usesWorkspaces: boolean,
-    specifications: ExtensionSpecification[],
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -316,9 +320,9 @@ export class App implements AppInterface {
     this.webs = webs
     this.dotenv = dotenv
     this.allExtensions = extensions
+    this.configExtensions = configExtensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
-    this.specifications = specifications
   }
 
   async updateDependencies() {
@@ -356,10 +360,6 @@ export class App implements AppInterface {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
   }
-
-  specificationForIdentifier(identifier: string) {
-    return findSpecificationForType(this.specifications, identifier)
-  }
 }
 
 export function validateFunctionExtensionsWithUiHandle(
@@ -391,7 +391,7 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], false, [])
+    super('', '', '', 'npm', configuration, {}, [], [], [], false)
   }
 }
 

@@ -1,7 +1,6 @@
 import {AppVersionsDiffSchema} from '../api/graphql/app_versions_diff.js'
 import metadata from '../metadata.js'
 import {AppInterface} from '../models/app/app.js'
-import {isAppConfigSpecification} from '../models/extensions/app-config.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -12,7 +11,7 @@ export async function confirmReleasePrompt(
 ) {
   const infoTable = []
   // Filter out app config extensions in the prompt
-  const extensions = [...versionsDiff.added, ...versionsDiff.updated].filter(isNonAppConfigExtension(app))
+  const extensions = [...versionsDiff.added, ...versionsDiff.updated]
 
   if (extensions.length > 0) {
     infoTable.push({
@@ -23,7 +22,7 @@ export async function confirmReleasePrompt(
   }
 
   // Filter out app config extensions in the prompt
-  const removed = versionsDiff.removed.filter(isNonAppConfigExtension(app))
+  const removed = versionsDiff.removed
 
   if (removed.length > 0) {
     infoTable.push({
@@ -53,13 +52,4 @@ export async function confirmReleasePrompt(
   if (!confirm) {
     throw new AbortSilentError()
   }
-}
-function isNonAppConfigExtension(
-  app: AppInterface,
-): (
-  value: {uuid: string; registrationTitle: string; specification: {identifier: string}},
-  index: number,
-  array: {uuid: string; registrationTitle: string; specification: {identifier: string}}[],
-) => unknown {
-  return (extension) => !isAppConfigSpecification(app, extension.specification.identifier)
 }

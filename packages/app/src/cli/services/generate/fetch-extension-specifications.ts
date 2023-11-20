@@ -5,7 +5,7 @@ import {
   FlattenedRemoteSpecification,
 } from '../../api/graphql/extension_specifications.js'
 
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ConfigExtensionSpecification, ExtensionSpecification} from '../../models/extensions/specification.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -27,17 +27,16 @@ export interface FetchSpecificationsOptions {
  * @param token - Token to access partners API
  * @returns List of extension specifications
  */
-export async function fetchSpecifications({
-  token,
-  apiKey,
-  config,
-}: FetchSpecificationsOptions): Promise<ExtensionSpecification[]> {
+export async function fetchSpecifications({token, apiKey, config}: FetchSpecificationsOptions): Promise<{
+  specs: ExtensionSpecification[]
+  configSpecs: ConfigExtensionSpecification[]
+}> {
   const result: ExtensionSpecificationsQuerySchema = await partnersRequest(ExtensionSpecificationsQuery, token, {
     api_key: apiKey,
   })
 
   const extensionSpecifications: FlattenedRemoteSpecification[] = result.extensionSpecifications
-    .filter((specification) => specification.options.managementExperience === 'cli')
+    .filter((specification) => ['cli', 'app_config'].includes(specification.options.managementExperience))
     .map((spec) => {
       const newSpec = spec as FlattenedRemoteSpecification
       // WORKAROUND: The identifiers in the API are different for these extensions to the ones the CLI
@@ -54,19 +53,19 @@ export async function fetchSpecifications({
     })
 
   const local = await loadLocalExtensionsSpecifications(config)
-  const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
-  return [...updatedSpecs]
+  const updatedSpecs = mergeLocalAndRemoteSpecs(local.specs, extensionSpecifications)
+  const updatedConfigSpecs = mergeLocalAndRemoteSpecs(local.configSpecs, extensionSpecifications)
+  return {specs: updatedSpecs, configSpecs: updatedConfigSpecs}
 }
 
-function mergeLocalAndRemoteSpecs(
-  local: ExtensionSpecification[],
-  remote: FlattenedRemoteSpecification[],
-): ExtensionSpecification[] {
+function mergeLocalAndRemoteSpecs<T>(local: T[], remote: FlattenedRemoteSpecification[]): T[] {
   const updated = local.map((spec) => {
-    const remoteSpec = remote.find((remote) => remote.identifier === spec.identifier)
-    if (remoteSpec) return {...spec, ...remoteSpec} as ExtensionSpecification
+    const specObject = spec as {[key: string]: unknown}
+    if (!specObject.identifier) return undefined
+    const remoteSpec = remote.find((remote) => remote.identifier === specObject.identifier)
+    if (remoteSpec) return {...spec, ...remoteSpec} as T
     return undefined
   })
 
-  return getArrayRejectingUndefined<ExtensionSpecification>(updated)
+  return getArrayRejectingUndefined<T>(updated)
 }

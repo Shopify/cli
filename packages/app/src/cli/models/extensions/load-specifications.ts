@@ -1,25 +1,38 @@
-import {ExtensionSpecification} from './specification.js'
+import {ConfigExtensionSpecification, ExtensionSpecification} from './specification.js'
 import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 import {fileURLToPath} from 'url'
 
 /**
  * Load all specifications from the local file system AND plugins
  */
-export async function loadLocalExtensionsSpecifications(config: Config): Promise<ExtensionSpecification[]> {
+export async function loadLocalExtensionsSpecifications(
+  config: Config,
+): Promise<{specs: ExtensionSpecification[]; configSpecs: ConfigExtensionSpecification[]}> {
   const local = await loadFSExtensionsSpecifications()
+  const managementExperience = (spec: unknown) => {
+    const specAsKeyValue = spec as {[key: string]: unknown}
+    return specAsKeyValue.managementExperience && specAsKeyValue.managementExperience === 'app_config'
+      ? 'appConfigSpecs'
+      : 'specs'
+  }
+  const {appConfigSpecs, specs} = groupBy(local, managementExperience)
   const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
-  return [...local, ...plugins]
+  return {
+    specs: [...(specs as ExtensionSpecification[]), ...plugins],
+    configSpecs: appConfigSpecs as ConfigExtensionSpecification[],
+  }
 }
 
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadFSExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
+export async function loadFSExtensionsSpecifications(): Promise<unknown[]> {
   return memoizedLoadSpecs('specifications')
 }
 
