@@ -84,7 +84,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       resolveDir: extension.directory,
       loader: 'tsx',
     },
-    environment: options.environment ?? 'production',
+    environment: options.environment,
     env,
     stderr: options.stderr,
     stdout: options.stdout,

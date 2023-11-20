@@ -27,7 +27,7 @@ import {
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {getAppConfigurationFileName, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {getAppConfigurationFileName, loadApp, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -36,6 +36,7 @@ import {
   DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -385,6 +386,52 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     apiKey: result.identifiers.app,
   })
   return result
+}
+
+export interface DraftExtensionsPushOptions {
+  directory: string
+  apiKey?: string
+  reset: boolean
+  commandConfig: Config
+  config?: string
+  enableDeveloperPreview: boolean
+}
+
+export async function ensureDraftExtensionsPushContext(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
+
+  const specifications = await loadLocalExtensionsSpecifications(draftExtensionsPushOptions.commandConfig)
+  const app: AppInterface = await loadApp({
+    specifications,
+    directory: draftExtensionsPushOptions.directory,
+    configName: draftExtensionsPushOptions.config,
+  })
+
+  const [partnersApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, partnersSession)
+
+  const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
+  showReusedDeployValues(org.businessName, app, partnersApp)
+
+  const prodEnvIdentifiers = getAppIdentifiers({app})
+
+  const {extensionIds: remoteExtensionIds} = await ensureDeploymentIdsPresence({
+    app,
+    partnersApp,
+    appId: partnersApp.apiKey,
+    appName: partnersApp.title,
+    force: true,
+    release: true,
+    token,
+    envIdentifiers: prodEnvIdentifiers,
+  })
+
+  await logMetadataForLoadedContext({
+    organizationId: partnersApp.organizationId,
+    apiKey: partnersApp.apiKey,
+  })
+
+  return {app, partnersSession, remoteExtensionIds, remoteApp: partnersApp}
 }
 
 /**
