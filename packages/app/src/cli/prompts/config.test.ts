@@ -271,6 +271,7 @@ api_version = "unstable"
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       const updatedContent = `client_id = "api-key"
       name = "app1"
+      handle = "app1"
       application_url = "https://example.com"
       embedded = true
 
@@ -309,6 +310,7 @@ api_version = "unstable"
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       const updatedContent = `client_id = "api-key"
       name = "app1"
+      handle = "app1"
       application_url = "https://example.com"
       embedded = true
 

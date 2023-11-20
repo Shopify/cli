@@ -20,6 +20,7 @@ const DEFAULT_APP = testApp()
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   path: '',
   name: 'app 1',
+  handle: 'app-1',
   client_id: '12345',
   webhooks: {
     api_version: '2023-04',

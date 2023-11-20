@@ -71,6 +71,7 @@ describe('link', () => {
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "app1"
+handle = "app1"
 client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
@@ -120,6 +121,7 @@ embedded = false
         configuration: {
           path: 'shopify.app.development.toml',
           name: 'my app',
+          handle: 'my-app',
           client_id: '12345',
           scopes: 'write_products',
           webhooks: {api_version: '2023-04'},
@@ -137,6 +139,7 @@ embedded = false
           apiKey: '12345',
           applicationUrl: 'https://myapp.com',
           title: 'my app',
+          handle: 'my-app',
           requestedAccessScopes: ['write_products'],
         }),
       )
@@ -150,6 +153,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "my app"
+handle = "my-app"
 client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
@@ -210,6 +214,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "app1"
+handle = "app1"
 client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
@@ -269,6 +274,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "app1"
+handle = "app1"
 client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
@@ -349,6 +355,7 @@ embedded = false
         configuration: {
           path: 'shopify.app.foo.toml',
           name: 'my app',
+          handle: 'my-app',
           client_id: '12345',
           scopes: 'write_products',
           webhooks: {api_version: '2023-04'},
@@ -393,6 +400,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "app1"
+handle = "app1"
 client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
@@ -435,6 +443,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "app1"
+handle = "app1"
 client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
@@ -477,6 +486,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "app1"
+handle = "app1"
 client_id = "api-key"
 application_url = "https://example.com"
 embedded = true

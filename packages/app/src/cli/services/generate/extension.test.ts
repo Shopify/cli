@@ -395,6 +395,7 @@ describe('initialize a extension', async () => {
           await file.writeFile(
             joinPath(destination, 'shopify.extension.toml'),
             `name = "my-fun-1"
+          handle = "my-fun-1"
           type = "function"
           api_version = "2023-10"
           [build]

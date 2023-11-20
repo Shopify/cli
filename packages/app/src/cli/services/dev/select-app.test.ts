@@ -49,8 +49,8 @@ const APP2 = testOrganizationApp({
 })
 const APP_LIST = {
   nodes: [
-    {id: APP1.id, title: APP1.title, apiKey: APP1.apiKey},
-    {id: APP2.id, title: APP2.title, apiKey: APP2.apiKey},
+    {id: APP1.id, title: APP1.title, handle: APP1.handle, apiKey: APP1.apiKey},
+    {id: APP2.id, title: APP2.title, handle: APP2.handle, apiKey: APP2.apiKey},
   ],
   pageInfo: {hasNextPage: false},
 }

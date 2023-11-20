@@ -46,6 +46,7 @@ describe('writeAppConfigurationFile', () => {
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "my app"
+handle = "my-app"
 client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true

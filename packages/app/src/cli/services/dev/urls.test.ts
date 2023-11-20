@@ -113,6 +113,7 @@ describe('updateURLs', () => {
       client_id: '12345',
       embedded: true,
       name: 'my app',
+      handle: 'my-app',
       webhooks: {
         api_version: '2023-04',
       },
@@ -208,6 +209,7 @@ describe('updateURLs', () => {
       client_id: '12345',
       embedded: true,
       name: 'my app',
+      handle: 'my-app',
       webhooks: {
         api_version: '2023-04',
       },

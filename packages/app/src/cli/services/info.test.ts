@@ -48,6 +48,7 @@ describe('info', () => {
       // Given
       const testConfig = `
       name = "my app"
+      handle = "my-app"
       client_id = "12345"
       application_url = "https://example.com/lala"
       embedded = true
@@ -68,6 +69,7 @@ describe('info', () => {
           configuration: {
             path: joinPath(tmp, 'shopify.app.toml'),
             name: 'my app',
+            handle: 'my-app',
             client_id: '12345',
             application_url: 'https://example.com/lala',
             embedded: true,

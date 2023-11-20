@@ -92,12 +92,14 @@ const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} 
 const APP1: OrganizationApp = testOrganizationApp({
   id: '1',
   title: 'app1',
+  handle: 'app-1',
   apiKey: 'key1',
   apiSecretKeys: [{secret: 'secret1'}],
 })
 const APP2 = testOrganizationApp({
   id: '2',
   title: 'app2',
+  handle: 'app-2',
   apiKey: 'key2',
   apiSecretKeys: [{secret: 'secret2'}],
 })
@@ -417,6 +419,7 @@ describe('ensureDevContext', async () => {
       // Given
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 name = "my app"
+handle = "my-app"
 client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
@@ -493,6 +496,7 @@ dev_store_url = "domain1"
         configuration: {
           path: joinPath(tmp, 'shopify.app.dev.toml'),
           name: 'my app',
+          handle: 'my-app',
           client_id: '12345',
           scopes: 'write_products',
           webhooks: {api_version: '2023-04'},
@@ -549,6 +553,7 @@ dev_store_url = "domain1"
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 name = "my app"
+handle = "my-app"
 client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
@@ -783,6 +788,7 @@ dev_store_url = "domain1"
           path: filePath,
           client_id: APP2.apiKey,
           name: APP2.apiKey,
+          handle: APP2.handle,
           application_url: APP2.applicationUrl,
           webhooks: {api_version: '2023-04'},
           embedded: true,
@@ -821,6 +827,7 @@ dev_store_url = "domain1"
           path: filePath,
           client_id: APP2.apiKey,
           name: APP2.apiKey,
+          handle: APP2.handle,
           application_url: APP2.applicationUrl,
           webhooks: {api_version: '2023-04'},
           embedded: true,

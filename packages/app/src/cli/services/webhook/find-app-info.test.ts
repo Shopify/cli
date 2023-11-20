@@ -58,8 +58,8 @@ describe('findApiKey', () => {
   const anAppName = 'app-name'
   const anotherAppName = 'another-app'
   const anotherApiKey = 'ANOTHER_API_KEY'
-  const anApp = {id: '1', title: anAppName, apiKey: anApiKey}
-  const anotherApp = {id: '2', title: anotherAppName, apiKey: anotherApiKey}
+  const anApp = {id: '1', title: anAppName, handle: anAppName, apiKey: anApiKey}
+  const anotherApp = {id: '2', title: anotherAppName, handle: anotherAppName, apiKey: anotherApiKey}
   const org = {
     id: '1',
     businessName: 'org1',

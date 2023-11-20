@@ -60,6 +60,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -90,6 +91,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -118,6 +120,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -146,6 +149,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -306,6 +310,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -344,6 +349,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id2',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -384,6 +390,7 @@ describe('deploy', () => {
       app,
       partnersApp: {
         id: 'app-id',
+        handle: 'app-handle',
         organizationId: 'org-id',
         applicationUrl: 'https://my-app.com',
         redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -431,6 +438,7 @@ describe('deploy', () => {
         app,
         partnersApp: {
           id: 'app-id',
+          handle: 'app-handle',
           organizationId: 'org-id',
           applicationUrl: 'https://my-app.com',
           redirectUrlWhitelist: ['https://my-app.com/auth'],
@@ -798,6 +806,7 @@ async function testWebhooks(app: AppInterface) {
     app,
     partnersApp: {
       id: 'app-id',
+      handle: 'app-handle',
       organizationId: 'org-id',
       applicationUrl: 'https://my-app.com',
       redirectUrlWhitelist: ['https://my-app.com/auth'],

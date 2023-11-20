@@ -40,6 +40,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         title: 'name of the app',
+        handle: 'name-of-the-app',
       },
       appUpdate: {
         userErrors: [],
@@ -62,6 +63,7 @@ describe('pushConfig', () => {
       redirectUrlAllowlist: null,
       requestedAccessScopes: ['read_products'],
       title: 'my app',
+      handle: 'my-app',
       webhookApiVersion: '2023-04',
     })
 
@@ -110,6 +112,7 @@ describe('pushConfig', () => {
       preferencesUrl: null,
       redirectUrlAllowlist: null,
       title: 'my app',
+      handle: 'my-app',
       webhookApiVersion: '2023-04',
     })
 
@@ -155,6 +158,7 @@ describe('pushConfig', () => {
       preferencesUrl: null,
       redirectUrlAllowlist: null,
       title: 'my app',
+      handle: 'my-app',
       webhookApiVersion: '2023-04',
     })
 
@@ -200,6 +204,7 @@ describe('pushConfig', () => {
       preferencesUrl: null,
       redirectUrlAllowlist: null,
       title: 'my app',
+      handle: 'my-app',
       requestedAccessScopes: [],
       webhookApiVersion: '2023-04',
     })
@@ -244,6 +249,7 @@ describe('pushConfig', () => {
       preferencesUrl: null,
       redirectUrlAllowlist: null,
       title: 'my app',
+      handle: 'my-app',
       webhookApiVersion: '2023-04',
     })
 
@@ -367,6 +373,7 @@ app_preferences > url: this url is blocked 6`)
     expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
       apiKey: '12345',
       title: 'my app',
+      handle: 'my-app',
       applicationUrl: 'https://myapp.com',
       gdprWebhooks: {
         customerDataRequestUrl: undefined,

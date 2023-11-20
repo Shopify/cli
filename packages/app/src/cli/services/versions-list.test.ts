@@ -39,6 +39,7 @@ describe('versions-list', () => {
         id: 'app-id',
         apiKey: 'app-api-key',
         title: 'app-title',
+        handle: 'app-title',
         organizationId: ORG1.id,
         apiSecretKeys: [],
         grantedScopes: [],
