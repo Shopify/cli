@@ -1,4 +1,5 @@
-import {defaultQuery, template, unauthorizedTemplate} from './template.js'
+import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
+import {unauthorizedTemplate} from './templates/unauthorized.js'
 import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
@@ -130,16 +131,22 @@ export function setupGraphiQLServer({
       throw err
     }
 
+    const apiVersion = apiVersions.sort().reverse()[0]!
+
     res.send(
-      await renderLiquidTemplate(template, {
-        url: namespacedShopifyUrl,
-        defaultQueries: [{query: defaultQuery}],
-        apiVersion: apiVersions.sort().reverse()[0]!,
-        storeFqdn,
-        versions: [...apiVersions, 'unstable'],
-        appName,
-        appUrl,
-      }),
+      await renderLiquidTemplate(
+        graphiqlTemplate({
+          apiVersion,
+          apiVersions: [...apiVersions, 'unstable'],
+          appName,
+          appUrl,
+          storeFqdn,
+        }),
+        {
+          url: namespacedShopifyUrl,
+          defaultQueries: [{query: defaultQuery}],
+        },
+      ),
     )
   })
 
