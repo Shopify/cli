@@ -274,6 +274,7 @@ export interface AppInterface extends AppConfigurationInterface {
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   configExtensions: ConfigExtensionInstance[]
+  configVersion: string
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -295,6 +296,7 @@ export class App implements AppInterface {
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
   configExtensions: ConfigExtensionInstance[]
+  configVersion: string
 
   // eslint-disable-next-line max-params
   constructor(
@@ -308,6 +310,7 @@ export class App implements AppInterface {
     extensions: ExtensionInstance[],
     configExtensions: ConfigExtensionInstance[],
     usesWorkspaces: boolean,
+    configVersion: string,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -323,6 +326,7 @@ export class App implements AppInterface {
     this.configExtensions = configExtensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.configVersion = configVersion
   }
 
   async updateDependencies() {
@@ -391,7 +395,7 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], [], false)
+    super('', '', '', 'npm', configuration, {}, [], [], [], false, '3')
   }
 }
 

@@ -58,6 +58,7 @@ export function testApp(
     app.allExtensions ?? [],
     app.configExtensions ?? [],
     app.usesWorkspaces ?? false,
+    '3',
     app.dotenv,
     app.errors,
   )

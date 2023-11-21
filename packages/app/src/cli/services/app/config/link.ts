@@ -2,8 +2,8 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
-  CurrentAppConfiguration,
   EmptyApp,
+  getAppVersionedSchema,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
@@ -23,7 +23,8 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {AllAppExtensionRegistrationsQuerySchema} from '../../../api/graphql/all_app_extension_registrations.js'
+import {updateAppIdentifiers} from '../../../models/app/identifiers.js'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -36,23 +37,31 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const localApp = await loadAppConfigFromDefaultToml(options)
   const directory = localApp?.directory || options.directory
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, directory)
-
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
-  // Get remote app configuration from app modules
-  //const remoteAppConfig = await getRemoteAppConfig(remoteApp.apiKey)
-  const configuration = mergeAppConfiguration(
-    {...localApp.configuration, path: configFilePath},
-    {
-      ...remoteApp,
-      //  ...remoteAppConfig
-    },
-  )
-
-  await writeAppConfigurationFile(configuration)
-
-  await saveCurrentConfig({configFileName, directory})
-
+  // Fetch app_config extension registrations
+  const partnersSession = await fetchPartnersSession()
+  const remoteSpecifications = await fetchAppExtensionRegistrations({
+    token: partnersSession.token,
+    apiKey: remoteApp.apiKey,
+  })
+  let configuration: AppConfiguration
+  let uploadCommand = 'config push'
+  // linkAppVersionedConfig => new remote app or remote app with at least one app_config extension registrations
+  if (localApp.configVersion === '3') {
+    configuration = await linkAppVersionedConfig(
+      localApp,
+      remoteApp,
+      options,
+      configFilePath,
+      configFileName,
+      directory,
+      remoteSpecifications,
+    )
+    uploadCommand = 'deploy'
+  } else {
+    configuration = await linkAppConfig(localApp, remoteApp, options, configFilePath, configFileName, directory)
+  }
   if (shouldRenderSuccess) {
     renderSuccess({
       headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
@@ -61,7 +70,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
         [`Make updates to ${configFileName} in your local project`],
         [
           'To upload your config, run',
-          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+          {command: formatPackageManagerCommand(localApp.packageManager, `shopify app ${uploadCommand}`)},
         ],
       ],
       reference: [
@@ -75,8 +84,63 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     })
   }
 
+  await updateEnvIdentifiers(remoteSpecifications, remoteApp, localApp, configFilePath)
   await logMetadataForLoadedContext(remoteApp)
+  return configuration
+}
 
+async function linkAppVersionedConfig(
+  localApp: AppInterface,
+  remoteApp: OrganizationApp,
+  options: LinkOptions,
+  configFilePath: string,
+  configFileName: string,
+  directory: string,
+  remoteSpecifications: AllAppExtensionRegistrationsQuerySchema,
+) {
+  // Populate the shopify.app.toml
+  const {configSpecs} = await loadLocalExtensionsSpecifications(options.commandConfig)
+  let configSections: {[key: string]: unknown} = {}
+  remoteSpecifications.app.configExtensionRegistrations.forEach((extension) => {
+    const configSpec = configSpecs.find((spec) => spec.identifier === extension.type.toLowerCase())
+    if (!configSpec) return
+    const firstLevelObjectName = Object.keys(configSpec.schema._def.shape())[0]!
+    let configExtensionString = extension.activeVersion?.config
+    let configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
+    configSections[firstLevelObjectName] = configExtension
+  })
+  const configuration = {
+    ...{...localApp.configuration, path: configFilePath},
+    ...{
+      version: '3',
+      name: remoteApp.title,
+      client_id: remoteApp.apiKey,
+    },
+    ...configSections,
+  }
+  const versionAppSchema = getAppVersionedSchema(configSpecs)
+  await writeAppConfigurationFile(configuration, versionAppSchema)
+  // Cache the toml file content
+  await saveCurrentConfig({configFileName, directory, configVersion: localApp.configVersion})
+  return configuration
+}
+
+async function linkAppConfig(
+  localApp: AppInterface,
+  remoteApp: OrganizationApp,
+  options: LinkOptions,
+  configFilePath: string,
+  configFileName: string,
+  directory: string,
+) {
+  const configuration = mergeAppConfiguration(
+    {...localApp.configuration, path: configFilePath},
+    {
+      ...remoteApp,
+    },
+  )
+  await writeAppConfigurationFile(configuration)
+  await saveCurrentConfig({configFileName, directory})
   return configuration
 }
 
@@ -94,6 +158,27 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
   } catch (error) {
     return new EmptyApp()
   }
+}
+
+async function updateEnvIdentifiers(
+  remoteSpecifications: AllAppExtensionRegistrationsQuerySchema,
+  remoteApp: OrganizationApp,
+  localApp: AppInterface,
+  configFilePath: string,
+) {
+  const extensionIdentifiers: {[key: string]: string} = {}
+  remoteSpecifications.app.configExtensionRegistrations.forEach(
+    (extension) => (extensionIdentifiers[extension.id] = extension.uuid),
+  )
+  remoteSpecifications.app.extensionRegistrations.forEach(
+    (extension) => (extensionIdentifiers[extension.id] = extension.uuid),
+  )
+
+  const identifiers = {
+    app: remoteApp.apiKey,
+    extensions: extensionIdentifiers,
+  }
+  await updateAppIdentifiers({app: {...localApp, dotenv: undefined}, identifiers, command: 'link', configFilePath})
 }
 
 async function loadRemoteApp(
@@ -217,24 +302,3 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
     }
   }
 }
-
-// export async function getRemoteAppConfig(apiKey: string): Promise<Partial<CurrentAppConfiguration>> {
-//   const token = await ensureAuthenticatedPartners()
-//   const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
-//   const appAccessModule = remoteSpecifications.app.extensionRegistrations.find((extension) => {
-//     return extension..toLowerCase() === APP_ACCESS_IDENTIFIER
-//   })
-//   const appConfig: Partial<CurrentAppConfiguration> = {}
-
-//   if (appAccessModule?.activeVersion?.config) {
-//     try {
-//       const appAccessConfig = JSON.parse(appAccessModule.activeVersion.config)
-//       appConfig.access = appAccessConfig.access
-//       // eslint-disable-next-line no-catch-all/no-catch-all
-//     } catch (error) {
-//       // Ignore errors
-//     }
-//   }
-
-//   return appConfig
-// }

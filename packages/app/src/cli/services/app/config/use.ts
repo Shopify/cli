@@ -69,12 +69,18 @@ interface SaveCurrentConfigOptions {
   configFileName: string
   directory: string
   configSpecs?: ConfigExtensionSpecification[]
+  configVersion?: string
 }
 
-export async function saveCurrentConfig({configFileName, directory, configSpecs}: SaveCurrentConfigOptions) {
+export async function saveCurrentConfig({
+  configFileName,
+  directory,
+  configSpecs,
+  configVersion,
+}: SaveCurrentConfigOptions) {
   const {configuration} = await loadAppConfiguration({configName: configFileName, directory, configSpecs})
 
-  if (isCurrentAppSchema(configuration) && configuration.client_id) {
+  if ((configVersion || isCurrentAppSchema(configuration)) && configuration.client_id) {
     setCachedAppInfo({
       directory,
       configFile: configFileName,
