@@ -25,11 +25,12 @@ export interface Identifiers {
 }
 
 export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
-type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
+type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release' | 'link'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
   identifiers: UuidOnlyIdentifiers
   command: UpdateAppIdentifiersCommand
+  configFilePath?: string
 }
 
 /**
@@ -38,14 +39,14 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command, configFilePath}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
 
   if (!dotenvFile) {
     dotenvFile = {
-      path: joinPath(app.directory, getDotEnvFileName(app.configuration.path)),
+      path: joinPath(app.directory, getDotEnvFileName(configFilePath ?? app.configuration.path)),
       variables: {},
     }
   }
@@ -62,7 +63,7 @@ export async function updateAppIdentifiers(
 
   const write =
     JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) &&
-    (command === 'deploy' || command === 'release')
+    (command === 'deploy' || command === 'release' || command === 'link')
   dotenvFile.variables = updatedVariables
   if (write) {
     await writeDotEnv(dotenvFile)
