@@ -2,7 +2,7 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const PaymentsAppSchema = BaseSchema.extend({
+const PaymentsExtensionSchema = BaseSchema.extend({
   // production_api_base_url: zod.string(),
   // benchmark_api_base_url: zod.string().optional(),
   // Extension inputs as defined here:
@@ -24,15 +24,15 @@ const PaymentsAppSchema = BaseSchema.extend({
     .optional(),
 })
 
-const cliPaymentsAppSpecfication = createExtensionSpecification({
-  identifier: 'cli_payments_app',
-  schema: PaymentsAppSchema,
+const PaymentsExtensionSpecfication = createExtensionSpecification({
+  identifier: 'payments_extension',
+  schema: PaymentsExtensionSchema,
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, _) => {
     return {
       // production_api_base_url: config.production_api_base_url,
       // benchmark_api_base_url: config.benchmark_api_base_url,
-      payment_session_url: config.payment_session_url,
+      start_payment_session_url: config.payment_session_url,
       refund_session_url: config.refund_session_url,
       capture_session_url: config.capture_session_url,
       void_session_url: config.void_session_url,
@@ -44,4 +44,4 @@ const cliPaymentsAppSpecfication = createExtensionSpecification({
   },
 })
 
-export default cliPaymentsAppSpecfication
+export default PaymentsExtensionSpecfication // cliPaymentsAppSpecfication
