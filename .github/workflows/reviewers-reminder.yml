@@ -9,7 +9,7 @@ jobs:
   remind:
     name: "[PR] Remind reviewers"
     runs-on: ubuntu-latest
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login != 'dependabot[bot]'
     steps:
       - name: comment PR
         uses: unsplash/comment-on-pr@ffe8f97ccc63ce12c3c23c6885b169db67958d3b # pin@v1.3.0
