@@ -7,12 +7,13 @@ import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DevSessionCreateMutation} from '../../../api/graphql/dev_session_create.js'
 
-import {DevSessionUpdateMutation} from '../../../api/graphql/dev_session_update.js'
+import {DevSessionUpdateMutation, DevSessionUpdateVariables} from '../../../api/graphql/dev_session_update.js'
 import {bundleForDev} from '../../deploy/bundle.js'
 import {
   DevSessionGenerateUrlMutation,
   DevSessionGenerateUrlSchema,
 } from '../../../api/graphql/dev_session_generate_url.js'
+import {DevSessionDeleteMutation} from '../../../api/graphql/dev_session_delete.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -20,6 +21,7 @@ import {emptyDir, fileExistsSync, mkdir, readFileSync} from '@shopify/cli-kit/no
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
 
 export interface DraftableExtensionOptions {
@@ -57,6 +59,12 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   // Start dev session
   await adminRequest(DevSessionCreateMutation, adminSession, {
     apiKey,
+  })
+
+  signal.addEventListener('abort', async () => {
+    outputInfo(`Stopping dev session`, stdout)
+    await adminRequest(DevSessionDeleteMutation, adminSession, {apiKey})
+    outputInfo(`Stopped`, stdout)
   })
 
   // Folder where we are going to store all shopify built extensions
@@ -159,6 +167,7 @@ export async function updateAppModules({
   // Consider creating an empty `.shopify-dev` folder to reuse results
   // await inTemporaryDirectory(async (tmpDir) => {
   try {
+    outputInfo(`Updating app modules`, stdout)
     const bundlePath = joinPath(devFolder, `bundle.zip`)
     await mkdir(dirname(bundlePath))
     await bundleForDev({app, extensions, bundlePath, directory: devFolder, stdout})
@@ -183,14 +192,14 @@ export async function updateAppModules({
     const appModules = await Promise.all(
       extensions.flatMap((ext) => ext.bundleConfig({identifiers: {}, token, apiKey: 'dev-apiKey'})),
     )
+    const appM = getArrayRejectingUndefined(appModules)
 
-    console.log(appModules)
-    console.log(apiKey)
-    await adminRequest(DevSessionUpdateMutation, adminSession, {
-      appModules,
+    const variables: DevSessionUpdateVariables = {
+      appModules: appM,
       bundleUrl: signedUrl,
       apiKey,
-    })
+    }
+    await adminRequest(DevSessionUpdateMutation, adminSession, variables)
 
     const names = extensions.map((ext) => ext.localIdentifier).join(', ')
 

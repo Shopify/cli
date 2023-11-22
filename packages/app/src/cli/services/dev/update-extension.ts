@@ -121,5 +121,5 @@ export async function updateExtensionConfig({
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = newConfig
   return updateAppModules({app, extensions: [extension], token, apiKey, stdout, adminSession, devFolder})
-  return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+  // return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
 }

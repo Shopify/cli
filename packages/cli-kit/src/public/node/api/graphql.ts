@@ -52,7 +52,6 @@ export async function graphqlRequest<T>(options: GraphQLRequestOptions<T>): Prom
     if (responseOptions?.onResponse) {
       responseOptions.onResponse(response)
     }
-
     return response.data
   })
 }

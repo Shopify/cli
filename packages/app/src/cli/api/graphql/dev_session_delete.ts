@@ -1,19 +1,27 @@
 import {gql} from 'graphql-request'
 
 export const DevSessionDeleteMutation = gql`
-  mutation devSessionDelete($id: ID!) {
-    devSessionDelete(id: $id) {
-      deletedAppId
+  mutation devSessionDelete($apiKey: String!) {
+    devSessionDelete(apiKey: $apiKey) {
+      success
+      userErrors {
+        field
+        message
+      }
     }
   }
 `
 
 export interface DevSessionDeleteVariables {
-  id: string
+  apiKey: string
 }
 
 export interface DevSessionDeleteSchema {
   devSessionDelete: {
-    deletedAppId: string
+    success: string
+    userErrors: {
+      field: string[]
+      message: string
+    }[]
   }
 }
