@@ -6,6 +6,7 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface, type NormalizedWebhookSubscriptions} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
+import {AppModuleSettings} from '../api/graphql/app_deploy.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -94,12 +95,10 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const appSpecModules = await Promise.all(
+            const appSpecModules: (AppModuleSettings | undefined)[] = await Promise.all(
               options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
-            const appModules = appSpecModules.concat(
-              options.app.configExtensions.map((ext) => ext.bundleConfig(identifiers)),
-            )
+            const appModules = appSpecModules.concat(options.app.configExtensions.map((ext) => ext.bundleConfig()))
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
               apiKey,

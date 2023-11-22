@@ -1,5 +1,5 @@
 import {getDotEnvFileName} from './loader.js'
-import {ConfigExtensionInstance, ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {writeDotEnv} from '@shopify/cli-kit/node/dot-env'
 import {constantize} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -25,12 +25,11 @@ export interface Identifiers {
 }
 
 export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
-type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release' | 'link'
+type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
   identifiers: UuidOnlyIdentifiers
   command: UpdateAppIdentifiersCommand
-  configFilePath?: string
 }
 
 /**
@@ -39,14 +38,14 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command, configFilePath}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
 
   if (!dotenvFile) {
     dotenvFile = {
-      path: joinPath(app.directory, getDotEnvFileName(configFilePath ?? app.configuration.path)),
+      path: joinPath(app.directory, getDotEnvFileName(app.configuration.path)),
       variables: {},
     }
   }
@@ -63,7 +62,7 @@ export async function updateAppIdentifiers(
 
   const write =
     JSON.stringify(dotenvFile.variables) !== JSON.stringify(updatedVariables) &&
-    (command === 'deploy' || command === 'release' || command === 'link')
+    (command === 'deploy' || command === 'release')
   dotenvFile.variables = updatedVariables
   if (write) {
     await writeDotEnv(dotenvFile)
@@ -96,13 +95,6 @@ export function getAppIdentifiers(
     }
   }
   app.allExtensions.forEach(processExtension)
-
-  const processConfigExtension = (configExtension: ConfigExtensionInstance) => {
-    if (Object.keys(envVariables).includes(configExtension.idEnvironmentVariableName)) {
-      extensionsIdentifiers[configExtension.localIdentifier] = envVariables[configExtension.idEnvironmentVariableName]!
-    }
-  }
-  app.configExtensions.forEach(processConfigExtension)
 
   return {
     app: envVariables[app.idEnvironmentVariableName],
