@@ -623,11 +623,11 @@ export async function getAppContext({
   }
 
   let cachedInfo = getCachedAppInfo(directory)
-  const {configSpecs} = await loadLocalExtensionsSpecifications(commandConfig!)
+  const {configSpecifications} = await loadLocalExtensionsSpecifications(commandConfig!)
   const {configuration} = await loadAppConfiguration({
     directory,
     configName,
-    configSpecs,
+    configSpecifications,
   })
 
   let remoteApp

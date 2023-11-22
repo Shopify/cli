@@ -28,8 +28,8 @@ export interface FetchSpecificationsOptions {
  * @returns List of extension specifications
  */
 export async function fetchSpecifications({token, apiKey, config}: FetchSpecificationsOptions): Promise<{
-  specs: ExtensionSpecification[]
-  configSpecs: ConfigExtensionSpecification[]
+  generalSpecifications: ExtensionSpecification[]
+  configSpecifications: ConfigExtensionSpecification[]
 }> {
   const result: ExtensionSpecificationsQuerySchema = await partnersRequest(ExtensionSpecificationsQuery, token, {
     api_key: apiKey,
@@ -53,9 +53,9 @@ export async function fetchSpecifications({token, apiKey, config}: FetchSpecific
     })
 
   const local = await loadLocalExtensionsSpecifications(config)
-  const updatedSpecs = mergeLocalAndRemoteSpecs(local.specs, extensionSpecifications)
-  const updatedConfigSpecs = mergeLocalAndRemoteSpecs(local.configSpecs, extensionSpecifications)
-  return {specs: updatedSpecs, configSpecs: updatedConfigSpecs}
+  const updatedSpecs = mergeLocalAndRemoteSpecs(local.generalSpecifications, extensionSpecifications)
+  const updatedConfigSpecs = mergeLocalAndRemoteSpecs(local.configSpecifications, extensionSpecifications)
+  return {generalSpecifications: updatedSpecs, configSpecifications: updatedConfigSpecs}
 }
 
 function mergeLocalAndRemoteSpecs<T>(local: T[], remote: FlattenedRemoteSpecification[]): T[] {

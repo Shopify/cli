@@ -98,10 +98,10 @@ async function linkAppVersionedConfig(
   remoteSpecifications: AllAppExtensionRegistrationsQuerySchema,
 ) {
   // Populate the shopify.app.toml
-  const {configSpecs} = await loadLocalExtensionsSpecifications(options.commandConfig)
+  const {configSpecifications} = await loadLocalExtensionsSpecifications(options.commandConfig)
   let configSections: {[key: string]: unknown} = {}
   remoteSpecifications.app.configExtensionRegistrations.forEach((extension) => {
-    const configSpec = configSpecs.find((spec) => spec.identifier === extension.type.toLowerCase())
+    const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
     if (!configSpec) return
     const firstLevelObjectName = Object.keys(configSpec.schema._def.shape())[0]!
     let configExtensionString = extension.activeVersion?.config
@@ -117,7 +117,7 @@ async function linkAppVersionedConfig(
     },
     ...configSections,
   }
-  const versionAppSchema = getAppVersionedSchema(configSpecs)
+  const versionAppSchema = getAppVersionedSchema(configSpecifications)
   await writeAppConfigurationFile(configuration, versionAppSchema)
   // Cache the toml file content
   await saveCurrentConfig({configFileName, directory, configVersion: localApp.configVersion})

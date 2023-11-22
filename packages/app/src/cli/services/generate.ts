@@ -48,10 +48,10 @@ async function generate(options: GenerateOptions) {
     configName: options.configName,
     ...specifications,
   })
-  const availableSpecifications = specifications.specs.map((spec) => spec.identifier)
+  const availableSpecifications = specifications.generalSpecifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)
 
-  const promptOptions = await buildPromptOptions(extensionTemplates, specifications.specs, app, options)
+  const promptOptions = await buildPromptOptions(extensionTemplates, specifications.generalSpecifications, app, options)
   const promptAnswers = await generateExtensionPrompts(promptOptions)
 
   await saveAnalyticsMetadata(promptAnswers, options.template)

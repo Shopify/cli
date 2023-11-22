@@ -44,11 +44,11 @@ export default class UpdateURL extends Command {
     }
     const apiKey = flags['client-id'] || flags['api-key']
 
-    const {configSpecs} = await loadLocalExtensionsSpecifications(this.config)
+    const {configSpecifications} = await loadLocalExtensionsSpecifications(this.config)
     const app = await loadAppConfiguration({
       configName: flags.config,
       directory: flags.path,
-      configSpecs,
+      configSpecifications,
     })
 
     const options: UpdateURLOptions = {
