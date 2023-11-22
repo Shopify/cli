@@ -1,0 +1,567 @@
+[
+  {
+    "name": "dev",
+    "description": "[Builds the app](/docs/apps/tools/cli/commands#build) and lets you preview it on a [development store](/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB).\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n  ",
+    "overviewPreviewDescription": "Builds the app and lets you preview it on a development or plus sandbox store",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app dev",
+            "code": "shopify app dev\n\n# Dev with a custom tunnel provider\nshopify app dev --tunnel-url https://cloudflaredurl.example.com:3000\n\n# Dev with specific details\nshopify app dev --client-id xxxxx --store mystore-name\n\n# Dev reseting all cached values\nshopify app dev --reset\n",
+            "language": "bash"
+          }
+        ],
+        "title": "dev"
+      }
+    },
+    "definitions": [
+      {
+        "title": "app dev flags",
+        "description": "The following flags are available for the `app info` command:",
+        "type": "appDev",
+        "typeDefinitions": {
+          "appDev": {
+            "filePath": "src-docs/commandTypes/app.dev.ts",
+            "name": "appDev",
+            "description": "",
+            "members": [
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--tunnel-url",
+                "value": "string",
+                "description": "The URL of a tunnel that you've started using your own local tunneling software. Shopify recommends [Cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/run-tunnel/trycloudflare/) for use with Shopify CLI.\n\nExpected format: `https://my-tunnel-url:port`",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--store <store>",
+                "value": "string",
+                "description": "The development store or Plus sandbox store that you want to use to preview your app.\n\nThe `--store` (or `-s`) flag accepts the following inputs:\n\n - The store prefix (johns-apparel)  - The [myshopify.com URL](https://help.shopify.com/manual/domains?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB) (`johns-apparel.myshopify.com`, `https://johns-apparel.myshopify.com`)",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--config <config-name>",
+                "value": "string",
+                "description": "The name of the config to use.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <id>",
+                "value": "string",
+                "description": "The client ID of your app. Use this flag to specify the app that you want to connect your project with. This flag replaces the deprecated `--api-key` flag.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-update",
+                "value": "\"\"",
+                "description": "Skip the prompt to update the app URLs that are set in the Partner Dashboard. Your URLs won't be updated.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <path/to/your/project>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true,
+                "defaultValue": "current working directory"
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--skip-dependencies-installation",
+                "value": "\"\"",
+                "description": "Skip checking and installing missing dependencies for your app.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all of your `dev` settings and send an uninstall request for the store to the default webhook endpoint (`/api/webhooks`), or the endpoint defined in [shopify.web.toml](/docs/apps/tools/cli/structure#shopify-web-toml).",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Provide more detailed output in the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disables color output in the logs",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--checkout-cart-url <url>",
+                "value": "string",
+                "description": "A partial link with a [product variant ID](https://help.shopify.com/manual/products/variants/find-variant-id?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB) and quantity to be used to create a test checkout for [checkout UI extensions](/docs/apps/checkout/build-options). If the flag isn't passed, then Shopify CLI auto-populates this value. To test with a specific product variant ID and quantity, you can provide the flag as `--checkout-cart-url \"/cart/12345:1\"`, where `12345` is the product variant ID and `:1` is the quantity.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--subscription-product-url <url>",
+                "value": "string",
+                "description": "A partial link with a product ID. Use this flag to specify the product to use when testing a purchase option extension. If the flag isn't passed, then Shopify CLI auto-populates this value. To test with a specific product ID, you can provide the flag as `--subscription-product-url \"/products/12345\"`, where `12345` is the product ID.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--theme-app-extension-port <port>",
+                "value": "string",
+                "description": "The local port to be used to test a [theme app extension](/docs/apps/online-store/theme-app-extensions).",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.dev.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--theme <theme id>",
+                "value": "string",
+                "description": "The ID or name of the theme to be used to test a [theme app extension](/docs/apps/online-store/theme-app-extensions).\n\nIf no theme is specified, then the command will use [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, when testing your theme app extension.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appDev {\n  /**\n   * The URL of a tunnel that you've started using your own local tunneling software. Shopify recommends [Cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/run-tunnel/trycloudflare/) for use with Shopify CLI.\n   *\n   * Expected format: `https://my-tunnel-url:port`\n   */\n  '--tunnel-url'?: string\n\n  /**\n   * The development store or Plus sandbox store that you want to use to preview your app.\n   *\n   * The `--store` (or `-s`) flag accepts the following inputs:\n   *\n   *  - The store prefix (johns-apparel)\n   *  - The [myshopify.com URL](https://help.shopify.com/manual/domains?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB) (`johns-apparel.myshopify.com`, `https://johns-apparel.myshopify.com`)\n   */\n  '--store <store>'?: string\n\n  /**\n   * The name of the config to use.\n   */\n  '--config <config-name>'?: string\n\n  /**\n   *The client ID of your app. Use this flag to specify the app that you want to connect your project with. This flag replaces the deprecated `--api-key` flag.\n   */\n  '--client-id <id>'?: string\n\n  /**\n   * Skip the prompt to update the app URLs that are set in the Partner Dashboard. Your URLs won't be updated.\n   */\n  '--no-update'?: ''\n\n  /**\n   * The path to your app directory.\n   *\n   * @default current working directory\n   */\n  '--path <path/to/your/project>'?: string\n\n  /**\n   * Skip checking and installing missing dependencies for your app.\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Reset all of your `dev` settings and send an uninstall request for the store to the default webhook endpoint (`/api/webhooks`), or the endpoint defined in [shopify.web.toml](/docs/apps/tools/cli/structure#shopify-web-toml).\n   */\n  '--reset'?: ''\n\n  /**\n   * Provide more detailed output in the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * Disables color output in the logs\n   */\n  '--no-color'?: ''\n\n  /**\n   * A partial link with a [product variant ID](https://help.shopify.com/manual/products/variants/find-variant-id?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB) and quantity to be used to create a test checkout for [checkout UI extensions](/docs/apps/checkout/build-options). If the flag isn't passed, then Shopify CLI auto-populates this value. To test with a specific product variant ID and quantity, you can provide the flag as `--checkout-cart-url \"/cart/12345:1\"`, where `12345` is the product variant ID and `:1` is the quantity.\n   */\n  '--checkout-cart-url <url>'?: string\n\n  /**\n   * A partial link with a product ID. Use this flag to specify the product to use when testing a purchase option extension. If the flag isn't passed, then Shopify CLI auto-populates this value. To test with a specific product ID, you can provide the flag as `--subscription-product-url \"/products/12345\"`, where `12345` is the product ID.\n   */\n  '--subscription-product-url <url>'?: string\n\n  /**\n   * \tThe local port to be used to test a [theme app extension](/docs/apps/online-store/theme-app-extensions).\n   */\n  '--theme-app-extension-port <port>'?: string\n\n  /**\n   * The ID or name of the theme to be used to test a [theme app extension](/docs/apps/online-store/theme-app-extensions).\n   *\n   * If no theme is specified, then the command will use [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, when testing your theme app extension.\n   */\n  '--theme <theme id>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "generate extension",
+    "description": "Generates a new [app extension](/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](/docs/apps/tools/cli/commands#supported-extensions).\n\nEach new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](/docs/apps/tools/cli/structure) and the documentation for your extension.\n",
+    "overviewPreviewDescription": "Generate a new app extension",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app generate extension",
+            "code": "shopify app generate extension\n",
+            "language": "bash"
+          }
+        ],
+        "title": "app generate extension"
+      }
+    },
+    "definitions": [
+      {
+        "title": "app generate extension flags",
+        "description": "The following flags are available for the `app info` command:",
+        "type": "appGenerateExtension",
+        "typeDefinitions": {
+          "appGenerateExtension": {
+            "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+            "name": "appGenerateExtension",
+            "description": "",
+            "members": [
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "name",
+                "value": "string",
+                "description": "The name of yout extension",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "template",
+                "value": "string",
+                "description": "The extension template. Refer to [supported extensions](/docs/apps/tools/cli/commands#supported-extensions).",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "path",
+                "value": "string",
+                "description": "The path to your app directory",
+                "isOptional": true,
+                "defaultValue": "current working directory"
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "config",
+                "value": "string",
+                "description": "The name of the config to use",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "verbose",
+                "value": "\"\"",
+                "description": "Provide more detailed output in the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "no-color",
+                "value": "\"\"",
+                "description": "Disables color output in the logs",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.generate-extension.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "flavor",
+                "value": "string",
+                "description": "Choose the flavor of the template that you want to start with.\n\nThe flavors that are available depend on the extension you're generating. For example:\n\n- UI extensions support `react`, `vanilla-js`, `typescript-react`, and `typescript`.\n\n- Shopify Functions support `vanilla-js`, `typescript`, `wasm`, and `rust`.\n\n- Some extensions, such as Shopify Flow actions and triggers, don't have flavor options.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appGenerateExtension {\n  /**\n   * The name of yout extension\n   */\n  name?: string\n\n  /**\n   * The extension template. Refer to [supported extensions](/docs/apps/tools/cli/commands#supported-extensions).\n   */\n  template?: string\n\n  /**\n   * The path to your app directory\n   *\n   * @default current working directory\n   */\n  path?: string\n\n  /**\n   * The name of the config to use\n   */\n  config?: string\n\n  /**\n   * Provide more detailed output in the logs.\n   */\n  verbose?: ''\n\n  /**\n   * Disables color output in the logs\n   */\n  'no-color'?: ''\n\n  /**\n   *Choose the flavor of the template that you want to start with.\n\nThe flavors that are available depend on the extension you're generating. For example:\n\n- UI extensions support `react`, `vanilla-js`, `typescript-react`, and `typescript`.\n\n- Shopify Functions support `vanilla-js`, `typescript`, `wasm`, and `rust`.\n\n- Some extensions, such as Shopify Flow actions and triggers, don't have flavor options.\n   */\n  flavor?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "info",
+    "description": "Displays information about your app.",
+    "overviewPreviewDescription": "Displays information about your app.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app info",
+            "code": "shopify app info --path &lt;path/to/your/app&gt; --config &lt;config_name&gt; --json\n",
+            "language": "bash"
+          }
+        ],
+        "title": "app info"
+      }
+    },
+    "definitions": [
+      {
+        "title": "app info flags",
+        "description": "The following flags are available for the `app info` command:",
+        "type": "appInfo",
+        "typeDefinitions": {
+          "appInfo": {
+            "filePath": "src-docs/commandTypes/app.info.ts",
+            "name": "appInfo",
+            "description": "",
+            "members": [
+              {
+                "filePath": "src-docs/commandTypes/app.info.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "path",
+                "value": "string",
+                "description": "The path to your app directory",
+                "isOptional": true,
+                "defaultValue": "current working directory"
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.info.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "config",
+                "value": "string",
+                "description": "The name of the config to use",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.info.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "verbose",
+                "value": "\"\"",
+                "description": "Provide more detailed output in the logs.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.info.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "no-color",
+                "value": "\"\"",
+                "description": "Disables color output in the logs",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/app.info.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "json",
+                "value": "\"\"",
+                "description": "Output the app info in JSON format",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface appInfo {\n  /**\n   * The path to your app directory\n   *\n   * @default current working directory\n   */\n  path?: string\n\n  /**\n   * The name of the config to use\n   */\n  config?: string\n\n  /**\n   * Provide more detailed output in the logs.\n   */\n  verbose?: ''\n\n  /**\n   * Disables color output in the logs\n   */\n  'no-color'?: ''\n\n  /**\n   * Output the app info in JSON format\n   */\n  json?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "app",
+    "related": []
+  },
+  {
+    "name": "config autocorrect",
+    "description": "Enables or disables command autocorrection. By default, autocorrect is off.",
+    "overviewPreviewDescription": "Enables or disables command autocorrection",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "config autocorrect",
+            "code": "shopify config autocorrect COMMAND\n",
+            "language": "bash"
+          }
+        ],
+        "title": "config autocorrect"
+      }
+    },
+    "definitions": [
+      {
+        "title": "config autocorrect commands",
+        "description": "The following options/flags are available for the `config autocorrect` command:",
+        "type": "Autocorrect",
+        "typeDefinitions": {
+          "Autocorrect": {
+            "filePath": "src-docs/commandTypes/autocorrect.ts",
+            "name": "Autocorrect",
+            "description": "",
+            "members": [
+              {
+                "filePath": "src-docs/commandTypes/autocorrect.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "on",
+                "value": "\"\"",
+                "description": "Enable autocorrect.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/autocorrect.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "off",
+                "value": "\"\"",
+                "description": "Disable autocorrect.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/autocorrect.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "status",
+                "value": "\"\"",
+                "description": "Check whether autocorrect is enabled or disabled.",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface Autocorrect {\n  /**\n   * \tEnable autocorrect.\n   */\n  on?: ''\n\n  /**\n   * \tDisable autocorrect.\n   */\n  off?: ''\n\n  /**\n   * Check whether autocorrect is enabled or disabled.\n   */\n  status?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "common",
+    "related": []
+  },
+  {
+    "name": "app dev",
+    "description": "Run a dev server for your app.",
+    "type": "component",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "featureFlag": "",
+      "image": "",
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "",
+            "code": "# search for a term on Shopify.dev\nshopify search &lt;query&gt;\n\n# search for a phrase on Shopify.dev\nshopify search \"&lt;a search query separated by spaces&gt;\"\n",
+            "language": ""
+          }
+        ],
+        "title": "",
+        "links": [
+          {
+            "name": "",
+            "url": "",
+            "icon": ""
+          }
+        ]
+      }
+    },
+    "category": "Commands",
+    "subCategory": "theme",
+    "examples": {
+      "description": "",
+      "exampleGroups": [
+        {
+          "title": "",
+          "featureFlag": "",
+          "examples": [
+            {
+              "description": "",
+              "featureFlag": "",
+              "image": "",
+              "codeblock": {
+                "tabs": [
+                  {
+                    "title": "",
+                    "code": "# search for a term on Shopify.dev\nshopify search &lt;query&gt;\n\n# search for a phrase on Shopify.dev\nshopify search \"&lt;a search query separated by spaces&gt;\"\n",
+                    "language": ""
+                  }
+                ],
+                "title": "",
+                "links": [
+                  {
+                    "name": "",
+                    "url": "",
+                    "icon": ""
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "examples": [
+        {
+          "description": "",
+          "featureFlag": "",
+          "image": "",
+          "codeblock": {
+            "tabs": [
+              {
+                "title": "",
+                "code": "# search for a term on Shopify.dev\nshopify search &lt;query&gt;\n\n# search for a phrase on Shopify.dev\nshopify search \"&lt;a search query separated by spaces&gt;\"\n",
+                "language": ""
+              }
+            ],
+            "title": "",
+            "links": [
+              {
+                "name": "",
+                "url": "",
+                "icon": ""
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "related": [
+      {
+        "name": "",
+        "subtitle": "",
+        "url": "",
+        "type": "",
+        "featureFlag": ""
+      }
+    ]
+  },
+  {
+    "name": "trigger",
+    "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the Partner API rate limit.\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+    "overviewPreviewDescription": "Triggers the delivery of a sample Admin API webhook",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "webhook trigger",
+            "code": "shopify webhook trigger\n",
+            "language": "bash"
+          }
+        ],
+        "title": "webhook trigger"
+      }
+    },
+    "definitions": [
+      {
+        "title": "webhook trigger flags",
+        "description": "The following flags are available for the `webhook trigger` command:",
+        "type": "webhookTrigger",
+        "typeDefinitions": {
+          "webhookTrigger": {
+            "filePath": "src-docs/commandTypes/webhook.trigger.ts",
+            "name": "webhookTrigger",
+            "description": "",
+            "members": [
+              {
+                "filePath": "src-docs/commandTypes/webhook.trigger.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "topic",
+                "value": "string",
+                "description": "The requested event topic. You can pass the webhook topic using the GraphQL enum value or the webhook topic name. For example, you can request the `orders/create` webhook topic by passing `ORDERS_CREATE` (GraphQL API style) or `orders/create` (REST API style). For a complete list of topics, refer to the [GraphQL Admin API reference](/api/admin-graphql/current/enums/webhooksubscriptiontopic), the REST Admin API reference, and the Mandatory webhooks guide.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/webhook.trigger.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "api-version",
+                "value": "string",
+                "description": "API version of the event topic, in the format YYYY-MM or unstable. If the topic isn't available in the specified version, then the webhook payload isn't sent.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/webhook.trigger.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "client-secret",
+                "value": "string",
+                "description": "Your app's client secret. This secret is used to generate and return a X-Shopify-Hmac-SHA256 header, which lets you validate the origin of the response that you receive.",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/webhook.trigger.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "delivery-method",
+                "value": "string",
+                "description": "The method chosen to deliver the topic payload. Options: http, google-pub-sub, event-bridge",
+                "isOptional": true
+              },
+              {
+                "filePath": "src-docs/commandTypes/webhook.trigger.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "address",
+                "value": "string",
+                "description": "The URL where the webhook payload should be sent.\n\nFor each delivery method, you need to provide a different address type:\n\n- http: For remote delivery, use an https:// address. For local delivery, use http://localhost:{port}/{url-path}.\n\n- google-pub-sub: A pubsub URL, in the format pubsub://{project-id}:{topic-id}\n\n- event-bridge: An Amazon Resource Name (ARN) starting with arn:aws:events:",
+                "isOptional": true
+              }
+            ],
+            "value": "export interface webhookTrigger {\n  /**\n   * The requested event topic. You can pass the webhook topic using the GraphQL enum value or the webhook topic name. For example, you can request the `orders/create` webhook topic by passing `ORDERS_CREATE` (GraphQL API style) or `orders/create` (REST API style).\n   * For a complete list of topics, refer to the [GraphQL Admin API reference](/api/admin-graphql/current/enums/webhooksubscriptiontopic), the REST Admin API reference, and the Mandatory webhooks guide.\n   */\n  topic?: string\n\n  /**\n   * API version of the event topic, in the format YYYY-MM or unstable. If the topic isn't available in the specified version, then the webhook payload isn't sent.\n   */\n  'api-version'?: string\n\n  /**\n   * Your app's client secret. This secret is used to generate and return a X-Shopify-Hmac-SHA256 header, which lets you validate the origin of the response that you receive.\n   */\n  'client-secret'?: string\n\n  /**\n   * The method chosen to deliver the topic payload. Options: http, google-pub-sub, event-bridge\n   */\n  'delivery-method'?: string\n\n  /**\n   * The URL where the webhook payload should be sent.\n\nFor each delivery method, you need to provide a different address type:\n\n - http: For remote delivery, use an https:// address. For local delivery, use http://localhost:{port}/{url-path}.\n\n - google-pub-sub: A pubsub URL, in the format pubsub://{project-id}:{topic-id}\n\n - event-bridge: An Amazon Resource Name (ARN) starting with arn:aws:events:\n   */\n  address?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "Commands",
+    "subCategory": "webhook",
+    "related": []
+  }
+]

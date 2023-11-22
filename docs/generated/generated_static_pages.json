@@ -1,0 +1,179 @@
+[
+  {
+    "title": "Apps",
+    "description": "Shopify CLI is a command-line interface tool that helps you build Shopify apps and themes. It quickly generates Shopify apps, themes, and custom storefronts. You can also use it to automate many common development tasks.",
+    "id": "app-cli",
+    "image": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
+    "darkImage": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "create",
+        "title": "Create a new app",
+        "sectionContent": "You need node version 18.12.0 or higher to use Shopify CLI.\n\nThis installs Shopify CLI globally, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.",
+        "codeblock": {
+          "title": "",
+          "tabs": [
+            {
+              "title": "npm",
+              "code": "npm install -g @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "yarn",
+              "code": "yarn add global @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "pnpm",
+              "code": "pnpm install -g @shopify/cli\n",
+              "language": "bash"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Generic",
+        "anchorLink": "getting-started",
+        "title": "Getting started",
+        "sectionContent": "Some other content for apps"
+      }
+    ]
+  },
+  {
+    "title": "Shopify CLI",
+    "description": "Shopify CLI is a command-line interface tool that helps you build Shopify apps and themes. It quickly generates Shopify apps, themes, and custom storefronts. You can also use it to automate many common development tasks.",
+    "id": "Shopify CLI",
+    "image": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
+    "darkImage": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "requirements",
+        "title": "Requirements",
+        "sectionContent": "- Node.js version 18.12.0 or higher\n- Ruby version 2.7.2 or higher (Only for theme commands)\n- Git version 2.28.0 or higher"
+      },
+      {
+        "type": "Generic",
+        "anchorLink": "installation",
+        "title": "Installation",
+        "sectionContent": "This installs Shopify CLI globally, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.\n\nFor app development you can also install the CLI locally to your project, find out more about that [Here](/docs/apps/getting-started/installation).",
+        "codeblock": {
+          "title": "",
+          "tabs": [
+            {
+              "title": "npm",
+              "code": "npm install -g @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "yarn",
+              "code": "yarn add global @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "pnpm",
+              "code": "pnpm install -g @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "homebrew",
+              "code": "# Only for macOS\nbrew tap shopify/shopify\nbrew install shopify-cli\n",
+              "language": "bash"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Generic",
+        "anchorLink": "Commands",
+        "title": "Commands",
+        "sectionContent": "\nShopify CLI groups commands into topics and this is the syntax to run them: `shopify [topic] [command]`.\nCheck out the [Commands](/docs/api/shopify-cli/commands) section to see the list of commands available for each topic.\n\nOr run the `help` command to get this information right in your terminal\n",
+        "codeblock": {
+          "title": "terminal",
+          "tabs": [
+            {
+              "code": "shopify help\n",
+              "language": "bash"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Generic",
+        "anchorLink": "upgrade",
+        "sectionContent": "We recommend to always use the latest version of the CLI if possible, run `version` to check the current version and if there are any update available and `upgrade` to install the latest CLI version.",
+        "title": "Upgrade your CLI",
+        "codeblock": {
+          "title": "terminal",
+          "tabs": [
+            {
+              "code": "shopify version\n&gt; Current Shopify CLI version: 3.50.0\n&gt; 💡 Version 3.51.0 available!\n\nshopify upgrade\n",
+              "language": "bash"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Resource",
+        "anchorLink": "fakeAnchorLink",
+        "title": "Resources",
+        "resources": [
+          {
+            "name": "Start building a theme",
+            "subtitle": "Learn how to set up your theme development environment and create a new theme",
+            "url": "/docs/themes/getting-started/create",
+            "type": "component"
+          },
+          {
+            "name": "Create an app",
+            "subtitle": "Learn how to set up your app development environment and start building",
+            "url": "/docs/apps/getting-started/create",
+            "type": "tutorial"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Themes",
+    "description": "Shopify CLI is a command-line interface tool that helps you build Shopify apps and themes. It quickly generates Shopify apps, themes, and custom storefronts. You can also use it to automate many common development tasks.",
+    "id": "theme-cli",
+    "image": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
+    "darkImage": "/assets/landing-pages/templated-apis/web-pixels-api/landing-page.png",
+    "sections": [
+      {
+        "type": "Generic",
+        "anchorLink": "create",
+        "title": "Create a new theme",
+        "sectionContent": "You need node version 18.12.0 or higher to use Shopify CLI.\n\nThis installs Shopify CLI globally, so you can run shopify commands from any directory. Find out more about the available commands by running `shopify` in your terminal.",
+        "codeblock": {
+          "title": "",
+          "tabs": [
+            {
+              "title": "npm",
+              "code": "npm install -g @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "yarn",
+              "code": "yarn add global @shopify/cli\n",
+              "language": "bash"
+            },
+            {
+              "title": "pnpm",
+              "code": "pnpm install -g @shopify/cli\n",
+              "language": "bash"
+            }
+          ]
+        }
+      },
+      {
+        "type": "Generic",
+        "anchorLink": "getting-started",
+        "title": "Getting started",
+        "sectionContent": "Some other content about themes"
+      }
+    ]
+  }
+]

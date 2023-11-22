@@ -27,7 +27,8 @@
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-documentation && bin/update-cli-kit-version.js && pnpm docs:generate",
     "refresh-documentation": "nx run-many --target=refresh-documentation --all --skip-nx-cache",
-    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache"
+    "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
+    "build-docs": "sh ./docs/build-docs.sh"
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",
@@ -35,9 +36,13 @@
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
     "@nrwl/tao": "16.7.4",
+    "@nx/eslint-plugin": "16.8.1",
+    "@nx/js": "16.8.1",
+    "@nx/workspace": "16.8.1",
     "@octokit/core": "^4.2.4",
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
+    "@shopify/generate-docs": "^0.12.0",
     "@shopify/typescript-configs": "^5.1.0",
     "@types/node": "16.18.57",
     "@types/rimraf": "^3.0.2",
@@ -71,10 +76,7 @@
     "tmp": "^0.2.1",
     "ts-node": "^10.9.1",
     "tslib": "^2.6.2",
-    "typescript": "5.2.2",
-    "@nx/workspace": "16.8.1",
-    "@nx/js": "16.8.1",
-    "@nx/eslint-plugin": "16.8.1"
+    "typescript": "5.2.2"
   },
   "workspaces": {
     "packages": [
