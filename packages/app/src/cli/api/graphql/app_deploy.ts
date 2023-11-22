@@ -46,8 +46,17 @@ export const AppDeploy = gql`
   }
 `
 
-export interface AppModuleSettings {
+export type AppModuleSettings = ConfigAppModuleSettings | GeneralAppModuleSettings
+
+export interface ConfigAppModuleSettings extends AppModuleCommonSettings {
+  specificationIdentifier: string
+}
+
+export interface GeneralAppModuleSettings extends AppModuleCommonSettings {
   uuid: string
+}
+
+interface AppModuleCommonSettings {
   config: string
   context: string
   handle: string

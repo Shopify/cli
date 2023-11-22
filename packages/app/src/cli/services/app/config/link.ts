@@ -84,7 +84,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     })
   }
 
-  await updateEnvIdentifiers(remoteSpecifications, remoteApp, localApp, configFilePath)
   await logMetadataForLoadedContext(remoteApp)
   return configuration
 }
@@ -158,27 +157,6 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
   } catch (error) {
     return new EmptyApp()
   }
-}
-
-async function updateEnvIdentifiers(
-  remoteSpecifications: AllAppExtensionRegistrationsQuerySchema,
-  remoteApp: OrganizationApp,
-  localApp: AppInterface,
-  configFilePath: string,
-) {
-  const extensionIdentifiers: {[key: string]: string} = {}
-  remoteSpecifications.app.configExtensionRegistrations.forEach(
-    (extension) => (extensionIdentifiers[extension.id] = extension.uuid),
-  )
-  remoteSpecifications.app.extensionRegistrations.forEach(
-    (extension) => (extensionIdentifiers[extension.id] = extension.uuid),
-  )
-
-  const identifiers = {
-    app: remoteApp.apiKey,
-    extensions: extensionIdentifiers,
-  }
-  await updateAppIdentifiers({app: {...localApp, dotenv: undefined}, identifiers, command: 'link', configFilePath})
 }
 
 async function loadRemoteApp(

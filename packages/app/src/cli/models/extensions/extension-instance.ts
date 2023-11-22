@@ -10,6 +10,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
+import {ConfigAppModuleSettings, GeneralAppModuleSettings} from '../../api/graphql/app_deploy.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -49,12 +50,12 @@ export class ConfigExtensionInstance<TConfiguration = unknown> {
     return this.getContentWithoutSectionName(this.configuration as {[key: string]: unknown})
   }
 
-  bundleConfig(identifiers: Identifiers) {
+  bundleConfig(): ConfigAppModuleSettings {
     return {
-      uuid: identifiers.extensions[this.specification.identifier]!,
       config: JSON.stringify(this.deployConfig()),
       context: 'context',
       handle: this.handle,
+      specificationIdentifier: this.specification.identifier,
     }
   }
 
@@ -290,7 +291,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
+  async bundleConfig({
+    identifiers,
+    token,
+    apiKey,
+  }: ExtensionBundleConfigOptions): Promise<GeneralAppModuleSettings | undefined> {
     const configValue = await this.deployConfig({apiKey, token})
     if (!configValue) return undefined
 

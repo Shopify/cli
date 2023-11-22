@@ -6,10 +6,8 @@ import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
-import {AppInterface} from '../../models/app/app.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {outputCompleted} from '@shopify/cli-kit/node/output'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
@@ -27,15 +25,10 @@ export async function ensureExtensionsIds(
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const {configIdentifiers, extensionIdentifiers} = groupIdentifiers(validIdentifiers, options.app)
   const localExtensions = options.app.allExtensions
 
-  const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, extensionIdentifiers)
-  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(
-    localExtensions,
-    dashboardOnlyExtensions,
-    extensionIdentifiers,
-  )
+  const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
+  const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
@@ -54,7 +47,7 @@ export async function ensureExtensionsIds(
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
   }
 
-  const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, extensionIdentifiers, 'uuid')
+  const matchExtensions = await automaticMatchmaking(localExtensions, remoteExtensions, validIdentifiers, 'uuid')
 
   let validMatches = matchExtensions.identifiers
   const validMatchesById: {[key: string]: string} = {}
@@ -105,18 +98,8 @@ export async function ensureExtensionsIds(
     if (!confirmed) return err('user-cancelled')
   }
 
-  // Add existing or toCreate config extensions
-  const matchConfigExtensions = await automaticMatchmaking(
-    options.app.configExtensions,
-    configExtensionRegistrations,
-    configIdentifiers,
-    'uuid',
-  )
-  validMatches = {...validMatches, ...matchConfigExtensions.identifiers}
-  extensionsToCreate.push(...matchConfigExtensions.toCreate)
-
   if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId, options.app)
+    const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id
@@ -135,35 +118,14 @@ export async function ensureExtensionsIds(
   })
 }
 
-async function createExtensions(extensions: LocalSource[], appId: string, app: AppInterface) {
+async function createExtensions(extensions: LocalSource[], appId: string) {
   const token = await ensureAuthenticatedPartners()
   const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.graphQLType, extension.handle, token)
-    if (!app.configExtensions.find((ext) => ext.localIdentifier === extension.localIdentifier)) {
-      outputCompleted(`Created extension ${extension.handle}.`)
-    }
     result[extension.localIdentifier] = registration
   }
   return result
-}
-
-function groupIdentifiers(
-  identifiers: IdentifiersExtensions,
-  app: AppInterface,
-): {configIdentifiers: IdentifiersExtensions; extensionIdentifiers: IdentifiersExtensions} {
-  const configIdentifiers: IdentifiersExtensions = {}
-  const extensionIdentifiers: IdentifiersExtensions = {}
-
-  for (const [localIdentifier, uuid] of Object.entries(identifiers)) {
-    if (app.allExtensions.find((ext) => ext.localIdentifier === localIdentifier)) {
-      extensionIdentifiers[localIdentifier] = uuid
-    } else if (app.configExtensions.find((ext) => ext.localIdentifier === localIdentifier)) {
-      configIdentifiers[localIdentifier] = uuid
-    }
-  }
-
-  return {configIdentifiers, extensionIdentifiers}
 }
