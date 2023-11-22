@@ -13,26 +13,25 @@ import {fileURLToPath} from 'url'
  */
 export async function loadLocalExtensionsSpecifications(
   config: Config,
-): Promise<{specs: ExtensionSpecification[]; configSpecs: ConfigExtensionSpecification[]}> {
+): Promise<{generalSpecifications: ExtensionSpecification[]; configSpecifications: ConfigExtensionSpecification[]}> {
   const local = await loadFSExtensionsSpecifications()
-  const managementExperience = (spec: unknown) => {
-    const specAsKeyValue = spec as {[key: string]: unknown}
-    return specAsKeyValue.managementExperience && specAsKeyValue.managementExperience === 'app_config'
-      ? 'appConfigSpecs'
-      : 'specs'
-  }
-  const {appConfigSpecs, specs} = groupBy(local, managementExperience)
+  const {cli: generalSpecifications, app_config: configSpecifications} = groupBy(
+    local,
+    (spec) => spec.managementExperience,
+  )
   const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return {
-    specs: [...(specs as ExtensionSpecification[]), ...plugins],
-    configSpecs: appConfigSpecs as ConfigExtensionSpecification[],
+    generalSpecifications: [...(generalSpecifications as ExtensionSpecification[]), ...plugins],
+    configSpecifications: configSpecifications as ConfigExtensionSpecification[],
   }
 }
 
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadFSExtensionsSpecifications(): Promise<unknown[]> {
+export async function loadFSExtensionsSpecifications(): Promise<
+  (ExtensionSpecification | ConfigExtensionSpecification)[]
+> {
   return memoizedLoadSpecs('specifications')
 }
 

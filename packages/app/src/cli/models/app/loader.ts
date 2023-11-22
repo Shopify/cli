@@ -165,8 +165,8 @@ interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
   configName?: string
-  specs: ExtensionSpecification[]
-  configSpecs: ConfigExtensionSpecification[]
+  generalSpecifications: ExtensionSpecification[]
+  configSpecifications: ConfigExtensionSpecification[]
 }
 
 /**
@@ -197,19 +197,19 @@ class AppLoader {
   private mode: AppLoaderMode
   private configName?: string
   private errors: AppErrors = new AppErrors()
-  private specifications: ExtensionSpecification[]
+  private generalSpecifications: ExtensionSpecification[]
   private configSpecifications: ConfigExtensionSpecification[]
 
-  constructor({directory, configName, mode, specs, configSpecs}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, generalSpecifications, configSpecifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
-    this.specifications = specs
-    this.configSpecifications = configSpecs
+    this.generalSpecifications = generalSpecifications
+    this.configSpecifications = configSpecifications
     this.configName = configName
   }
 
   findSpecificationForType(type: string) {
-    return findSpecificationForType(this.specifications, type)
+    return findSpecificationForType(this.generalSpecifications, type)
   }
 
   parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -225,7 +225,7 @@ class AppLoader {
     const configurationLoader = new AppConfigurationLoader({
       directory: this.directory,
       configName: this.configName,
-      configSpecs: this.configSpecifications,
+      configSpecifications: this.configSpecifications,
     })
     const {
       directory: appDirectory,
@@ -337,7 +337,7 @@ class AppLoader {
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    const specification = findSpecificationForType(this.specifications, type)
+    const specification = findSpecificationForType(this.generalSpecifications, type)
     if (!specification) {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -456,7 +456,7 @@ class AppLoader {
     const {configuration} = await loadAppConfiguration({
       configName: undefined,
       directory,
-      configSpecs: this.configSpecifications,
+      configSpecifications: this.configSpecifications,
     })
 
     const appConfigModules: ConfigExtensionInstance[] = []
@@ -550,7 +550,7 @@ export async function loadAppConfiguration(
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
-  configSpecs?: ConfigExtensionSpecification[]
+  configSpecifications?: ConfigExtensionSpecification[]
 }
 
 type LinkedConfigurationSource =
@@ -577,12 +577,12 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
-  private configSpecs: ConfigExtensionSpecification[]
+  private configSpecifications: ConfigExtensionSpecification[]
 
-  constructor({directory, configName, configSpecs}: AppConfigurationLoaderConstructorArgs) {
+  constructor({directory, configName, configSpecifications}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
     this.configName = configName
-    this.configSpecs = configSpecs ?? []
+    this.configSpecifications = configSpecifications ?? []
   }
 
   async loaded() {
@@ -602,7 +602,7 @@ class AppConfigurationLoader {
         directory: appDirectory,
         warningContent,
         shouldRenderSuccess: false,
-        configSpecs: this.configSpecs,
+        configSpecifications: this.configSpecifications,
       })
     }
 
@@ -613,7 +613,7 @@ class AppConfigurationLoader {
     let appSchema
     let configVersion = '2'
     if (isVersionedAppConfigurationSchema(file as {[key: string]: unknown})) {
-      appSchema = getAppVersionedSchema(this.configSpecs)
+      appSchema = getAppVersionedSchema(this.configSpecifications)
       configVersion = '3'
     } else {
       appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema

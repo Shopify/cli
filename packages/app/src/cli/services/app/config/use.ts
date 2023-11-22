@@ -21,7 +21,7 @@ export interface UseOptions {
   reset?: boolean
   warningContent?: RenderAlertOptions
   shouldRenderSuccess?: boolean
-  configSpecs?: ConfigExtensionSpecification[]
+  configSpecifications?: ConfigExtensionSpecification[]
 }
 
 export default async function use({
@@ -30,7 +30,7 @@ export default async function use({
   warningContent,
   shouldRenderSuccess = true,
   reset = false,
-  configSpecs = [],
+  configSpecifications = [],
 }: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
@@ -52,7 +52,7 @@ export default async function use({
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
-  const configuration = await saveCurrentConfig({configFileName, directory, configSpecs})
+  const configuration = await saveCurrentConfig({configFileName, directory, configSpecifications})
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -68,17 +68,17 @@ export default async function use({
 interface SaveCurrentConfigOptions {
   configFileName: string
   directory: string
-  configSpecs?: ConfigExtensionSpecification[]
+  configSpecifications?: ConfigExtensionSpecification[]
   configVersion?: string
 }
 
 export async function saveCurrentConfig({
   configFileName,
   directory,
-  configSpecs,
+  configSpecifications,
   configVersion,
 }: SaveCurrentConfigOptions) {
-  const {configuration} = await loadAppConfiguration({configName: configFileName, directory, configSpecs})
+  const {configuration} = await loadAppConfiguration({configName: configFileName, directory, configSpecifications})
 
   if ((configVersion || isCurrentAppSchema(configuration)) && configuration.client_id) {
     setCachedAppInfo({

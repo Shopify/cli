@@ -10,7 +10,6 @@ export async function confirmReleasePrompt(
   app: AppInterface,
 ) {
   const infoTable = []
-  // Filter out app config extensions in the prompt
   const extensions = [...versionsDiff.added, ...versionsDiff.updated]
 
   if (extensions.length > 0) {
@@ -21,7 +20,6 @@ export async function confirmReleasePrompt(
     })
   }
 
-  // Filter out app config extensions in the prompt
   const removed = versionsDiff.removed
 
   if (removed.length > 0) {

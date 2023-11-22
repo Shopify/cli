@@ -95,10 +95,12 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const appSpecModules: (AppModuleSettings | undefined)[] = await Promise.all(
+            const generalSpecificationModules: (AppModuleSettings | undefined)[] = await Promise.all(
               options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
-            const appModules = appSpecModules.concat(options.app.configExtensions.map((ext) => ext.bundleConfig()))
+            const appModules = generalSpecificationModules.concat(
+              options.app.configExtensions.map((ext) => ext.bundleConfig()),
+            )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
               apiKey,

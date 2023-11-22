@@ -34,13 +34,13 @@ export default class ConfigUse extends Command {
 
   public async run(): Promise<void> {
     const {flags, args} = await this.parse(ConfigUse)
-    const {configSpecs} = await loadLocalExtensionsSpecifications(this.config)
+    const {configSpecifications} = await loadLocalExtensionsSpecifications(this.config)
     // eslint-disable-next-line @shopify/cli/required-fields-when-loading-app
     const localApp = await loadAppConfiguration({
       directory: flags.path,
-      configSpecs,
+      configSpecifications,
     })
 
-    await use({directory: localApp.directory, configName: args.config, reset: flags.reset, configSpecs})
+    await use({directory: localApp.directory, configName: args.config, reset: flags.reset, configSpecifications})
   }
 }
