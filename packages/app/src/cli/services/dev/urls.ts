@@ -245,13 +245,15 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     )
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
-      const localConfiguration: AppConfiguration = options.localApp.configuration
-      localConfiguration.build = {
-        ...localConfiguration.build,
-        automatically_update_urls_on_dev: shouldUpdateURLs,
-      }
-
-      await writeAppConfigurationFile(localConfiguration)
+      //  1. Search for the extension of type that includes automatically_update_urls_on_dev
+      //  2. Update its content
+      //  3. Rewrite the app configuration file from the app_config_extension specs
+      // const localConfiguration: AppConfiguration = options.localApp.configuration
+      // localConfiguration.build = {
+      //   ...localConfiguration.build,
+      //   automatically_update_urls_on_dev: shouldUpdateURLs,
+      // }
+      // await writeAppConfigurationFile(localConfiguration)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

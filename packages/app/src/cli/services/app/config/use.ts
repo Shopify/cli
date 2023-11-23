@@ -1,7 +1,7 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {AppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {AppConfiguration} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {GetConfigQuerySchema, GetConfig} from '../../../api/graphql/get_config.js'
 import {ConfigExtensionSpecification} from '../../../models/extensions/specification.js'
@@ -69,18 +69,12 @@ interface SaveCurrentConfigOptions {
   configFileName: string
   directory: string
   configSpecifications?: ConfigExtensionSpecification[]
-  configVersion?: string
 }
 
-export async function saveCurrentConfig({
-  configFileName,
-  directory,
-  configSpecifications,
-  configVersion,
-}: SaveCurrentConfigOptions) {
+export async function saveCurrentConfig({configFileName, directory, configSpecifications}: SaveCurrentConfigOptions) {
   const {configuration} = await loadAppConfiguration({configName: configFileName, directory, configSpecifications})
 
-  if ((configVersion || isCurrentAppSchema(configuration)) && configuration.client_id) {
+  if (configuration.client_id) {
     setCachedAppInfo({
       directory,
       configFile: configFileName,

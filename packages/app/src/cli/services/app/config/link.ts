@@ -4,6 +4,7 @@ import {
   AppInterface,
   EmptyApp,
   getAppVersionedSchema,
+  isAppSchema,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
@@ -45,22 +46,19 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     token: partnersSession.token,
     apiKey: remoteApp.apiKey,
   })
-  let configuration: AppConfiguration
-  let uploadCommand = 'config push'
-  // linkAppVersionedConfig => new remote app or remote app with at least one app_config extension registrations
-  if (localApp.configVersion === '3') {
-    configuration = await linkAppVersionedConfig(
-      localApp,
-      remoteApp,
-      options,
-      configFilePath,
-      configFileName,
-      directory,
-      remoteSpecifications,
-    )
-    uploadCommand = 'deploy'
-  } else {
-    configuration = await linkAppConfig(localApp, remoteApp, options, configFilePath, configFileName, directory)
+  let configuration: AppConfiguration | undefined = await linkAppVersionedConfig(
+    localApp,
+    remoteApp,
+    options,
+    configFilePath,
+    configFileName,
+    directory,
+    remoteSpecifications,
+  )
+  let uploadCommand = 'deploy'
+  if (configuration) {
+    configuration = await linkAppConfig(localApp, remoteApp, configFilePath, configFileName, directory)
+    uploadCommand = 'config push'
   }
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -85,7 +83,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   }
 
   await logMetadataForLoadedContext(remoteApp)
-  return configuration
+  return configuration!
 }
 
 async function linkAppVersionedConfig(
@@ -103,31 +101,32 @@ async function linkAppVersionedConfig(
   remoteSpecifications.app.configExtensionRegistrations.forEach((extension) => {
     const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
     if (!configSpec) return
-    const firstLevelObjectName = Object.keys(configSpec.schema._def.shape())[0]!
+    //const firstLevelObjectName = Object.keys(configSpec.schema._def.shape())[0]!
     let configExtensionString = extension.activeVersion?.config
     let configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
-    configSections[firstLevelObjectName] = configExtension
+
+    configSections = {...configSections, ...configSpec.reverseTransform(configExtension)}
   })
+
   const configuration = {
     ...{...localApp.configuration, path: configFilePath},
     ...{
-      version: '3',
       name: remoteApp.title,
       client_id: remoteApp.apiKey,
     },
     ...configSections,
   }
   const versionAppSchema = getAppVersionedSchema(configSpecifications)
+  if (!isAppSchema(configuration, versionAppSchema)) return undefined
   await writeAppConfigurationFile(configuration, versionAppSchema)
   // Cache the toml file content
-  await saveCurrentConfig({configFileName, directory, configVersion: localApp.configVersion})
+  await saveCurrentConfig({configFileName, directory})
   return configuration
 }
 
 async function linkAppConfig(
   localApp: AppInterface,
   remoteApp: OrganizationApp,
-  options: LinkOptions,
   configFilePath: string,
   configFileName: string,
   directory: string,

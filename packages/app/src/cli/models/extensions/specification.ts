@@ -2,8 +2,10 @@ import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
-import {Result} from '@shopify/cli-kit/node/result'
+import {Result, err, ok} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
+import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -22,8 +24,19 @@ interface ExtensionSpecificationCommon {
   managementExperience: ExtensionManagementExperience
 }
 
+export interface TransformationConfig {
+  schema: {[key: string]: string}
+  types: {[key: string]: {[key: string]: string}}
+}
+
 export interface ConfigExtensionSpecification<TConfiguration = unknown> extends ExtensionSpecificationCommon {
   schema: ZodSchemaType<TConfiguration>
+  transformConfig?: TransformationConfig
+  validateConfig?: {[key: string]: unknown}
+
+  validate: (obj: object) => Result<unknown, string>
+  transform: (obj: object) => object
+  reverseTransform: (obj: object) => object
 }
 
 /**
@@ -117,10 +130,96 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
 export function createConfigExtensionSpecification<TConfiguration = unknown>(spec: {
   identifier: string
   schema: TConfiguration
+  transformConfig?: TransformationConfig
+  validateConfig?: {[key: string]: unknown}
 }): ConfigExtensionSpecification<TConfiguration> {
   return {
     identifier: spec.identifier,
     schema: spec.schema as ZodSchemaType<TConfiguration>,
     managementExperience: 'app_config' as ExtensionManagementExperience,
+    transformConfig: spec.transformConfig,
+    validateConfig: spec.validateConfig,
+    validate: spec.validateConfig ? (object) => validate(object, spec.validateConfig!) : () => ok({} as unknown),
+    transform: spec.transformConfig
+      ? (object) => transform(object, spec.transformConfig!)
+      : (object) => defaultTransform(object as {[key: string]: unknown}),
+    reverseTransform: spec.transformConfig
+      ? (object) => transform(object, spec.transformConfig!, true)
+      : (object) => defaultReverseTransform(spec.schema as ZodSchemaType<TConfiguration>, object),
   }
+}
+
+function validate(obj: object, config: {[key: string]: unknown}) {
+  for (const [objectPath, validation] of Object.entries(config)) {
+    const value = getPathValue(obj, objectPath)
+    if (typeof value !== 'string') continue
+
+    switch (validation) {
+      case 'url':
+        if (!validateUrl(value)) {
+          return err(`${objectPath}. Invalid url: ${value}`)
+        }
+        break
+      default:
+        break
+    }
+  }
+  return ok({} as unknown)
+}
+
+function transform(obj: object, config: TransformationConfig, reverse = false): object {
+  const transformedObj = {}
+
+  for (const [mappedPath, objectPath] of Object.entries(config.schema)) {
+    const originPath = reverse ? mappedPath : objectPath
+    const targetPath = reverse ? objectPath : mappedPath
+    let value = getPathValue(obj, originPath)
+
+    if (reverse) {
+      const typesConfig = getPathValue(config, `types.${targetPath}`) ?? {}
+      for (const [originValue, targetValue] of Object.entries(typesConfig)) {
+        if (value === targetValue) {
+          value = parseValue(originValue)
+          break
+        }
+      }
+    } else {
+      const transformation = getPathValue(config, `types.${originPath}.${value}`)
+      if (transformation) {
+        value = transformation
+      }
+    }
+
+    setPathValue(transformedObj, targetPath, value)
+  }
+
+  return transformedObj
+}
+
+const validateUrl = (url: string) => {
+  return /^https:\/\/.*/.test(url)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function parseValue(value: string): any {
+  if (value === 'true') return true
+  if (value === 'false') return false
+
+  const num = Number(value)
+  if (!isNaN(num)) return num
+
+  return value
+}
+
+function defaultTransform(content: {[key: string]: unknown}): {[key: string]: unknown} {
+  const firstKey = Object.keys(content)[0]
+  return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function defaultReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: object) {
+  const configSection: {[key: string]: unknown} = {}
+  const firstLevelObjectName = Object.keys(schema._def.shape())[0]!
+  configSection[firstLevelObjectName] = content
+  return configSection
 }
