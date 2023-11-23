@@ -101,7 +101,6 @@ const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
 })
 
 export const AppVersionedBaseSchema = zod.object({
-  version: zod.string(),
   name: zod.string().max(30),
   client_id: zod.string(),
   extension_directories: zod.array(zod.string()).optional(),
@@ -179,6 +178,17 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   const {path, ...rest} = item
   return isType(AppSchema, rest)
+}
+
+/**
+ * Check if the content is valid against the schema definition.
+ * @param content - the content to validate
+ * @param schema - the schema to validate against
+ * @returns true if the content is valid against the schema definition, false otherwise
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isAppSchema<T>(content: unknown, schema: zod.ZodType<T, any, any>) {
+  return isType(schema, content)
 }
 
 /**
@@ -274,7 +284,6 @@ export interface AppInterface extends AppConfigurationInterface {
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   configExtensions: ConfigExtensionInstance[]
-  configVersion: string
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -296,7 +305,6 @@ export class App implements AppInterface {
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
   configExtensions: ConfigExtensionInstance[]
-  configVersion: string
 
   // eslint-disable-next-line max-params
   constructor(
@@ -310,7 +318,6 @@ export class App implements AppInterface {
     extensions: ExtensionInstance[],
     configExtensions: ConfigExtensionInstance[],
     usesWorkspaces: boolean,
-    configVersion: string,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -326,7 +333,6 @@ export class App implements AppInterface {
     this.configExtensions = configExtensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
-    this.configVersion = configVersion
   }
 
   async updateDependencies() {
@@ -395,7 +401,7 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], [], false, '3')
+    super('', '', '', 'npm', configuration, {}, [], [], [], false)
   }
 }
 

@@ -47,7 +47,7 @@ export class ConfigExtensionInstance<TConfiguration = unknown> {
   }
 
   deployConfig() {
-    return this.getContentWithoutSectionName(this.configuration as {[key: string]: unknown})
+    return this.specification.transform(this.configuration as object)
   }
 
   bundleConfig(): ConfigAppModuleSettings {

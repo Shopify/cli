@@ -9,6 +9,7 @@ import {
   AppSchema,
   LegacyAppSchema,
   getAppVersionedSchema,
+  isAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -74,25 +75,6 @@ export async function loadConfigurationFile(
       throw err
     }
   }
-}
-
-const isVersionedAppConfigurationSchema = (content: {[key: string]: unknown}) => {
-  if (content.version && content.version === '3') return true
-  return false
-}
-
-const isCurrentSchema = (schema: unknown) => {
-  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
-  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
-
-  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-  for (const field in schema as {[key: string]: unknown}) {
-    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
-      return true
-    }
-  }
-
-  return false
 }
 
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -227,12 +209,7 @@ class AppLoader {
       configName: this.configName,
       configSpecifications: this.configSpecifications,
     })
-    const {
-      directory: appDirectory,
-      configuration,
-      configurationLoadResultMetadata,
-      configVersion,
-    } = await configurationLoader.loaded()
+    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
@@ -263,7 +240,6 @@ class AppLoader {
       allExtensions,
       configExtensions,
       usesWorkspaces,
-      configVersion,
       dotenv,
     )
 
@@ -474,6 +450,8 @@ class AppLoader {
           const {path, ...specConfigurationWithouPath} = specConfiguration
           if (Object.keys(specConfigurationWithouPath).length === 0) return
 
+          specification.validate(specConfiguration).valueOrAbort()
+
           const promise = this.createConfigExtensionInstance(
             specification.identifier,
             specConfiguration,
@@ -610,14 +588,9 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
-    let appSchema
-    let configVersion = '2'
-    if (isVersionedAppConfigurationSchema(file as {[key: string]: unknown})) {
-      appSchema = getAppVersionedSchema(this.configSpecifications)
-      configVersion = '3'
-    } else {
-      appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
-    }
+    const appVersionedSchema = getAppVersionedSchema(this.configSpecifications)
+    const appSchema = isAppSchema(file, appVersionedSchema) ? appVersionedSchema : LegacyAppSchema
+
     const configuration = await parseConfigurationFile(appSchema, configurationPath)
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
@@ -645,7 +618,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configVersion}
+    return {directory: appDirectory, configuration, configurationLoadResultMetadata}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
