@@ -5,6 +5,7 @@ export const GetConfig = gql`
     app(apiKey: $apiKey) {
       id
       title
+      handle
       apiKey
       organizationId
       appType
@@ -36,6 +37,7 @@ export const GetConfig = gql`
 export interface App {
   id: string
   title: string
+  handle: string
   apiKey: string
   organizationId: string
   appType: string

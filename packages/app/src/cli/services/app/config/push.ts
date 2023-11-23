@@ -26,6 +26,7 @@ export interface PushOptions {
 
 const FIELD_NAMES: {[key: string]: string} = {
   title: 'name',
+  handle: 'handle',
   api_key: 'client_id',
   redirect_url_whitelist: 'auth > redirect_urls',
   requested_access_scopes: 'access_scopes > scopes',
@@ -125,6 +126,7 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
+    handle: configuration.handle,
     applicationUrl: configuration.application_url,
     webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,

@@ -3,6 +3,7 @@ import {gql} from 'graphql-request'
 export const PushConfig = gql`
   mutation appUpdate(
     $title: String!
+    $handle: String
     $apiKey: String!
     $applicationUrl: Url
     $redirectUrlAllowlist: [Url]
@@ -17,6 +18,7 @@ export const PushConfig = gql`
     appUpdate(
       input: {
         title: $title
+        handle: $handle
         apiKey: $apiKey
         applicationUrl: $applicationUrl
         redirectUrlWhitelist: $redirectUrlAllowlist
@@ -51,6 +53,7 @@ interface AppProxy {
 
 export interface PushConfigVariables {
   title: string
+  handle?: string
   apiKey: string
   applicationUrl?: string
   redirectUrlAllowlist?: string[] | null

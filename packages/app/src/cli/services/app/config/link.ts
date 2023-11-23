@@ -132,6 +132,7 @@ export function mergeAppConfiguration(
     path: appConfiguration.path,
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
+    handle: remoteApp.handle,
     application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
     webhooks: {
