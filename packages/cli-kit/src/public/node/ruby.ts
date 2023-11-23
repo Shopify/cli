@@ -481,6 +481,7 @@ async function runBundler(args: string[], options: ExecOptions) {
       BUNDLE_USER_HOME: bundleUserHome(),
       BUNDLE_WITHOUT: 'development:test',
       BUNDLE_PATH: envPaths('shopify-gems').cache,
+      BUNDLE_FROZEN: 'true',
     },
   })
 }

@@ -308,6 +308,7 @@ function validateBundleExec(
       SHOPIFY_CLI_VERSION: '3.x.x',
       ...(bundled && {SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}),
       BUNDLE_PATH,
+      BUNDLE_FROZEN: 'true',
       ...(spinFqdn && {SPIN_FQDN: spinFqdn, SPIN: '1'}),
       ...(windows && {BUNDLE_USER_HOME: joinPath('root', 'AppData', 'Local', 'shopify-bundler-nodejs', 'Cache')}),
     },
