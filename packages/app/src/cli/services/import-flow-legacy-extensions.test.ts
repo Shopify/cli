@@ -19,6 +19,7 @@ vi.mock('./context/partner-account-info.js')
 const organizationApp: OrganizationApp = {
   id: 'id',
   title: 'title',
+  handle: 'handle',
   apiKey: 'apiKey',
   organizationId: 'organizationId',
   apiSecretKeys: [],

@@ -108,6 +108,7 @@ describe('setup-dev-processes', () => {
       apiSecret: 'api-secret',
       id: '1234',
       title: 'App',
+      handle: 'app',
       organizationId: '5678',
       grantedScopes: [],
       applicationUrl: 'https://example.com/application',

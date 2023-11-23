@@ -23,6 +23,7 @@ vi.mock('./release/version-diff.js')
 const APP = {
   id: 'app-id',
   title: 'app-title',
+  handle: 'app-handle',
   apiKey: 'api-key',
   organizationId: 'org-id',
   grantedScopes: [],

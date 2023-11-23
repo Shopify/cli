@@ -369,6 +369,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     app: options.app,
     partnersApp: {
       id: partnersApp.id,
+      handle: partnersApp.handle,
       title: partnersApp.title,
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,

@@ -53,6 +53,7 @@ const remoteExtensionIds = {
 const remoteApp = {
   id: 'app-id',
   title: 'app-title',
+  handle: 'app-title',
   apiKey: 'api-key',
   organizationId: 'org-id',
   grantedScopes: [],
