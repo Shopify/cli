@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.51.1
+
+### Patch Changes
+
+- aed02aeb8: Fix bundler env vars
+
 ## 3.51.0
 
 ### Minor Changes
