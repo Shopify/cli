@@ -4,9 +4,13 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching} from '../../context/identifiers.js'
 import {installJavy} from '../../function/build.js'
-import {DevSessionCreateMutation} from '../../../api/graphql/dev_session_create.js'
+import {DevSessionCreateMutation, DevSessionCreateSchema} from '../../../api/graphql/dev_session_create.js'
 
-import {DevSessionUpdateMutation, DevSessionUpdateVariables} from '../../../api/graphql/dev_session_update.js'
+import {
+  DevSessionUpdateMutation,
+  DevSessionUpdateSchema,
+  DevSessionUpdateVariables,
+} from '../../../api/graphql/dev_session_update.js'
 import {bundleForDev} from '../../deploy/bundle.js'
 import {
   DevSessionGenerateUrlMutation,
@@ -54,9 +58,15 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   await installJavy(app)
 
   // Start dev session
-  await adminRequest(DevSessionCreateMutation, adminSession, {
+  const result: DevSessionCreateSchema = await adminRequest(DevSessionCreateMutation, adminSession, {
     apiKey,
   })
+
+  if (result.devSessionCreate.userErrors?.length > 0) {
+    const errors = result.devSessionCreate.userErrors.map((error) => error.message).join(', ')
+    outputInfo(`Error while creating dev session: ${errors}`, stdout)
+    // throw new Error(`Error while creating dev session: ${errors}`)
+  }
 
   signal.addEventListener('abort', async () => {
     outputInfo(`Stopping dev session`, stdout)
@@ -157,6 +167,11 @@ export async function updateAppModules({
       {apiKey},
     )
 
+    if (signedUrlResult.devSessionSignedUrlGenerate.userErrors?.length > 0) {
+      const errors = signedUrlResult.devSessionSignedUrlGenerate.userErrors.map((error) => error.message).join(', ')
+      throw new Error(`Error while generating signed url: ${errors}`)
+    }
+
     const signedUrl = signedUrlResult.devSessionSignedUrlGenerate.signedUrl
 
     const form = formData()
@@ -178,7 +193,12 @@ export async function updateAppModules({
       bundleUrl: signedUrl,
       apiKey,
     }
-    await adminRequest(DevSessionUpdateMutation, adminSession, variables)
+    const result: DevSessionUpdateSchema = await adminRequest(DevSessionUpdateMutation, adminSession, variables)
+
+    if (result.devSessionUpdate.userErrors?.length > 0) {
+      const errors = result.devSessionUpdate.userErrors.map((error) => error.message).join(', ')
+      throw new Error(`Error while updating app modules: ${errors}`)
+    }
 
     const names = extensions.map((ext) => ext.localIdentifier).join(', ')
 
