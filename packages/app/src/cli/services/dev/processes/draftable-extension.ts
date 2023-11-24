@@ -2,8 +2,7 @@ import {BaseProcess, DevProcessFunction} from './types.js'
 import {setupExtensionWatcher} from '../extension/bundler.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {AppInterface} from '../../../models/app/app.js'
-import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
-import {getAppIdentifiers} from '../../../models/app/identifiers.js'
+import {PartnersAppForIdentifierMatching} from '../../context/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DevSessionCreateMutation} from '../../../api/graphql/dev_session_create.js'
 
@@ -14,7 +13,6 @@ import {
   DevSessionGenerateUrlSchema,
 } from '../../../api/graphql/dev_session_generate_url.js'
 import {DevSessionDeleteMutation} from '../../../api/graphql/dev_session_delete.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {emptyDir, fileExistsSync, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
@@ -28,7 +26,6 @@ export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
   token: string
   apiKey: string
-  remoteExtensionIds: {[key: string]: string}
   proxyUrl: string
   localApp: AppInterface
   adminSession: AdminSession
@@ -50,7 +47,7 @@ async function prepareDevFolder(directory: string) {
 
 export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExtensionOptions> = async (
   {stderr, stdout, abortSignal: signal},
-  {extensions, token, adminSession, apiKey, remoteExtensionIds: remoteExtensions, proxyUrl, localApp: app},
+  {extensions, token, adminSession, apiKey, proxyUrl, localApp: app},
 ) => {
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
@@ -76,8 +73,8 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
   await Promise.all(
     extensions.map(async (extension) => {
       await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
-      const registrationId = remoteExtensions[extension.localIdentifier]
-      if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
+      // const registrationId = remoteExtensions[extension.localIdentifier]
+      // if (!registrationId) throw new AbortError(`Extension ${extension.localIdentifier} not found on remote app.`)
       // Initial draft update for each extension
       // await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
       // Watch for changes
@@ -91,7 +88,6 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
         token,
         adminSession,
         apiKey,
-        registrationId,
         devFolder,
       })
     }),
@@ -112,23 +108,6 @@ export async function setupDraftableExtensionsProcess({
   if (draftableExtensions.length === 0) {
     return
   }
-  const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
-
-  const {extensionIds: remoteExtensionIds, extensions: extensionsUuids} = await ensureDeploymentIdsPresence({
-    app: localApp,
-    partnersApp: remoteApp,
-    appId: apiKey,
-    appName: remoteApp.title,
-    force: true,
-    release: true,
-    token,
-    envIdentifiers: prodEnvIdentifiers,
-  })
-
-  // Update the local app with the remote extension UUIDs.
-  // Extensions are initialized with a random dev UUID when running the dev command
-  // which is sent over WS messages for live reload in dev preview of UI Extensions.
-  localApp.updateExtensionUUIDS(extensionsUuids)
 
   return {
     type: 'draftable-extension',
@@ -140,7 +119,7 @@ export async function setupDraftableExtensionsProcess({
       token,
       ...options,
       extensions: draftableExtensions,
-      remoteExtensionIds,
+      // remoteExtensionIds,
     },
   }
 }

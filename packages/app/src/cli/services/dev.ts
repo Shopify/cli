@@ -22,7 +22,6 @@ import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
@@ -122,10 +121,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     token,
   )
 
-  // If we have a real UUID for an extension, use that instead of a random one
-  const allExtensionsWithDevUUIDs = getDevUUIDsForAllExtensions(localApp, apiKey)
-  localApp.allExtensions = allExtensionsWithDevUUIDs
-
   return {
     storeFqdn,
     storeId,
@@ -179,17 +174,6 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
   })
 
   await reportAnalyticsEvent({config: config.commandOptions.commandConfig, exitMode: 'ok'})
-}
-
-function getDevUUIDsForAllExtensions(localApp: AppInterface, apiKey: string) {
-  const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
-  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
-  const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-
-  return localApp.allExtensions.map((ext) => {
-    ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID
-    return ext
-  })
 }
 
 async function handleUpdatingOfPartnerUrls(

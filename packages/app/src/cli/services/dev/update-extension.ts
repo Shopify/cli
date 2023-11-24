@@ -69,7 +69,6 @@ interface UpdateExtensionConfigOptions {
   adminSession: AdminSession
   app: AppInterface
   apiKey: string
-  registrationId: string
   devFolder: string
   stdout: Writable
   stderr: Writable
@@ -81,7 +80,6 @@ export async function updateExtensionConfig({
   adminSession,
   app,
   apiKey,
-  registrationId,
   devFolder,
   stdout,
   stderr,

@@ -125,7 +125,6 @@ export interface SetupExtensionWatcherOptions {
   token: string
   adminSession: AdminSession
   apiKey: string
-  registrationId: string
   devFolder: string
 }
 
@@ -139,7 +138,6 @@ export async function setupExtensionWatcher({
   adminSession,
   token,
   apiKey,
-  registrationId,
   devFolder,
 }: SetupExtensionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
@@ -214,7 +212,6 @@ Redeploy Paths:
             extension,
             token,
             apiKey,
-            registrationId,
             stdout,
             stderr,
             adminSession,
