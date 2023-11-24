@@ -26,7 +26,7 @@ interface ExtensionSpecificationCommon {
 
 export interface TransformationConfig {
   schema: {[key: string]: string}
-  types: {[key: string]: {[key: string]: string}}
+  types?: {[key: string]: {[key: string]: string}}
 }
 
 export interface ConfigExtensionSpecification<TConfiguration = unknown> extends ExtensionSpecificationCommon {
@@ -152,18 +152,31 @@ export function createConfigExtensionSpecification<TConfiguration = unknown>(spe
 function validate(obj: object, config: {[key: string]: unknown}) {
   for (const [objectPath, validation] of Object.entries(config)) {
     const value = getPathValue(obj, objectPath)
-    if (typeof value !== 'string') continue
+    if (typeof value !== 'string' && !Array.isArray(value)) continue
 
-    switch (validation) {
-      case 'url':
-        if (!validateUrl(value)) {
-          return err(`${objectPath}. Invalid url: ${value}`)
-        }
-        break
-      default:
-        break
+    let values: string[] = []
+    if (typeof value === 'string') {
+      values.push(value)
+    } else {
+      values = value
     }
+
+    const result = values.map((value) => {
+      switch (validation) {
+        case 'url':
+          if (!validateUrl(value)) {
+            return err(`${objectPath}. Invalid url: ${value}`)
+          }
+          break
+        default:
+          break
+      }
+      return ok({} as unknown)
+    })
+    const error = result.find((validation) => validation.isErr())
+    if (error) return error
   }
+
   return ok({} as unknown)
 }
 
