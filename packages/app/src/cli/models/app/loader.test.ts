@@ -2305,7 +2305,6 @@ describe('WebhooksSchema', () => {
       subscriptions: [
         {
           topic: 'products/create',
-          format: 'xml',
         },
       ],
     }
@@ -2374,27 +2373,6 @@ describe('WebhooksSchema', () => {
         message: 'To use top-level topics, you must also provide a top-level `endpoint`',
         fatal: true,
         path: ['webhooks', 'topics'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('throws an error if format is not json or xml', async () => {
-      const webhookConfig: WebhookConfig = {
-        subscriptions: [
-          {
-            topic: 'products/create',
-            format: 'csv' as any,
-          },
-        ],
-      }
-      const errorObj = {
-        received: 'csv',
-        code: zod.ZodIssueCode.invalid_enum_value,
-        options: ['json', 'xml'],
-        path: ['webhooks', 'subscriptions', 0, 'format'],
-        message: "Invalid enum value. Expected 'json' | 'xml', received 'csv'",
       }
 
       const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
