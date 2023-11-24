@@ -56,7 +56,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     remoteSpecifications,
   )
   let uploadCommand = 'deploy'
-  if (configuration) {
+  if (!configuration) {
     configuration = await linkAppConfig(localApp, remoteApp, configFilePath, configFileName, directory)
     uploadCommand = 'config push'
   }

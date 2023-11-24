@@ -1,7 +1,7 @@
 import spec from './app_config_app_ui.js'
 import {describe, expect, test} from 'vitest'
 
-describe('functionConfiguration', () => {
+describe('app_cofig_app_ui', () => {
   describe('validate', () => {
     test('a correct object should return ok', () => {
       // Given
@@ -20,7 +20,7 @@ describe('functionConfiguration', () => {
       // Then
       expect(() => result.valueOrBug()).not.toThrowError()
     })
-    test('wrong application_url value should return ko', () => {
+    test.only('wrong application_url value should return ko', () => {
       // Given
       const object = {
         embedded: true,
