@@ -45,7 +45,7 @@ module ShopifyCLI
         # on disk.
         def reject_duplicated_checksums!
           checksums_mutex.synchronize do
-            checksum_by_key.reject! { |key, _| checksum_by_key.key?("#{key}.liquid") }
+            checksum_by_key.reject! { |key, _| key.starts_with?(“assets/“) && checksum_by_key.key?("#{key}.liquid") }
           end
         end
 
