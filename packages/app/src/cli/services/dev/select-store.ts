@@ -9,9 +9,7 @@ import {
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 
@@ -107,7 +105,6 @@ export async function convertToTestStoreIfNeeded(
   /**
    * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
    */
-  if (isSpinEnvironment() && firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
     throw new AbortError(
       `The store you specified (${store.shopDomain}) is not a dev store`,
