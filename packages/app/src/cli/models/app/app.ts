@@ -55,7 +55,6 @@ const EndpointValidation = zod
 export const WebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
   sub_topic: zod.string().optional(),
-  format: zod.enum(['json', 'xml']).optional(),
   include_fields: zod.array(zod.string()).optional(),
   metafield_namespaces: zod.array(zod.string()).optional(),
   endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
