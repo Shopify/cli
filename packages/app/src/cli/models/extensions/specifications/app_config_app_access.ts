@@ -38,7 +38,7 @@ const AppAccessValidateConfig = {
 }
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'app_ui',
+  identifier: 'app_access',
   schema: AppAccessSchema,
   transformConfig: AppAccessTransformConfig,
   validateConfig: AppAccessValidateConfig,
