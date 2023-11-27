@@ -1,6 +1,6 @@
 import {fetchStoreThemes} from './fetch.js'
 import {fetchThemes} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/models/index'
 import {test, vi, describe, expect} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 

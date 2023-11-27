@@ -3,7 +3,7 @@ import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {deleteTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme, isDevelopmentTheme} from '@shopify/cli-kit/node/themes/models/index'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {
   renderConfirmationPrompt,
@@ -37,7 +37,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
   }
 
   themes.map((theme) => {
-    if (theme.hasDevelopmentRole) {
+    if (isDevelopmentTheme(theme)) {
       removeDevelopmentTheme()
     }
     return deleteTheme(theme.id, adminSession)

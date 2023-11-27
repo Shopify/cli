@@ -84,6 +84,16 @@ module ShopifyCLI
             # Fallback to using the raw content
           end
         end
+        # p '-------------'
+        # # puts "\n\n"
+        puts "\n"
+        puts "\n"
+        puts content
+        puts "\n"
+        puts "\n"
+        # p '-------------'
+        # p Digest::MD5.hexdigest(content)
+        # p '-------------'
         Digest::MD5.hexdigest(content)
       end
 
@@ -119,6 +129,7 @@ module ShopifyCLI
         end
 
         normalized = JSON.generate(parsed)
+        puts normalized
         # Backend escapes forward slashes
         normalized.gsub!(/\//, "\\/")
         normalized

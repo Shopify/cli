@@ -1,7 +1,7 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemes} from './theme-selector.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/models/index'
 import {test, describe, vi, expect} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 

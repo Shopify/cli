@@ -1,7 +1,7 @@
 import {publish} from './publish.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {publishTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/models/index'
 import {renderSuccess, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {test, describe, expect, vi} from 'vitest'
 

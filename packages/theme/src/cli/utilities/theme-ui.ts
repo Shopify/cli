@@ -1,4 +1,4 @@
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/models/index'
 
 export function themeComponent(theme: Theme) {
   return [

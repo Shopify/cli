@@ -1,13 +1,13 @@
 import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
+import {pull} from '../../services/pull.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {fetchTheme} from '@shopify/cli-kit/node/themes/themes-api'
 
 export default class Pull extends ThemeCommand {
   static description = 'Download your remote theme files locally.'
@@ -53,6 +53,11 @@ export default class Pull extends ThemeCommand {
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    beta: Flags.boolean({
+      hidden: true,
+      description: 'The beta flag activates an optimized implementation of the pull command.',
+      env: 'SHOPIFY_FLAG_BETA',
+    }),
   }
 
   static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
@@ -64,21 +69,15 @@ export default class Pull extends ThemeCommand {
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-    const theme = await (flags.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
-    if (theme) {
-      if (flags.development) {
-        flags.theme = `${theme.id}`
-        flags.development = false
-      }
-      if (useEmbeddedThemeCLI()) {
-        flags['development-theme-id'] = theme.id
-      }
-    }
+    const theme = (await fetchTheme(Number(flags.theme!), adminSession))!
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Pull.cli2Flags})
     const command = ['theme', 'pull', flags.path, ...flagsToPass]
 
-    await execCLI2(command, {store, adminToken: adminSession.token})
+    if (flags.beta) {
+      await pull({theme, path: flags.path}, adminSession)
+    } else {
+      await execCLI2(command, {store, adminToken: adminSession.token})
+    }
   }
 }

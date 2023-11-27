@@ -1,11 +1,19 @@
 import {storeAdminUrl} from './theme-urls.js'
-import {Theme} from './models/theme.js'
 import * as throttler from '../../../private/node/themes/themes-api/throttler.js'
 import {apiCallLimit, retryAfter} from '../../../private/node/themes/themes-api/headers.js'
 import {retry} from '../../../private/node/themes/themes-api/retry.js'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {
+  Theme,
+  Checksum,
+  Key,
+  ThemeAsset,
+  buildChecksum,
+  buildTheme,
+  buildThemeAsset,
+} from '@shopify/cli-kit/node/themes/models/index'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
 
@@ -16,12 +24,30 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
 
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   const response = await request('GET', '/themes', session, undefined, {fields: 'id,name,role,processing'})
-  return buildThemes(response)
+  const themes = response.json?.themes
+  if (themes?.length > 0) return themes.map(buildTheme)
+  return []
 }
 
 export async function createTheme(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('POST', '/themes', session, {theme: {...params}})
   return buildTheme({...response.json.theme, createdAtRuntime: true})
+}
+
+export async function fetchThemeAsset(id: number, key: Key, session: AdminSession): Promise<ThemeAsset | undefined> {
+  const response = await request('GET', `/themes/${id}/assets`, session, undefined, {
+    'asset[key]': key,
+  })
+  return buildThemeAsset(response.json.asset)
+}
+
+export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
+  const response = await request('GET', `/themes/${id}/assets`, session, undefined, {fields: 'key,checksum'})
+  const assets = response.json?.assets
+
+  if (assets?.length > 0) return assets.map(buildChecksum)
+
+  return []
 }
 
 interface UpgradeThemeOptions {
@@ -99,16 +125,6 @@ function buildThemes(response: RestResponse): Theme[] {
   }
 
   return []
-}
-
-// Using `any` to avoid introducing extra DTO layers.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function buildTheme(themeJson: any): Theme | undefined {
-  if (!themeJson?.id) {
-    return undefined
-  }
-
-  return new Theme(themeJson.id, themeJson.name, themeJson.role, themeJson.createdAtRuntime, themeJson.processing)
 }
 
 function handleForbiddenError(session: AdminSession): never {

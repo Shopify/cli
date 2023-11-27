@@ -5,7 +5,7 @@ import {describe, vi, expect, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme, buildTheme} from '@shopify/cli-kit/node/themes/models/index'
 
 vi.mock('../../utilities/development-theme-manager.js')
 vi.mock('../../utilities/theme-store.js')
@@ -39,7 +39,7 @@ describe('Push', () => {
     }
 
     test('should pass development theme from local storage to CLI 2', async () => {
-      const theme = new Theme(1, 'Theme', 'development')
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
       await run([], theme)
 
       expect(DevelopmentThemeManager.prototype.findOrCreate).not.toHaveBeenCalled()
@@ -49,7 +49,7 @@ describe('Push', () => {
 
     test('should pass theme and development theme from local storage to CLI 2', async () => {
       const themeId = 2
-      const theme = new Theme(3, 'Theme', 'development')
+      const theme = buildTheme({id: 3, name: 'Theme', role: 'development'})!
       await run([`--theme=${themeId}`], theme)
 
       expectCLI2ToHaveBeenCalledWith(`theme push ${path} --theme ${themeId} --development-theme-id ${theme.id}`)
@@ -64,7 +64,7 @@ describe('Push', () => {
     })
 
     test('should pass theme and development theme to CLI 2', async () => {
-      const theme = new Theme(4, 'Theme', 'development')
+      const theme = buildTheme({id: 4, name: 'Theme', role: 'development'})!
       await run(['--development'], theme)
 
       expect(DevelopmentThemeManager.prototype.findOrCreate).toHaveBeenCalledOnce()
