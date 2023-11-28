@@ -115,8 +115,8 @@ async function linkAppVersionedConfig(
   remoteExtensionRegistrations.app.configExtensionRegistrations.forEach((extension) => {
     const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
     if (!configSpec) return
-    //const firstLevelObjectName = Object.keys(configSpec.schema._def.shape())[0]!
     let configExtensionString = extension.activeVersion?.config
+    if (!configExtensionString) return
     let configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
 
     configSections = {...configSections, ...configSpec.reverseTransform(configExtension)}
