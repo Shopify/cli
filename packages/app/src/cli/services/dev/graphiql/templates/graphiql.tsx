@@ -65,6 +65,7 @@ export function graphiqlTemplate({
 <html lang="en">
   <head>
     <title>GraphiQL</title>
+    <link rel="shortcut icon" href="{{url}}/graphiql/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.1.1/build/esm/styles.css" />
     <style>
       body {
