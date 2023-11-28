@@ -203,6 +203,7 @@ function transform(obj: object, config: TransformationConfig, reverse = false): 
       }
     }
 
+    if (value === undefined) continue
     setPathValue(transformedObj, targetPath, value)
   }
 

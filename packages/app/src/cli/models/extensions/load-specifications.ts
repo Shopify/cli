@@ -8,12 +8,15 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 import {fileURLToPath} from 'url'
 
+export interface Specifications {
+  generalSpecifications: ExtensionSpecification[]
+  configSpecifications: ConfigExtensionSpecification[]
+}
+
 /**
  * Load all specifications from the local file system AND plugins
  */
-export async function loadLocalExtensionsSpecifications(
-  config: Config,
-): Promise<{generalSpecifications: ExtensionSpecification[]; configSpecifications: ConfigExtensionSpecification[]}> {
+export async function loadLocalExtensionsSpecifications(config: Config): Promise<Specifications> {
   const local = await loadFSExtensionsSpecifications()
   const {cli: generalSpecifications, app_config: configSpecifications} = groupBy(
     local,

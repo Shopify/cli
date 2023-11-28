@@ -16,6 +16,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -23,6 +24,7 @@ import {
   isCurrentAppSchema,
   appIsLaunchable,
   getAppScopesArray,
+  getAppVersionedSchema,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -47,6 +49,7 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -187,14 +190,20 @@ export async function ensureDevContext(
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
   if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const newConfiguration: AppConfiguration = {
+    const newConfiguration = {
       ...configuration,
       build: {
-        ...configuration.build,
+        ...(getPathValue(configuration, 'build') ?? {}),
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    await writeAppConfigurationFile(newConfiguration)
+    const specifications = await fetchSpecifications({
+      token,
+      apiKey: selectedApp.apiKey,
+      config: options.commandConfig,
+    })
+    const appVersionedSchema = getAppVersionedSchema(specifications.configSpecifications)
+    await writeAppConfigurationFile(newConfiguration, appVersionedSchema)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -640,8 +649,8 @@ export async function getAppContext({
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
-      storeFqdn: configuration.build?.dev_store_url,
-      updateURLs: configuration.build?.automatically_update_urls_on_dev,
+      storeFqdn: getPathValue<string>(configuration, 'build.dev_store_url'),
+      updateURLs: getPathValue<boolean>(configuration, 'build.automatically_update_urls_on_dev'),
     }
   }
 

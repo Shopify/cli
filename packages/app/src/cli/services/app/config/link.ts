@@ -3,14 +3,14 @@ import {
   AppConfiguration,
   AppInterface,
   EmptyApp,
+  getAppScopes,
   getAppVersionedSchema,
   isAppSchema,
-  isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
 import {OrganizationApp, OrganizationConfigurationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {Specifications, loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
@@ -25,7 +25,9 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../../api/graphql/all_app_extension_registrations.js'
-import {updateAppIdentifiers} from '../../../models/app/identifiers.js'
+import {setPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
+import {ConfigExtensionSpecification} from '../../../models/extensions/specification.js'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -35,17 +37,19 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const localApp = await loadAppConfigFromDefaultToml(options)
+  const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
+  const localApp = await loadAppConfigFromDefaultToml(options, specifications)
   const directory = localApp?.directory || options.directory
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, directory)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(options.directory, configFileName)
   // Fetch app_config extension registrations
   const partnersSession = await fetchPartnersSession()
-  const remoteSpecifications = await fetchAppExtensionRegistrations({
+  const remoteExtensionRegistrations = await fetchAppExtensionRegistrations({
     token: partnersSession.token,
     apiKey: remoteApp.apiKey,
   })
+  const appVersionedSchema = getAppVersionedSchema(specifications.configSpecifications)
   let configuration: AppConfiguration | undefined = await linkAppVersionedConfig(
     localApp,
     remoteApp,
@@ -53,11 +57,20 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     configFilePath,
     configFileName,
     directory,
-    remoteSpecifications,
+    remoteExtensionRegistrations,
+    appVersionedSchema,
+    specifications.configSpecifications,
   )
   let uploadCommand = 'deploy'
   if (!configuration) {
-    configuration = await linkAppConfig(localApp, remoteApp, configFilePath, configFileName, directory)
+    configuration = await linkAppConfig(
+      localApp,
+      remoteApp,
+      configFilePath,
+      configFileName,
+      directory,
+      appVersionedSchema,
+    )
     uploadCommand = 'config push'
   }
   if (shouldRenderSuccess) {
@@ -93,12 +106,13 @@ async function linkAppVersionedConfig(
   configFilePath: string,
   configFileName: string,
   directory: string,
-  remoteSpecifications: AllAppExtensionRegistrationsQuerySchema,
+  remoteExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema,
+  versionAppSchema: zod.ZodTypeAny,
+  configSpecifications: ConfigExtensionSpecification[],
 ) {
   // Populate the shopify.app.toml
-  const {configSpecifications} = await loadLocalExtensionsSpecifications(options.commandConfig)
   let configSections: {[key: string]: unknown} = {}
-  remoteSpecifications.app.configExtensionRegistrations.forEach((extension) => {
+  remoteExtensionRegistrations.app.configExtensionRegistrations.forEach((extension) => {
     const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
     if (!configSpec) return
     //const firstLevelObjectName = Object.keys(configSpec.schema._def.shape())[0]!
@@ -116,8 +130,8 @@ async function linkAppVersionedConfig(
     },
     ...configSections,
   }
-  const versionAppSchema = getAppVersionedSchema(configSpecifications)
-  if (!isAppSchema(configuration, versionAppSchema)) return undefined
+  if (Object.keys(configSections).length === 0 || !isAppSchema(configuration, versionAppSchema)) return undefined
+
   await writeAppConfigurationFile(configuration, versionAppSchema)
   // Cache the toml file content
   await saveCurrentConfig({configFileName, directory})
@@ -130,6 +144,7 @@ async function linkAppConfig(
   configFilePath: string,
   configFileName: string,
   directory: string,
+  versionAppSchema: zod.ZodTypeAny,
 ) {
   const configuration = mergeAppConfiguration(
     {...localApp.configuration, path: configFilePath},
@@ -137,14 +152,16 @@ async function linkAppConfig(
       ...remoteApp,
     },
   )
-  await writeAppConfigurationFile(configuration)
+  await writeAppConfigurationFile(configuration, versionAppSchema)
   await saveCurrentConfig({configFileName, directory})
   return configuration
 }
 
-async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
+async function loadAppConfigFromDefaultToml(
+  options: LinkOptions,
+  specifications: Specifications,
+): Promise<AppInterface> {
   try {
-    const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
     const app = await loadApp({
       ...specifications,
       directory: options.directory,
@@ -200,7 +217,7 @@ export function mergeAppConfiguration(
   appConfiguration: AppConfiguration,
   remoteApp: OrganizationConfigurationApp,
 ): AppConfiguration {
-  const result: AppConfiguration = {
+  const result = {
     path: appConfiguration.path,
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
@@ -223,33 +240,33 @@ export function mergeAppConfiguration(
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   if (hasAnyPrivacyWebhook) {
-    result.webhooks.privacy_compliance = {
+    setPathValue(result, 'webhooks.privacy_compliance', {
       customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
       customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
       shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
-    }
+    })
   }
 
   if (remoteApp.appProxy?.url) {
-    result.app_proxy = {
+    setPathValue(result, 'app_proxy', {
       url: remoteApp.appProxy.url,
       subpath: remoteApp.appProxy.subPath,
       prefix: remoteApp.appProxy.subPathPrefix,
-    }
+    })
   }
 
   if (remoteApp.preferencesUrl) {
-    result.app_preferences = {url: remoteApp.preferencesUrl}
+    setPathValue(result, 'app_preferences', {url: remoteApp.preferencesUrl})
   }
 
-  result.access_scopes = getAccessScopes(appConfiguration, remoteApp)
+  setPathValue(result, 'access_scopes', getAccessScopes(appConfiguration, remoteApp))
 
   if (appConfiguration.extension_directories) {
-    result.extension_directories = appConfiguration.extension_directories
+    setPathValue(result, 'extension_directories', appConfiguration.extension_directories)
   }
 
   if (appConfiguration.web_directories) {
-    result.web_directories = appConfiguration.web_directories
+    setPathValue(result, 'web_directories', appConfiguration.web_directories)
   }
 
   return result
@@ -262,14 +279,9 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
       scopes: remoteApp.requestedAccessScopes.join(','),
     }
     // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
-  } else if (isLegacyAppSchema(appConfiguration) && appConfiguration.scopes) {
+  } else if (getAppScopes(appConfiguration)) {
     return {
-      scopes: appConfiguration.scopes,
-      use_legacy_install_flow: true,
-    }
-  } else if (isCurrentAppSchema(appConfiguration) && appConfiguration.access_scopes?.scopes) {
-    return {
-      scopes: appConfiguration.access_scopes.scopes,
+      scopes: getAppScopes(appConfiguration),
       use_legacy_install_flow: true,
     }
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true

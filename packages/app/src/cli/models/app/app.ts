@@ -2,12 +2,6 @@ import {AppErrors, isWebType} from './loader.js'
 import {ConfigExtensionInstance, ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {
-  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA,
-  validateInnerSubscriptions,
-  validateTopLevelSubscriptions,
-  httpsRegex,
-} from '../../utilities/app/config/webhooks.js'
 import {ConfigExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -15,6 +9,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -26,82 +21,9 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
-// example PubSub URI - pubsub://{project}:{topic}
-const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
-// example Eventbridge ARN - arn:aws:events:{region}::event-source/aws.partner/shopify.com/{app_id}/{path}
-const arnRegex =
-  /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/
-
-// adding http or https presence and absence of new lines to url validation
-const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
-  const regex = httpsOnly ? httpsRegex : /^(https?:\/\/)/
-  return zodType
-    .url()
-    .refine((value) => Boolean(value.match(regex)), {message})
-    .refine((value) => !value.includes('\n'), {message})
-}
-
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
-const removeTrailingSlash = (arg: unknown) =>
-  typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
-const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
-  httpsOnly: true,
-  message: 'Only https urls are allowed',
-}).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-const EndpointValidation = zod
-  .union([zod.string().regex(httpsRegex), zod.string().regex(pubSubRegex), zod.string().regex(arnRegex)])
-  .optional()
-
-export const WebhookSubscriptionSchema = zod.object({
-  topic: zod.string(),
-  sub_topic: zod.string().optional(),
-  format: zod.enum(['json', 'xml']).optional(),
-  include_fields: zod.array(zod.string()).optional(),
-  metafield_namespaces: zod.array(zod.string()).optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
-  path: zod
-    .string()
-    .refine((path) => path.startsWith('/') && path.length > 1, {
-      message: 'Path must start with a forward slash and be longer than 1 character',
-    })
-    .optional(),
-})
-
-const WebhooksSchema = zod.object({
-  api_version: zod.string(),
-  privacy_compliance: zod
-    .object({
-      customer_deletion_url: ensureHttpsOnlyUrl.optional(),
-      customer_data_request_url: ensureHttpsOnlyUrl.optional(),
-      shop_deletion_url: ensureHttpsOnlyUrl.optional(),
-    })
-    .optional(),
-})
-
-const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
-  topics: zod.array(zod.string()).nonempty().optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
-  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-}).superRefine((schema, ctx) => {
-  // eslint-disable-next-line no-warning-comments
-  // TODO - remove once declarative webhooks are live, don't validate properties we are not using yet
-  if (TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA) return
-
-  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema)
-  if (topLevelSubscriptionErrors) {
-    ctx.addIssue(topLevelSubscriptionErrors)
-    return zod.NEVER
-  }
-
-  const innerSubscriptionErrors = validateInnerSubscriptions(schema)
-  if (innerSubscriptionErrors) {
-    ctx.addIssue(innerSubscriptionErrors)
-    return zod.NEVER
-  }
-})
-
-export const AppVersionedBaseSchema = zod.object({
+export const AppSchema = zod.object({
   name: zod.string().max(30),
   client_id: zod.string(),
   extension_directories: zod.array(zod.string()).optional(),
@@ -112,10 +34,10 @@ export function getAppVersionedSchema(specs: ConfigExtensionSpecification[]) {
   return specs.reduce((schema, spec) => {
     return schema.merge(spec.schema)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }, AppVersionedBaseSchema as any)
+  }, AppSchema as any)
 }
 
-export const AppSchema = zod
+/* export const AppSchema = zod
   .object({
     name: zod.string().max(30),
     client_id: zod.string(),
@@ -159,9 +81,9 @@ export const AppSchema = zod
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
   })
-  .strict()
+  .strict()*/
 
-export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema, AppVersionedBaseSchema])
+export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
@@ -177,8 +99,7 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  * @param item - the item to validate
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  const {path, ...rest} = item
-  return isType(AppSchema, rest)
+  return getPathValue(item, 'client_id') !== undefined
 }
 
 /**
@@ -199,8 +120,8 @@ export function isAppSchema<T>(content: unknown, schema: zod.ZodType<T, any, any
 export function getAppScopes(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) {
     return config.scopes
-  } else if (isCurrentAppSchema(config)) {
-    return config.access_scopes?.scopes ?? ''
+  } else if (getPathValue(config, 'access_scopes.scopes')) {
+    return getPathValue<string>(config, 'access_scopes.scopes') ?? ''
   }
   return ''
 }
@@ -216,7 +137,9 @@ export function getAppScopesArray(config: AppConfiguration) {
 
 export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
-  if (isCurrentAppSchema(config)) return Boolean(config.access_scopes?.use_legacy_install_flow)
+  if (isCurrentAppSchema(config)) {
+    return getPathValue<boolean>(config, 'access_scopes.scopes.use_legacy_install_flow')
+  }
   return false
 }
 
@@ -261,8 +184,6 @@ export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: 
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
-export type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
-export type NormalizedWebhookSubscriptions = Partial<zod.infer<typeof WebhookSubscriptionSchema>>[]
 
 export interface Web {
   directory: string
@@ -273,6 +194,7 @@ export interface Web {
 export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
+  configSchema: zod.ZodTypeAny
 }
 
 export interface AppInterface extends AppConfigurationInterface {
@@ -306,6 +228,7 @@ export class App implements AppInterface {
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
   configExtensions: ConfigExtensionInstance[]
+  configSchema: zod.ZodTypeAny
 
   // eslint-disable-next-line max-params
   constructor(
@@ -319,6 +242,7 @@ export class App implements AppInterface {
     extensions: ExtensionInstance[],
     configExtensions: ConfigExtensionInstance[],
     usesWorkspaces: boolean,
+    configSchema: zod.ZodTypeAny,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -334,6 +258,7 @@ export class App implements AppInterface {
     this.configExtensions = configExtensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.configSchema = configSchema
   }
 
   async updateDependencies() {
@@ -402,7 +327,7 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], [], false)
+    super('', '', '', 'npm', configuration, {}, [], [], [], false, AppSchema)
   }
 }
 

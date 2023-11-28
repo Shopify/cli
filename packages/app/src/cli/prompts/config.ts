@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
-import {AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
+import {getAppScopes, getAppScopesArray, isCurrentAppSchema} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
@@ -17,8 +17,9 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
+import {deepCompare, deepDifference, setPathValue} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -73,18 +74,19 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(options: PushOptions, app: App) {
+export async function confirmPushChanges(options: PushOptions, app: App, schema: zod.ZodTypeAny) {
   if (options.force) return true
 
-  const configuration = options.configuration as CurrentAppConfiguration
+  const configuration = options.configuration
   const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
 
-  if (configuration.access_scopes?.scopes)
-    configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
+  if (isCurrentAppSchema(configuration) && getAppScopes(configuration) !== undefined) {
+    setPathValue(configuration, 'access_scopes.scopes', getAppScopesArray(configuration).join(',') as unknown as object)
+  }
 
   const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(AppSchema, configuration) as object), build: undefined},
-    {...(rewriteConfiguration(AppSchema, remoteConfiguration) as object), build: undefined},
+    {...(rewriteConfiguration(schema, configuration) as object), build: undefined},
+    {...(rewriteConfiguration(schema, remoteConfiguration) as object), build: undefined},
   )
 
   if (deepCompare(updated, baseline)) {

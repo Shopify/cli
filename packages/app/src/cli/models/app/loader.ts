@@ -6,10 +6,9 @@ import {
   WebType,
   getAppScopesArray,
   AppConfigurationInterface,
-  AppSchema,
-  LegacyAppSchema,
   getAppVersionedSchema,
   isAppSchema,
+  LegacyAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -209,7 +208,12 @@ class AppLoader {
       configName: this.configName,
       configSpecifications: this.configSpecifications,
     })
-    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
+    const {
+      directory: appDirectory,
+      configuration,
+      configurationLoadResultMetadata,
+      configSchema,
+    } = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
@@ -240,6 +244,7 @@ class AppLoader {
       allExtensions,
       configExtensions,
       usesWorkspaces,
+      configSchema,
       dotenv,
     )
 
@@ -599,7 +604,7 @@ class AppConfigurationLoader {
       allClientIdsByConfigName,
     }
 
-    if (appSchema === AppSchema) {
+    if (appSchema === appVersionedSchema) {
       let gitTracked = false
       try {
         gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
@@ -618,7 +623,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appSchema}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

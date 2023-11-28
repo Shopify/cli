@@ -1,5 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
@@ -15,6 +15,7 @@ import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 
 export interface PartnersURLs {
   applicationUrl: string
@@ -184,24 +185,24 @@ export async function updateURLs(
   }
 
   if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
-    const localConfiguration: AppConfiguration = {
+    const localConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
       auth: {
-        ...localApp.configuration.auth,
+        ...getPathValue(localApp.configuration, 'auth'),
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
 
     if (urls.appProxy) {
-      localConfiguration.app_proxy = {
+      setPathValue(localConfiguration, 'app_proxy', {
         url: urls.appProxy.proxyUrl,
         subpath: urls.appProxy.proxySubPath,
         prefix: urls.appProxy.proxySubPathPrefix,
-      }
+      })
     }
 
-    await writeAppConfigurationFile(localConfiguration)
+    await writeAppConfigurationFile(localConfiguration, localApp.configSchema)
   }
 }
 
@@ -245,15 +246,12 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     )
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
-      //  1. Search for the extension of type that includes automatically_update_urls_on_dev
-      //  2. Update its content
-      //  3. Rewrite the app configuration file from the app_config_extension specs
-      // const localConfiguration: AppConfiguration = options.localApp.configuration
-      // localConfiguration.build = {
-      //   ...localConfiguration.build,
-      //   automatically_update_urls_on_dev: shouldUpdateURLs,
-      // }
-      // await writeAppConfigurationFile(localConfiguration)
+      const localConfiguration = options.localApp.configuration
+      setPathValue(localConfiguration, 'build', {
+        ...(getPathValue(localConfiguration, 'build') ?? {}),
+        automatically_update_urls_on_dev: shouldUpdateURLs,
+      })
+      await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

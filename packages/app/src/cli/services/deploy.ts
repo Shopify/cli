@@ -3,9 +3,9 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {AppInterface, type NormalizedWebhookSubscriptions} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
+import {fakedWebhookSubscriptionsMutation, getWebhookConfig} from '../utilities/app/config/webhooks.js'
 import {AppModuleSettings} from '../api/graphql/app_deploy.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
@@ -128,11 +128,12 @@ export async function deploy(options: DeployOptions) {
         tasks.push({
           title: 'Releasing webhooks',
           task: async () => {
-            if (!('webhooks' in app.configuration)) return
+            const webhooks = getWebhookConfig(app.configuration)
+            if (!webhooks) return
 
             // normalize webhook config with the top level config
-            const webhookSubscriptions: NormalizedWebhookSubscriptions = []
-            const {topics, subscriptions, endpoint} = app.configuration.webhooks
+            const webhookSubscriptions = []
+            const {topics, subscriptions, endpoint} = webhooks
 
             if (endpoint && topics?.length) {
               for (const topic of topics) {

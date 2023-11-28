@@ -1,12 +1,37 @@
+import {AppConfiguration} from '../../../models/app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
-import type {NormalizedWebhookSubscriptions, WebhookConfig} from '../../../models/app/app.js'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 // used in tandem with declarativeWebhooks beta when we are not in the context of an app
 export const TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA = true
 
+export interface WebhookSubscription {
+  topic: string
+  sub_topic?: string
+  format?: 'xml' | 'json'
+  include_fields?: string[]
+  metafield_namespaces?: string[]
+  endpoint?: string
+  path?: string
+}
+
+export interface PrivacyWebhooks {
+  customer_deletion_url?: string
+  customer_data_request_url?: string
+  shop_deletion_url?: string
+}
+
+export interface WebhookConfig {
+  api_version: string
+  privacy_compliance?: PrivacyWebhooks
+  endpoint?: string
+  topics?: string[]
+  subscriptions?: WebhookSubscription[]
+}
+
 // eslint-disable-next-line no-warning-comments
 // TODO - remove this when mutation is ready
-export function fakedWebhookSubscriptionsMutation(subscriptions: NormalizedWebhookSubscriptions) {
+export function fakedWebhookSubscriptionsMutation(subscriptions: WebhookSubscription[]) {
   return subscriptions
 }
 export const httpsRegex = /^(https:\/\/)/
@@ -110,4 +135,8 @@ export function validateInnerSubscriptions({endpoint, subscriptions = [], ...sch
 
     uniqueSubscriptionEndpointSet.add(key)
   }
+}
+
+export function getWebhookConfig(config: AppConfiguration) {
+  return getPathValue(config, 'webhooks') ? (getPathValue(config, 'webhooks') as WebhookConfig) : undefined
 }
