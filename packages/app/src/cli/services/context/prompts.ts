@@ -120,7 +120,7 @@ async function getInfoBreakdown(
 
   const appModuleVersionsNonConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
-      (module) => module.specification.options.managementExperience !== 'app_config',
+      (module) => module.specification !== null && module.specification?.options.managementExperience !== 'app_config',
     ) || []
   const nonDashboardRemoteRegistrationUuids =
     appModuleVersionsNonConfig
