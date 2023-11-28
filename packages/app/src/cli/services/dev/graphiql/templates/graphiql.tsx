@@ -123,7 +123,7 @@ export function graphiqlTemplate({
         max-width: max(12vw, 150px);
         text-overflow: ellipsis;
         overflow: hidden;
-        text-wrap: nowrap;
+        white-space: nowrap;
       }
       @media only screen and (max-width: 1550px) {
         .top-bar-section-title {
