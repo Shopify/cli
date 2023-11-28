@@ -118,27 +118,30 @@ export function graphiqlTemplate({
       #top-bar #outbound-links a:hover .Polaris-Text--root {
         text-decoration: underline;
       }
-      @media only screen and (max-width: 1450px) {
+      #top-bar #outbound-links a span.Polaris-Text--root {
+        max-width: max(12vw, 150px);
+        text-overflow: ellipsis;
+        overflow: hidden;
+        text-wrap: nowrap;
+      }
+      @media only screen and (max-width: 1550px) {
         .top-bar-section-title {
           display: none;
         }
       }
       @media only screen and (max-width: 1150px) {
         #top-bar #outbound-links a span.Polaris-Text--root {
-          max-width: max(12vw, 150px);
-          text-overflow: ellipsis;
-          overflow: hidden;
-          text-wrap: nowrap;
+          max-width: max(12vw, 140px);
         }
       }
-      @media only screen and (max-width: 1039px) {
+      @media only screen and (max-width: 1080px) {
         #top-bar .Polaris-Grid-Cell:nth-child(2) {
           justify-self: left;
         }
       }
       @media only screen and (max-width: 650px) {
         #top-bar #outbound-links a span.Polaris-Text--root {
-          max-width: 18vw;
+          max-width: 17vw;
         }
       }
     </style>
