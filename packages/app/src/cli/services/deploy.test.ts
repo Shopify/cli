@@ -526,7 +526,6 @@ describe('deploy', () => {
             },
             {
               topic: 'products/delete',
-              format: 'xml',
             },
           ],
         }),
@@ -550,7 +549,6 @@ describe('deploy', () => {
         {
           endpoint: 'https://example.com',
           topic: 'products/delete',
-          format: 'xml',
         },
       ])
       expect(renderSuccess).toHaveBeenCalledWith(
@@ -576,7 +574,6 @@ describe('deploy', () => {
             },
             {
               topic: 'products/delete',
-              format: 'xml',
             },
           ],
         }),
@@ -600,7 +597,6 @@ describe('deploy', () => {
         {
           endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           topic: 'products/delete',
-          format: 'xml',
         },
       ])
       expect(renderSuccess).toHaveBeenCalledWith(
@@ -626,7 +622,6 @@ describe('deploy', () => {
             },
             {
               topic: 'products/delete',
-              format: 'xml',
             },
           ],
         }),
@@ -650,7 +645,6 @@ describe('deploy', () => {
         {
           endpoint: 'pubsub://my-project-123:my-topic',
           topic: 'products/delete',
-          format: 'xml',
         },
       ])
       expect(renderSuccess).toHaveBeenCalledWith(

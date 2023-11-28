@@ -256,6 +256,7 @@ export function graphiqlTemplate({
 
       // Update the version when the select changes
       document.getElementById('version-select').addEventListener('change', function(event) {
+        document.querySelector('#version-select .Polaris-Select__SelectedOption').innerText = event.target.value
         renderGraphiQL(event.target.value)
       })
 
