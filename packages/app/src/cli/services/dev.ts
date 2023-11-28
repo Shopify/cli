@@ -55,6 +55,7 @@ export interface DevOptions {
   theme?: string
   themeExtensionPort?: number
   notify?: string
+  consistentDev: boolean
 }
 
 export async function dev(commandOptions: DevOptions) {

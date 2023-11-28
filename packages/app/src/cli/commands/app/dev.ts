@@ -91,6 +91,12 @@ export default class Dev extends Command {
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
+    'consistent-dev': Flags.boolean({
+      hidden: true,
+      description: 'Use a consistent development environment.',
+      env: 'SHOPIFY_FLAG_CONSISTENT_DEV',
+      default: true,
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -134,6 +140,7 @@ export default class Dev extends Command {
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
       notify: flags.notify,
+      consistentDev: flags['consistent-dev'],
     }
 
     await dev(devOptions)
