@@ -51,7 +51,7 @@ const shopifySvg = (
 const polarisUnauthorizedContent = renderToStaticMarkup(
   <AppProvider i18n={{}}>
     <Page narrowWidth>
-      <div className="max-width-480px">
+      <div className="card-wrapper">
         <Card padding="600">
           <BlockStack gap="500">
             {shopifySvg}
@@ -103,8 +103,10 @@ export const unauthorizedTemplate = `
         align-items: center;
         height: 100%;
       }
-      .max-width-480px {
+      .card-wrapper {
         max-width: 480px;
+        margin-left: 20px;
+        margin-right: 20px;
       }
       #post-install {
         display: none;
