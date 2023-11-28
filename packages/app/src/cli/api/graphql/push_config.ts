@@ -43,7 +43,7 @@ interface GdprWebhooks {
   shopDeletionUrl?: string
 }
 
-interface AppProxy {
+export interface AppProxy {
   proxyUrl: string
   proxySubPath: string
   proxySubPathPrefix: string

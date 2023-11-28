@@ -38,6 +38,7 @@ import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export interface DevOptions {
   directory: string
@@ -140,7 +141,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConfig) {
   if (
     isCurrentAppSchema(localApp.configuration) &&
-    !localApp.configuration.access_scopes?.use_legacy_install_flow &&
+    getPathValue<boolean>(localApp.configuration, 'access_scopes.use_legacy_install_flow') &&
     getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
   ) {
     const nextSteps = [
@@ -209,7 +210,13 @@ async function handleUpdatingOfPartnerUrls(
       const newURLs = generatePartnersURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
+        getPathValue(localApp.configuration, 'app_proxy')
+          ? {
+              url: getPathValue<string>(localApp.configuration, 'app_proxy.url')!,
+              subpath: getPathValue<string>(localApp.configuration, 'app_proxy.subpath')!,
+              prefix: getPathValue<string>(localApp.configuration, 'app_proxy.subpath_prefix')!,
+            }
+          : undefined,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
