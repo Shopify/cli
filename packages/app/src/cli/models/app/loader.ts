@@ -7,8 +7,8 @@ import {
   getAppScopesArray,
   AppConfigurationInterface,
   getAppVersionedSchema,
-  isAppSchema,
   LegacyAppSchema,
+  isCurrentAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -455,7 +455,9 @@ class AppLoader {
           const {path, ...specConfigurationWithouPath} = specConfiguration
           if (Object.keys(specConfigurationWithouPath).length === 0) return
 
-          specification.validate(specConfiguration).valueOrAbort()
+          specification.validate(specConfiguration).mapError((error) => {
+            throw new AbortError(`Fix a schema error in ${directory}:\n- ${error}`)
+          })
 
           const promise = this.createConfigExtensionInstance(
             specification.identifier,
@@ -594,7 +596,7 @@ class AppConfigurationLoader {
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(this.configSpecifications)
-    const appSchema = isAppSchema(file, appVersionedSchema) ? appVersionedSchema : LegacyAppSchema
+    const appSchema = isCurrentAppSchema(file) ? appVersionedSchema : LegacyAppSchema
 
     const configuration = await parseConfigurationFile(appSchema, configurationPath)
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)

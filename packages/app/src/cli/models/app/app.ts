@@ -28,6 +28,12 @@ export const AppSchema = zod.object({
   client_id: zod.string(),
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
+  build: zod
+    .object({
+      automatically_update_urls_on_dev: zod.boolean().optional(),
+      dev_store_url: zod.string().optional(),
+    })
+    .optional(),
 })
 
 export function getAppVersionedSchema(specs: ConfigExtensionSpecification[]) {
@@ -36,52 +42,6 @@ export function getAppVersionedSchema(specs: ConfigExtensionSpecification[]) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }, AppSchema as any)
 }
-
-/* export const AppSchema = zod
-  .object({
-    name: zod.string().max(30),
-    client_id: zod.string(),
-    application_url: validateUrl(zod.string()),
-    embedded: zod.boolean(),
-    access_scopes: zod
-      .object({
-        scopes: zod.string().optional(),
-        use_legacy_install_flow: zod.boolean().optional(),
-      })
-      .optional(),
-    auth: zod
-      .object({
-        redirect_urls: zod.array(validateUrl(zod.string())),
-      })
-      .optional(),
-    webhooks: WebhooksSchemaWithDeclarative,
-    app_proxy: zod
-      .object({
-        url: validateUrl(zod.string()),
-        subpath: zod.string(),
-        prefix: zod.string(),
-      })
-      .optional(),
-    pos: zod
-      .object({
-        embedded: zod.boolean(),
-      })
-      .optional(),
-    app_preferences: zod
-      .object({
-        url: validateUrl(zod.string().max(255)),
-      })
-      .optional(),
-    build: zod
-      .object({
-        automatically_update_urls_on_dev: zod.boolean().optional(),
-        dev_store_url: zod.string().optional(),
-      })
-      .optional(),
-    extension_directories: zod.array(zod.string()).optional(),
-    web_directories: zod.array(zod.string()).optional(),
-  })
-  .strict()*/
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
@@ -98,7 +58,8 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  * Check whether a shopify.app.toml schema is valid against the current schema definition.
  * @param item - the item to validate
  */
-export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isCurrentAppSchema(item: any): item is CurrentAppConfiguration {
   return getPathValue(item, 'client_id') !== undefined
 }
 
