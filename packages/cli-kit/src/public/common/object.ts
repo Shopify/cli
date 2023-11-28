@@ -94,7 +94,7 @@ export function deepDifference(one: object, two: object): [object, object] {
 export function getPathValue<T = object>(object: object, path: string): T | undefined {
   const get = require('lodash/get.js')
 
-  return get(object, path) ? (get(object, path) as T) : undefined
+  return get(object, path) === undefined ? undefined : (get(object, path) as T)
 }
 
 /**
