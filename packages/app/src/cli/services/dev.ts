@@ -25,6 +25,7 @@ import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../model
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
+import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -122,6 +123,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     token,
   )
 
+  // If we have a real UUID for an extension, use that instead of a random one
+  const allExtensionsWithDevUUIDs = getDevUUIDsForAllExtensions(localApp, apiKey)
+  localApp.allExtensions = allExtensionsWithDevUUIDs
+
   return {
     storeFqdn,
     storeId,
@@ -175,6 +180,17 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
   })
 
   await reportAnalyticsEvent({config: config.commandOptions.commandConfig, exitMode: 'ok'})
+}
+
+function getDevUUIDsForAllExtensions(localApp: AppInterface, apiKey: string) {
+  const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
+  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
+  const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
+
+  return localApp.allExtensions.map((ext) => {
+    ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID
+    return ext
+  })
 }
 
 async function handleUpdatingOfPartnerUrls(
