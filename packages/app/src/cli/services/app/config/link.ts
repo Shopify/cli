@@ -123,7 +123,7 @@ async function linkAppVersionedConfig(
   })
 
   const configuration = {
-    ...{...localApp.configuration, path: configFilePath},
+    path: configFilePath,
     ...{
       name: remoteApp.title,
       client_id: remoteApp.apiKey,
