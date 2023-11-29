@@ -64,6 +64,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       noTunnel: false,
+      consistentDev: false,
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -124,6 +125,7 @@ describe('setup-dev-processes', () => {
       storeId,
       token,
       partnerUrlsUpdated: true,
+      adminSession: {token: '', storeFqdn: ''},
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')

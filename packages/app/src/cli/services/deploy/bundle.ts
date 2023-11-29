@@ -59,7 +59,6 @@ export interface BundleDevOptions {
 }
 
 export async function bundleForDev(options: BundleDevOptions) {
-  // await inTemporaryDirectory(async (tmpDir) => {
   const bundleDirectory = joinPath(options.directory, 'bundle')
   await mkdirSync(bundleDirectory)
   await touchFile(joinPath(bundleDirectory, '.shopify'))
@@ -80,5 +79,4 @@ export async function bundleForDev(options: BundleDevOptions) {
       outputZipPath: options.bundlePath,
     })
   }
-  // })
 }

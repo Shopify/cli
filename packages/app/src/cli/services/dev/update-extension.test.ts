@@ -1,6 +1,6 @@
 import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
-import {testUIExtension} from '../../models/app/app.test-data.js'
+import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -207,12 +207,16 @@ another = "setting"
       await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionConfig({
+        app: testApp(),
         extension: mockExtension,
         token,
         apiKey,
         registrationId,
         stdout,
         stderr,
+        adminSession: {token: '', storeFqdn: ''},
+        consistentDev: false,
+        devFolder: '',
       })
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {

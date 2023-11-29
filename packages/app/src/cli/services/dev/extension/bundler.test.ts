@@ -258,6 +258,9 @@ describe('setupExtensionWatcher', () => {
       apiKey: 'mock-api-key',
       registrationId: 'mock-registration-id',
       token: 'mock-token',
+      adminSession: {token: '', storeFqdn: ''},
+      devFolder: '',
+      consistentDev: false,
     }
   }
 

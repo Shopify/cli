@@ -16,7 +16,9 @@ import {ClientError, gql} from 'graphql-request'
  */
 export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
   const api = 'Admin'
-  const version = 'unstable' // await fetchLatestSupportedApiVersion(session)
+  // Hardcoded unstable during consistent-dev prototype
+  // const version =  await fetchLatestSupportedApiVersion(session)
+  const version = 'unstable'
   const url = adminUrl(session.storeFqdn, version)
   return graphqlRequest({query, api, url, token: session.token, variables})
 }

@@ -1,4 +1,4 @@
-import {updateAppModules} from './processes/draftable-extension.js'
+import {updateAppModules} from './processes/consistent-dev.js'
 import {
   ExtensionUpdateDraftInput,
   ExtensionUpdateDraftMutation,
@@ -68,10 +68,12 @@ interface UpdateExtensionConfigOptions {
   token: string
   adminSession: AdminSession
   app: AppInterface
+  registrationId: string
   apiKey: string
   devFolder: string
   stdout: Writable
   stderr: Writable
+  consistentDev: boolean
 }
 
 export async function updateExtensionConfig({
@@ -81,6 +83,8 @@ export async function updateExtensionConfig({
   app,
   apiKey,
   devFolder,
+  consistentDev,
+  registrationId,
   stdout,
   stderr,
 }: UpdateExtensionConfigOptions) {
@@ -118,6 +122,9 @@ export async function updateExtensionConfig({
 
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = newConfig
-  return updateAppModules({app, extensions: [extension], token, apiKey, stdout, adminSession, devFolder})
-  // return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+  if (consistentDev) {
+    return updateAppModules({app, extensions: [extension], token, apiKey, stdout, adminSession, devFolder})
+  } else {
+    return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+  }
 }

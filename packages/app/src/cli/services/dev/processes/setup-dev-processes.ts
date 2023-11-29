@@ -5,6 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
+import {ConsistentDevProcess, setupConsistentDevProcess} from './consistent-dev.js'
 import {environmentVariableNames, urlNamespaces} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
@@ -30,6 +31,7 @@ type DevProcessDefinition =
   | PreviewableExtensionProcess
   | DraftableExtensionProcess
   | GraphiQLServerProcess
+  | ConsistentDevProcess
 
 export type DevProcesses = DevProcessDefinition[]
 
@@ -111,14 +113,22 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: localApp.directory,
     }),
-    await setupDraftableExtensionsProcess({
-      localApp,
-      remoteApp,
-      apiKey,
-      token,
-      proxyUrl: network.proxyUrl,
-      adminSession,
-    }),
+    commandOptions.consistentDev
+      ? await setupConsistentDevProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          token,
+          proxyUrl: network.proxyUrl,
+          adminSession,
+        })
+      : await setupDraftableExtensionsProcess({
+          localApp,
+          remoteApp,
+          apiKey,
+          token,
+          proxyUrl: network.proxyUrl,
+        }),
     await setupPreviewThemeAppExtensionsProcess({
       allExtensions: localApp.allExtensions,
       storeFqdn,
