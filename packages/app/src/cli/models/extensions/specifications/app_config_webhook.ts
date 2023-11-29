@@ -1,5 +1,5 @@
 import {EndpointValidation, removeTrailingSlash} from './utils/app_config_webhook.js'
-import {createConfigExtensionSpecification} from '../specification.js'
+import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {validateInnerSubscriptions, validateTopLevelSubscriptions} from '../../../utilities/app/config/webhooks.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -21,7 +21,7 @@ export const WebhookSubscriptionSchema = zod.object({
 })
 
 const WebhooksSchema = zod.object({
-  api_version: zod.string(),
+  api_version: zod.string().optional(),
   privacy_compliance: zod
     .object({
       customer_deletion_url: zod.string().optional(),
@@ -53,20 +53,23 @@ const ExtendedWebhooksSchema = WebhooksSchema.extend({
   }
 })
 
-const WebhookSchema = zod.object({
+export const WebhookSchema = zod.object({
   webhooks: ExtendedWebhooksSchema.optional(),
 })
 
-const WebhookValidateConfig = {
-  'privacy_compliance.customer_deletion_url': 'url',
-  'privacy_compliance.customer_data_request_url': 'url',
-  'privacy_compliance.shop_deletion_url': 'url',
+const WebhookransformConfig: TransformationConfig = {
+  schema: {
+    api_version: 'webhooks.api_version',
+    topics: 'webhooks.topics',
+    endpoint: 'webhooks.endpoint',
+    subscriptions: 'webhooks.subscriptions',
+  },
 }
 
 const spec = createConfigExtensionSpecification({
   identifier: 'webhooks',
   schema: WebhookSchema,
-  validateConfig: WebhookValidateConfig,
+  transformConfig: WebhookransformConfig,
 })
 
 export default spec

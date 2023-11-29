@@ -22,7 +22,7 @@ export interface PrivacyWebhooks {
 }
 
 export interface WebhookConfig {
-  api_version: string
+  api_version?: string
   privacy_compliance?: PrivacyWebhooks
   endpoint?: string
   topics?: string[]
