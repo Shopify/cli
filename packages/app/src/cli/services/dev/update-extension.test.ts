@@ -1,4 +1,4 @@
-import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js'
+import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
@@ -206,14 +206,7 @@ another = "setting"
 
       await writeFile(mockExtension.outputPath, 'test content')
 
-      await updateExtensionConfig({
-        extension: mockExtension,
-        token,
-        apiKey,
-        registrationId,
-        stdout,
-        stderr,
-      })
+      await reloadExtensionConfig({extension: mockExtension, stdout})
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
