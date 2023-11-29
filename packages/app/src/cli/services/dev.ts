@@ -37,7 +37,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {ensureAuthenticatedAdmin, ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   directory: string
@@ -85,7 +85,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     updateURLs: cachedUpdateURLs,
   } = await ensureDevContext(commandOptions, partnersSession)
 
-  const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+  let adminSession: AdminSession = {token: '', storeFqdn: ''}
+  if (commandOptions.consistentDev) {
+    adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+  }
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
