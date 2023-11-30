@@ -31,7 +31,7 @@ export default class AppInfo extends Command {
     const {flags} = await this.parse(AppInfo)
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({
-      ...specifications,
+      specifications,
       directory: flags.path,
       configName: flags.config,
       mode: 'report',

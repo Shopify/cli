@@ -24,10 +24,14 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {AllAppExtensionRegistrationsQuerySchema} from '../../../api/graphql/all_app_extension_registrations.js'
+import {
+  AllAppExtensionRegistrationsQuerySchema,
+  ExtensionRegistration,
+} from '../../../api/graphql/all_app_extension_registrations.js'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {ConfigExtensionSpecification} from '../../../models/extensions/specification.js'
+import {s} from 'vitest/dist/reporters-cb94c88b.js'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -59,7 +63,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     directory,
     remoteExtensionRegistrations,
     appVersionedSchema,
-    specifications.configSpecifications,
+    specifications,
   )
   let uploadCommand = 'deploy'
   if (!configuration) {
@@ -70,6 +74,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       configFileName,
       directory,
       appVersionedSchema,
+      specifications,
     )
     uploadCommand = 'config push'
   }
@@ -108,19 +113,13 @@ async function linkAppVersionedConfig(
   directory: string,
   remoteExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema,
   versionAppSchema: zod.ZodTypeAny,
-  configSpecifications: ConfigExtensionSpecification[],
+  specifications: Specifications,
 ) {
-  // Populate the shopify.app.toml
-  let configSections: {[key: string]: unknown} = {}
-  remoteExtensionRegistrations.app.configExtensionRegistrations.forEach((extension) => {
-    const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
-    if (!configSpec) return
-    let configExtensionString = extension.activeVersion?.config
-    if (!configExtensionString) return
-    let configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
-
-    configSections = {...configSections, ...configSpec.reverseTransform(configExtension)}
-  })
+  const configSections = getRemoteAppConfig(
+    remoteExtensionRegistrations.app.configExtensionRegistrations,
+    specifications.configSpecifications,
+    remoteApp,
+  )
 
   const configuration = {
     path: configFilePath,
@@ -134,7 +133,7 @@ async function linkAppVersionedConfig(
 
   await writeAppConfigurationFile(configuration, versionAppSchema)
   // Cache the toml file content
-  await saveCurrentConfig({configFileName, directory})
+  await saveCurrentConfig({configFileName, directory, specifications})
   return configuration
 }
 
@@ -145,6 +144,7 @@ async function linkAppConfig(
   configFileName: string,
   directory: string,
   versionAppSchema: zod.ZodTypeAny,
+  specifications: Specifications,
 ) {
   const configuration = mergeAppConfiguration(
     {...localApp.configuration, path: configFilePath},
@@ -153,7 +153,7 @@ async function linkAppConfig(
     },
   )
   await writeAppConfigurationFile(configuration, versionAppSchema)
-  await saveCurrentConfig({configFileName, directory})
+  await saveCurrentConfig({configFileName, directory, specifications})
   return configuration
 }
 
@@ -167,6 +167,7 @@ async function loadAppConfigFromDefaultToml(
       directory: options.directory,
       mode: 'report',
       configName: configurationFileNames.app,
+      specifications,
     })
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -290,4 +291,22 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
       use_legacy_install_flow: true,
     }
   }
+}
+
+export function getRemoteAppConfig(
+  configRegistrations: ExtensionRegistration[],
+  configSpecifications: ConfigExtensionSpecification[],
+  remoteApp: {title: string; apiKey: string},
+) {
+  let remoteAppConfig: {[key: string]: unknown} = {}
+  configRegistrations.forEach((extension) => {
+    const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
+    if (!configSpec) return
+    let configExtensionString = extension.activeVersion?.config
+    if (!configExtensionString) return
+    let configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
+
+    remoteAppConfig = {...remoteAppConfig, ...configSpec.reverseTransform(configExtension)}
+  })
+  return {...remoteAppConfig, name: remoteApp.title, client_id: remoteApp.apiKey}
 }

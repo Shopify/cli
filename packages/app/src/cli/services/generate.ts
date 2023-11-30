@@ -46,7 +46,7 @@ async function generate(options: GenerateOptions) {
   const app: AppInterface = await loadApp({
     directory: options.directory,
     configName: options.configName,
-    ...specifications,
+    specifications,
   })
   const availableSpecifications = specifications.generalSpecifications.map((spec) => spec.identifier)
   const extensionTemplates = await fetchExtensionTemplates(token, apiKey, availableSpecifications)

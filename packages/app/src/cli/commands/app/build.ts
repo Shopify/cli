@@ -47,7 +47,7 @@ export default class Build extends Command {
     }))
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({...specifications, directory: flags.path, configName: flags.config})
+    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
     await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
   }
 }

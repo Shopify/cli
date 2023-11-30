@@ -4,7 +4,7 @@ import {selectConfigFile} from '../../../prompts/config.js'
 import {AppConfiguration} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
 import {GetConfigQuerySchema, GetConfig} from '../../../api/graphql/get_config.js'
-import {ConfigExtensionSpecification} from '../../../models/extensions/specification.js'
+import {Specifications} from '../../../models/extensions/load-specifications.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -21,7 +21,7 @@ export interface UseOptions {
   reset?: boolean
   warningContent?: RenderAlertOptions
   shouldRenderSuccess?: boolean
-  configSpecifications?: ConfigExtensionSpecification[]
+  specifications: Specifications
 }
 
 export default async function use({
@@ -30,7 +30,7 @@ export default async function use({
   warningContent,
   shouldRenderSuccess = true,
   reset = false,
-  configSpecifications = [],
+  specifications,
 }: UseOptions): Promise<string | undefined> {
   if (reset) {
     clearCurrentConfigFile(directory)
@@ -52,7 +52,11 @@ export default async function use({
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
-  const configuration = await saveCurrentConfig({configFileName, directory, configSpecifications})
+  const configuration = await saveCurrentConfig({
+    configFileName,
+    directory,
+    specifications,
+  })
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -68,11 +72,11 @@ export default async function use({
 interface SaveCurrentConfigOptions {
   configFileName: string
   directory: string
-  configSpecifications?: ConfigExtensionSpecification[]
+  specifications: Specifications
 }
 
-export async function saveCurrentConfig({configFileName, directory, configSpecifications}: SaveCurrentConfigOptions) {
-  const {configuration} = await loadAppConfiguration({configName: configFileName, directory, configSpecifications})
+export async function saveCurrentConfig({configFileName, directory, specifications}: SaveCurrentConfigOptions) {
+  const {configuration} = await loadAppConfiguration({configName: configFileName, directory, specifications})
 
   if (configuration.client_id) {
     setCachedAppInfo({

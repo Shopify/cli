@@ -4,6 +4,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {fetchActiveAppVersion} from '../dev/fetch.js'
 import metadata from '../../metadata.js'
 import {AppInterface} from '../../models/app/app.js'
+import {DiffContent} from '../../prompts/config.js'
 import {
   InfoTableSection,
   renderAutocompletePrompt,
@@ -55,12 +56,14 @@ export async function deployConfirmationPrompt({
   apiKey,
   token,
   app,
+  diffConfigContent,
 }: {
   summary: SourceSummary
   release: boolean
   apiKey: string
   token: string
   app: AppInterface
+  diffConfigContent?: DiffContent
 }): Promise<boolean> {
   const {infoTable, removesExtension}: {infoTable: InfoTableSection[]; removesExtension: boolean} =
     await buildInfoPrompt(apiKey, token, identifiers, toCreate, dashboardOnly, app)
@@ -69,12 +72,13 @@ export async function deployConfirmationPrompt({
   let confirmationResponse = true
 
   const appExists = Boolean(appTitle)
-  const isDangerous = appExists && removesExtension
+  const isDangerous = appExists && (removesExtension || diffConfigContent)
 
   if (isDangerous) {
     confirmationResponse = await renderDangerousConfirmationPrompt({
       message: question,
       infoTable,
+      gitDiff: diffConfigContent,
       confirmation: appTitle!,
     })
   } else {
@@ -88,7 +92,6 @@ export async function deployConfirmationPrompt({
 
     confirmationResponse = await renderConfirmationPrompt({
       message: question,
-      infoTable,
       confirmationMessage,
       cancellationMessage: 'No, cancel',
     })

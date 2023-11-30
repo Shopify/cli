@@ -1,6 +1,7 @@
 import {TextInput} from './TextInput.js'
 import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
+import {GitDiff, GitDiffProps} from './Prompts/GitDiff.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -10,11 +11,13 @@ import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
+import {capitalize} from '@shopify/cli-kit/common/string'
 
 export interface DangerousConfirmationPromptProps {
   message: string
   confirmation: string
   infoTable?: InfoTableProps['table']
+  gitDiff?: GitDiffProps['gitDiff'] & {title?: string}
   onSubmit: (value: boolean) => void
   abortSignal?: AbortSignal
 }
@@ -23,6 +26,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   message,
   confirmation,
   infoTable,
+  gitDiff,
   onSubmit,
   abortSignal,
 }) => {
@@ -88,7 +92,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
       ) : (
         <>
           <Box flexDirection="column" gap={1} marginTop={1} marginLeft={3}>
-            {infoTable ? (
+            {infoTable || gitDiff ? (
               <Box
                 paddingLeft={2}
                 borderStyle="bold"
@@ -99,7 +103,15 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
                 flexDirection="column"
                 gap={1}
               >
-                <InfoTable table={infoTable} />
+                {infoTable ? <InfoTable table={infoTable} /> : null}
+                {gitDiff ? (
+                  <Box flexDirection="column">
+                    <Box>
+                      <Text>{capitalize(gitDiff.title ?? 'Configuration:')}</Text>
+                    </Box>
+                    <GitDiff gitDiff={gitDiff} />
+                  </Box>
+                ) : null}
               </Box>
             ) : null}
             <Box>

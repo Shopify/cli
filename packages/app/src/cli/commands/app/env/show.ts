@@ -19,7 +19,7 @@ export default class EnvShow extends Command {
     const {flags} = await this.parse(EnvShow)
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({
-      ...specifications,
+      specifications,
       directory: flags.path,
       configName: flags.config,
       mode: 'report',

@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
 import {PushOptions} from '../services/app/config/push.js'
-import {getAppScopes, getAppScopesArray, isCurrentAppSchema} from '../models/app/app.js'
+import {AppConfiguration, getAppScopes, getAppScopesArray, isCurrentAppSchema} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
@@ -20,6 +20,11 @@ import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {deepCompare, deepDifference, setPathValue} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
+
+export interface DiffContent {
+  baselineContent: string
+  updatedContent: string
+}
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -80,31 +85,39 @@ export async function confirmPushChanges(options: PushOptions, app: App, schema:
   const configuration = options.configuration
   const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
 
-  if (isCurrentAppSchema(configuration) && getAppScopes(configuration) !== undefined) {
-    setPathValue(configuration, 'access_scopes.scopes', getAppScopesArray(configuration).join(',') as unknown as object)
-  }
-
-  const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(schema, configuration) as object), build: undefined},
-    {...(rewriteConfiguration(schema, remoteConfiguration) as object), build: undefined},
-  )
-
-  if (deepCompare(updated, baseline)) {
-    renderInfo({headline: 'No changes to update.'})
-    return false
-  }
-
-  const baselineContent = encodeToml(baseline)
-  const updatedContent = encodeToml(updated)
+  const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)
+  if (!gitDiff) return false
 
   return renderConfirmationPrompt({
     message: ['Make the following changes to your remote configuration?'],
     gitDiff: {
-      baselineContent,
-      updatedContent,
+      baselineContent: gitDiff.baselineContent,
+      updatedContent: gitDiff.updatedContent,
     },
     defaultValue: true,
     confirmationMessage: 'Yes, confirm changes',
     cancellationMessage: 'No, cancel',
   })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildDiffConfigContent(localConfig: AppConfiguration, remoteConfig: any, schema: zod.ZodTypeAny) {
+  if (isCurrentAppSchema(localConfig) && getAppScopes(localConfig) !== undefined) {
+    setPathValue(localConfig, 'access_scopes.scopes', getAppScopesArray(localConfig).join(',') as unknown as object)
+  }
+
+  const [updated, baseline] = deepDifference(
+    {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
+    {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},
+  )
+
+  if (deepCompare(updated, baseline)) {
+    renderInfo({headline: 'No changes to update.'})
+    return undefined
+  }
+
+  return {
+    baselineContent: encodeToml(baseline),
+    updatedContent: encodeToml(updated),
+  }
 }
