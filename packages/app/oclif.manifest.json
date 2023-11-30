@@ -322,6 +322,13 @@
           "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
           "multiple": false
+        },
+        "consistent-dev": {
+          "name": "consistent-dev",
+          "type": "boolean",
+          "description": "Use a consistent development environment.",
+          "hidden": true,
+          "allowNo": false
         }
       },
       "args": {}
