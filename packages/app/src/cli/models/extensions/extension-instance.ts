@@ -256,7 +256,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       config: JSON.stringify(remainingConfigs),
       context: contextValue,
       handle: this.handle,
-      specificationIdentifier: this.specification.identifier,
     }
   }
 }

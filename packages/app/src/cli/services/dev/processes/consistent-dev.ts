@@ -169,7 +169,14 @@ export async function updateAppModules({
     })
 
     const appModules = await Promise.all(
-      extensions.flatMap((ext) => ext.bundleConfig({identifiers: {}, token, apiKey: 'dev-apiKey'})),
+      extensions.flatMap(async (ext) => {
+        const bundleConfig = await ext.bundleConfig({identifiers: {}, token, apiKey})
+        if (!bundleConfig) return undefined
+        return {
+          ...bundleConfig,
+          specificationIdentifier: ext.localIdentifier,
+        }
+      }),
     )
     const appM = getArrayRejectingUndefined(appModules)
 
