@@ -14,9 +14,10 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ConfigExtensionInstance, ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ConfigExtensionSpecification, ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
+import {Specifications} from '../extensions/load-specifications.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -146,8 +147,7 @@ interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
   configName?: string
-  generalSpecifications: ExtensionSpecification[]
-  configSpecifications: ConfigExtensionSpecification[]
+  specifications: Specifications
 }
 
 /**
@@ -178,19 +178,17 @@ class AppLoader {
   private mode: AppLoaderMode
   private configName?: string
   private errors: AppErrors = new AppErrors()
-  private generalSpecifications: ExtensionSpecification[]
-  private configSpecifications: ConfigExtensionSpecification[]
+  private specifications: Specifications
 
-  constructor({directory, configName, mode, generalSpecifications, configSpecifications}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
-    this.generalSpecifications = generalSpecifications
-    this.configSpecifications = configSpecifications
+    this.specifications = specifications
     this.configName = configName
   }
 
   findSpecificationForType(type: string) {
-    return findSpecificationForType(this.generalSpecifications, type)
+    return findSpecificationForType(this.specifications.generalSpecifications, type)
   }
 
   parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -206,7 +204,7 @@ class AppLoader {
     const configurationLoader = new AppConfigurationLoader({
       directory: this.directory,
       configName: this.configName,
-      configSpecifications: this.configSpecifications,
+      specifications: this.specifications,
     })
     const {
       directory: appDirectory,
@@ -245,6 +243,7 @@ class AppLoader {
       configExtensions,
       usesWorkspaces,
       configSchema,
+      this.specifications,
       dotenv,
     )
 
@@ -301,7 +300,7 @@ class AppLoader {
   }
 
   async createConfigExtensionInstance(type: string, configurationObject: unknown, configurationPath: string) {
-    const specification = this.configSpecifications.find((spec) => spec.identifier === type)
+    const specification = this.specifications.configSpecifications.find((spec) => spec.identifier === type)
     if (!specification) {
       return this.abortOrReport(
         outputContent`Invalid config extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -318,7 +317,7 @@ class AppLoader {
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    const specification = findSpecificationForType(this.generalSpecifications, type)
+    const specification = findSpecificationForType(this.specifications.generalSpecifications, type)
     if (!specification) {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -437,13 +436,13 @@ class AppLoader {
     const {configuration} = await loadAppConfiguration({
       configName: undefined,
       directory,
-      configSpecifications: this.configSpecifications,
+      specifications: this.specifications,
     })
 
     const appConfigModules: ConfigExtensionInstance[] = []
 
     await Promise.all(
-      this.configSpecifications
+      this.specifications.configSpecifications
         .map(async (specification) => {
           const specConfiguration = await parseConfigurationObject(
             specification.schema,
@@ -535,7 +534,7 @@ export async function loadAppConfiguration(
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
-  configSpecifications?: ConfigExtensionSpecification[]
+  specifications: Specifications
 }
 
 type LinkedConfigurationSource =
@@ -562,12 +561,12 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
-  private configSpecifications: ConfigExtensionSpecification[]
+  private specifications: Specifications
 
-  constructor({directory, configName, configSpecifications}: AppConfigurationLoaderConstructorArgs) {
+  constructor({directory, configName, specifications}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
     this.configName = configName
-    this.configSpecifications = configSpecifications ?? []
+    this.specifications = specifications
   }
 
   async loaded() {
@@ -587,7 +586,7 @@ class AppConfigurationLoader {
         directory: appDirectory,
         warningContent,
         shouldRenderSuccess: false,
-        configSpecifications: this.configSpecifications,
+        specifications: this.specifications,
       })
     }
 
@@ -595,7 +594,7 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
-    const appVersionedSchema = getAppVersionedSchema(this.configSpecifications)
+    const appVersionedSchema = getAppVersionedSchema(this.specifications.configSpecifications)
     const appSchema = isCurrentAppSchema(file) ? appVersionedSchema : LegacyAppSchema
 
     const configuration = await parseConfigurationFile(appSchema, configurationPath)
@@ -625,7 +624,13 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appSchema}
+    return {
+      directory: appDirectory,
+      configuration,
+      configurationLoadResultMetadata,
+      configSchema: appSchema,
+      specifications: this.specifications,
+    }
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

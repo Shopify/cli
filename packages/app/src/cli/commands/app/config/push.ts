@@ -23,11 +23,11 @@ export default class ConfigPush extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(ConfigPush)
-    const {configSpecifications} = await loadLocalExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications(this.config)
     const {configuration, configSchema} = await loadAppConfiguration({
       configName: flags.config,
       directory: flags.path,
-      configSpecifications,
+      specifications,
     })
 
     await pushConfig({configuration, force: flags.force, configSchema})

@@ -3,6 +3,8 @@ import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
+import {getRemoteAppConfig} from '../app/config/link.js'
+import {DiffContent, buildDiffConfigContent} from '../../prompts/config.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -17,7 +19,8 @@ export interface EnsureDeploymentIdsPresenceOptions {
   envIdentifiers: Partial<Identifiers>
   force: boolean
   release: boolean
-  partnersApp?: PartnersAppForIdentifierMatching
+  partnersApp: PartnersAppForIdentifierMatching
+  diffConfigContent?: DiffContent
 }
 
 export interface RemoteSource {
@@ -38,15 +41,43 @@ export interface LocalSource {
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
-  const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
+  const {remoteExtensions, diffConfigContent} = await fetchAndBuildDiffConfigContent(
+    options.token,
+    options.appId,
+    options.app,
+    options.partnersApp,
+  )
 
-  const extensions = await ensureExtensionsIds(options, remoteSpecifications.app)
-  if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
+  return (await ensureExtensionsIds({...options, diffConfigContent}, remoteExtensions))
+    .mapError((error) => handleIdsError(error, options.appName, options.app.packageManager))
+    .map((extensions) => {
+      return {
+        app: options.appId,
+        extensions: extensions.extensions,
+        extensionIds: extensions.extensionIds,
+      }
+    })
+    .valueOrAbort()
+}
 
+async function fetchAndBuildDiffConfigContent(
+  token: string,
+  apiKey: string,
+  app: AppInterface,
+  remoteApp: PartnersAppForIdentifierMatching,
+) {
+  const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
+
+  const remoteConfig = getRemoteAppConfig(
+    remoteSpecifications.app.configExtensionRegistrations,
+    app.specifications.configSpecifications,
+    remoteApp,
+  )
+
+  const localConfig = app.configuration
   return {
-    app: options.appId,
-    extensions: extensions.value.extensions,
-    extensionIds: extensions.value.extensionIds,
+    remoteExtensions: remoteSpecifications.app,
+    diffConfigContent: buildDiffConfigContent(localConfig, remoteConfig, app.configSchema),
   }
 }
 

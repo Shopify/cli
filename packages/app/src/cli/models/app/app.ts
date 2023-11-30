@@ -3,6 +3,7 @@ import {ConfigExtensionInstance, ExtensionInstance} from '../extensions/extensio
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ConfigExtensionSpecification} from '../extensions/specification.js'
+import {Specifications} from '../extensions/load-specifications.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -156,6 +157,7 @@ export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
   configSchema: zod.ZodTypeAny
+  specifications: Specifications
 }
 
 export interface AppInterface extends AppConfigurationInterface {
@@ -187,6 +189,7 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
+  specifications: Specifications
   allExtensions: ExtensionInstance[]
   configExtensions: ConfigExtensionInstance[]
   configSchema: zod.ZodTypeAny
@@ -204,6 +207,7 @@ export class App implements AppInterface {
     configExtensions: ConfigExtensionInstance[],
     usesWorkspaces: boolean,
     configSchema: zod.ZodTypeAny,
+    specifications: Specifications,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
@@ -220,6 +224,7 @@ export class App implements AppInterface {
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.configSchema = configSchema
+    this.specifications = specifications
   }
 
   async updateDependencies() {
@@ -288,7 +293,10 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 export class EmptyApp extends App {
   constructor() {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], [], false, AppSchema)
+    super('', '', '', 'npm', configuration, {}, [], [], [], false, AppSchema, {
+      generalSpecifications: [],
+      configSpecifications: [],
+    })
   }
 }
 

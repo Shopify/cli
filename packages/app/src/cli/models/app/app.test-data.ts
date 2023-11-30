@@ -60,6 +60,7 @@ export function testApp(
     app.configExtensions ?? [],
     app.usesWorkspaces ?? false,
     app.configSchema ?? AppSchema,
+    app.specifications ?? {generalSpecifications: [], configSpecifications: []},
     app.dotenv,
     app.errors,
   )

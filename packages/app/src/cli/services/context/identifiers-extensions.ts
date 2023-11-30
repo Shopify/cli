@@ -19,7 +19,6 @@ export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
   {
     extensionRegistrations: initialRemoteExtensions,
-    configExtensionRegistrations,
     dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
   }: AppWithExtensions,
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
@@ -94,6 +93,7 @@ export async function ensureExtensionsIds(
       apiKey: options.appId,
       token: options.token,
       app: options.app,
+      diffConfigContent: options.diffConfigContent,
     })
     if (!confirmed) return err('user-cancelled')
   }
