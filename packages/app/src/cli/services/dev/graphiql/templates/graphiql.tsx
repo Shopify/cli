@@ -281,9 +281,9 @@ export function graphiqlTemplate({
         const topErrorBar = document.querySelector('#graphiql #top-error-bar')
         const statusDiv = document.querySelector('#graphiql #status-badge')
         const allBadgeDivs = Array.from(statusDiv.querySelectorAll('.status-badge-option'))
-        const activeBadge = !serverIsLive ? 'disconnected'
-          : !appIsInstalled ? 'unauthorized'
-          : 'running'
+        let activeBadge = 'running'
+        if (!serverIsLive) activeBadge = 'disconnected'
+        if (!appIsInstalled) activeBadge = 'unauthorized'
         allBadgeDivs.forEach(function(badge) {
           if (badge.id == ('status-badge-' + activeBadge)) {
             badge.style.display = 'block'
