@@ -61,7 +61,6 @@ export interface BundleDevOptions {
 export async function bundleForDev(options: BundleDevOptions) {
   const bundleDirectory = joinPath(options.directory, 'bundle')
   await mkdirSync(bundleDirectory)
-  await touchFile(joinPath(bundleDirectory, '.shopify'))
 
   const promises = (options.extensions ?? []).map((extension) => {
     return extension.buildForBundle(
