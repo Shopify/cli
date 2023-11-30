@@ -105,7 +105,6 @@ export const startConsistentDevSession: DevProcessFunction<ConsistentDevOptions>
 
   await Promise.all(
     extensions.map(async (extension) => {
-      // await extension.build({app, stdout, stderr, useTasks: false, signal, environment: 'development'})
       return setupExtensionWatcher({
         extension,
         app,
@@ -113,12 +112,10 @@ export const startConsistentDevSession: DevProcessFunction<ConsistentDevOptions>
         stdout,
         stderr,
         signal,
-        token,
-        adminSession,
-        apiKey,
-        devFolder,
-        registrationId: '',
-        consistentDev: true,
+        onChange: async () => {
+          // At this point the extension has alreday been built and is ready to be updated
+          await updateAppModules({app, extensions: [extension], adminSession, token, apiKey, stdout, devFolder})
+        },
       })
     }),
   )
