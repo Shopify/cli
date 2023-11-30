@@ -2,7 +2,7 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'
-import {LinkMinor} from '@shopify/polaris-icons'
+import {CircleAlertMajor, LinkMinor} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
 
@@ -65,6 +65,7 @@ export function graphiqlTemplate({
 <html lang="en">
   <head>
     <title>GraphiQL</title>
+    <link rel="shortcut icon" href="{{url}}/graphiql/favicon.ico" type="image/x-icon" />
     <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.1.1/build/esm/styles.css" />
     <style>
       body {
@@ -103,8 +104,11 @@ export function graphiqlTemplate({
         align-items: center;
         height: 100%;
       }
-      #top-bar #status-badge-disconnected {
+      #top-bar .status-badge-option {
         display: none;
+      }
+      #top-bar #status-badge-running {
+        display: block;
       }
       #graphiql {
         height: 100vh;
@@ -122,7 +126,7 @@ export function graphiqlTemplate({
         max-width: max(12vw, 150px);
         text-overflow: ellipsis;
         overflow: hidden;
-        text-wrap: nowrap;
+        white-space: nowrap;
       }
       @media only screen and (max-width: 1550px) {
         .top-bar-section-title {
@@ -176,13 +180,19 @@ export function graphiqlTemplate({
                   <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 7, xl: 7}}>
                     <InlineStack gap="400">
                       <div id="status-badge" className="top-bar-section">
-                        <div id="status-badge-running">
+                        <div className="status-badge-option" id="status-badge-running">
                           <span className="top-bar-section-title">Status: </span>
                           <Badge tone="success" progress="complete">
                             Running
                           </Badge>
                         </div>
-                        <div id="status-badge-disconnected">
+                        <div className="status-badge-option" id="status-badge-unauthorized">
+                          <span className="top-bar-section-title">Status: </span>
+                          <Badge tone="attention" icon={CircleAlertMajor}>
+                            App uninstalled
+                          </Badge>
+                        </div>
+                        <div className="status-badge-option" id="status-badge-disconnected">
                           <span className="top-bar-section-title">Status: </span>
                           <Badge tone="warning" progress="partiallyComplete">
                             Disconnected
@@ -263,33 +273,49 @@ export function graphiqlTemplate({
         renderGraphiQL(event.target.value)
       })
 
-      // Warn when the server has been stopped
-      const pingInterval = setInterval(function() {
+      // Start out optimistic
+      let serverIsLive = true
+      let appIsInstalled = true
+
+      const updateBadge = function() {
         const topErrorBar = document.querySelector('#graphiql #top-error-bar')
         const statusDiv = document.querySelector('#graphiql #status-badge')
-        const runningBadgeDiv = statusDiv.querySelector('#status-badge-running')
-        const disconnectedBadgeDiv = statusDiv.querySelector('#status-badge-disconnected')
-        const displayErrorServerStopped = function() {
-          runningBadgeDiv.style.display = 'none'
-          disconnectedBadgeDiv.style.display = 'block'
-          topErrorBar.style.display = 'block'
-        }
-        const displayServerRunning = function() {
-          disconnectedBadgeDiv.style.display = 'none'
-          runningBadgeDiv.style.display = 'block'
-          topErrorBar.style.display = 'none'
-        }
-        const displayErrorServerStoppedTimeout = setTimeout(displayErrorServerStopped, 3000)
+        const allBadgeDivs = Array.from(statusDiv.querySelectorAll('.status-badge-option'))
+        let activeBadge = 'running'
+        if (!serverIsLive) activeBadge = 'disconnected'
+        if (!appIsInstalled) activeBadge = 'unauthorized'
+        allBadgeDivs.forEach(function(badge) {
+          if (badge.id == ('status-badge-' + activeBadge)) {
+            badge.style.display = 'block'
+          } else {
+            badge.style.display = 'none'
+          }
+        })
+        topErrorBar.style.display = serverIsLive ? 'none' : 'block'
+      }
+      const statusInterval = setInterval(updateBadge, 1000)
+
+      // Warn when the server has been stopped
+      const pingInterval = setInterval(function() {
+        const displayErrorServerStoppedTimeout = setTimeout(function() { serverIsLive = false }, 3000)
         fetch('{{url}}/graphiql/ping')
           .then(function(response) {
             if (response.status === 200) {
               clearTimeout(displayErrorServerStoppedTimeout)
-              displayServerRunning()
+              serverIsLive = true
             } else {
-              displayErrorServerStopped()
+              serverIsLive = false
             }
           })
       }, 2000)
+
+      // Warn when the app has been uninstalled
+      setInterval(function() {
+        fetch('{{ url }}/graphiql/status')
+          .then(async function(response) {
+            appIsInstalled = (await response.json()).status === 'OK'
+          })
+      }, 5000)
     </script>
   </body>
 </html>
