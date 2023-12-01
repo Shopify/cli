@@ -174,10 +174,11 @@ export async function updateAppModules({
         if (!bundleConfig) return undefined
         return {
           ...bundleConfig,
-          specificationIdentifier: ext.localIdentifier,
+          specificationIdentifier: ext.specification.identifier,
         }
       }),
     )
+
     const appM = getArrayRejectingUndefined(appModules)
 
     const variables: DevSessionUpdateVariables = {
