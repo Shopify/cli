@@ -1,22 +1,12 @@
-import {BaseProcess, DevProcessFunction} from './types.js'
+import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
 import {themeExtensionArgs} from '../theme-extension-args.js'
-import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {runThemeAppExtensionServer} from './theme-app-extension-dev-preview.js'
+import type {DevProcessFunction, PreviewThemeAppExtensionsOptions, PreviewThemeAppExtensionsProcess} from './types.js'
 
-export interface PreviewThemeAppExtensionsOptions {
-  adminSession: AdminSession
-  themeExtensionServerArgs: string[]
-  storefrontToken: string
-  token: string
-}
-
-export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThemeAppExtensionsOptions> {
-  type: 'theme-app-extensions'
-}
-
-export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
+export const runLegacyThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
   {adminSession, themeExtensionServerArgs: args, storefrontToken, token},
 ) => {
@@ -39,6 +29,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   themeExtensionPort,
   notify,
   token,
+  devPreview,
 }: Pick<PreviewThemeAppExtensionsOptions, 'token'> & {
   allExtensions: ExtensionInstance[]
   apiKey: string
@@ -46,6 +37,7 @@ export async function setupPreviewThemeAppExtensionsProcess({
   theme?: string
   notify?: string
   themeExtensionPort?: number
+  devPreview: boolean
 }): Promise<PreviewThemeAppExtensionsProcess | undefined> {
   const themeExtensions = allExtensions.filter((ext) => ext.isThemeExtension)
   if (themeExtensions.length === 0) {
@@ -72,10 +64,12 @@ export async function setupPreviewThemeAppExtensionsProcess({
     }),
   ])
 
+  const taeFunc = devPreview ? runThemeAppExtensionServer : runLegacyThemeAppExtensionsServer
+
   return {
     type: 'theme-app-extensions',
     prefix: 'extensions',
-    function: runThemeAppExtensionsServer,
+    function: taeFunc,
     options: {
       adminSession,
       themeExtensionServerArgs: args,

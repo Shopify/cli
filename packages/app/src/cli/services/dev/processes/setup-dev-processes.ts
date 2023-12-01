@@ -1,5 +1,5 @@
-import {BaseProcess, DevProcessFunction} from './types.js'
-import {PreviewThemeAppExtensionsProcess, setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
+import type {BaseProcess, DevProcessFunction, PreviewThemeAppExtensionsProcess} from './types.js'
+import {setupPreviewThemeAppExtensionsProcess} from './theme-app-extension.js'
 import {PreviewableExtensionProcess, setupPreviewableExtensionsProcess} from './previewable-extension.js'
 import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draftable-extension.js'
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
@@ -123,6 +123,7 @@ export async function setupDevProcesses({
       theme: commandOptions.theme,
       themeExtensionPort: commandOptions.themeExtensionPort,
       notify: commandOptions.notify,
+      devPreview: commandOptions.devPreview,
     }),
     setupSendUninstallWebhookProcess({
       webs: localApp.webs,

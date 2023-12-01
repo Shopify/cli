@@ -62,10 +62,10 @@ export interface DevOptions {
 export async function dev(commandOptions: DevOptions) {
   const config = await prepareForDev(commandOptions)
 
-  if (commandOptions.devPreview) {
-    console.log('new functionality!', config)
-    return
-  }
+  // if (commandOptions.devPreview) {
+  //   console.log('new functionality!', config)
+  //   return
+  // }
 
   await actionsBeforeSettingUpDevProcesses(config)
   const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)

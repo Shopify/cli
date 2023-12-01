@@ -4,7 +4,7 @@ import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {GraphiQLServerProcess, launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
-import {runThemeAppExtensionsServer} from './theme-app-extension.js'
+import {runLegacyThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
   testAppWithConfig,
   testTaxCalculationExtension,
@@ -197,7 +197,7 @@ describe('setup-dev-processes', () => {
     expect(res.processes[4]).toMatchObject({
       type: 'theme-app-extensions',
       prefix: 'extensions',
-      function: runThemeAppExtensionsServer,
+      function: runLegacyThemeAppExtensionsServer,
       options: {
         adminSession: {
           storeFqdn: 'store.myshopify.io',
