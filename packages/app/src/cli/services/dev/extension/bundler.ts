@@ -3,7 +3,7 @@ import {ExtensionDevOptions} from '../extension.js'
 import {bundleExtension} from '../../extensions/bundle.js'
 
 import {AppInterface} from '../../../models/app/app.js'
-import {updateExtensionConfig} from '../update-extension.js'
+import {reloadExtensionConfig} from '../update-extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -121,9 +121,7 @@ export interface SetupExtensionWatcherOptions {
   stdout: Writable
   stderr: Writable
   signal: AbortSignal
-  token: string
-  apiKey: string
-  registrationId: string
+  onChange: () => Promise<void>
 }
 
 export async function setupExtensionWatcher({
@@ -133,9 +131,7 @@ export async function setupExtensionWatcher({
   stdout,
   stderr,
   signal,
-  token,
-  apiKey,
-  registrationId,
+  onChange,
 }: SetupExtensionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
@@ -193,7 +189,8 @@ Redeploy Paths:
     buildController = new AbortController()
     const buildSignal = buildController.signal
     const shouldBuild = micromatch.isMatch(path, rebuildAndRedeployWatchPaths)
-    buildIfNecessary(extension, shouldBuild, {
+
+    reloadAndbuildIfNecessary(extension, shouldBuild, {
       app,
       stdout,
       stderr,
@@ -204,7 +201,7 @@ Redeploy Paths:
     })
       .then(() => {
         if (!buildSignal.aborted) {
-          return updateExtensionConfig({extension, token, apiKey, registrationId, stdout, stderr})
+          return onChange()
         }
       })
       .catch((updateError: unknown) => {
@@ -214,7 +211,12 @@ Redeploy Paths:
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
 }
 
-export async function buildIfNecessary(extension: ExtensionInstance, build: boolean, options: ExtensionBuildOptions) {
+export async function reloadAndbuildIfNecessary(
+  extension: ExtensionInstance,
+  build: boolean,
+  options: ExtensionBuildOptions,
+) {
+  await reloadExtensionConfig({extension, stdout: options.stdout})
   if (!build) return
   return extension.build(options)
 }

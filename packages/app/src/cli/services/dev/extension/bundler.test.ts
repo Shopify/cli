@@ -6,7 +6,7 @@ import {
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
 import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
-import {updateExtensionConfig} from '../update-extension.js'
+import {reloadExtensionConfig} from '../update-extension.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -255,9 +255,7 @@ describe('setupExtensionWatcher', () => {
       stdout: new Writable(),
       stderr: new Writable(),
       signal: signal ?? new AbortController().signal,
-      apiKey: 'mock-api-key',
-      registrationId: 'mock-registration-id',
-      token: 'mock-token',
+      onChange: vi.fn(),
     }
   }
 
@@ -339,7 +337,7 @@ describe('setupExtensionWatcher', () => {
         ignored: '**/*.test.*',
       },
     )
-    expect(updateExtensionConfig).toHaveBeenCalled()
+    expect(reloadExtensionConfig).toHaveBeenCalled()
   })
 
   test('builds and deploys the function on file change', async () => {
@@ -370,14 +368,11 @@ describe('setupExtensionWatcher', () => {
         useTasks: false,
       }),
     )
-    expect(updateExtensionConfig).toHaveBeenCalledWith({
+    expect(reloadExtensionConfig).toHaveBeenCalledWith({
       extension: watchOptions.extension,
-      token: watchOptions.token,
-      apiKey: watchOptions.apiKey,
-      registrationId: watchOptions.registrationId,
       stdout: watchOptions.stdout,
-      stderr: watchOptions.stderr,
     })
+    expect(watchOptions.onChange).toHaveBeenCalled()
   })
 
   test('does not deploy the function if the build fails', async () => {
@@ -398,7 +393,7 @@ describe('setupExtensionWatcher', () => {
     await flushPromises()
 
     expect(buildSpy).toHaveBeenCalled()
-    expect(updateExtensionConfig).not.toHaveBeenCalled()
+    expect(watchOptions.onChange).not.toHaveBeenCalled()
   })
 
   test('terminates existing builds on concurrent file change', async () => {

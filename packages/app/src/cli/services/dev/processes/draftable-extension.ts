@@ -44,9 +44,10 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
         stdout,
         stderr,
         signal,
-        token,
-        apiKey,
-        registrationId,
+        onChange: async () => {
+          // At this point the extension has alreday been built and is ready to be updated
+          await updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr})
+        },
       })
     }),
   )
