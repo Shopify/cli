@@ -100,8 +100,12 @@ export async function confirmPushChanges(options: PushOptions, app: App, schema:
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildDiffConfigContent(localConfig: AppConfiguration, remoteConfig: any, schema: zod.ZodTypeAny) {
+export function buildDiffConfigContent(
+  localConfig: AppConfiguration,
+  remoteConfig: unknown,
+  schema: zod.ZodTypeAny,
+  renderNoChanges = true,
+) {
   if (isCurrentAppSchema(localConfig) && getAppScopes(localConfig) !== undefined) {
     setPathValue(localConfig, 'access_scopes.scopes', getAppScopesArray(localConfig).join(',') as unknown as object)
   }
@@ -112,7 +116,7 @@ export function buildDiffConfigContent(localConfig: AppConfiguration, remoteConf
   )
 
   if (deepCompare(updated, baseline)) {
-    renderInfo({headline: 'No changes to update.'})
+    if (renderNoChanges) renderInfo({headline: 'No changes to update.'})
     return undefined
   }
 

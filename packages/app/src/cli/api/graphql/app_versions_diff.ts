@@ -30,30 +30,20 @@ export const AppVersionsDiffQuery = gql`
   }
 `
 
+export interface AppVersionsDiffExtensionSchema {
+  uuid: string
+  registrationTitle: string
+  specification: {
+    identifier: string
+  }
+}
+
 export interface AppVersionsDiffSchema {
   app: {
     versionsDiff: {
-      added: {
-        uuid: string
-        registrationTitle: string
-        specification: {
-          identifier: string
-        }
-      }[]
-      updated: {
-        uuid: string
-        registrationTitle: string
-        specification: {
-          identifier: string
-        }
-      }[]
-      removed: {
-        uuid: string
-        registrationTitle: string
-        specification: {
-          identifier: string
-        }
-      }[]
+      added: AppVersionsDiffExtensionSchema[]
+      updated: AppVersionsDiffExtensionSchema[]
+      removed: AppVersionsDiffExtensionSchema[]
     }
   }
 }

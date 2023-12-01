@@ -1,27 +1,26 @@
 import {manualMatchIds} from './id-manual-matching.js'
 import {automaticMatchmaking} from './id-matching.js'
-import {EnsureDeploymentIdsPresenceOptions, LocalSource, MatchingError, RemoteSource} from './identifiers.js'
-import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
+import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
-  configExtensionRegistrations: RemoteSource[]
   dashboardManagedExtensionRegistrations: RemoteSource[]
 }
 
-export async function ensureExtensionsIds(
+export async function resolveExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
   {
     extensionRegistrations: initialRemoteExtensions,
     dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
   }: AppWithExtensions,
-): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
+) {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   const localExtensions = options.app.allExtensions
@@ -31,13 +30,13 @@ export async function ensureExtensionsIds(
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
-    if (!confirmedMigration) return err('user-cancelled')
+    if (!confirmedMigration) throw new AbortSilentError()
     remoteExtensions = await migrateExtensionsToUIExtension(uiExtensionsToMigrate, options.appId, remoteExtensions)
   }
 
   if (flowExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(flowExtensionsToMigrate, false)
-    if (!confirmedMigration) return err('user-cancelled')
+    if (!confirmedMigration) throw new AbortSilentError()
     const newRemoteExtensions = await migrateFlowExtensions(
       flowExtensionsToMigrate,
       options.appId,
@@ -72,32 +71,25 @@ export async function ensureExtensionsIds(
     onlyRemoteExtensions = matchResult.onlyRemote
   }
 
-  if (!options.force) {
-    let question
-
-    if (options.release) {
-      question = `Release a new version of ${options.partnersApp?.title}?`
-    } else {
-      question = `Create a new version of ${options.partnersApp?.title}?`
-    }
-
-    const confirmed = await deployConfirmationPrompt({
-      summary: {
-        appTitle: options.partnersApp?.title,
-        question,
-        identifiers: validMatches,
-        toCreate: extensionsToCreate,
-        dashboardOnly: dashboardOnlyExtensions,
-      },
-      release: options.release,
-      apiKey: options.appId,
-      token: options.token,
-      app: options.app,
-      diffConfigContent: options.diffConfigContent,
-    })
-    if (!confirmed) return err('user-cancelled')
+  return {
+    validMatches,
+    extensionsToCreate,
+    dashboardOnlyExtensions,
   }
+}
 
+export async function deployConfirmed(
+  options: EnsureDeploymentIdsPresenceOptions,
+  extensionRegistrations: RemoteSource[],
+  {
+    validMatches,
+    extensionsToCreate,
+  }: {
+    validMatches: IdentifiersExtensions
+    extensionsToCreate: LocalSource[]
+  },
+) {
+  const validMatchesById: {[key: string]: string} = {}
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
@@ -108,14 +100,14 @@ export async function ensureExtensionsIds(
 
   // For extensions we also need the match by ID, not only UUID (doesn't apply to functions)
   for (const [localIdentifier, uuid] of Object.entries(validMatches)) {
-    const registration = remoteExtensions.find((registration) => registration.uuid === uuid)
+    const registration = extensionRegistrations.find((registration) => registration.uuid === uuid)
     if (registration) validMatchesById[localIdentifier] = registration.id
   }
 
-  return ok({
+  return {
     extensions: validMatches,
     extensionIds: validMatchesById,
-  })
+  }
 }
 
 async function createExtensions(extensions: LocalSource[], appId: string) {
