@@ -47,12 +47,13 @@ export class ConfigExtensionInstance<TConfiguration = unknown> {
   }
 
   deployConfig() {
-    return this.specification.transform(this.configuration as object)
+    const transformed = this.specification.transform(this.configuration as object)
+    return Object.keys(transformed).length > 0 ? transformed : undefined
   }
 
   bundleConfig(): ConfigAppModuleSettings {
     return {
-      config: JSON.stringify(this.deployConfig()),
+      config: this.deployConfig() ? JSON.stringify(this.deployConfig()) : '',
       handle: this.handle,
       specificationIdentifier: this.specification.identifier,
     }

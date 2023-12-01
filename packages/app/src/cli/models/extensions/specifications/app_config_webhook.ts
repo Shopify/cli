@@ -1,6 +1,11 @@
 import {EndpointValidation, removeTrailingSlash} from './utils/app_config_webhook.js'
-import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {validateInnerSubscriptions, validateTopLevelSubscriptions} from '../../../utilities/app/config/webhooks.js'
+import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {
+  transformToWebhookConfig,
+  transformWebhookConfig,
+  validateInnerSubscriptions,
+  validateTopLevelSubscriptions,
+} from '../../../utilities/app/config/webhooks.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA = true
@@ -57,19 +62,15 @@ export const WebhookSchema = zod.object({
   webhooks: ExtendedWebhooksSchema.optional(),
 })
 
-const WebhookransformConfig: TransformationConfig = {
-  schema: {
-    api_version: 'webhooks.api_version',
-    topics: 'webhooks.topics',
-    endpoint: 'webhooks.endpoint',
-    subscriptions: 'webhooks.subscriptions',
-  },
+const WebhookTransformConfig: CustomTransformationConfig = {
+  forward: (content: object) => transformWebhookConfig(content),
+  reverse: (content: object) => transformToWebhookConfig(content),
 }
 
 const spec = createConfigExtensionSpecification({
   identifier: 'webhooks',
   schema: WebhookSchema,
-  transformConfig: WebhookransformConfig,
+  transformConfig: WebhookTransformConfig,
 })
 
 export default spec

@@ -29,9 +29,14 @@ export interface TransformationConfig {
   types?: {[key: string]: {[key: string]: string}}
 }
 
+export interface CustomTransformationConfig {
+  forward?: (obj: object) => object
+  reverse?: (obj: object) => object
+}
+
 export interface ConfigExtensionSpecification<TConfiguration = unknown> extends ExtensionSpecificationCommon {
   schema: ZodSchemaType<TConfiguration>
-  transformConfig?: TransformationConfig
+  transformConfig?: TransformationConfig | CustomTransformationConfig
   validateConfig?: {[key: string]: unknown}
 
   validate: (obj: object) => Result<unknown, string>
@@ -130,7 +135,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
 export function createConfigExtensionSpecification<TConfiguration = unknown>(spec: {
   identifier: string
   schema: TConfiguration
-  transformConfig?: TransformationConfig
+  transformConfig?: TransformationConfig | CustomTransformationConfig
   validateConfig?: {[key: string]: unknown}
 }): ConfigExtensionSpecification<TConfiguration> {
   return {
@@ -140,13 +145,29 @@ export function createConfigExtensionSpecification<TConfiguration = unknown>(spe
     transformConfig: spec.transformConfig,
     validateConfig: spec.validateConfig,
     validate: spec.validateConfig ? (object) => validate(object, spec.validateConfig!) : () => ok({} as unknown),
-    transform: spec.transformConfig
-      ? (object) => transform(object, spec.transformConfig!)
-      : (object) => defaultTransform(object as {[key: string]: unknown}),
-    reverseTransform: spec.transformConfig
-      ? (object) => transform(object, spec.transformConfig!, true)
-      : (object) => defaultReverseTransform(spec.schema as ZodSchemaType<TConfiguration>, object),
+    transform: resolveTransformConfig(spec.transformConfig),
+    reverseTransform: resolveReverseTransformConfig(spec.schema as ZodSchemaType<TConfiguration>, spec.transformConfig),
   }
+}
+
+function resolveTransformConfig(transformConfig?: TransformationConfig | CustomTransformationConfig) {
+  if (!transformConfig) return (object: object) => defaultTransform(object as {[key: string]: unknown})
+
+  if (Object.keys(transformConfig).includes('forward')) return (transformConfig as CustomTransformationConfig).forward!
+
+  return (object: object) => transform(object, transformConfig as TransformationConfig)
+}
+
+function resolveReverseTransformConfig<T>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: zod.ZodType<T, any, any>,
+  transformConfig?: TransformationConfig | CustomTransformationConfig,
+) {
+  if (!transformConfig) return (object: object) => defaultReverseTransform(schema, object)
+
+  if (Object.keys(transformConfig).includes('reverse')) return (transformConfig as CustomTransformationConfig).reverse!
+
+  return (object: object) => reverseTransform(object, transformConfig as TransformationConfig)
 }
 
 function validate(obj: object, config: {[key: string]: unknown}) {
@@ -178,6 +199,10 @@ function validate(obj: object, config: {[key: string]: unknown}) {
   }
 
   return ok({} as unknown)
+}
+
+function reverseTransform(obj: object, config: TransformationConfig) {
+  return transform(obj, config, true)
 }
 
 function transform(obj: object, config: TransformationConfig, reverse = false): object {

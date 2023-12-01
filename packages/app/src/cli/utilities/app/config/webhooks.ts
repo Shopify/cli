@@ -29,6 +29,14 @@ export interface WebhookConfig {
   subscriptions?: WebhookSubscription[]
 }
 
+interface WebhookServerConfig {
+  topic: string
+  endpoint: string
+  subtopic?: string
+  include_fields?: string[]
+  metafield_namespaces?: string[]
+}
+
 // eslint-disable-next-line no-warning-comments
 // TODO - remove this when mutation is ready
 export function fakedWebhookSubscriptionsMutation(subscriptions: WebhookSubscription[]) {
@@ -139,4 +147,81 @@ export function validateInnerSubscriptions({endpoint, subscriptions = [], ...sch
 
 export function getWebhookConfig(config: AppConfiguration) {
   return getPathValue(config, 'webhooks') ? (getPathValue(config, 'webhooks') as WebhookConfig) : undefined
+}
+
+export function transformWebhookConfig(content: object) {
+  const webhooks = content as WebhookConfig
+
+  // normalize webhook config with the top level config
+  const webhookSubscriptions = []
+  const {topics, subscriptions, endpoint} = webhooks
+
+  if (endpoint && topics?.length) {
+    for (const topic of topics) {
+      webhookSubscriptions.push({
+        topic,
+        endpoint,
+      })
+    }
+  }
+
+  if (subscriptions?.length) {
+    for (const {path, endpoint: localEndpoint, ...subscription} of subscriptions) {
+      // we can assume this is valid from earlier validation, and local endpoint will overwrite top level if there is any
+      const subscriptionConfig = {
+        endpoint: localEndpoint || endpoint,
+        ...subscription,
+      }
+
+      if (path) {
+        subscriptionConfig.endpoint = `${subscriptionConfig.endpoint}${path}`
+      }
+
+      webhookSubscriptions.push(subscriptionConfig)
+    }
+  }
+  return webhookSubscriptions
+}
+
+export function transformToWebhookConfig(content: object) {
+  const serverWebhooks = content as WebhookServerConfig[]
+  const frequencyMap: {[key: string]: number} = {}
+  serverWebhooks.forEach((item) => {
+    frequencyMap[item.endpoint] = (frequencyMap[item.endpoint] || 0) + 1
+  })
+  const maxCount = Math.max(...Object.values(frequencyMap))
+  const defaultEndpoint = Object.keys(frequencyMap).find((key) => frequencyMap[key] === maxCount)
+
+  const topics: string[] = []
+  const subscriptions: WebhookSubscription[] = []
+
+  for (const item of serverWebhooks) {
+    if (item.endpoint === defaultEndpoint && !item.subtopic && !item.include_fields && !item.metafield_namespaces) {
+      topics.push(item.topic)
+    } else {
+      let path: string | undefined
+      let endpoint: string | undefined
+
+      // If the endpoint starts with the defaultEndpoint, extract the rest of the string as the path
+      if (item.endpoint.startsWith(defaultEndpoint!)) {
+        path = item.endpoint.slice(defaultEndpoint!.length)
+      } else {
+        // If the endpoint does not start with the defaultEndpoint, extract the path using a regular expression
+        const pathMatch = item.endpoint.match(/^[^:]+:\/\/[^/]+\/(.*)/)
+        path = pathMatch ? pathMatch[1] : undefined
+        endpoint = item.endpoint
+      }
+
+      // Exclude undefined keys from the subscription object
+      const subscription: WebhookSubscription = {...item}
+      if (path) subscription.path = path
+      if (endpoint) subscription.endpoint = endpoint
+      if (item.endpoint.startsWith(defaultEndpoint!)) {
+        delete subscription.endpoint
+      }
+      subscriptions.push(subscription)
+    }
+  }
+
+  return {endpoint: defaultEndpoint, topics, subscriptions}
 }

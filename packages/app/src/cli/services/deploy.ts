@@ -99,9 +99,7 @@ export async function deploy(options: DeployOptions) {
               options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
             const appModules = generalSpecificationModules.concat(
-              options.app.configExtensions
-                .map((ext) => ext.bundleConfig())
-                .filter((module) => Object.keys(JSON.parse(module.config)).length > 0),
+              options.app.configExtensions.map((ext) => ext.bundleConfig()).filter((module) => module.config !== ''),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
