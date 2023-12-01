@@ -14,11 +14,8 @@ const AppUiSchema = zod.object({
 const AppUiTransformConfig: TransformationConfig = {
   schema: {
     app_url: 'application_url',
-    ui: 'embedded',
+    embedded: 'embedded',
     preferences_url: 'app_preferences.url',
-  },
-  types: {
-    embedded: {true: 'embedded', false: 'external'},
   },
 }
 

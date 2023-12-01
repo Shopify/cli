@@ -53,7 +53,6 @@ export class ConfigExtensionInstance<TConfiguration = unknown> {
   bundleConfig(): ConfigAppModuleSettings {
     return {
       config: JSON.stringify(this.deployConfig()),
-      context: 'context',
       handle: this.handle,
       specificationIdentifier: this.specification.identifier,
     }

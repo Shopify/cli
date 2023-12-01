@@ -54,11 +54,11 @@ export interface ConfigAppModuleSettings extends AppModuleCommonSettings {
 
 export interface GeneralAppModuleSettings extends AppModuleCommonSettings {
   uuid: string
+  context: string
 }
 
 interface AppModuleCommonSettings {
   config: string
-  context: string
   handle: string
 }
 

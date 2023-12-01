@@ -1,7 +1,7 @@
 import {createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const PosEmbedmentSchema = zod.object({
+const PosConfigurationSchema = zod.object({
   pos: zod
     .object({
       embedded: zod.boolean(),
@@ -10,8 +10,8 @@ const PosEmbedmentSchema = zod.object({
 })
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'pos_embedment',
-  schema: PosEmbedmentSchema,
+  identifier: 'pos_configuration',
+  schema: PosConfigurationSchema,
 })
 
 export default spec
