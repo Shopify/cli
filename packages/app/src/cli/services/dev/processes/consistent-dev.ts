@@ -41,6 +41,7 @@ export interface UpdateAppModulesOptions {
   adminSession: AdminSession
   token: string
   apiKey: string
+  isNewSession: boolean
   stdout: Writable
 }
 
@@ -101,7 +102,7 @@ export const startConsistentDevSession: DevProcessFunction<ConsistentDevOptions>
   const devFolder = await prepareDevFolder(app.directory)
 
   // Initial update of all modules
-  await updateAppModules({app, extensions, adminSession, token, apiKey, stdout, devFolder})
+  await updateAppModules({app, extensions, adminSession, token, apiKey, stdout, devFolder, isNewSession: true})
 
   await Promise.all(
     extensions.map(async (extension) => {
@@ -114,7 +115,16 @@ export const startConsistentDevSession: DevProcessFunction<ConsistentDevOptions>
         signal,
         onChange: async () => {
           // At this point the extension has alreday been built and is ready to be updated
-          await updateAppModules({app, extensions: [extension], adminSession, token, apiKey, stdout, devFolder})
+          await updateAppModules({
+            app,
+            extensions: [extension],
+            adminSession,
+            token,
+            apiKey,
+            stdout,
+            devFolder,
+            isNewSession: false,
+          })
         },
       })
     }),
@@ -137,6 +147,7 @@ export async function updateAppModules({
   extensions,
   adminSession,
   token,
+  isNewSession,
   stdout,
   apiKey,
 }: UpdateAppModulesOptions) {
@@ -185,6 +196,7 @@ export async function updateAppModules({
       appModules: appM,
       bundleUrl: signedUrl,
       apiKey,
+      devSessionUpdateType: isNewSession ? 'ABSOLUTE' : 'UPDATE_ONLY',
     }
     const result: DevSessionUpdateSchema = await adminRequest(DevSessionUpdateMutation, adminSession, variables)
 

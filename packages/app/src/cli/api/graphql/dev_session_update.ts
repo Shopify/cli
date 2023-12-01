@@ -1,8 +1,18 @@
 import {gql} from 'graphql-request'
 
 export const DevSessionUpdateMutation = gql`
-  mutation devSessionUpdate($apiKey: String!, $bundleUrl: String, $appModules: [AppModuleSettings!]) {
-    devSessionUpdate(apiKey: $apiKey, bundleUrl: $bundleUrl, appModules: $appModules) {
+  mutation devSessionUpdate(
+    $apiKey: String!
+    $bundleUrl: String
+    $appModules: [AppModuleSettings!]
+    $devSessionUpdateType: DevSessionUpdateType
+  ) {
+    devSessionUpdate(
+      apiKey: $apiKey
+      bundleUrl: $bundleUrl
+      appModules: $appModules
+      devSessionUpdateType: $devSessionUpdateType
+    ) {
       success
       userErrors {
         field
@@ -13,6 +23,7 @@ export const DevSessionUpdateMutation = gql`
 `
 
 export interface DevSessionUpdateVariables {
+  devSessionUpdateType: 'ABSOLUTE' | 'UPDATE_ONLY' | 'DELETE_ONLY'
   bundleUrl: string
   apiKey: string
   appModules: {
