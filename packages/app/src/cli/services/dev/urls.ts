@@ -64,7 +64,7 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
   }
 
   if (isSpin() && !options.tunnelUrl) {
-    frontendUrl = `https://cli.${await spinFqdn()}`
+    frontendUrl = `https://cli-server.${await spinFqdn()}`
     const cliMainServicePort = appPort()
     if (cliMainServicePort !== undefined && (await checkPortAvailability(cliMainServicePort))) {
       frontendPort = cliMainServicePort
