@@ -254,13 +254,14 @@ export interface AppInterface extends AppConfigurationInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
-  allExtensions: ExtensionInstance[]
+  extensions: ExtensionInstance[]
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  get allExtensions(): ExtensionInstance[]
 }
 
 export class App implements AppInterface {
@@ -274,7 +275,7 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  allExtensions: ExtensionInstance[]
+  extensions: ExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -298,9 +299,13 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.allExtensions = extensions
+    this.extensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+  }
+
+  get allExtensions() {
+    return this.extensions.filter((ext) => !ext.specification.appModuleFeatures().includes('app_config'))
   }
 
   async updateDependencies() {
