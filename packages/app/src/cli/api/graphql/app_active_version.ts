@@ -30,7 +30,7 @@ interface AppModuleVersionSpecification {
   identifier: string
   name: string
   options: {
-    managementExperience: 'cli' | 'custom' | 'dashboard'
+    managementExperience: 'cli' | 'custom' | 'dashboard' | 'app_config'
   }
 }
 

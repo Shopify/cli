@@ -1,12 +1,11 @@
 import {AppSchema} from '../../app/app.js'
-import {ZodSchemaType, BaseConfigType} from '../schemas.js'
-import {createExtensionSpecification} from '../specification.js'
+import {createConfigExtensionSpecification} from '../specification.js'
 
 const PosConfigurationSchema = AppSchema.pick({pos: true}).strip()
 
-const spec = createExtensionSpecification({
+const spec = createConfigExtensionSpecification({
   identifier: 'point_of_sale',
-  schema: PosConfigurationSchema as unknown as ZodSchemaType<BaseConfigType>,
+  schema: PosConfigurationSchema,
   appModuleFeatures: () => ['app_config'],
 })
 

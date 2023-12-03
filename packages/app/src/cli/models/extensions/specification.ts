@@ -4,6 +4,7 @@ import {blocks} from '../../constants.js'
 
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -42,6 +43,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  transform?: (content: {[key: string]: unknown}) => {[key: string]: unknown}
 }
 
 /**
@@ -87,6 +89,7 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  */
 export function createExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
+  transform?: (content: {[key: string]: unknown}) => {[key: string]: unknown},
 ): ExtensionSpecification<TConfiguration> {
   const defaults = {
     // these two fields are going to be overridden by the extension specification API response,
@@ -98,6 +101,29 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
+    transform,
   }
   return {...defaults, ...spec}
+}
+
+export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
+  identifier: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: zod.ZodObject<any>
+  appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+}): ExtensionSpecification<TConfiguration> {
+  return createExtensionSpecification(
+    {
+      identifier: spec.identifier,
+      schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
+      appModuleFeatures: spec.appModuleFeatures,
+      deployConfig: async (config) => config,
+    },
+    transformRemoveSection,
+  )
+}
+
+function transformRemoveSection(content: {[key: string]: unknown}): {[key: string]: unknown} {
+  const firstKey = Object.keys(content)[0]
+  return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
 }

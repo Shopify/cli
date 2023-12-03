@@ -85,6 +85,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
+  get isAppConfigExtension() {
+    return this.features.includes('app_config')
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -132,11 +136,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
     }
 
-    return (
-      // module id param is not necessary for non-Function extensions
-      this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined) ??
-      Promise.resolve(undefined)
-    )
+    const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const transformedConfig = this.specification.transform?.(this.configuration)
+    return deployConfig ?? transformedConfig ?? undefined
   }
 
   validate() {
@@ -253,12 +255,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const {handle, ...remainingConfigs} = configValue
     const contextValue = (handle as string) || ''
 
-    return {
-      uuid: identifiers.extensions[this.localIdentifier]!,
+    const result = {
       config: JSON.stringify(remainingConfigs),
       context: contextValue,
       handle: this.handle,
     }
+
+    return this.isAppConfigExtension
+      ? {...result, specificationIdentifier: this.specification.identifier}
+      : {...result, uuid: identifiers.extensions[this.localIdentifier]!}
   }
 }
 

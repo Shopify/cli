@@ -95,7 +95,7 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const appModules = await Promise.all(
-              options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
+              options.app.extensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
