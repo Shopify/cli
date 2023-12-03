@@ -1,7 +1,19 @@
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'
+import {
+  AppProvider,
+  Badge,
+  Banner,
+  BlockStack,
+  Box,
+  Card,
+  Grid,
+  InlineStack,
+  Link,
+  Select,
+  Text,
+} from '@shopify/polaris'
 import {CircleAlertMajor, LinkMinor} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
@@ -170,11 +182,14 @@ export function graphiqlTemplate({
             <Box background="bg-surface" padding="400">
               <BlockStack gap="300">
                 <div id="top-error-bar">
-                  <Banner
-                    tone="critical"
-                    title="The server has been stopped. Restart dev and launch the GraphiQL Explorer from the terminal again."
-                    onDismiss={() => {}}
-                  ></Banner>
+                  <Card padding={{xs: '0'}}>
+                    <Banner tone="critical" onDismiss={() => {}}>
+                      <p>
+                        The server has been stopped. Restart <code>dev</code> from the CLI and launch the GraphiQL
+                        explorer again.
+                      </p>
+                    </Banner>
+                  </Card>
                 </div>
                 <Grid columns={{xs: 3, sm: 3, md: 3}}>
                   <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 7, xl: 7}}>
