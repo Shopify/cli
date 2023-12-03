@@ -11,11 +11,13 @@ import {selectConfigName} from '../../../prompts/config.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {fetchPartnersSession} from '../../context/partner-account-info.js'
+import {PartnersSession, fetchPartnersSession} from '../../context/partner-account-info.js'
+import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_registrations.js'
+import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -30,14 +32,28 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const localApp = await loadAppConfigFromDefaultToml(options)
+  const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
+  const localApp = await loadAppConfigFromDefaultToml(options, specifications)
   const directory = localApp?.directory || options.directory
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, directory)
+  const partnersSession = await fetchPartnersSession()
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, partnersSession, directory)
 
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
 
-  const configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
+  const remoteExtensionRegistrations = await fetchAppExtensionRegistrations({
+    token: partnersSession.token,
+    apiKey: remoteApp.apiKey,
+  })
+  const remoteAppConfigurationExtension = remoteAppConfigurationExtensionContent(
+    remoteExtensionRegistrations.app.configExtensionRegistrations,
+    specifications.filter((spec) => spec.appModuleFeatures().includes('app_config')),
+  )
+  const localAndRemoteApiClientConfiguration = mergeAppConfiguration(
+    {...localApp.configuration, path: configFilePath},
+    remoteApp,
+  )
+  const configuration = {...localAndRemoteApiClientConfiguration, ...remoteAppConfigurationExtension}
 
   await writeAppConfigurationFile(configuration)
 
@@ -70,9 +86,11 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   return configuration
 }
 
-async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppInterface> {
+async function loadAppConfigFromDefaultToml(
+  options: LinkOptions,
+  specifications: ExtensionSpecification[],
+): Promise<AppInterface> {
   try {
-    const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
     const app = await loadApp({
       specifications,
       directory: options.directory,
@@ -89,9 +107,9 @@ async function loadAppConfigFromDefaultToml(options: LinkOptions): Promise<AppIn
 async function loadRemoteApp(
   localApp: AppInterface,
   apiKey: string | undefined,
+  partnersSession: PartnersSession,
   directory?: string,
 ): Promise<OrganizationApp> {
-  const partnersSession = await fetchPartnersSession()
   if (!apiKey) {
     return fetchOrCreateOrganizationApp(localApp, partnersSession, directory)
   }
@@ -206,4 +224,21 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
       use_legacy_install_flow: true,
     }
   }
+}
+
+export function remoteAppConfigurationExtensionContent(
+  configRegistrations: ExtensionRegistration[],
+  configSpecifications: ExtensionSpecification[],
+) {
+  let remoteAppConfig: {[key: string]: unknown} = {}
+  configRegistrations.forEach((extension) => {
+    const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
+    if (!configSpec) return
+    const configExtensionString = extension.activeVersion?.config
+    if (!configExtensionString) return
+    const configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
+
+    remoteAppConfig = {...remoteAppConfig, ...(configSpec.reverseTransform?.(configExtension) ?? configExtension)}
+  })
+  return {...remoteAppConfig}
 }

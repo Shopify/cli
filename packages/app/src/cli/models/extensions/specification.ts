@@ -44,6 +44,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   transform?: (content: {[key: string]: unknown}) => {[key: string]: unknown}
+  reverseTransform?: (content: {[key: string]: unknown}) => {[key: string]: unknown}
 }
 
 /**
@@ -89,7 +90,6 @@ export interface CreateExtensionSpecType<TConfiguration extends BaseConfigType =
  */
 export function createExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
-  transform?: (content: {[key: string]: unknown}) => {[key: string]: unknown},
 ): ExtensionSpecification<TConfiguration> {
   const defaults = {
     // these two fields are going to be overridden by the extension specification API response,
@@ -101,7 +101,8 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    transform,
+    transform: spec.transform,
+    reverseTransform: spec.reverseTransform,
   }
   return {...defaults, ...spec}
 }
@@ -112,18 +113,25 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   schema: zod.ZodObject<any>
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
 }): ExtensionSpecification<TConfiguration> {
-  return createExtensionSpecification(
-    {
-      identifier: spec.identifier,
-      schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
-      appModuleFeatures: spec.appModuleFeatures,
-      deployConfig: async (config) => config,
-    },
-    transformRemoveSection,
-  )
+  return createExtensionSpecification({
+    identifier: spec.identifier,
+    schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
+    appModuleFeatures: spec.appModuleFeatures,
+    deployConfig: async (config) => config,
+    transform: transformRemoveSection,
+    reverseTransform: (content) => defaultReverseTransform(spec.schema, content),
+  })
 }
 
-function transformRemoveSection(content: {[key: string]: unknown}): {[key: string]: unknown} {
+function transformRemoveSection(content: {[key: string]: unknown}) {
   const firstKey = Object.keys(content)[0]
   return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function defaultReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
+  const configSection: {[key: string]: unknown} = {}
+  const firstLevelObjectName = Object.keys(schema._def.shape())[0]!
+  configSection[firstLevelObjectName] = content
+  return configSection
 }
