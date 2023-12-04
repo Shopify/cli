@@ -30,6 +30,7 @@ interface SetupGraphiQLServerOptions {
   appUrl: string
   apiKey: string
   apiSecret: string
+  randomKey: string
   url: string
   storeFqdn: string
 }
@@ -41,6 +42,7 @@ export function setupGraphiQLServer({
   appUrl,
   apiKey,
   apiSecret,
+  randomKey,
   url,
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
@@ -55,6 +57,12 @@ export function setupGraphiQLServer({
       }
       next()
     })
+
+  function failIfUnmatchedKey(str: string, res: express.Response): boolean {
+    if (str === randomKey) return false
+    res.status(401).json({error: 'Unauthorized'})
+    return true
+  }
 
   let _token: string | undefined
   async function token(): Promise<string> {
@@ -121,8 +129,9 @@ export function setupGraphiQLServer({
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/graphiql', async (_req, res) => {
+  app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
     let apiVersions: string[]
     try {
       apiVersions = await fetchApiVersionsWithTokenRefresh()
@@ -147,6 +156,7 @@ export function setupGraphiQLServer({
           apiVersions: [...apiVersions, 'unstable'],
           appName,
           appUrl,
+          randomKey,
           storeFqdn,
         }),
         {
@@ -162,6 +172,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
     try {
