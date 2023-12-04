@@ -23,10 +23,11 @@ export async function ensureExtensionsIds(
   }: AppWithExtensions,
 ): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
   let remoteExtensions = initialRemoteExtensions
+  const managedUuidExtensions = options.app.allExtensions.filter((ext) => ext.isUuidManaged())
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
+  let localExtensions = managedUuidExtensions.filter((ext) => !ext.isFunctionExtension)
 
-  const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
+  const functionExtensions = managedUuidExtensions.filter((ext) => ext.isFunctionExtension)
   localExtensions = localExtensions.concat(functionExtensions)
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)

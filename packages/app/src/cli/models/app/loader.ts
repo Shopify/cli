@@ -709,11 +709,12 @@ async function logMetadataForLoadedApp(
   await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
-    const extensionFunctionCount = app.allExtensions.filter((extension) => extension.isFunctionExtension).length
-    const extensionUICount = app.allExtensions.filter((extension) => extension.isESBuildExtension).length
-    const extensionThemeCount = app.allExtensions.filter((extension) => extension.isThemeExtension).length
+    const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
+    const extensionFunctionCount = extensionsToAddToMetrics.filter((extension) => extension.isFunctionExtension).length
+    const extensionUICount = extensionsToAddToMetrics.filter((extension) => extension.isESBuildExtension).length
+    const extensionThemeCount = extensionsToAddToMetrics.filter((extension) => extension.isThemeExtension).length
 
-    const extensionTotalCount = app.allExtensions.length
+    const extensionTotalCount = extensionsToAddToMetrics.length
 
     const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
@@ -721,7 +722,7 @@ async function logMetadataForLoadedApp(
     const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
-    for (const extension of app.allExtensions) {
+    for (const extension of extensionsToAddToMetrics) {
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {

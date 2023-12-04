@@ -127,7 +127,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension
+    return !this.isThemeExtension && !this.isAppConfigExtension
+  }
+
+  isUuidManaged() {
+    return !this.isAppConfigExtension
+  }
+
+  isSentToMetrics() {
+    return !this.isAppConfigExtension
+  }
+
+  isReturnedAsInfo() {
+    return !this.isAppConfigExtension
   }
 
   async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
@@ -261,9 +273,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
 
-    return this.isAppConfigExtension
-      ? {...result, specificationIdentifier: this.specification.identifier}
-      : {...result, uuid: identifiers.extensions[this.localIdentifier]!}
+    return this.isUuidManaged()
+      ? {...result, uuid: identifiers.extensions[this.localIdentifier]!}
+      : {...result, specificationIdentifier: this.specification.identifier}
   }
 }
 
