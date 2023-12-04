@@ -276,6 +276,7 @@ export function graphiqlTemplate({
                 {query: "{%if query.preface %}{{query.preface}}\\n{% endif %}{{query.query}}", variables: "{{query.variables}}"},
               {%endfor%}
             ],
+            isHeadersEditorEnabled: false,
           }),
           document.getElementById('graphiql-explorer'),
         )
