@@ -440,10 +440,11 @@ Release an app version.
 ```
 USAGE
   $ shopify app release --version <value> [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c
-    <value>] [--reset]
+    <value>] [--reset] [-f]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
+  -f, --force           Release without asking for confirmation.
   --client-id=<value>   The Client ID of your app.
   --no-color            Disable color output.
   --path=<value>        [default: .] The path to your app directory.
