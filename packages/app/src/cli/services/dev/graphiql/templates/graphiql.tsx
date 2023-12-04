@@ -1,20 +1,4 @@
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import React from 'react'
-import {renderToStaticMarkup} from 'react-dom/server'
-import {
-  AppProvider,
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Card,
-  Grid,
-  InlineStack,
-  Link,
-  Select,
-  Text,
-} from '@shopify/polaris'
-import {CircleAlertMajor, LinkMinor} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
 
@@ -176,83 +160,6 @@ export function graphiqlTemplate({
   </head>
   <body>
     <div id="graphiql">
-      ${renderToStaticMarkup(
-        <AppProvider i18n={{}}>
-          <div id="top-bar">
-            <Box background="bg-surface" padding="400">
-              <BlockStack gap="300">
-                <div id="top-error-bar">
-                  <Card padding={{xs: '0'}}>
-                    <Banner tone="critical" onDismiss={() => {}}>
-                      <p>
-                        The server has been stopped. Restart <code>dev</code> from the CLI and launch the GraphiQL
-                        explorer again.
-                      </p>
-                    </Banner>
-                  </Card>
-                </div>
-                <Grid columns={{xs: 3, sm: 3, md: 3}}>
-                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 7, xl: 7}}>
-                    <InlineStack gap="400">
-                      <div id="status-badge" className="top-bar-section">
-                        <div className="status-badge-option" id="status-badge-running">
-                          <span className="top-bar-section-title">Status: </span>
-                          <Badge tone="success" progress="complete">
-                            Running
-                          </Badge>
-                        </div>
-                        <div className="status-badge-option" id="status-badge-unauthorized">
-                          <span className="top-bar-section-title">Status: </span>
-                          <Badge tone="attention" icon={CircleAlertMajor}>
-                            App uninstalled
-                          </Badge>
-                        </div>
-                        <div className="status-badge-option" id="status-badge-disconnected">
-                          <span className="top-bar-section-title">Status: </span>
-                          <Badge tone="warning" progress="partiallyComplete">
-                            Disconnected
-                          </Badge>
-                        </div>
-                      </div>
-                      <div id="version-select" className="top-bar-section">
-                        <span className="top-bar-section-title">API version: </span>
-                        <Select
-                          label="API version"
-                          labelHidden
-                          options={apiVersions}
-                          value={apiVersion}
-                          onChange={() => {}}
-                        />
-                      </div>
-                      <div id="outbound-links" className="top-bar-section">
-                        <span className="top-bar-section-title">Store: </span>
-                        <Link url={`https://${storeFqdn}/admin`} target="_blank">
-                          <Badge tone="info" icon={LinkMinor}>
-                            {storeFqdn}
-                          </Badge>
-                        </Link>
-                        <span className="top-bar-section-title">App: </span>
-                        <Link url={appUrl} target="_blank">
-                          <Badge tone="info" icon={LinkMinor}>
-                            {appName}
-                          </Badge>
-                        </Link>
-                      </div>
-                    </InlineStack>
-                  </Grid.Cell>
-                  <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 5, xl: 5}}>
-                    <div id="scopes-note" className="top-bar-section">
-                      <Text as="span" tone="subdued">
-                        GraphiQL runs on the same access scopes you’ve defined in the TOML file for your app.
-                      </Text>
-                    </div>
-                  </Grid.Cell>
-                </Grid>
-              </BlockStack>
-            </Box>
-          </div>
-        </AppProvider>,
-      )}
       <div id="graphiql-explorer">Loading...</div>
     </div>
     <script

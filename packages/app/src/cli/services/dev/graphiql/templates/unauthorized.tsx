@@ -1,6 +1,5 @@
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {AppProvider, BlockStack, Button, Card, Link, Page, Text} from '@shopify/polaris'
 
 const shopifySvg = (
   <svg width="102" height="28" viewBox="0 0 102 28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,41 +48,32 @@ const shopifySvg = (
 )
 
 const polarisUnauthorizedContent = renderToStaticMarkup(
-  <AppProvider i18n={{}}>
-    <Page narrowWidth>
-      <div className="card-wrapper">
-        <Card padding="600">
-          <BlockStack gap="500">
-            {shopifySvg}
-            <div id="pre-install">
-              <BlockStack gap="200">
-                <Text variant="headingMd" as="h2">
-                  Install your app to access GraphiQL
-                </Text>
-                <p>
-                  The GraphiQL Explorer relies on your app being installed on your development store to access its data.
-                </p>
-                <p id="card-cta">
-                  <Button id="app-install-button">Install your app</Button>
-                </p>
-              </BlockStack>
-            </div>
+  <div className="card-wrapper">
+    {shopifySvg}
+    <div id="pre-install">
+      <h2>
+        Install your app to access GraphiQL
+      </h2>
+      <br />
+      <p>
+        The GraphiQL Explorer relies on your app being installed on your development store to access its data.
+      </p>
+      <br />
+      <p id="card-cta">
+        <button id="app-install-button">Install your app</button>
+      </p>
+    </div>
 
-            <div id="post-install">
-              <BlockStack gap="200">
-                <Text variant="headingMd" as="h2">
-                  Loading GraphiQL...
-                </Text>
-                <p>
-                  If you're not redirected automatically, <Link url="{{url}}/graphiql">click here</Link>.
-                </p>
-              </BlockStack>
-            </div>
-          </BlockStack>
-        </Card>
-      </div>
-    </Page>
-  </AppProvider>,
+    <div id="post-install">
+      <h2>
+        Loading GraphiQL...
+      </h2>
+      <br />
+      <p>
+        If you're not redirected automatically, <a href="{{url}}/graphiql">click here</a>.
+      </p>
+    </div>
+  </div>
 )
 
 export const unauthorizedTemplate = `
@@ -101,12 +91,16 @@ export const unauthorizedTemplate = `
         display: flex;
         flex-direction: row;
         align-items: center;
+        justify-content: center;
         height: 100%;
       }
       .card-wrapper {
         max-width: 480px;
         margin-left: 20px;
         margin-right: 20px;
+        border: 1px solid gray;
+        border-radius: 20px;
+        padding: 20px;
       }
       #post-install {
         display: none;

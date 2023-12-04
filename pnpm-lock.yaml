@@ -166,12 +166,6 @@ importers:
       '@shopify/plugin-cloudflare':
         specifier: 3.51.0
         version: link:../plugin-cloudflare
-      '@shopify/polaris':
-        specifier: 12.1.1
-        version: 12.1.1(react-dom@18.2.0)(react@18.2.0)
-      '@shopify/polaris-icons':
-        specifier: 7.9.0
-        version: 7.9.0
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0
@@ -4569,36 +4563,6 @@ packages:
     resolution: {integrity: sha512-70iT2GNXVASA7jPtuKTsPKoq82Ws/x9Nu1sGuTnvchQpeltFG9oJEu/1r9AuTS05dQoM6fivnOCxZGy5XnCFqw==}
     dev: false
 
-  /@shopify/polaris-icons@7.9.0:
-    resolution: {integrity: sha512-JSn8tg5c6cWiKqOJE1757kuK8JKP9NGpwIp9Li2gEIA/PP4LL8RHMYOIuH3RS/yQO3pEhVsHnnlVFvREate8ng==}
-    engines: {node: ^16.17.0 || >=18.12.0}
-    dev: false
-
-  /@shopify/polaris-tokens@8.1.0:
-    resolution: {integrity: sha512-qubEikjLuZp+lqZrlr9wBQug8fZbZlgKrfXbjISnszD4bTT1vmpsGohX00UYsWORQUqYyyS5106VwpLX3eZWLQ==}
-    engines: {node: ^16.17.0 || >=18.12.0}
-    dependencies:
-      deepmerge: 4.3.1
-    dev: false
-
-  /@shopify/polaris@12.1.1(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-AiHsZx6wbAxDjKFXjE9J/QTbyMtyd0yQ7jTNcIu7a+HGgSClZDk4PemeiFVS2VAVFJ8rsrpwmMZ6RRFJWSpiVA==}
-    engines: {node: ^16.17.0 || >=18.12.0}
-    peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
-    dependencies:
-      '@shopify/polaris-icons': 7.9.0
-      '@shopify/polaris-tokens': 8.1.0
-      '@types/react': 17.0.2
-      '@types/react-dom': 16.9.19
-      '@types/react-transition-group': 4.4.9
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
-      react-fast-compare: 3.2.2
-      react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
-    dev: false
-
   /@shopify/react-effect@4.1.12(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-Zy0CH0onvv/Jll4ePxvWa1STS6cILjoFI+6LxMFapC8ZVcCQdnrQFLmuoyF+rfyuFqJtwHE9y1sDZcP+EkW3GQ==}
     engines: {node: '>=12.14.0'}
@@ -5052,18 +5016,13 @@ packages:
     resolution: {integrity: sha512-xC8D280Bf6p0zguJ8g62jcEOKZiUbx9sIe6O3tT/lKfR87A7A6g65q13z6D5QUMIa/6yFPkNhqjF5z/VVZEYqQ==}
     dependencies:
       '@types/react': 17.0.2
+    dev: true
 
   /@types/react-dom@18.2.0:
     resolution: {integrity: sha512-8yQrvS6sMpSwIovhPOwfyNf2Wz6v/B62LFSVYQ85+Rq3tLsBIG7rP5geMxaijTUxSkrO6RzN/IRuIAADYQsleA==}
     dependencies:
       '@types/react': 17.0.2
     dev: true
-
-  /@types/react-transition-group@4.4.9:
-    resolution: {integrity: sha512-ZVNmWumUIh5NhH8aMD9CR2hdW0fNuYInlocZHaZ+dgk/1K49j1w/HoAuK1ki+pgscQrOFRTlXeoURtuzEkV3dg==}
-    dependencies:
-      '@types/react': 17.0.2
-    dev: false
 
   /@types/react@17.0.2:
     resolution: {integrity: sha512-Xt40xQsrkdvjn1EyWe1Bc0dJLcil/9x2vAuW7ya+PuQip4UYUaXyhzWmAbwRsdMgwOFHpfp7/FFZebDU6Y8VHA==}
@@ -11929,10 +11888,6 @@ packages:
       scheduler: 0.23.0
     dev: false
 
-  /react-fast-compare@3.2.2:
-    resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
-    dev: false
-
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
 
@@ -12022,20 +11977,6 @@ packages:
       prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
-    dev: false
-
-  /react-transition-group@4.4.5(react-dom@18.2.0)(react@18.2.0):
-    resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
-    peerDependencies:
-      react: '>=16.6.0'
-      react-dom: '>=16.6.0'
-    dependencies:
-      '@babel/runtime': 7.21.5
-      dom-helpers: 5.2.1
-      loose-envify: 1.4.0
-      prop-types: 15.8.1
-      react: 18.2.0
-      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /react@17.0.2:
