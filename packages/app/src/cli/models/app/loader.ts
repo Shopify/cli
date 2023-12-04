@@ -342,7 +342,9 @@ class AppLoader {
 
   async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
-    const configExtensionPromises = await this.createConfigExtensionInstances(appDirectory, appConfiguration)
+    const configExtensionPromises = isCurrentSchema(appConfiguration)
+      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
+      : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
     const allExtensions = getArrayRejectingUndefined(extensions.flat())

@@ -4,7 +4,13 @@ import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {deployConfirmationPrompt, extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {AppInterface} from '../../models/app/app.js'
-import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
+import {
+  testApp,
+  testAppConfigExtensions,
+  testFunctionExtension,
+  testOrganizationApp,
+  testUIExtension,
+} from '../../models/app/app.test-data.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -468,6 +474,34 @@ describe('ensureExtensionsIds: includes functions', () => {
         extensionIds: {EXTENSION_A: 'A', FUNCTION_A: 'FUNCTION_A'},
       }),
     )
+  })
+})
+
+describe('ensureExtensionsIds: excludes non uuid managed extensions', () => {
+  test("automatic matching logic doesn't receive the non uuid managed extensions", async () => {
+    // Given
+    vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
+      identifiers: {EXTENSION_A: 'UUID_A', FUNCTION_A: 'FUNCTION_A_UUID'},
+      toCreate: [],
+      toConfirm: [],
+      toManualMatch: {
+        local: [],
+        remote: [],
+      },
+    })
+    vi.mocked(deployConfirmationPrompt).mockResolvedValueOnce(true)
+
+    // When
+    const ensureExtensionsIdsOptions = options([EXTENSION_A])
+    const CONFIG_A = await testAppConfigExtensions()
+    ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
+    await ensureExtensionsIds(ensureExtensionsIdsOptions, {
+      extensionRegistrations: [REGISTRATION_A],
+      dashboardManagedExtensionRegistrations: [],
+    })
+
+    // Then
+    expect(automaticMatchmaking).toHaveBeenCalledWith([EXTENSION_A], [REGISTRATION_A], {}, 'uuid')
   })
 })
 

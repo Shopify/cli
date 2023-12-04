@@ -1,5 +1,6 @@
 import {
   testApp,
+  testAppConfigExtensions,
   testFunctionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
@@ -111,6 +112,14 @@ describe('isDraftable', () => {
     expect(got1).toBe(false)
   })
 
+  test('returns false for app config extensions', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got1 = extensionInstance.isDraftable()
+
+    expect(got1).toBe(false)
+  })
+
   test('returns true for web pixel extensions', async () => {
     const extensionInstance = await testWebPixelExtension()
 
@@ -157,5 +166,59 @@ describe('build', async () => {
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
     })
+  })
+})
+
+describe('deployConfig', async () => {
+  test('returns deployConfig when defined', async () => {
+    const extensionInstance = await testThemeExtensions()
+
+    const got = await extensionInstance.deployConfig({token: 'token', apiKey: 'apiKey'})
+
+    expect(got).toMatchObject({theme_extension: {files: {}}})
+  })
+
+  test('returns transformed config when defined', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = await extensionInstance.deployConfig({token: 'token', apiKey: 'apiKey'})
+
+    expect(got).toMatchObject({embedded: true})
+  })
+})
+
+describe('bundleConfig', async () => {
+  test('returns the uuid value when the extension is uuid managed', async () => {
+    const extensionInstance = await testThemeExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {extensions: {'theme-extension-name': 'theme-uuid'}, extensionIds: {}, app: 'My app'},
+      token: 'token',
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        uuid: 'theme-uuid',
+      }),
+    )
+    expect(got).not.toHaveProperty('specificationIdentifier')
+  })
+
+  test('returns the specification identifier when the extension is not uuid managed', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {extensions: {}, extensionIds: {}, app: 'My app'},
+      token: 'token',
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        specificationIdentifier: 'pos_configuration',
+      }),
+    )
+    expect(got).not.toHaveProperty('uuid')
   })
 })

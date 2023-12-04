@@ -67,7 +67,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
         [`Make updates to ${configFileName} in your local project`],
         [
           'To upload your config, run',
-          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
         ],
       ],
       reference: [

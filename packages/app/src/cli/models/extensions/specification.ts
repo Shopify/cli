@@ -107,6 +107,13 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
   return {...defaults, ...spec}
 }
 
+/**
+ * Create a new app config extension spec. This factory method for creating app config extensions is created for two
+ * reasons:
+ *   - schema needs to be casted to ZodSchemaType<TConfiguration>
+ *   - App config extensions have default transform and reverseTransform functions
+
+ */
 export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,21 +122,60 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 }): ExtensionSpecification<TConfiguration> {
   return createExtensionSpecification({
     identifier: spec.identifier,
+    // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
+    // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
-    deployConfig: async (config) => config,
-    transform: transformRemoveSection,
-    reverseTransform: (content) => defaultReverseTransform(spec.schema, content),
+    transform: defaultAppConfigTransform,
+    reverseTransform: (content) => defaultAppConfigReverseTransform(spec.schema, content),
   })
 }
 
-function transformRemoveSection(content: {[key: string]: unknown}) {
+/**
+ * Flat the configuration object to a single level object. This is the schema expected by the server side.
+ * ```json
+ * {
+ *   pos: {
+ *    embedded = true
+ *   }
+ * }
+ * ```
+ * will be flattened to:
+ * ```json
+ * {
+ *  embedded = true
+ * }
+ * ```
+ * @param content - The objet to be flattened
+ *
+ * @returns A single level object
+ */
+function defaultAppConfigTransform(content: {[key: string]: unknown}) {
   const firstKey = Object.keys(content)[0]
   return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
 }
 
+/**
+ * Nest the content inside the first level object expected by the local schema.
+ * ```json
+ * {
+ *  embedded = true
+ * }
+ * ```
+ * will be flattened to applying the proper schema will return:
+ * ```json
+ * {
+ *   pos: {
+ *    embedded = true
+ *   }
+ * }
+ * ```
+ * @param content - The objet to be nested
+ *
+ * @returns The nested object
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function defaultReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
+function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
   const configSection: {[key: string]: unknown} = {}
   const firstLevelObjectName = Object.keys(schema._def.shape())[0]!
   configSection[firstLevelObjectName] = content

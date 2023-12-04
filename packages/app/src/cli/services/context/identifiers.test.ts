@@ -120,6 +120,7 @@ beforeEach(() => {
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {
       extensionRegistrations: [REGISTRATION_A, REGISTRATION_B],
+      configExtensionRegistrations: [],
       dashboardManagedExtensionRegistrations: [],
     },
   })

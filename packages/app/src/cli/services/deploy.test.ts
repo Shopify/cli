@@ -772,7 +772,7 @@ async function testDeployBundle({app, partnersApp, options, released = true, com
   })
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
+    app: {extensionRegistrations: [], configExtensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
 
   await deploy({

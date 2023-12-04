@@ -1604,6 +1604,38 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with a Pos configuration app access extension configured inside the toml file', async () => {
+    // Given
+    const linkedAppConfigurationWithPosConfiguration = `
+    name = "for-testing"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [pos]
+    embedded = true
+    `
+    await writeConfig(linkedAppConfigurationWithPosConfiguration)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        pos: {
+          embedded: true,
+        },
+      })
+    }
+  })
+
   test('loads the app with several functions that have valid configurations', async () => {
     // Given
     await writeConfig(appConfiguration)

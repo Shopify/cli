@@ -7,6 +7,7 @@ import {
   testUIExtension,
   testPartnersUserSession,
   testFunctionExtension,
+  testAppConfigExtensions,
 } from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -66,6 +67,26 @@ describe('draftExtensionsPush', () => {
     // Given
     const app = testApp({
       allExtensions: [],
+    })
+    vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
+      app,
+      partnersSession: testPartnersUserSession,
+      remoteExtensionIds,
+      remoteApp,
+    })
+
+    // When
+    await draftExtensionsPush(draftExtensionsPushOptions(app))
+
+    // Then
+    expect(updateExtensionDraft).not.toHaveBeenCalledOnce()
+    expect(enableDeveloperPreview).not.toHaveBeenCalled()
+  })
+
+  test('do nothing if the app includes only app config extensions', async () => {
+    // Given
+    const app = testApp({
+      allExtensions: [await testAppConfigExtensions()],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,

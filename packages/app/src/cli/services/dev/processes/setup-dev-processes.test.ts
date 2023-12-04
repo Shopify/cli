@@ -43,6 +43,7 @@ beforeEach(() => {
           title: 'mock-theme',
         },
       ],
+      configExtensionRegistrations: [],
       dashboardManagedExtensionRegistrations: [],
     },
   })
