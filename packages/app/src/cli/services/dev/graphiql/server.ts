@@ -60,7 +60,7 @@ export function setupGraphiQLServer({
 
   function failIfUnmatchedKey(str: string, res: express.Response): boolean {
     if (str === randomKey) return false
-    res.status(401).json({error: 'Unauthorized'})
+    res.status(404).send(`Invalid path ${res.req.originalUrl}`)
     return true
   }
 
