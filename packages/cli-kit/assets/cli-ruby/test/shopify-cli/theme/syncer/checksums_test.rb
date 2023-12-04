@@ -55,15 +55,23 @@ module ShopifyCLI
 
         def test_reject_duplicated_checksums
           @checksums.stubs(:checksum_by_key).returns({
-            "file1.liquid" => "",
-            "file2.liquid" => "",
-            "file1" => "",
-            "file2" => "",
+            "assets/file1.liquid" => "",
+            "assets/file2.liquid" => "",
+            "assets/file1" => "",
+            "assets/file2" => "",
+            "templates/product.json" => "",
+            "templates/product.json.liquid" => "",
           })
 
           @checksums.reject_duplicated_checksums!
 
-          assert_equal(["file1.liquid", "file2.liquid"], @checksums.keys.sort)
+          expected_keys = [
+            "assets/file1.liquid",
+            "assets/file2.liquid",
+            "templates/product.json",
+            "templates/product.json.liquid",
+          ]
+          assert_equal(expected_keys, @checksums.keys.sort)
         end
 
         private

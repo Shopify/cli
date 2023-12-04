@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, WebType} from './app.js'
+import {App, AppConfiguration, AppInterface, WebType, WebhookConfig} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -9,6 +9,7 @@ import {OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
+import {PartnersSession} from '../../services/context/partner-account-info.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -87,6 +88,16 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   }
 
   return app
+}
+
+export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+  return {
+    ...DEFAULT_CONFIG,
+    webhooks: {
+      ...DEFAULT_CONFIG.webhooks,
+      ...webhookConfigOverrides,
+    },
+  }
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {
@@ -223,7 +234,6 @@ interface TestFunctionExtensionOptions {
   dir?: string
   config?: FunctionConfigType
   entryPath?: string
-  usingExtensionFramework?: boolean
 }
 
 export async function testFunctionExtension(
@@ -242,7 +252,6 @@ export async function testFunctionExtension(
     directory,
     specification,
   })
-  extension.usingExtensionsFramework = opts.usingExtensionFramework ?? false
   return extension
 }
 
@@ -497,3 +506,19 @@ export const testLocalExtensionTemplates: ExtensionTemplate[] = [
   productSubscriptionUIExtension,
   webPixelUIExtension,
 ]
+
+export const testPartnersUserSession: PartnersSession = {
+  token: 'token',
+  accountInfo: {
+    type: 'UserAccount',
+    email: 'partner@shopify.com',
+  },
+}
+
+export const testPartnersServiceSession: PartnersSession = {
+  token: 'partnersToken',
+  accountInfo: {
+    type: 'ServiceAccount',
+    orgName: 'organization',
+  },
+}

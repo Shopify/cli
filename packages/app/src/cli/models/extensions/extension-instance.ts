@@ -41,15 +41,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   handle: string
   specification: ExtensionSpecification
 
-  private useExtensionsFramework: boolean
-
   get graphQLType() {
-    if (this.features.includes('function')) {
-      if (this.useExtensionsFramework) return 'FUNCTION'
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const functionConfig: any = this.configuration
-      return functionConfig.type.toUpperCase()
-    }
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
   }
 
@@ -101,10 +93,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
-  set usingExtensionsFramework(value: boolean) {
-    this.useExtensionsFramework = value
-  }
-
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -120,7 +108,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.handle = this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
-    this.useExtensionsFramework = false
     this.outputPath = this.directory
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
@@ -133,21 +120,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  isDraftable(unifiedDeployment: boolean) {
-    if (unifiedDeployment) {
-      return !this.isThemeExtension
-    } else {
-      return !this.isPreviewable && !this.isThemeExtension && !this.isFunctionExtension
-    }
+  isDraftable() {
+    return !this.isThemeExtension
   }
 
-  async deployConfig({
-    apiKey,
-    token,
-    unifiedDeployment,
-  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+  async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
     if (this.isFunctionExtension) {
-      if (!unifiedDeployment) return undefined
       const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
       return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
     }
@@ -204,21 +182,26 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get watchPaths() {
-    const config = this.configuration as unknown as FunctionConfigType
-    const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
+    if (this.isFunctionExtension) {
+      const config = this.configuration as unknown as FunctionConfigType
+      const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
 
-    if (!this.isJavaScript && configuredPaths.length === 0) {
-      return null
+      if (!this.isJavaScript && configuredPaths.length === 0) {
+        return null
+      }
+
+      const watchPaths: string[] = configuredPaths ?? []
+      if (this.isJavaScript && configuredPaths.length === 0) {
+        watchPaths.push(joinPath('src', '**', '*.{js,ts}'))
+      }
+      watchPaths.push(joinPath('**', '!(.)*.graphql'))
+
+      return watchPaths.map((path) => joinPath(this.directory, path))
+    } else if (this.isESBuildExtension) {
+      return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
+    } else {
+      return []
     }
-
-    const watchPaths: string[] = configuredPaths ?? []
-    if (this.isJavaScript && configuredPaths.length === 0) {
-      watchPaths.push(joinPath('src', '**', '*.js'))
-      watchPaths.push(joinPath('src', '**', '*.ts'))
-    }
-    watchPaths.push(joinPath('**', '!(.)*.graphql'))
-
-    return watchPaths.map((path) => joinPath(this.directory, path))
   }
 
   get inputQueryPath() {
@@ -261,8 +244,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey, unifiedDeployment}: ExtensionBundleConfigOptions) {
-    const configValue = await this.deployConfig({apiKey, token, unifiedDeployment})
+  async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
+    const configValue = await this.deployConfig({apiKey, token})
     if (!configValue) return undefined
 
     const {handle, ...remainingConfigs} = configValue
@@ -280,12 +263,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 export interface ExtensionDeployConfigOptions {
   apiKey: string
   token: string
-  unifiedDeployment: boolean
 }
 
 export interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   token: string
   apiKey: string
-  unifiedDeployment: boolean
 }

@@ -1,16 +1,17 @@
 import {PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {DEFAULT_CONFIG, testApp} from '../../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, testApp, testAppWithConfig, testPartnersUserSession} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
+import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {describe, vi, test, expect, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/partners')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../context/partner-account-info.js')
 vi.mock('../../../prompts/config.js')
 vi.mock('../../context.js')
 vi.mock('../../dev/fetch.js')
@@ -25,6 +26,7 @@ describe('pushConfig', () => {
   beforeEach(() => {
     vi.mocked(confirmPushChanges).mockResolvedValue(true)
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
+    vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
   })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {
@@ -411,5 +413,102 @@ app_preferences > url: this url is blocked 6`)
 
     expect(confirmPushChanges).toHaveBeenCalled()
     expect(renderSuccess).not.toHaveBeenCalled()
+  })
+
+  test('does not update webhooks configurations when declarative webhooks beta is true', async () => {
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+        webhookApiVersion: '2023-04',
+        betas: {
+          declarativeWebhooks: true,
+        },
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    const app = testAppWithConfig({
+      config: {
+        webhooks: {
+          api_version: '2023-11',
+          privacy_compliance: {
+            customer_data_request_url: 'https://myapp.com/customer-data-request',
+            customer_deletion_url: 'https://myapp.com/customer-deletion',
+            shop_deletion_url: 'https://myapp.com/shop-deletion',
+          },
+        },
+      },
+    })
+
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+    }
+
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual(
+      expect.objectContaining({
+        apiKey: '12345',
+        gdprWebhooks: undefined,
+        webhookApiVersion: '2023-04',
+      }),
+    )
+
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
+    })
+  })
+
+  test('it does update webhooks configurations when declarative webhooks beta is false', async () => {
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '12345',
+        webhookApiVersion: '2023-04',
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+
+    const app = testAppWithConfig({
+      config: {
+        webhooks: {
+          api_version: '2023-11',
+          privacy_compliance: {
+            customer_data_request_url: 'https://myapp.com/customer-data-request',
+            customer_deletion_url: 'https://myapp.com/customer-deletion',
+            shop_deletion_url: 'https://myapp.com/shop-deletion',
+          },
+        },
+      },
+    })
+
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+    }
+
+    await pushConfig(options)
+
+    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual(
+      expect.objectContaining({
+        apiKey: '12345',
+        gdprWebhooks: {
+          customerDataRequestUrl: 'https://myapp.com/customer-data-request',
+          customerDeletionUrl: 'https://myapp.com/customer-deletion',
+          shopDeletionUrl: 'https://myapp.com/shop-deletion',
+        },
+        webhookApiVersion: '2023-11',
+      }),
+    )
+
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Updated your app config for my app',
+      body: ['Your shopify.app.toml config is live for your app users.'],
+    })
   })
 })

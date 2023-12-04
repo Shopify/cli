@@ -9,6 +9,7 @@ export const MANIFEST_VERSION = '3'
 export interface PreviewableExtensionOptions {
   apiKey: string
   storeFqdn: string
+  storeId: string
   port: number
   pathPrefix: string
   cartUrl?: string
@@ -31,6 +32,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
   {
     apiKey,
     storeFqdn,
+    storeId,
     subscriptionProductUrl,
     port,
     cartUrl,
@@ -55,6 +57,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     url: proxyUrl,
     port,
     storeFqdn,
+    storeId,
     apiKey,
     grantedScopes,
     checkoutCartUrl: cartUrl,

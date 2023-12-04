@@ -1,5 +1,5 @@
 {
-  "version": "3.50.0",
+  "version": "3.51.0",
   "commands": {
     "app:build": {
       "id": "app:build",
@@ -797,6 +797,65 @@
           "description": "The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'."
         }
       }
+    },
+    "app:draft-extensions:push": {
+      "id": "app:draft-extensions:push",
+      "description": "Updates the content of the app draft version.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {
+        "verbose": {
+          "name": "verbose",
+          "type": "boolean",
+          "description": "Increase the verbosity of the logs.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to your app directory.",
+          "multiple": false,
+          "default": "."
+        },
+        "client-id": {
+          "name": "client-id",
+          "type": "option",
+          "description": "The Client ID of your app.",
+          "hidden": false,
+          "multiple": false,
+          "exclusive": [
+            "config"
+          ]
+        },
+        "reset": {
+          "name": "reset",
+          "type": "boolean",
+          "description": "Reset all your settings.",
+          "hidden": false,
+          "allowNo": false
+        },
+        "config": {
+          "name": "config",
+          "type": "option",
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "hidden": false,
+          "multiple": false
+        },
+        "enable-dev-preview": {
+          "name": "enable-dev-preview",
+          "type": "boolean",
+          "description": "Enable dev preview after the draft content is updated.",
+          "hidden": false,
+          "allowNo": false
+        }
+      },
+      "args": {}
     },
     "app:env:pull": {
       "id": "app:env:pull",

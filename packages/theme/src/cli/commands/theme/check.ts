@@ -18,7 +18,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {themeCheckRun} from '@shopify/theme-check-node'
+import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
 import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
@@ -49,7 +49,9 @@ Runs checks matching all categories when specified more than once`,
       char: 'C',
       required: false,
       description: `Use the config provided, overriding .theme-check.yml if present
-Use :theme_app_extension to use default checks for theme app extensions`,
+      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
+      theme-check:recommended, theme-check:all
+      For backwards compatibility, :theme_app_extension is also supported `,
       env: 'SHOPIFY_FLAG_CONFIG',
     }),
     // Typescript theme check no longer uses `--exclude-categories`
@@ -171,7 +173,10 @@ Excludes checks matching any category when specified more than once`,
         return
       }
 
-      const {offenses, theme} = await themeCheckRun(path, flags.config)
+      // To support backwards compatibility for legacy configs
+      const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
+      const config = isLegacyConfig ? LegacyIdentifiers.get(flags.config!.slice(1)) : flags.config
+      const {offenses, theme} = await themeCheckRun(path, config)
 
       const offensesByFile = sortOffenses(offenses)
 
@@ -210,7 +215,7 @@ Excludes checks matching any category when specified more than once`,
         await performAutoFixes(theme, offenses)
       }
 
-      handleExit(offenses, flags['fail-level'] as FailLevel)
+      return handleExit(offenses, flags['fail-level'] as FailLevel)
     }
 
     await execCLI2(['theme', 'check', path, ...this.passThroughFlags(flags, {allowedFlags: Check.cli2Flags})], {

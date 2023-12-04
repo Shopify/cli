@@ -1,4 +1,5 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {
@@ -14,7 +15,6 @@ import {
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
@@ -31,7 +31,8 @@ interface GenerateSchemaOptions {
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
-  const token = await ensureAuthenticatedPartners()
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
   const {api_version: version, type, targeting} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
   const stdout = options.stdout
@@ -44,7 +45,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app, token)).apiKey
+    apiKey = (await fetchOrCreateOrganizationApp(app, partnersSession)).apiKey
   }
 
   const usingTargets = Boolean(targeting?.length)

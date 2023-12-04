@@ -14,12 +14,32 @@ import {
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {ActiveAppVersionQuery, ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {AccountInfo, PartnersSession, isServiceAccount, isUserAccount} from '../context/partner-account-info.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 export class NoOrgError extends AbortError {
-  constructor(organizationId?: string) {
+  constructor(partnersAccount: AccountInfo, organizationId?: string) {
+    let accountIdentifier = 'unknown'
+    let identifierMessage = (formattedIdentifier: string) => `an ${formattedIdentifier}`
+    if (isServiceAccount(partnersAccount)) {
+      accountIdentifier = partnersAccount.orgName
+      identifierMessage = (formattedIdentifier: string) => `the ${formattedIdentifier} organization`
+    } else if (isUserAccount(partnersAccount)) {
+      accountIdentifier = partnersAccount.email
+      identifierMessage = (formattedIdentifier: string) => `the ${formattedIdentifier} user`
+    }
+
+    const formattedIdentifier = outputContent`${outputToken.yellow(accountIdentifier)}`.value
+
     const nextSteps = [
+      [
+        `Your current active session is associated with ${identifierMessage(
+          formattedIdentifier,
+        )} account. To start a new session with a different account, run`,
+        {command: 'shopify auth logout'},
+      ],
       [
         'Have you',
         {
@@ -106,11 +126,11 @@ export async function fetchActiveAppVersion({
  * @param token - Token to access partners API
  * @returns List of organizations
  */
-export async function fetchOrganizations(token: string) {
+export async function fetchOrganizations(partnersSession: PartnersSession): Promise<Organization[]> {
   const query = AllOrganizationsQuery
-  const result: AllOrganizationsQuerySchema = await partnersRequest(query, token)
+  const result: AllOrganizationsQuerySchema = await partnersRequest(query, partnersSession.token)
   const organizations = result.organizations.nodes
-  if (organizations.length === 0) throw new NoOrgError()
+  if (organizations.length === 0) throw new NoOrgError(partnersSession.accountInfo)
   return organizations
 }
 
@@ -120,13 +140,17 @@ export async function fetchOrganizations(token: string) {
  * @param token - Token to access partners API
  * @returns Current organization details and list of apps and stores
  */
-export async function fetchOrgAndApps(orgId: string, token: string, title?: string): Promise<FetchResponse> {
+export async function fetchOrgAndApps(
+  orgId: string,
+  partnersSession: PartnersSession,
+  title?: string,
+): Promise<FetchResponse> {
   const query = FindOrganizationQuery
   const params: {id: string; title?: string} = {id: orgId}
   if (title) params.title = title
-  const result: FindOrganizationQuerySchema = await partnersRequest(query, token, params)
+  const result: FindOrganizationQuerySchema = await partnersRequest(query, partnersSession.token, params)
   const org = result.organizations.nodes[0]
-  if (!org) throw new NoOrgError(orgId)
+  if (!org) throw new NoOrgError(partnersSession.accountInfo, orgId)
   const parsedOrg = {id: org.id, businessName: org.businessName}
   return {organization: parsedOrg, apps: org.apps, stores: []}
 }
@@ -145,11 +169,11 @@ export async function fetchAppPreviewMode(apiKey: string, token: string): Promis
   return res.app?.developmentStorePreviewEnabled
 }
 
-export async function fetchOrgFromId(id: string, token: string): Promise<Organization> {
+export async function fetchOrgFromId(id: string, partnersSession: PartnersSession): Promise<Organization> {
   const query = FindOrganizationBasicQuery
-  const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, token, {id})
+  const res: FindOrganizationBasicQuerySchema = await partnersRequest(query, partnersSession.token, {id})
   const org = res.organizations.nodes[0]
-  if (!org) throw new NoOrgError(id)
+  if (!org) throw new NoOrgError(partnersSession.accountInfo, id)
   return org
 }
 

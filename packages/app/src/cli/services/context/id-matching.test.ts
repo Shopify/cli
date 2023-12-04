@@ -63,13 +63,6 @@ const REGISTRATION_D = {
   type: 'WEB_PIXEL_EXTENSION',
 }
 
-const REGISTRATION_LEGACY_FUNCTION_A = {
-  uuid: 'FUNCTION_UUID_A',
-  id: 'FUNCTION_A',
-  title: 'FUNCTION A',
-  type: 'PRODUCT_DISCOUNTS',
-}
-
 const REGISTRATION_FUNCTION_A = {
   uuid: 'FUNCTION_UUID_A',
   id: 'FUNCTION_A',
@@ -89,7 +82,6 @@ let EXTENSION_B: ExtensionInstance
 let EXTENSION_B_2: ExtensionInstance
 let EXTENSION_C: ExtensionInstance
 let EXTENSION_D: ExtensionInstance
-let LEGACY_FUNCTION_A: ExtensionInstance
 let FUNCTION_A: ExtensionInstance
 
 beforeAll(async () => {
@@ -208,23 +200,6 @@ beforeAll(async () => {
     devUUID: 'devUUID',
   })
 
-  LEGACY_FUNCTION_A = await testFunctionExtension({
-    dir: '/FUNCTION_A',
-    config: {
-      name: 'FUNCTION A',
-      type: 'product_discounts',
-      description: 'Function',
-      build: {
-        command: 'make build',
-        path: 'dist/index.wasm',
-      },
-      configuration_ui: false,
-      api_version: '2022-07',
-      metafields: [],
-    },
-    usingExtensionFramework: false,
-  })
-
   FUNCTION_A = await testFunctionExtension({
     dir: '/FUNCTION_A',
     config: {
@@ -239,7 +214,6 @@ beforeAll(async () => {
       api_version: '2022-07',
       metafields: [],
     },
-    usingExtensionFramework: false,
   })
 })
 
@@ -641,20 +615,6 @@ describe('automaticMatchmaking: functions', () => {
       identifiers: {},
       toConfirm: [],
       toCreate: [FUNCTION_A],
-      toManualMatch: {local: [], remote: []},
-    }
-    expect(got).toEqual(expected)
-  })
-
-  test('updates existing function', async () => {
-    // When
-    const got = await automaticMatchmaking([LEGACY_FUNCTION_A], [REGISTRATION_LEGACY_FUNCTION_A], {}, 'id')
-
-    // Then
-    const expected = {
-      identifiers: {'function-a': 'FUNCTION_A'},
-      toConfirm: [],
-      toCreate: [],
       toManualMatch: {local: [], remote: []},
     }
     expect(got).toEqual(expected)

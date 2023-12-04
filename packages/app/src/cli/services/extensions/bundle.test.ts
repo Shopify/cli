@@ -317,6 +317,7 @@ describe('bundleExtension()', () => {
           app,
           stdout,
           stderr,
+          environment: 'production',
         })
 
         // Then

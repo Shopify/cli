@@ -40,8 +40,6 @@ interface ExecCLI2Options {
   stdout?: Writable
   // Stream to pipe the command's stdout to.
   stderr?: Writable
-  // Deployment mode
-  unifiedDeployment?: boolean
 }
 /**
  * Execute CLI 2.0 commands.
@@ -71,7 +69,6 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     ...(await getSpinEnvironmentVariables()),
     SHOPIFY_CLI_1P_DEV: firstPartyDev() ? '1' : '0',
     SHOPIFY_CLI_VERSION: CLI_KIT_VERSION,
-    SHOPIFY_CLI_UNIFIED_DEPLOYMENT: options.unifiedDeployment ? '1' : '0',
   }
 
   try {
@@ -483,7 +480,7 @@ async function runBundler(args: string[], options: ExecOptions) {
       ...options.env,
       BUNDLE_USER_HOME: bundleUserHome(),
       BUNDLE_WITHOUT: 'development:test',
-      BUNDLE_APP_CONFIG: envPaths('shopify-gems').cache,
+      BUNDLE_PATH: envPaths('shopify-gems').cache,
     },
   })
 }

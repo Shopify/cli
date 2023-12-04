@@ -44,7 +44,6 @@ beforeEach(() => {
         },
       ],
       dashboardManagedExtensionRegistrations: [],
-      functions: [],
     },
   })
 })
@@ -53,7 +52,7 @@ describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
     const token = 'token'
     const storeFqdn = 'store.myshopify.io'
-    const usesUnifiedDeployment = true
+    const storeId = '123456789'
     const remoteAppUpdated = true
     const commandOptions: DevConfig['commandOptions'] = {
       subscriptionProductUrl: '/products/999999',
@@ -122,8 +121,8 @@ describe('setup-dev-processes', () => {
       remoteApp,
       remoteAppUpdated,
       storeFqdn,
+      storeId,
       token,
-      usesUnifiedDeployment,
       partnerUrlsUpdated: true,
     })
 
@@ -159,7 +158,6 @@ describe('setup-dev-processes', () => {
         apiSecret: 'api-secret',
         port: expect.any(Number),
         appUrl: 'https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key',
-        scopes: ['read_products'],
         storeFqdn: 'store.myshopify.io',
         url: 'example.com/proxy',
       },
@@ -188,7 +186,6 @@ describe('setup-dev-processes', () => {
       prefix: 'extensions',
       function: pushUpdatesForDraftableExtensions,
       options: {
-        unifiedDeployment: true,
         localApp,
         apiKey: 'api-key',
         token,
@@ -211,7 +208,6 @@ describe('setup-dev-processes', () => {
             ' ',
           ),
         storefrontToken: 'storefront-token',
-        usesUnifiedDeployment: true,
         token,
       },
     })

@@ -206,7 +206,7 @@ jobs:
   pr-test-coverage:
     name: '[PR] Run Test Coverage with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+    if: ${{ (github.event_name == 'pull_request' || github.event_name == 'merge_group') && github.event.pull_request.user.login != 'dependabot[bot]' }}
     timeout-minutes: 30
     strategy:
       matrix:

@@ -3,17 +3,18 @@ import {deploy} from './deploy.js'
 import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {DeploymentMode} from './deploy/mode.js'
 import {
   testApp,
   testFunctionExtension,
   testThemeExtensions,
   testUIExtension,
   testOrganizationApp,
+  getWebhookConfig,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
+import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
@@ -22,6 +23,10 @@ import {Config} from '@oclif/core'
 
 const versionTag = 'unique-version-tag'
 
+vi.mock('../utilities/app/config/webhooks.js', async () => ({
+  ...((await vi.importActual('../utilities/app/config/webhooks.js')) as any),
+  fakedWebhookSubscriptionsMutation: vi.fn(),
+}))
 vi.mock('./context.js')
 vi.mock('./deploy/upload.js')
 vi.mock('./deploy/bundle.js')
@@ -31,17 +36,6 @@ vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
-
-const PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
-  id: 'app-id',
-  organizationId: 'org-id',
-  betas: {unifiedAppDeployment: true},
-})
-
-const PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA = testOrganizationApp({
-  id: 'app-id',
-  organizationId: 'org-id',
-})
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -56,27 +50,7 @@ beforeEach(() => {
 })
 
 describe('deploy', () => {
-  test("passes deploymentMode: 'legacy' to uploadExtensionsBundle() when the unifiedAppDeployment beta is disabled", async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
-    vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
-
-    // When
-    await testDeployBundle({app, partnersApp: PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA})
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
-      apiKey: 'app-id',
-      appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle}],
-      bundlePath: expect.stringMatching(/bundle.zip$/),
-      token: 'api-token',
-      extensionIds: {},
-      deploymentMode: 'legacy',
-    })
-  })
-
-  test("passes deploymentMode: 'legacy' to uploadExtensionsBundle() when the unifiedAppDeployment beta is enabled and noRelease arg is false", async () => {
+  test('passes release to uploadExtensionsBundle()', async () => {
     // Given
     const app = testApp({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
@@ -91,7 +65,6 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
       options: {
         noRelease: false,
@@ -104,39 +77,7 @@ describe('deploy', () => {
       appModules: [],
       token: 'api-token',
       extensionIds: {},
-      deploymentMode: 'unified',
-    })
-  })
-
-  test("passes deploymentMode: 'unified-skip-release' to uploadExtensionsBundle() when the unifiedAppDeployment beta is enabled and noRelease arg is true", async () => {
-    // Given
-    const app = testApp({allExtensions: []})
-    vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
-
-    // When
-    await testDeployBundle({
-      app,
-      partnersApp: {
-        id: 'app-id',
-        organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
-        title: 'app-title',
-        grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
-      },
-      options: {
-        noRelease: true,
-      },
-    })
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
-      apiKey: 'app-id',
-      appModules: [],
-      token: 'api-token',
-      extensionIds: {},
-      deploymentMode: 'unified-skip-release',
+      release: true,
     })
   })
 
@@ -154,7 +95,6 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
       options: {
         message: 'Deployed from CLI with flag',
@@ -183,7 +123,6 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
       options: {
         version: '1.1.0',
@@ -198,7 +137,7 @@ describe('deploy', () => {
     )
   })
 
-  test('deploys the app with no extensions and beta flag', async () => {
+  test('deploys the app with no extensions', async () => {
     const app = testApp({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
@@ -212,7 +151,6 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
     })
 
@@ -222,24 +160,10 @@ describe('deploy', () => {
       appModules: [],
       token: 'api-token',
       extensionIds: {},
-      deploymentMode: 'unified',
+      release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
-  })
-
-  test("doesn't deploy the app with no extensions and no beta flag", async () => {
-    const app = testApp({allExtensions: []})
-
-    // When
-    await testDeployBundle({app, partnersApp: PARTNERS_APP_WITHOUT_UNIFIED_APP_DEPLOYMENTS_BETA})
-
-    // Then
-    expect(uploadExtensionsBundle).not.toHaveBeenCalled()
-    expect(bundleAndBuildExtensions).not.toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).not.toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).not.toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI extension', async () => {
@@ -257,11 +181,10 @@ describe('deploy', () => {
       appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle}],
       token: 'api-token',
       extensionIds: {},
-      deploymentMode: 'legacy',
+      release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 theme extension', async () => {
@@ -286,50 +209,13 @@ describe('deploy', () => {
       ],
       token: 'api-token',
       extensionIds: {},
-      deploymentMode: 'legacy',
+      release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
-  test('does not upload the extension bundle with 1 function and no beta flag', async () => {
-    // Given
-    const functionExtension = await testFunctionExtension()
-    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
-    const app = testApp({allExtensions: [functionExtension]})
-
-    // When
-    await testDeployBundle({app})
-
-    // Then
-    expect(uploadFunctionExtensions).toHaveBeenCalledWith(
-      [
-        expect.objectContaining({
-          configuration: functionExtension.configuration,
-          directory: functionExtension.directory,
-          entrySourceFilePath: functionExtension.entrySourceFilePath,
-          idEnvironmentVariableName: functionExtension.idEnvironmentVariableName,
-          localIdentifier: functionExtension.localIdentifier,
-          useExtensionsFramework: false,
-        }),
-      ],
-      {
-        identifiers: {
-          app: 'app-id',
-          extensions: {'test-function-extension': 'test-function-extension'},
-          extensionIds: {},
-        },
-        token: 'api-token',
-      },
-    )
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(uploadExtensionsBundle).not.toHaveBeenCalled()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
-  })
-
-  test('uploads the extension bundle with 1 function and beta flag', async () => {
+  test('uploads the extension bundle with 1 function', async () => {
     // Given
     const functionExtension = await testFunctionExtension()
     vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
@@ -349,7 +235,13 @@ describe('deploy', () => {
     vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
 
     // When
-    await testDeployBundle({app, partnersApp: PARTNERS_APP_WITH_UNIFIED_APP_DEPLOYMENTS_BETA})
+    await testDeployBundle({
+      app,
+      partnersApp: testOrganizationApp({
+        id: 'app-id',
+        organizationId: 'org-id',
+      }),
+    })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -365,56 +257,10 @@ describe('deploy', () => {
       token: 'api-token',
       extensionIds: {},
       bundlePath: undefined,
-      deploymentMode: 'unified',
+      release: true,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
-  })
-
-  test('uploads the extension bundle with 1 function and no beta flag but switch to unified', async () => {
-    // Given
-    const functionExtension = await testFunctionExtension()
-    vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
-
-    const app = testApp({allExtensions: [functionExtension]})
-    const moduleId = 'module-id'
-    const mockedFunctionConfiguration = {
-      title: functionExtension.configuration.name,
-      module_id: moduleId,
-      description: functionExtension.configuration.description,
-      app_key: 'app-id',
-      api_type: functionExtension.configuration.type,
-      api_version: functionExtension.configuration.api_version,
-      enable_creation_ui: true,
-      localization: {},
-    }
-    vi.mocked(uploadWasmBlob).mockResolvedValue({url: 'url', moduleId})
-
-    // When
-    await testDeployBundle({app, released: false, switchToDeploymentMode: 'unified'})
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
-      apiKey: 'app-id',
-      appModules: [
-        {
-          uuid: functionExtension.localIdentifier,
-          config: JSON.stringify(mockedFunctionConfiguration),
-          context: '',
-          handle: functionExtension.handle,
-        },
-      ],
-      token: 'api-token',
-      extensionIds: {},
-      bundlePath: undefined,
-      deploymentMode: 'unified',
-      message: undefined,
-      version: undefined,
-    })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('uploads the extension bundle with 1 UI and 1 theme extension', async () => {
@@ -425,7 +271,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, switchToDeploymentMode: 'legacy'})
+    await testDeployBundle({app, released: false, commitReference})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -442,57 +288,14 @@ describe('deploy', () => {
       ],
       token: 'api-token',
       extensionIds: {},
-      deploymentMode: 'legacy',
+      release: true,
       commitReference,
     })
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
   })
 
   test('shows a success message', async () => {
-    // Given
-    const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
-
-    // When
-    await testDeployBundle({app})
-
-    // Then
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Deployed to Shopify!',
-      customSections: [
-        {
-          body: {
-            list: {
-              items: [['test-ui-extension is deployed to Shopify but not yet live']],
-            },
-          },
-          title: 'Summary',
-        },
-        {
-          body: {
-            list: {
-              items: [
-                [
-                  'Publish',
-                  {
-                    link: {
-                      url: 'https://partners.shopify.com/org-id/apps/app-id/extensions/web_pixel/',
-                      label: 'test-ui-extension',
-                    },
-                  },
-                ],
-              ],
-            },
-          },
-          title: 'Next steps',
-        },
-      ],
-    })
-  })
-
-  test('shows a specific success message when deploying using the unified app deployment flow without message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({allExtensions: [uiExtension]})
@@ -508,13 +311,11 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
       options: {
         noRelease: false,
       },
       released: true,
-      switchToDeploymentMode: 'unified',
     })
 
     // Then
@@ -532,7 +333,7 @@ describe('deploy', () => {
     })
   })
 
-  test('shows a specific success message when deploying using the unified app deployment flow but there is an error with the release', async () => {
+  test('shows a specific success message when there is an error with the release', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({allExtensions: [uiExtension]})
@@ -548,14 +349,12 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
       options: {
         noRelease: false,
         message: 'version message',
       },
       released: false,
-      switchToDeploymentMode: 'unified',
     })
 
     // Then
@@ -574,7 +373,7 @@ describe('deploy', () => {
     })
   })
 
-  test('shows a specific success message when deploying --no-release using the unified app deployment flow', async () => {
+  test('shows a specific success message when deploying --no-release', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const app = testApp({allExtensions: [uiExtension]})
@@ -590,7 +389,6 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
-        betas: {unifiedAppDeployment: true},
       },
       options: {
         noRelease: true,
@@ -619,6 +417,314 @@ describe('deploy', () => {
       ],
     })
   })
+
+  describe('declarative webhook subscription config', () => {
+    test('does not run the webhook subscription task if the declarativeWebhooks beta is disabled', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+        }),
+      })
+
+      await testDeployBundle({
+        app,
+        partnersApp: {
+          id: 'app-id',
+          organizationId: 'org-id',
+          applicationUrl: 'https://my-app.com',
+          redirectUrlWhitelist: ['https://my-app.com/auth'],
+          title: 'app-title',
+          grantedScopes: [],
+        },
+      })
+
+      expect(fakedWebhookSubscriptionsMutation).not.toHaveBeenCalled()
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('does not run the webhook subscription task if there is no webhooks config', async () => {
+      const app = testApp()
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).not.toHaveBeenCalled()
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('runs the webhook subscription task if the declarativeWebhooks beta is enabled', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('normalizes top level subscriptions', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create', 'products/update'],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/update',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('top level http config is overwritten by subscription specific config', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              endpoint: 'https://example2.com',
+              topic: 'products/create',
+            },
+            {
+              endpoint: 'pubsub://my-project-123:my-topic',
+              topic: 'products/create',
+            },
+            {
+              topic: 'products/delete',
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example2.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/delete',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('top level arn config is overwritten by subscription specific config', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
+              topic: 'products/create',
+            },
+            {
+              endpoint: 'pubsub://my-project-123:my-topic',
+              topic: 'products/create',
+            },
+            {
+              topic: 'products/delete',
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_new_webhook_path',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          topic: 'products/delete',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('top level pub sub config is overwritten by subscription specific config', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              endpoint: 'pubsub://my-project-456:my-new-topic',
+              topic: 'products/create',
+            },
+            {
+              endpoint: 'https://example.com',
+              topic: 'products/create',
+            },
+            {
+              topic: 'products/delete',
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-456:my-new-topic',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'pubsub://my-project-123:my-topic',
+          topic: 'products/delete',
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('subscription level path is appended to top level endpoint', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              topic: 'products/delete',
+              path: '/delete',
+              include_fields: ['id'],
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example.com/delete',
+          topic: 'products/delete',
+          include_fields: ['id'],
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+
+    test('subscription level path is appended to inner level endpoint', async () => {
+      const app = testApp({
+        configuration: getWebhookConfig({
+          endpoint: 'https://example.com',
+          topics: ['products/create'],
+          subscriptions: [
+            {
+              topic: 'products/delete',
+              endpoint: 'https://example2.com',
+              path: '/delete',
+              include_fields: ['id'],
+            },
+          ],
+        }),
+      })
+
+      await testWebhooks(app)
+
+      expect(fakedWebhookSubscriptionsMutation).toHaveBeenCalledWith([
+        {
+          endpoint: 'https://example.com',
+          topic: 'products/create',
+        },
+        {
+          endpoint: 'https://example2.com/delete',
+          topic: 'products/delete',
+          include_fields: ['id'],
+        },
+      ])
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headline: 'New version released to users.',
+        }),
+      )
+    })
+  })
 })
 
 interface TestDeployBundleInput {
@@ -632,36 +738,15 @@ interface TestDeployBundleInput {
   }
   released?: boolean
   commitReference?: string
-  switchToDeploymentMode?: DeploymentMode
 }
 
-async function testDeployBundle({
-  app,
-  partnersApp,
-  options,
-  released = true,
-  commitReference,
-  switchToDeploymentMode,
-}: TestDeployBundleInput) {
+async function testDeployBundle({app, partnersApp, options, released = true, commitReference}: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
   for (const extension of app.allExtensions) {
     extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
   const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}
-  const deploymentMode: DeploymentMode =
-    switchToDeploymentMode ??
-    (function () {
-      if (partnersApp?.betas?.unifiedAppDeployment) {
-        if (options?.noRelease) {
-          return 'unified-skip-release'
-        } else {
-          return 'unified'
-        }
-      } else {
-        return 'legacy'
-      }
-    })()
 
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app,
@@ -673,7 +758,7 @@ async function testDeployBundle({
         organizationId: 'org-id',
       }),
     token: 'api-token',
-    deploymentMode,
+    release: !options?.noRelease,
   })
 
   vi.mocked(useThemebundling).mockReturnValue(true)
@@ -687,7 +772,7 @@ async function testDeployBundle({
   })
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: [], functions: []},
+    app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
 
   await deploy({
@@ -699,5 +784,20 @@ async function testDeployBundle({
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
     commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+  })
+}
+
+async function testWebhooks(app: AppInterface) {
+  return testDeployBundle({
+    app,
+    partnersApp: {
+      id: 'app-id',
+      organizationId: 'org-id',
+      applicationUrl: 'https://my-app.com',
+      redirectUrlWhitelist: ['https://my-app.com/auth'],
+      title: 'app-title',
+      grantedScopes: [],
+      betas: {declarativeWebhooks: true},
+    },
   })
 }

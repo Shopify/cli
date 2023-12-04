@@ -20,7 +20,6 @@ interface UpdateExtensionDraftOptions {
   registrationId: string
   stdout: Writable
   stderr: Writable
-  unifiedDeployment: boolean
 }
 
 export async function updateExtensionDraft({
@@ -30,7 +29,6 @@ export async function updateExtensionDraft({
   registrationId,
   stdout,
   stderr,
-  unifiedDeployment,
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   if (extension.features.includes('esbuild')) {
@@ -39,7 +37,7 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const configValue = (await extension.deployConfig({apiKey, token, unifiedDeployment})) || {}
+  const configValue = (await extension.deployConfig({apiKey, token})) || {}
   const {handle, ...remainingConfigs} = configValue
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
@@ -64,23 +62,10 @@ export async function updateExtensionDraft({
 
 interface UpdateExtensionConfigOptions {
   extension: ExtensionInstance
-  token: string
-  apiKey: string
-  registrationId: string
   stdout: Writable
-  stderr: Writable
-  unifiedDeployment: boolean
 }
 
-export async function updateExtensionConfig({
-  extension,
-  token,
-  apiKey,
-  registrationId,
-  stdout,
-  stderr,
-  unifiedDeployment,
-}: UpdateExtensionConfigOptions) {
+export async function reloadExtensionConfig({extension, stdout}: UpdateExtensionConfigOptions) {
   const abort = (errorMessage: OutputMessage) => {
     stdout.write(errorMessage)
     throw new AbortError(errorMessage)
@@ -115,5 +100,4 @@ export async function updateExtensionConfig({
 
   // eslint-disable-next-line require-atomic-updates
   extension.configuration = newConfig
-  return updateExtensionDraft({extension, token, apiKey, registrationId, stdout, stderr, unifiedDeployment})
 }

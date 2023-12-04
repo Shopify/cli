@@ -24,9 +24,9 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   webhooks: {
     api_version: '2023-04',
     privacy_compliance: {
-      customer_deletion_url: 'https://google.com/',
-      customer_data_request_url: 'https://google.com/',
-      shop_deletion_url: 'https://google.com/',
+      customer_deletion_url: 'https://google.com',
+      customer_data_request_url: 'https://google.com',
+      shop_deletion_url: 'https://google.com',
     },
   },
   application_url: 'http://example.com',
@@ -35,19 +35,19 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
     redirect_urls: ['https://google.com'],
   },
   app_proxy: {
-    url: 'https://google.com/',
-    subpath: 'https://google.com/',
-    prefix: 'https://google.com/',
+    url: 'https://google.com',
+    subpath: 'https://google.com',
+    prefix: 'https://google.com',
   },
   pos: {
     embedded: false,
   },
   app_preferences: {
-    url: 'https://google.com/',
+    url: 'https://google.com',
   },
   build: {
     automatically_update_urls_on_dev: true,
-    dev_store_url: 'https://google.com/',
+    dev_store_url: 'https://google.com',
   },
 }
 

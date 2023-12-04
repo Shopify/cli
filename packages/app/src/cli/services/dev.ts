@@ -17,9 +17,9 @@ import {frontAndBackendConfig} from './dev/processes/utils.js'
 import {outputUpdateURLsResult, renderDev} from './dev/ui.js'
 import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
-import {DeploymentMode} from './deploy/mode.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
@@ -28,16 +28,16 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   directory: string
@@ -58,34 +58,12 @@ export interface DevOptions {
   notify?: string
 }
 
-interface DevTasksContext {
-  config?: DevConfig
-  processes?: DevProcesses
-  previewUrl?: string
-  graphiqlUrl?: string
-}
-
 export async function dev(commandOptions: DevOptions) {
-  await ensureAuthenticatedPartners()
-  const devContext = await renderTasks<DevTasksContext>([
-    {
-      title: 'Preparing environment',
-      task: async (ctx: DevTasksContext) => {
-        ctx.config = await prepareForDev(commandOptions)
-      },
-    },
-    {
-      title: 'Configuring dev processes',
-      task: async (ctx: DevTasksContext) => {
-        const devConfig = ctx.config!
-        await actionsBeforeSettingUpDevProcesses(devConfig)
-        const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(devConfig)
-        Object.assign(ctx, {processes, graphiqlUrl, previewUrl})
-        await actionsBeforeLaunchingDevProcesses(devConfig)
-      },
-    },
-  ])
-  await launchDevProcesses(devContext as Required<DevTasksContext>)
+  const config = await prepareForDev(commandOptions)
+  await actionsBeforeSettingUpDevProcesses(config)
+  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  await actionsBeforeLaunchingDevProcesses(config)
+  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -96,13 +74,15 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const token = await ensureAuthenticatedPartners()
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
   const {
     storeFqdn,
+    storeId,
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-  } = await ensureDevContext(commandOptions, token)
+  } = await ensureDevContext(commandOptions, partnersSession)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
@@ -146,6 +126,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
   return {
     storeFqdn,
+    storeId,
     remoteApp,
     remoteAppUpdated,
     localApp,
@@ -153,7 +134,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     commandOptions,
     network,
     partnerUrlsUpdated,
-    usesUnifiedDeployment: remoteApp?.betas?.unifiedAppDeployment ?? false,
   }
 }
 
@@ -193,7 +173,6 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
     tunnelUrl: config.network.proxyUrl,
     shouldUpdateURLs: config.partnerUrlsUpdated,
     storeFqdn: config.storeFqdn,
-    deploymentMode: config.usesUnifiedDeployment ? 'unified' : 'legacy',
   })
 
   await reportAnalyticsEvent({config: config.commandOptions.commandConfig, exitMode: 'ok'})
@@ -382,7 +361,6 @@ export async function logMetadataForDev(options: {
   tunnelUrl: string
   shouldUpdateURLs: boolean
   storeFqdn: string
-  deploymentMode: DeploymentMode | undefined
 }) {
   const tunnelType = await getAnalyticsTunnelType(options.devOptions.commandConfig, options.tunnelUrl)
   await metadata.addPublicMetadata(() => ({
@@ -392,7 +370,6 @@ export async function logMetadataForDev(options: {
     store_fqdn_hash: hashString(options.storeFqdn),
     cmd_app_dependency_installation_skipped: options.devOptions.skipDependenciesInstallation,
     cmd_app_reset_used: options.devOptions.reset,
-    cmd_app_deployment_mode: options.deploymentMode,
   }))
 
   await metadata.addSensitiveMetadata(() => ({

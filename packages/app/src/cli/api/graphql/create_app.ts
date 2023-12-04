@@ -29,9 +29,6 @@ export const CreateAppQuery = gql`
         }
         appType
         grantedScopes
-        betas {
-          unifiedAppDeployment
-        }
         applicationUrl
         redirectUrlWhitelist
         requestedAccessScopes
@@ -79,9 +76,6 @@ export interface CreateAppQuerySchema {
       }[]
       appType: string
       grantedScopes: string[]
-      betas?: {
-        unifiedAppDeployment?: boolean
-      }
       applicationUrl: string
       redirectUrlWhitelist: string[]
       requestedAccessScopes?: string[]

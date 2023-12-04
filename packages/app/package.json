@@ -1,6 +1,6 @@
 {
   "name": "@shopify/app",
-  "version": "3.50.0",
+  "version": "3.51.0",
   "description": "Utilities for loading, building, and publishing apps.",
   "homepage": "https://github.com/shopify/cli#readme",
   "bugs": {
@@ -43,24 +43,27 @@
   "dependencies": {
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "2.11.7",
-    "@shopify/cli-kit": "3.50.0",
+    "@shopify/cli-kit": "3.51.0",
     "@shopify/function-runner": "4.1.1",
-    "@shopify/plugin-cloudflare": "3.50.0",
-    "@shopify/shopify-api": "7.5.0",
+    "@shopify/plugin-cloudflare": "3.51.0",
+    "@shopify/polaris": "12.1.1",
+    "@shopify/polaris-icons": "7.9.0",
     "abort-controller": "3.0.0",
     "body-parser": "1.20.2",
     "chokidar": "3.5.3",
     "diff": "5.1.0",
-    "esbuild": "0.19.3",
+    "esbuild": "0.19.8",
     "express": "4.18.2",
     "graphql-request": "5.2.0",
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
-    "javy-cli": "0.1.8",
-    "serve-static": "1.15.0",
-    "ws": "8.13.0",
     "ink": "4.4.1",
-    "react": "18.2.0"
+    "javy-cli": "0.1.8",
+    "micromatch": "4.0.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "serve-static": "1.15.0",
+    "ws": "8.13.0"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.2",
@@ -68,8 +71,10 @@
     "@types/express": "^4.17.17",
     "@types/http-proxy": "^1.17.11",
     "@types/lodash-es": "^4.17.9",
+    "@types/micromatch": "^4.0.5",
     "@types/node": "16.18.57",
     "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
     "@types/serve-static": "^1.15.2",
     "@types/ws": "^8.5.5",
     "@vitest/coverage-istanbul": "^0.34.3",
@@ -83,7 +88,7 @@
     "react": "18.2.0"
   },
   "engines": {
-    "node": ">=14.17.0"
+    "node": ">=16.0.0"
   },
   "os": [
     "darwin",
