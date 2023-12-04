@@ -35,7 +35,7 @@ export default class Release extends Command {
     }),
     force: Flags.boolean({
       hidden: false,
-      description: 'Deploy without asking for confirmation.',
+      description: 'Release without asking for confirmation.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
     }),
