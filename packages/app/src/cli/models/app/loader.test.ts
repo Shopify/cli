@@ -1624,16 +1624,24 @@ automatically_update_urls_on_dev = true
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
-    expect(extension).not.toBeUndefined()
-    if (extension) {
-      expect(extension.configuration).toMatchObject({
+    expect(app.allExtensions).toHaveLength(3)
+    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      }),
+      expect.objectContaining({
         pos: {
           embedded: true,
         },
-      })
-    }
+      }),
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2023-07',
+        },
+      }),
+    ])
   })
 
   test('loads the app with several functions that have valid configurations', async () => {
