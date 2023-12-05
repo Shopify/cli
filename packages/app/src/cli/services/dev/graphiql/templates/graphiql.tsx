@@ -294,8 +294,8 @@ export function graphiqlTemplate({
         const statusDiv = document.querySelector('#graphiql #status-badge')
         const allBadgeDivs = Array.from(statusDiv.querySelectorAll('.status-badge-option'))
         let activeBadge = 'running'
-        if (!serverIsLive) activeBadge = 'disconnected'
         if (!appIsInstalled) activeBadge = 'unauthorized'
+        if (!serverIsLive) activeBadge = 'disconnected'
         allBadgeDivs.forEach(function(badge) {
           if (badge.id == ('status-badge-' + activeBadge)) {
             badge.style.display = 'flex'
