@@ -112,7 +112,11 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   if (app.betas?.declarativeWebhooks) {
     // These fields will be updated by the deploy command
     webhookApiVersion = app.webhookApiVersion
-    gdprWebhooks = app.gdprWebhooks
+    gdprWebhooks = {
+      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url,
+      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url,
+      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url,
+    }
   } else {
     webhookApiVersion = configuration.webhooks?.api_version
     gdprWebhooks = {
