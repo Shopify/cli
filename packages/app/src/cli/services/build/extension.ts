@@ -106,11 +106,9 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
-  if (extension.isJavaScript) {
-    return runCommandOrBuildJSFunction(extension, options)
-  } else {
-    return buildOtherFunction(extension, options)
-  }
+  return extension.isJavaScript
+    ? runCommandOrBuildJSFunction(extension, options)
+    : buildOtherFunction(extension, options)
 }
 
 async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {

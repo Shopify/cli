@@ -16,7 +16,7 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {touchFile, writeFile, copyFile} from '@shopify/cli-kit/node/fs'
 
 /**
  * Class that represents an instance of a local extension
@@ -238,6 +238,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     await this.build(options)
+
+    if (this.isFunctionExtension) {
+      await copyFile(this.outputPath, joinPath(bundleDirectory, extensionId, 'index.wasm'))
+    }
 
     if (this.isThemeExtension && useThemebundling()) {
       await bundleThemeExtension(this, options)
