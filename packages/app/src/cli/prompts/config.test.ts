@@ -4,7 +4,7 @@ import {testOrganizationApp, testAppWithConfig, DEFAULT_CONFIG} from '../models/
 import {App} from '../api/graphql/get_config.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
-import {AppConfiguration, CurrentAppConfiguration} from '../models/app/app.js'
+import {AppConfiguration} from '../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -196,10 +196,7 @@ describe('confirmPushChanges', () => {
 
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-      const configuration = mergeAppConfiguration(
-        {...DEFAULT_CONFIG, path: configurationPath},
-        app as OrganizationApp,
-      ) as CurrentAppConfiguration
+      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
 
       configuration.name = 'app2'
       configuration.access_scopes = {scopes: 'read_themes, read_customers'}

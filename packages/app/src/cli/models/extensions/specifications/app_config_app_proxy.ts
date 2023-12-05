@@ -1,11 +1,11 @@
 import {AppSchema} from '../../app/app.js'
 import {createConfigExtensionSpecification} from '../specification.js'
 
-const PosConfigurationSchema = AppSchema.pick({pos: true}).strip()
+const AppProxySchema = AppSchema.pick({app_proxy: true}).strip()
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'point_of_sale',
-  schema: PosConfigurationSchema,
+  identifier: 'app_proxy',
+  schema: AppProxySchema,
 })
 
 export default spec

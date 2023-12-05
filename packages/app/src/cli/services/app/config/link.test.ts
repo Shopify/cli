@@ -530,7 +530,7 @@ embedded = false
     })
   })
 
-  test('overwrite the api client configuration with the remote app_config extension registrarions', async () => {
+  test('the api client configuration is depp merged with the remote app_config extension registrarions', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -543,7 +543,9 @@ embedded = false
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
-          webhooks: {api_version: '2023-04'},
+          webhooks: {
+            api_version: '2023-04',
+          },
           application_url: 'https://myapp.com',
           embedded: true,
           pos: {
@@ -584,6 +586,17 @@ embedded = false
                 config: JSON.stringify({embedded: true}),
               },
             },
+            {
+              type: 'privacy_compliance_webhooks',
+              id: '543',
+              uuid: '543',
+              title: 'privacy_compliance_webhooks',
+              activeVersion: {
+                config: JSON.stringify({
+                  customers_redact_url: 'https://myhooks.dev/apps/customer_deletion_url',
+                }),
+              },
+            },
           ],
           dashboardManagedExtensionRegistrations: [],
         },
@@ -610,6 +623,9 @@ redirect_urls = [ "https://example.com/callback1" ]
 
 [webhooks]
 api_version = "2023-07"
+
+  [webhooks.privacy_compliance]
+  customer_deletion_url = "https://myhooks.dev/apps/customer_deletion_url"
 
 [pos]
 embedded = true
