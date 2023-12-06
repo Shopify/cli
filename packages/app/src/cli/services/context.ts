@@ -16,6 +16,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -27,7 +28,13 @@ import {
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {getAppConfigurationFileName, loadApp, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {
+  getAppConfigurationFileName,
+  getAppConfigurationShorthand,
+  loadApp,
+  loadAppConfiguration,
+  loadAppName,
+} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -343,13 +350,24 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = partnersSession.token
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
 
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey: partnersApp.apiKey,
+    config: options.commandConfig,
+  })
+  const app: AppInterface = await loadApp({
+    specifications,
+    directory: options.app.directory,
+    configName: getAppConfigurationShorthand(options.app.configuration.path),
+  })
+
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
-  showReusedDeployValues(org.businessName, options.app, partnersApp)
+  showReusedDeployValues(org.businessName, app, partnersApp)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
-    app: options.app,
+    app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
     force: options.force,
@@ -362,7 +380,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
+    app: await updateAppIdentifiers({app, identifiers, command: 'deploy'}),
   }
 
   const result = {

@@ -116,7 +116,7 @@ export async function deploy(options: DeployOptions) {
             })
 
             if (!useThemebundling()) {
-              const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
+              const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 

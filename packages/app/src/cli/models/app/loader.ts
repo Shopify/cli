@@ -162,7 +162,7 @@ interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
   configName?: string
-  specifications: ExtensionSpecification[]
+  specifications?: ExtensionSpecification[]
 }
 
 /**
@@ -198,7 +198,7 @@ class AppLoader {
   constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
-    this.specifications = specifications
+    this.specifications = specifications ?? []
     this.configName = configName
   }
 
@@ -342,6 +342,8 @@ class AppLoader {
   }
 
   async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+    if (this.specifications.length === 0) return []
+
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
     const configExtensionPromises = isCurrentSchema(appConfiguration)
       ? await this.createConfigExtensionInstances(appDirectory, appConfiguration as CurrentAppConfiguration)
