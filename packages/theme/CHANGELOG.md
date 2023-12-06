@@ -1,5 +1,17 @@
 # @shopify/theme
 
+## 3.52.0
+
+### Patch Changes
+
+- 1de8122c4: No longer drops _.json templates when there is a _.json.liquid template with the same name.
+- Updated dependencies [4ea4c08dd]
+- Updated dependencies [1de8122c4]
+- Updated dependencies [060bd75cf]
+- Updated dependencies [060bd75cf]
+- Updated dependencies [9cbe46e06]
+  - @shopify/cli-kit@3.52.0
+
 ## 3.51.0
 
 ### Minor Changes

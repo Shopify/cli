@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.52.0
+
+### Minor Changes
+
+- 060bd75cf: Support client credentials flow (currently used in GraphiQL)
+- 060bd75cf: Expose functions to get information on available Admin API versions
+
+### Patch Changes
+
+- 4ea4c08dd: Fix bundler env vars
+- 1de8122c4: No longer drops _.json templates when there is a _.json.liquid template with the same name.
+- 9cbe46e06: Fix a bug with keypresses after Input
+
 ## 3.51.0
 
 ### Minor Changes
