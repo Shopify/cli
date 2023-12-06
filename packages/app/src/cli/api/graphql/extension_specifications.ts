@@ -8,6 +8,7 @@ export const ExtensionSpecificationsQuery = gql`
       externalIdentifier
       identifier
       gated
+      experience
       options {
         managementExperience
         registrationLimit
@@ -31,8 +32,9 @@ export interface RemoteSpecification {
   identifier: string
   gated: boolean
   externalIdentifier: string
+  experience: 'extension' | 'configuration' | 'deprecated'
   options: {
-    managementExperience: 'cli' | 'custom' | 'dashboard' | 'app_config'
+    managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
   }
   features?: {

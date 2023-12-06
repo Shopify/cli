@@ -115,6 +115,19 @@ export const AppSchema = zod
         redirect_urls: zod.array(validateUrl(zod.string())),
       })
       .optional(),
+    access: zod
+      .object({
+        admin: zod
+          .union([
+            zod.literal(true),
+            zod.object({
+              mode: zod.enum(['online', 'offline']).optional(),
+            }),
+          ])
+          .optional(),
+        customer_account: zod.boolean().optional(),
+      })
+      .optional(),
     webhooks: WebhooksSchemaWithDeclarative,
     app_proxy: zod
       .object({

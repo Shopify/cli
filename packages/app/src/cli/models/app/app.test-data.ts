@@ -313,6 +313,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'checkout_post_purchase',
     externalIdentifier: 'checkout_post_purchase_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -329,6 +330,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'theme',
     externalIdentifier: 'theme_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -340,6 +342,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'product_subscription',
     externalIdentifier: 'product_subscription_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -356,6 +359,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'ui_extension',
     externalIdentifier: 'ui_extension_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 50,
@@ -367,11 +371,29 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     },
   },
   {
+    name: 'Customer Accounts',
+    externalName: 'Customer Accounts',
+    identifier: 'customer_accounts_ui_extension',
+    externalIdentifier: 'customer_accounts_ui_extension_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 10,
+    },
+    features: {
+      argo: {
+        surface: 'customer_accounts',
+      },
+    },
+  },
+  {
     name: 'Checkout Extension',
     externalName: 'Checkout UI',
     identifier: 'checkout_ui_extension',
     externalIdentifier: 'checkout_ui_extension_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 5,
@@ -390,6 +412,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'subscription_management',
     externalIdentifier: 'product_subscription_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
@@ -406,6 +429,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'marketing_activity_extension',
     externalIdentifier: 'marketing_activity_extension_external',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'dashboard',
       registrationLimit: 100,
@@ -417,6 +441,7 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'function',
     externalIdentifier: 'function',
     gated: false,
+    experience: 'extension',
     options: {
       managementExperience: 'cli',
       registrationLimit: 1,
