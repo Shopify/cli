@@ -8,6 +8,7 @@ import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/gr
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -1202,6 +1203,44 @@ describe('deploymentErrorsToCustomSections', () => {
     ])
   })
 
+  test('returns an array of custom identifiers sections', async () => {
+    // Given
+    const errors = [
+      {
+        field: ['prefix'],
+        message: 'is not included in the list.',
+        category: 'invalid',
+        details: [
+          {
+            specification_identifier: 'app_proxy',
+            extension_title: 'Registration title',
+            extension_id: 123,
+          },
+        ],
+      },
+    ]
+    const specifications = await loadFSExtensionsSpecifications()
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(errors, {}, {}, specifications)
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        // Uses name from identifiers and not from remote `extension_title`
+        title: 'app_proxy',
+        body: [
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['prefix: is not included in the list.'],
+            },
+          },
+        ],
+      },
+    ])
+  })
+
   test('returns an array of custom sections when given a single generic error message', () => {
     // Given
     const errors = [
@@ -1262,6 +1301,40 @@ describe('deploymentErrorsToCustomSections', () => {
     ])
   })
 
+  test('returns a specific error message when the error is about the version being already taken', () => {
+    // Given
+    const errors = [
+      {
+        field: ['version_tag'],
+        message: 'has already been taken',
+        category: '',
+        details: [],
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(
+      errors,
+      {
+        'amortizable-marketplace-ext': '123',
+        'amortizable-marketplace-ext-2': '456',
+      },
+      {
+        version: 'already-taken-version',
+      },
+    )
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        body: [
+          'An app version with the name',
+          {userInput: 'already-taken-version'},
+          'already exists. Deploy again with a different version name.',
+        ],
+      },
+    ])
+  })
   test('returns a specific error message when the error is about the version being already taken', () => {
     // Given
     const errors = [

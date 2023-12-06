@@ -22,6 +22,7 @@ import {
 } from '../../api/graphql/functions/app_function_set.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
@@ -101,6 +102,9 @@ interface UploadExtensionsBundleOptions {
 
   /** The git reference url of the app version */
   commitReference?: string
+
+  /** The list of extension specifications */
+  specifications?: ExtensionSpecification[]
 }
 
 export interface UploadExtensionValidationError {
@@ -173,6 +177,7 @@ export async function uploadExtensionsBundle(
       {
         version: options.version,
       },
+      options.specifications ?? [],
     )
 
     if (result.appDeploy.appVersion) {
@@ -206,25 +211,43 @@ export function deploymentErrorsToCustomSections(
   flags: {
     version?: string
   } = {},
+  specifications: ExtensionSpecification[] = [],
 ): ErrorCustomSection[] {
+  const configurationSpecificationIds = specifications
+    .filter((spec) => spec.appModuleFeatures().includes('app_config'))
+    .map((spec) => spec.identifier)
+
   const isExtensionError = (error: (typeof errors)[0]) => {
     return error.details?.some((detail) => detail.extension_id) ?? false
   }
 
-  const isCliError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
+  const isCliExtensionIdError = (error: (typeof errors)[0], extensionIds: IdentifiersExtensions) => {
     const errorExtensionId =
       error.details?.find((detail) => typeof detail.extension_id !== 'undefined')?.extension_id.toString() ?? ''
 
     return Object.values(extensionIds).includes(errorExtensionId)
   }
 
+  const isCliSpecificationIdError = (error: (typeof errors)[0], configurationSpecificationIds: string[]) => {
+    const specificationIdentifier =
+      error.details
+        ?.find((detail) => typeof detail.specification_identifier !== 'undefined')
+        ?.specification_identifier?.toString() ?? ''
+
+    return configurationSpecificationIds.includes(specificationIdentifier)
+  }
+
   const [extensionErrors, nonExtensionErrors] = partition(errors, (error) => isExtensionError(error))
 
-  const [cliErrors, partnersErrors] = partition(extensionErrors, (error) => isCliError(error, extensionIds))
+  const [cliErrors, partnersErrors] = partition(
+    extensionErrors,
+    (error) =>
+      isCliExtensionIdError(error, extensionIds) || isCliSpecificationIdError(error, configurationSpecificationIds),
+  )
 
   const customSections = [
     ...generalErrorsSection(nonExtensionErrors, {version: flags.version}),
-    ...cliErrorsSections(cliErrors, extensionIds),
+    ...cliErrorsSections(cliErrors, extensionIds, configurationSpecificationIds),
     ...partnersErrorsSections(partnersErrors),
   ]
   return customSections
@@ -270,7 +293,11 @@ function generalErrorsSection(errors: AppDeploySchema['appDeploy']['userErrors']
   }
 }
 
-function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], identifiers: IdentifiersExtensions) {
+function cliErrorsSections(
+  errors: AppDeploySchema['appDeploy']['userErrors'],
+  identifiers: IdentifiersExtensions,
+  configurationSpecificationIds: string[],
+) {
   return errors.reduce((sections, error) => {
     const field = error.field.join('.').replace('extension_points', 'extensions.targeting')
     const errorMessage = field === 'base' ? error.message : `${field}: ${error.message}`
@@ -279,9 +306,13 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
     const extensionIdentifier = error.details
       .find((detail) => typeof detail.extension_id !== 'undefined')
       ?.extension_id.toString()
-
     const handle = Object.keys(identifiers).find((key) => identifiers[key] === extensionIdentifier)
-    const extensionName = handle ?? remoteTitle
+    const specificationIdentifier =
+      error.details
+        ?.find((detail) => typeof detail.specification_identifier !== 'undefined')
+        ?.specification_identifier?.toString() ?? ''
+    const configurationSpecification = configurationSpecificationIds.find((spec) => spec === specificationIdentifier)
+    const extensionName = configurationSpecification ?? handle ?? remoteTitle
 
     const existingSection = sections.find((section) => section.title === extensionName)
 
