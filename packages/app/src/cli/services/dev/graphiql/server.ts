@@ -59,6 +59,11 @@ export function setupGraphiQLServer({
       next()
     })
 
+  // Assumes that the proxy adds to the beginning of the URL string
+  function isProxied(req: express.Request, canonicalUrl: string): boolean {
+    return req.originalUrl.split('?', 2)[0] !== canonicalUrl
+  }
+
   function failIfUnmatchedKey(str: string, res: express.Response): boolean {
     if (str === randomKey) return false
     res.status(404).send(`Invalid path ${res.req.originalUrl}`)
@@ -133,7 +138,7 @@ export function setupGraphiQLServer({
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
     if (
-      req.originalUrl !== '/graphiql' &&
+      isProxied(req, '/graphiql') &&
       failIfUnmatchedKey(req.query.key as string, res)
     ) return
 
@@ -179,7 +184,7 @@ export function setupGraphiQLServer({
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
     if (
-      req.originalUrl.split('?', 2)[0] !== '/graphiql/graphql.json' &&
+      isProxied(req, '/graphiql/graphql.json') &&
       failIfUnmatchedKey(req.query.key as string, res)
     ) return
 
