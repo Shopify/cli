@@ -19,13 +19,13 @@ export interface GraphiQLServerProcess extends BaseProcess<GraphiQLServerProcess
 }
 
 export async function setupGraphiQLServerProcess(
-  options: Omit<GraphiQLServerProcessOptions, 'port'>,
+  options: GraphiQLServerProcessOptions,
 ): Promise<GraphiQLServerProcess> {
   return {
     type: 'graphiql',
     prefix: `graphiql`,
     urlPrefix: `/${urlNamespaces.devTools}/graphiql`,
-    options: {...options, port: -1},
+    options,
     function: launchGraphiQLServer,
   }
 }

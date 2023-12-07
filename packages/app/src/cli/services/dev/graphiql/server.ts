@@ -46,8 +46,9 @@ export function setupGraphiQLServer({
   url,
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
-  outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
+  outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
   const namespacedShopifyUrl = `https://${url}/${urlNamespaces.devTools}`
+  const localhostUrl = `http://localhost:${port}/${urlNamespaces.devTools}`
 
   const app = express()
     // Make the app accept all routes starting with /.shopify/xxx as /xxx
@@ -130,6 +131,8 @@ export function setupGraphiQLServer({
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
+    const url = req.hostname === 'localhost' ? localhostUrl : namespacedShopifyUrl
+
     outputDebug('Handling /graphiql request', stdout)
     if (failIfUnmatchedKey(req.query.key as string, res)) return
     let apiVersions: string[]
@@ -140,7 +143,7 @@ export function setupGraphiQLServer({
         return res.send(
           await renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
-            url: namespacedShopifyUrl,
+            url,
           }),
         )
       }
@@ -160,7 +163,7 @@ export function setupGraphiQLServer({
           storeFqdn,
         }),
         {
-          url: namespacedShopifyUrl,
+          url,
           defaultQueries: [{query: defaultQuery}],
         },
       ),

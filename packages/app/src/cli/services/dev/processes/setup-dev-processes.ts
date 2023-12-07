@@ -90,6 +90,7 @@ export async function setupDevProcesses({
       ? await setupGraphiQLServerProcess({
           appName: localApp.name,
           appUrl: appPreviewUrl,
+          port: 3457,
           apiKey,
           apiSecret,
           randomKey,
@@ -178,9 +179,7 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
         rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
       } else if (process.type === 'graphiql') {
-        const targetPort = await getAvailableTCPPort()
-        rules[process.urlPrefix] = `http://localhost:${targetPort}`
-        process.options.port = targetPort
+        rules[process.urlPrefix] = `http://localhost:${process.options.port}`
       }
 
       return {process, rules}
