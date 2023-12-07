@@ -15,13 +15,12 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
-  | 'app_config'
 
-export type ExtensionManagementExperience = 'cli' | 'app_config'
+export type ExtensionExperience = 'extension' | 'configuration'
 
 interface ExtensionSpecificationCommon {
   identifier: string
-  managementExperience: ExtensionManagementExperience
+  experience: ExtensionExperience
 }
 
 export interface TransformationConfig {
@@ -127,7 +126,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    managementExperience: 'cli' as ExtensionManagementExperience,
+    experience: 'extension' as ExtensionExperience,
   }
   return {...defaults, ...spec}
 }
@@ -141,7 +140,7 @@ export function createConfigExtensionSpecification<TConfiguration = unknown>(spe
   return {
     identifier: spec.identifier,
     schema: spec.schema as ZodSchemaType<TConfiguration>,
-    managementExperience: 'app_config' as ExtensionManagementExperience,
+    experience: 'configuration' as ExtensionExperience,
     transformConfig: spec.transformConfig,
     validateConfig: spec.validateConfig,
     validate: spec.validateConfig ? (object) => validate(object, spec.validateConfig!) : () => ok({} as unknown),

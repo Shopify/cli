@@ -218,7 +218,7 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
 
   const appModuleVersionsNonConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
-      (module) => module.specification !== null && module.specification?.options.managementExperience !== 'app_config',
+      (module) => module.specification !== null && module.specification?.experience !== 'configuration',
     ) || []
 
   const nonDashboardRemoteRegistrationUuids =

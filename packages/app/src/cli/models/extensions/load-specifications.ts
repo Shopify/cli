@@ -18,9 +18,9 @@ export interface Specifications {
  */
 export async function loadLocalExtensionsSpecifications(config: Config): Promise<Specifications> {
   const local = await loadFSExtensionsSpecifications()
-  const {cli: generalSpecifications, app_config: configSpecifications} = groupBy(
+  const {extension: generalSpecifications, configuration: configSpecifications} = groupBy(
     local,
-    (spec) => spec.managementExperience,
+    (spec) => spec.experience,
   )
   const plugins = await loadUIExtensionSpecificationsFromPlugins(config)
   return {

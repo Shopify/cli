@@ -12,6 +12,7 @@ export const ActiveAppVersionQuery = gql`
           specification {
             identifier
             name
+            experience
             options {
               managementExperience
             }
@@ -29,8 +30,9 @@ export interface ActiveAppVersionQueryVariables {
 export interface AppModuleVersionSpecification {
   identifier: string
   name: string
+  experience: 'extension' | 'configuration' | 'deprecated'
   options: {
-    managementExperience: 'cli' | 'custom' | 'dashboard' | 'app_config'
+    managementExperience: 'cli' | 'custom' | 'dashboard'
   }
 }
 
