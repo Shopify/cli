@@ -48,7 +48,7 @@ export function setupGraphiQLServer({
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
   const namespacedShopifyUrl = `https://${url}/${urlNamespaces.devTools}`
-  const localhostUrl = `http://localhost:${port}/${urlNamespaces.devTools}`
+  const localhostUrl = `http://localhost:${port}`
 
   const app = express()
     // Make the app accept all routes starting with /.shopify/xxx as /xxx
@@ -131,10 +131,13 @@ export function setupGraphiQLServer({
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
-    const url = req.hostname === 'localhost' ? localhostUrl : namespacedShopifyUrl
-
     outputDebug('Handling /graphiql request', stdout)
-    if (failIfUnmatchedKey(req.query.key as string, res)) return
+    if (
+      req.originalUrl !== '/graphiql' &&
+      failIfUnmatchedKey(req.query.key as string, res)
+    ) return
+
+    const url = req.hostname === 'localhost' ? localhostUrl : namespacedShopifyUrl
     let apiVersions: string[]
     try {
       apiVersions = await fetchApiVersionsWithTokenRefresh()
@@ -175,7 +178,10 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
-    if (failIfUnmatchedKey(req.query.key as string, res)) return
+    if (
+      req.originalUrl.split('?', 2)[0] !== '/graphiql/graphql.json' &&
+      failIfUnmatchedKey(req.query.key as string, res)
+    ) return
 
     const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
     try {

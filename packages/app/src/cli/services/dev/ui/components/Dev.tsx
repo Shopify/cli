@@ -38,7 +38,7 @@ const Dev: FunctionComponent<DevProps> = ({
   abortController,
   processes,
   previewUrl,
-  graphiqlUrl,
+  graphiqlUrl = '',
   app,
   pollingTime = 5000,
   developerPreview,
@@ -46,7 +46,8 @@ const Dev: FunctionComponent<DevProps> = ({
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
-  const defaultStatusMessage = `Preview URL: ${previewUrl}${graphiqlUrl ? `\nGraphiQL URL: ${graphiqlUrl}` : ''}`
+  const localhostGraphiqlUrl = 'http://localhost:3457/graphiql'
+  const defaultStatusMessage = `Preview URL: ${previewUrl}${graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}\nGraphiQL URL if localhost is inaccessible: ${graphiqlUrl}` : ''}`
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {
@@ -147,7 +148,7 @@ const Dev: FunctionComponent<DevProps> = ({
             await metadata.addPublicMetadata(() => ({
               cmd_dev_graphiql_opened: true,
             }))
-            await openURL(graphiqlUrl)
+            await openURL(localhostGraphiqlUrl)
           } else if (input === 'q') {
             abortController.abort()
           } else if (input === 'd' && canEnablePreviewMode) {
