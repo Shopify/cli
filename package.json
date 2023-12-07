@@ -64,7 +64,7 @@
     "pin-github-action": "^1.8.0",
     "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.8.7",
-    "react": "17.0.2",
+    "react": "^18.0.0",
     "rimraf": "^3.0.2",
     "shx": "^0.3.4",
     "tempy": "^3.0.0",
@@ -92,6 +92,7 @@
   },
   "version": "0.0.0",
   "resolutions": {
+    "react": "^18.0.0",
     "@types/react": "17.0.2",
     "vite": "4.4.9",
     "@oclif/core": "2.11.7"
