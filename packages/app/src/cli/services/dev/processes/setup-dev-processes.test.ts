@@ -2,7 +2,7 @@ import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-proces
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
-import {GraphiQLServerProcess, launchGraphiQLServer} from './graphiql.js'
+import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
@@ -54,6 +54,7 @@ describe('setup-dev-processes', () => {
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
+    const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
@@ -124,6 +125,7 @@ describe('setup-dev-processes', () => {
       storeId,
       token,
       partnerUrlsUpdated: true,
+      graphiqlPort,
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
@@ -227,7 +229,6 @@ describe('setup-dev-processes', () => {
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
-    const graphiqlPort = (res.processes[1] as GraphiQLServerProcess).options.port
     const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
     expect(res.processes[6]).toMatchObject({

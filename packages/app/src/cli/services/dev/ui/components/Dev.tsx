@@ -24,6 +24,7 @@ export interface DevProps {
   abortController: AbortController
   previewUrl: string
   graphiqlUrl?: string
+  graphiqlPort: number
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -39,6 +40,7 @@ const Dev: FunctionComponent<DevProps> = ({
   processes,
   previewUrl,
   graphiqlUrl = '',
+  graphiqlPort,
   app,
   pollingTime = 5000,
   developerPreview,
@@ -46,7 +48,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
-  const localhostGraphiqlUrl = 'http://localhost:3457/graphiql'
+  const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultStatusMessage = `Preview URL: ${previewUrl}${graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}\nGraphiQL URL if localhost is inaccessible: ${graphiqlUrl}` : ''}`
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
 

@@ -25,6 +25,7 @@ import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../model
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -124,6 +125,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const allExtensionsWithDevUUIDs = getDevUUIDsForAllExtensions(localApp, apiKey)
   localApp.allExtensions = allExtensionsWithDevUUIDs
 
+  const graphiqlPort = ports.graphiql
+
   return {
     storeFqdn,
     storeId,
@@ -134,6 +137,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     commandOptions,
     network,
     partnerUrlsUpdated,
+    graphiqlPort,
   }
 }
 
@@ -309,6 +313,7 @@ async function launchDevProcesses({
     processes: processesForTaskRunner,
     previewUrl,
     graphiqlUrl,
+    graphiqlPort: config.graphiqlPort,
     app,
     abortController,
     developerPreview: developerPreviewController(apiKey, token),

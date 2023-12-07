@@ -53,6 +53,7 @@ export interface DevConfig {
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
+  graphiqlPort: number
 }
 
 export async function setupDevProcesses({
@@ -64,6 +65,7 @@ export async function setupDevProcesses({
   storeId,
   commandOptions,
   network,
+  graphiqlPort
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -90,7 +92,7 @@ export async function setupDevProcesses({
       ? await setupGraphiQLServerProcess({
           appName: localApp.name,
           appUrl: appPreviewUrl,
-          port: 3457,
+          port: graphiqlPort,
           apiKey,
           apiSecret,
           randomKey,

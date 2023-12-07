@@ -79,6 +79,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -158,6 +159,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -194,6 +196,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -219,6 +222,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -246,6 +250,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -288,6 +293,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -351,6 +357,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -408,6 +415,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -459,6 +467,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -501,6 +510,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -567,6 +577,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={{
           ...testApp,
           canEnablePreviewMode: false,
@@ -623,6 +634,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -663,6 +675,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -725,6 +738,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -774,6 +788,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -812,6 +827,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -850,6 +866,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -886,6 +903,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,

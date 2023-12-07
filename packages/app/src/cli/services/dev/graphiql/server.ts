@@ -228,5 +228,5 @@ export function setupGraphiQLServer({
     }
     res.end()
   })
-  return app.listen(port, () => stdout.write('GraphiQL server started'))
+  return app.listen(port, () => stdout.write(`GraphiQL server started on port ${port}`))
 }
