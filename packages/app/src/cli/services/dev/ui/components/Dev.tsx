@@ -49,7 +49,11 @@ const Dev: FunctionComponent<DevProps> = ({
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
-  const defaultStatusMessage = `Preview URL: ${previewUrl}${graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}\nGraphiQL URL if localhost is inaccessible: ${graphiqlUrl}` : ''}`
+  const defaultStatusMessage = `Preview URL: ${previewUrl}${
+    graphiqlUrl
+      ? `\nGraphiQL URL: ${localhostGraphiqlUrl}\nGraphiQL URL if localhost is inaccessible: ${graphiqlUrl}`
+      : ''
+  }`
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
 
   const {isAborted} = useAbortSignal(abortController.signal, async (err) => {

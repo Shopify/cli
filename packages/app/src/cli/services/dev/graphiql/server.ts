@@ -137,10 +137,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
-    if (
-      isProxied(req, '/graphiql') &&
-      failIfUnmatchedKey(req.query.key as string, res)
-    ) return
+    if (isProxied(req, '/graphiql') && failIfUnmatchedKey(req.query.key as string, res)) return
 
     const url = req.hostname === 'localhost' ? localhostUrl : namespacedShopifyUrl
     let apiVersions: string[]
@@ -183,10 +180,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
-    if (
-      isProxied(req, '/graphiql/graphql.json') &&
-      failIfUnmatchedKey(req.query.key as string, res)
-    ) return
+    if (isProxied(req, '/graphiql/graphql.json') && failIfUnmatchedKey(req.query.key as string, res)) return
 
     const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
     try {

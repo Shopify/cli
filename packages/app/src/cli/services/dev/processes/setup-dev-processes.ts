@@ -65,7 +65,7 @@ export async function setupDevProcesses({
   storeId,
   commandOptions,
   network,
-  graphiqlPort
+  graphiqlPort,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
