@@ -36,6 +36,7 @@ export async function getUIExtensionPayload(
         smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
         writePrivacyConsent:
           extension.configuration.capabilities?.collect_buyer_consent?.write_privacy_consent || false,
+        privacyCookies: extension.configuration.capabilities?.collect_buyer_consent?.privacy_cookies || [],
       },
     },
     development: {
