@@ -37,16 +37,6 @@ export async function fetchSpecifications({
   })
 
   const extensionSpecifications: FlattenedRemoteSpecification[] = result.extensionSpecifications
-    // .map((spec) => {
-    // // Enable the CLI for Dashboard managed extensions
-    // if (spec.identifier === 'payments_app') spec.options.managementExperience = 'cli'
-    // if (spec.identifier === 'payments_app_credit_card') spec.options.managementExperience = 'cli'
-    // if (spec.identifier === 'payments_app_custom_credit_card') spec.options.managementExperience = 'cli'
-    // if (spec.identifier === 'payments_app_redeemable') spec.options.managementExperience = 'cli'
-    // if (spec.identifier === 'payments_app_custom_onsite') spec.options.managementExperience = 'cli'
-
-    //   return spec
-    // })
     .filter((specification) => specification.options.managementExperience === 'cli')
     .map((spec) => {
       const newSpec = spec as FlattenedRemoteSpecification
