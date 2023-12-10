@@ -187,8 +187,7 @@ export function graphiqlTemplate({
                   <Card padding={{xs: '0'}}>
                     <Banner tone="critical" onDismiss={() => {}}>
                       <p>
-                        The server has been stopped. Restart <code>dev</code> from the CLI and launch the GraphiQL
-                        explorer again.
+                        The server has been stopped. Restart <code>dev</code> from the CLI.
                       </p>
                     </Banner>
                   </Card>
