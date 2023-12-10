@@ -57,6 +57,7 @@ export interface DevOptions {
   theme?: string
   themeExtensionPort?: number
   notify?: string
+  graphiqlPort?: number
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -125,7 +126,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const allExtensionsWithDevUUIDs = getDevUUIDsForAllExtensions(localApp, apiKey)
   localApp.allExtensions = allExtensionsWithDevUUIDs
 
-  const graphiqlPort = ports.graphiql
+  const graphiqlPort = commandOptions.graphiqlPort || ports.graphiql
 
   return {
     storeFqdn,
