@@ -1,6 +1,5 @@
 import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
-import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -31,7 +30,6 @@ interface SetupGraphiQLServerOptions {
   apiKey: string
   apiSecret: string
   key?: string
-  url: string
   storeFqdn: string
 }
 
@@ -43,21 +41,12 @@ export function setupGraphiQLServer({
   apiKey,
   apiSecret,
   key,
-  url,
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
-  const namespacedShopifyUrl = `https://${url}/${urlNamespaces.devTools}`
   const localhostUrl = `http://localhost:${port}`
 
   const app = express()
-    // Make the app accept all routes starting with /.shopify/xxx as /xxx
-    .use((req, _res, next) => {
-      if (req.path.startsWith(`/${urlNamespaces.devTools}`)) {
-        req.url = req.url.replace(`/${urlNamespaces.devTools}`, '')
-      }
-      next()
-    })
 
   function failIfUnmatchedKey(str: string, res: express.Response): boolean {
     if (!key || str === key) return false
@@ -134,7 +123,6 @@ export function setupGraphiQLServer({
     outputDebug('Handling /graphiql request', stdout)
     if (failIfUnmatchedKey(req.query.key as string, res)) return
 
-    const url = req.hostname === 'localhost' ? localhostUrl : namespacedShopifyUrl
     let apiVersions: string[]
     try {
       apiVersions = await fetchApiVersionsWithTokenRefresh()
@@ -143,7 +131,7 @@ export function setupGraphiQLServer({
         return res.send(
           await renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
-            url,
+            url: localhostUrl,
           }),
         )
       }
@@ -163,7 +151,7 @@ export function setupGraphiQLServer({
           storeFqdn,
         }),
         {
-          url,
+          url: localhostUrl,
           defaultQueries: [{query: defaultQuery}],
         },
       ),

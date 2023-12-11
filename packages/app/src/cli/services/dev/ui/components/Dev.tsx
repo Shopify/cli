@@ -50,9 +50,7 @@ const Dev: FunctionComponent<DevProps> = ({
   const pollingInterval = useRef<NodeJS.Timeout>()
   const localhostGraphiqlUrl = `http://localhost:${graphiqlPort}/graphiql`
   const defaultStatusMessage = `Preview URL: ${previewUrl}${
-    graphiqlUrl
-      ? `\nGraphiQL URL: ${localhostGraphiqlUrl}\nGraphiQL URL if localhost is inaccessible: ${graphiqlUrl}`
-      : ''
+    graphiqlUrl ? `\nGraphiQL URL: ${localhostGraphiqlUrl}` : ''
   }`
   const [statusMessage, setStatusMessage] = useState(defaultStatusMessage)
 

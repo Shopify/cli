@@ -5,7 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {environmentVariableNames, urlNamespaces} from '../../../constants.js'
+import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
@@ -97,7 +97,6 @@ export async function setupDevProcesses({
           apiSecret,
           key: graphiqlKey,
           storeFqdn,
-          url: network.proxyUrl.replace(/^https?:\/\//, ''),
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
@@ -152,7 +151,7 @@ export async function setupDevProcesses({
     processes: processesWithProxy,
     previewUrl,
     graphiqlUrl: shouldRenderGraphiQL
-      ? `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
+      ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
       : undefined,
   }
 }
@@ -180,8 +179,6 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
         const targetPort = await getAvailableTCPPort()
         rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
-      } else if (process.type === 'graphiql') {
-        rules[process.urlPrefix] = `http://localhost:${process.options.port}`
       }
 
       return {process, rules}

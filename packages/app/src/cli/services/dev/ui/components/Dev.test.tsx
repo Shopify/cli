@@ -105,7 +105,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -182,7 +181,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -439,7 +437,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -536,7 +533,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -556,7 +552,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -607,7 +602,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -663,7 +657,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:1234/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
@@ -699,7 +692,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -720,7 +712,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -770,7 +761,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       Failed to turn off development store preview.
       "
     `)
@@ -821,7 +811,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       Failed to turn off development store preview.
       "
     `)
@@ -855,7 +844,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -897,7 +885,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       Failed to turn on development store preview automatically.
       Try turning it on manually by pressing \`d\`.
       "
@@ -933,7 +920,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       "
     `)
 
@@ -951,7 +937,6 @@ describe('Dev', () => {
 
       Preview URL: https://shopify.com
       GraphiQL URL: http://localhost:0000/graphiql
-      GraphiQL URL if localhost is inaccessible: https://graphiql.shopify.com
       Failed to handle your input.
       "
     `)
