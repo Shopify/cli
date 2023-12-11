@@ -223,6 +223,8 @@ class AppLoader {
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
 
+    // console.log(configuration)
+
     const {allExtensions, usedCustomLayout} = await this.loadExtensions(
       appDirectory,
       configuration.extension_directories,

@@ -76,8 +76,6 @@ function getExtensionPoints(extensionPoints: ExtensionInstance['configuration'][
     return extensionPoints.map((extensionPoint) => {
       const {target, resource} = extensionPoint
 
-      console.log(extensionPoints)
-
       return {
         ...extensionPoint,
         surface: getExtensionPointTargetSurface(target),

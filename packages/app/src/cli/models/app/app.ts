@@ -142,6 +142,14 @@ export const AppSchema = zod
       .optional(),
     extension_directories: zod.array(zod.string()).optional(),
     web_directories: zod.array(zod.string()).optional(),
+    group: zod
+      .array(
+        zod.object({
+          name: zod.string().max(30),
+          id: zod.string(),
+        }),
+      )
+      .optional(),
   })
   .strict()
 
@@ -290,6 +298,8 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
   ) {
+    console.log(configuration)
+
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
