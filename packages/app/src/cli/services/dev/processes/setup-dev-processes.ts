@@ -16,7 +16,6 @@ import {PartnersURLs} from '../urls.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {randomHex} from '@shopify/cli-kit/node/crypto'
 
 export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -54,6 +53,7 @@ export interface DevConfig {
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
   graphiqlPort: number
+  graphiqlKey?: string
 }
 
 export async function setupDevProcesses({
@@ -66,6 +66,7 @@ export async function setupDevProcesses({
   commandOptions,
   network,
   graphiqlPort,
+  graphiqlKey,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -76,7 +77,6 @@ export async function setupDevProcesses({
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL =
     isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
-  const randomKey = randomHex(16)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -95,7 +95,7 @@ export async function setupDevProcesses({
           port: graphiqlPort,
           apiKey,
           apiSecret,
-          randomKey,
+          key: graphiqlKey,
           storeFqdn,
           url: network.proxyUrl.replace(/^https?:\/\//, ''),
         })
@@ -152,7 +152,7 @@ export async function setupDevProcesses({
     processes: processesWithProxy,
     previewUrl,
     graphiqlUrl: shouldRenderGraphiQL
-      ? `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql?key=${randomKey}`
+      ? `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
       : undefined,
   }
 }

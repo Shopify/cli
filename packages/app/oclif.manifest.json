@@ -329,6 +329,13 @@
           "description": "Local port of the GraphiQL development server.",
           "hidden": true,
           "multiple": false
+        },
+        "graphiql-key": {
+          "name": "graphiql-key",
+          "type": "option",
+          "description": "Key used to authenticate GraphiQL requests.",
+          "hidden": true,
+          "multiple": false
         }
       },
       "args": {}

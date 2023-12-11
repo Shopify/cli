@@ -30,7 +30,7 @@ interface SetupGraphiQLServerOptions {
   appUrl: string
   apiKey: string
   apiSecret: string
-  randomKey: string
+  key?: string
   url: string
   storeFqdn: string
 }
@@ -42,7 +42,7 @@ export function setupGraphiQLServer({
   appUrl,
   apiKey,
   apiSecret,
-  randomKey,
+  key,
   url,
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
@@ -59,13 +59,8 @@ export function setupGraphiQLServer({
       next()
     })
 
-  // Assumes that the proxy adds to the beginning of the URL string
-  function isProxied(req: express.Request, canonicalUrl: string): boolean {
-    return req.originalUrl.split('?', 2)[0] !== canonicalUrl
-  }
-
   function failIfUnmatchedKey(str: string, res: express.Response): boolean {
-    if (str === randomKey) return false
+    if (!key || str === key) return false
     res.status(404).send(`Invalid path ${res.req.originalUrl}`)
     return true
   }
@@ -137,7 +132,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
-    if (isProxied(req, '/graphiql') && failIfUnmatchedKey(req.query.key as string, res)) return
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     const url = req.hostname === 'localhost' ? localhostUrl : namespacedShopifyUrl
     let apiVersions: string[]
@@ -164,7 +159,7 @@ export function setupGraphiQLServer({
           apiVersions: [...apiVersions, 'unstable'],
           appName,
           appUrl,
-          randomKey,
+          key,
           storeFqdn,
         }),
         {
@@ -180,7 +175,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
-    if (isProxied(req, '/graphiql/graphql.json') && failIfUnmatchedKey(req.query.key as string, res)) return
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
     try {

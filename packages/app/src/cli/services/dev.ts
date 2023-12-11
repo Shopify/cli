@@ -58,6 +58,7 @@ export interface DevOptions {
   themeExtensionPort?: number
   notify?: string
   graphiqlPort?: number
+  graphiqlKey?: string
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -99,6 +100,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   }
 
   const graphiqlPort = commandOptions.graphiqlPort || ports.graphiql
+  const {graphiqlKey} = commandOptions
 
   const {webs, ...network} = await setupNetworkingOptions(
     localApp.webs,
@@ -140,6 +142,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     network,
     partnerUrlsUpdated,
     graphiqlPort,
+    graphiqlKey,
   }
 }
 

@@ -63,7 +63,7 @@ interface GraphiQLTemplateOptions {
   apiVersions: string[]
   appName: string
   appUrl: string
-  randomKey: string
+  key?: string
   storeFqdn: string
 }
 
@@ -72,7 +72,7 @@ export function graphiqlTemplate({
   apiVersions,
   appName,
   appUrl,
-  randomKey,
+  key,
   storeFqdn,
 }: GraphiQLTemplateOptions): string {
   return `<!DOCTYPE html>
@@ -266,7 +266,7 @@ export function graphiqlTemplate({
         ReactDOM.render(
           React.createElement(GraphiQL, {
             fetcher: GraphiQL.createFetcher({
-              url: '{{url}}/graphiql/graphql.json?key=${randomKey}&api_version=' + apiVersion,
+              url: '{{url}}/graphiql/graphql.json?key=${key ?? ''}&api_version=' + apiVersion,
             }),
             defaultEditorToolsVisibility: true,
             defaultTabs: [

@@ -96,6 +96,11 @@ export default class Dev extends Command {
       description: 'Local port of the GraphiQL development server.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_PORT',
     }),
+    'graphiql-key': Flags.string({
+      hidden: true,
+      description: 'Key used to authenticate GraphiQL requests.',
+      env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -140,6 +145,7 @@ export default class Dev extends Command {
       themeExtensionPort: flags['theme-app-extension-port'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
+      graphiqlKey: flags['graphiql-key'],
     }
 
     await dev(devOptions)

@@ -8,7 +8,7 @@ interface GraphiQLServerProcessOptions {
   apiKey: string
   apiSecret: string
   storeFqdn: string
-  randomKey: string
+  key?: string
   url: string
   port: number
 }
