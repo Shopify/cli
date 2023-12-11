@@ -98,7 +98,8 @@ export default class Dev extends Command {
     }),
     'graphiql-key': Flags.string({
       hidden: true,
-      description: 'Key used to authenticate GraphiQL requests.',
+      description:
+        'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
   }
