@@ -81,7 +81,7 @@ const WebhooksSchema = zod.object({
 
 const DeclarativeWebhooksSchema = zod.object({
   topics: zod.array(zod.string()).nonempty().optional(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
@@ -135,7 +135,7 @@ export const VersionedAppSchema = zod.object({
       direct_api_offline_access: zod.boolean().optional(),
     })
     .optional(),
-  webhooks: WebhooksSchemaWithDeclarative.optional(),
+  webhooks: WebhooksSchemaWithDeclarative,
   app_proxy: zod
     .object({
       url: validateUrl(zod.string()),
@@ -250,7 +250,7 @@ export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: 
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
-export type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
+export type WebhookConfig = zod.infer<typeof AppSchema>['webhooks']
 export type DeclarativeWebhookConfig = zod.infer<typeof DeclarativeWebhooksSchema>
 export type NormalizedWebhookSubscription = zod.infer<typeof WebhookSubscriptionSchema>
 

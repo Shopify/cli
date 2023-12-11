@@ -12,11 +12,10 @@ export function filterFalsey(values: (string | boolean | undefined)[]) {
 const generateSubscriptionKey = (topic: string, uri: string) => `${topic}::${uri}`
 
 export function validateTopLevelSubscriptions(webhookConfig: WebhookConfig) {
-  const schema = webhookConfig!
-  const hasEndpoint = Boolean(schema.uri)
-  const hasTopics = Boolean(schema.topics?.length)
+  const hasEndpoint = Boolean(webhookConfig.uri)
+  const hasTopics = Boolean(webhookConfig.topics?.length)
 
-  if (hasEndpoint && !hasTopics && !schema.subscriptions?.length) {
+  if (hasEndpoint && !hasTopics && !webhookConfig.subscriptions?.length) {
     return {
       code: zod.ZodIssueCode.custom,
       message: 'To use a top-level `uri`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
@@ -34,7 +33,7 @@ export function validateTopLevelSubscriptions(webhookConfig: WebhookConfig) {
   }
 
   // given the uri will be static, the only way to have duplicate top-level subscriptions is if there are multiple identical topics
-  if (hasTopics && schema.topics?.length !== new Set(schema.topics).size) {
+  if (hasTopics && webhookConfig.topics?.length !== new Set(webhookConfig.topics).size) {
     return {
       code: zod.ZodIssueCode.custom,
       message: duplicateSubscriptionsError,
@@ -45,7 +44,7 @@ export function validateTopLevelSubscriptions(webhookConfig: WebhookConfig) {
 }
 
 export function validateInnerSubscriptions(webhookConfig: WebhookConfig) {
-  const {uri, subscriptions = [], ...schema} = webhookConfig!
+  const {uri, subscriptions = [], ...schema} = webhookConfig
   const uniqueSubscriptionEndpointSet = new Set()
 
   // add validated unique top level subscriptions to set

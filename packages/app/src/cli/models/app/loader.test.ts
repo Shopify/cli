@@ -2042,6 +2042,7 @@ describe('parseConfigurationObject', () => {
 describe('WebhooksSchema', () => {
   test('throws an error if uri is not an https uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'http://example.com',
       topics: ['products/create'],
     }
@@ -2058,6 +2059,7 @@ describe('WebhooksSchema', () => {
 
   test('removes trailing slashes on uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'https://example.com/',
       topics: ['products/create'],
     }
@@ -2070,6 +2072,7 @@ describe('WebhooksSchema', () => {
 
   test('throws an error if uri is not a valid formatted https URL, pubsub URI, or Eventbridge ARN', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'my::URI-thing::Shopify::123',
       topics: ['products/create'],
     }
@@ -2086,6 +2089,7 @@ describe('WebhooksSchema', () => {
 
   test('accepts a top level https uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'https://example.com',
       topics: ['products/create'],
     }
@@ -2097,6 +2101,7 @@ describe('WebhooksSchema', () => {
 
   test('accepts a top level pub sub uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'pubsub://my-project-123:my-topic',
       topics: ['products/create'],
     }
@@ -2108,6 +2113,7 @@ describe('WebhooksSchema', () => {
 
   test('accepts a top level ARN uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH"',
       topics: ['products/create'],
     }
@@ -2119,6 +2125,7 @@ describe('WebhooksSchema', () => {
 
   test('using a top level uri is invalid without a topics array and without sub webhook subscriptions', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'https://example.com',
     }
     const errorObj = {
@@ -2134,6 +2141,7 @@ describe('WebhooksSchema', () => {
 
   test('using a top level uri is valid with topics array', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'https://example.com',
       topics: ['products/create'],
     }
@@ -2145,6 +2153,7 @@ describe('WebhooksSchema', () => {
 
   test('using a top level uri is valid with sub webhook subscriptions', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'pubsub://my-project-123:my-topic',
       subscriptions: [
         {
@@ -2160,6 +2169,7 @@ describe('WebhooksSchema', () => {
 
   test('throws an error if we have duplicate top level topics with top level uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'https://example.com',
       topics: ['products/create', 'products/create'],
     }
@@ -2176,6 +2186,7 @@ describe('WebhooksSchema', () => {
 
   test('allows unique top level topics with top level uri', async () => {
     const webhookConfig: WebhookConfig = {
+      api_version: '2021-07',
       uri: 'https://example.com',
       topics: ['products/create', 'products/update'],
     }
@@ -2188,6 +2199,7 @@ describe('WebhooksSchema', () => {
   describe('WebhookSubscriptionSchema', () => {
     test('removes trailing forward slash', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2204,6 +2216,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if topics and subscriptions are defined, but no top level uri is provided', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         topics: ['products/create', 'products/update'],
         subscriptions: [
           {
@@ -2225,6 +2238,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if uri is not an https uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2245,6 +2259,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path does not start with a forward slash', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             uri: 'https://example.com',
@@ -2267,6 +2282,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path is only forward slash', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             uri: 'https://example.com',
@@ -2289,6 +2305,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path is used with pub sub', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         subscriptions: [
           {
@@ -2313,6 +2330,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path is used with arn', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         subscriptions: [
           {
@@ -2337,6 +2355,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if uri is not a valid https URL, pub sub URI, or Eventbridge ARN', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2357,6 +2376,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a pub sub config with both project and topic', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2372,6 +2392,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if there is no top level uri and no subscription uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2391,6 +2412,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with top level uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         subscriptions: [
           {
@@ -2406,6 +2428,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with top level pub sub uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'pubsub://my-project-123:my-topic',
         subscriptions: [
           {
@@ -2421,6 +2444,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with a top level arn', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         subscriptions: [
           {
@@ -2436,6 +2460,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with no top level uri but defined local uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2451,6 +2476,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with no top level uri but defined pub sub uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2466,6 +2492,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with no top level uri but a defined arn uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2481,6 +2508,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if there is no defined uri at any level and a path is included', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         subscriptions: [
           {
@@ -2502,6 +2530,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a relative path with top level uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         subscriptions: [
           {
@@ -2518,6 +2547,7 @@ describe('WebhooksSchema', () => {
 
     test('accepts a relative path with subscription level uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2534,6 +2564,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using https uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2556,6 +2587,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited https uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2577,6 +2609,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using uri with path', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com/path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2600,6 +2633,7 @@ describe('WebhooksSchema', () => {
 
     test('allows unique top level topics and unique inner subscription config using https uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2617,6 +2651,7 @@ describe('WebhooksSchema', () => {
 
     test('allows same top level topics and same inner subscription config with unique paths using https uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2638,6 +2673,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using pub sub', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'pubsub://my-project-123:my-topic',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2660,6 +2696,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited pub sub', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'pubsub://my-project-123:my-topic',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2681,6 +2718,7 @@ describe('WebhooksSchema', () => {
 
     test('allows unique top level topics and unique inner subscription config using pub sub', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'pubsub://my-project-123:my-topic',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2698,6 +2736,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using arn uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2720,6 +2759,7 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited arn uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
@@ -2741,6 +2781,7 @@ describe('WebhooksSchema', () => {
 
     test('allows unique top level topics and unique inner subscription config using arn uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         topics: ['products/update', 'products/create'],
         subscriptions: [

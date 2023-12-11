@@ -177,7 +177,7 @@ export function mergeAppConfiguration(
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   if (hasAnyPrivacyWebhook) {
-    result.webhooks!.privacy_compliance = {
+    result.webhooks.privacy_compliance = {
       customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
       customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
       shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,

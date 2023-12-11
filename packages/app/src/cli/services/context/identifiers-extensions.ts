@@ -14,7 +14,6 @@ import {AbortSilentError} from '@shopify/cli-kit/node/error'
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
   dashboardManagedExtensionRegistrations: RemoteSource[]
-  configurationRegistrations: RemoteSource[]
 }
 
 export async function ensureExtensionsIds(
