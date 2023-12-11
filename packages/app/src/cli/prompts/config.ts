@@ -19,6 +19,12 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
+import {zod} from '@shopify/cli-kit/node/schema'
+
+export interface DiffContent {
+  baselineContent: string
+  updatedContent: string
+}
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -73,36 +79,47 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(options: PushOptions, app: App) {
+export async function confirmPushChanges(options: PushOptions, app: App, schema: zod.ZodTypeAny = AppSchema) {
   if (options.force) return true
 
   const configuration = options.configuration as CurrentAppConfiguration
   const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
 
-  if (configuration.access_scopes?.scopes)
-    configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
-
-  const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(AppSchema, configuration) as object), build: undefined},
-    {...(rewriteConfiguration(AppSchema, remoteConfiguration) as object), build: undefined},
-  )
-
-  if (deepCompare(updated, baseline)) {
-    renderInfo({headline: 'No changes to update.'})
-    return false
-  }
-
-  const baselineContent = encodeToml(baseline)
-  const updatedContent = encodeToml(updated)
+  const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)
+  if (!gitDiff) return false
 
   return renderConfirmationPrompt({
     message: ['Make the following changes to your remote configuration?'],
     gitDiff: {
-      baselineContent,
-      updatedContent,
+      baselineContent: gitDiff.baselineContent,
+      updatedContent: gitDiff.updatedContent,
     },
     defaultValue: true,
     confirmationMessage: 'Yes, confirm changes',
     cancellationMessage: 'No, cancel',
   })
+}
+
+export function buildDiffConfigContent(
+  localConfig: CurrentAppConfiguration,
+  remoteConfig: unknown,
+  schema: zod.ZodTypeAny = AppSchema,
+  renderNoChanges = true,
+) {
+  if (localConfig.access_scopes?.scopes) localConfig.access_scopes.scopes = getAppScopesArray(localConfig).join(',')
+
+  const [updated, baseline] = deepDifference(
+    {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
+    {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},
+  )
+
+  if (deepCompare(updated, baseline)) {
+    if (renderNoChanges) renderInfo({headline: 'No changes to update.'})
+    return undefined
+  }
+
+  return {
+    baselineContent: encodeToml(baseline),
+    updatedContent: encodeToml(updated),
+  }
 }

@@ -248,6 +248,8 @@ class AppLoader {
       allExtensions,
       usesWorkspaces,
       dotenv,
+      undefined,
+      this.specifications,
     )
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors

@@ -7,6 +7,7 @@ import {
   validateTopLevelSubscriptions,
   httpsRegex,
 } from '../../utilities/app/config/webhooks.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -80,7 +81,7 @@ const WebhooksSchema = zod.object({
 
 const DeclarativeWebhooksSchema = zod.object({
   topics: zod.array(zod.string()).nonempty().optional(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation),
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
@@ -98,56 +99,63 @@ const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSc
   }
 })
 
-export const AppSchema = zod
-  .object({
-    name: zod.string().max(30),
-    client_id: zod.string(),
-    application_url: validateUrl(zod.string()),
-    embedded: zod.boolean(),
-    access_scopes: zod
-      .object({
-        scopes: zod.string().optional(),
-        use_legacy_install_flow: zod.boolean().optional(),
-      })
-      .optional(),
-    auth: zod
-      .object({
-        redirect_urls: zod.array(validateUrl(zod.string())),
-      })
-      .optional(),
-    access: zod
-      .object({
-        direct_api_offline_access: zod.boolean().optional(),
-      })
-      .optional(),
-    webhooks: WebhooksSchemaWithDeclarative,
-    app_proxy: zod
-      .object({
-        url: validateUrl(zod.string()),
-        subpath: zod.string(),
-        prefix: zod.string(),
-      })
-      .optional(),
-    pos: zod
-      .object({
-        embedded: zod.boolean(),
-      })
-      .optional(),
-    app_preferences: zod
-      .object({
-        url: validateUrl(zod.string().max(255)),
-      })
-      .optional(),
-    build: zod
-      .object({
-        automatically_update_urls_on_dev: zod.boolean().optional(),
-        dev_store_url: zod.string().optional(),
-      })
-      .optional(),
-    extension_directories: zod.array(zod.string()).optional(),
-    web_directories: zod.array(zod.string()).optional(),
-  })
-  .strict()
+export const NonVersionedAppTopSchema = zod.object({
+  name: zod.string().max(30),
+  client_id: zod.string(),
+})
+
+export const NonVersionedAppBottomSchema = zod.object({
+  build: zod
+    .object({
+      automatically_update_urls_on_dev: zod.boolean().optional(),
+      dev_store_url: zod.string().optional(),
+    })
+    .optional(),
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
+})
+export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema)
+
+export const VersionedAppSchema = zod.object({
+  application_url: validateUrl(zod.string()),
+  embedded: zod.boolean(),
+  access_scopes: zod
+    .object({
+      scopes: zod.string().optional(),
+      use_legacy_install_flow: zod.boolean().optional(),
+    })
+    .optional(),
+  auth: zod
+    .object({
+      redirect_urls: zod.array(validateUrl(zod.string())),
+    })
+    .optional(),
+  access: zod
+    .object({
+      direct_api_offline_access: zod.boolean().optional(),
+    })
+    .optional(),
+  webhooks: WebhooksSchemaWithDeclarative.optional(),
+  app_proxy: zod
+    .object({
+      url: validateUrl(zod.string()),
+      subpath: zod.string(),
+      prefix: zod.string(),
+    })
+    .optional(),
+  pos: zod
+    .object({
+      embedded: zod.boolean(),
+    })
+    .optional(),
+  app_preferences: zod
+    .object({
+      url: validateUrl(zod.string().max(255)),
+    })
+    .optional(),
+})
+
+export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
@@ -200,6 +208,12 @@ export function appIsLaunchable(app: AppInterface) {
   const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
 
   return Boolean(frontendConfig || backendConfig)
+}
+
+export function filterNonVersionedAppFields(app: AppInterface) {
+  return Object.keys(app.configuration).filter(
+    (fieldName) => !Object.keys(NonVersionedAppSchema.shape).concat('path').includes(fieldName),
+  )
 }
 
 export enum WebType {
@@ -260,6 +274,7 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  specifications?: ExtensionSpecification[]
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -280,6 +295,7 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
+  specifications?: ExtensionSpecification[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -294,6 +310,7 @@ export class App implements AppInterface {
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
+    specifications?: ExtensionSpecification[],
   ) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
@@ -306,6 +323,7 @@ export class App implements AppInterface {
     this.allExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.specifications = specifications
   }
 
   async updateDependencies() {

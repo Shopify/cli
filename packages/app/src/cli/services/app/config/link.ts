@@ -49,7 +49,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   })
   const remoteAppConfigurationExtension = remoteAppConfigurationExtensionContent(
     remoteExtensionRegistrations.app.configurationRegistrations,
-    specifications.filter((spec) => spec.appModuleFeatures().includes('app_config')),
+    specifications,
   )
   const localAndRemoteApiClientConfiguration = mergeAppConfiguration(
     {...localApp.configuration, path: configFilePath},
@@ -177,7 +177,7 @@ export function mergeAppConfiguration(
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   if (hasAnyPrivacyWebhook) {
-    result.webhooks.privacy_compliance = {
+    result.webhooks!.privacy_compliance = {
       customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
       customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
       shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
@@ -236,9 +236,10 @@ const getAccessScopes = (appConfiguration: AppConfiguration, remoteApp: Organiza
 
 export function remoteAppConfigurationExtensionContent(
   configRegistrations: ExtensionRegistration[],
-  configSpecifications: ExtensionSpecification[],
+  specifications: ExtensionSpecification[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
+  const configSpecifications = specifications.filter((spec) => spec.appModuleFeatures().includes('app_config'))
   configRegistrations.forEach((extension) => {
     const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
     if (!configSpec) return
