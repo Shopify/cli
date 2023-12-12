@@ -14,7 +14,6 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {removeObjectField} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -190,18 +189,6 @@ export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppCo
 }
 
 /**
- * Check whether a shopify.app.toml schema is valid against the current schema definition.
- * @param item - the item to validate
- */
-export function isCurrentAppBaseSchema(
-  configuration: unknown,
-  schema: zod.ZodTypeAny,
-): configuration is CurrentAppBaseConfiguration {
-  const configurationWithoutPath = removeObjectField(configuration, 'path')
-  return isType(schema, configurationWithoutPath)
-}
-
-/**
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
@@ -269,7 +256,6 @@ export const WebConfigurationSchema = zod.union([
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppBaseConfiguration = zod.infer<typeof NonVersionedAppSchema> & {path: string}
 export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string}
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>

@@ -1,13 +1,4 @@
-import {
-  deepCompare,
-  deepDifference,
-  deepMergeObjects,
-  getPathValue,
-  mapValues,
-  pickBy,
-  removeObjectField,
-  setPathValue,
-} from './object.js'
+import {deepCompare, deepDifference, deepMergeObjects, getPathValue, mapValues, pickBy, setPathValue} from './object.js'
 import {describe, expect, test} from 'vitest'
 
 describe('deepMergeObjects', () => {
@@ -240,46 +231,5 @@ describe('setPathValue', () => {
 
     // Then
     expect(getPathValue(result, 'key1')).toEqual({key11: 2})
-  })
-})
-
-describe.only('removeObjectField', () => {
-  test('returns the same value when the param is not an object', () => {
-    // Given
-    const obj = 'test'
-
-    // When
-    const result = removeObjectField(obj, 'key1')
-
-    // Then
-    expect(result).toEqual(obj)
-  })
-  test('returns the same value when the param is an object but the field does not exist', () => {
-    // Given
-    const obj = {
-      key2: 1,
-      key3: 2,
-    }
-
-    // When
-    const result = removeObjectField(obj, 'key1')
-
-    // Then
-    expect(result).toEqual(obj)
-  })
-  test('returns object without the field when the param is an object and the field does exist', () => {
-    // Given
-    const obj = {
-      key2: 1,
-      key3: 2,
-    }
-
-    // When
-    const result = removeObjectField(obj, 'key2')
-
-    // Then
-    expect(result).toEqual({
-      key3: 2,
-    })
   })
 })
