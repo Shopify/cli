@@ -32,4 +32,8 @@ export const urlNamespaces = {
   devTools: '.shopify',
 } as const
 
+export const ports = {
+  graphiql: 3457,
+} as const
+
 export const EsbuildEnvVarRegex = /^([a-zA-Z0-9_])*$/

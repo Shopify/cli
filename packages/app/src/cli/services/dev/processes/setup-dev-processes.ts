@@ -5,7 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {environmentVariableNames, urlNamespaces} from '../../../constants.js'
+import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
@@ -16,7 +16,6 @@ import {PartnersURLs} from '../urls.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {randomHex} from '@shopify/cli-kit/node/crypto'
 
 export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
   type: 'proxy-server'
@@ -53,6 +52,8 @@ export interface DevConfig {
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
+  graphiqlPort: number
+  graphiqlKey?: string
 }
 
 export async function setupDevProcesses({
@@ -64,6 +65,8 @@ export async function setupDevProcesses({
   storeId,
   commandOptions,
   network,
+  graphiqlPort,
+  graphiqlKey,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -74,7 +77,6 @@ export async function setupDevProcesses({
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL =
     isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
-  const randomKey = randomHex(16)
 
   const processes = [
     ...(await setupWebProcesses({
@@ -90,11 +92,11 @@ export async function setupDevProcesses({
       ? await setupGraphiQLServerProcess({
           appName: localApp.name,
           appUrl: appPreviewUrl,
+          port: graphiqlPort,
           apiKey,
           apiSecret,
-          randomKey,
+          key: graphiqlKey,
           storeFqdn,
-          url: network.proxyUrl.replace(/^https?:\/\//, ''),
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
@@ -149,7 +151,7 @@ export async function setupDevProcesses({
     processes: processesWithProxy,
     previewUrl,
     graphiqlUrl: shouldRenderGraphiQL
-      ? `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql?key=${randomKey}`
+      ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
       : undefined,
   }
 }
@@ -176,10 +178,6 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
       } else if (process.type === 'previewable-extension') {
         const targetPort = await getAvailableTCPPort()
         rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
-        process.options.port = targetPort
-      } else if (process.type === 'graphiql') {
-        const targetPort = await getAvailableTCPPort()
-        rules[process.urlPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
       }
 

@@ -79,6 +79,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -103,7 +104,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -158,6 +159,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -178,7 +180,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -194,6 +196,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -219,6 +222,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -246,6 +250,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -288,6 +293,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -351,6 +357,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -408,6 +415,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -428,7 +436,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -459,6 +467,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -501,6 +510,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -522,7 +532,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -541,7 +551,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -567,6 +577,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={{
           ...testApp,
           canEnablePreviewMode: false,
@@ -590,7 +601,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -623,6 +634,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -644,7 +656,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:1234/graphiql
       Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
@@ -663,6 +675,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -678,7 +691,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -698,7 +711,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -725,6 +738,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -746,7 +760,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to turn off development store preview.
       "
     `)
@@ -774,6 +788,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -795,7 +810,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to turn off development store preview.
       "
     `)
@@ -812,6 +827,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -827,7 +843,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -850,6 +866,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -867,7 +884,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to turn on development store preview automatically.
       Try turning it on manually by pressing \`d\`.
       "
@@ -886,6 +903,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -901,7 +919,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -918,7 +936,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to handle your input.
       "
     `)
