@@ -990,12 +990,15 @@ Uploads the current theme as a development theme to the connected store, then pr
 ```
 USAGE
   $ shopify theme dev [--no-color] [--verbose] [--path <value>] [--host <value>] [--live-reload
-    hot-reload|full-page|off] [--poll] [--theme-editor-sync] [--port <value>] [-s <value>] [-t <value>] [-o <value>] [-x
-    <value>] [--password <value>] [-e <value>] [--notify <value>] [--open]
+    hot-reload|full-page|off] [--poll] [--theme-editor-sync] [--port <value>] [-s <value>] [-t <value>] [-n] [-o
+    <value>] [-x <value>] [--password <value>] [-e <value>] [--notify <value>] [--open]
 
 FLAGS
   -e, --environment=<value>
       The environment to apply to the current command.
+
+  -n, --nodelete
+      Runs the dev command without deleting local files.
 
   -o, --only=<value>...
       Hot reload only files that match the specified pattern.
