@@ -14,6 +14,7 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {removeObjectField} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -159,6 +160,17 @@ export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merg
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
+export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
+  const topAndConfigSpecsSchema = specs.reduce((schema, spec) => {
+    return schema.merge(spec.schema)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }, NonVersionedAppTopSchema as any)
+
+  const schema = topAndConfigSpecsSchema.merge(NonVersionedAppBottomSchema)
+
+  return specs.length > 0 ? schema.strict() : schema
+}
+
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
  * @param item - the item to validate
@@ -175,6 +187,18 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   const {path, ...rest} = item
   return isType(AppSchema, rest)
+}
+
+/**
+ * Check whether a shopify.app.toml schema is valid against the current schema definition.
+ * @param item - the item to validate
+ */
+export function isCurrentAppBaseSchema(
+  configuration: unknown,
+  schema: zod.ZodTypeAny,
+): configuration is CurrentAppBaseConfiguration {
+  const configurationWithoutPath = removeObjectField(configuration, 'path')
+  return isType(schema, configurationWithoutPath)
 }
 
 /**
@@ -245,6 +269,7 @@ export const WebConfigurationSchema = zod.union([
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
+export type CurrentAppBaseConfiguration = zod.infer<typeof NonVersionedAppSchema> & {path: string}
 export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string}
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>

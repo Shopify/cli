@@ -110,3 +110,19 @@ export function setPathValue(object: object, path: string, value?: unknown): obj
 
   return set(object, path, value)
 }
+
+/**
+ * Return a copy of the object without type removing an specific field.
+ *
+ * @param object - The object to modify.
+ * @param field - The field to remove.
+ * @returns - Returns object without the field if it exists.
+ */
+export function removeObjectField(object: unknown, field: string): unknown {
+  let objectWithoutField = object
+  if (typeof object === 'object' && object !== null) {
+    objectWithoutField = {...object}
+    delete (objectWithoutField as {[key: string]: unknown})[field]
+  }
+  return objectWithoutField
+}

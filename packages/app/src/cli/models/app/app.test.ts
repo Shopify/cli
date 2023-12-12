@@ -3,7 +3,9 @@ import {
   LegacyAppConfiguration,
   getAppScopes,
   getAppScopesArray,
+  getAppVersionedSchema,
   getUIExtensionRendererVersion,
+  isCurrentAppBaseSchema,
   isCurrentAppSchema,
   isLegacyAppSchema,
   validateFunctionExtensionsWithUiHandle,
@@ -11,6 +13,7 @@ import {
 import {DEFAULT_CONFIG, testApp, testUIExtension, testFunctionExtension} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -94,6 +97,36 @@ describe('app schema validation', () => {
 
       expect(isCurrentAppSchema(config)).toBe(false)
     })
+  })
+})
+
+describe('isCurrentAppBaseSchema', () => {
+  test('schema generated without the specs -- pass', () => {
+    // Given
+    const schema = getAppVersionedSchema([])
+
+    // When / Then
+    expect(isCurrentAppBaseSchema(CORRECT_CURRENT_APP_SCHEMA, schema)).toBe(true)
+  })
+  test('schema generated with the specs -- pass', async () => {
+    // Given
+    const configSpecifications = (await loadFSExtensionsSpecifications()).filter((spec) =>
+      spec.appModuleFeatures().includes('app_config'),
+    )
+    const schema = getAppVersionedSchema(configSpecifications)
+
+    // When / Then
+    expect(isCurrentAppBaseSchema(CORRECT_CURRENT_APP_SCHEMA, schema)).toBe(true)
+  })
+  test('schema generated with the specs using legacy content -- fail', async () => {
+    // Given
+    const configSpecifications = (await loadFSExtensionsSpecifications()).filter((spec) =>
+      spec.appModuleFeatures().includes('app_config'),
+    )
+    const schema = getAppVersionedSchema(configSpecifications)
+
+    // When / Then
+    expect(isCurrentAppBaseSchema(CORRECT_LEGACY_APP_SCHEMA, schema)).toBe(false)
   })
 })
 
