@@ -175,7 +175,7 @@ export function setupGraphiQLServer({
           Accept: 'application/json',
           'Content-Type': 'application/json',
           'X-Shopify-Access-Token': await token(),
-          'User-Agent': `Shopify CLI GraphiQL; v=${CLI_KIT_VERSION}`,
+          'User-Agent': `ShopifyCLIGraphiQL/${CLI_KIT_VERSION}`,
         }
 
         return fetch(graphqlUrl, {
