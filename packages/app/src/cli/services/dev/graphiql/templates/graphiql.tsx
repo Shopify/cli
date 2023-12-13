@@ -19,8 +19,8 @@ import {CircleAlertMajor, LinkMinor} from '@shopify/polaris-icons'
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
 
 const graphiqlIntroMessage = `
-# Welcome to the Shopify GraphiQL Explorer! If you've used GraphiQL before,
-# you can go ahead and jump to the next tab.
+# Welcome to GraphiQL for the Shopify Admin API! If you've used
+# GraphiQL before, you can jump to the next tab.
 #
 # GraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
