@@ -1178,6 +1178,7 @@ automatically_update_urls_on_dev = true
         api_access = true
 
         [extensions.capabilities.collect_buyer_consent]
+        write_privacy_consent = false
         sms_marketing = true
 
         [extensions.settings]
@@ -1245,6 +1246,7 @@ automatically_update_urls_on_dev = true
           block_progress: true,
           api_access: true,
           collect_buyer_consent: {
+            write_privacy_consent: false,
             sms_marketing: true,
           },
         },
@@ -1534,6 +1536,7 @@ automatically_update_urls_on_dev = true
       api_access = true
 
       [capabilities.collect_buyer_consent]
+      write_privacy_consent = true
       sms_marketing = true
 
       [settings]
@@ -1570,6 +1573,7 @@ automatically_update_urls_on_dev = true
           block_progress: true,
           network_access: true,
           collect_buyer_consent: {
+            write_privacy_consent: true,
             sms_marketing: true,
           },
         },

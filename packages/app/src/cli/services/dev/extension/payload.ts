@@ -34,6 +34,8 @@ export async function getUIExtensionPayload(
       apiAccess: extension.configuration.capabilities?.api_access || false,
       collectBuyerConsent: {
         smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
+        writePrivacyConsent:
+          extension.configuration.capabilities?.collect_buyer_consent?.write_privacy_consent || false,
       },
     },
     development: {

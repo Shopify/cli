@@ -22,6 +22,7 @@ async function testGetLocalization(tmpDir: string, currentLocalization?: Localiz
         api_access: false,
         collect_buyer_consent: {
           sms_marketing: false,
+          write_privacy_consent: false,
         },
       },
     },
