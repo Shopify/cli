@@ -122,15 +122,18 @@ ${outputToken.json(applications)}
 
   let newSession = {}
 
-  if (validationResult === 'needs_full_auth') {
-    if (noPrompt) {
-      throw new AbortError(
-        `The currently available CLI credentials are invalid.
+  function throwOnNoPrompt() {
+    if (!noPrompt) return
+    throw new AbortError(
+      `The currently available CLI credentials are invalid.
 
 The CLI is currently unable to prompt for reauthentication.`,
-        'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment.',
-      )
-    }
+      'Restart the CLI process you were running. If in an interactive terminal, you will be prompted to reauthenticate. If in a non-interactive terminal, ensure the correct credentials are available in the program environment.',
+    )
+  }
+
+  if (validationResult === 'needs_full_auth') {
+    throwOnNoPrompt()
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
@@ -139,6 +142,7 @@ The CLI is currently unable to prompt for reauthentication.`,
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
+        throwOnNoPrompt()
         newSession = await executeCompleteFlow(applications, fqdn)
       } else if (error instanceof InvalidRequestError) {
         await secureStore.remove()

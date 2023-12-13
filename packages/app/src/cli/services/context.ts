@@ -842,22 +842,15 @@ export async function developerPreviewUpdate({
   token: string
   enabled: boolean
 }) {
-  let result: DevelopmentStorePreviewUpdateSchema | undefined
-  try {
-    const query = DevelopmentStorePreviewUpdateQuery
-    const variables: DevelopmentStorePreviewUpdateInput = {
-      input: {
-        apiKey,
-        enabled,
-      },
-    }
-
-    result = await partnersRequest(query, token, variables)
-    const userErrors = result?.developmentStorePreviewUpdate?.userErrors
-    return !userErrors || userErrors.length === 0
-
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error: unknown) {
-    return false
+  const query = DevelopmentStorePreviewUpdateQuery
+  const variables: DevelopmentStorePreviewUpdateInput = {
+    input: {
+      apiKey,
+      enabled,
+    },
   }
+
+  const result: DevelopmentStorePreviewUpdateSchema | undefined = await partnersRequest(query, token, variables)
+  const userErrors = result?.developmentStorePreviewUpdate?.userErrors
+  return !userErrors || userErrors.length === 0
 }

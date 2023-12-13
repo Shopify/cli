@@ -1,6 +1,5 @@
 import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
-import {urlNamespaces} from '../../../constants.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -30,7 +29,7 @@ interface SetupGraphiQLServerOptions {
   appUrl: string
   apiKey: string
   apiSecret: string
-  url: string
+  key?: string
   storeFqdn: string
 }
 
@@ -41,20 +40,19 @@ export function setupGraphiQLServer({
   appUrl,
   apiKey,
   apiSecret,
-  url,
+  key,
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
-  outputDebug(`Setting up GraphiQL HTTP server...`, stdout)
-  const namespacedShopifyUrl = `https://${url}/${urlNamespaces.devTools}`
+  outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
+  const localhostUrl = `http://localhost:${port}`
 
   const app = express()
-    // Make the app accept all routes starting with /.shopify/xxx as /xxx
-    .use((req, _res, next) => {
-      if (req.path.startsWith(`/${urlNamespaces.devTools}`)) {
-        req.url = req.url.replace(`/${urlNamespaces.devTools}`, '')
-      }
-      next()
-    })
+
+  function failIfUnmatchedKey(str: string, res: express.Response): boolean {
+    if (!key || str === key) return false
+    res.status(404).send(`Invalid path ${res.req.originalUrl}`)
+    return true
+  }
 
   let _token: string | undefined
   async function token(): Promise<string> {
@@ -121,8 +119,10 @@ export function setupGraphiQLServer({
   })
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/graphiql', async (_req, res) => {
+  app.get('/graphiql', async (req, res) => {
     outputDebug('Handling /graphiql request', stdout)
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
+
     let apiVersions: string[]
     try {
       apiVersions = await fetchApiVersionsWithTokenRefresh()
@@ -131,7 +131,7 @@ export function setupGraphiQLServer({
         return res.send(
           await renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
-            url: namespacedShopifyUrl,
+            url: localhostUrl,
           }),
         )
       }
@@ -147,10 +147,11 @@ export function setupGraphiQLServer({
           apiVersions: [...apiVersions, 'unstable'],
           appName,
           appUrl,
+          key,
           storeFqdn,
         }),
         {
-          url: namespacedShopifyUrl,
+          url: localhostUrl,
           defaultQueries: [{query: defaultQuery}],
         },
       ),
@@ -162,6 +163,7 @@ export function setupGraphiQLServer({
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   app.post('/graphiql/graphql.json', async (req, res) => {
     outputDebug('Handling /graphiql/graphql.json request', stdout)
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
     try {
@@ -203,5 +205,5 @@ export function setupGraphiQLServer({
     }
     res.end()
   })
-  return app.listen(port, () => stdout.write('GraphiQL server started'))
+  return app.listen(port, () => stdout.write(`GraphiQL server started on port ${port}`))
 }

@@ -1,5 +1,26 @@
 # @shopify/app
 
+## 3.52.0
+
+### Minor Changes
+
+- 060bd75cf: Support client credentials flow (currently used in GraphiQL)
+- 4a09085f2: Restyle GraphiQL top bar and install screen using Polaris
+- 4bc740a4e: Bump required node version to "^16.17.0 || >=18.12.0" to match polaris, the most stringent CLI dependency to date
+
+### Patch Changes
+
+- 306c0f6d3: Add extra layer of security for GraphiQL
+- 77da9c8a3: Fix select box in GraphiQL
+- 98574587c: Touch up GraphiQL visuals
+- Updated dependencies [4ea4c08dd]
+- Updated dependencies [1de8122c4]
+- Updated dependencies [060bd75cf]
+- Updated dependencies [060bd75cf]
+- Updated dependencies [9cbe46e06]
+  - @shopify/cli-kit@3.52.0
+  - @shopify/plugin-cloudflare@3.52.0
+
 ## 3.51.0
 
 ### Minor Changes

@@ -63,6 +63,7 @@ interface GraphiQLTemplateOptions {
   apiVersions: string[]
   appName: string
   appUrl: string
+  key?: string
   storeFqdn: string
 }
 
@@ -71,6 +72,7 @@ export function graphiqlTemplate({
   apiVersions,
   appName,
   appUrl,
+  key,
   storeFqdn,
 }: GraphiQLTemplateOptions): string {
   return `<!DOCTYPE html>
@@ -185,8 +187,7 @@ export function graphiqlTemplate({
                   <Card padding={{xs: '0'}}>
                     <Banner tone="critical" onDismiss={() => {}}>
                       <p>
-                        The server has been stopped. Restart <code>dev</code> from the CLI and launch the GraphiQL
-                        explorer again.
+                        The server has been stopped. Restart <code>dev</code> from the CLI.
                       </p>
                     </Banner>
                   </Card>
@@ -265,7 +266,7 @@ export function graphiqlTemplate({
         ReactDOM.render(
           React.createElement(GraphiQL, {
             fetcher: GraphiQL.createFetcher({
-              url: '{{url}}/graphiql/graphql.json?api_version=' + apiVersion,
+              url: '{{url}}/graphiql/graphql.json?key=${key ?? ''}&api_version=' + apiVersion,
             }),
             defaultEditorToolsVisibility: true,
             defaultTabs: [

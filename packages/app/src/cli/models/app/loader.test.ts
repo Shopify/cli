@@ -1083,6 +1083,76 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with an Admin Action extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "unstable"
+      [[extensions]]
+      name = "my-admin-action"
+      handle = "admin-action-handle"
+      type = "ui_extension"
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.action.render"
+      [[extensions.metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-admin-action',
+    })
+
+    // Create a temporary ActionExtension.js file
+    const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-admin-action', 'src')
+    await mkdir(extensionDirectory)
+
+    const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+    await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        api_version: 'unstable',
+        name: 'my-admin-action',
+        handle: 'admin-action-handle',
+        type: 'ui_extension',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+        ],
+        extension_points: [
+          {
+            metafields: [
+              {
+                namespace: 'my-namespace',
+                key: 'my-key',
+              },
+            ],
+            module: './src/ActionExtension.js',
+            target: 'admin.product-details.action.render',
+          },
+        ],
+        targeting: [
+          {
+            module: './src/ActionExtension.js',
+            target: 'admin.product-details.action.render',
+          },
+        ],
+      })
+    }
+  })
+
   test('loads the app with a UI extension that has a full valid unified configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -1272,49 +1342,6 @@ automatically_update_urls_on_dev = true
             key: 'my-key-2',
           },
         ],
-      })
-    }
-  })
-
-  test('loads the app with a Customer Accounts UI extension that has a full valid configuration', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    const blockConfiguration = `
-      type = "customer_accounts_ui_extension"
-      name = "my-customer-accounts-ui-extension"
-
-      categories = [ "returns" ]
-      authenticated_redirect_start_url = "https://example.com/start"
-      authenticated_redirect_redirect_urls = ["https://example.com/redirect"]
-
-      extension_points = [
-        'CustomerAccount::FullPage::RenderWithin',
-      ]
-      `
-    await writeBlockConfig({
-      blockConfiguration,
-      name: 'my-customer-accounts-ui-extension',
-    })
-
-    await writeFile(joinPath(blockPath('my-customer-accounts-ui-extension'), 'index.js'), '/** content **/')
-
-    // When
-    const app = await loadApp({directory: tmpDir, specifications})
-
-    // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
-    expect(extension).not.toBeUndefined()
-    if (extension) {
-      expect(extension.configuration).toMatchObject({
-        type: 'customer_accounts_ui_extension',
-        name: 'my-customer-accounts-ui-extension',
-        extension_points: ['CustomerAccount::FullPage::RenderWithin'],
-        metafields: [],
-        categories: ['returns'],
-        authenticated_redirect_start_url: 'https://example.com/start',
-        authenticated_redirect_redirect_urls: ['https://example.com/redirect'],
       })
     }
   })
@@ -1791,223 +1818,6 @@ automatically_update_urls_on_dev = true
       cmd_app_linked_config_name: 'shopify.app.toml',
       cmd_app_linked_config_git_tracked: true,
       cmd_app_linked_config_source: 'cached',
-    })
-  })
-
-  describe('customer_accounts_ui_extension', () => {
-    test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are unset', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).resolves.toBeDefined()
-    })
-
-    test('loads the app with an Admin Action extension that has a full valid configuration', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-
-      const blockConfiguration = `
-        api_version = "unstable"
-
-        [[extensions]]
-        name = "my-admin-action"
-        handle = "admin-action-handle"
-        type = "ui_extension"
-        [[extensions.targeting]]
-        module = "./src/ActionExtension.js"
-        target = "admin.product-details.action.render"
-
-        [[extensions.metafields]]
-        namespace = "my-namespace"
-        key = "my-key"
-        `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-admin-action',
-      })
-
-      // Create a temporary ActionExtension.js file
-      const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-admin-action', 'src')
-      await mkdir(extensionDirectory)
-
-      const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
-      await writeFile(tempFilePath, '/* ActionExtension.js content */')
-
-      // When
-      const app = await loadApp({directory: tmpDir, specifications})
-
-      // Then
-      expect(app.allExtensions).toHaveLength(1)
-      const extension = app.allExtensions[0]
-      expect(extension).not.toBeUndefined()
-      if (extension) {
-        expect(extension.configuration).toMatchObject({
-          api_version: 'unstable',
-          name: 'my-admin-action',
-          handle: 'admin-action-handle',
-          type: 'ui_extension',
-          metafields: [
-            {
-              namespace: 'my-namespace',
-              key: 'my-key',
-            },
-          ],
-          extension_points: [
-            {
-              metafields: [
-                {
-                  namespace: 'my-namespace',
-                  key: 'my-key',
-                },
-              ],
-              module: './src/ActionExtension.js',
-              target: 'admin.product-details.action.render',
-            },
-          ],
-          targeting: [
-            {
-              module: './src/ActionExtension.js',
-              target: 'admin.product-details.action.render',
-            },
-          ],
-        })
-      }
-    })
-
-    test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_start_url = 'https://www.shopify.com/start'
-        authenticated_redirect_redirect_urls = ['https://www.shopify.com/finalize', 'https://www.loop.com/finalize']
-
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).resolves.toBeDefined()
-    })
-
-    test('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_start_url = '/start-url'
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_start_url must be a valid URL./,
-      )
-    })
-
-    test('should throw when "authenticatedRedirectStartUrl" is an empty string', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_start_url = ''
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_start_url must be a valid URL./,
-      )
-    })
-
-    test('should throw when "authenticatedRedirectRedirectUrls" contains an invalid URL', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_redirect_urls = ['/start-url']
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_redirect_urls does contain invalid URLs./,
-      )
-    })
-
-    test('should throw when one of the "authenticatedRedirectRedirectUrls" is an invalid URL', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_redirect_urls = ['/start-url', 'https://www.shopify.com/', '/end-url']
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_redirect_urls does contain invalid URLs./,
-      )
-    })
-
-    test('should throw when "authenticatedRedirectRedirectUrls" is an empty array', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_redirect_urls = []
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs./,
-      )
     })
   })
 })

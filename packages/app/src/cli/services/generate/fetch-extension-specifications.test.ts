@@ -54,18 +54,6 @@ describe('fetchExtensionSpecifications', () => {
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          externalName: 'Customer Accounts',
-          identifier: 'customer_accounts_ui_extension',
-          externalIdentifier: 'customer_accounts_ui_extension_external',
-          registrationLimit: 10,
-          surface: 'customer_accounts',
-        }),
-      ]),
-    )
-
-    expect(got).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
           name: 'Product Subscription',
           externalName: 'Subscription UI',
           identifier: 'product_subscription',

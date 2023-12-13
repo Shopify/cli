@@ -1,5 +1,5 @@
 {
-  "version": "3.51.0",
+  "version": "3.52.0",
   "commands": {
     "app:build": {
       "id": "app:build",
@@ -321,6 +321,20 @@
           "name": "notify",
           "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+          "multiple": false
+        },
+        "graphiql-port": {
+          "name": "graphiql-port",
+          "type": "option",
+          "description": "Local port of the GraphiQL development server.",
+          "hidden": true,
+          "multiple": false
+        },
+        "graphiql-key": {
+          "name": "graphiql-key",
+          "type": "option",
+          "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
+          "hidden": true,
           "multiple": false
         }
       },
