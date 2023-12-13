@@ -25,6 +25,7 @@ import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../model
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -56,6 +57,8 @@ export interface DevOptions {
   theme?: string
   themeExtensionPort?: number
   notify?: string
+  graphiqlPort?: number
+  graphiqlKey?: string
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -96,8 +99,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     localApp = await installAppDependencies(localApp)
   }
 
+  const graphiqlPort = commandOptions.graphiqlPort || ports.graphiql
+  const {graphiqlKey} = commandOptions
+
   const {webs, ...network} = await setupNetworkingOptions(
     localApp.webs,
+    graphiqlPort,
     apiKey,
     token,
     {
@@ -134,6 +141,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     commandOptions,
     network,
     partnerUrlsUpdated,
+    graphiqlPort,
+    graphiqlKey,
   }
 }
 
@@ -228,6 +237,7 @@ async function handleUpdatingOfPartnerUrls(
 
 async function setupNetworkingOptions(
   webs: Web[],
+  graphiqlPort: number,
   apiKey: string,
   token: string,
   frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl' | 'commandConfig'>,
@@ -235,7 +245,7 @@ async function setupNetworkingOptions(
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
-  await validateCustomPorts(webs)
+  await validateCustomPorts(webs, graphiqlPort)
 
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
@@ -309,6 +319,7 @@ async function launchDevProcesses({
     processes: processesForTaskRunner,
     previewUrl,
     graphiqlUrl,
+    graphiqlPort: config.graphiqlPort,
     app,
     abortController,
     developerPreview: developerPreviewController(apiKey, token),
@@ -386,20 +397,28 @@ export function scopesMessage(scopes: string[]) {
   }
 }
 
-export async function validateCustomPorts(webConfigs: Web[]) {
+export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
   const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
   if (duplicatedPort) {
     throw new AbortError(`Found port ${duplicatedPort} for multiple webs.`, 'Please define a unique port for each web.')
   }
-  await Promise.all(
-    allPorts.map(async (port) => {
+  await Promise.all([
+    ...allPorts.map(async (port) => {
       const portAvailable = await checkPortAvailability(port!)
       if (!portAvailable) {
         throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)
       }
     }),
-  )
+    (async () => {
+      const portAvailable = await checkPortAvailability(graphiqlPort)
+      if (!portAvailable) {
+        const errorMessage = `Port ${graphiqlPort} is not available for serving GraphiQL.`
+        const tryMessage = ['Choose a different port by setting the', {command: '--graphiql-port'}, 'flag.']
+        throw new AbortError(errorMessage, tryMessage)
+      }
+    })(),
+  ])
 }
 
 export function setPreviousAppId(directory: string, apiKey: string) {

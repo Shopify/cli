@@ -91,6 +91,17 @@ export default class Dev extends Command {
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
       env: 'SHOPIFY_FLAG_NOTIFY',
     }),
+    'graphiql-port': Flags.integer({
+      hidden: true,
+      description: 'Local port of the GraphiQL development server.',
+      env: 'SHOPIFY_FLAG_GRAPHIQL_PORT',
+    }),
+    'graphiql-key': Flags.string({
+      hidden: true,
+      description:
+        'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
+      env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -134,6 +145,8 @@ export default class Dev extends Command {
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
       notify: flags.notify,
+      graphiqlPort: flags['graphiql-port'],
+      graphiqlKey: flags['graphiql-key'],
     }
 
     await dev(devOptions)

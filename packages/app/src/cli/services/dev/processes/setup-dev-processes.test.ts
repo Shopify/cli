@@ -2,7 +2,7 @@ import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-proces
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
-import {GraphiQLServerProcess, launchGraphiQLServer} from './graphiql.js'
+import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
@@ -13,7 +13,6 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
-import {urlNamespaces} from '../../../constants.js'
 import {fetchAppExtensionRegistrations} from '../fetch.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
@@ -54,6 +53,7 @@ describe('setup-dev-processes', () => {
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
+    const graphiqlPort = 1234
     const commandOptions: DevConfig['commandOptions'] = {
       subscriptionProductUrl: '/products/999999',
       checkoutCartUrl: '/cart/999999:1',
@@ -114,6 +114,8 @@ describe('setup-dev-processes', () => {
       redirectUrlWhitelist: [],
     }
 
+    const graphiqlKey = 'somekey'
+
     const res = await setupDevProcesses({
       localApp,
       commandOptions,
@@ -124,6 +126,8 @@ describe('setup-dev-processes', () => {
       storeId,
       token,
       partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey,
     })
 
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
@@ -151,15 +155,14 @@ describe('setup-dev-processes', () => {
       type: 'graphiql',
       function: launchGraphiQLServer,
       prefix: 'graphiql',
-      urlPrefix: `/${urlNamespaces.devTools}/graphiql`,
       options: {
         appName: 'App',
         apiKey: 'api-key',
         apiSecret: 'api-secret',
         port: expect.any(Number),
         appUrl: 'https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key',
+        key: 'somekey',
         storeFqdn: 'store.myshopify.io',
-        url: 'example.com/proxy',
       },
     })
     expect(res.processes[2]).toMatchObject({
@@ -227,7 +230,6 @@ describe('setup-dev-processes', () => {
     // Check the ports & rule mapping
     const webPort = (res.processes[0] as WebProcess).options.port
     const hmrPort = (res.processes[0] as WebProcess).options.hmrServerOptions?.port
-    const graphiqlPort = (res.processes[1] as GraphiQLServerProcess).options.port
     const previewExtensionPort = (res.processes[2] as PreviewableExtensionProcess).options.port
 
     expect(res.processes[6]).toMatchObject({
@@ -238,7 +240,6 @@ describe('setup-dev-processes', () => {
         port: 444,
         rules: {
           '/extensions': `http://localhost:${previewExtensionPort}`,
-          [`/${urlNamespaces.devTools}/graphiql`]: `http://localhost:${graphiqlPort}`,
           '/ping': `http://localhost:${hmrPort}`,
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,

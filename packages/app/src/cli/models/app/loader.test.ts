@@ -5,8 +5,8 @@ import {
   loadDotEnv,
   parseConfigurationObject,
 } from './loader.js'
-import {AppSchema, LegacyAppSchema, WebConfigurationSchema} from './app.js'
-import {DEFAULT_CONFIG} from './app.test-data.js'
+import {AppSchema, LegacyAppSchema, WebConfigurationSchema, WebhookConfig} from './app.js'
+import {DEFAULT_CONFIG, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -25,11 +25,17 @@ import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from 
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent} from '@shopify/cli-kit/node/output'
+import {zod} from '@shopify/cli-kit/node/schema'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'path'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
+
+vi.mock('../../utilities/app/config/webhooks.js', async () => ({
+  ...((await vi.importActual('../../utilities/app/config/webhooks.js')) as any),
+  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA: false,
+}))
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
@@ -1077,6 +1083,76 @@ automatically_update_urls_on_dev = true
     }
   })
 
+  test('loads the app with an Admin Action extension that has a full valid configuration', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "unstable"
+      [[extensions]]
+      name = "my-admin-action"
+      handle = "admin-action-handle"
+      type = "ui_extension"
+      [[extensions.targeting]]
+      module = "./src/ActionExtension.js"
+      target = "admin.product-details.action.render"
+      [[extensions.metafields]]
+      namespace = "my-namespace"
+      key = "my-key"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-admin-action',
+    })
+
+    // Create a temporary ActionExtension.js file
+    const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-admin-action', 'src')
+    await mkdir(extensionDirectory)
+
+    const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
+    await writeFile(tempFilePath, '/* ActionExtension.js content */')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        api_version: 'unstable',
+        name: 'my-admin-action',
+        handle: 'admin-action-handle',
+        type: 'ui_extension',
+        metafields: [
+          {
+            namespace: 'my-namespace',
+            key: 'my-key',
+          },
+        ],
+        extension_points: [
+          {
+            metafields: [
+              {
+                namespace: 'my-namespace',
+                key: 'my-key',
+              },
+            ],
+            module: './src/ActionExtension.js',
+            target: 'admin.product-details.action.render',
+          },
+        ],
+        targeting: [
+          {
+            module: './src/ActionExtension.js',
+            target: 'admin.product-details.action.render',
+          },
+        ],
+      })
+    }
+  })
+
   test('loads the app with a UI extension that has a full valid unified configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -1266,49 +1342,6 @@ automatically_update_urls_on_dev = true
             key: 'my-key-2',
           },
         ],
-      })
-    }
-  })
-
-  test('loads the app with a Customer Accounts UI extension that has a full valid configuration', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    const blockConfiguration = `
-      type = "customer_accounts_ui_extension"
-      name = "my-customer-accounts-ui-extension"
-
-      categories = [ "returns" ]
-      authenticated_redirect_start_url = "https://example.com/start"
-      authenticated_redirect_redirect_urls = ["https://example.com/redirect"]
-
-      extension_points = [
-        'CustomerAccount::FullPage::RenderWithin',
-      ]
-      `
-    await writeBlockConfig({
-      blockConfiguration,
-      name: 'my-customer-accounts-ui-extension',
-    })
-
-    await writeFile(joinPath(blockPath('my-customer-accounts-ui-extension'), 'index.js'), '/** content **/')
-
-    // When
-    const app = await loadApp({directory: tmpDir, specifications})
-
-    // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
-    expect(extension).not.toBeUndefined()
-    if (extension) {
-      expect(extension.configuration).toMatchObject({
-        type: 'customer_accounts_ui_extension',
-        name: 'my-customer-accounts-ui-extension',
-        extension_points: ['CustomerAccount::FullPage::RenderWithin'],
-        metafields: [],
-        categories: ['returns'],
-        authenticated_redirect_start_url: 'https://example.com/start',
-        authenticated_redirect_redirect_urls: ['https://example.com/redirect'],
       })
     }
   })
@@ -1787,223 +1820,6 @@ automatically_update_urls_on_dev = true
       cmd_app_linked_config_source: 'cached',
     })
   })
-
-  describe('customer_accounts_ui_extension', () => {
-    test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are unset', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).resolves.toBeDefined()
-    })
-
-    test('loads the app with an Admin Action extension that has a full valid configuration', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-
-      const blockConfiguration = `
-        api_version = "unstable"
-
-        [[extensions]]
-        name = "my-admin-action"
-        handle = "admin-action-handle"
-        type = "ui_extension"
-        [[extensions.targeting]]
-        module = "./src/ActionExtension.js"
-        target = "admin.product-details.action.render"
-
-        [[extensions.metafields]]
-        namespace = "my-namespace"
-        key = "my-key"
-        `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-admin-action',
-      })
-
-      // Create a temporary ActionExtension.js file
-      const extensionDirectory = joinPath(tmpDir, 'extensions', 'my-admin-action', 'src')
-      await mkdir(extensionDirectory)
-
-      const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
-      await writeFile(tempFilePath, '/* ActionExtension.js content */')
-
-      // When
-      const app = await loadApp({directory: tmpDir, specifications})
-
-      // Then
-      expect(app.allExtensions).toHaveLength(1)
-      const extension = app.allExtensions[0]
-      expect(extension).not.toBeUndefined()
-      if (extension) {
-        expect(extension.configuration).toMatchObject({
-          api_version: 'unstable',
-          name: 'my-admin-action',
-          handle: 'admin-action-handle',
-          type: 'ui_extension',
-          metafields: [
-            {
-              namespace: 'my-namespace',
-              key: 'my-key',
-            },
-          ],
-          extension_points: [
-            {
-              metafields: [
-                {
-                  namespace: 'my-namespace',
-                  key: 'my-key',
-                },
-              ],
-              module: './src/ActionExtension.js',
-              target: 'admin.product-details.action.render',
-            },
-          ],
-          targeting: [
-            {
-              module: './src/ActionExtension.js',
-              target: 'admin.product-details.action.render',
-            },
-          ],
-        })
-      }
-    })
-
-    test('should not throw when "authenticatedRedirectStartUrl" and "authenticatedRedirectRedirectUrls" are set and valid', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_start_url = 'https://www.shopify.com/start'
-        authenticated_redirect_redirect_urls = ['https://www.shopify.com/finalize', 'https://www.loop.com/finalize']
-
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).resolves.toBeDefined()
-    })
-
-    test('should throw when "authenticatedRedirectStartUrl" is not a valid URL', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_start_url = '/start-url'
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_start_url must be a valid URL./,
-      )
-    })
-
-    test('should throw when "authenticatedRedirectStartUrl" is an empty string', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_start_url = ''
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_start_url must be a valid URL./,
-      )
-    })
-
-    test('should throw when "authenticatedRedirectRedirectUrls" contains an invalid URL', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_redirect_urls = ['/start-url']
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_redirect_urls does contain invalid URLs./,
-      )
-    })
-
-    test('should throw when one of the "authenticatedRedirectRedirectUrls" is an invalid URL', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_redirect_urls = ['/start-url', 'https://www.shopify.com/', '/end-url']
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_redirect_urls does contain invalid URLs./,
-      )
-    })
-
-    test('should throw when "authenticatedRedirectRedirectUrls" is an empty array', async () => {
-      // Given
-      await writeConfig(appConfiguration)
-      const blockConfiguration = `
-        name = "my_extension"
-        type = "customer_accounts_ui_extension"
-
-        authenticated_redirect_redirect_urls = []
-      `
-      await writeBlockConfig({
-        blockConfiguration,
-        name: 'my-extension',
-      })
-      await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
-
-      // When
-      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow(
-        /authenticated_redirect_redirect_urls can not be an empty array! It may only contain one or multiple valid URLs./,
-      )
-    })
-  })
 })
 
 describe('getAppConfigurationFileName', () => {
@@ -2187,4 +2003,733 @@ describe('parseConfigurationObject', () => {
 
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
+})
+
+describe('WebhooksSchema', () => {
+  test('throws an error if endpoint is not an https endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'http://example.com',
+      topics: ['products/create'],
+    }
+    const errorObj = {
+      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
+      code: zod.ZodIssueCode.invalid_string,
+      message: 'Invalid',
+      path: ['webhooks', 'endpoint'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('removes trailing slashes on endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'https://example.com/',
+      topics: ['products/create'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    webhookConfig.endpoint = 'https://example.com'
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('throws an error if endpoint is not a valid formatted https URL, pubsub URI, or Eventbridge ARN', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'my::URI-thing::Shopify::123',
+      topics: ['products/create'],
+    }
+    const errorObj = {
+      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
+      code: zod.ZodIssueCode.invalid_string,
+      message: 'Invalid',
+      path: ['webhooks', 'endpoint'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('accepts a top level https endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'https://example.com',
+      topics: ['products/create'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts a top level pub sub endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'pubsub://my-project-123:my-topic',
+      topics: ['products/create'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts a top level ARN endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH"',
+      topics: ['products/create'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('using a top level endpoint is invalid without a topics array and without sub webhook subscriptions', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'https://example.com',
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'To use a top-level `endpoint`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
+      fatal: true,
+      path: ['webhooks'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('using a top level endpoint is valid with topics array', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'https://example.com',
+      topics: ['products/create'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('using a top level endpoint is valid with sub webhook subscriptions', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'pubsub://my-project-123:my-topic',
+      subscriptions: [
+        {
+          topic: 'products/create',
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('throws an error if we have duplicate top level topics with top level endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'https://example.com',
+      topics: ['products/create', 'products/create'],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+      fatal: true,
+      path: ['webhooks', 'topics'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('allows unique top level topics with top level endpoint', async () => {
+    const webhookConfig: WebhookConfig = {
+      endpoint: 'https://example.com',
+      topics: ['products/create', 'products/update'],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  describe('WebhookSubscriptionSchema', () => {
+    test('removes trailing forward slash', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'https://example.com/',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      webhookConfig.subscriptions![0]!.endpoint = 'https://example.com'
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if topics and subscriptions are defined, but no top level endpoint is provided', async () => {
+      const webhookConfig: WebhookConfig = {
+        topics: ['products/create', 'products/update'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'https://example.com',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'To use top-level topics, you must also provide a top-level `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'topics'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if endpoint is not an https endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'http://example.com',
+          },
+        ],
+      }
+      const errorObj = {
+        validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
+        code: zod.ZodIssueCode.invalid_string,
+        message: 'Invalid',
+        path: ['webhooks', 'subscriptions', 0, 'endpoint'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path does not start with a forward slash', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            endpoint: 'https://example.com',
+            topic: 'products/create',
+            path: 'my-neat-new-path',
+          },
+        ],
+      }
+      const errorObj = [
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'Path must start with a forward slash and be longer than 1 character',
+          path: ['webhooks', 'subscriptions', 0, 'path'],
+        },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path is only forward slash', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            endpoint: 'https://example.com',
+            topic: 'products/create',
+            path: '/',
+          },
+        ],
+      }
+      const errorObj = [
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'Path must start with a forward slash and be longer than 1 character',
+          path: ['webhooks', 'subscriptions', 0, 'path'],
+        },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path is used with pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        subscriptions: [
+          {
+            endpoint: 'pubsub://my-project-123:my-topic',
+            topic: 'products/create',
+            path: '/test_path',
+          },
+        ],
+      }
+      const errorObj = [
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'You must use an https `endpoint` to use a relative path',
+          fatal: true,
+          path: ['webhooks', 'subscriptions', 0],
+        },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if path is used with arn', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        subscriptions: [
+          {
+            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+            topic: 'products/create',
+            path: '/test_path',
+          },
+        ],
+      }
+      const errorObj = [
+        {
+          code: zod.ZodIssueCode.custom,
+          message: 'You must use an https `endpoint` to use a relative path',
+          fatal: true,
+          path: ['webhooks', 'subscriptions', 0],
+        },
+      ]
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if endpoint is not a valid https URL, pub sub URI, or Eventbridge ARN', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'my::test-thing::Shopify::123',
+          },
+        ],
+      }
+      const errorObj = {
+        validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
+        code: zod.ZodIssueCode.invalid_string,
+        message: 'Invalid',
+        path: ['webhooks', 'subscriptions', 0, 'endpoint'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('accepts a pub sub config with both project and topic', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'pubsub://my-project-123:my-topic',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if there is no top level endpoint and no subscription endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You must include either a top-level endpoint or an endpoint per `[[webhooks.subscriptions]]`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('accepts a subscription with top level endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('accepts a subscription with top level pub sub endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'pubsub://my-project-123:my-topic',
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('accepts a subscription with a top level arn', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('accepts a subscription with no top level endpoint but defined local endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'https://example.com',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('accepts a subscription with no top level endpoint but defined pub sub endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'pubsub://my-project-123:my-topic',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('accepts a subscription with no top level endpoint but a defined arn endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if there is no defined endpoint at any level and a path is included', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        subscriptions: [
+          {
+            topic: 'products/create',
+            path: '/my-webhook-path',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You must use an https `endpoint` to use a relative path',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('accepts a relative path with top level endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        subscriptions: [
+          {
+            topic: 'products/create',
+            path: '/my-webhook-path',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('accepts a relative path with subscription level endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'https://example.com',
+            path: '/my-webhook-path',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using https endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'https://example.com',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited https endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using endpoint with path', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com/path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'https://example.com',
+            path: '/path',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('allows unique top level topics and unique inner subscription config using https endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/delete',
+            endpoint: 'https://example.com',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('allows same top level topics and same inner subscription config with unique paths using https endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'https://example.com',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            path: '/path-1',
+          },
+          {
+            topic: 'products/create',
+            path: '/path-2',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'pubsub://my-project-123:my-topic',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'pubsub://my-project-123:my-topic',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'pubsub://my-project-123:my-topic',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('allows unique top level topics and unique inner subscription config using pub sub', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'pubsub://my-project-123:my-topic',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/delete',
+            endpoint: 'pubsub://my-project-123:my-topic',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using arn endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited arn endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/create',
+          },
+        ],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        fatal: true,
+        path: ['webhooks', 'subscriptions', 0, 'products/create'],
+      }
+
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    })
+
+    test('allows unique top level topics and unique inner subscription config using arn endpoint', async () => {
+      const webhookConfig: WebhookConfig = {
+        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        topics: ['products/update', 'products/create'],
+        subscriptions: [
+          {
+            topic: 'products/delete',
+            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+          },
+        ],
+      }
+
+      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+      expect(abortOrReport).not.toHaveBeenCalled()
+      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    })
+  })
+
+  async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhookConfig) {
+    const err = Array.isArray(errorObj) ? errorObj : [errorObj]
+    const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(err, null, 2)}`
+    const abortOrReport = vi.fn()
+
+    const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)
+    const parsedConfiguration = await parseConfigurationObject(AppSchema, 'tmp', toParse, abortOrReport)
+    return {abortOrReport, expectedFormatted, parsedConfiguration}
+  }
 })

@@ -1,4 +1,4 @@
-import {updateExtensionConfig, updateExtensionDraft} from './update-extension.js'
+import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
 import {testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
@@ -158,8 +158,8 @@ describe('updateExtensionDraft()', () => {
   })
 })
 
-describe('updateExtensionConfig()', () => {
-  test('updates draft with new config', async () => {
+describe('reloadExtensionConfig()', () => {
+  test('reloads extension config', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const configurationToml = `name = "test"
 type = "web_pixel_extension"
@@ -168,6 +168,16 @@ runtime_context = "strict"
 type = "object"
 another = "setting"
 `
+
+      const parsedConfig = {
+        type: 'web_pixel_extension',
+        runtime_context: 'strict',
+        settings: {
+          type: 'object',
+          another: 'setting',
+        },
+      }
+
       await writeFile(joinPath(tmpDir, 'shopify.ui.extension.toml'), configurationToml)
 
       const configuration = {
@@ -195,40 +205,13 @@ another = "setting"
         type: 'web_pixel_extension',
       } as any)
 
-      vi.mocked(parseConfigurationObject).mockResolvedValue({
-        type: 'web_pixel_extension',
-        runtime_context: 'strict',
-        settings: {
-          type: 'object',
-          another: 'setting',
-        },
-      })
+      vi.mocked(parseConfigurationObject).mockResolvedValue(parsedConfig)
 
       await writeFile(mockExtension.outputPath, 'test content')
 
-      await updateExtensionConfig({
-        extension: mockExtension,
-        token,
-        apiKey,
-        registrationId,
-        stdout,
-        stderr,
-      })
+      await reloadExtensionConfig({extension: mockExtension, stdout})
 
-      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
-        apiKey,
-        context: undefined,
-        handle,
-        registrationId,
-        config:
-          '{"runtime_context":"strict","runtime_configuration_definition":{"type":"object","another":"setting"},"serialized_script":"dGVzdCBjb250ZW50"}',
-      })
-
-      // Check if outputDebug is called with success message
-      expect(outputInfo).toHaveBeenCalledWith(
-        `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
-        stdout,
-      )
+      expect(mockExtension.configuration).toEqual(parsedConfig)
     })
   })
 })

@@ -13,10 +13,10 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   template: zod.object({
     categories: zod.array(zod.string()),
     module: zod.string(),
-    require_app: zod.boolean(),
-    discoverable: zod.boolean(),
-    allow_one_click_activate: zod.boolean(),
-    enabled: zod.boolean(),
+    require_app: zod.boolean().optional(),
+    discoverable: zod.boolean().optional(),
+    allow_one_click_activate: zod.boolean().optional(),
+    enabled: zod.boolean().optional(),
   }),
 })
 

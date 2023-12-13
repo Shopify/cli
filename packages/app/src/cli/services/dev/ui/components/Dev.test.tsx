@@ -79,6 +79,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -103,7 +104,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -158,6 +159,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -178,7 +180,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -189,7 +191,15 @@ describe('Dev', () => {
   test('opens the previewUrl when p is pressed', async () => {
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     await waitForInputsToBeReady()
@@ -207,7 +217,15 @@ describe('Dev', () => {
 
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={abortController}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     const promise = renderInstance.waitUntilExit()
@@ -227,7 +245,15 @@ describe('Dev', () => {
 
     // When
     const renderInstance = render(
-      <Dev processes={[]} abortController={abortController} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={abortController}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     const promise = renderInstance.waitUntilExit()
@@ -267,6 +293,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -330,6 +357,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -387,6 +415,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -407,7 +436,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -438,6 +467,7 @@ describe('Dev', () => {
         abortController={abortController}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -480,6 +510,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -501,7 +532,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -520,7 +551,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -546,6 +577,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={{
           ...testApp,
           canEnablePreviewMode: false,
@@ -569,7 +601,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -602,6 +634,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         pollingTime={200}
         developerPreview={developerPreview}
@@ -623,7 +656,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:1234/graphiql
       Failed to fetch the latest status of the development store preview, trying again in 5 seconds.
       "
     `)
@@ -637,7 +670,15 @@ describe('Dev', () => {
     vi.mocked(developerPreview.update).mockResolvedValueOnce(true)
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -650,7 +691,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -670,7 +711,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -697,6 +738,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -718,7 +760,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to turn off development store preview.
       "
     `)
@@ -746,6 +788,7 @@ describe('Dev', () => {
         abortController={new AbortController()}
         previewUrl="https://shopify.com"
         graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
         app={testApp}
         developerPreview={developerPreview}
       />,
@@ -767,7 +810,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to turn off development store preview.
       "
     `)
@@ -779,7 +822,15 @@ describe('Dev', () => {
   test('enables preview mode at startup', async () => {
     // Given
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -792,7 +843,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -810,7 +861,15 @@ describe('Dev', () => {
     vi.mocked(developerPreview.enable).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     await waitForContent(renderInstance, 'Failed to turn on development store preview automatically.')
@@ -825,7 +884,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to turn on development store preview automatically.
       Try turning it on manually by pressing \`d\`.
       "
@@ -839,7 +898,15 @@ describe('Dev', () => {
     vi.mocked(openURL).mockRejectedValueOnce(new Error('something went wrong'))
 
     const renderInstance = render(
-      <Dev processes={[]} abortController={new AbortController()} previewUrl="https://shopify.com" graphiqlUrl="https://graphiql.shopify.com" app={testApp} developerPreview={developerPreview} />,
+      <Dev
+        processes={[]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        app={testApp}
+        developerPreview={developerPreview}
+      />,
     )
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
@@ -852,7 +919,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       "
     `)
 
@@ -869,7 +936,7 @@ describe('Dev', () => {
       › Press q │ quit
 
       Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
+      GraphiQL URL: http://localhost:0000/graphiql
       Failed to handle your input.
       "
     `)

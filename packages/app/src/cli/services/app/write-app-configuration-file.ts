@@ -33,6 +33,9 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
   if (schema instanceof zod.ZodArray) {
     return (config as unknown[]).map((item) => rewriteConfiguration(schema.element, item))
   }
+  if (schema instanceof zod.ZodEffects) {
+    return rewriteConfiguration(schema._def.schema, config)
+  }
   if (schema instanceof zod.ZodObject) {
     const entries = Object.entries(schema.shape)
     const confObj = config as {[key: string]: unknown}

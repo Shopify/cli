@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, WebType} from './app.js'
+import {App, AppConfiguration, AppInterface, WebType, WebhookConfig} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -88,6 +88,16 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   }
 
   return app
+}
+
+export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+  return {
+    ...DEFAULT_CONFIG,
+    webhooks: {
+      ...DEFAULT_CONFIG.webhooks,
+      ...webhookConfigOverrides,
+    },
+  }
 }
 
 export function testOrganizationApp(app: Partial<OrganizationApp> = {}): OrganizationApp {
@@ -302,22 +312,6 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     features: {
       argo: {
         surface: 'all',
-      },
-    },
-  },
-  {
-    name: 'Customer Accounts',
-    externalName: 'Customer Accounts',
-    identifier: 'customer_accounts_ui_extension',
-    externalIdentifier: 'customer_accounts_ui_extension_external',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 10,
-    },
-    features: {
-      argo: {
-        surface: 'customer_accounts',
       },
     },
   },

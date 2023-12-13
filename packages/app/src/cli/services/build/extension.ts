@@ -38,6 +38,17 @@ export interface ExtensionBuildOptions {
    * The app that contains the extensions.
    */
   app: AppInterface
+
+  /**
+   * The environment to build the extension.
+   * Default value: production
+   */
+  environment: 'production' | 'development'
+
+  /**
+   * The URL where the app is running.
+   */
+  appURL?: string
 }
 
 /**
@@ -56,6 +67,10 @@ export async function buildThemeExtension(extension: ExtensionInstance, options:
  */
 export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
+  const env = options.app.dotenv?.variables ?? {}
+  if (options.appURL) {
+    env.APP_URL = options.appURL
+  }
 
   await bundleExtension({
     minify: true,
@@ -65,8 +80,8 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
       resolveDir: extension.directory,
       loader: 'tsx',
     },
-    environment: 'production',
-    env: options.app.dotenv?.variables ?? {},
+    environment: options.environment,
+    env,
     stderr: options.stderr,
     stdout: options.stdout,
   })

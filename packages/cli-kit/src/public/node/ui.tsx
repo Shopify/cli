@@ -45,6 +45,14 @@ import {Key as InkKey, RenderOptions} from 'ink'
 
 type PartialBy<T, TKey extends keyof T> = Omit<T, TKey> & Partial<Pick<T, TKey>>
 
+interface UIDebugOptions {
+  /** If true, don't check if the current terminal is interactive or not */
+  skipTTYCheck: boolean
+}
+const defaultUIDebugOptions: UIDebugOptions = {
+  skipTTYCheck: false,
+}
+
 export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
   renderOptions?: RenderOptions
 }
@@ -282,27 +290,36 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
-export async function renderSelectPrompt<T>({
-  renderOptions,
-  isConfirmationPrompt,
-  ...props
-}: RenderSelectPromptOptions<T>): Promise<T> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+// eslint-disable-next-line max-params
+export async function renderSelectPrompt<T>(
+  {renderOptions, isConfirmationPrompt, ...props}: RenderSelectPromptOptions<T>,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+): Promise<T> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   if (!isConfirmationPrompt) {
     recordUIEvent({type: 'selectPrompt', properties: {renderOptions, ...props}})
   }
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<SelectPrompt {...props} onSubmit={(value: T) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let selectedValue: T
+    try {
+      await render(
+        <SelectPrompt
+          {...props}
+          onSubmit={(value: T) => {
+            selectedValue = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return selectedValue!
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -416,8 +433,12 @@ export interface RenderAutocompleteOptions<T>
  *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
-export async function renderAutocompletePrompt<T>({renderOptions, ...props}: RenderAutocompleteOptions<T>): Promise<T> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+// eslint-disable-next-line max-params
+export async function renderAutocompletePrompt<T>(
+  {renderOptions, ...props}: RenderAutocompleteOptions<T>,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+): Promise<T> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'autocompletePrompt', properties: arguments[0]})
@@ -436,16 +457,25 @@ export async function renderAutocompletePrompt<T>({renderOptions, ...props}: Ren
     ...props,
   }
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<AutocompletePrompt {...newProps} onSubmit={(value: T) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let selectedValue: T
+    try {
+      await render(
+        <AutocompletePrompt
+          {...newProps}
+          onSubmit={(value: T) => {
+            selectedValue = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return selectedValue!
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -515,22 +545,35 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-export async function renderTextPrompt({renderOptions, ...props}: RenderTextPromptOptions): Promise<string> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+// eslint-disable-next-line max-params
+export async function renderTextPrompt(
+  {renderOptions, ...props}: RenderTextPromptOptions,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+): Promise<string> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'textPrompt', properties: arguments[0]})
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<TextPrompt {...props} onSubmit={(value: string) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let enteredText = ''
+    try {
+      await render(
+        <TextPrompt
+          {...props}
+          onSubmit={(value: string) => {
+            enteredText = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return enteredText
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -561,25 +604,35 @@ export interface RenderDangerousConfirmationPromptOptions extends Omit<Dangerous
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-export async function renderDangerousConfirmationPrompt({
-  renderOptions,
-  ...props
-}: RenderDangerousConfirmationPromptOptions): Promise<boolean> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin})
+// eslint-disable-next-line max-params
+export async function renderDangerousConfirmationPrompt(
+  {renderOptions, ...props}: RenderDangerousConfirmationPromptOptions,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+): Promise<boolean> {
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   // eslint-disable-next-line prefer-rest-params
   recordUIEvent({type: 'dangerousConfirmationPrompt', properties: arguments[0]})
 
-  return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
-    return new Promise((resolve, reject) => {
-      render(<DangerousConfirmationPrompt {...props} onSubmit={(value: boolean) => resolve(value)} />, {
-        ...renderOptions,
-        exitOnCtrlC: false,
-      })
-        .catch(reject)
-        .finally(resetRecordedSleep)
-    })
+  return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
+    let confirmed: boolean
+    try {
+      await render(
+        <DangerousConfirmationPrompt
+          {...props}
+          onSubmit={(value: boolean) => {
+            confirmed = value
+          }}
+        />,
+        {
+          ...renderOptions,
+          exitOnCtrlC: false,
+        },
+      )
+      return confirmed!
+    } finally {
+      resetRecordedSleep()
+    }
   })
 }
 
@@ -605,15 +658,15 @@ export function renderText({text, logLevel = 'info', logger = consoleLog}: Rende
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
-export const keypress = async () => {
-  throwInNonTTY({message: 'Press any key'})
+// eslint-disable-next-line max-params
+export const keypress = async (stdin = process.stdin, uiDebugOptions: UIDebugOptions = defaultUIDebugOptions) => {
+  throwInNonTTY({message: 'Press any key'}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(() => {
     // eslint-disable-next-line max-params
     return new Promise((resolve, reject) => {
       const handler = (buffer: Buffer) => {
-        process.stdin.setRawMode(false)
-        process.stdin.pause()
+        stdin.setRawMode(false)
 
         const bytes = Array.from(buffer)
 
@@ -621,12 +674,16 @@ export const keypress = async () => {
           outputDebug('Canceled keypress, User pressed CTRL+C')
           reject(new AbortSilentError())
         }
+        stdin.unref()
         process.nextTick(resolve)
       }
 
-      process.stdin.resume()
-      process.stdin.setRawMode(true)
-      process.stdin.once('data', handler)
+      stdin.setRawMode(true)
+      stdin.once('data', handler)
+
+      // We want to indicate that we're still using stdin, so that the process
+      // doesn't exit early.
+      stdin.ref()
     })
   })
 }
@@ -636,8 +693,9 @@ interface ThrowInNonTTYOptions {
   stdin?: NodeJS.ReadStream
 }
 
-function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions) {
-  if (stdin || terminalSupportsRawMode()) return
+// eslint-disable-next-line max-params
+function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
+  if (uiDebugOptions.skipTTYCheck || stdin || terminalSupportsRawMode()) return
 
   const promptText = tokenItemToString(message)
   const errorMessage = `Failed to prompt:

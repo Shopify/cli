@@ -19,12 +19,12 @@ vi.mock('../common/version.js')
 vi.mock('env-paths')
 vi.mock('../common/version.js', () => ({CLI_KIT_VERSION: '3.x.x'}))
 
-const BUNDLE_APP_CONFIG = '/bundle/app/config/path'
+const BUNDLE_PATH = '/bundle/app/cache/path'
 
 beforeEach(() => {
   vi.mocked(getEnvironmentVariables).mockReturnValue({})
   vi.mocked(envPaths).mockReturnValue({
-    cache: BUNDLE_APP_CONFIG,
+    cache: BUNDLE_PATH,
     data: '',
     config: '',
     log: '',
@@ -307,7 +307,7 @@ function validateBundleExec(
       SHOPIFY_CLI_1P_DEV: '0',
       SHOPIFY_CLI_VERSION: '3.x.x',
       ...(bundled && {SHOPIFY_CLI_BUNDLED_THEME_CLI: '1'}),
-      BUNDLE_APP_CONFIG,
+      BUNDLE_PATH,
       ...(spinFqdn && {SPIN_FQDN: spinFqdn, SPIN: '1'}),
       ...(windows && {BUNDLE_USER_HOME: joinPath('root', 'AppData', 'Local', 'shopify-bundler-nodejs', 'Cache')}),
     },
