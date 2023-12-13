@@ -90,7 +90,7 @@ export async function setupDevProcesses({
     })),
     shouldRenderGraphiQL
       ? await setupGraphiQLServerProcess({
-          appName: localApp.name,
+          appName: remoteApp.title,
           appUrl: appPreviewUrl,
           port: graphiqlPort,
           apiKey,
