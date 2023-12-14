@@ -102,23 +102,19 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Configuration:'}, 'deleted field name1']],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -158,26 +154,21 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
+              helperText: 'Removing extensions can permanentely delete app user data',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [
-                [{subdued: 'Extension:'}, 'remote extension'],
-                [{subdued: 'Configuration:'}, 'deleted field name1'],
-              ],
-              bullet: '-',
             },
           ],
           dangerPrompt: true,
@@ -214,26 +205,20 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [
-                [{subdued: 'Extension:'}, 'remote extension'],
-                [{subdued: 'Configuration:'}, 'deleted field name1'],
-              ],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -271,15 +256,11 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Extension:'}, 'remote extension']],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -319,20 +300,18 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           infoTable: [
             {
               header: 'Configuration:',
-              items: [{subdued: 'No changes'}],
+              items: [],
+              emptyItemsText: 'No changes',
             },
             {
               header: 'Extensions:',
+              helperText: 'Removing extensions can permanentely delete app user data',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Extension:'}, 'remote extension']],
-              bullet: '-',
             },
           ],
           dangerPrompt: true,
@@ -373,23 +352,19 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Configuration:'}, 'deleted field name1']],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,

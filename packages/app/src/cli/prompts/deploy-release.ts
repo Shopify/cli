@@ -1,3 +1,4 @@
+import {buildNURInfoTableSection} from './ui/NURInfoTableSection.js'
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
@@ -18,11 +19,10 @@ export interface DeployConfirmationPromptOptions {
   appTitle?: string
   extensionsContentPrompt: {
     extensionsInfoTable?: InfoTableSection
-    deletedInfoTable?: InfoTableSection
+    hasDeletedExtensions: boolean
   }
   configContentPrompt: {
     configInfoTable: InfoTableSection
-    deletedInfoTable?: InfoTableSection
   }
   release: boolean
 }
@@ -48,41 +48,30 @@ export async function deployOrReleaseConfirmationPrompt({
 
 async function deployConfirmationPrompt({
   appTitle,
-  extensionsContentPrompt: {extensionsInfoTable, deletedInfoTable},
-  configContentPrompt: {configInfoTable, deletedInfoTable: configDeletedInfoTable},
+  extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
+  configContentPrompt: {configInfoTable},
   release,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
 
-  let question = `Create a new version${appTitle ? ` of ${appTitle}` : ''}?`
-  if (release) {
-    question = `Release a new version${appTitle ? ` of ${appTitle}` : ''}?`
-  }
-
-  let finalDeletedInfoTable = deletedInfoTable ?? {header: '', items: [], bullet: '-'}
-  if (configDeletedInfoTable && useVersionedAppConfig()) {
-    finalDeletedInfoTable = {
-      ...finalDeletedInfoTable,
-      header: configDeletedInfoTable.header,
-      items: [...finalDeletedInfoTable.items, ...configDeletedInfoTable.items],
-    }
-  }
-
   const infoTable = []
-  if (
-    useVersionedAppConfig() &&
-    (extensionsInfoTable || finalDeletedInfoTable.header !== '' || configInfoTable.items.length > 0)
-  ) {
+  if ((extensionsInfoTable || configInfoTable.items.length > 0) && useVersionedAppConfig()) {
     infoTable.push(
-      configInfoTable.items.length === 0 ? {...configInfoTable, items: [{subdued: 'No changes'}]} : configInfoTable,
+      configInfoTable.items.length === 0
+        ? {...configInfoTable, emptyItemsText: 'No changes', items: []}
+        : configInfoTable,
     )
   }
-  if (extensionsInfoTable) infoTable.push(extensionsInfoTable)
-  if (finalDeletedInfoTable.header !== '') infoTable.push(finalDeletedInfoTable)
+  const isDangerous = appTitle !== undefined && hasDeletedExtensions
+  if (extensionsInfoTable)
+    infoTable.push(
+      isDangerous
+        ? {...extensionsInfoTable, helperText: 'Removing extensions can permanentely delete app user data'}
+        : extensionsInfoTable,
+    )
 
-  const isDangerous = appTitle !== undefined && deletedInfoTable
-
+  const question = `${release ? 'Release' : 'Create'} a new version${appTitle ? ` of ${appTitle}` : ''}?`
   if (isDangerous) {
     confirmationResponse = await renderDangerousConfirmationPrompt({
       message: question,
@@ -90,18 +79,10 @@ async function deployConfirmationPrompt({
       confirmation: appTitle,
     })
   } else {
-    let confirmationMessage
-
-    if (release) {
-      confirmationMessage = 'Yes, release this new version'
-    } else {
-      confirmationMessage = 'Yes, create this new version'
-    }
-
     confirmationResponse = await renderConfirmationPrompt({
       message: question,
       infoTable,
-      confirmationMessage,
+      confirmationMessage: `Yes, ${release ? 'release' : 'create'} this new version`,
       cancellationMessage: 'No, cancel',
     })
   }
@@ -120,22 +101,18 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
   const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = extensionsContentBreakdown
 
   let extensionsInfoTable
-  const extensionsInfo = [
-    ...toCreateBreakdown.map((identifier) => [identifier, {subdued: '(new)'}]),
-    ...toUpdate.map((identifier) => [identifier, {subdued: ''}]),
-    ...fromDashboard.map((identifier) => [identifier, {subdued: '(from Partner Dashboard)'}]),
-  ]
-  if (extensionsInfo.length > 0) {
-    extensionsInfoTable = {header: 'Extensions:', items: extensionsInfo}
+  const section = {
+    new: toCreateBreakdown,
+    updated: [...toUpdate, ...fromDashboard.map((identifier) => [identifier, {subdued: '(from Partner Dashboard)'}])],
+    removed: onlyRemote,
   }
+  const extensionsInfo = buildNURInfoTableSection(section)
 
-  let deletedInfoTable
-  const deleted = onlyRemote.map((field) => [{subdued: 'Extension:'}, field])
-  if (deleted.length > 0) {
-    deletedInfoTable = {
-      header: 'Removes:',
-      items: deleted,
-      bullet: '-',
+  const hasDeletedExtensions = onlyRemote.length > 0
+  if (extensionsInfo.length > 0) {
+    extensionsInfoTable = {
+      header: 'Extensions:',
+      items: extensionsInfo,
     }
   }
 
@@ -145,7 +122,7 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
     cmd_deploy_confirm_removed_registrations: onlyRemote.length,
   }))
 
-  return {extensionsInfoTable, deletedInfoTable}
+  return {extensionsInfoTable, hasDeletedExtensions}
 }
 
 async function buildConfigContentPrompt(
@@ -160,25 +137,18 @@ async function buildConfigContentPrompt(
 
   const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} = configContentBreakdown
 
-  const modifiedFieldNames = [
-    ...existingUpdatedFieldNames.map((field) => [field, {subdued: '(updated)'}]),
-    ...newFieldNames.map((field) => [field, {subdued: '(new)'}]),
-  ]
-  const configurationInfo = [...existingFieldNames.map((field) => [field, {subdued: ''}]), ...modifiedFieldNames]
+  const section = {
+    new: newFieldNames,
+    updated: [...existingUpdatedFieldNames, ...existingFieldNames],
+    removed: deletedFieldNames,
+  }
+  const configurationInfo = buildNURInfoTableSection(section)
+
+  const hasModifiedFields = newFieldNames.length > 0 || existingUpdatedFieldNames.length > 0
   const configInfoTable = {
     header: 'Configuration:',
-    items: modifiedFieldNames.length > 0 || !release ? configurationInfo : [],
+    items: hasModifiedFields || deletedFieldNames.length > 0 || !release ? configurationInfo : [],
   }
 
-  let deletedInfoTable
-  const deleted = deletedFieldNames.map((field) => [{subdued: 'Configuration:'}, field])
-  if (deleted.length > 0) {
-    deletedInfoTable = {
-      header: 'Removes:',
-      items: deleted,
-      bullet: '-',
-    }
-  }
-
-  return {configInfoTable, deletedInfoTable}
+  return {configInfoTable}
 }
