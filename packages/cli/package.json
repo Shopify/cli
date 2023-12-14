@@ -105,13 +105,13 @@
   "devDependencies": {
     "@shopify/app": "3.52.0",
     "@shopify/theme": "3.52.0",
-    "@types/node": "16.18.57",
+    "@types/node": "18.19.3",
     "@vitest/coverage-istanbul": "^0.34.3",
     "vite": "^4.4.9",
     "vitest": "^0.34.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.12.0"
   },
   "os": [
     "darwin",
