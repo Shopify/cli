@@ -1,0 +1,49 @@
+name = "admin-extensions"
+client_id = "c31d4f51528e45f27c9abad36bc7c6cc"
+application_url = "https://tourist-caution-accessory-conditions.trycloudflare.com"
+embedded = true
+
+[access_scopes]
+scopes = "write_products"
+
+[auth]
+redirect_urls = [
+  "https://tourist-caution-accessory-conditions.trycloudflare.com/auth/callback",
+  "https://tourist-caution-accessory-conditions.trycloudflare.com/auth/shopify/callback",
+  "https://tourist-caution-accessory-conditions.trycloudflare.com/api/auth/callback"
+]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "olavo-test.myshopify.com"
+
+[[custom_data.metaobject_definitions]]
+type = "$app:qrCode"
+name = "QR Code"
+
+[[custom_data.metaobject_definitions.field_definitions]]
+name = "title"
+key = "title"
+type = "single_line_text_field"
+required = true
+
+[[custom_data.metaobject_definitions.field_definitions]]
+name = "Product variant"
+key = "variant"
+type = "variant_reference"
+required = true
+
+[[custom_data.metaobject_definitions.field_definitions]]
+name = "Destination"
+key = "destination"
+type = "single_line_text_field"
+
+[[custom_data.metaobject_definitions.field_definitions.validations]]
+name = "choices"
+value = ["Checkout", "Product detail"]

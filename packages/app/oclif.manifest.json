@@ -1179,6 +1179,22 @@
       },
       "args": {}
     },
+    "app:generate:crud": {
+      "id": "app:generate:crud",
+      "description": "Scaffold an CRUD UI.",
+      "strict": true,
+      "pluginName": "@shopify/app",
+      "pluginAlias": "@shopify/app",
+      "pluginType": "core",
+      "aliases": [],
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+      },
+      "args": {
+      }
+    },
     "app:generate:extension": {
       "id": "app:generate:extension",
       "description": "Scaffold an Extension.",

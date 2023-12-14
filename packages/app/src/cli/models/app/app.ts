@@ -111,6 +111,41 @@ export const AppSchema = zod
         use_legacy_install_flow: zod.boolean().optional(),
       })
       .optional(),
+    custom_data: zod
+      .object({
+        metafield_definitions: zod
+          .array(
+            zod.object({
+              namespace: zod.string(),
+              key: zod.string(),
+              type: zod.string(),
+              owner_type: zod.string(),
+              name: zod.string(),
+              description: zod.string().optional(),
+            }),
+          )
+          .optional(),
+        metaobject_definitions: zod
+          .array(
+            zod.object({
+              name: zod.string(),
+              type: zod.string(),
+              field_definitions: zod
+                .array(
+                  zod.object({
+                    key: zod.string(),
+                    type: zod.string(),
+                    name: zod.string(),
+                    required: zod.boolean().optional(),
+                    description: zod.string().optional(),
+                  }),
+                )
+                .optional(),
+            }),
+          )
+          .optional(),
+      })
+      .optional(),
     auth: zod
       .object({
         redirect_urls: zod.array(validateUrl(zod.string())),
