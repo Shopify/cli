@@ -2,6 +2,7 @@ import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import express from 'express'
 import bodyParser from 'body-parser'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -174,6 +175,7 @@ export function setupGraphiQLServer({
           Accept: 'application/json',
           'Content-Type': 'application/json',
           'X-Shopify-Access-Token': await token(),
+          'User-Agent': `ShopifyCLIGraphiQL/${CLI_KIT_VERSION}`,
         }
 
         return fetch(graphqlUrl, {
