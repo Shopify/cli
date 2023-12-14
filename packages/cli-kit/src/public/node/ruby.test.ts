@@ -271,9 +271,9 @@ function mockRubyEnvironment() {
 
 function mockPlatformAndArch({windows}: {windows: boolean}) {
   if (windows) {
-    vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'x64'})
+    vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'amd64'})
   } else {
-    vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'x64'})
+    vi.mocked(platformAndArch).mockReturnValue({platform: 'darwin', arch: 'amd64'})
   }
 }
 

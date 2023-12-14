@@ -57,12 +57,13 @@ export function platformAndArch(
   platform: PlatformStrings
   arch: PlatformArch
 } {
-  let archString = arch
+  let archString: PlatformArch
   if (arch === 'x64') {
     archString = 'amd64'
-  }
-  if (arch === 'ia32') {
+  } else if (arch === 'ia32') {
     archString = '386'
+  } else {
+    archString = arch
   }
   const platformString = (platform.match(/^win.+/) ? 'windows' : platform) as PlatformStrings
   return {platform: platformString, arch: archString}
