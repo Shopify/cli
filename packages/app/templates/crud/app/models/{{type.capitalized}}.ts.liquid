@@ -1,0 +1,104 @@
+type GraphQLClient = (query: string, options?: {variables?: Record<string, any>}) => Promise<Response>
+
+export async function fetch{{type.capitalized}}List(graphql: GraphQLClient) {
+  const response = await graphql(
+    `#graphql
+      query {
+        metaobjects(type: "{{metaobject.type}}", first: 10) {
+          edges {
+            node {
+              id
+              displayName
+              handle
+              updatedAt
+              createdAt
+              {% for field in metaobject.field_definitions %}
+              {{field.key}}: field(key: "{{field.key}}") {
+                value
+                type
+                {% if field.type == "variant_reference" %}
+                reference {
+                  ... on ProductVariant {
+                    id
+                    title
+                    image {
+                      url
+                    }
+                    product {
+                      id
+                      handle
+                      title
+                      featuredMedia {
+                        preview {
+                          image {
+                            url
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+                {% endif %}
+              }
+              {% endfor %}
+            }
+          }
+        }
+      }
+    `,
+  )
+  const {data} = await response.json()
+  return data?.metaobjects?.edges.map((edge) => edge?.node).filter(notNull) || []
+}
+
+export async function fetch{{type.capitalized}}(graphql: GraphQLClient, handle: string) {
+  const response = await graphql(
+    `#graphql
+      query Fetch($handle: String!) {
+        metaobjectByHandle(handle: {type: "{{metaobject.type}}", handle: $handle}) {
+          id
+          displayName
+          handle
+          updatedAt
+          createdAt
+          {% for field in metaobject.field_definitions %}
+          {{field.key}}: field(key: "{{field.key}}") {
+            value
+            type
+            {% if field.type == "variant_reference" %}
+            reference {
+              ... on ProductVariant {
+                id
+                title
+                image {
+                  url
+                }
+                product {
+                  id
+                  handle
+                  title
+                  featuredMedia {
+                    preview {
+                      image {
+                        url
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            {% endif %}
+          }
+          {% endfor %}
+        }
+      }
+    `,
+    {variables: {handle}},
+  )
+  const {data} = await response.json()
+  return data?.metaobjectByHandle ?? undefined
+}
+
+function notNull<T>(value: T | null | undefined): value is T {
+  return value != null
+}

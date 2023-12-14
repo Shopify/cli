@@ -49,13 +49,28 @@ export default class AppGenerateCrud extends Command {
         throw new Error(`Metaobject definition for ${args.name} not found`)
       }
 
+      // generate capitalized, singular, plural reduce
+      const props = Object.entries({
+        type: metaobjectDefinition.type.slice('$app:'.length),
+        name: metaobjectDefinition.name,
+      }).reduce(
+        (acc, [key, value]) => ({
+          ...acc,
+          [key]: {
+            original: value,
+            capitalized: value.charAt(0).toUpperCase() + value.slice(1),
+            singular: pluralize.singular(value),
+            plural: pluralize.plural(value),
+          },
+        }),
+        {},
+      )
+
       await generateFromLocalTemplate({
         template: 'crud',
         directory: joinPath(cwd()),
         options: {
-          name: metaobjectDefinition.name,
-          namePlural: pluralize.plural(metaobjectDefinition.name),
-          nameSingular: pluralize.singular(metaobjectDefinition.name),
+          ...props,
           metaobject: metaobjectDefinition,
         },
       })
