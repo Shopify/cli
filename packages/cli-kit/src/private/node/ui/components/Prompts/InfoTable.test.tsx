@@ -40,4 +40,42 @@ describe('InfoTable', async () => {
       • items"
     `)
   })
+
+  test('when the list of items has elements doesnt render the empty message', async () => {
+    const {lastFrame} = render(
+      <InfoTable
+        table={[
+          {
+            header: 'header',
+            items: ['item'],
+            emptyItemsText: 'empty',
+          },
+        ]}
+      />,
+    )
+
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
+      "Header
+      • item"
+    `)
+  })
+
+  test('when the list of items is empty renders the empty message subdued if set', async () => {
+    const {lastFrame} = render(
+      <InfoTable
+        table={[
+          {
+            header: 'header',
+            items: [],
+            emptyItemsText: 'empty',
+          },
+        ]}
+      />,
+    )
+
+    expect(lastFrame()!).toMatchInlineSnapshot(`
+      "[1mHeader[22m
+      [2mempty[22m"
+    `)
+  })
 })
