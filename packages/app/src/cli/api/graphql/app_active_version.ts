@@ -9,6 +9,7 @@ export const ActiveAppVersionQuery = gql`
           registrationUuid
           registrationTitle
           type
+          config
           specification {
             identifier
             name
@@ -40,6 +41,7 @@ export interface AppModuleVersion {
   registrationId: string
   registrationUuid: string
   registrationTitle: string
+  config?: string
   type: string
   specification?: AppModuleVersionSpecification
 }

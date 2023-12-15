@@ -9,6 +9,7 @@ import {remoteAppConfigurationExtensionContent} from '../app/config/link.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
+import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -90,9 +91,39 @@ export async function configExtensionsIdentifiersBreakdown(
   return configContentBreakdown
 }
 
+export async function configExtensionsIdentifiersReleaseBreakdown(
+  token: string,
+  apiKey: string,
+  app: AppInterface,
+  versionAppModules: AppModuleVersion[],
+) {
+  const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
+
+  const appModuleVersionsConfig =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+      (module) => module.specification?.experience === 'configuration',
+    ) || []
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(
+    appModuleVersionsConfig.map(mapAppModuleToExtensionRegistration),
+    app,
+    versionAppModules.map(mapAppModuleToExtensionRegistration),
+  )
+}
+
+function mapAppModuleToExtensionRegistration(appModule: AppModuleVersion): ExtensionRegistration {
+  return {
+    id: appModule.registrationId,
+    uuid: appModule.registrationUuid,
+    title: appModule.registrationTitle,
+    type: appModule.specification?.identifier ?? '',
+    draftVersion: appModule.config ? {config: appModule.config} : undefined,
+    activeVersion: appModule.config ? {config: appModule.config} : undefined,
+  }
+}
+
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
   return {
-    existingFieldNames: filterNonVersionedAppFields(app),
+    existingFieldNames: filterNonVersionedAppFields(app.configuration),
     existingUpdatedFieldNames: [] as string[],
     newFieldNames: [] as string[],
     deletedFieldNames: [] as string[],
@@ -102,11 +133,14 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 function resolveRemoteConfigExtensionIdentifiersBreakdown(
   extensionRegistrations: ExtensionRegistration[],
   app: AppInterface,
+  versionExtensionRegistrations?: ExtensionRegistration[],
 ): ConfigExtensionIdentifiersBreakdown {
   const remoteConfig = remoteAppConfigurationExtensionContent(extensionRegistrations, app.specifications ?? [])
-  const localConfig = app.configuration
+  const baselineConfig = versionExtensionRegistrations
+    ? remoteAppConfigurationExtensionContent(versionExtensionRegistrations, app.specifications ?? [])
+    : app.configuration
   const diffConfigContent = buildDiffConfigContent(
-    localConfig as CurrentAppConfiguration,
+    baselineConfig as CurrentAppConfiguration,
     remoteConfig,
     app.configSchema,
     false,
@@ -114,7 +148,7 @@ function resolveRemoteConfigExtensionIdentifiersBreakdown(
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
   // (versioned fields)
-  const versionedLocalFieldNames = filterNonVersionedAppFields(app)
+  const versionedLocalFieldNames = filterNonVersionedAppFields(baselineConfig)
   // List of remote fields that have different values to the local ones or are not present in the local config
   const remoteDiffModifications = diffConfigContent
     ? getFieldsFromDiffConfigContent(diffConfigContent.baselineContent)

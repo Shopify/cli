@@ -2,6 +2,7 @@
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {
   configExtensionsIdentifiersBreakdown,
+  configExtensionsIdentifiersReleaseBreakdown,
   extensionsIdentifiersDeployBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './breakdown-extensions.js'
@@ -528,6 +529,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         location: 'location',
         versionTag: '1.0.0',
         message: 'message',
+        appModuleVersions: [],
       },
     }
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
@@ -562,6 +564,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         location: 'location',
         versionTag: '1.0.0',
         message: 'message',
+        appModuleVersions: [],
       },
     }
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
@@ -784,6 +787,274 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         newFieldNames: [...NON_VERSIONED_NEW_FIELD_NAMES, ...[]],
         deletedFieldNames: ['pos'],
       })
+    })
+  })
+})
+describe('configExtensionsIdentifiersReleaseBreakdown', () => {
+  test.only('when the version to release config and remote remote current app exists and have same values it will be returned in the existing list', async () => {
+    // Given
+    const configToReleaseAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const configActiveAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
+    vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+
+    const specifications = await loadFSExtensionsSpecifications()
+
+    // When
+    const result = await configExtensionsIdentifiersReleaseBreakdown(
+      'token',
+      'apiKey',
+      await LOCAL_APP([], APP_CONFIGURATION),
+      [configToReleaseAppModule],
+    )
+
+    // Then
+    expect(result).toEqual({
+      existingFieldNames: ['application_url', 'embedded'],
+      existingUpdatedFieldNames: [],
+      newFieldNames: [],
+      deletedFieldNames: [],
+    })
+  })
+  test('when the version to release config and remote remote current app exists and have different values it will be returned in the update list', async () => {
+    // Given
+    const configToReleaseAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const configActiveAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({app_url: 'https://myapp-edited.com', embedded: false}),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const activeVersion = {
+      app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}},
+    }
+    vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+
+    const specifications = await loadFSExtensionsSpecifications()
+
+    // When
+    const result = await configExtensionsIdentifiersReleaseBreakdown(
+      'token',
+      'apiKey',
+      await LOCAL_APP([], APP_CONFIGURATION),
+      [configToReleaseAppModule],
+    )
+
+    // Then
+    expect(result).toEqual({
+      existingFieldNames: [],
+      existingUpdatedFieldNames: ['application_url', 'embedded'],
+      newFieldNames: [],
+      deletedFieldNames: [],
+    })
+  })
+  test('when the version to release includes a new config it will be returned in the new list', async () => {
+    // Given
+    const configToReleaseAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({
+        app_url: 'https://myapp.com',
+        embedded: true,
+      }),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const configActiveAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const configActivePosConfigurationAppModule: AppModuleVersion = {
+      registrationId: 'C_B',
+      registrationUuid: 'UUID_C_B',
+      registrationTitle: 'Registration title',
+      type: 'point_of_sale',
+      config: JSON.stringify({
+        embedded: false,
+      }),
+      specification: {
+        identifier: 'point_of_sale',
+        name: 'Pos configuration',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const activeVersion = {
+      app: {
+        activeAppVersion: {
+          appModuleVersions: [configActiveAppModule, configActivePosConfigurationAppModule, MODULE_DASHBOARD_A],
+        },
+      },
+    }
+    vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+
+    const specifications = await loadFSExtensionsSpecifications()
+
+    // When
+    const result = await configExtensionsIdentifiersReleaseBreakdown(
+      'token',
+      'apiKey',
+      await LOCAL_APP([], APP_CONFIGURATION),
+      [configToReleaseAppModule],
+    )
+
+    // Then
+    expect(result).toEqual({
+      existingFieldNames: ['application_url', 'embedded'],
+      existingUpdatedFieldNames: [],
+      newFieldNames: [],
+      deletedFieldNames: ['pos'],
+    })
+  })
+  test('when the version to release config doesnt include a config module that exists in the remote remote current app it will be returned in the delete list', async () => {
+    // Given
+    const configToReleaseAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({
+        app_url: 'https://myapp.com',
+        embedded: true,
+      }),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const configToReleasePosAppModule: AppModuleVersion = {
+      registrationId: 'C_B',
+      registrationUuid: 'UUID_C_B',
+      registrationTitle: 'Registration title',
+      type: 'point_of_sale',
+      config: JSON.stringify({
+        embedded: false,
+      }),
+      specification: {
+        identifier: 'point_of_sale',
+        name: 'Pos configuration',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const configActiveAppModule: AppModuleVersion = {
+      registrationId: 'C_A',
+      registrationUuid: 'UUID_C_A',
+      registrationTitle: 'Registration title',
+      type: 'app_home',
+      config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+      specification: {
+        identifier: 'app_home',
+        name: 'App Ui',
+        experience: 'configuration',
+        options: {
+          managementExperience: 'cli',
+        },
+      },
+    }
+    const activeVersion = {
+      app: {
+        activeAppVersion: {
+          appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A],
+        },
+      },
+    }
+    vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+
+    const specifications = await loadFSExtensionsSpecifications()
+
+    // When
+    const result = await configExtensionsIdentifiersReleaseBreakdown(
+      'token',
+      'apiKey',
+      await LOCAL_APP([], APP_CONFIGURATION),
+      [configToReleaseAppModule, configToReleasePosAppModule],
+    )
+
+    // Then
+    expect(result).toEqual({
+      existingFieldNames: ['application_url', 'embedded'],
+      existingUpdatedFieldNames: [],
+      newFieldNames: ['pos'],
+      deletedFieldNames: [],
     })
   })
 })
