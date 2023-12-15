@@ -79,13 +79,19 @@ export async function runCLI(options: RunCLIOptions): Promise<void> {
   const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
   const {run, settings, flush, Errors} = await import('@oclif/core')
+  const {fileURLToPath} = await import('url')
+  const {ShopifyConfig} = await import('./custom-oclif-loader.js')
 
   if (isDevelopment()) {
     settings.debug = true
   }
 
   try {
-    await run(undefined, options.moduleURL)
+    // Use a custom OCLIF config so that plug-ins can be dynamically discovered and loaded
+    const config = new ShopifyConfig({root: fileURLToPath(options.moduleURL)})
+    await config.load()
+
+    await run(undefined, config)
     await flush()
     printEventsJson()
     // eslint-disable-next-line no-catch-all/no-catch-all
