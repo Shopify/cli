@@ -131,6 +131,7 @@ export async function testUIExtension(
       api_access: false,
       collect_buyer_consent: {
         sms_marketing: false,
+        write_privacy_consent: false,
       },
     },
   }
@@ -312,22 +313,6 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     features: {
       argo: {
         surface: 'all',
-      },
-    },
-  },
-  {
-    name: 'Customer Accounts',
-    externalName: 'Customer Accounts',
-    identifier: 'customer_accounts_ui_extension',
-    externalIdentifier: 'customer_accounts_ui_extension_external',
-    gated: false,
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 10,
-    },
-    features: {
-      argo: {
-        surface: 'customer_accounts',
       },
     },
   },

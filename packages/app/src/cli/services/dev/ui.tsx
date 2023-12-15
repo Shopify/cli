@@ -66,6 +66,7 @@ export async function renderDev({
   app,
   abortController,
   graphiqlUrl,
+  graphiqlPort,
   developerPreview,
 }: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
@@ -76,6 +77,7 @@ export async function renderDev({
         previewUrl={previewUrl}
         app={app}
         graphiqlUrl={graphiqlUrl}
+        graphiqlPort={graphiqlPort}
         developerPreview={developerPreview}
       />,
       {
@@ -101,7 +103,7 @@ async function renderDevNonInteractive({
   app: {canEnablePreviewMode},
   abortController,
   developerPreview,
-}: Omit<DevProps, 'previewUrl'>) {
+}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
   if (canEnablePreviewMode) {
     await developerPreview.enable()
     abortController?.signal.addEventListener('abort', async () => {

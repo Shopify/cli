@@ -1,26 +1,14 @@
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
-import {
-  AppProvider,
-  Badge,
-  Banner,
-  BlockStack,
-  Box,
-  Card,
-  Grid,
-  InlineStack,
-  Link,
-  Select,
-  Text,
-} from '@shopify/polaris'
-import {CircleAlertMajor, LinkMinor} from '@shopify/polaris-icons'
+import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'
+import {CircleAlertMajor, CircleDisabledMajor, LinkMinor} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
 
 const graphiqlIntroMessage = `
-# Welcome to the Shopify GraphiQL Explorer! If you've used GraphiQL before,
-# you can go ahead and jump to the next tab.
+# Welcome to GraphiQL for the Shopify Admin API! If you've used
+# GraphiQL before, you can jump to the next tab.
 #
 # GraphiQL is an in-browser tool for writing, validating, and
 # testing GraphQL queries.
@@ -63,6 +51,7 @@ interface GraphiQLTemplateOptions {
   apiVersions: string[]
   appName: string
   appUrl: string
+  key?: string
   storeFqdn: string
 }
 
@@ -71,6 +60,7 @@ export function graphiqlTemplate({
   apiVersions,
   appName,
   appUrl,
+  key,
   storeFqdn,
 }: GraphiQLTemplateOptions): string {
   return `<!DOCTYPE html>
@@ -117,10 +107,11 @@ export function graphiqlTemplate({
         height: 100%;
       }
       #top-bar .status-badge-option {
+        gap: 8px;
         display: none;
       }
       #top-bar #status-badge-running {
-        display: block;
+        display: flex;
       }
       #graphiql {
         height: 100vh;
@@ -131,6 +122,9 @@ export function graphiqlTemplate({
         flex-grow: 1;
         overflow: auto;
       }
+      #top-bar #outbound-links a {
+        line-height: 0;
+      }
       #top-bar #outbound-links a:hover .Polaris-Text--root {
         text-decoration: underline;
       }
@@ -139,6 +133,11 @@ export function graphiqlTemplate({
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
+      }
+      .with-shrunk-icon .Polaris-Icon {
+        height: 1rem;
+        width: 1rem;
+        margin: 0.125rem;
       }
       @media only screen and (max-width: 1550px) {
         .top-bar-section-title {
@@ -181,16 +180,6 @@ export function graphiqlTemplate({
           <div id="top-bar">
             <Box background="bg-surface" padding="400">
               <BlockStack gap="300">
-                <div id="top-error-bar">
-                  <Card padding={{xs: '0'}}>
-                    <Banner tone="critical" onDismiss={() => {}}>
-                      <p>
-                        The server has been stopped. Restart <code>dev</code> from the CLI and launch the GraphiQL
-                        explorer again.
-                      </p>
-                    </Banner>
-                  </Card>
-                </div>
                 <Grid columns={{xs: 3, sm: 3, md: 3}}>
                   <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 7, xl: 7}}>
                     <InlineStack gap="400">
@@ -201,15 +190,15 @@ export function graphiqlTemplate({
                             Running
                           </Badge>
                         </div>
-                        <div className="status-badge-option" id="status-badge-unauthorized">
+                        <div className="status-badge-option with-shrunk-icon" id="status-badge-unauthorized">
                           <span className="top-bar-section-title">Status: </span>
                           <Badge tone="attention" icon={CircleAlertMajor}>
                             App uninstalled
                           </Badge>
                         </div>
-                        <div className="status-badge-option" id="status-badge-disconnected">
+                        <div className="status-badge-option with-shrunk-icon" id="status-badge-disconnected">
                           <span className="top-bar-section-title">Status: </span>
-                          <Badge tone="warning" progress="partiallyComplete">
+                          <Badge tone="critical" icon={CircleDisabledMajor}>
                             Disconnected
                           </Badge>
                         </div>
@@ -224,7 +213,7 @@ export function graphiqlTemplate({
                           onChange={() => {}}
                         />
                       </div>
-                      <div id="outbound-links" className="top-bar-section">
+                      <div id="outbound-links" className="top-bar-section with-shrunk-icon">
                         <span className="top-bar-section-title">Store: </span>
                         <Link url={`https://${storeFqdn}/admin`} target="_blank">
                           <Badge tone="info" icon={LinkMinor}>
@@ -248,6 +237,13 @@ export function graphiqlTemplate({
                     </div>
                   </Grid.Cell>
                 </Grid>
+                <div id="top-error-bar">
+                  <Banner tone="critical" onDismiss={() => {}} icon={CircleDisabledMajor}>
+                    <p>
+                      The server has been stopped. Restart <code>dev</code> from the CLI.
+                    </p>
+                  </Banner>
+                </div>
               </BlockStack>
             </Box>
           </div>
@@ -265,7 +261,7 @@ export function graphiqlTemplate({
         ReactDOM.render(
           React.createElement(GraphiQL, {
             fetcher: GraphiQL.createFetcher({
-              url: '{{url}}/graphiql/graphql.json?api_version=' + apiVersion,
+              url: '{{url}}/graphiql/graphql.json?key=${key ?? ''}&api_version=' + apiVersion,
             }),
             defaultEditorToolsVisibility: true,
             defaultTabs: [
@@ -298,11 +294,11 @@ export function graphiqlTemplate({
         const statusDiv = document.querySelector('#graphiql #status-badge')
         const allBadgeDivs = Array.from(statusDiv.querySelectorAll('.status-badge-option'))
         let activeBadge = 'running'
-        if (!serverIsLive) activeBadge = 'disconnected'
         if (!appIsInstalled) activeBadge = 'unauthorized'
+        if (!serverIsLive) activeBadge = 'disconnected'
         allBadgeDivs.forEach(function(badge) {
           if (badge.id == ('status-badge-' + activeBadge)) {
-            badge.style.display = 'block'
+            badge.style.display = 'flex'
           } else {
             badge.style.display = 'none'
           }

@@ -14,9 +14,6 @@ export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionD
     rawUrl.searchParams.append('dev', `${options.url}/extensions`)
 
     return rawUrl.toString()
-  } else if (extension.surface === 'customer_accounts') {
-    const rawUrl = getCustomerAccountsRedirectUrl(extension, options)
-    return rawUrl.toString()
   } else {
     const rawUrl = new URL(`https://${options.storeFqdn}/`)
     rawUrl.pathname = 'admin/extensions-dev'

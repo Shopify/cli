@@ -56,7 +56,6 @@ export interface UIExtensionPayload {
   }
   extensionPoints: string[] | null | DevNewExtensionPointSchema[]
   localization: Localization | null
-  categories: string[] | null
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   metafields?: {namespace: string; key: string}[] | null

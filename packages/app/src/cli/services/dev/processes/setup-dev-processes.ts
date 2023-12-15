@@ -5,7 +5,7 @@ import {DraftableExtensionProcess, setupDraftableExtensionsProcess} from './draf
 import {SendWebhookProcess, setupSendUninstallWebhookProcess} from './uninstall-webhook.js'
 import {GraphiQLServerProcess, setupGraphiQLServerProcess} from './graphiql.js'
 import {WebProcess, setupWebProcesses} from './web.js'
-import {environmentVariableNames, urlNamespaces} from '../../../constants.js'
+import {environmentVariableNames} from '../../../constants.js'
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 
 import {OrganizationApp} from '../../../models/organization.js'
@@ -52,6 +52,8 @@ export interface DevConfig {
   commandOptions: DevOptions
   network: DevNetworkOptions
   partnerUrlsUpdated: boolean
+  graphiqlPort: number
+  graphiqlKey?: string
 }
 
 export async function setupDevProcesses({
@@ -63,6 +65,8 @@ export async function setupDevProcesses({
   storeId,
   commandOptions,
   network,
+  graphiqlPort,
+  graphiqlKey,
 }: DevConfig): Promise<{
   processes: DevProcesses
   previewUrl: string
@@ -86,12 +90,13 @@ export async function setupDevProcesses({
     })),
     shouldRenderGraphiQL
       ? await setupGraphiQLServerProcess({
-          appName: localApp.name,
+          appName: remoteApp.title,
           appUrl: appPreviewUrl,
+          port: graphiqlPort,
           apiKey,
           apiSecret,
+          key: graphiqlKey,
           storeFqdn,
-          url: network.proxyUrl.replace(/^https?:\/\//, ''),
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
@@ -145,7 +150,9 @@ export async function setupDevProcesses({
   return {
     processes: processesWithProxy,
     previewUrl,
-    graphiqlUrl: shouldRenderGraphiQL ? `${network.proxyUrl}/${urlNamespaces.devTools}/graphiql` : undefined,
+    graphiqlUrl: shouldRenderGraphiQL
+      ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
+      : undefined,
   }
 }
 
@@ -171,10 +178,6 @@ async function setPortsAndAddProxyProcess(processes: DevProcesses, proxyPort: nu
       } else if (process.type === 'previewable-extension') {
         const targetPort = await getAvailableTCPPort()
         rules[process.options.pathPrefix] = `http://localhost:${targetPort}`
-        process.options.port = targetPort
-      } else if (process.type === 'graphiql') {
-        const targetPort = await getAvailableTCPPort()
-        rules[process.urlPrefix] = `http://localhost:${targetPort}`
         process.options.port = targetPort
       }
 

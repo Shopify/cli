@@ -356,10 +356,10 @@ describe('ExportJavyBuilder', () => {
     const got = builder.wit
 
     // Then
-    expect(got).toContain('package function:impl')
+    expect(got).toContain('package function:impl;')
     expect(got).toContain('world shopify-function')
-    expect(got).toContain('export %foo-bar: func()')
-    expect(got).toContain('export %foo-baz: func()')
+    expect(got).toContain('export %foo-bar: func();')
+    expect(got).toContain('export %foo-baz: func();')
   })
 
   test('entrypointContents', () => {
