@@ -79,34 +79,31 @@ export async function extensionsIdentifiersReleaseBreakdown(
   return {extensionIdentifiersBreakdown, versionDetails}
 }
 
-export async function configExtensionsIdentifiersBreakdown(
-  localApp: AppInterface,
-  extensionRegistrations: ExtensionRegistration[],
-  release?: boolean,
-) {
-  let configContentBreakdown = loadLocalConfigExtensionIdentifiersBreakdown(localApp)
-  if (release) {
-    configContentBreakdown = resolveRemoteConfigExtensionIdentifiersBreakdown(extensionRegistrations, localApp)
-  }
-  return configContentBreakdown
-}
+export async function configExtensionsIdentifiersBreakdown({
+  token,
+  apiKey,
+  localApp,
+  versionAppModules,
+  release,
+}: {
+  token: string
+  apiKey: string
+  localApp: AppInterface
+  versionAppModules?: AppModuleVersion[]
+  release?: boolean
+}) {
+  if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
-export async function configExtensionsIdentifiersReleaseBreakdown(
-  token: string,
-  apiKey: string,
-  app: AppInterface,
-  versionAppModules: AppModuleVersion[],
-) {
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
-
   const appModuleVersionsConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification?.experience === 'configuration',
     ) || []
+
   return resolveRemoteConfigExtensionIdentifiersBreakdown(
     appModuleVersionsConfig.map(mapAppModuleToExtensionRegistration),
-    app,
-    versionAppModules.map(mapAppModuleToExtensionRegistration),
+    localApp,
+    versionAppModules ? versionAppModules.map(mapAppModuleToExtensionRegistration) : undefined,
   )
 }
 

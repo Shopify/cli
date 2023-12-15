@@ -1,6 +1,6 @@
 import {ensureReleaseContext} from './context.js'
 import {
-  configExtensionsIdentifiersReleaseBreakdown,
+  configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
 import {AppInterface} from '../models/app/app.js'
@@ -40,12 +40,13 @@ export async function release(options: ReleaseOptions) {
     options.version,
     app.specifications ?? [],
   )
-  const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersReleaseBreakdown(
+  const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
     token,
-    partnersApp.apiKey,
-    app,
-    versionDetails.appModuleVersions,
-  )
+    apiKey: partnersApp.apiKey,
+    localApp: app,
+    versionAppModules: versionDetails.appModuleVersions,
+    release: true,
+  })
   const confirmed = await deployOrReleaseConfirmationPrompt({
     configExtensionIdentifiersBreakdown,
     extensionIdentifiersBreakdown,
