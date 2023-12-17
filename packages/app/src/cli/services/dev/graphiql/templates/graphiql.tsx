@@ -308,12 +308,16 @@ export function graphiqlTemplate({
       const statusInterval = setInterval(updateBadge, 1000)
 
       // Warn when the server has been stopped
+      const displayErrorServerStoppedTimeouts = []
       const pingInterval = setInterval(function() {
-        const displayErrorServerStoppedTimeout = setTimeout(function() { serverIsLive = false }, 3000)
+        displayErrorServerStoppedTimeouts.push(setTimeout(function() { serverIsLive = false }, 3000))
         fetch('{{url}}/graphiql/ping')
           .then(function(response) {
             if (response.status === 200) {
-              clearTimeout(displayErrorServerStoppedTimeout)
+              while (displayErrorServerStoppedTimeouts.length > 0) {
+                const timeout = displayErrorServerStoppedTimeouts.pop()
+                clearTimeout(timeout)
+              }
               serverIsLive = true
             } else {
               serverIsLive = false
