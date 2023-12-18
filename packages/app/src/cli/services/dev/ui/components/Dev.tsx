@@ -215,7 +215,7 @@ const Dev: FunctionComponent<DevProps> = ({
               ) : null}
               {graphiqlUrl ? (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open the GraphiQL Explorer in
+                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
                   your browser
                 </Text>
               ) : null}
