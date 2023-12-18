@@ -26,6 +26,7 @@ module Theme
         parser.on("-e", "--theme-editor-sync") { flags[:editor_sync] = true }
         parser.on("--stable") { flags[:stable] = true }
         parser.on("-t", "--theme=NAME_OR_ID") { |theme| flags[:theme] = theme }
+        parser.on("-n", "--nodelete") { flags[:nodelete] = true }
         parser.on("-o", "--only=PATTERN", Conversions::IncludeGlob) do |pattern|
           flags[:includes] ||= []
           flags[:includes] |= pattern
@@ -46,9 +47,10 @@ module Theme
         root = root_value(options, name)
         flags = options.flags.dup
         host = flags[:host] || DEFAULT_HTTP_HOST
+        delete = !flags[:nodelete]
 
         ShopifyCLI::Theme::DevServer.start(@ctx, root, host: host, **flags) do |syncer|
-          UI::SyncProgressBar.new(syncer).progress(:upload_theme!, delay_low_priority_files: true)
+          UI::SyncProgressBar.new(syncer).progress(:upload_theme!, delay_low_priority_files: true, delete: delete)
         end
       end
 

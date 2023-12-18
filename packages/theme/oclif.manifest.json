@@ -372,6 +372,13 @@
           "description": "Theme ID or name of the remote theme.",
           "multiple": false
         },
+        "nodelete": {
+          "name": "nodelete",
+          "type": "boolean",
+          "char": "n",
+          "description": "Runs the dev command without deleting local files.",
+          "allowNo": false
+        },
         "only": {
           "name": "only",
           "type": "option",
@@ -436,6 +443,7 @@
         "overwrite-json",
         "port",
         "theme",
+        "nodelete",
         "only",
         "ignore",
         "stable",
@@ -1177,6 +1185,13 @@
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
           "multiple": false
+        },
+        "nodelete": {
+          "name": "nodelete",
+          "type": "boolean",
+          "char": "n",
+          "description": "Runs the dev command without deleting local files.",
+          "allowNo": false
         },
         "only": {
           "name": "only",
