@@ -14,7 +14,7 @@ To learn more about web pixels, see Shopify’s [developer documentation](https:
 
 > The web pixel extension API gives you access to a select set of controlled APIs for accessing browser APIs and subscribing to customer events, within one of our Lax or Strict sandboxes.
 
-This template project already provides a basic exetnsion setup. For more information, see the [Web pixel extension API documentation](https://shopify.dev/docs/api/pixels/pixel-extension).
+This template project already provides a basic extension setup. For more information, see the [Web pixel extension API documentation](https://shopify.dev/docs/api/pixels/pixel-extension).
 
 ## Customer Events
 
