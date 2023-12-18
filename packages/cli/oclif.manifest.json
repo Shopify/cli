@@ -152,38 +152,6 @@
       "flags": {},
       "args": {}
     },
-    "hydrogen:init": {
-      "id": "hydrogen:init",
-      "description": "Clones a Git repository to use as a starting point for building a new theme.",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        }
-      },
-      "args": {
-        "name": {
-          "name": "name",
-          "description": "Name of the new theme",
-          "required": false
-        }
-      }
-    },
     "kitchen-sink:async": {
       "id": "kitchen-sink:async",
       "description": "View the UI kit components that process async tasks",

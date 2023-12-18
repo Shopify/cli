@@ -25,7 +25,6 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
-* [`shopify hydrogen init [NAME]`](#shopify-hydrogen-init-name)
 * [`shopify kitchen-sink async`](#shopify-kitchen-sink-async)
 * [`shopify kitchen-sink prompts`](#shopify-kitchen-sink-prompts)
 * [`shopify kitchen-sink static`](#shopify-kitchen-sink-static)
@@ -611,27 +610,6 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.18/src/commands/help.ts)_
-
-## `shopify hydrogen init [NAME]`
-
-Clones a Git repository to use as a starting point for building a new theme.
-
-```
-USAGE
-  $ shopify hydrogen init [NAME] [--no-color] [--verbose]
-
-ARGUMENTS
-  NAME  Name of the new theme
-
-FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
-
-DESCRIPTION
-  Clones a Git repository to use as a starting point for building a new theme.
-```
-
-_See code: [dist/cli/commands/hydrogen/init.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/hydrogen/init.js)_
 
 ## `shopify kitchen-sink async`
 
