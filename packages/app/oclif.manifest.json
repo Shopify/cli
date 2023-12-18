@@ -511,6 +511,14 @@
           "hidden": false,
           "allowNo": false
         },
+        "force": {
+          "name": "force",
+          "type": "boolean",
+          "char": "f",
+          "description": "Release without asking for confirmation.",
+          "hidden": false,
+          "allowNo": false
+        },
         "version": {
           "name": "version",
           "type": "option",
