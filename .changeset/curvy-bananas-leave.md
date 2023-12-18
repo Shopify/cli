@@ -1,4 +1,7 @@
 ---
+'@shopify/ui-extensions-dev-console-app': minor
+'@shopify/ui-extensions-server-kit': minor
+'@shopify/ui-extensions-test-utils': minor
 '@shopify/plugin-did-you-mean': minor
 '@shopify/plugin-cloudflare': minor
 '@shopify/create-app': minor
