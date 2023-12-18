@@ -2,8 +2,7 @@ import {removeDevelopmentTheme} from './local-storage.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {deleteTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {deleteTheme} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {
   renderConfirmationPrompt,
@@ -14,6 +13,8 @@ import {
   LinkToken,
 } from '@shopify/cli-kit/node/ui'
 import {pluralize} from '@shopify/cli-kit/common/string'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
 
 export interface DeleteOptions {
   selectTheme: boolean
@@ -37,7 +38,7 @@ export async function deleteThemes(adminSession: AdminSession, options: DeleteOp
   }
 
   themes.map((theme) => {
-    if (theme.hasDevelopmentRole) {
+    if (isDevelopmentTheme(theme)) {
       removeDevelopmentTheme()
     }
     return deleteTheme(theme.id, adminSession)
