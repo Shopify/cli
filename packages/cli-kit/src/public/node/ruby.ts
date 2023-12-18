@@ -9,6 +9,7 @@ import {isSpinEnvironment, spinFqdn} from './context/spin.js'
 import {firstPartyDev, useEmbeddedThemeCLI} from './context/local.js'
 import {outputContent, outputToken} from './output.js'
 import {isTruthy} from './context/utilities.js'
+import {runWithTimer} from './metadata.js'
 import {pathConstants} from '../../private/node/constants.js'
 import {coerceSemverVersion} from '../../private/node/semver.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -39,8 +40,6 @@ interface ExecCLI2Options {
   stdout?: Writable
   // Stream to pipe the command's stdout to.
   stderr?: Writable
-  // Deployment mode
-  unifiedDeployment?: boolean
 }
 /**
  * Execute CLI 2.0 commands.
@@ -70,7 +69,6 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     ...(await getSpinEnvironmentVariables()),
     SHOPIFY_CLI_1P_DEV: firstPartyDev() ? '1' : '0',
     SHOPIFY_CLI_VERSION: CLI_KIT_VERSION,
-    SHOPIFY_CLI_UNIFIED_DEPLOYMENT: options.unifiedDeployment ? '1' : '0',
   }
 
   try {
@@ -450,7 +448,9 @@ async function getSpinEnvironmentVariables() {
  * @param directory - Directory where the Gemfile is located.
  */
 async function shopifyBundleInstall(directory: string): Promise<void> {
-  await runBundler(['install'], {cwd: directory})
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    await runBundler(['install'], {cwd: directory})
+  })
 }
 
 /**
@@ -480,7 +480,7 @@ async function runBundler(args: string[], options: ExecOptions) {
       ...options.env,
       BUNDLE_USER_HOME: bundleUserHome(),
       BUNDLE_WITHOUT: 'development:test',
-      BUNDLE_APP_CONFIG: envPaths('shopify-gems').cache,
+      BUNDLE_PATH: envPaths('shopify-gems').cache,
     },
   })
 }

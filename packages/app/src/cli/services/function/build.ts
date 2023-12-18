@@ -11,6 +11,7 @@ import {findPathUp, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
+import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {Writable} from 'stream'
 
 interface JSFunctionBuildOptions {
@@ -92,10 +93,12 @@ export async function buildGraphqlTypes(
     throw new Error('GraphQL types can only be built for JavaScript functions')
   }
 
-  return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
-    cwd: fun.directory,
-    stderr: options.stderr,
-    signal: options.signal,
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+      cwd: fun.directory,
+      stderr: options.stderr,
+      signal: options.signal,
+    })
   })
 }
 
@@ -262,8 +265,8 @@ export class ExportJavyBuilder implements JavyBuilder {
 
   get wit() {
     // % escapes the name to avoid conflict with reserved words, if any
-    const witExports = this.exports.map((name) => `export %${hyphenate(name)}: func()`)
-    return `package function:impl
+    const witExports = this.exports.map((name) => `export %${hyphenate(name)}: func();`)
+    return `package function:impl;
 
 world ${JAVY_WORLD} {
   ${witExports.join('\n  ')}

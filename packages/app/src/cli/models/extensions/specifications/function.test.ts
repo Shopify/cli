@@ -14,7 +14,6 @@ describe('functionConfiguration', () => {
   const moduleId = 'module_id'
   const apiKey = 'app-key'
   const token = 'app-token'
-  const unifiedDeployment = true
   const inputQuery = 'query { f }'
 
   const config = {
@@ -63,7 +62,7 @@ describe('functionConfiguration', () => {
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+      const got = await extension.deployConfig({apiKey, token})
 
       // Then
       expect(got).toEqual({
@@ -101,7 +100,7 @@ describe('functionConfiguration', () => {
       extension.configuration.ui = undefined
 
       // When
-      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+      const got = await extension.deployConfig({apiKey, token})
 
       // Then
       expect(got).toEqual({
@@ -134,7 +133,7 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
 
       // When
-      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+      const got = await extension.deployConfig({apiKey, token})
 
       // Then
       expect(got!.targets).toEqual([
@@ -149,7 +148,7 @@ describe('functionConfiguration', () => {
     extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
 
     // When & Then
-    await expect(() => extension.deployConfig({apiKey, token, unifiedDeployment})).rejects.toThrowError(AbortError)
+    await expect(() => extension.deployConfig({apiKey, token})).rejects.toThrowError(AbortError)
   })
 
   describe('with legacy type', async () => {
@@ -172,7 +171,7 @@ describe('functionConfiguration', () => {
         await writeFile(extension.inputQueryPath, inputQuery)
 
         // When
-        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+        const got = await extension.deployConfig({apiKey, token})
 
         // Then
         expect(got).toEqual({
@@ -210,7 +209,7 @@ describe('functionConfiguration', () => {
         extension.configuration.ui = undefined
 
         // When
-        const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+        const got = await extension.deployConfig({apiKey, token})
 
         // Then
         expect(got).toEqual({
@@ -247,7 +246,7 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(localesDir, 'en.default.json'), JSON.stringify(enLocale))
 
       // When
-      const got = await extension.deployConfig({apiKey, token, unifiedDeployment})
+      const got = await extension.deployConfig({apiKey, token})
 
       // Then
       const expectedLocalization = {
@@ -271,7 +270,6 @@ describe('functionConfiguration', () => {
       const got = (await extension.deployConfig({
         apiKey,
         token,
-        unifiedDeployment,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
       // Then
@@ -289,7 +287,6 @@ describe('functionConfiguration', () => {
       const got = (await extension.deployConfig({
         apiKey,
         token,
-        unifiedDeployment,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
       // Then

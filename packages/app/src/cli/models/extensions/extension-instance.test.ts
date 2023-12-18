@@ -7,6 +7,7 @@ import {
   testWebPixelExtension,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
@@ -50,11 +51,23 @@ describe('watchPaths', async () => {
 
     const got = extensionInstance.watchPaths
 
-    expect(got).toEqual([
-      joinPath('foo', 'src', '**', '*.js'),
-      joinPath('foo', 'src', '**', '*.ts'),
-      joinPath('foo', '**', '!(.)*.graphql'),
-    ])
+    expect(got).toEqual([joinPath('foo', 'src', '**', '*.{js,ts}'), joinPath('foo', '**', '!(.)*.graphql')])
+  })
+
+  test('returns js and ts paths for esbuild extensions', async () => {
+    const extensionInstance = await testUIExtension({directory: 'foo'})
+
+    const got = extensionInstance.watchPaths
+
+    expect(got).toEqual([joinPath('foo', 'src', '**', '*.{ts,tsx,js,jsx}')])
+  })
+
+  test('return empty array for non-function non-esbuild extensions', async () => {
+    const extensionInstance = await testTaxCalculationExtension('foo')
+
+    const got = extensionInstance.watchPaths
+
+    expect(got).toEqual([])
   })
 
   test('returns configured paths and input query', async () => {
@@ -90,52 +103,34 @@ describe('watchPaths', async () => {
 })
 
 describe('isDraftable', () => {
-  test('returns true for ui extensions when using unified deploys', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable(true)
-
-    expect(got).toBe(true)
-  })
-
-  test('returns false for ui extensions when not using unified deploys', async () => {
-    const extensionInstance = await testUIExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(false)
-  })
-
   test('returns false for theme extensions', async () => {
     const extensionInstance = await testThemeExtensions()
 
-    const got1 = extensionInstance.isDraftable(true)
-    const got2 = extensionInstance.isDraftable(false)
+    const got1 = extensionInstance.isDraftable()
 
     expect(got1).toBe(false)
-    expect(got2).toBe(false)
-  })
-
-  test('returns false for functions when not using unified deploys', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable(false)
-
-    expect(got).toBe(false)
-  })
-
-  test('returns true for functions when using unified deploys', async () => {
-    const extensionInstance = await testFunctionExtension()
-
-    const got = extensionInstance.isDraftable(true)
-
-    expect(got).toBe(true)
   })
 
   test('returns true for web pixel extensions', async () => {
     const extensionInstance = await testWebPixelExtension()
 
-    const got = extensionInstance.isDraftable(false)
+    const got = extensionInstance.isDraftable()
+
+    expect(got).toBe(true)
+  })
+
+  test('returns true for ui extensions', async () => {
+    const extensionInstance = await testUIExtension()
+
+    const got = extensionInstance.isDraftable()
+
+    expect(got).toBe(true)
+  })
+
+  test('returns true for functions', async () => {
+    const extensionInstance = await testFunctionExtension()
+
+    const got = extensionInstance.isDraftable()
 
     expect(got).toBe(true)
   })
@@ -146,10 +141,11 @@ describe('build', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const extensionInstance = await testTaxCalculationExtension(tmpDir)
-      const options = {
+      const options: ExtensionBuildOptions = {
         stdout: new Writable(),
         stderr: new Writable(),
         app: testApp(),
+        environment: 'production',
       }
 
       const outputFilePath = joinPath(tmpDir, `dist/${extensionInstance.outputFileName}`)

@@ -19,12 +19,15 @@ export const npmLockfile = 'package-lock.json'
 /** The name of the pnpm lock file */
 export const pnpmLockfile = 'pnpm-lock.yaml'
 
+/** The name of the bun lock file */
+export const bunLockfile = 'bun.lockb'
+
 /** The name of the pnpm workspace file */
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
-export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile]
-export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml'
+export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile]
+export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb'
 
 /**
  * A union type that represents the type of dependencies in the package.json
@@ -37,7 +40,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
 /**
  * A union that represents the package managers available.
  */
-export const packageManager = ['yarn', 'npm', 'pnpm', 'unknown'] as const
+export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
 
 /**
@@ -84,6 +87,8 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
     return 'yarn'
   } else if (env.npm_config_user_agent?.includes('pnpm')) {
     return 'pnpm'
+  } else if (env.npm_config_user_agent?.includes('bun')) {
+    return 'bun'
   } else if (env.npm_config_user_agent?.includes('npm')) {
     return 'npm'
   }
@@ -104,10 +109,13 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)
+  const bunLockPath = joinPath(directory, bunLockfile)
   if (await fileExists(yarnLockPath)) {
     return 'yarn'
   } else if (await fileExists(pnpmLockPath)) {
     return 'pnpm'
+  } else if (await fileExists(bunLockPath)) {
+    return 'bun'
   } else {
     return 'npm'
   }
@@ -456,17 +464,23 @@ export async function addNPMDependencies(
         argumentsToAddDependenciesWithPNPM(dependenciesWithVersion, options.type, Boolean(options.addToRootDirectory)),
       )
       break
+    case 'bun':
+      await installDependencies(options, argumentsToAddDependenciesWithBun(dependenciesWithVersion, options.type))
+      await installDependencies(options, ['install'])
+      break
     case 'unknown':
       throw new UnknownPackageManagerError()
   }
 }
 
 async function installDependencies(options: AddNPMDependenciesIfNeededOptions, args: string[]) {
-  return exec(options.packageManager, args, {
-    cwd: options.directory,
-    stdout: options.stdout,
-    stderr: options.stderr,
-    signal: options.signal,
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    return exec(options.packageManager, args, {
+      cwd: options.directory,
+      stdout: options.stdout,
+      stderr: options.stderr,
+      signal: options.signal,
+    })
   })
 }
 
@@ -569,6 +583,30 @@ function argumentsToAddDependenciesWithPNPM(dependencies: string[], type: Depend
 }
 
 /**
+ * Returns the arguments to add dependencies using Bun.
+ * @param dependencies - The list of dependencies to add
+ * @param type - The dependency type.
+ * @returns An array with the arguments.
+ */
+function argumentsToAddDependenciesWithBun(dependencies: string[], type: DependencyType): string[] {
+  let command = ['add']
+
+  command = command.concat(dependencies)
+
+  switch (type) {
+    case 'dev':
+      command.push('--development')
+      break
+    case 'peer':
+      command.push('--optional')
+      break
+    case 'prod':
+      break
+  }
+  return command
+}
+
+/**
  * Given a directory it traverses the directory up looking for a package.json and if found, it reads it
  * decodes the JSON, and returns its content as a Javascript object.
  * @param options - The directory from which traverse up.
@@ -595,7 +633,7 @@ export async function addResolutionOrOverride(directory: string, dependencies: {
       ? {...packageJsonContent.resolutions, ...dependencies}
       : dependencies
   }
-  if (packageManager === 'npm' || packageManager === 'pnpm') {
+  if (packageManager === 'npm' || packageManager === 'pnpm' || packageManager === 'bun') {
     packageJsonContent.overrides = packageJsonContent.overrides
       ? {...packageJsonContent.overrides, ...dependencies}
       : dependencies

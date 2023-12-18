@@ -3,6 +3,7 @@ import {getUIExtensionResourceURL} from '../../../../utilities/extensions/config
 import {ExtensionDevOptions} from '../../extension.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
 import {createError, H3Error, ServerResponse, sendError as h3SendError} from 'h3'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
 
 export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.configuration.type, options)
@@ -12,9 +13,6 @@ export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionD
     rawUrl.pathname = resourceUrl
     rawUrl.searchParams.append('dev', `${options.url}/extensions`)
 
-    return rawUrl.toString()
-  } else if (extension.surface === 'customer_accounts') {
-    const rawUrl = getCustomerAccountsRedirectUrl(extension, options)
     return rawUrl.toString()
   } else {
     const rawUrl = new URL(`https://${options.storeFqdn}/`)
@@ -46,7 +44,7 @@ export function getExtensionPointRedirectUrl(
       rawUrl.searchParams.append('target', requestedTarget)
       break
     case 'customer-accounts':
-      rawUrl = getCustomerAccountsRedirectUrl(extension, options)
+      rawUrl = getCustomerAccountsRedirectUrl(extension, options, requestedTarget)
       break
     default:
       return undefined
@@ -55,14 +53,23 @@ export function getExtensionPointRedirectUrl(
   return rawUrl.toString()
 }
 
-function getCustomerAccountsRedirectUrl(extension: ExtensionInstance, options: ExtensionDevOptions): URL {
-  const [storeName, ...storeDomainParts] = options.storeFqdn.split('.')
-  const accountsUrl = `${storeName}.account.${storeDomainParts.join('.')}`
+function getCustomerAccountsRedirectUrl(
+  extension: ExtensionInstance,
+  options: ExtensionDevOptions,
+  requestedTarget = '',
+): URL {
   const origin = `${options.url}/extensions`
+  const storeId = options.storeId
+  const [_, ...storeDomainParts] = options.storeFqdn.split('.')
+  const customerAccountHost = isSpinEnvironment() ? storeDomainParts.join('.') : 'shopify.com'
+  const rawUrl = new URL(`https://${customerAccountHost}/${storeId}/account/extensions-development`)
 
-  const rawUrl = new URL(`https://${accountsUrl}/extensions-development`)
   rawUrl.searchParams.append('origin', origin)
   rawUrl.searchParams.append('extensionId', extension.devUUID)
+  rawUrl.searchParams.append('source', 'CUSTOMER_ACCOUNT_EXTENSION')
+  if (requestedTarget !== '') {
+    rawUrl.searchParams.append('target', requestedTarget)
+  }
   return rawUrl
 }
 

@@ -27,6 +27,11 @@ export default class List extends ThemeCommand {
       description: 'Only list theme with the given ID.',
       env: 'SHOPIFY_FLAG_ID',
     }),
+    json: Flags.boolean({
+      description: 'Output the theme list as JSON.',
+      default: false,
+      env: 'SHOPIFY_FLAG_JSON',
+    }),
     environment: themeFlags.environment,
   }
 

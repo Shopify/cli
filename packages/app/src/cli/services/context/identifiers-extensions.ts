@@ -25,11 +25,9 @@ export async function ensureExtensionsIds(
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
   let localExtensions = options.app.allExtensions.filter((ext) => !ext.isFunctionExtension)
-  if (options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release') {
-    const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
-    functionExtensions.forEach((ext) => (ext.usingExtensionsFramework = true))
-    localExtensions = localExtensions.concat(functionExtensions)
-  }
+
+  const functionExtensions = options.app.allExtensions.filter((ext) => ext.isFunctionExtension)
+  localExtensions = localExtensions.concat(functionExtensions)
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
@@ -78,33 +76,26 @@ export async function ensureExtensionsIds(
   }
 
   if (!options.force) {
-    const question = (() => {
-      switch (options.deploymentMode) {
-        case 'legacy':
-          return 'Make the following changes to your extensions in Shopify Partners?'
-        case 'unified':
-          return `Release a new version of ${options.partnersApp?.title}?`
-        case 'unified-skip-release':
-          return `Create a new version of ${options.partnersApp?.title}?`
-      }
-    })()
+    let question
 
-    const confirmed = await deployConfirmationPrompt(
-      {
+    if (options.release) {
+      question = `Release a new version of ${options.partnersApp?.title}?`
+    } else {
+      question = `Create a new version of ${options.partnersApp?.title}?`
+    }
+
+    const confirmed = await deployConfirmationPrompt({
+      summary: {
         appTitle: options.partnersApp?.title,
         question,
         identifiers: validMatches,
         toCreate: extensionsToCreate,
-        onlyRemote: onlyRemoteExtensions,
-        dashboardOnly:
-          options.deploymentMode === 'unified' || options.deploymentMode === 'unified-skip-release'
-            ? dashboardOnlyExtensions
-            : [],
+        dashboardOnly: dashboardOnlyExtensions,
       },
-      options.deploymentMode,
-      options.appId,
-      options.token,
-    )
+      release: options.release,
+      apiKey: options.appId,
+      token: options.token,
+    })
     if (!confirmed) return err('user-cancelled')
   }
 

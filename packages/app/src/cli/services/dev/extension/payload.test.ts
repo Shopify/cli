@@ -36,6 +36,7 @@ describe('getUIExtensionPayload', () => {
             block_progress: false,
             collect_buyer_consent: {
               sms_marketing: false,
+              write_privacy_consent: false,
             },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
@@ -55,6 +56,7 @@ describe('getUIExtensionPayload', () => {
         port: 123,
         url: 'http://tunnel-url.com',
         storeFqdn: 'my-domain.com',
+        storeId: '123456789',
         buildDirectory: tmpDir,
         checkoutCartUrl: 'https://my-domain.com/cart',
         subscriptionProductUrl: 'https://my-domain.com/subscription',
@@ -99,7 +101,6 @@ describe('getUIExtensionPayload', () => {
           },
           status: 'success',
         },
-        categories: null,
         extensionPoints: ['CUSTOM_EXTENSION_POINT'],
         externalType: 'checkout_ui_extension_external',
         localization: null,
@@ -160,6 +161,7 @@ describe('getUIExtensionPayload', () => {
             api_access: false,
             collect_buyer_consent: {
               sms_marketing: false,
+              write_privacy_consent: false,
             },
           },
           extension_points: [
@@ -245,6 +247,7 @@ describe('getUIExtensionPayload', () => {
             api_access: false,
             collect_buyer_consent: {
               sms_marketing: false,
+              write_privacy_consent: false,
             },
           },
           extension_points: [

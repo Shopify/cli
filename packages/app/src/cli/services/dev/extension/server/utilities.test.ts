@@ -2,7 +2,14 @@ import {getRedirectUrl, getExtensionPointRedirectUrl} from './utilities.js'
 import {ExtensionDevOptions} from '../../extension.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
+
+vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/context/spin')
 
 describe('getRedirectURL()', () => {
   test('returns a URL with a URL param', async () => {
@@ -43,26 +50,6 @@ describe('getRedirectURL()', () => {
     const result = getRedirectUrl(extension, options)
 
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
-  })
-
-  test('returns a URL with a origin param if the surface is customer_accounts', async () => {
-    const extension = await testUIExtension({
-      configuration: {type: 'customer_accounts_ui_extension', name: 'test', metafields: []},
-    })
-
-    // Overwrite the surface to be customer_accounts (we don't have real values in tests)
-    extension.specification.surface = 'customer_accounts'
-
-    const options = {
-      storeFqdn: 'example.myshopify.com',
-      url: 'https://localhost:8081',
-    } as unknown as ExtensionDevOptions
-
-    const result = getRedirectUrl(extension, options)
-
-    expect(result).toBe(
-      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=test-ui-extension-uuid',
-    )
   })
 })
 
@@ -105,37 +92,60 @@ describe('getExtensionPointRedirectUrl()', () => {
     expect(result).toBe('https://example.myshopify.com/mock/cart/url?dev=https%3A%2F%2Flocalhost%3A8081%2Fextensions')
   })
 
-  test('returns customer account server URL if the extension point targets customer account', () => {
+  test('returns customer account URL on shopify.com if the target is a customer account target and env is not spin', () => {
+    vi.mocked(isSpinEnvironment).mockReturnValue(false)
     const extension = {
       devUUID: '123abc',
     } as ExtensionInstance
 
     const options = {
       storeFqdn: 'example.myshopify.com',
+      storeId: '123456789',
       url: 'https://localhost:8081',
     } as unknown as ExtensionDevOptions
 
     const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
 
     expect(result).toBe(
-      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc',
+      'https://shopify.com/123456789/account/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&target=customer-account.page.render',
     )
   })
 
-  test('returns customer account server URL if the extension point uses legacy customer account target', () => {
+  test('returns customer account URL on a spin shopify domain if it is in a spin env', () => {
+    vi.mocked(isSpinEnvironment).mockReturnValue(true)
+    const extension = {
+      devUUID: '123abc',
+    } as ExtensionInstance
+
+    const options = {
+      storeFqdn: 'shop1.shopify.spin-instance.us.spin.dev',
+      storeId: '123456789',
+      url: 'https://localhost:8081',
+    } as unknown as ExtensionDevOptions
+
+    const result = getExtensionPointRedirectUrl('customer-account.page.render', extension, options)
+
+    expect(result).toBe(
+      'https://shopify.spin-instance.us.spin.dev/123456789/account/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&target=customer-account.page.render',
+    )
+  })
+
+  test('returns customer account URL on shopify.com if the extension point uses legacy customer account target and env is not spin', () => {
+    vi.mocked(isSpinEnvironment).mockReturnValue(false)
     const extension = {
       devUUID: '123abc',
     } as ExtensionInstance
 
     const options = {
       storeFqdn: 'example.myshopify.com',
+      storeId: '123456789',
       url: 'https://localhost:8081',
     } as unknown as ExtensionDevOptions
 
     const result = getExtensionPointRedirectUrl('CustomerAccount::FullPage::RenderWithin', extension, options)
 
     expect(result).toBe(
-      'https://example.account.myshopify.com/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc',
+      'https://shopify.com/123456789/account/extensions-development?origin=https%3A%2F%2Flocalhost%3A8081%2Fextensions&extensionId=123abc&source=CUSTOMER_ACCOUNT_EXTENSION&target=CustomerAccount%3A%3AFullPage%3A%3ARenderWithin',
     )
   })
 

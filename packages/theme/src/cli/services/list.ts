@@ -5,11 +5,13 @@ import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/fil
 import {renderTable} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export interface Options {
   role?: Role
   name?: string
   id?: number
+  json: boolean
 }
 
 export async function list(adminSession: AdminSession, options: Options) {
@@ -27,6 +29,10 @@ export async function list(adminSession: AdminSession, options: Options) {
   const hostTheme = getHostTheme(store)
   if (filter.any()) {
     storeThemes = filterThemes(store, storeThemes, filter)
+  }
+
+  if (options.json) {
+    return outputInfo(JSON.stringify(storeThemes, null, 2))
   }
 
   const themes = storeThemes.map(({id, name, role}) => {

@@ -3,7 +3,6 @@ import {Dev, DevProps} from './ui/components/Dev.js'
 import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
-import {disableDeveloperPreview, enableDeveloperPreview} from '../context.js'
 import React from 'react'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {render, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -61,7 +60,15 @@ export async function outputUpdateURLsResult(
   }
 }
 
-export async function renderDev({processes, previewUrl, app, abortController, graphiqlUrl}: DevProps) {
+export async function renderDev({
+  processes,
+  previewUrl,
+  app,
+  abortController,
+  graphiqlUrl,
+  graphiqlPort,
+  developerPreview,
+}: DevProps) {
   if (terminalSupportsRawMode(process.stdin)) {
     return render(
       <Dev
@@ -70,13 +77,15 @@ export async function renderDev({processes, previewUrl, app, abortController, gr
         previewUrl={previewUrl}
         app={app}
         graphiqlUrl={graphiqlUrl}
+        graphiqlPort={graphiqlPort}
+        developerPreview={developerPreview}
       />,
       {
         exitOnCtrlC: false,
       },
     )
   } else {
-    await renderDevNonInteractive({processes, app, abortController})
+    await renderDevNonInteractive({processes, app, abortController, developerPreview})
   }
 }
 
@@ -91,13 +100,14 @@ async function partnersURL(organizationId: string, appId: string) {
 
 async function renderDevNonInteractive({
   processes,
-  app: {apiKey, token, canEnablePreviewMode},
+  app: {canEnablePreviewMode},
   abortController,
-}: Omit<DevProps, 'previewUrl'>) {
+  developerPreview,
+}: Omit<DevProps, 'previewUrl' | 'graphiqlPort'>) {
   if (canEnablePreviewMode) {
-    await enableDeveloperPreview({apiKey, token})
+    await developerPreview.enable()
     abortController?.signal.addEventListener('abort', async () => {
-      await disableDeveloperPreview({apiKey, token})
+      await developerPreview.disable()
     })
   }
   return Promise.all(

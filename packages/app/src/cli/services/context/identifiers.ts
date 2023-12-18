@@ -1,15 +1,13 @@
-import {ensureFunctionsIds} from './identifiers-functions.js'
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {AppInterface} from '../../models/app/app.js'
-import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {Identifiers} from '../../models/app/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {OrganizationApp, MinimalOrganizationApp} from '../../models/organization.js'
-import {DeploymentMode} from '../deploy/mode.js'
+import {MinimalOrganizationApp} from '../../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-export type PartnersAppForIdentifierMatching = MinimalOrganizationApp & Pick<OrganizationApp, 'betas'>
+export type PartnersAppForIdentifierMatching = MinimalOrganizationApp
 
 export interface EnsureDeploymentIdsPresenceOptions {
   app: AppInterface
@@ -18,7 +16,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   appName: string
   envIdentifiers: Partial<Identifiers>
   force: boolean
-  deploymentMode: DeploymentMode
+  release: boolean
   partnersApp?: PartnersAppForIdentifierMatching
 }
 
@@ -40,26 +38,14 @@ export interface LocalSource {
 export type MatchingError = 'pending-remote' | 'invalid-environment' | 'user-cancelled'
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
-  // We need local extensions to deploy when deploymentMode is 'legacy'
-  if (!options.app.hasExtensions() && options.deploymentMode === 'legacy')
-    return {app: options.appId, extensions: {}, extensionIds: {}}
-
   const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
-
-  let functions: IdentifiersExtensions = {}
-
-  if (options.deploymentMode === 'legacy') {
-    const result = await ensureFunctionsIds(options, remoteSpecifications.app.functions)
-    if (result.isErr()) throw handleIdsError(result.error, options.appName, options.app.packageManager)
-    functions = result.value
-  }
 
   const extensions = await ensureExtensionsIds(options, remoteSpecifications.app)
   if (extensions.isErr()) throw handleIdsError(extensions.error, options.appName, options.app.packageManager)
 
   return {
     app: options.appId,
-    extensions: {...functions, ...extensions.value.extensions},
+    extensions: extensions.value.extensions,
     extensionIds: extensions.value.extensionIds,
   }
 }

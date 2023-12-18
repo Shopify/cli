@@ -1,5 +1,36 @@
 # @shopify/cli-kit
 
+## 3.52.0
+
+### Minor Changes
+
+- 060bd75cf: Support client credentials flow (currently used in GraphiQL)
+- 060bd75cf: Expose functions to get information on available Admin API versions
+
+### Patch Changes
+
+- 4ea4c08dd: Fix bundler env vars
+- 1de8122c4: No longer drops _.json templates when there is a _.json.liquid template with the same name.
+- 9cbe46e06: Fix a bug with keypresses after Input
+
+## 3.51.0
+
+### Minor Changes
+
+- 533c66492: Adds `pascalize` function which wraps the `pascalCase` function from change-case package
+- 64b49598b: Support Bun as a package manager (experimental)
+- e72b4f1c8: Allow refreshing a Partners token without a fallback to prompting
+
+### Patch Changes
+
+- a8c8b1e6b: Fix node/git isClean to return a boolean value instead of a function
+- 8b7ce36b1: Fix node site link, which was just changed
+- b90f24b2e: Warn when using EoL'ed Node
+- 8c979a621: Fix TAE hot code reloading in spin
+- 7802bffa9: Fix duplicated error messages
+- 28e629078: Fix ruby bundler config when Rails app that uses bundler local config
+- 0b8b97993: Fixing CLI Kit base-command to await errorHandler method instead of exiting early
+
 ## 3.50.0
 
 ### Minor Changes

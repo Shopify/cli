@@ -5,14 +5,26 @@ export const SUPPORTED_COMMERCE_OBJECTS = {
   product_reference: 'product_reference',
   marketing_activity_reference: 'marketing_activity_reference',
   abandonment_reference: 'abandonment_reference',
+  company_reference: 'company_reference',
+  company_contact_reference: 'company_contact_reference',
 }
 
-export const PARTNERS_COMMERCE_OBJECTS = ['customer', 'order', 'product', 'marketing_activity', 'abandonment']
+export const PARTNERS_COMMERCE_OBJECTS = [
+  'customer',
+  'order',
+  'product',
+  'marketing_activity',
+  'abandonment',
+  'company',
+  'company_contact',
+]
 
 export const TRIGGER_SUPPORTED_COMMERCE_OBJECTS = [
   SUPPORTED_COMMERCE_OBJECTS.customer_reference,
   SUPPORTED_COMMERCE_OBJECTS.order_reference,
   SUPPORTED_COMMERCE_OBJECTS.product_reference,
+  SUPPORTED_COMMERCE_OBJECTS.company_reference,
+  SUPPORTED_COMMERCE_OBJECTS.company_contact_reference,
 ]
 
 export const ACTION_SUPPORTED_COMMERCE_OBJECTS = [
@@ -21,6 +33,8 @@ export const ACTION_SUPPORTED_COMMERCE_OBJECTS = [
   SUPPORTED_COMMERCE_OBJECTS.product_reference,
   SUPPORTED_COMMERCE_OBJECTS.marketing_activity_reference,
   SUPPORTED_COMMERCE_OBJECTS.abandonment_reference,
+  SUPPORTED_COMMERCE_OBJECTS.company_reference,
+  SUPPORTED_COMMERCE_OBJECTS.company_contact_reference,
 ]
 
 const UI_TYPES = {

@@ -108,6 +108,29 @@ describe('serializeCommerceObjectField', () => {
     })
   })
 
+  test('should serialize a company contact commerce object field for a flow action', () => {
+    // given
+    const commerceObjectField: ConfigField = {
+      type: 'company_contact_reference',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // when
+    const serializedField = serializeCommerceObjectField(commerceObjectField, 'flow_action')
+
+    // then
+    expect(serializedField).toEqual({
+      name: 'company_contact_id',
+      uiType: 'commerce-object-id',
+      label: 'CompanyContact ID',
+      description: 'This is my field',
+      required: true,
+    })
+  })
+
   test('should serialize a commerce object field for a flow trigger', () => {
     // given
     const commerceObjectField: ConfigField = {
@@ -125,6 +148,27 @@ describe('serializeCommerceObjectField', () => {
     expect(serializedField).toEqual({
       name: 'product_id',
       uiType: 'product',
+      description: 'This is my field',
+    })
+  })
+
+  test('should serialize a company contact commerce object field for a flow trigger', () => {
+    // given
+    const commerceObjectField: ConfigField = {
+      type: 'company_contact_reference',
+      key: 'my-field',
+      name: 'My Field',
+      description: 'This is my field',
+      required: true,
+    }
+
+    // when
+    const serializedField = serializeCommerceObjectField(commerceObjectField, 'flow_trigger')
+
+    // then
+    expect(serializedField).toEqual({
+      name: 'company_contact_id',
+      uiType: 'company_contact',
       description: 'This is my field',
     })
   })

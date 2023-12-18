@@ -1,5 +1,54 @@
 # @shopify/app
 
+## 3.52.0
+
+### Minor Changes
+
+- 060bd75cf: Support client credentials flow (currently used in GraphiQL)
+- 4a09085f2: Restyle GraphiQL top bar and install screen using Polaris
+- 4bc740a4e: Bump required node version to "^16.17.0 || >=18.12.0" to match polaris, the most stringent CLI dependency to date
+
+### Patch Changes
+
+- 306c0f6d3: Add extra layer of security for GraphiQL
+- 77da9c8a3: Fix select box in GraphiQL
+- 98574587c: Touch up GraphiQL visuals
+- Updated dependencies [4ea4c08dd]
+- Updated dependencies [1de8122c4]
+- Updated dependencies [060bd75cf]
+- Updated dependencies [060bd75cf]
+- Updated dependencies [9cbe46e06]
+  - @shopify/cli-kit@3.52.0
+  - @shopify/plugin-cloudflare@3.52.0
+
+## 3.51.0
+
+### Minor Changes
+
+- 533c66492: Support Company and Company Contact commerce objects in Flow Action and Flow Trigger extensions
+- 63ef7bfad: Enable dev preview in non interactive terminals
+
+### Patch Changes
+
+- f7e840953: Redirect to customer account url with target and source param.
+- e72b4f1c8: Refresh Partners token in the background as necessary during dev
+- 47ab30db8: Fix run CLI manually in spin
+- f5caf4da4: Add new --json flag to theme list and app versions list commands
+- 652a14f93: Fetch partners account info regarding using an user or a service account. Display used partners account in the info command output. Add partners account information inside the no org found error banner
+- Updated dependencies [533c66492]
+- Updated dependencies [a8c8b1e6b]
+- Updated dependencies [8b7ce36b1]
+- Updated dependencies [b90f24b2e]
+- Updated dependencies [8c979a621]
+- Updated dependencies [ac74bbc13]
+- Updated dependencies [7802bffa9]
+- Updated dependencies [28e629078]
+- Updated dependencies [0b8b97993]
+- Updated dependencies [64b49598b]
+- Updated dependencies [e72b4f1c8]
+  - @shopify/cli-kit@3.51.0
+  - @shopify/plugin-cloudflare@3.51.0
+
 ## 3.50.0
 
 ### Minor Changes

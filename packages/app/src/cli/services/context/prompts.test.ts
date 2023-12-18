@@ -9,43 +9,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/partners')
 
 describe('deployConfirmationPrompt', () => {
-  describe('when legacy deployment mode', () => {
-    test('renders confirmation prompt with the source summary', async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-
-      // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({
-          identifiers: {...identifier1, ...identifier2},
-          toCreate: [createdExtension],
-          onlyRemote: [remoteOnlyExtension],
-          dashboardOnly: [dashboardOnlyExtension],
-        }),
-        'legacy',
-        'apiKey',
-        'token',
-      )
-
-      // Then
-      expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(legacyRenderConfirmationPromptContent())
-    })
-
-    test("doesn't call renderConfirmationPrompt() when no extensions to deploy and infoTable is empty", async () => {
-      // Given
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-
-      // When
-      const response = await deployConfirmationPrompt(buildSourceSummary(), 'legacy', 'apiKey', 'token')
-
-      // Then
-      expect(response).toBe(true)
-      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('when unified deployment mode and app has an active version', () => {
+  describe('when app has an active version', () => {
     test('renders confirmation prompt with the comparison between source summary and active version', async () => {
       // Given
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
@@ -58,12 +22,17 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderConfirmationPromptContent({
+        renderConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -81,6 +50,47 @@ describe('deployConfirmationPrompt', () => {
       )
     })
 
+    test('renders confirmation prompt with the comparison between source summary and active version with a custom message when release is false', async () => {
+      // Given
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(partnersRequest).mockResolvedValue(activeVersionContent({noDelete: true}))
+
+      // When
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: false,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
+
+      // Then
+      expect(response).toBe(true)
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(
+        renderConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
+          infoTable: [
+            {
+              header: 'Includes:',
+              items: [
+                ['extension1', {subdued: '(new)'}],
+                ['id1', {subdued: '(new)'}],
+                'extension2',
+                ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+              ],
+              bullet: '+',
+            },
+          ],
+          confirmationMessage: 'Yes, create this new version',
+        }),
+      )
+    })
+
     test('renders dangerous confirmation prompt with the comparison between source summary and active version when extensions will be deleted', async () => {
       // Given
       vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
@@ -93,12 +103,17 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
       expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderDangerousConfirmationPromptContent({
+        renderDangerousConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -141,12 +156,17 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension, dashboardExtensionIncludedInActiveVersion],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
       expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderDangerousConfirmationPromptContent({
+        renderDangerousConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -185,12 +205,17 @@ describe('deployConfirmationPrompt', () => {
         onlyRemote: [remoteOnlyExtension],
         dashboardOnly: [dashboardOnlyExtension],
       })
-      const response = await deployConfirmationPrompt(sourceSummary, 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
       expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderDangerousConfirmationPromptContent({
+        renderDangerousConfirmationPromptContent({
           appTitle: sourceSummary.appTitle,
           infoTable: [
             {
@@ -215,24 +240,24 @@ describe('deployConfirmationPrompt', () => {
     })
   })
 
-  describe("when unified deployment mode and app doesn't have an active version", () => {
+  describe("when app doesn't have an active version", () => {
     test('renders confirmation prompt with registered, unreleased CLI extensions as new extensions', async () => {
       // Given
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(partnersRequest).mockResolvedValue({app: {activeAppVersion: null}})
 
       // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({identifiers: {...identifier1}}),
-        'unified',
-        'apiKey',
-        'token',
-      )
+      const response = await deployConfirmationPrompt({
+        summary: buildSourceSummary({identifiers: {...identifier1}}),
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
-        unifiedRenderConfirmationPromptContent({
+        renderConfirmationPromptContent({
           infoTable: [
             {
               header: 'Includes:',
@@ -250,16 +275,16 @@ describe('deployConfirmationPrompt', () => {
       vi.mocked(partnersRequest).mockResolvedValue({app: {activeAppVersion: null}})
 
       // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({onlyRemote: [remoteOnlyExtension]}),
-        'unified',
-        'apiKey',
-        'token',
-      )
+      const response = await deployConfirmationPrompt({
+        summary: buildSourceSummary({onlyRemote: [remoteOnlyExtension]}),
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(renderConfirmationPromptContent({infoTable: []}))
     })
 
     test('renders confirmation prompt with empty infoTable when no changes are being released to users', async () => {
@@ -268,11 +293,16 @@ describe('deployConfirmationPrompt', () => {
       vi.mocked(partnersRequest).mockResolvedValue({app: {activeAppVersion: null}})
 
       // When
-      const response = await deployConfirmationPrompt(buildSourceSummary(), 'unified', 'apiKey', 'token')
+      const response = await deployConfirmationPrompt({
+        summary: buildSourceSummary(),
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(renderConfirmationPromptContent({infoTable: []}))
     })
 
     test('renders confirmation prompt with empty infoTable when remote only extensions exist but are missing locally', async () => {
@@ -281,23 +311,22 @@ describe('deployConfirmationPrompt', () => {
       vi.mocked(partnersRequest).mockResolvedValue({app: {activeAppVersion: null}})
 
       // When
-      const response = await deployConfirmationPrompt(
-        buildSourceSummary({onlyRemote: [remoteOnlyExtension]}),
-        'unified',
-        'apiKey',
-        'token',
-      )
+      const response = await deployConfirmationPrompt({
+        summary: buildSourceSummary({onlyRemote: [remoteOnlyExtension]}),
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
 
       // Then
       expect(response).toBe(true)
-      expect(renderConfirmationPrompt).toHaveBeenCalledWith(unifiedRenderConfirmationPromptContent({infoTable: []}))
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(renderConfirmationPromptContent({infoTable: []}))
     })
   })
 })
 
 const identifier1 = {extension1: 'uuid1'}
 const identifier2 = {extension2: 'uuid2'}
-const identifier3 = {extension3: 'uuid3'}
 const createdExtension = {
   localIdentifier: 'id1',
   graphQLType: 'type1',
@@ -325,41 +354,14 @@ interface BuildSourceSummaryOptions {
 }
 
 function buildSourceSummary(options: BuildSourceSummaryOptions = {}): SourceSummary {
-  const {identifiers = {}, toCreate = [], onlyRemote = [], dashboardOnly = []} = options
+  const {identifiers = {}, toCreate = [], dashboardOnly = []} = options
 
   return {
     appTitle: 'my-app',
     question: 'question',
     identifiers,
     toCreate,
-    onlyRemote,
     dashboardOnly,
-  }
-}
-
-function legacyRenderConfirmationPromptContent(confirmationMessage = 'Yes, deploy to push changes') {
-  return {
-    cancellationMessage: 'No, cancel',
-    confirmationMessage,
-    infoTable: [
-      {
-        header: 'Includes:',
-        items: [
-          ['id1', {subdued: '(new)'}],
-          'extension1',
-          'extension2',
-          ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
-        ],
-        bullet: '+',
-      },
-      {
-        header: 'Removes:',
-        items: ['remote_title1'],
-        bullet: '-',
-        helperText: 'This can permanently delete app user data.',
-      },
-    ],
-    message: 'question',
   }
 }
 
@@ -416,12 +418,13 @@ function activeVersionContent({noDelete = false} = {}) {
   }
 }
 
-interface UnifiedRenderConfirmationPromptContentOptions {
+interface RenderConfirmationPromptContentOptions {
   infoTable?: InfoTableSection[]
   appTitle?: string
+  confirmationMessage?: string
 }
 
-function unifiedRenderDangerousConfirmationPromptContent(options: UnifiedRenderConfirmationPromptContentOptions = {}) {
+function renderDangerousConfirmationPromptContent(options: RenderConfirmationPromptContentOptions = {}) {
   const {appTitle, infoTable} = options
 
   return {
@@ -431,12 +434,12 @@ function unifiedRenderDangerousConfirmationPromptContent(options: UnifiedRenderC
   }
 }
 
-function unifiedRenderConfirmationPromptContent(options: UnifiedRenderConfirmationPromptContentOptions = {}) {
-  const {infoTable} = options
+function renderConfirmationPromptContent(options: RenderConfirmationPromptContentOptions = {}) {
+  const {infoTable, confirmationMessage} = options
 
   return {
     cancellationMessage: 'No, cancel',
-    confirmationMessage: 'Yes, release this new version',
+    confirmationMessage: confirmationMessage ? confirmationMessage : 'Yes, release this new version',
     infoTable,
     message: 'question',
   }
