@@ -102,7 +102,7 @@ Or run the \`help\` command to get this information right in your terminal
       type: 'Generic',
       anchorLink: 'upgrade',
       sectionContent:
-        'We recommend to always use the latest version of the CLI if possible, run `version` to check the current version and if there are any update available and `upgrade` to install the latest CLI version.',
+        'We recommend to always use the latest version of the CLI if possible, run `version` to check the current version and if there are any updates available. Then run the same install command to upgrade to the latest CLI version.',
       title: 'Upgrade your CLI',
       codeblock: {
         title: 'terminal',
@@ -113,6 +113,27 @@ Or run the \`help\` command to get this information right in your terminal
           },
         ],
       },
+    },
+    {
+      type: 'Generic',
+      anchorLink: 'reporting',
+      title: 'Usage reporting',
+      sectionContent: `Anonymous usage statistics are collected by default. To opt out, you can use the environment variable \`SHOPIFY_CLI_NO_ANALYTICS=1\`.`,
+    },
+    {
+      type: 'Generic',
+      anchorLink: 'contributing',
+      title: 'Contributing to Shopify CLI',
+      sectionContent: `Shopify CLI is open source. [Learn how to contribute](https://github.com/Shopify/cli/wiki/Contributors:-Introduction) to our GitHub repository.`,
+    },
+    {
+      type: 'Generic',
+      anchorLink: 'help',
+      title: 'Where to get help',
+      sectionContent: `
+- [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
+- [Shopify Community Forums](https://community.shopify.com/?shpxid=f84767ac-02DB-40B4-E6CB-AAF9AB7659DA) - Visit our forums to connect with the community and learn more about Shopify CLI development.
+`,
     },
     //     {
     //       type: 'Generic',
