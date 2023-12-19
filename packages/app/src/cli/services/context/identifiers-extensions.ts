@@ -9,19 +9,31 @@ import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
   dashboardManagedExtensionRegistrations: RemoteSource[]
+  configExtensionRegistrations: RemoteSource[]
 }
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
   {
     extensionRegistrations: initialRemoteExtensions,
+    configExtensionRegistrations,
     dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
   }: AppWithExtensions,
-): Promise<Result<{extensions: IdentifiersExtensions; extensionIds: IdentifiersExtensions}, MatchingError>> {
+): Promise<
+  Result<
+    {
+      extensions: IdentifiersExtensions
+      extensionIds: IdentifiersExtensions
+      extensionsNonUuidManaged: IdentifiersExtensions
+    },
+    MatchingError
+  >
+> {
   let remoteExtensions = initialRemoteExtensions
   const managedUuidExtensions = options.app.allExtensions.filter((ext) => ext.isUuidManaged())
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
@@ -100,6 +112,12 @@ export async function ensureExtensionsIds(
     if (!confirmed) return err('user-cancelled')
   }
 
+  const extensionsNonUuidManaged = await ensureNonUuidManagedExtensionsIds(
+    configExtensionRegistrations,
+    options.app.allExtensions.filter((ext) => !ext.isUuidManaged()),
+    options.appId,
+  )
+
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, options.appId)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
@@ -117,17 +135,43 @@ export async function ensureExtensionsIds(
   return ok({
     extensions: validMatches,
     extensionIds: validMatchesById,
+    extensionsNonUuidManaged,
   })
 }
 
-async function createExtensions(extensions: LocalSource[], appId: string) {
+async function ensureNonUuidManagedExtensionsIds(
+  remoteConfigExtensionRegistrations: RemoteSource[],
+  localExtensionRegistrations: LocalSource[],
+  appId: string,
+) {
+  if (!useVersionedAppConfig()) return {}
+
+  const extensionsToCreate: LocalSource[] = []
+  const validMatches: {[key: string]: string} = {}
+  localExtensionRegistrations.forEach((local) => {
+    const possibleMatch = remoteConfigExtensionRegistrations.find((remote) => remote.type === local.graphQLType)
+    if (possibleMatch) validMatches[local.localIdentifier] = possibleMatch.uuid
+    else extensionsToCreate.push(local)
+  })
+
+  if (extensionsToCreate.length > 0) {
+    const newIdentifiers = await createExtensions(extensionsToCreate, appId, false)
+    for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
+      validMatches[localIdentifier] = registration.uuid
+    }
+  }
+
+  return validMatches
+}
+
+async function createExtensions(extensions: LocalSource[], appId: string, output = true) {
   const token = await ensureAuthenticatedPartners()
   const result: {[localIdentifier: string]: RemoteSource} = {}
   for (const extension of extensions) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
     const registration = await createExtension(appId, extension.graphQLType, extension.handle, token)
-    outputCompleted(`Created extension ${extension.handle}.`)
+    if (output) outputCompleted(`Created extension ${extension.handle}.`)
     result[extension.localIdentifier] = registration
   }
   return result

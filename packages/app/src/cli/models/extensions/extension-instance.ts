@@ -273,9 +273,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       handle: this.handle,
     }
 
-    return this.isUuidManaged()
-      ? {...result, uuid: identifiers.extensions[this.localIdentifier]!}
-      : {...result, specificationIdentifier: this.specification.identifier}
+    const uuid = this.isUuidManaged()
+      ? identifiers.extensions[this.localIdentifier]
+      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+    return {...result, uuid: uuid!}
   }
 }
 
