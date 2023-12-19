@@ -1,7 +1,7 @@
-import spec from './app_config_pos_configuration.js'
+import spec from './app_config_point_of_sale.js'
 import {describe, expect, test} from 'vitest'
 
-describe('app_cofig_pos_configuration', () => {
+describe('app_cofig_point_of_sale', () => {
   describe('transform', () => {
     test('should return the transformed object', () => {
       // Given

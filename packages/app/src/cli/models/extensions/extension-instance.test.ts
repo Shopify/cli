@@ -188,11 +188,16 @@ describe('deployConfig', async () => {
 })
 
 describe('bundleConfig', async () => {
-  test('returns the uuid value when the extension is uuid managed', async () => {
+  test('returns the uuid from extensions value when the extension is uuid managed', async () => {
     const extensionInstance = await testThemeExtensions()
 
     const got = await extensionInstance.bundleConfig({
-      identifiers: {extensions: {'theme-extension-name': 'theme-uuid'}, extensionIds: {}, app: 'My app'},
+      identifiers: {
+        extensions: {'theme-extension-name': 'theme-uuid'},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {},
+      },
       token: 'token',
       apiKey: 'apiKey',
     })
@@ -202,23 +207,26 @@ describe('bundleConfig', async () => {
         uuid: 'theme-uuid',
       }),
     )
-    expect(got).not.toHaveProperty('specificationIdentifier')
   })
 
-  test('returns the specification identifier when the extension is not uuid managed', async () => {
+  test('returns the uuid from extensionsNonUuidManaged value when the extension is not uuid managed', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
     const got = await extensionInstance.bundleConfig({
-      identifiers: {extensions: {}, extensionIds: {}, app: 'My app'},
+      identifiers: {
+        extensions: {},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {'point-of-sale': 'uuid'},
+      },
       token: 'token',
       apiKey: 'apiKey',
     })
 
     expect(got).toEqual(
       expect.objectContaining({
-        specificationIdentifier: 'pos_configuration',
+        uuid: 'uuid',
       }),
     )
-    expect(got).not.toHaveProperty('uuid')
   })
 })

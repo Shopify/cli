@@ -25,7 +25,12 @@ vi.mock('../fetch.js')
 
 beforeEach(() => {
   // mocked for draft extensions
-  vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({extensionIds: {}, app: 'app-id', extensions: {}})
+  vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({
+    extensionIds: {},
+    app: 'app-id',
+    extensions: {},
+    extensionsNonUuidManaged: {},
+  })
 
   // mocked for theme app extensions
   vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue({
@@ -43,7 +48,7 @@ beforeEach(() => {
           title: 'mock-theme',
         },
       ],
-      configExtensionRegistrations: [],
+      configurationRegistrations: [],
       dashboardManagedExtensionRegistrations: [],
     },
   })

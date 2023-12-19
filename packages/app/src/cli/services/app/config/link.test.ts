@@ -38,7 +38,7 @@ beforeEach(() => {
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {
       extensionRegistrations: [],
-      configExtensionRegistrations: [],
+      configurationRegistrations: [],
       dashboardManagedExtensionRegistrations: [],
     },
   })
@@ -574,12 +574,12 @@ embedded = false
               },
             },
           ],
-          configExtensionRegistrations: [
+          configurationRegistrations: [
             {
-              type: 'pos_configuration',
+              type: 'point_of_sale',
               id: '321',
               uuid: '321',
-              title: 'pos_configuration',
+              title: 'point_of_sale',
               activeVersion: {
                 config: JSON.stringify({embedded: true}),
               },

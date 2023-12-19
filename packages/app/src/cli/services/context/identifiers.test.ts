@@ -120,7 +120,7 @@ beforeEach(() => {
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {
       extensionRegistrations: [REGISTRATION_A, REGISTRATION_B],
-      configExtensionRegistrations: [],
+      configurationRegistrations: [],
       dashboardManagedExtensionRegistrations: [],
     },
   })
@@ -164,7 +164,9 @@ describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
 describe('app has no local extensions', () => {
   test('ensureDeploymentIdsPresence() fully executes when releasing', async () => {
     // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(
+      ok({extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}}),
+    )
 
     // When
     const got = await ensureDeploymentIdsPresence(options([], {}, testOrganizationApp(), true))
@@ -172,12 +174,14 @@ describe('app has no local extensions', () => {
     // Then
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
     expect(ensureExtensionsIds).toHaveBeenCalledOnce()
-    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
   })
 
   test('ensureDeploymentIdsPresence() fully executes when not releasing', async () => {
     // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
+    vi.mocked(ensureExtensionsIds).mockResolvedValue(
+      ok({extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}}),
+    )
 
     // When
     const got = await ensureDeploymentIdsPresence(options([], {}, testOrganizationApp(), false))
@@ -185,6 +189,6 @@ describe('app has no local extensions', () => {
     // Then
     expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
     expect(ensureExtensionsIds).toHaveBeenCalledOnce()
-    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
+    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
   })
 })

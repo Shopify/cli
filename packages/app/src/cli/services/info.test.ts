@@ -362,7 +362,7 @@ describe('info', () => {
 
       // Then
       expect(result).toContain('📂 handle-for-extension-1')
-      expect(result).not.toContain('📂 pos_configuration')
+      expect(result).not.toContain('📂 point_of_sale')
     })
   })
 
@@ -418,7 +418,7 @@ describe('info', () => {
       const resultObject = JSON.parse((result as TokenizedString).value) as AppInterface
       const extensionsIdentifiers = resultObject.allExtensions.map((extension) => extension.localIdentifier)
       expect(extensionsIdentifiers).toContain('handle-for-extension-1')
-      expect(extensionsIdentifiers).not.toContain('pos_configuration')
+      expect(extensionsIdentifiers).not.toContain('point_of_sale')
     })
   })
 })

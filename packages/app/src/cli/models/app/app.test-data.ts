@@ -181,7 +181,7 @@ export async function testAppConfigExtensions(): Promise<ExtensionInstance> {
   } as unknown as BaseConfigType
 
   const allSpecs = await loadFSExtensionsSpecifications()
-  const specification = allSpecs.find((spec) => spec.identifier === 'pos_configuration')!
+  const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
 
   const extension = new ExtensionInstance({
     configuration,

@@ -247,7 +247,7 @@ describe('deployConfirmationPrompt', () => {
         registrationId: 'id3',
         registrationUuid: 'uuid3',
         registrationTitle: 'title3',
-        type: 'pos_configurations',
+        type: 'point_of_sales',
         specification: {
           identifier: 'spec1',
           name: 'specName1',

@@ -10,13 +10,14 @@ import {
   testUIExtension,
   testOrganizationApp,
   getWebhookConfig,
+  testAppConfigExtensions,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
@@ -286,6 +287,57 @@ describe('deploy', () => {
           handle: themeExtension.handle,
         },
       ],
+      token: 'api-token',
+      extensionIds: {},
+      release: true,
+      commitReference,
+    })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+  })
+
+  test('uploads the extension bundle with 1 non uuid managed extension if beta enabled', async () => {
+    // Given
+    const extensionNonUuidManaged = await testAppConfigExtensions()
+    const app = testApp({allExtensions: [extensionNonUuidManaged]})
+    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
+
+    // When
+    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      appModules: [
+        {
+          uuid: extensionNonUuidManaged.localIdentifier,
+          config: JSON.stringify({embedded: true}),
+          context: '',
+          handle: extensionNonUuidManaged.handle,
+        },
+      ],
+      token: 'api-token',
+      extensionIds: {},
+      release: true,
+      commitReference,
+    })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+  })
+
+  test('doesnt upload the extension bundle with 1 non uuid managed extension if beta disabled', async () => {
+    // Given
+    const extensionNonUuidManaged = await testAppConfigExtensions()
+    const app = testApp({allExtensions: [extensionNonUuidManaged]})
+    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
+
+    // When
+    await testDeployBundle({app, released: false, commitReference})
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      appModules: [],
       token: 'api-token',
       extensionIds: {},
       release: true,
@@ -738,15 +790,32 @@ interface TestDeployBundleInput {
   }
   released?: boolean
   commitReference?: string
+  versionedAppConfig?: boolean
 }
 
-async function testDeployBundle({app, partnersApp, options, released = true, commitReference}: TestDeployBundleInput) {
+async function testDeployBundle({
+  app,
+  partnersApp,
+  options,
+  released = true,
+  commitReference,
+  versionedAppConfig = false,
+}: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  for (const extension of app.allExtensions) {
+  for (const extension of app.allExtensions.filter((ext) => ext.isUuidManaged())) {
     extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
-  const identifiers = {app: 'app-id', extensions: extensionsPayload, extensionIds: {}}
+  const extensionsNonUuidPayload: {[key: string]: string} = {}
+  for (const extension of app.allExtensions.filter((ext) => !ext.isUuidManaged())) {
+    extensionsNonUuidPayload[extension.localIdentifier] = extension.localIdentifier
+  }
+  const identifiers = {
+    app: 'app-id',
+    extensions: extensionsPayload,
+    extensionIds: {},
+    extensionsNonUuidManaged: extensionsNonUuidPayload,
+  }
 
   vi.mocked(ensureDeployContext).mockResolvedValue({
     app,
@@ -772,8 +841,9 @@ async function testDeployBundle({app, partnersApp, options, released = true, com
   })
   vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {extensionRegistrations: [], configExtensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
+    app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
+  vi.mocked(useVersionedAppConfig).mockReturnValue(versionedAppConfig)
 
   await deploy({
     app,
