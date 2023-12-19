@@ -46,7 +46,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     apiKey: remoteApp.apiKey,
   })
   const remoteAppConfigurationExtension = remoteAppConfigurationExtensionContent(
-    remoteExtensionRegistrations.app.configExtensionRegistrations,
+    remoteExtensionRegistrations.app.configurationRegistrations,
     specifications.filter((spec) => spec.appModuleFeatures().includes('app_config')),
   )
   const localAndRemoteApiClientConfiguration = mergeAppConfiguration(

@@ -14,14 +14,14 @@ import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]
   dashboardManagedExtensionRegistrations: RemoteSource[]
-  configExtensionRegistrations: RemoteSource[]
+  configurationRegistrations: RemoteSource[]
 }
 
 export async function ensureExtensionsIds(
   options: EnsureDeploymentIdsPresenceOptions,
   {
     extensionRegistrations: initialRemoteExtensions,
-    configExtensionRegistrations,
+    configurationRegistrations,
     dashboardManagedExtensionRegistrations: dashboardOnlyExtensions,
   }: AppWithExtensions,
 ): Promise<
@@ -113,7 +113,7 @@ export async function ensureExtensionsIds(
   }
 
   const extensionsNonUuidManaged = await ensureNonUuidManagedExtensionsIds(
-    configExtensionRegistrations,
+    configurationRegistrations,
     options.app.allExtensions.filter((ext) => !ext.isUuidManaged()),
     options.appId,
   )
@@ -140,7 +140,7 @@ export async function ensureExtensionsIds(
 }
 
 async function ensureNonUuidManagedExtensionsIds(
-  remoteConfigExtensionRegistrations: RemoteSource[],
+  remoteConfigurationRegistrations: RemoteSource[],
   localExtensionRegistrations: LocalSource[],
   appId: string,
 ) {
@@ -149,7 +149,7 @@ async function ensureNonUuidManagedExtensionsIds(
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   localExtensionRegistrations.forEach((local) => {
-    const possibleMatch = remoteConfigExtensionRegistrations.find((remote) => remote.type === local.graphQLType)
+    const possibleMatch = remoteConfigurationRegistrations.find((remote) => remote.type === local.graphQLType)
     if (possibleMatch) validMatches[local.localIdentifier] = possibleMatch.uuid
     else extensionsToCreate.push(local)
   })
