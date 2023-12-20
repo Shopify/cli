@@ -107,7 +107,7 @@ embedded = false
         body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
-          ['To upload your config, run', {command: 'npm run shopify app deploy'}],
+          ['To upload your config, run', {command: 'npm run shopify app config push'}],
         ],
         reference: [
           {
@@ -186,7 +186,7 @@ embedded = false
         body: 'Using shopify.app.staging.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.staging.toml in your local project`],
-          ['To upload your config, run', {command: 'yarn shopify app deploy'}],
+          ['To upload your config, run', {command: 'yarn shopify app config push'}],
         ],
         reference: [
           {
@@ -245,7 +245,7 @@ embedded = false
         body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
-          ['To upload your config, run', {command: 'yarn shopify app deploy'}],
+          ['To upload your config, run', {command: 'yarn shopify app config push'}],
         ],
         reference: [
           {
@@ -516,7 +516,7 @@ embedded = false
         body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
-          ['To upload your config, run', {command: 'npm run shopify app deploy'}],
+          ['To upload your config, run', {command: 'npm run shopify app config push'}],
         ],
         reference: [
           {
@@ -615,6 +615,22 @@ api_version = "2023-07"
 embedded = true
 `
       expect(content).toEqual(expectedContent)
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
+        body: 'Using shopify.app.staging.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.staging.toml in your local project`],
+          ['To upload your config, run', {command: 'yarn shopify app deploy'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
+      })
     })
   })
 })

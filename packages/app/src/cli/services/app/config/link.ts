@@ -59,6 +59,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   await saveCurrentConfig({configFileName, directory})
 
+  const usingVersionedAppConfig = remoteExtensionRegistrations.app.configurationRegistrations.length > 0
   if (shouldRenderSuccess) {
     renderSuccess({
       headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
@@ -67,7 +68,12 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
         [`Make updates to ${configFileName} in your local project`],
         [
           'To upload your config, run',
-          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
+          {
+            command: formatPackageManagerCommand(
+              localApp.packageManager,
+              `shopify app ${usingVersionedAppConfig ? 'deploy' : 'config push'}`,
+            ),
+          },
         ],
       ],
       reference: [
