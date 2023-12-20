@@ -26,6 +26,30 @@ describe('app_config_privacy_compliance_webhooks', () => {
         shop_redact_url: 'https://myhooks.dev/apps/shop_deletion_url',
       })
     })
+    test('should not return attributes without value', () => {
+      // Given
+      const object = {
+        webhooks: {
+          privacy_compliance: {
+            customer_deletion_url: 'https://myhooks.dev/apps/customer_deletion_url',
+            shop_deletion_url: 'https://myhooks.dev/apps/shop_deletion_url',
+          },
+        },
+      }
+      const appConfigSpec = spec
+
+      // When
+      const result = appConfigSpec.transform!(object)
+
+      // Then
+      expect(result).toMatchObject({
+        customers_redact_url: 'https://myhooks.dev/apps/customer_deletion_url',
+        shop_redact_url: 'https://myhooks.dev/apps/shop_deletion_url',
+      })
+      Object.keys(result).forEach((key) => {
+        expect(result[key]).not.toBeUndefined()
+      })
+    })
   })
 
   describe('reverseTransform', () => {

@@ -143,14 +143,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) {
-      const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
-      return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
-    }
+    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, token})
+    return this.commonDeployConfig(apiKey)
+  }
 
+  async functionDeployConfig({
+    apiKey,
+    token,
+  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
+    return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
+  }
+
+  async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
     const transformedConfig = this.specification.transform?.(this.configuration)
-    return deployConfig ?? transformedConfig ?? undefined
+    const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
+    return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }
 
   validate() {

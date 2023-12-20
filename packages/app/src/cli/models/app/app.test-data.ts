@@ -173,12 +173,14 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
-export async function testAppConfigExtensions(): Promise<ExtensionInstance> {
-  const configuration = {
-    pos: {
-      embedded: true,
-    },
-  } as unknown as BaseConfigType
+export async function testAppConfigExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        pos: {
+          embedded: true,
+        },
+      } as unknown as BaseConfigType)
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!

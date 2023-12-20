@@ -189,7 +189,7 @@ function appConfigTransform(
     const originPath = reverse ? mappedPath : objectPath
     const targetPath = reverse ? objectPath : mappedPath
     const sourceValue = getPathValue(content, originPath)
-    setPathValue(transformedContent, targetPath, sourceValue)
+    if (sourceValue !== undefined) setPathValue(transformedContent, targetPath, sourceValue)
   }
 
   return transformedContent

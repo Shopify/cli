@@ -10,6 +10,7 @@ import {
   AppSchema,
   LegacyAppSchema,
   AppConfiguration,
+  CurrentAppConfiguration,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -343,7 +344,7 @@ class AppLoader {
   async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
     const configExtensionPromises = isCurrentSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
+      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration as CurrentAppConfiguration)
       : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
@@ -419,7 +420,7 @@ class AppLoader {
     })
   }
 
-  async createConfigExtensionInstances(directory: string, appConfiguration: AppConfiguration) {
+  async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     return this.specifications
       .filter((specification) => specification.appModuleFeatures().includes('app_config'))
       .map(async (specification) => {
@@ -438,8 +439,17 @@ class AppLoader {
           specConfiguration,
           appConfiguration.path,
           directory,
+        ).then((extensionInstance) =>
+          this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
         )
       })
+  }
+
+  async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
+    if (!extensionInstance) return
+
+    const configContent = await extensionInstance.commonDeployConfig(apiKey)
+    return configContent ? extensionInstance : undefined
   }
 
   async findEntryPath(directory: string, specification: ExtensionSpecification) {
