@@ -1624,9 +1624,13 @@ automatically_update_urls_on_dev = true
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
+    expect(app.allExtensions).toHaveLength(2)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      }),
       expect.objectContaining({
         pos: {
           embedded: true,

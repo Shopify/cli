@@ -624,9 +624,6 @@ redirect_urls = [ "https://example.com/callback1" ]
 [webhooks]
 api_version = "2023-07"
 
-  [webhooks.privacy_compliance]
-  customer_deletion_url = "https://myhooks.dev/apps/customer_deletion_url"
-
 [pos]
 embedded = true
 `
