@@ -568,7 +568,7 @@ describe('ensureExtensionsIds: handle non existent uuid managed extensions', () 
       }),
     )
   })
-  test('when the beta flag is disable configuration extensions are not created', async () => {
+  test('when the beta flag is disabled configuration extensions are not created', async () => {
     // Given
     vi.mocked(automaticMatchmaking).mockResolvedValueOnce({
       identifiers: {},

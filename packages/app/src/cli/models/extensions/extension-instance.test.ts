@@ -188,7 +188,7 @@ describe('deployConfig', async () => {
 })
 
 describe('bundleConfig', async () => {
-  test('returns the uuid from extensions value when the extension is uuid managed', async () => {
+  test('returns the uuid from extensions when the extension is uuid managed', async () => {
     const extensionInstance = await testThemeExtensions()
 
     const got = await extensionInstance.bundleConfig({
@@ -209,7 +209,7 @@ describe('bundleConfig', async () => {
     )
   })
 
-  test('returns the uuid from extensionsNonUuidManaged value when the extension is not uuid managed', async () => {
+  test('returns the uuid from extensionsNonUuidManaged when the extension is not uuid managed', async () => {
     const extensionInstance = await testAppConfigExtensions()
 
     const got = await extensionInstance.bundleConfig({
