@@ -251,8 +251,9 @@ describe('deployConfirmationPrompt', () => {
         specification: {
           identifier: 'spec1',
           name: 'specName1',
+          experience: 'configuration',
           options: {
-            managementExperience: 'app_config',
+            managementExperience: 'cli',
           },
         },
       })
@@ -435,6 +436,7 @@ function activeVersionContent({noDelete = false} = {}) {
       specification: {
         identifier: 'spec1',
         name: 'specName1',
+        experience: 'extension',
         options: {
           managementExperience: 'cli',
         },
@@ -448,6 +450,7 @@ function activeVersionContent({noDelete = false} = {}) {
       specification: {
         identifier: 'spec2',
         name: 'specName2',
+        experience: 'deprecated',
         options: {
           managementExperience: 'dashboard',
         },
@@ -463,6 +466,7 @@ function activeVersionContent({noDelete = false} = {}) {
       specification: {
         identifier: 'spec3',
         name: 'specName3',
+        experience: 'extension',
         options: {
           managementExperience: 'cli',
         },

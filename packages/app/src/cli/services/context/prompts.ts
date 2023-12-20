@@ -117,12 +117,12 @@ async function getInfoBreakdown(
 
   const appModuleVersionsNonConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
-      (module) => module.specification !== null && module.specification?.options.managementExperience !== 'app_config',
+      (module) => module.specification && module.specification?.experience !== 'configuration',
     ) || []
 
   const nonDashboardRemoteRegistrations =
     appModuleVersionsNonConfig
-      .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
+      .filter((module) => module.specification!.options.managementExperience !== 'dashboard')
       .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
   let toCreateFinal: string[] = []
