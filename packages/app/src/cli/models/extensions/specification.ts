@@ -167,9 +167,9 @@ function resolveReverseAppConfigTransform<T>(
  * ```
  * the method returns the following object:
  * ```json
- * { source: { fieldSourceA: 'valueA' } }
+ * { source: { fieldTargetA: 'valueA' } }
  * ```
- * The tranfomat can be applied in both ways depending on the reverse parameter
+ * The transformation can be applied in both ways depending on the reverse parameter
  *
  * @param content - The objet to be transformed
  * @param config - The transformation config

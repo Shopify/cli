@@ -530,7 +530,7 @@ embedded = false
     })
   })
 
-  test('the api client configuration is depp merged with the remote app_config extension registrarions', async () => {
+  test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
