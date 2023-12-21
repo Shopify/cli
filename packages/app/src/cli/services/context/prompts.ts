@@ -115,9 +115,14 @@ async function getInfoBreakdown(
 } | null> {
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
+  const appModuleVersionsNonConfig =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+      (module) => module.specification && module.specification?.experience !== 'configuration',
+    ) || []
+
   const nonDashboardRemoteRegistrations =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions
-      .filter((module) => !module.specification || module.specification.options.managementExperience !== 'dashboard')
+    appModuleVersionsNonConfig
+      .filter((module) => module.specification!.options.managementExperience !== 'dashboard')
       .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
 
   let toCreateFinal: string[] = []
@@ -140,7 +145,7 @@ async function getInfoBreakdown(
     ...dashboardOnly.map((source) => source.uuid),
   ]
   const onlyRemote =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions
+    appModuleVersionsNonConfig
       .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
       .map((module) => module.registrationTitle) ?? []
 

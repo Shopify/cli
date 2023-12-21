@@ -15,6 +15,18 @@ export const AllAppExtensionRegistrationsQuery = gql`
           config
         }
       }
+      configurationRegistrations {
+        id
+        uuid
+        title
+        type
+        draftVersion {
+          config
+        }
+        activeVersion {
+          config
+        }
+      }
       dashboardManagedExtensionRegistrations {
         id
         uuid
@@ -51,6 +63,7 @@ export interface ExtensionRegistration {
 export interface AllAppExtensionRegistrationsQuerySchema {
   app: {
     extensionRegistrations: ExtensionRegistration[]
+    configurationRegistrations: ExtensionRegistration[]
     dashboardManagedExtensionRegistrations: ExtensionRegistration[]
   }
 }

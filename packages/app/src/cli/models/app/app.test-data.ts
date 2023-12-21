@@ -174,6 +174,26 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
   return extension
 }
 
+export async function testAppConfigExtensions(): Promise<ExtensionInstance> {
+  const configuration = {
+    pos: {
+      embedded: true,
+    },
+  } as unknown as BaseConfigType
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification,
+  })
+
+  return extension
+}
+
 export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'web pixel name',

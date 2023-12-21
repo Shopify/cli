@@ -43,7 +43,11 @@ export async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise
 
 export async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
   if (options.format === 'json') {
-    return outputContent`${JSON.stringify(app, null, 2)}`
+    const appWithSupportedExtensions = {
+      ...app,
+      allExtensions: app.allExtensions.filter((ext) => ext.isReturnedAsInfo()),
+    }
+    return outputContent`${JSON.stringify(appWithSupportedExtensions, null, 2)}`
   } else {
     const appInfo = new AppInfo(app, options)
     return appInfo.output()
@@ -142,11 +146,12 @@ class AppInfo {
       })
     }
 
-    augmentWithExtensions(this.app.allExtensions, this.extensionSubSection.bind(this))
+    const supportedExtensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
+    augmentWithExtensions(supportedExtensions, this.extensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
-      this.app.allExtensions.forEach((extension) => {
+      supportedExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
     }

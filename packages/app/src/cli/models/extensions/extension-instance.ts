@@ -85,6 +85,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('esbuild')
   }
 
+  get isAppConfigExtension() {
+    return this.features.includes('app_config')
+  }
+
   get features(): ExtensionFeature[] {
     return this.specification.appModuleFeatures(this.configuration)
   }
@@ -105,7 +109,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.handle = this.configuration.handle ?? slugify(this.configuration.name ?? '')
+    this.handle = this.specification.appModuleFeatures().includes('app_config')
+      ? slugify(this.specification.identifier)
+      : this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
@@ -121,7 +127,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension
+    return !this.isThemeExtension && !this.isAppConfigExtension
+  }
+
+  isUuidManaged() {
+    return !this.isAppConfigExtension
+  }
+
+  isSentToMetrics() {
+    return !this.isAppConfigExtension
+  }
+
+  isReturnedAsInfo() {
+    return !this.isAppConfigExtension
   }
 
   async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
@@ -130,11 +148,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
     }
 
-    return (
-      // module id param is not necessary for non-Function extensions
-      this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined) ??
-      Promise.resolve(undefined)
-    )
+    const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const transformedConfig = this.specification.transform?.(this.configuration)
+    return deployConfig ?? transformedConfig ?? undefined
   }
 
   validate() {
@@ -251,12 +267,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const {handle, ...remainingConfigs} = configValue
     const contextValue = (handle as string) || ''
 
-    return {
-      uuid: identifiers.extensions[this.localIdentifier]!,
+    const result = {
       config: JSON.stringify(remainingConfigs),
       context: contextValue,
       handle: this.handle,
     }
+
+    const uuid = this.isUuidManaged()
+      ? identifiers.extensions[this.localIdentifier]
+      : identifiers.extensionsNonUuidManaged[this.localIdentifier]
+    return {...result, uuid: uuid!}
   }
 }
 

@@ -238,6 +238,67 @@ describe('deployConfirmationPrompt', () => {
         }),
       )
     })
+
+    test("doesn't render remote app config sections inside the removed sections", async () => {
+      // Given
+      vi.mocked(renderDangerousConfirmationPrompt).mockResolvedValue(true)
+      const activeVersion = activeVersionContent()
+      activeVersion.app.activeAppVersion.appModuleVersions.push({
+        registrationId: 'id3',
+        registrationUuid: 'uuid3',
+        registrationTitle: 'title3',
+        type: 'point_of_sales',
+        specification: {
+          identifier: 'spec1',
+          name: 'specName1',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      })
+      vi.mocked(partnersRequest).mockResolvedValue(activeVersion)
+
+      // When
+      const sourceSummary = buildSourceSummary({
+        identifiers: {...identifier1, ...identifier2},
+        toCreate: [createdExtension],
+        onlyRemote: [remoteOnlyExtension],
+        dashboardOnly: [dashboardOnlyExtension],
+      })
+      const response = await deployConfirmationPrompt({
+        summary: sourceSummary,
+        release: true,
+        apiKey: 'apiKey',
+        token: 'token',
+      })
+
+      // Then
+      expect(response).toBe(true)
+      expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith(
+        renderDangerousConfirmationPromptContent({
+          appTitle: sourceSummary.appTitle,
+          infoTable: [
+            {
+              header: 'Includes:',
+              items: [
+                ['extension1', {subdued: '(new)'}],
+                ['id1', {subdued: '(new)'}],
+                'extension2',
+                ['dashboard_title2', {subdued: '(from Partner Dashboard)'}],
+              ],
+              bullet: '+',
+            },
+            {
+              header: 'Removes:',
+              helperText: 'This can permanently delete app user data.',
+              items: ['title3', 'dashboard_title1'],
+              bullet: '-',
+            },
+          ],
+        }),
+      )
+    })
   })
 
   describe("when app doesn't have an active version", () => {
@@ -375,6 +436,7 @@ function activeVersionContent({noDelete = false} = {}) {
       specification: {
         identifier: 'spec1',
         name: 'specName1',
+        experience: 'extension',
         options: {
           managementExperience: 'cli',
         },
@@ -388,6 +450,7 @@ function activeVersionContent({noDelete = false} = {}) {
       specification: {
         identifier: 'spec2',
         name: 'specName2',
+        experience: 'deprecated',
         options: {
           managementExperience: 'dashboard',
         },
@@ -403,6 +466,7 @@ function activeVersionContent({noDelete = false} = {}) {
       specification: {
         identifier: 'spec3',
         name: 'specName3',
+        experience: 'extension',
         options: {
           managementExperience: 'cli',
         },

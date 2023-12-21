@@ -846,6 +846,7 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -872,6 +873,7 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
@@ -899,6 +901,7 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -925,6 +928,7 @@ describe('ensureDeployContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -949,7 +953,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
-    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
   })
 
@@ -970,6 +974,7 @@ describe('ensureDeployContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     // There is a cached app but it will be ignored
@@ -1000,7 +1005,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
-    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
   })
 })
@@ -1013,6 +1018,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
@@ -1041,6 +1047,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
@@ -1069,6 +1076,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
@@ -1096,6 +1104,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
@@ -1140,6 +1149,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
@@ -1226,6 +1236,7 @@ describe('ensureThemeExtensionDevContext', () => {
             type: 'THEME_APP_EXTENSION',
           },
         ],
+        configurationRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
       },
     })
@@ -1247,7 +1258,7 @@ describe('ensureThemeExtensionDevContext', () => {
     const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
+      app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
     })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',
