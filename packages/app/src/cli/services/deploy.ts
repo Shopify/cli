@@ -98,7 +98,7 @@ export async function deploy(options: DeployOptions) {
               useVersionedAppConfig() || !extension.isAppConfigExtension
 
             const appModules = await Promise.all(
-              options.app.allExtensions
+              app.allExtensions
                 .filter(filterConfigurationAppModules)
                 .flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )

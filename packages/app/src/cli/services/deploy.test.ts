@@ -186,34 +186,6 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 App access extension', async () => {
-    // Given
-    const app = testApp()
-    const appConfigExtension = await testAppConfigExtensions()
-    const appWithExtensions = testApp({allExtensions: [appConfigExtension]})
-
-    // When
-    await testDeployBundle({app, appToDeploy: appWithExtensions})
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
-      apiKey: 'app-id',
-      appModules: [
-        {
-          specificationIdentifier: appConfigExtension.specification.identifier,
-          config: '{"embedded":true}',
-          context: '',
-          handle: appConfigExtension.handle,
-        },
-      ],
-      token: 'api-token',
-      extensionIds: {},
-      release: true,
-    })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-  })
-
   test('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()

@@ -1027,6 +1027,7 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     const appWithExtensions = testApp({

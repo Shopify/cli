@@ -271,7 +271,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
     const configValue = await this.deployConfig({apiKey, token})
-    if (!configValue || Object.keys(configValue).length === 0) return undefined
+    if (!configValue) return undefined
 
     const {handle, ...remainingConfigs} = configValue
     const contextValue = (handle as string) || ''
