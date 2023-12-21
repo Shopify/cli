@@ -2,6 +2,7 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
+  CurrentAppConfiguration,
   EmptyApp,
   isCurrentAppSchema,
   isLegacyAppSchema,
@@ -23,6 +24,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -53,7 +55,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     {...localApp.configuration, path: configFilePath},
     remoteApp,
   )
-  const configuration = {...localAndRemoteApiClientConfiguration, ...remoteAppConfigurationExtension}
+  const configuration = deepMergeObjects(localAndRemoteApiClientConfiguration, remoteAppConfigurationExtension)
 
   await writeAppConfigurationFile(configuration)
 
@@ -151,8 +153,8 @@ async function loadConfigurationFileName(
 export function mergeAppConfiguration(
   appConfiguration: AppConfiguration,
   remoteApp: OrganizationApp,
-): AppConfiguration {
-  const result: AppConfiguration = {
+): CurrentAppConfiguration {
+  const result: CurrentAppConfiguration = {
     path: appConfiguration.path,
     client_id: remoteApp.apiKey,
     name: remoteApp.title,

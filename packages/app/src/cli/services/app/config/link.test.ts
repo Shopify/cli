@@ -530,7 +530,7 @@ embedded = false
     })
   })
 
-  test('overwrite the api client configuration with the remote app_config extension registrarions', async () => {
+  test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -543,7 +543,9 @@ embedded = false
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
-          webhooks: {api_version: '2023-04'},
+          webhooks: {
+            api_version: '2023-04',
+          },
           application_url: 'https://myapp.com',
           embedded: true,
           pos: {
@@ -582,6 +584,17 @@ embedded = false
               title: 'point_of_sale',
               activeVersion: {
                 config: JSON.stringify({embedded: true}),
+              },
+            },
+            {
+              type: 'privacy_compliance_webhooks',
+              id: '543',
+              uuid: '543',
+              title: 'privacy_compliance_webhooks',
+              activeVersion: {
+                config: JSON.stringify({
+                  customers_redact_url: 'https://myhooks.dev/apps/customer_deletion_url',
+                }),
               },
             },
           ],

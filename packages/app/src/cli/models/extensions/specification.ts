@@ -5,6 +5,7 @@ import {blocks} from '../../constants.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 
 export type ExtensionFeature =
   | 'ui_preview'
@@ -15,6 +16,10 @@ export type ExtensionFeature =
   | 'esbuild'
   | 'single_js_entry_path'
   | 'app_config'
+
+export interface TransformationConfig {
+  [key: string]: string
+}
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -118,17 +123,76 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   identifier: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: zod.ZodObject<any>
-  appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
+  transformConfig?: TransformationConfig
 }): ExtensionSpecification<TConfiguration> {
+  const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
     identifier: spec.identifier,
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
     // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
-    appModuleFeatures: spec.appModuleFeatures,
-    transform: defaultAppConfigTransform,
-    reverseTransform: (content) => defaultAppConfigReverseTransform(spec.schema, content),
+    appModuleFeatures: appModuleFeatures().includes('app_config')
+      ? appModuleFeatures
+      : () => appModuleFeatures().concat('app_config'),
+    transform: resolveAppConfigTransform(spec.transformConfig),
+    reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
   })
+}
+
+function resolveAppConfigTransform(transformConfig?: TransformationConfig) {
+  if (!transformConfig) return (content: {[key: string]: unknown}) => defaultAppConfigTransform(content)
+
+  return (content: {[key: string]: unknown}) => appConfigTransform(content, transformConfig)
+}
+
+function resolveReverseAppConfigTransform<T>(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: zod.ZodType<T, any, any>,
+  transformConfig?: TransformationConfig,
+) {
+  if (!transformConfig) return (content: {[key: string]: unknown}) => defaultAppConfigReverseTransform(schema, content)
+
+  return (content: {[key: string]: unknown}) => appConfigTransform(content, transformConfig, true)
+}
+
+/**
+ * Given an object:
+ * ```json
+ * { source: { fieldSourceA: 'valueA' } }
+ * ```
+ *  and a tranform config content like this:
+ * ```json
+ * { 'target.fieldTargetA': 'source.fieldSourceA'}
+ * ```
+ * the method returns the following object:
+ * ```json
+ * { source: { fieldTargetA: 'valueA' } }
+ * ```
+ * The transformation can be applied in both ways depending on the reverse parameter
+ *
+ * @param content - The objet to be transformed
+ * @param config - The transformation config
+ * @param reverse - If true, the transformation will be applied in reverse
+ *
+ * @returns the transformed object
+ */
+
+function appConfigTransform(
+  content: {[key: string]: unknown},
+  config: TransformationConfig,
+  reverse = false,
+): {[key: string]: unknown} {
+  const transformedContent = {}
+
+  for (const [mappedPath, objectPath] of Object.entries(config)) {
+    const originPath = reverse ? mappedPath : objectPath
+    const targetPath = reverse ? objectPath : mappedPath
+    const sourceValue = getPathValue(content, originPath)
+    if (sourceValue !== undefined) setPathValue(transformedContent, targetPath, sourceValue)
+  }
+
+  return transformedContent
 }
 
 /**

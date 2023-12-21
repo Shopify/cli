@@ -185,6 +185,14 @@ describe('deployConfig', async () => {
 
     expect(got).toMatchObject({embedded: true})
   })
+
+  test('returns undefined when the transformed config is empty', async () => {
+    const extensionInstance = await testAppConfigExtensions(true)
+
+    const got = await extensionInstance.deployConfig({token: 'token', apiKey: 'apiKey'})
+
+    expect(got).toBeUndefined()
+  })
 })
 
 describe('bundleConfig', async () => {
