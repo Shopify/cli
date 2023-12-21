@@ -32,16 +32,20 @@ async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<st
   return apiVersions.reverse()[0]!
 }
 
+interface SupportedApiVersionsOptions {
+  future?: boolean
+}
+
 /**
  * GraphQL query to retrieve all supported API versions.
  *
  * @param session - Shopify admin session including token and Store FQDN.
  * @returns - An array of supported API versions.
  */
-export async function supportedApiVersions(session: AdminSession): Promise<string[]> {
+export async function supportedApiVersions(session: AdminSession, options: SupportedApiVersionsOptions = {}): Promise<string[]> {
   const apiVersions = await fetchApiVersions(session)
   return apiVersions
-    .filter((item) => item.supported)
+    .filter((item) => item.supported || options.future && Date.parse(item.handle) > Date.now())
     .map((item) => item.handle)
     .sort()
 }

@@ -103,7 +103,7 @@ export function setupGraphiQLServer({
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     let apiVersions: string[]
     try {
-      apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
+      apiVersions = await supportedApiVersions({storeFqdn, token: await token()}, {future: true})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (err) {
       // Retry once with a new token, in case the token expired or was revoked
@@ -139,7 +139,7 @@ export function setupGraphiQLServer({
       throw err
     }
 
-    const apiVersion = apiVersions.sort().reverse()[0]!
+    const apiVersion = apiVersions.sort().reverse().filter((handle: string) => Date.parse(handle) <= Date.now())[0]!
 
     res.send(
       await renderLiquidTemplate(
