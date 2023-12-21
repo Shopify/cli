@@ -110,16 +110,3 @@ export function setPathValue(object: object, path: string, value?: unknown): obj
 
   return set(object, path, value)
 }
-
-/**
- * Deletes the value at path of object.
- *
- * @param object - The object to modify.
- * @param path - The path of the property to set.
- * @returns - Returns object.
- */
-export function removePathValue(object: object, path: string): object {
-  const remove = require('lodash/remove.js')
-
-  return remove(object, path)
-}

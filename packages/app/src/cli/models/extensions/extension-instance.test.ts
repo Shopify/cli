@@ -6,6 +6,7 @@ import {
   testThemeExtensions,
   testUIExtension,
   testWebPixelExtension,
+  testWebhookExtensions,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -234,6 +235,27 @@ describe('bundleConfig', async () => {
     expect(got).toEqual(
       expect.objectContaining({
         uuid: 'uuid',
+      }),
+    )
+  })
+
+  test.only('returns arrays formatted properly inside the config', async () => {
+    const extensionInstance = await testWebhookExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {webhooks: 'uuid'},
+      },
+      token: 'token',
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        config: '{"subscriptions":[{"endpoint":"https://my-app.com/webhooks/my-neat-path","topic":"orders/delete"}]}',
       }),
     )
   })

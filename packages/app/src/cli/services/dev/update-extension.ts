@@ -6,7 +6,6 @@ import {
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
-import {getPathValue, removePathValue} from '@shopify/cli-kit/common/object'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -39,17 +38,15 @@ export async function updateExtensionDraft({
   }
 
   const configValue = (await extension.deployConfig({apiKey, token})) || {}
-  const handle = getPathValue(configValue, 'handle') as string
-  if (handle) removePathValue(configValue, 'handle')
-
+  const {handle, ...remainingConfigs} = configValue
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...configValue,
+      ...remainingConfigs,
       serialized_script: encodedFile,
     }),
     handle: extension.handle,
-    context: handle,
+    context: handle as string,
     registrationId,
   }
   const mutation = ExtensionUpdateDraftMutation

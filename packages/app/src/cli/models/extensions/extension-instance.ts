@@ -17,7 +17,6 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {getPathValue, removePathValue} from '@shopify/cli-kit/common/object'
 
 /**
  * Class that represents an instance of a local extension
@@ -143,7 +142,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return !this.isAppConfigExtension
   }
 
-  async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<object | undefined> {
+  async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
     if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, token})
     return this.commonDeployConfig(apiKey)
   }
@@ -156,9 +155,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
-  async commonDeployConfig(apiKey: string): Promise<object | undefined> {
+  async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transform?.(this.configuration)
+    const transformedConfig = this.specification.transform?.(this.configuration) as {[key: string]: unknown} | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
     return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }
@@ -274,12 +273,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const configValue = await this.deployConfig({apiKey, token})
     if (!configValue) return undefined
 
-    const handle = getPathValue(configValue, 'handle') as string
-    if (handle) removePathValue(configValue, 'handle')
+    const {handle, ...remainingConfigs} = configValue
+    const contextValue = (handle as string) || ''
 
     const result = {
-      config: JSON.stringify(configValue),
-      context: handle || '',
+      config: JSON.stringify(remainingConfigs),
+      context: contextValue,
       handle: this.handle,
     }
 

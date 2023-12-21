@@ -196,6 +196,34 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   return extension
 }
 
+export async function testWebhookExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        webhooks: {
+          subscriptions: [
+            {
+              topic: 'orders/delete',
+              path: '/my-neat-path',
+              endpoint: 'https://my-app.com/webhooks',
+            },
+          ],
+        },
+      } as unknown as BaseConfigType)
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification,
+  })
+
+  return extension
+}
+
 export async function testWebPixelExtension(directory = './my-extension'): Promise<ExtensionInstance> {
   const configuration = {
     name: 'web pixel name',
