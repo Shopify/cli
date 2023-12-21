@@ -21,6 +21,11 @@ export interface TransformationConfig {
   [key: string]: string
 }
 
+export interface CustomTransformationConfig {
+  forward?: (obj: object) => object
+  reverse?: (obj: object) => object
+}
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -48,8 +53,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  transform?: (content: {[key: string]: unknown}) => {[key: string]: unknown}
-  reverseTransform?: (content: {[key: string]: unknown}) => {[key: string]: unknown}
+  transform?: (content: object) => object
+  reverseTransform?: (content: object) => object
 }
 
 /**
@@ -124,7 +129,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: zod.ZodObject<any>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
-  transformConfig?: TransformationConfig
+  transformConfig?: TransformationConfig | CustomTransformationConfig
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -140,20 +145,29 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   })
 }
 
-function resolveAppConfigTransform(transformConfig?: TransformationConfig) {
-  if (!transformConfig) return (content: {[key: string]: unknown}) => defaultAppConfigTransform(content)
+function resolveAppConfigTransform(transformConfig?: TransformationConfig | CustomTransformationConfig) {
+  if (!transformConfig) return (content: object) => defaultAppConfigTransform(content as {[key: string]: unknown})
 
-  return (content: {[key: string]: unknown}) => appConfigTransform(content, transformConfig)
+  if (Object.keys(transformConfig).includes('forward')) {
+    return (transformConfig as CustomTransformationConfig).forward!
+  } else {
+    return (content: object) => appConfigTransform(content, transformConfig)
+  }
 }
 
 function resolveReverseAppConfigTransform<T>(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   schema: zod.ZodType<T, any, any>,
-  transformConfig?: TransformationConfig,
+  transformConfig?: TransformationConfig | CustomTransformationConfig,
 ) {
-  if (!transformConfig) return (content: {[key: string]: unknown}) => defaultAppConfigReverseTransform(schema, content)
+  if (!transformConfig)
+    return (content: object) => defaultAppConfigReverseTransform(schema, content as {[key: string]: unknown})
 
-  return (content: {[key: string]: unknown}) => appConfigTransform(content, transformConfig, true)
+  if (Object.keys(transformConfig).includes('reverse')) {
+    return (transformConfig as CustomTransformationConfig).reverse!
+  } else {
+    return (content: object) => appConfigTransform(content, transformConfig, true)
+  }
 }
 
 /**
@@ -179,10 +193,10 @@ function resolveReverseAppConfigTransform<T>(
  */
 
 function appConfigTransform(
-  content: {[key: string]: unknown},
-  config: TransformationConfig,
+  content: object,
+  config: TransformationConfig | CustomTransformationConfig,
   reverse = false,
-): {[key: string]: unknown} {
+): object {
   const transformedContent = {}
 
   for (const [mappedPath, objectPath] of Object.entries(config)) {

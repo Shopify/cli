@@ -48,16 +48,18 @@ const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   message: 'Only https urls are allowed',
 }).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-const EndpointValidation = zod
-  .union([zod.string().regex(httpsRegex), zod.string().regex(pubSubRegex), zod.string().regex(arnRegex)])
-  .optional()
+const EndpointValidation = zod.union([
+  zod.string().regex(httpsRegex),
+  zod.string().regex(pubSubRegex),
+  zod.string().regex(arnRegex),
+])
 
 export const WebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
+  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation).optional(),
   sub_topic: zod.string().optional(),
   include_fields: zod.array(zod.string()).optional(),
   metafield_namespaces: zod.array(zod.string()).optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
   path: zod
     .string()
     .refine((path) => path.startsWith('/') && path.length > 1, {
@@ -77,11 +79,13 @@ const WebhooksSchema = zod.object({
     .optional(),
 })
 
-const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
+const DeclarativeWebhooksSchema = zod.object({
   topics: zod.array(zod.string()).nonempty().optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
+  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation).optional(),
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-}).superRefine((schema, ctx) => {
+})
+
+const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSchema).superRefine((schema, ctx) => {
   // eslint-disable-next-line no-warning-comments
   // TODO - remove once declarative webhooks are live, don't validate properties we are not using yet
   if (TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA) return
@@ -233,7 +237,8 @@ export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 export type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
-export type NormalizedWebhookSubscriptions = Partial<zod.infer<typeof WebhookSubscriptionSchema>>[]
+export type DeclarativeWebhookConfig = zod.infer<typeof DeclarativeWebhooksSchema>
+export type NormalizedWebhookSubscription = zod.infer<typeof WebhookSubscriptionSchema>
 
 export interface Web {
   directory: string

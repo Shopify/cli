@@ -1,9 +1,14 @@
 import {themeExtensionConfig} from './theme-extension-config.js'
 import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {AppSchema} from '../../models/app/app.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {beforeAll, describe, expect, test} from 'vitest'
+
+beforeAll(() => {
+  const schema = AppSchema
+})
 
 describe('themeExtensionConfig', () => {
   test('builds a base64 encoded payload containing all theme files', async () => {

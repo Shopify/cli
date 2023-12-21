@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -30,7 +30,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     if (schemaType === 'legacy') {
       return {scopes: '', extension_directories: [], path: ''}
     } else {
-      return DEFAULT_CONFIG
+      return DEFAULT_CONFIG as CurrentAppConfiguration
     }
   }
 
@@ -85,7 +85,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
-  }
+  } as CurrentAppConfiguration
 
   return app
 }
