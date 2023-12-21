@@ -139,7 +139,7 @@ export function transformWebhookConfig(content: object) {
       webhookSubscriptions.push(subscriptionConfig)
     }
   }
-  return {subscriptions: webhookSubscriptions}
+  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
 }
 
 export function transformToWebhookConfig(content: object) {
