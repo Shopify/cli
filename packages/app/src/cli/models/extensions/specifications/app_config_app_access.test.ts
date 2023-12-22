@@ -6,18 +6,8 @@ describe('app_cofig_app_access', () => {
     test('should return the transformed object', () => {
       // Given
       const object = {
-        access_scopes: {
-          scopes: 'scope',
-          use_legacy_install_flow: true,
-        },
-        auth: {
-          redirect_urls: ['https://redirect-1.com', 'https://redirect-2.com'],
-        },
         access: {
-          admin: {
-            mode: 'online',
-          },
-          customer_account: true,
+          direct_api_offline_access: true,
         },
       }
       const appAccessSpec = spec
@@ -27,13 +17,9 @@ describe('app_cofig_app_access', () => {
 
       // Then
       expect(result).toMatchObject({
-        scopes: 'scope',
-        use_legacy_install_flow: true,
-        admin: {
-          mode: 'online',
+        access: {
+          direct_api_offline_access: true,
         },
-        customer_account: true,
-        redirect_urls: ['https://redirect-1.com', 'https://redirect-2.com'],
       })
     })
   })
@@ -42,13 +28,9 @@ describe('app_cofig_app_access', () => {
     test('should return the reversed transformed object', () => {
       // Given
       const object = {
-        scopes: 'scope',
-        use_legacy_install_flow: true,
-        admin: {
-          mode: 'online',
+        access: {
+          direct_api_offline_access: true,
         },
-        customer_account: true,
-        redirect_urls: ['https://redirect-1.com', 'https://redirect-2.com'],
       }
       const appAccessSpec = spec
 
@@ -57,18 +39,8 @@ describe('app_cofig_app_access', () => {
 
       // Then
       expect(result).toMatchObject({
-        access_scopes: {
-          scopes: 'scope',
-          use_legacy_install_flow: true,
-        },
-        auth: {
-          redirect_urls: ['https://redirect-1.com', 'https://redirect-2.com'],
-        },
         access: {
-          admin: {
-            mode: 'online',
-          },
-          customer_account: true,
+          direct_api_offline_access: true,
         },
       })
     })

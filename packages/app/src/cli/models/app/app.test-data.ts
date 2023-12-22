@@ -371,23 +371,6 @@ export const testRemoteSpecifications: RemoteSpecification[] = [
     },
   },
   {
-    name: 'Customer Accounts',
-    externalName: 'Customer Accounts',
-    identifier: 'customer_accounts_ui_extension',
-    externalIdentifier: 'customer_accounts_ui_extension_external',
-    gated: false,
-    experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 10,
-    },
-    features: {
-      argo: {
-        surface: 'customer_accounts',
-      },
-    },
-  },
-  {
     name: 'Checkout Extension',
     externalName: 'Checkout UI',
     identifier: 'checkout_ui_extension',

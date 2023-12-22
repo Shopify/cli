@@ -117,15 +117,7 @@ export const AppSchema = zod
       .optional(),
     access: zod
       .object({
-        admin: zod
-          .union([
-            zod.literal(true),
-            zod.object({
-              mode: zod.enum(['online', 'offline']).optional(),
-            }),
-          ])
-          .optional(),
-        customer_account: zod.boolean().optional(),
+        direct_api_offline_access: zod.boolean().optional(),
       })
       .optional(),
     webhooks: WebhooksSchemaWithDeclarative,
