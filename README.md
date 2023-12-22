@@ -11,8 +11,6 @@ With the Shopify command line interface (Shopify CLI 3.0), you can:
 
 Learn more in the [commands docs](./packages/cli/README.md#commands).
 
-<p>&nbsp;</p>
-
 ### Before you begin ###
 
 Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/getting-started) (or another package manager of your choice).
