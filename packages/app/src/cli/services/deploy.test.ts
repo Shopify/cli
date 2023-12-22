@@ -481,6 +481,7 @@ interface TestDeployBundleInput {
   released?: boolean
   commitReference?: string
   versionedAppConfig?: boolean
+  appToDeploy?: AppInterface
 }
 
 async function testDeployBundle({
@@ -490,6 +491,7 @@ async function testDeployBundle({
   released = true,
   commitReference,
   versionedAppConfig = false,
+  appToDeploy,
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -508,7 +510,7 @@ async function testDeployBundle({
   }
 
   vi.mocked(ensureDeployContext).mockResolvedValue({
-    app,
+    app: appToDeploy ?? app,
     identifiers,
     partnersApp:
       partnersApp ??

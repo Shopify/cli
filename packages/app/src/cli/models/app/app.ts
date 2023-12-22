@@ -115,6 +115,11 @@ export const AppSchema = zod
         redirect_urls: zod.array(validateUrl(zod.string())),
       })
       .optional(),
+    access: zod
+      .object({
+        direct_api_offline_access: zod.boolean().optional(),
+      })
+      .optional(),
     webhooks: WebhooksSchemaWithDeclarative,
     app_proxy: zod
       .object({
