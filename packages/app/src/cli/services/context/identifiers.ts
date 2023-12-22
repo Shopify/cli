@@ -46,7 +46,18 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   if (!options.app.hasExtensions() && options.deploymentMode === 'legacy')
     return {app: options.appId, extensions: {}, extensionIds: {}}
 
-  const remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
+  let remoteSpecifications = await fetchAppExtensionRegistrations({token: options.token, apiKey: options.appId})
+
+  const extensionRegistrations = remoteSpecifications.app.extensionRegistrations
+  const configurationRegistration = remoteSpecifications.app.configurationRegistrations
+
+  remoteSpecifications = {
+    ...remoteSpecifications,
+    app: {
+      ...remoteSpecifications.app,
+      extensionRegistrations: [...extensionRegistrations, ...configurationRegistration],
+    },
+  }
 
   let functions: IdentifiersExtensions = {}
 
