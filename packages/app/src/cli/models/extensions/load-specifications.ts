@@ -1,6 +1,5 @@
 import {ExtensionSpecification} from './specification.js'
 import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
-import {AppSchema} from '../app/app.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
 import {Config} from '@oclif/core'
@@ -27,7 +26,6 @@ export async function loadFSExtensionsSpecifications(): Promise<ExtensionSpecifi
 const memoizedLoadSpecs = memoize(loadSpecifications)
 
 async function loadSpecifications(directoryName: string) {
-  const schema = AppSchema
   /**
    * When running tests, "await import('.../spec..ts')" is handled by Vitest which does
    * transform the TS module into a JS one before loading it. Hence the inclusion of .ts

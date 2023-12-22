@@ -3,7 +3,6 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {
-  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA,
   validateInnerSubscriptions,
   validateTopLevelSubscriptions,
   httpsRegex,
@@ -86,10 +85,6 @@ const DeclarativeWebhooksSchema = zod.object({
 })
 
 const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSchema).superRefine((schema, ctx) => {
-  // eslint-disable-next-line no-warning-comments
-  // TODO - remove once declarative webhooks are live, don't validate properties we are not using yet
-  if (TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA) return
-
   const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema)
   if (topLevelSubscriptionErrors) {
     ctx.addIssue(topLevelSubscriptionErrors)

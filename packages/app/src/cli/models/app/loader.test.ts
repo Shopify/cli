@@ -32,11 +32,6 @@ import {resolve} from 'path'
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
 
-vi.mock('../../utilities/app/config/webhooks.js', async () => ({
-  ...((await vi.importActual('../../utilities/app/config/webhooks.js')) as any),
-  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA: false,
-}))
-
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
 
