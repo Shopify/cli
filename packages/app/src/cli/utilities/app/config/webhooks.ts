@@ -3,22 +3,22 @@ import type {WebhookConfig} from '../../../models/app/app.js'
 
 export const httpsRegex = /^(https:\/\/)/
 
-const duplicateSubscriptionsError = 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`'
+const duplicateSubscriptionsError = 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`'
 
 export function filterFalsey(values: (string | boolean | undefined)[]) {
   return values.filter(Boolean)
 }
 
-const generateSubscriptionKey = (topic: string, endpoint: string) => `${topic}::${endpoint}`
+const generateSubscriptionKey = (topic: string, uri: string) => `${topic}::${uri}`
 
 export function validateTopLevelSubscriptions(schema: WebhookConfig) {
-  const hasEndpoint = Boolean(schema.endpoint)
+  const hasEndpoint = Boolean(schema.uri)
   const hasTopics = Boolean(schema.topics?.length)
 
   if (hasEndpoint && !hasTopics && !schema.subscriptions?.length) {
     return {
       code: zod.ZodIssueCode.custom,
-      message: 'To use a top-level `endpoint`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
+      message: 'To use a top-level `uri`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
       fatal: true,
     }
   }
@@ -26,13 +26,13 @@ export function validateTopLevelSubscriptions(schema: WebhookConfig) {
   if (!hasEndpoint && hasTopics) {
     return {
       code: zod.ZodIssueCode.custom,
-      message: 'To use top-level topics, you must also provide a top-level `endpoint`',
+      message: 'To use top-level topics, you must also provide a top-level `uri`',
       fatal: true,
       path: ['topics'],
     }
   }
 
-  // given the endpoint will be static, the only way to have duplicate top-level subscriptions is if there are multiple identical topics
+  // given the uri will be static, the only way to have duplicate top-level subscriptions is if there are multiple identical topics
   if (hasTopics && schema.topics?.length !== new Set(schema.topics).size) {
     return {
       code: zod.ZodIssueCode.custom,
@@ -43,13 +43,13 @@ export function validateTopLevelSubscriptions(schema: WebhookConfig) {
   }
 }
 
-export function validateInnerSubscriptions({endpoint, subscriptions = [], ...schema}: WebhookConfig) {
+export function validateInnerSubscriptions({uri, subscriptions = [], ...schema}: WebhookConfig) {
   const uniqueSubscriptionEndpointSet = new Set()
 
   // add validated unique top level subscriptions to set
-  if (endpoint && schema.topics?.length) {
+  if (uri && schema.topics?.length) {
     for (const topic of schema.topics) {
-      uniqueSubscriptionEndpointSet.add(generateSubscriptionKey(topic, endpoint))
+      uniqueSubscriptionEndpointSet.add(generateSubscriptionKey(topic, uri))
     }
   }
 
@@ -58,33 +58,33 @@ export function validateInnerSubscriptions({endpoint, subscriptions = [], ...sch
   for (const [i, subscription] of subscriptions.entries()) {
     const path = ['subscriptions', i]
 
-    // If no top-level endpoints are provided, ensure each subscription has at least one endpoint
-    if (!endpoint && !subscription.endpoint) {
+    // If no top-level uris are provided, ensure each subscription has at least one uri
+    if (!uri && !subscription.uri) {
       return {
         code: zod.ZodIssueCode.custom,
-        message: 'You must include either a top-level endpoint or an endpoint per `[[webhooks.subscriptions]]`',
+        message: 'You must include either a top-level uri or an uri per `[[webhooks.subscriptions]]`',
         fatal: true,
         path,
       }
     }
 
-    let finalEndpoint = subscription.endpoint
+    let finalEndpoint = subscription.uri
 
-    // if there is no endpoint override, use top level endpoint. we are sure there will be one from earlier validation
+    // if there is no uri override, use top level uri. we are sure there will be one from earlier validation
     if (!finalEndpoint) {
-      finalEndpoint = endpoint
+      finalEndpoint = uri
     }
 
     if (subscription.path && !httpsRegex.test(finalEndpoint!)) {
       return {
         code: zod.ZodIssueCode.custom,
-        message: 'You must use an https `endpoint` to use a relative path',
+        message: 'You must use an https `uri` to use a relative path',
         fatal: true,
         path,
       }
     }
 
-    // concat the path to the endpoint if it exists to ensure uniqueness
+    // concat the path to the uri if it exists to ensure uniqueness
     if (subscription.path) {
       finalEndpoint = `${finalEndpoint}${subscription.path}`
     }

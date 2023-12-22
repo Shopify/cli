@@ -239,7 +239,7 @@ describe('bundleConfig', async () => {
     )
   })
 
-  test.only('returns arrays formatted properly inside the config', async () => {
+  test('returns arrays formatted properly inside the config', async () => {
     const extensionInstance = await testWebhookExtensions()
 
     const got = await extensionInstance.bundleConfig({
@@ -255,7 +255,7 @@ describe('bundleConfig', async () => {
 
     expect(got).toEqual(
       expect.objectContaining({
-        config: '{"subscriptions":[{"endpoint":"https://my-app.com/webhooks/my-neat-path","topic":"orders/delete"}]}',
+        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks/my-neat-path","topic":"orders/delete"}]}',
       }),
     )
   })

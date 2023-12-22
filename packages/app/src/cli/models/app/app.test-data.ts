@@ -205,7 +205,7 @@ export async function testWebhookExtensions(emptyConfig = false): Promise<Extens
             {
               topic: 'orders/delete',
               path: '/my-neat-path',
-              endpoint: 'https://my-app.com/webhooks',
+              uri: 'https://my-app.com/webhooks',
             },
           ],
         },

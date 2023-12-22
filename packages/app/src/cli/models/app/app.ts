@@ -47,7 +47,7 @@ const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   message: 'Only https urls are allowed',
 }).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-const EndpointValidation = zod.union([
+const UriValidation = zod.union([
   zod.string().regex(httpsRegex),
   zod.string().regex(pubSubRegex),
   zod.string().regex(arnRegex),
@@ -55,7 +55,7 @@ const EndpointValidation = zod.union([
 
 export const WebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation).optional(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
   sub_topic: zod.string().optional(),
   include_fields: zod.array(zod.string()).optional(),
   metafield_namespaces: zod.array(zod.string()).optional(),
@@ -80,7 +80,7 @@ const WebhooksSchema = zod.object({
 
 const DeclarativeWebhooksSchema = zod.object({
   topics: zod.array(zod.string()).nonempty().optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation).optional(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 

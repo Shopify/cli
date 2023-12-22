@@ -7,7 +7,7 @@ describe('webhooks', () => {
       // Given
       const object = {
         webhooks: {
-          endpoint: 'https://my-app.com/webhooks',
+          uri: 'https://my-app.com/webhooks',
           topics: ['products/create', 'products/update', 'products/delete'],
           subscriptions: [
             {
@@ -20,13 +20,13 @@ describe('webhooks', () => {
             {
               topic: 'metaobjects/create',
               sub_topic: 'something',
-              endpoint: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
             {
               topic: 'orders/create',
               include_fields: ['variants', 'title'],
               metafield_namespaces: ['size'],
-              endpoint: 'https://valid-url',
+              uri: 'https://valid-url',
             },
           ],
         },
@@ -41,31 +41,31 @@ describe('webhooks', () => {
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
           },
           {
             topic: 'products/update',
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
           },
           {
             topic: 'products/delete',
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
           },
           {
-            endpoint: 'https://my-app.com/webhooks/my-neat-path',
+            uri: 'https://my-app.com/webhooks/my-neat-path',
             topic: 'orders/delete',
           },
           {
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
             topic: 'payment_terms.challenged',
           },
           {
-            endpoint: 'pubsub://absolute-feat-test:pub-sub-topic2',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             topic: 'metaobjects/create',
             sub_topic: 'something',
           },
           {
-            endpoint: 'https://valid-url',
+            uri: 'https://valid-url',
             topic: 'orders/create',
             include_fields: ['variants', 'title'],
             metafield_namespaces: ['size'],
@@ -81,27 +81,27 @@ describe('webhooks', () => {
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
           },
           {
             topic: 'products/update',
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
           },
           {
             topic: 'products/delete',
-            endpoint: 'https://my-app.com/webhooks',
+            uri: 'https://my-app.com/webhooks',
           },
           {
-            endpoint: 'https://my-app.com/webhooks/my-neat-path',
+            uri: 'https://my-app.com/webhooks/my-neat-path',
             topic: 'orders/delete',
           },
           {
-            endpoint: 'pubsub://absolute-feat-test:pub-sub-topic2',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             topic: 'metaobjects/create',
             sub_topic: 'something',
           },
           {
-            endpoint: 'https://valid-url',
+            uri: 'https://valid-url',
             topic: 'orders/create',
             include_fields: ['variants', 'title'],
             metafield_namespaces: ['size'],
@@ -116,7 +116,7 @@ describe('webhooks', () => {
       // Then
       expect(result).toMatchObject({
         webhooks: {
-          endpoint: 'https://my-app.com/webhooks',
+          uri: 'https://my-app.com/webhooks',
           topics: ['products/create', 'products/update', 'products/delete'],
           subscriptions: [
             {
@@ -126,13 +126,13 @@ describe('webhooks', () => {
             {
               topic: 'metaobjects/create',
               sub_topic: 'something',
-              endpoint: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
             {
               topic: 'orders/create',
               include_fields: ['variants', 'title'],
               metafield_namespaces: ['size'],
-              endpoint: 'https://valid-url',
+              uri: 'https://valid-url',
             },
           ],
         },
