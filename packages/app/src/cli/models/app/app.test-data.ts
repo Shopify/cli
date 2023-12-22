@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -30,7 +30,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     if (schemaType === 'legacy') {
       return {scopes: '', extension_directories: [], path: ''}
     } else {
-      return DEFAULT_CONFIG
+      return DEFAULT_CONFIG as CurrentAppConfiguration
     }
   }
 
@@ -85,7 +85,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
-  }
+  } as CurrentAppConfiguration
 
   return app
 }
@@ -185,6 +185,34 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory: './',
+    specification,
+  })
+
+  return extension
+}
+
+export async function testWebhookExtensions(emptyConfig = false): Promise<ExtensionInstance> {
+  const configuration = emptyConfig
+    ? ({} as unknown as BaseConfigType)
+    : ({
+        webhooks: {
+          subscriptions: [
+            {
+              topic: 'orders/delete',
+              path: '/my-neat-path',
+              uri: 'https://my-app.com/webhooks',
+            },
+          ],
+        },
+      } as unknown as BaseConfigType)
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
 
   const extension = new ExtensionInstance({
     configuration,
