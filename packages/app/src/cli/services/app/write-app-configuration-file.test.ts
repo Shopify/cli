@@ -50,16 +50,6 @@ client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
 
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-
-[auth]
-redirect_urls = [
-  "https://example.com/redirect",
-  "https://example.com/redirect2"
-]
-
 [webhooks]
 api_version = "2023-07"
 
@@ -78,6 +68,16 @@ embedded = false
 
 [app_preferences]
 url = "https://example.com/prefs"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+
+[auth]
+redirect_urls = [
+  "https://example.com/redirect",
+  "https://example.com/redirect2"
+]
 
 [build]
 automatically_update_urls_on_dev = true

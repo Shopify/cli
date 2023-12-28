@@ -87,18 +87,18 @@ client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
@@ -166,18 +166,18 @@ client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})
@@ -226,18 +226,18 @@ client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -285,18 +285,18 @@ client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).not.toHaveBeenCalled()
@@ -409,18 +409,18 @@ client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
 `
       expect(content).toEqual(expectedContent)
     })
@@ -451,18 +451,18 @@ client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
 `
       expect(content).toEqual(expectedContent)
     })
@@ -493,13 +493,6 @@ client_id = "api-key"
 application_url = "https://example.com"
 embedded = true
 
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
 [webhooks]
 api_version = "2023-07"
 
@@ -508,6 +501,13 @@ api_version = "2023-07"
 
 [pos]
 embedded = false
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
@@ -614,18 +614,18 @@ client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = true
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = true
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({

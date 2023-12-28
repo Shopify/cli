@@ -105,6 +105,17 @@ export const NonVersionedAppTopSchema = zod.object({
 })
 
 export const NonVersionedAppBottomSchema = zod.object({
+  access_scopes: zod
+    .object({
+      scopes: zod.string().optional(),
+      use_legacy_install_flow: zod.boolean().optional(),
+    })
+    .optional(),
+  auth: zod
+    .object({
+      redirect_urls: zod.array(validateUrl(zod.string())),
+    })
+    .optional(),
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -119,17 +130,6 @@ export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersioned
 export const VersionedAppSchema = zod.object({
   application_url: validateUrl(zod.string()),
   embedded: zod.boolean(),
-  access_scopes: zod
-    .object({
-      scopes: zod.string().optional(),
-      use_legacy_install_flow: zod.boolean().optional(),
-    })
-    .optional(),
-  auth: zod
-    .object({
-      redirect_urls: zod.array(validateUrl(zod.string())),
-    })
-    .optional(),
   access: zod
     .object({
       direct_api_offline_access: zod.boolean().optional(),

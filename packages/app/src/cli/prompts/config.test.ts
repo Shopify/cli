@@ -219,19 +219,19 @@ describe('confirmPushChanges', () => {
         gitDiff: {
           baselineContent: `name = "app1"
 
-[access_scopes]
-scopes = "read_products"
-
 [webhooks]
 api_version = "2023-07"
+
+[access_scopes]
+scopes = "read_products"
 `,
           updatedContent: `name = "app2"
 
-[access_scopes]
-scopes = "read_themes,read_customers"
-
 [webhooks]
 api_version = "unstable"
+
+[access_scopes]
+scopes = "read_themes,read_customers"
 `,
         },
         defaultValue: true,
