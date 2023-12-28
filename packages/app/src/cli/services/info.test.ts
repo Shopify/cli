@@ -2,28 +2,37 @@ import {InfoOptions, info} from './info.js'
 import {fetchAppDetailsFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
+import * as accountInfo from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {testApp, testOrganizationApp, testUIExtension} from '../models/app/app.test-data.js'
+import {
+  testPartnersUserSession,
+  testApp,
+  testOrganizationApp,
+  testUIExtension,
+  testAppConfigExtensions,
+} from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {checkForNewVersion} from '@shopify/cli-kit/node/node-package-manager'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 const infoOptions: InfoOptions = {
   format: 'text',
   webEnv: false,
 }
+
+beforeEach(() => {
+  vi.spyOn(accountInfo, 'fetchPartnersSession').mockResolvedValue(testPartnersUserSession)
+})
 
 describe('info', () => {
   test('returns update shopify cli reminder when last version is greater than current version', async () => {
@@ -85,6 +94,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Access scopes\s*read_products/)
       expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
       expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
+      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -111,6 +121,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Access scopes\s*my-scope/)
       expect(unstyled(result)).toMatch(/Dev store\s*my-app.example.com/)
       expect(unstyled(result)).toMatch(/Update URLs\s*Yes/)
+      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -127,6 +138,7 @@ describe('info', () => {
       expect(unstyled(result)).toMatch(/Dev store\s*Not yet configured/)
       expect(unstyled(result)).toMatch(/Client ID\s*Not yet configured/)
       expect(unstyled(result)).toMatch(/Update URLs\s*Not yet configured/)
+      expect(unstyled(result)).toMatch(/Partners account\s*partner@shopify.com/)
     })
   })
 
@@ -172,7 +184,6 @@ describe('info', () => {
         },
       })
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
       // When
       const result = await info(app, {...infoOptions, webEnv: true})
@@ -215,7 +226,6 @@ describe('info', () => {
         },
       })
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
       // When
       const result = await info(app, {...infoOptions, format: 'json', webEnv: true})
@@ -286,7 +296,6 @@ describe('info', () => {
         },
       })
       vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
 
       // When
       const result = await info(app, infoOptions)
@@ -301,6 +310,115 @@ describe('info', () => {
       expect(result).toContain('📂 extension-2')
       expect(result).toContain('! Mock error with ui_extension')
       expect(result).toContain('! Mock error with checkout_ui_extension')
+    })
+  })
+
+  test("doesn't return extensions not supported using the default output format", async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const uiExtension1 = await testUIExtension({
+        configuration: {
+          path: 'extension/path/1',
+          name: 'Extension 1',
+          handle: 'handle-for-extension-1',
+          type: 'ui_extension',
+          metafields: [],
+        },
+      })
+      const configExtension = await testAppConfigExtensions()
+
+      const app = mockApp({
+        directory: tmp,
+        app: {
+          allExtensions: [uiExtension1, configExtension],
+        },
+      })
+      const organization = {
+        id: '123',
+        betas: {},
+        businessName: 'test',
+        website: '',
+        apps: {nodes: []},
+      }
+      const organizationApp = testOrganizationApp({
+        id: '123',
+        title: 'Test app',
+        appType: 'custom',
+      })
+      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
+      vi.mocked(fetchOrgAndApps).mockResolvedValue({
+        organization,
+        stores: [],
+        apps: {
+          nodes: [organizationApp],
+          pageInfo: {hasNextPage: false},
+        },
+      })
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+
+      // When
+      const result = await info(app, infoOptions)
+
+      // Then
+      expect(result).toContain('📂 handle-for-extension-1')
+      expect(result).not.toContain('📂 point_of_sale')
+    })
+  })
+
+  test("doesn't return extensions not supported using the json output format", async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const uiExtension1 = await testUIExtension({
+        configuration: {
+          path: 'extension/path/1',
+          name: 'Extension 1',
+          handle: 'handle-for-extension-1',
+          type: 'ui_extension',
+          metafields: [],
+        },
+      })
+      const configExtension = await testAppConfigExtensions()
+
+      const app = mockApp({
+        directory: tmp,
+        app: {
+          allExtensions: [uiExtension1, configExtension],
+        },
+      })
+      const organization = {
+        id: '123',
+        betas: {},
+        businessName: 'test',
+        website: '',
+        apps: {nodes: []},
+      }
+      const organizationApp = testOrganizationApp({
+        id: '123',
+        title: 'Test app',
+        appType: 'custom',
+      })
+      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
+      vi.mocked(fetchOrgAndApps).mockResolvedValue({
+        organization,
+        stores: [],
+        apps: {
+          nodes: [organizationApp],
+          pageInfo: {hasNextPage: false},
+        },
+      })
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+
+      // When
+      const result = await info(app, {format: 'json', webEnv: false})
+
+      // Then
+      expect(result).toBeInstanceOf(TokenizedString)
+      const resultObject = JSON.parse((result as TokenizedString).value) as AppInterface
+      const extensionsIdentifiers = resultObject.allExtensions.map((extension) => extension.localIdentifier)
+      expect(extensionsIdentifiers).toContain('handle-for-extension-1')
+      expect(extensionsIdentifiers).not.toContain('point_of_sale')
     })
   })
 })

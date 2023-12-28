@@ -1,6 +1,11 @@
 import {loadFSExtensionsSpecifications} from './load-specifications.js'
-import {testFunctionExtension} from '../app/app.test-data.js'
-import {describe, test, expect} from 'vitest'
+import {AppSchema} from '../app/app.js'
+import {describe, test, expect, beforeAll} from 'vitest'
+
+// If the AppSchema is not instanced, the dynamic loading of loadFSExtensionsSpecifications is not working
+beforeAll(() => {
+  const schema = AppSchema
+})
 
 describe('allUISpecifications', () => {
   test('loads the specifications successfully', async () => {
@@ -19,31 +24,5 @@ describe('allLocalSpecs', () => {
 
     // Then
     expect(got.length).not.toEqual(0)
-  })
-})
-
-describe('graphQLType', () => {
-  test('returns type when not using extensions framework', async () => {
-    // Given
-    const functionA = await testFunctionExtension()
-
-    // When
-    functionA.usingExtensionsFramework = false
-    const got = functionA.graphQLType
-
-    // Then
-    expect(got).toEqual('PRODUCT_DISCOUNTS')
-  })
-
-  test('returns FUNCTION when using extensions framework', async () => {
-    // Given
-    const functionA = await testFunctionExtension()
-
-    // When
-    functionA.usingExtensionsFramework = true
-    const got = functionA.graphQLType
-
-    // Then
-    expect(got).toEqual('FUNCTION')
   })
 })

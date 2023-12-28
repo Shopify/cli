@@ -12,7 +12,7 @@ import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_pro
 import {confirmPushChanges} from '../../../prompts/config.js'
 import {logMetadataForLoadedContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -42,81 +42,94 @@ const FIELD_NAMES: {[key: string]: string} = {
 
 export async function pushConfig(options: PushOptions) {
   const {configuration} = options
-  if (isCurrentAppSchema(configuration)) {
-    const token = await ensureAuthenticatedPartners()
-    const configFileName = isCurrentAppSchema(configuration) ? basename(configuration.path) : undefined
+  if (!isCurrentAppSchema(configuration)) return
 
-    const queryVariables = {apiKey: configuration.client_id}
-    const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
+  const configFileName = isCurrentAppSchema(configuration) ? basename(configuration.path) : undefined
 
-    if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
-    const {app} = queryResult
+  const queryVariables = {apiKey: configuration.client_id}
+  const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
 
-    const {businessName: org} = await fetchOrgFromId(app.organizationId, token)
-    renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
+  if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
+  const {app} = queryResult
 
-    if (!(await confirmPushChanges(options, app))) return
+  const {businessName: org} = await fetchOrgFromId(app.organizationId, partnersSession)
+  renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
 
-    const variables = getMutationVars(app, configuration)
+  if (!(await confirmPushChanges(options, app))) return
 
-    const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
+  const variables = getMutationVars(app, configuration)
 
-    if (result.appUpdate.userErrors.length > 0) {
-      const errors = result.appUpdate.userErrors
-        .map((error) => {
-          const [_, ...fieldPath] = error.field || []
-          const mappedName = FIELD_NAMES[fieldPath.join(',')] || fieldPath.join(', ')
-          const fieldName = mappedName ? `${mappedName}: ` : ''
-          return `${fieldName}${error.message}`
-        })
-        .join('\n')
+  const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
+
+  if (result.appUpdate.userErrors.length > 0) {
+    const errors = result.appUpdate.userErrors
+      .map((error) => {
+        const [_, ...fieldPath] = error.field || []
+        const mappedName = FIELD_NAMES[fieldPath.join(',')] || fieldPath.join(', ')
+        const fieldName = mappedName ? `${mappedName}: ` : ''
+        return `${fieldName}${error.message}`
+      })
+      .join('\n')
+    abort(errors)
+  }
+
+  const shouldDeleteScopes =
+    app.requestedAccessScopes &&
+    (configuration.access_scopes?.scopes === undefined || usesLegacyScopesBehavior(configuration))
+
+  if (shouldDeleteScopes) {
+    const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
+
+    if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
+      const errors = clearResult.appRequestedAccessScopesClear.userErrors.map((error) => error.message).join(', ')
       abort(errors)
     }
-
-    const shouldDeleteScopes =
-      app.requestedAccessScopes &&
-      (configuration.access_scopes?.scopes === undefined || usesLegacyScopesBehavior(configuration))
-
-    if (shouldDeleteScopes) {
-      const clearResult: ClearScopesSchema = await partnersRequest(clearRequestedScopes, token, {apiKey: app.apiKey})
-
-      if (clearResult.appRequestedAccessScopesClear?.userErrors?.length > 0) {
-        const errors = clearResult.appRequestedAccessScopesClear.userErrors.map((error) => error.message).join(', ')
-        abort(errors)
-      }
-    }
-
-    if (!configuration.app_proxy && app.appProxy) {
-      const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
-
-      if (deleteResult?.userErrors?.length > 0) {
-        const errors = deleteResult.userErrors.map((error) => error.message).join(', ')
-        abort(errors)
-      }
-    }
-
-    await logMetadataForLoadedContext(app)
-
-    renderSuccess({
-      headline: `Updated your app config for ${configuration.name}`,
-      body: [`Your ${configFileName} config is live for your app users.`],
-    })
   }
+
+  if (!configuration.app_proxy && app.appProxy) {
+    const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
+
+    if (deleteResult?.userErrors?.length > 0) {
+      const errors = deleteResult.userErrors.map((error) => error.message).join(', ')
+      abort(errors)
+    }
+  }
+
+  await logMetadataForLoadedContext(app)
+
+  renderSuccess({
+    headline: `Updated your app config for ${configuration.name}`,
+    body: [`Your ${configFileName} config is live for your app users.`],
+  })
 }
 
 const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
+  let webhookApiVersion
+  let gdprWebhooks
+
+  if (app.betas?.declarativeWebhooks) {
+    // These fields will be updated by the deploy command
+    webhookApiVersion = app.webhookApiVersion
+    gdprWebhooks = app.gdprWebhooks
+  } else {
+    webhookApiVersion = configuration.webhooks?.api_version
+    gdprWebhooks = {
+      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url,
+      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url,
+      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url,
+    }
+  }
+
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
     applicationUrl: configuration.application_url,
-    webhookApiVersion: configuration.webhooks?.api_version,
+    webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
-    gdprWebhooks: {
-      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url ?? undefined,
-      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url ?? undefined,
-      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url ?? undefined,
-    },
+    gdprWebhooks,
     posEmbedded: configuration.pos?.embedded ?? false,
     preferencesUrl: configuration.app_preferences?.url ?? null,
   }

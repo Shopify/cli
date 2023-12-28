@@ -19,24 +19,25 @@ import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
+import {fetchPartnersSession} from './context/partner-account-info.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
-import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
+import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 export interface DevOptions {
   directory: string
@@ -55,36 +56,16 @@ export interface DevOptions {
   theme?: string
   themeExtensionPort?: number
   notify?: string
-}
-
-interface DevTasksContext {
-  config?: DevConfig
-  processes?: DevProcesses
-  previewUrl?: string
-  graphiqlUrl?: string
+  graphiqlPort?: number
+  graphiqlKey?: string
 }
 
 export async function dev(commandOptions: DevOptions) {
-  await ensureAuthenticatedPartners()
-  const devContext = await renderTasks<DevTasksContext>([
-    {
-      title: 'Preparing environment',
-      task: async (ctx: DevTasksContext) => {
-        ctx.config = await prepareForDev(commandOptions)
-      },
-    },
-    {
-      title: 'Configuring dev processes',
-      task: async (ctx: DevTasksContext) => {
-        const devConfig = ctx.config!
-        await actionsBeforeSettingUpDevProcesses(devConfig)
-        const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(devConfig)
-        Object.assign(ctx, {processes, graphiqlUrl, previewUrl})
-        await actionsBeforeLaunchingDevProcesses(devConfig)
-      },
-    },
-  ])
-  await launchDevProcesses(devContext as Required<DevTasksContext>)
+  const config = await prepareForDev(commandOptions)
+  await actionsBeforeSettingUpDevProcesses(config)
+  const {processes, graphiqlUrl, previewUrl} = await setupDevProcesses(config)
+  await actionsBeforeLaunchingDevProcesses(config)
+  await launchDevProcesses({processes, previewUrl, graphiqlUrl, config})
 }
 
 async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
@@ -95,13 +76,15 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const token = await ensureAuthenticatedPartners()
+  const partnersSession = await fetchPartnersSession()
+  const token = partnersSession.token
   const {
     storeFqdn,
+    storeId,
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
-  } = await ensureDevContext(commandOptions, token)
+  } = await ensureDevContext(commandOptions, partnersSession)
 
   const apiKey = remoteApp.apiKey
   const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
@@ -115,8 +98,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     localApp = await installAppDependencies(localApp)
   }
 
+  const graphiqlPort = commandOptions.graphiqlPort || ports.graphiql
+  const {graphiqlKey} = commandOptions
+
   const {webs, ...network} = await setupNetworkingOptions(
     localApp.webs,
+    graphiqlPort,
     apiKey,
     token,
     {
@@ -139,12 +126,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     token,
   )
 
-  // If we have a real UUID for an extension, use that instead of a random one
-  const allExtensionsWithDevUUIDs = getDevUUIDsForAllExtensions(localApp, apiKey)
-  localApp.allExtensions = allExtensionsWithDevUUIDs
-
   return {
     storeFqdn,
+    storeId,
     remoteApp,
     remoteAppUpdated,
     localApp,
@@ -152,6 +136,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     commandOptions,
     network,
     partnerUrlsUpdated,
+    graphiqlPort,
+    graphiqlKey,
   }
 }
 
@@ -196,17 +182,6 @@ async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
   await reportAnalyticsEvent({config: config.commandOptions.commandConfig, exitMode: 'ok'})
 }
 
-function getDevUUIDsForAllExtensions(localApp: AppInterface, apiKey: string) {
-  const prodEnvIdentifiers = getAppIdentifiers({app: localApp})
-  const envExtensionsIds = prodEnvIdentifiers.extensions || {}
-  const extensionsIds = prodEnvIdentifiers.app === apiKey ? envExtensionsIds : {}
-
-  return localApp.allExtensions.map((ext) => {
-    ext.devUUID = extensionsIds[ext.localIdentifier] ?? ext.devUUID
-    return ext
-  })
-}
-
 async function handleUpdatingOfPartnerUrls(
   webs: Web[],
   commandSpecifiedToUpdate: boolean,
@@ -246,6 +221,7 @@ async function handleUpdatingOfPartnerUrls(
 
 async function setupNetworkingOptions(
   webs: Web[],
+  graphiqlPort: number,
   apiKey: string,
   token: string,
   frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl' | 'commandConfig'>,
@@ -253,7 +229,7 @@ async function setupNetworkingOptions(
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
-  await validateCustomPorts(webs)
+  await validateCustomPorts(webs, graphiqlPort)
 
   // generateFrontendURL still uses the old naming of frontendUrl and frontendPort,
   // we can rename them to proxyUrl and proxyPort when we delete dev.ts
@@ -327,6 +303,7 @@ async function launchDevProcesses({
     processes: processesForTaskRunner,
     previewUrl,
     graphiqlUrl,
+    graphiqlPort: config.graphiqlPort,
     app,
     abortController,
     developerPreview: developerPreviewController(apiKey, token),
@@ -404,20 +381,28 @@ export function scopesMessage(scopes: string[]) {
   }
 }
 
-export async function validateCustomPorts(webConfigs: Web[]) {
+export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: number) {
   const allPorts = webConfigs.map((config) => config.configuration.port).filter((port) => port)
   const duplicatedPort = allPorts.find((port, index) => allPorts.indexOf(port) !== index)
   if (duplicatedPort) {
     throw new AbortError(`Found port ${duplicatedPort} for multiple webs.`, 'Please define a unique port for each web.')
   }
-  await Promise.all(
-    allPorts.map(async (port) => {
+  await Promise.all([
+    ...allPorts.map(async (port) => {
       const portAvailable = await checkPortAvailability(port!)
       if (!portAvailable) {
         throw new AbortError(`Hard-coded port ${port} is not available, please choose a different one.`)
       }
     }),
-  )
+    (async () => {
+      const portAvailable = await checkPortAvailability(graphiqlPort)
+      if (!portAvailable) {
+        const errorMessage = `Port ${graphiqlPort} is not available for serving GraphiQL.`
+        const tryMessage = ['Choose a different port by setting the', {command: '--graphiql-port'}, 'flag.']
+        throw new AbortError(errorMessage, tryMessage)
+      }
+    })(),
+  ])
 }
 
 export function setPreviousAppId(directory: string, apiKey: string) {

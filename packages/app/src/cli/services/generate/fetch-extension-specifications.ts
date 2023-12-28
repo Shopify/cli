@@ -37,7 +37,7 @@ export async function fetchSpecifications({
   })
 
   const extensionSpecifications: FlattenedRemoteSpecification[] = result.extensionSpecifications
-    .filter((specification) => specification.options.managementExperience === 'cli')
+    .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
     .map((spec) => {
       const newSpec = spec as FlattenedRemoteSpecification
       // WORKAROUND: The identifiers in the API are different for these extensions to the ones the CLI

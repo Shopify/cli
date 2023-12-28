@@ -1,17 +1,17 @@
 import link, {LinkOptions} from './link.js'
 import {saveCurrentConfig} from './use.js'
-import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {testPartnersUserSession, testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {describe, expect, test, vi} from 'vitest'
+import {fetchPartnersSession} from '../../context/partner-account-info.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
 const LOCAL_APP = testApp()
@@ -28,9 +28,21 @@ vi.mock('../../../models/app/loader.js', async () => {
 })
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('../../context/partner-account-info.js')
 vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
+vi.mock('../../context/partner-account-info.js')
+
+beforeEach(() => {
+  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
+  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+    app: {
+      extensionRegistrations: [],
+      configurationRegistrations: [],
+      dashboardManagedExtensionRegistrations: [],
+    },
+  })
+})
 
 describe('link', () => {
   test('does not ask for a name when it is provided as a flag', async () => {
@@ -300,7 +312,7 @@ embedded = false
         apiKey: 'api-key',
       }
       vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+      vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
@@ -326,7 +338,7 @@ embedded = false
         apiKey: '1234-5678',
       }
       vi.mocked(loadApp).mockResolvedValue({...LOCAL_APP, directory: tmp})
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+      vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
@@ -505,6 +517,123 @@ embedded = false
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
           ['To upload your config, run', {command: 'npm run shopify app config push'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
+      })
+    })
+  })
+
+  test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      const localApp = testApp({
+        configuration: {
+          path: 'shopify.app.development.toml',
+          name: 'my app',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {
+            api_version: '2023-04',
+          },
+          application_url: 'https://myapp.com',
+          embedded: true,
+          pos: {
+            embedded: false,
+          },
+        },
+      })
+      vi.mocked(loadApp).mockResolvedValue({...localApp, directory: tmp})
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
+        testOrganizationApp({
+          apiKey: '12345',
+          applicationUrl: 'https://myapp.com',
+          title: 'my app',
+          requestedAccessScopes: ['write_products'],
+        }),
+      )
+      vi.mocked(selectConfigName).mockResolvedValue('staging')
+      vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+        app: {
+          extensionRegistrations: [
+            {
+              type: 'THEME_APP_EXTENSION',
+              id: '123',
+              uuid: '123',
+              title: 'mock-theme',
+              activeVersion: {
+                config: JSON.stringify({name: 'my-theme-app', type: 'theme_app_extension'}),
+              },
+            },
+          ],
+          configurationRegistrations: [
+            {
+              type: 'point_of_sale',
+              id: '321',
+              uuid: '321',
+              title: 'point_of_sale',
+              activeVersion: {
+                config: JSON.stringify({embedded: true}),
+              },
+            },
+            {
+              type: 'privacy_compliance_webhooks',
+              id: '543',
+              uuid: '543',
+              title: 'privacy_compliance_webhooks',
+              activeVersion: {
+                config: JSON.stringify({
+                  customers_redact_url: 'https://myhooks.dev/apps/customer_deletion_url',
+                }),
+              },
+            },
+          ],
+          dashboardManagedExtensionRegistrations: [],
+        },
+      })
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = true
+`
+      expect(content).toEqual(expectedContent)
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
+        body: 'Using shopify.app.staging.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.staging.toml in your local project`],
+          ['To upload your config, run', {command: 'yarn shopify app deploy'}],
         ],
         reference: [
           {

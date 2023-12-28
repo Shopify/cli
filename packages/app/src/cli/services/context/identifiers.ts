@@ -47,6 +47,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     app: options.appId,
     extensions: extensions.value.extensions,
     extensionIds: extensions.value.extensionIds,
+    extensionsNonUuidManaged: extensions.value.extensionsNonUuidManaged,
   }
 }
 

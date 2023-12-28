@@ -1,5 +1,5 @@
 {
-  "version": "3.50.0",
+  "version": "3.52.0",
   "commands": {
     "theme:check": {
       "id": "theme:check",
@@ -58,7 +58,7 @@
           "name": "config",
           "type": "option",
           "char": "C",
-          "description": "Use the config provided, overriding .theme-check.yml if present\nUse :theme_app_extension to use default checks for theme app extensions",
+          "description": "Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported ",
           "required": false,
           "multiple": false
         },
@@ -372,6 +372,13 @@
           "description": "Theme ID or name of the remote theme.",
           "multiple": false
         },
+        "nodelete": {
+          "name": "nodelete",
+          "type": "boolean",
+          "char": "n",
+          "description": "Runs the dev command without deleting local files.",
+          "allowNo": false
+        },
         "only": {
           "name": "only",
           "type": "option",
@@ -436,6 +443,7 @@
         "overwrite-json",
         "port",
         "theme",
+        "nodelete",
         "only",
         "ignore",
         "stable",
@@ -1178,6 +1186,13 @@
           "description": "Theme ID or name of the remote theme.",
           "multiple": false
         },
+        "nodelete": {
+          "name": "nodelete",
+          "type": "boolean",
+          "char": "n",
+          "description": "Runs the dev command without deleting local files.",
+          "allowNo": false
+        },
         "only": {
           "name": "only",
           "type": "option",
@@ -1298,135 +1313,6 @@
       "cli2Flags": [
         "force"
       ]
-    },
-    "theme:update:check": {
-      "id": "theme:update:check",
-      "description": "Validate an 'update_extension.json' script.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "script": {
-          "name": "script",
-          "type": "option",
-          "description": "The path to the 'update_extension.json' script.",
-          "multiple": false,
-          "default": "./update_extension.json"
-        }
-      },
-      "args": {}
-    },
-    "theme:update:init": {
-      "id": "theme:update:init",
-      "description": "Initialize an 'update_extension.json' script.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your theme directory.",
-          "multiple": false,
-          "default": "."
-        }
-      },
-      "args": {}
-    },
-    "theme:update:run": {
-      "id": "theme:update:run",
-      "description": "Run the theme update process.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your theme directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "store": {
-          "name": "store",
-          "type": "option",
-          "char": "s",
-          "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
-        },
-        "script": {
-          "name": "script",
-          "type": "option",
-          "description": "The path to the 'update_extension.json' script.",
-          "multiple": false
-        },
-        "from-theme": {
-          "name": "from-theme",
-          "type": "option",
-          "description": "The theme ID or name of the theme at the previous version.",
-          "required": true,
-          "multiple": false
-        },
-        "to-theme": {
-          "name": "to-theme",
-          "type": "option",
-          "description": "The theme ID or name of the theme at the target version.",
-          "required": true,
-          "multiple": false
-        }
-      },
-      "args": {}
     }
   }
 }
