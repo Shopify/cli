@@ -60,7 +60,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
       // Description of the definitions. Can use Markdown.
       description: 'The following flags are available for the `app info` command:',
       // Name of the TypeScript type this entity uses.
-      type: 'appDev',
+      type: 'appdev',
     },
   ],
   // This determines where in the sidebar the entity will appear.
