@@ -152,6 +152,18 @@
       "flags": {},
       "args": {}
     },
+    "docs:generate-interfaces": {
+      "id": "docs:generate-interfaces",
+      "description": "Generate commands interfaces for the Shopify Documentation",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
     "kitchen-sink:async": {
       "id": "kitchen-sink:async",
       "description": "View the UI kit components that process async tasks",
