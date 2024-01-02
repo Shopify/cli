@@ -19,6 +19,7 @@ import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/com
 import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
+import {VideoAnimation, VideoAnimationProps} from '../../private/node/ui/components/VideoAnimation.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
@@ -497,6 +498,25 @@ export function renderTable<T extends ScalarDict>({renderOptions, ...props}: Ren
   recordUIEvent({type: 'table', properties: arguments[0]})
 
   return renderOnce(<Table {...props} />, {renderOptions})
+}
+
+interface RenderVideoOptions extends VideoAnimationProps {
+  renderOptions?: RenderOptions
+}
+
+export async function renderVideo({renderOptions, ...props}: RenderVideoOptions) {
+  // eslint-disable-next-line prefer-rest-params
+  recordUIEvent({type: 'video', properties: arguments[0]})
+
+  // eslint-disable-next-line max-params
+  return new Promise<void>((resolve, reject) => {
+    render(<VideoAnimation {...props} onComplete={resolve} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    })
+      .then(() => resetRecordedSleep())
+      .catch(reject)
+  })
 }
 
 interface RenderTasksOptions {

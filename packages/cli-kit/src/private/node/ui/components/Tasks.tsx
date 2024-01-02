@@ -1,4 +1,5 @@
 import {TextAnimation} from './TextAnimation.js'
+import {VideoAnimation} from './VideoAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
@@ -19,11 +20,19 @@ export interface Task<TContext = unknown> {
   skip?: (ctx: TContext) => boolean
 }
 
+interface Loader {
+  videoPath: string
+  audioPath?: string
+  captionsPath?: string
+  duration: number
+}
+
 export interface TasksProps<TContext> {
   tasks: Task<TContext>[]
   silent?: boolean
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
+  loader?: Loader
 }
 
 enum TasksState {
@@ -64,11 +73,13 @@ function Tasks<TContext>({
   silent = isUnitTest(),
   onComplete = noop,
   abortSignal,
+  loader,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
-  const {twoThirds} = useLayout()
+  const {oneThird, twoThirds} = useLayout()
   const loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
+  const [videoCompleted, setVideoCompleted] = useState(false)
   const ctx = useRef<TContext>({} as TContext)
   const {isRawModeSupported} = useStdin()
 
@@ -117,9 +128,21 @@ function Tasks<TContext>({
     return null
   }
 
+  const {videoPath, audioPath, captionsPath, duration} = loader || {}
+
   return state === TasksState.Loading && !isAborted ? (
     <Box flexDirection="column">
-      <TextAnimation text={loadingBar} />
+      {videoPath && !videoCompleted ? (
+        <VideoAnimation
+          videoPath={videoPath}
+          audioPath={audioPath}
+          captionsPath={captionsPath}
+          abortSignal={abortSignal}
+          duration={duration}
+          maxWidth={Math.min(oneThird, 80)}
+          onComplete={() => setVideoCompleted(true)}
+        />
+      ) : <TextAnimation text={loadingBar} />}
       <Text>{currentTask.title} ...</Text>
     </Box>
   ) : null

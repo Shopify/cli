@@ -3,6 +3,8 @@
   "include": ["./src/**/*.ts", "./src/**/*.js", "./src/**/*.tsx"],
   "exclude": ["./dist", "./src/templates/**/*"],
   "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "outDir": "dist",
     "allowJs": true,
     "rootDir": "src",
