@@ -26,9 +26,6 @@
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
 * [`shopify kitchen-sink all`](#shopify-kitchen-sink-all)
-* [`shopify kitchen-sink async`](#shopify-kitchen-sink-async)
-* [`shopify kitchen-sink prompts`](#shopify-kitchen-sink-prompts)
-* [`shopify kitchen-sink static`](#shopify-kitchen-sink-static)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
@@ -627,48 +624,6 @@ DESCRIPTION
 ALIASES
   $ shopify kitchen-sink all
 ```
-
-## `shopify kitchen-sink async`
-
-View the UI kit components that process async tasks
-
-```
-USAGE
-  $ shopify kitchen-sink async
-
-DESCRIPTION
-  View the UI kit components that process async tasks
-```
-
-_See code: [dist/cli/commands/kitchen-sink/async.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.53.0/dist/cli/commands/kitchen-sink/async.js)_
-
-## `shopify kitchen-sink prompts`
-
-View the UI kit components prompts
-
-```
-USAGE
-  $ shopify kitchen-sink prompts
-
-DESCRIPTION
-  View the UI kit components prompts
-```
-
-_See code: [dist/cli/commands/kitchen-sink/prompts.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.53.0/dist/cli/commands/kitchen-sink/prompts.js)_
-
-## `shopify kitchen-sink static`
-
-View the UI kit components that display static output
-
-```
-USAGE
-  $ shopify kitchen-sink static
-
-DESCRIPTION
-  View the UI kit components that display static output
-```
-
-_See code: [dist/cli/commands/kitchen-sink/static.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.53.0/dist/cli/commands/kitchen-sink/static.js)_
 
 ## `shopify plugins:install PLUGIN...`
 

@@ -8,6 +8,7 @@ import Command from '@shopify/cli-kit/node/base-command'
  */
 export default class KitchenSinkStatic extends Command {
   static description = 'View the UI kit components that display static output'
+  static hidden = true
 
   async run(): Promise<void> {
     await staticService()

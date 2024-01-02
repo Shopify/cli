@@ -126,12 +126,34 @@
         "command-flags.js"
       ]
     },
+    "plugins": {
+      "aliases": [],
+      "args": {},
+      "flags": {},
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "plugins",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "plugins",
+        "index.js"
+      ]
+    },
     "kitchen-sink:async": {
       "aliases": [],
       "args": {},
       "description": "View the UI kit components that process async tasks",
       "flags": {},
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [],
       "id": "kitchen-sink:async",
       "pluginAlias": "@shopify/cli",
@@ -177,6 +199,7 @@
       "description": "View the UI kit components prompts",
       "flags": {},
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [],
       "id": "kitchen-sink:prompts",
       "pluginAlias": "@shopify/cli",
@@ -198,6 +221,7 @@
       "description": "View the UI kit components that display static output",
       "flags": {},
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [],
       "id": "kitchen-sink:static",
       "pluginAlias": "@shopify/cli",
@@ -211,27 +235,6 @@
         "commands",
         "kitchen-sink",
         "static.js"
-      ]
-    },
-    "plugins": {
-      "aliases": [],
-      "args": {},
-      "flags": {},
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [],
-      "id": "plugins",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "isESM": true,
-      "relativePath": [
-        "dist",
-        "cli",
-        "commands",
-        "plugins",
-        "index.js"
       ]
     },
     "demo:catalog": {
