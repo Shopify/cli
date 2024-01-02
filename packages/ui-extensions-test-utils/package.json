@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-test-utils",
-  "version": "3.25.0",
+  "version": "3.26.0",
   "private": true,
   "license": "MIT",
   "main": "dist/index",

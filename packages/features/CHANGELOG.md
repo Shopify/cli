@@ -1,5 +1,12 @@
 # @shopify/features
 
+## 0.10.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+
 ## 0.9.0
 
 ### Minor Changes

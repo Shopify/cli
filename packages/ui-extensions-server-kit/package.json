@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-server-kit",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "private": false,
   "license": "MIT",
   "exports": {
@@ -48,7 +48,7 @@
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@shopify/ui-extensions-test-utils": "3.25.0",
+    "@shopify/ui-extensions-test-utils": "3.26.0",
     "@types/node": "18.19.3",
     "@types/react": "17.0.2",
     "@types/react-dom": "^16.9.11",

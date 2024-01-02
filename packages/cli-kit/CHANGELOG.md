@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+- 72b1daaee: Add new `nodelete` flag to `shopify theme dev` command
+
+### Patch Changes
+
+- cc3ada0a2: Throw an error correctly if reauthenticating in non-TTY with noPrompt = true
+
 ## 3.52.0
 
 ### Minor Changes
