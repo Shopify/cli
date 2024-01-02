@@ -51,6 +51,7 @@
     "eslint": "^8.48.0",
     "execa": "^7.2.0",
     "fast-glob": "^3.3.1",
+    "json-stringify-deterministic": "1.0.12",
     "find-up": "^6.3.0",
     "fs-extra": "^11.1.0",
     "graphql": "^16.8.1",
