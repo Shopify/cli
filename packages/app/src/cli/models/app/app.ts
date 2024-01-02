@@ -130,11 +130,6 @@ export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersioned
 export const VersionedAppSchema = zod.object({
   application_url: validateUrl(zod.string()),
   embedded: zod.boolean(),
-  access: zod
-    .object({
-      direct_api_offline_access: zod.boolean().optional(),
-    })
-    .optional(),
   webhooks: WebhooksSchemaWithDeclarative,
   pos: zod
     .object({
