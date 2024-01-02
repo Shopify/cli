@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function build',
   description: `Compile a function to wasm.`,
-  overviewPreviewDescription: 'Compile a function to wasm.',
+  overviewPreviewDescription: `Compile a function to wasm.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

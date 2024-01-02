@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'auth logout',
   description: `Logout from Shopify.`,
-  overviewPreviewDescription: 'Logout from Shopify.',
+  overviewPreviewDescription: `Logout from Shopify.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

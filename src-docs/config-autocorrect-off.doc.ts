@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'config autocorrect off',
   description: `Disable autocorrect.`,
-  overviewPreviewDescription: 'Disable autocorrect.',
+  overviewPreviewDescription: `Disable autocorrect.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

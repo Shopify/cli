@@ -166,7 +166,7 @@
     },
     "docs:generate": {
       "id": "docs:generate",
-      "description": "Generate commands interfaces for the Shopify Documentation",
+      "description": "Generate CLI commands documentation",
       "strict": true,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",

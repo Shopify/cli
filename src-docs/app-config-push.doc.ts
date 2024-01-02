@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app config push',
   description: `Push your app configuration to the Partner Dashboard.`,
-  overviewPreviewDescription: 'Push your app configuration to the Partner Dashboard.',
+  overviewPreviewDescription: `Push your app configuration to the Partner Dashboard.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

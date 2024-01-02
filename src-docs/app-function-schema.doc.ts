@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function schema',
   description: `Fetch the latest GraphQL schema for a function.`,
-  overviewPreviewDescription: 'Fetch the latest GraphQL schema for a function.',
+  overviewPreviewDescription: `Fetch the latest GraphQL schema for a function.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

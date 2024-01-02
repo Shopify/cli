@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app update-url',
   description: `Update your app and redirect URLs in the Partners Dashboard.`,
-  overviewPreviewDescription: 'Update your app and redirect URLs in the Partners Dashboard.',
+  overviewPreviewDescription: `Update your app and redirect URLs in the Partners Dashboard.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

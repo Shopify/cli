@@ -1316,7 +1316,7 @@ _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/th
 
 ## `shopify theme share`
 
-Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.
+Creates a shareable, unpublished, and new theme on your theme library with a randomized name.
 
 ```
 USAGE
@@ -1332,6 +1332,8 @@ FLAGS
   --verbose                  Increase the verbosity of the logs.
 
 DESCRIPTION
+  Creates a shareable, unpublished, and new theme on your theme library with a randomized name.
+
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to
   `shopify theme push -u -t=RANDOMIZED_NAME`.
 ```

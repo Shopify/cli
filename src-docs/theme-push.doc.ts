@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme push',
   description: `Uploads your local theme files to the connected store, overwriting the remote version if specified.`,
-  overviewPreviewDescription: 'Uploads your local theme files to the connected store, overwriting the remote version if specified.',
+  overviewPreviewDescription: `Uploads your local theme files to the connected store, overwriting the remote version if specified.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

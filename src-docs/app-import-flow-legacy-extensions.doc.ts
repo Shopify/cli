@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app import-flow-legacy-extensions',
   description: `Import dashboard-managed flow extensions into your app.`,
-  overviewPreviewDescription: 'Import dashboard-managed flow extensions into your app.',
+  overviewPreviewDescription: `Import dashboard-managed flow extensions into your app.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

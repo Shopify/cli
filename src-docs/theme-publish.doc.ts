@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme publish',
   description: `Set a remote theme as the live theme.`,
-  overviewPreviewDescription: 'Set a remote theme as the live theme.',
+  overviewPreviewDescription: `Set a remote theme as the live theme.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

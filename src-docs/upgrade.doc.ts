@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'upgrade',
   description: `Upgrade the Shopify CLI.`,
-  overviewPreviewDescription: 'Upgrade the Shopify CLI.',
+  overviewPreviewDescription: `Upgrade the Shopify CLI.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

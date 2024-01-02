@@ -18,7 +18,7 @@ const data: ReferenceEntityTemplateSchema = {
   - Trigger requests are rate-limited using the Partner API rate limit.
   - You can't use this method to validate your API webhook subscriptions.
   `,
-  overviewPreviewDescription: 'Trigger delivery of a sample webhook topic payload to a designated address.',
+  overviewPreviewDescription: `Trigger delivery of a sample webhook topic payload to a designated address.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

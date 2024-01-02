@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme delete',
   description: `Delete remote themes from the connected store. This command can't be undone.`,
-  overviewPreviewDescription: 'Delete remote themes from the connected store. This command can't be undone.',
+  overviewPreviewDescription: `Delete remote themes from the connected store. This command can't be undone.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

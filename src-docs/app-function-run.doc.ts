@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function run',
   description: `Run a function locally for testing.`,
-  overviewPreviewDescription: 'Run a function locally for testing.',
+  overviewPreviewDescription: `Run a function locally for testing.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

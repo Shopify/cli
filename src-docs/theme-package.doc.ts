@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme package',
   description: `Package your theme into a .zip file, ready to upload to the Online Store.`,
-  overviewPreviewDescription: 'Package your theme into a .zip file, ready to upload to the Online Store.',
+  overviewPreviewDescription: `Package your theme into a .zip file, ready to upload to the Online Store.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

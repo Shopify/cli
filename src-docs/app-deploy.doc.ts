@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app deploy',
   description: `Deploy your Shopify app.`,
-  overviewPreviewDescription: 'Deploy your Shopify app.',
+  overviewPreviewDescription: `Deploy your Shopify app.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

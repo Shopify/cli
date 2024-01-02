@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme check',
   description: `Validate the theme.`,
-  overviewPreviewDescription: 'Validate the theme.',
+  overviewPreviewDescription: `Validate the theme.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'config autocorrect status',
   description: `Check autocorrect current status. On by default.`,
-  overviewPreviewDescription: 'Check autocorrect current status. On by default.',
+  overviewPreviewDescription: `Check autocorrect current status. On by default.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

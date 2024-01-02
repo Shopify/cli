@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme init',
   description: `Clones a Git repository to use as a starting point for building a new theme.`,
-  overviewPreviewDescription: 'Clones a Git repository to use as a starting point for building a new theme.',
+  overviewPreviewDescription: `Clones a Git repository to use as a starting point for building a new theme.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

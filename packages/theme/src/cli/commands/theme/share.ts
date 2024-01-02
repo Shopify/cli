@@ -10,6 +10,8 @@ export default class Share extends ThemeCommand {
   static description =
     'Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.'
 
+  static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
+
   static flags = {
     ...globalFlags,
     ...themeFlags,

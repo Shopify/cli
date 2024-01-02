@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme pull',
   description: `Download your remote theme files locally.`,
-  overviewPreviewDescription: 'Download your remote theme files locally.',
+  overviewPreviewDescription: `Download your remote theme files locally.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

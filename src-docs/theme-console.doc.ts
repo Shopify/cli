@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme console',
   description: `Shopify Liquid REPL (read-eval-print loop) tool`,
-  overviewPreviewDescription: 'Shopify Liquid REPL (read-eval-print loop) tool',
+  overviewPreviewDescription: `Shopify Liquid REPL (read-eval-print loop) tool`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

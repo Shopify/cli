@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app versions list',
   description: `List deployed versions of your app.`,
-  overviewPreviewDescription: 'List deployed versions of your app.',
+  overviewPreviewDescription: `List deployed versions of your app.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

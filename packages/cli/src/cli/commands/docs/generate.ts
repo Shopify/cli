@@ -48,7 +48,7 @@ async function writeCommandDocumentation(command: oclifCommand.Loadable) {
 const data: ReferenceEntityTemplateSchema = {
   name: '${commandName}',
   description: \`${command.description?.replace(/`/g, '\\`')}\`,
-  overviewPreviewDescription: '${command.summary ?? command.description}',
+  overviewPreviewDescription: \`${command.summary ?? command.description}\`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 const data: ReferenceEntityTemplateSchema = {
   name: 'app config use',
   description: `Activate an app configuration.`,
-  overviewPreviewDescription: 'Activate an app configuration.',
+  overviewPreviewDescription: `Activate an app configuration.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
