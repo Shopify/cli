@@ -128,17 +128,10 @@ export const NonVersionedAppBottomSchema = zod.object({
 export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema)
 
 export const VersionedAppSchema = zod.object({
-  application_url: validateUrl(zod.string()),
-  embedded: zod.boolean(),
   webhooks: WebhooksSchemaWithDeclarative,
   pos: zod
     .object({
       embedded: zod.boolean(),
-    })
-    .optional(),
-  app_preferences: zod
-    .object({
-      url: validateUrl(zod.string().max(255)),
     })
     .optional(),
 })

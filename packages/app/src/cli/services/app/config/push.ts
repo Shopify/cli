@@ -20,6 +20,10 @@ import {
   AppProxyConfiguration,
   AppProxySpecIdentifier,
 } from '../../../models/extensions/specifications/app_config_app_proxy.js'
+import {
+  AppHomeConfiguration,
+  AppHomeSpecIdentifier,
+} from '../../../models/extensions/specifications/app_config_app_home.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -144,16 +148,17 @@ const getMutationVars = (app: App, localApp: AppInterface) => {
     }
   }
 
+  const appHomeSchema = localApp.getConfigExtension(AppHomeSpecIdentifier) as AppHomeConfiguration
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: configuration.application_url,
+    applicationUrl: appHomeSchema.application_url,
     webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
-    embedded: configuration.embedded ?? app.embedded,
+    embedded: appHomeSchema.embedded ?? app.embedded,
     gdprWebhooks,
     posEmbedded: configuration.pos?.embedded ?? false,
-    preferencesUrl: configuration.app_preferences?.url ?? null,
+    preferencesUrl: appHomeSchema.app_preferences?.url ?? null,
   }
 
   if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
