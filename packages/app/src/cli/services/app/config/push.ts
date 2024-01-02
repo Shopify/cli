@@ -24,6 +24,10 @@ import {
   AppHomeConfiguration,
   AppHomeSpecIdentifier,
 } from '../../../models/extensions/specifications/app_config_app_home.js'
+import {
+  PosConfiguration,
+  PosSpecIdentifier,
+} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -149,6 +153,7 @@ const getMutationVars = (app: App, localApp: AppInterface) => {
   }
 
   const appHomeSchema = localApp.getConfigExtension(AppHomeSpecIdentifier) as AppHomeConfiguration
+  const posSchema = localApp.getConfigExtension(PosSpecIdentifier) as PosConfiguration
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
@@ -157,7 +162,7 @@ const getMutationVars = (app: App, localApp: AppInterface) => {
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: appHomeSchema.embedded ?? app.embedded,
     gdprWebhooks,
-    posEmbedded: configuration.pos?.embedded ?? false,
+    posEmbedded: posSchema.pos?.embedded ?? false,
     preferencesUrl: appHomeSchema.app_preferences?.url ?? null,
   }
 

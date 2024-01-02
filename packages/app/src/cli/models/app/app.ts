@@ -129,11 +129,6 @@ export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersioned
 
 export const VersionedAppSchema = zod.object({
   webhooks: WebhooksSchemaWithDeclarative,
-  pos: zod
-    .object({
-      embedded: zod.boolean(),
-    })
-    .optional(),
 })
 
 export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merge(NonVersionedAppBottomSchema).strict()
