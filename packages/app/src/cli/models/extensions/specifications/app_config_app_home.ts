@@ -13,6 +13,7 @@ const spec = createConfigExtensionSpecification({
   identifier: 'app_home',
   schema: AppHomeSchema,
   transformConfig: AppHomeTransformConfig,
+  position: 4,
 })
 
 export default spec

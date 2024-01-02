@@ -13,6 +13,7 @@ const spec = createConfigExtensionSpecification({
   identifier: 'webhooks',
   schema: WebhookSchema,
   transformConfig: WebhookTransformConfig,
+  position: 1,
 })
 
 // Transform methods

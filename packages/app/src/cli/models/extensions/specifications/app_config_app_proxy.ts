@@ -18,6 +18,7 @@ export const AppProxySpecIdentifier = 'app_proxy'
 const spec: ExtensionSpecification = createConfigExtensionSpecification({
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
+  position: 2,
 })
 
 export default spec

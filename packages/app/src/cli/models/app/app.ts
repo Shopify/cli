@@ -102,9 +102,6 @@ const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSc
 export const NonVersionedAppTopSchema = zod.object({
   name: zod.string().max(30),
   client_id: zod.string(),
-})
-
-export const NonVersionedAppBottomSchema = zod.object({
   access_scopes: zod
     .object({
       scopes: zod.string().optional(),
@@ -116,6 +113,9 @@ export const NonVersionedAppBottomSchema = zod.object({
       redirect_urls: zod.array(validateUrl(zod.string())),
     })
     .optional(),
+})
+
+export const NonVersionedAppBottomSchema = zod.object({
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -153,7 +153,9 @@ export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merg
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
-  const topAndConfigSpecsSchema = specs.reduce((schema, spec) => {
+  const sortSpecsByPosition = (spec1: ExtensionSpecification, spec2: ExtensionSpecification) =>
+    spec1.position - spec2.position
+  const topAndConfigSpecsSchema = specs.sort(sortSpecsByPosition).reduce((schema, spec) => {
     return schema.merge(spec.schema)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   }, NonVersionedAppTopSchema as any)

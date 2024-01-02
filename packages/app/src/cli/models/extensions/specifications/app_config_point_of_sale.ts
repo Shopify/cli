@@ -6,6 +6,7 @@ const PosConfigurationSchema = AppSchema.pick({pos: true}).strip()
 const spec = createConfigExtensionSpecification({
   identifier: 'point_of_sale',
   schema: PosConfigurationSchema,
+  position: 3,
 })
 
 export default spec
