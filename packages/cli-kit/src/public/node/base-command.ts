@@ -47,8 +47,8 @@ abstract class BaseCommand extends Command {
   // This function checks for the presence of any of the available CLI flags
   // and warns the user to use the `--` separator.
   protected showNpmFlagWarning(): void {
-    const commandVariables = this.constructor as unknown as {_flags: JsonMap}
-    const commandFlags = Object.keys(commandVariables._flags || {})
+    const commandVariables = this.constructor as unknown as {flags: JsonMap}
+    const commandFlags = Object.keys(commandVariables.flags || {})
     const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key).replace(/^no_/, '')}`)
 
     if (possibleNpmEnvVars.some((flag) => process.env[flag] !== undefined)) {
