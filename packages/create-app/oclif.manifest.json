@@ -1,79 +1,100 @@
 {
-  "version": "3.53.0",
   "commands": {
     "init": {
-      "id": "init",
-      "strict": true,
-      "pluginName": "@shopify/create-app",
-      "pluginAlias": "@shopify/create-app",
-      "pluginType": "core",
       "aliases": [
         "create-app"
       ],
+      "args": {},
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "name": {
-          "name": "name",
-          "type": "option",
           "char": "n",
+          "env": "SHOPIFY_FLAG_NAME",
           "hidden": false,
-          "multiple": false
+          "name": "name",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "char": "p",
+          "env": "SHOPIFY_FLAG_PATH",
           "hidden": false,
+          "name": "path",
+          "default": ".",
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "template": {
-          "name": "template",
-          "type": "option",
           "description": "The app template. Accepts one of the following:\n       - <remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_TEMPLATE",
+          "name": "template",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "flavor": {
-          "name": "flavor",
-          "type": "option",
           "description": "Which flavor of the given template to use.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_TEMPLATE_FLAVOR",
+          "name": "flavor",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "package-manager": {
-          "name": "package-manager",
-          "type": "option",
           "char": "d",
+          "env": "SHOPIFY_FLAG_PACKAGE_MANAGER",
           "hidden": false,
+          "name": "package-manager",
+          "hasDynamicHelp": false,
           "multiple": false,
           "options": [
             "npm",
             "yarn",
             "pnpm",
             "bun"
-          ]
+          ],
+          "type": "option"
         },
         "local": {
-          "name": "local",
-          "type": "boolean",
           "char": "l",
+          "env": "SHOPIFY_FLAG_LOCAL",
           "hidden": true,
-          "allowNo": false
+          "name": "local",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "init",
+      "pluginAlias": "@shopify/create-app",
+      "pluginName": "@shopify/create-app",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "init.js"
+      ]
     }
-  }
+  },
+  "version": "3.53.0"
 }

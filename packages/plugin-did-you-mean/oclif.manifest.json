@@ -1,38 +1,68 @@
 {
-  "version": "3.53.0",
   "commands": {
     "config:autocorrect:off": {
-      "id": "config:autocorrect:off",
-      "description": "Disable autocorrect.",
-      "strict": true,
-      "pluginName": "@shopify/plugin-did-you-mean",
-      "pluginAlias": "@shopify/plugin-did-you-mean",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Disable autocorrect.",
       "flags": {},
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "config:autocorrect:off",
+      "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginName": "@shopify/plugin-did-you-mean",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "off.js"
+      ]
     },
     "config:autocorrect:on": {
-      "id": "config:autocorrect:on",
-      "description": "Enable autocorrect.",
-      "strict": true,
-      "pluginName": "@shopify/plugin-did-you-mean",
-      "pluginAlias": "@shopify/plugin-did-you-mean",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Enable autocorrect.",
       "flags": {},
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "config:autocorrect:on",
+      "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginName": "@shopify/plugin-did-you-mean",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "on.js"
+      ]
     },
     "config:autocorrect:status": {
-      "id": "config:autocorrect:status",
-      "description": "Check autocorrect current status.",
-      "strict": true,
-      "pluginName": "@shopify/plugin-did-you-mean",
-      "pluginAlias": "@shopify/plugin-did-you-mean",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Check autocorrect current status.",
       "flags": {},
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "config:autocorrect:status",
+      "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginName": "@shopify/plugin-did-you-mean",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "status.js"
+      ]
     }
-  }
+  },
+  "version": "3.53.0"
 }

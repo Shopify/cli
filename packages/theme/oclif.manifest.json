@@ -1,80 +1,89 @@
 {
-  "version": "3.53.0",
   "commands": {
     "theme:check": {
-      "id": "theme:check",
-      "description": "Validate the theme.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Validate the theme.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "dev-preview": {
-          "name": "dev-preview",
-          "type": "boolean",
           "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
+          "env": "SHOPIFY_FLAG_DEV_PREVIEW",
+          "name": "dev-preview",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "auto-correct": {
-          "name": "auto-correct",
-          "type": "boolean",
           "char": "a",
           "description": "Automatically fix offenses",
+          "env": "SHOPIFY_FLAG_AUTO_CORRECT",
+          "name": "auto-correct",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "category": {
-          "name": "category",
-          "type": "option",
           "char": "c",
           "description": "Only run this category of checks\nRuns checks matching all categories when specified more than once",
+          "env": "SHOPIFY_FLAG_CATEGORY",
+          "name": "category",
           "required": false,
-          "multiple": false
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "config": {
-          "name": "config",
-          "type": "option",
           "char": "C",
           "description": "Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported ",
+          "env": "SHOPIFY_FLAG_CONFIG",
+          "name": "config",
           "required": false,
-          "multiple": false
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "exclude-category": {
-          "name": "exclude-category",
-          "type": "option",
           "char": "x",
           "description": "Exclude this category of checks\nExcludes checks matching any category when specified more than once",
+          "env": "SHOPIFY_FLAG_EXCLUDE_CATEGORY",
+          "name": "exclude-category",
           "required": false,
-          "multiple": false
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "fail-level": {
-          "name": "fail-level",
-          "type": "option",
           "description": "Minimum severity for exit with error code",
+          "env": "SHOPIFY_FLAG_FAIL_LEVEL",
+          "name": "fail-level",
           "required": false,
+          "default": "error",
+          "hasDynamicHelp": false,
           "multiple": false,
           "options": [
             "crash",
@@ -84,66 +93,81 @@
             "warning",
             "info"
           ],
-          "default": "error"
+          "type": "option"
         },
         "update-docs": {
-          "name": "update-docs",
-          "type": "boolean",
           "description": "Update Theme Check docs (objects, filters, and tags)",
+          "env": "SHOPIFY_FLAG_UPDATE_DOCS",
+          "name": "update-docs",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "init": {
-          "name": "init",
-          "type": "boolean",
           "description": "Generate a .theme-check.yml file",
+          "env": "SHOPIFY_FLAG_INIT",
+          "name": "init",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "list": {
-          "name": "list",
-          "type": "boolean",
           "description": "List enabled checks",
+          "env": "SHOPIFY_FLAG_LIST",
+          "name": "list",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "output": {
-          "name": "output",
-          "type": "option",
           "char": "o",
           "description": "The output format to use",
+          "env": "SHOPIFY_FLAG_OUTPUT",
+          "name": "output",
           "required": false,
+          "default": "text",
+          "hasDynamicHelp": false,
           "multiple": false,
           "options": [
             "text",
             "json"
           ],
-          "default": "text"
+          "type": "option"
         },
         "print": {
-          "name": "print",
-          "type": "boolean",
           "description": "Output active config to STDOUT",
+          "env": "SHOPIFY_FLAG_PRINT",
+          "name": "print",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "version": {
-          "name": "version",
-          "type": "boolean",
           "char": "v",
           "description": "Print Theme Check version",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "name": "version",
           "required": false,
-          "allowNo": false
+          "allowNo": false,
+          "type": "boolean"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
-      "args": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:check",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
       "cli2Flags": [
         "auto-correct",
         "category",
@@ -156,285 +180,370 @@
         "output",
         "print",
         "version"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "check.js"
       ]
     },
     "theme:console": {
-      "id": "theme:console",
-      "description": "Shopify Liquid REPL (read-eval-print loop) tool",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Shopify Liquid REPL (read-eval-print loop) tool",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "url": {
-          "name": "url",
-          "type": "option",
           "description": "The url to be used as context",
+          "env": "SHOPIFY_FLAG_URL",
+          "name": "url",
+          "default": "/",
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "/"
+          "type": "option"
         },
         "port": {
-          "name": "port",
-          "type": "option",
           "description": "Local port to serve authentication service.",
+          "env": "SHOPIFY_FLAG_PORT",
+          "name": "port",
+          "default": "9293",
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "9293"
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:console",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "console.js"
+      ]
     },
     "theme:delete": {
-      "id": "theme:delete",
-      "description": "Delete remote themes from the connected store. This command can't be undone.",
-      "strict": false,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Delete remote themes from the connected store. This command can't be undone.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "development": {
-          "name": "development",
-          "type": "boolean",
           "char": "d",
           "description": "Delete your development theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
         },
         "show-all": {
-          "name": "show-all",
-          "type": "boolean",
           "char": "a",
           "description": "Include others development themes in theme list.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_SHOW_ALL",
+          "name": "show-all",
+          "allowNo": false,
+          "type": "boolean"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Skip confirmation.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:delete",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "delete.js"
+      ]
     },
     "theme:dev": {
-      "id": "theme:dev",
-      "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "host": {
-          "name": "host",
-          "type": "option",
           "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_HOST",
+          "name": "host",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "live-reload": {
-          "name": "live-reload",
-          "type": "option",
           "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
+          "env": "SHOPIFY_FLAG_LIVE_RELOAD",
+          "name": "live-reload",
+          "default": "hot-reload",
+          "hasDynamicHelp": false,
           "multiple": false,
           "options": [
             "hot-reload",
             "full-page",
             "off"
           ],
-          "default": "hot-reload"
+          "type": "option"
         },
         "poll": {
-          "name": "poll",
-          "type": "boolean",
           "description": "Force polling to detect file changes.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_POLL",
+          "name": "poll",
+          "allowNo": false,
+          "type": "boolean"
         },
         "theme-editor-sync": {
-          "name": "theme-editor-sync",
-          "type": "boolean",
           "description": "Synchronize Theme Editor updates in the local theme files.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_THEME_EDITOR_SYNC",
+          "name": "theme-editor-sync",
+          "allowNo": false,
+          "type": "boolean"
         },
         "port": {
-          "name": "port",
-          "type": "option",
           "description": "Local port to serve theme preview from.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_PORT",
+          "name": "port",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "nodelete": {
-          "name": "nodelete",
-          "type": "boolean",
           "char": "n",
           "description": "Runs the dev command without deleting local files.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
         },
         "only": {
-          "name": "only",
-          "type": "option",
           "char": "o",
           "description": "Hot reload only files that match the specified pattern.",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "ignore": {
-          "name": "ignore",
-          "type": "option",
           "char": "x",
           "description": "Skip hot reloading any files that match the specified pattern.",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "stable": {
-          "name": "stable",
-          "type": "boolean",
           "description": "Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)",
+          "env": "SHOPIFY_FLAG_STABLE",
           "hidden": true,
-          "allowNo": false
+          "name": "stable",
+          "allowNo": false,
+          "type": "boolean"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
-          "allowNo": false
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "notify": {
-          "name": "notify",
-          "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_NOTIFY",
+          "name": "notify",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "open": {
-          "name": "open",
-          "type": "boolean",
           "description": "Automatically launch the theme preview in your default web browser.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_OPEN",
+          "name": "open",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:dev",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
       "cli2Flags": [
         "host",
         "live-reload",
@@ -449,498 +558,667 @@
         "stable",
         "force",
         "notify"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "dev.js"
       ]
     },
     "theme:help-old": {
-      "id": "theme:help-old",
-      "description": "Show help from Ruby CLI",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
-      "hidden": true,
       "aliases": [],
+      "args": {},
+      "description": "Show help from Ruby CLI",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "command": {
-          "name": "command",
-          "type": "option",
           "description": "The command for which to show CLI2 help.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_COMMAND",
+          "name": "command",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "theme:help-old",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "help-old.js"
+      ]
     },
     "theme:info": {
-      "id": "theme:info",
-      "description": "Print basic information about your theme environment.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Print basic information about your theme environment.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:info",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "info.js"
+      ]
     },
     "theme:init": {
-      "id": "theme:init",
-      "description": "Clones a Git repository to use as a starting point for building a new theme.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your theme directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "clone-url": {
-          "name": "clone-url",
-          "type": "option",
-          "char": "u",
-          "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
-          "multiple": false,
-          "default": "https://github.com/Shopify/dawn.git"
-        },
-        "latest": {
-          "name": "latest",
-          "type": "boolean",
-          "char": "l",
-          "description": "Downloads the latest release of the `clone-url`",
-          "allowNo": false
-        }
-      },
       "args": {
         "name": {
-          "name": "name",
           "description": "Name of the new theme",
+          "name": "name",
           "required": false
         }
-      }
-    },
-    "theme:language-server": {
-      "id": "theme:language-server",
-      "description": "Start a Language Server Protocol server.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
-      "aliases": [],
+      },
+      "description": "Clones a Git repository to use as a starting point for building a new theme.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
-        "dev-preview": {
-          "name": "dev-preview",
-          "type": "boolean",
-          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
-          "required": false,
-          "allowNo": false
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "clone-url": {
+          "char": "u",
+          "description": "The Git URL to clone from. Defaults to Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git",
+          "env": "SHOPIFY_FLAG_CLONE_URL",
+          "name": "clone-url",
+          "default": "https://github.com/Shopify/dawn.git",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "latest": {
+          "char": "l",
+          "description": "Downloads the latest release of the `clone-url`",
+          "env": "SHOPIFY_FLAG_LATEST",
+          "name": "latest",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {}
-    },
-    "theme:list": {
-      "id": "theme:list",
-      "description": "Lists your remote themes.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:init",
       "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
       "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "init.js"
+      ]
+    },
+    "theme:language-server": {
       "aliases": [],
+      "args": {},
+      "description": "Start a Language Server Protocol server.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "dev-preview": {
+          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
+          "env": "SHOPIFY_FLAG_DEV_PREVIEW",
+          "name": "dev-preview",
+          "required": false,
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:language-server",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "language-server.js"
+      ]
+    },
+    "theme:list": {
+      "aliases": [],
+      "args": {},
+      "description": "Lists your remote themes.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "role": {
-          "name": "role",
-          "type": "option",
           "description": "Only list themes with the given role.",
+          "env": "SHOPIFY_FLAG_ROLE",
+          "name": "role",
+          "hasDynamicHelp": false,
           "multiple": false,
           "options": [
             "live",
             "unpublished",
             "development"
-          ]
+          ],
+          "type": "option"
         },
         "name": {
-          "name": "name",
-          "type": "option",
           "description": "Only list themes that contain the given name.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_NAME",
+          "name": "name",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "id": {
-          "name": "id",
-          "type": "option",
           "description": "Only list theme with the given ID.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ID",
+          "name": "id",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "json": {
-          "name": "json",
-          "type": "boolean",
           "description": "Output the theme list as JSON.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:list",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "list.js"
+      ]
     },
     "theme:open": {
-      "id": "theme:open",
-      "description": "Opens the preview of your remote theme.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Opens the preview of your remote theme.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "development": {
-          "name": "development",
-          "type": "boolean",
           "char": "d",
           "description": "Open your development theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
         },
         "editor": {
-          "name": "editor",
-          "type": "boolean",
           "char": "E",
           "description": "Open the theme editor for the specified theme in the browser.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_EDITOR",
+          "name": "editor",
+          "allowNo": false,
+          "type": "boolean"
         },
         "live": {
-          "name": "live",
-          "type": "boolean",
           "char": "l",
           "description": "Open your live (published) theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:open",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "open.js"
+      ]
     },
     "theme:package": {
-      "id": "theme:package",
-      "description": "Package your theme into a .zip file, ready to upload to the Online Store.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Package your theme into a .zip file, ready to upload to the Online Store.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:package",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "package.js"
+      ]
     },
     "theme:publish": {
-      "id": "theme:publish",
-      "description": "Set a remote theme as the live theme.",
-      "strict": false,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Set a remote theme as the live theme.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Skip confirmation.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:publish",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": false,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "publish.js"
+      ]
     },
     "theme:pull": {
-      "id": "theme:pull",
-      "description": "Download your remote theme files locally.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Download your remote theme files locally.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "development": {
-          "name": "development",
-          "type": "boolean",
           "char": "d",
           "description": "Pull theme files from your remote development theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
         },
         "live": {
-          "name": "live",
-          "type": "boolean",
           "char": "l",
           "description": "Pull theme files from your remote live theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
         },
         "nodelete": {
-          "name": "nodelete",
-          "type": "boolean",
           "char": "n",
           "description": "Runs the pull command without deleting local files.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
         },
         "only": {
-          "name": "only",
-          "type": "option",
           "char": "o",
           "description": "Download only the specified files (Multiple flags allowed).",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "ignore": {
-          "name": "ignore",
-          "type": "option",
           "char": "x",
           "description": "Skip downloading the specified files (Multiple flags allowed).",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
-          "allowNo": false
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:pull",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
       "cli2Flags": [
         "theme",
         "development",
@@ -950,145 +1228,180 @@
         "ignore",
         "force",
         "development-theme-id"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "pull.js"
       ]
     },
     "theme:push": {
-      "id": "theme:push",
-      "description": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "development": {
-          "name": "development",
-          "type": "boolean",
           "char": "d",
           "description": "Push theme files from your remote development theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
         },
         "live": {
-          "name": "live",
-          "type": "boolean",
           "char": "l",
           "description": "Push theme files from your remote live theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
         },
         "unpublished": {
-          "name": "unpublished",
-          "type": "boolean",
           "char": "u",
           "description": "Create a new unpublished theme and push to it.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_UNPUBLISHED",
+          "name": "unpublished",
+          "allowNo": false,
+          "type": "boolean"
         },
         "nodelete": {
-          "name": "nodelete",
-          "type": "boolean",
           "char": "n",
           "description": "Runs the push command without deleting local files.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
         },
         "only": {
-          "name": "only",
-          "type": "option",
           "char": "o",
           "description": "Download only the specified files (Multiple flags allowed).",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "ignore": {
-          "name": "ignore",
-          "type": "option",
           "char": "x",
           "description": "Skip downloading the specified files (Multiple flags allowed).",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "json": {
-          "name": "json",
-          "type": "boolean",
           "char": "j",
           "description": "Output JSON instead of a UI.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
         },
         "allow-live": {
-          "name": "allow-live",
-          "type": "boolean",
           "char": "a",
           "description": "Allow push to a live theme.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_ALLOW_LIVE",
+          "name": "allow-live",
+          "allowNo": false,
+          "type": "boolean"
         },
         "publish": {
-          "name": "publish",
-          "type": "boolean",
           "char": "p",
           "description": "Publish as the live theme after uploading.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_PUBLISH",
+          "name": "publish",
+          "allowNo": false,
+          "type": "boolean"
         },
         "stable": {
-          "name": "stable",
-          "type": "boolean",
           "description": "Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)",
+          "env": "SHOPIFY_FLAG_STABLE",
           "hidden": true,
-          "allowNo": false
+          "name": "stable",
+          "allowNo": false,
+          "type": "boolean"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
-          "allowNo": false
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:push",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
       "cli2Flags": [
         "theme",
         "development",
@@ -1103,216 +1416,482 @@
         "stable",
         "force",
         "development-theme-id"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "push.js"
       ]
     },
     "theme:serve": {
-      "id": "theme:serve",
-      "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
-      "hidden": true,
       "aliases": [],
+      "args": {},
+      "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "host": {
-          "name": "host",
-          "type": "option",
           "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_HOST",
+          "name": "host",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "live-reload": {
-          "name": "live-reload",
-          "type": "option",
           "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
+          "env": "SHOPIFY_FLAG_LIVE_RELOAD",
+          "name": "live-reload",
+          "default": "hot-reload",
+          "hasDynamicHelp": false,
           "multiple": false,
           "options": [
             "hot-reload",
             "full-page",
             "off"
           ],
-          "default": "hot-reload"
+          "type": "option"
         },
         "poll": {
-          "name": "poll",
-          "type": "boolean",
           "description": "Force polling to detect file changes.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_POLL",
+          "name": "poll",
+          "allowNo": false,
+          "type": "boolean"
         },
         "theme-editor-sync": {
-          "name": "theme-editor-sync",
-          "type": "boolean",
           "description": "Synchronize Theme Editor updates in the local theme files.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_THEME_EDITOR_SYNC",
+          "name": "theme-editor-sync",
+          "allowNo": false,
+          "type": "boolean"
         },
         "port": {
-          "name": "port",
-          "type": "option",
           "description": "Local port to serve theme preview from.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_PORT",
+          "name": "port",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "theme": {
-          "name": "theme",
-          "type": "option",
           "char": "t",
           "description": "Theme ID or name of the remote theme.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "nodelete": {
-          "name": "nodelete",
-          "type": "boolean",
           "char": "n",
           "description": "Runs the dev command without deleting local files.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
         },
         "only": {
-          "name": "only",
-          "type": "option",
           "char": "o",
           "description": "Hot reload only files that match the specified pattern.",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "ignore": {
-          "name": "ignore",
-          "type": "option",
           "char": "x",
           "description": "Skip hot reloading any files that match the specified pattern.",
-          "multiple": true
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
         },
         "stable": {
-          "name": "stable",
-          "type": "boolean",
           "description": "Performs the upload by relying in the legacy upload approach (slower, but it might be more stable in some scenarios)",
+          "env": "SHOPIFY_FLAG_STABLE",
           "hidden": true,
-          "allowNo": false
+          "name": "stable",
+          "allowNo": false,
+          "type": "boolean"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
-          "allowNo": false
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "notify": {
-          "name": "notify",
-          "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_NOTIFY",
+          "name": "notify",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "open": {
-          "name": "open",
-          "type": "boolean",
           "description": "Automatically launch the theme preview in your default web browser.",
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_OPEN",
+          "name": "open",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "theme:serve",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "cli2Flags": [
+        "host",
+        "live-reload",
+        "poll",
+        "theme-editor-sync",
+        "overwrite-json",
+        "port",
+        "theme",
+        "nodelete",
+        "only",
+        "ignore",
+        "stable",
+        "force",
+        "notify"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "serve.js"
+      ]
     },
     "theme:share": {
-      "id": "theme:share",
-      "description": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
-      "strict": true,
-      "pluginName": "@shopify/theme",
-      "pluginAlias": "@shopify/theme",
-      "pluginType": "core",
       "aliases": [],
+      "args": {},
+      "description": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
       "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "type": "option"
         },
         "password": {
-          "name": "password",
-          "type": "option",
           "description": "Password generated from the Theme Access app.",
-          "multiple": false
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "store": {
-          "name": "store",
-          "type": "option",
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "environment": {
-          "name": "environment",
-          "type": "option",
           "char": "e",
           "description": "The environment to apply to the current command.",
-          "multiple": false
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
           "char": "f",
           "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
-          "allowNo": false
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
         }
       },
-      "args": {},
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:share",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
       "cli2Flags": [
         "force"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "share.js"
+      ]
+    },
+    "theme:update:check": {
+      "aliases": [],
+      "args": {},
+      "description": "Validate an 'update_extension.json' script.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "script": {
+          "description": "The path to the 'update_extension.json' script.",
+          "env": "SHOPIFY_FLAG_SCRIPT",
+          "name": "script",
+          "default": "./update_extension.json",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "theme:update:check",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "update",
+        "check.js"
+      ]
+    },
+    "theme:update:init": {
+      "aliases": [],
+      "args": {},
+      "description": "Initialize an 'update_extension.json' script.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "theme:update:init",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "update",
+        "init.js"
+      ]
+    },
+    "theme:update:run": {
+      "aliases": [],
+      "args": {},
+      "description": "Run the theme update process.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your theme directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "script": {
+          "description": "The path to the 'update_extension.json' script.",
+          "env": "SHOPIFY_FLAG_SCRIPT",
+          "name": "script",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "from-theme": {
+          "description": "The theme ID or name of the theme at the previous version.",
+          "env": "SHOPIFY_FLAG_SOURCE_THEME",
+          "name": "from-theme",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "to-theme": {
+          "description": "The theme ID or name of the theme at the target version.",
+          "env": "SHOPIFY_FLAG_TARGET_THEME",
+          "name": "to-theme",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "theme:update:run",
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "strict": true,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "update",
+        "run.js"
       ]
     }
-  }
+  },
+  "version": "3.53.0"
 }
