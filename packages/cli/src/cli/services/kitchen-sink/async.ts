@@ -1,22 +1,9 @@
 import {renderConcurrent, renderTasks, renderVideo} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {moduleDirectory} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
 export async function asyncTasks() {
-  await renderVideo({
-    videoPath: "/Users/amcaplan/Movies/Untitled.gif",
-    duration: 15000,
-    maxWidth: 25,
-  })
-
-  await renderVideo({
-    videoPath: "/Users/amcaplan/src/github.com/pzich/ffmpeg-ascii/out-bg.json",
-    audioPath: "/Users/amcaplan/src/github.com/Shopify/cli/packages/app/assets/video/edition-2023/audio.mp3",
-    captionsPath: "/Users/amcaplan/src/github.com/Shopify/cli/packages/app/assets/video/edition-2023/captions.srt",
-    duration: 30030,
-    maxWidth: 120,
-  })
-
   // renderConcurrent
   let backendPromiseResolve: () => void
 
@@ -72,4 +59,21 @@ export async function asyncTasks() {
   ]
 
   await renderTasks(tasks)
+
+  const thisFileDir = moduleDirectory(import.meta.url)
+  const videoDir = thisFileDir.concat('/../../../../assets/video/kitchen-sink')
+
+  await renderVideo({
+    videoPath: videoDir.concat("/simple-spinner.gif"),
+    duration: 15000,
+    maxWidth: 25,
+  })
+
+  await renderVideo({
+    videoPath: videoDir.concat("/out-bg.json"),
+    audioPath: videoDir.concat("/audio.mp3"),
+    captionsPath: videoDir.concat("/captions.srt"),
+    duration: 30030,
+    maxWidth: 120,
+  })
 }
