@@ -4,7 +4,9 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class AutocorrectStatus extends Command {
-  static description = 'Check autocorrect current status.'
+  static description = 'Check autocorrect current status. On by default.'
+
+  static usage = 'shopify config autocorrect status'
 
   async run(): Promise<void> {
     if (isAutocorrectEnabled()) {

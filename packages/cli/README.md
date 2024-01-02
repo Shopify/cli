@@ -5,7 +5,7 @@
 * [`shopify app config push`](#shopify-app-config-push)
 * [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
 * [`shopify app deploy`](#shopify-app-deploy)
-* [`shopify app dev`](#shopify-app-dev)
+* [`shopify shopify app dev [flags]`](#shopify-shopify-app-dev-flags)
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
@@ -21,9 +21,9 @@
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
-* [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
-* [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
-* [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
+* [`shopify shopify config autocorrect off`](#shopify-shopify-config-autocorrect-off)
+* [`shopify shopify config autocorrect on`](#shopify-shopify-config-autocorrect-on)
+* [`shopify shopify config autocorrect status`](#shopify-shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
 * [`shopify kitchen-sink async`](#shopify-kitchen-sink-async)
 * [`shopify kitchen-sink prompts`](#shopify-kitchen-sink-prompts)
@@ -53,7 +53,7 @@
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
-* [`shopify webhook trigger`](#shopify-webhook-trigger)
+* [`shopify shopify webhook trigger [flags]`](#shopify-shopify-webhook-trigger-flags)
 
 ## `shopify app build`
 
@@ -173,16 +173,13 @@ DESCRIPTION
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/deploy.js)_
 
-## `shopify app dev`
+## `shopify shopify app dev [flags]`
 
 Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [-s <value>]
-    [--reset | ] [--skip-dependencies-installation] [--no-update] [--subscription-product-url <value>]
-    [--checkout-cart-url <value>] [--tunnel-url <value> |  | ] [-t <value>] [--theme-app-extension-port <value>]
-    [--notify <value>]
+  $ shopify shopify app dev [flags]
 
 FLAGS
   -c, --config=<value>                The name of the app configuration.
@@ -206,6 +203,39 @@ FLAGS
 
 DESCRIPTION
   Run the app.
+
+  [Builds the app](/docs/apps/tools/cli/commands#build) and lets you preview it on a [development
+  store](/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managi
+  ng-stores/plus-sandbox-store?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB).
+
+  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps.
+  If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these
+  configurations using `dev --reset` to go through all of them again:
+
+  - Associating your project with an app associated with your Partner account or organization, or creating a new app.
+  - Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's
+  selected automatically.
+  - Installing your app on the store using the provided install link.
+  - Creating a tunnel between your local environment and the store using Cloudflare.
+
+  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.
+  - Updating the app URLs that are set in the Partner Dashboard.
+
+  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then
+  you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.
+
+  - Enabling development store preview for extensions.
+  - Building and serving your app and app extensions.
+
+  If you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview
+  your app for the first time:
+
+  - PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)
+  - Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
+
+  > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have
+  a staff account on the store. Staff accounts are created automatically the first time you access a development store
+  with your Partner staff account through the Partner Dashboard.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/dev.js)_
@@ -555,40 +585,40 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v2.2.24/src/commands/commands.ts)_
 
-## `shopify config autocorrect off`
+## `shopify shopify config autocorrect off`
 
 Disable autocorrect.
 
 ```
 USAGE
-  $ shopify config autocorrect off
+  $ shopify shopify config autocorrect off
 
 DESCRIPTION
   Disable autocorrect.
 ```
 
-## `shopify config autocorrect on`
+## `shopify shopify config autocorrect on`
 
-Enable autocorrect.
-
-```
-USAGE
-  $ shopify config autocorrect on
-
-DESCRIPTION
-  Enable autocorrect.
-```
-
-## `shopify config autocorrect status`
-
-Check autocorrect current status.
+Enable autocorrect.  By default is on.
 
 ```
 USAGE
-  $ shopify config autocorrect status
+  $ shopify shopify config autocorrect on
 
 DESCRIPTION
-  Check autocorrect current status.
+  Enable autocorrect.  By default is on.
+```
+
+## `shopify shopify config autocorrect status`
+
+Check autocorrect current status. On by default.
+
+```
+USAGE
+  $ shopify shopify config autocorrect status
+
+DESCRIPTION
+  Check autocorrect current status. On by default.
 ```
 
 ## `shopify help [COMMANDS]`
@@ -1339,14 +1369,13 @@ DESCRIPTION
 
 _See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/version.js)_
 
-## `shopify webhook trigger`
+## `shopify shopify webhook trigger [flags]`
 
 Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify webhook trigger [--help] [--topic <value>] [--api-version <value>] [--delivery-method
-    http|google-pub-sub|event-bridge] [--shared-secret <value>] [--client-secret <value>] [--address <value>]
+  $ shopify shopify webhook trigger [flags]
 
 FLAGS
   --address=<value>
@@ -1380,6 +1409,28 @@ FLAGS
 
 DESCRIPTION
   Trigger delivery of a sample webhook topic payload to a designated address.
+
+
+  Triggers the delivery of a sample Admin API event topic payload to a designated address.
+
+  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit
+  testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing
+  the related action in Shopify.
+
+  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use
+  Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from
+  your app's local directory, but send the webhook to a staging environment endpoint.
+
+  To learn more about using webhooks in a Shopify app, refer to [Webhooks
+  overview](https://shopify.dev/docs/apps/webhooks).
+
+  ### Limitations
+
+  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that
+  differ based on the payload contents.
+  - Webhooks triggered using this method aren't retried when they fail.
+  - Trigger requests are rate-limited using the Partner API rate limit.
+  - You can't use this method to validate your API webhook subscriptions.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/webhook/trigger.js)_

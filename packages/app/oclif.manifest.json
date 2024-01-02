@@ -178,8 +178,10 @@
     },
     "app:dev": {
       "id": "app:dev",
-      "description": "Run the app.",
+      "summary": "Run the app.",
+      "description": "[Builds the app](/docs/apps/tools/cli/commands#build) and lets you preview it on a [development store](/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managing-stores/plus-sandbox-store?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB).\n\n  To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps. If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these configurations using `dev --reset` to go through all of them again:\n\n- Associating your project with an app associated with your Partner account or organization, or creating a new app.\n- Selecting a development store or Plus sandbox store to use for testing. If you have only one store, then it's selected automatically.\n- Installing your app on the store using the provided install link.\n- Creating a tunnel between your local environment and the store using Cloudflare.\n\n  You can use your own tunneling software instead, by passing your tunnel URL with the `--tunnel-url` flag.\n- Updating the app URLs that are set in the Partner Dashboard.\n\n  To avoid overwriting any URLs that are already set, select the No, never option. If you select this option, then you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.\n\n- Enabling development store preview for extensions.\n- Building and serving your app and app extensions.\n\nIf you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview your app for the first time:\n\n- PHP: [Set up your Laravel app](https://github.com/Shopify/shopify-app-template-php#setting-up-your-laravel-app)\n- Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)\n\n> Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a staff account on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.\n  ",
       "strict": true,
+      "usage": "shopify app dev [flags]",
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
       "pluginType": "core",
@@ -607,8 +609,10 @@
     },
     "webhook:trigger": {
       "id": "webhook:trigger",
-      "description": "Trigger delivery of a sample webhook topic payload to a designated address.",
+      "summary": "Trigger delivery of a sample webhook topic payload to a designated address.",
+      "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the Partner API rate limit.\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "strict": true,
+      "usage": "shopify webhook trigger [flags]",
       "pluginName": "@shopify/app",
       "pluginAlias": "@shopify/app",
       "pluginType": "core",

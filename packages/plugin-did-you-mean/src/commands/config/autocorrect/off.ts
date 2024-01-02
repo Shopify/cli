@@ -6,6 +6,8 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 export default class AutocorrectOff extends Command {
   static description = 'Disable autocorrect.'
 
+  static usage = 'shopify config autocorrect off'
+
   async run(): Promise<void> {
     setAutocorrect(false)
     renderInfo({body: autocorrectStatus.off})
