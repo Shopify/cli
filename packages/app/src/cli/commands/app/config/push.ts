@@ -27,6 +27,6 @@ export default class ConfigPush extends Command {
       directory: flags.path,
     })
 
-    await pushConfig({configuration, force: flags.force})
+    await pushConfig({configuration, force: flags.force, commandConfig: this.config})
   }
 }

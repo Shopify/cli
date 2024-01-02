@@ -9,7 +9,6 @@ import {
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
 import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
@@ -19,6 +18,7 @@ import {getCachedCommandInfo} from '../../local-storage.js'
 import {PartnersSession, fetchPartnersSession} from '../../context/partner-account-info.js'
 import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
+import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -34,11 +34,16 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const specifications = await loadLocalExtensionsSpecifications(options.commandConfig)
-  const localApp = await loadAppConfigFromDefaultToml(options, specifications)
+  let localApp = await loadAppConfigFromDefaultToml(options)
   const directory = localApp?.directory || options.directory
   const partnersSession = await fetchPartnersSession()
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, partnersSession, directory)
+  const specifications = await fetchSpecifications({
+    token: partnersSession.token,
+    apiKey: remoteApp.apiKey,
+    config: options.commandConfig,
+  })
+  localApp = await loadAppConfigFromDefaultToml(options, specifications)
 
   await logMetadataForLoadedContext(remoteApp)
 
@@ -59,7 +64,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   )
   const configuration = deepMergeObjects(localAndRemoteApiClientConfiguration, remoteAppConfigurationExtension)
 
-  await writeAppConfigurationFile(configuration)
+  await writeAppConfigurationFile(configuration, localApp.configSchema)
 
   await saveCurrentConfig({configFileName, directory})
 
@@ -96,7 +101,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
 async function loadAppConfigFromDefaultToml(
   options: LinkOptions,
-  specifications: ExtensionSpecification[],
+  specifications?: ExtensionSpecification[],
 ): Promise<AppInterface> {
   try {
     const app = await loadApp({
@@ -154,7 +159,7 @@ export function mergeAppConfiguration(
   appConfiguration: AppConfiguration,
   remoteApp: OrganizationApp,
 ): CurrentAppConfiguration {
-  const result: CurrentAppConfiguration = {
+  let result: CurrentAppConfiguration = {
     path: appConfiguration.path,
     client_id: remoteApp.apiKey,
     name: remoteApp.title,
@@ -185,10 +190,13 @@ export function mergeAppConfiguration(
   }
 
   if (remoteApp.appProxy?.url) {
-    result.app_proxy = {
-      url: remoteApp.appProxy.url,
-      subpath: remoteApp.appProxy.subPath,
-      prefix: remoteApp.appProxy.subPathPrefix,
+    result = {
+      ...result,
+      app_proxy: {
+        url: remoteApp.appProxy.url,
+        subpath: remoteApp.appProxy.subPath,
+        prefix: remoteApp.appProxy.subPathPrefix,
+      },
     }
   }
 

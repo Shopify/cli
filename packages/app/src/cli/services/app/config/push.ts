@@ -7,21 +7,30 @@ import {
   isCurrentAppSchema,
   usesLegacyScopesBehavior,
   getAppScopesArray,
+  AppInterface,
 } from '../../../models/app/app.js'
 import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
 import {logMetadataForLoadedContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
+import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
+import {loadApp} from '../../../models/app/loader.js'
+import {
+  AppProxyConfiguration,
+  AppProxySpecIdentifier,
+} from '../../../models/extensions/specifications/app_config_app_proxy.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename, dirname} from '@shopify/cli-kit/node/path'
+import {Config} from '@oclif/core'
 
 export interface PushOptions {
   configuration: AppConfiguration
   force: boolean
+  commandConfig: Config
 }
 
 const FIELD_NAMES: {[key: string]: string} = {
@@ -41,16 +50,28 @@ const FIELD_NAMES: {[key: string]: string} = {
 }
 
 export async function pushConfig(options: PushOptions) {
-  const {configuration} = options
+  let configuration = options.configuration
   if (!isCurrentAppSchema(configuration)) return
 
+  // Load local complete configuration
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
   const configFileName = isCurrentAppSchema(configuration) ? basename(configuration.path) : undefined
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey: configuration.client_id,
+    config: options.commandConfig,
+  })
+  const localApp = await loadApp({
+    directory: dirname(configuration.path),
+    specifications,
+    configName: configFileName,
+  })
+  configuration = localApp.configuration as CurrentAppConfiguration
 
+  // Fetch remote configuration
   const queryVariables = {apiKey: configuration.client_id}
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
-
   if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
   const {app} = queryResult
 
@@ -59,9 +80,9 @@ export async function pushConfig(options: PushOptions) {
 
   await logMetadataForLoadedContext(app)
 
-  if (!(await confirmPushChanges(options, app))) return
+  if (!(await confirmPushChanges(options.force, configuration, app, localApp.configSchema))) return
 
-  const variables = getMutationVars(app, configuration)
+  const variables = getMutationVars(app, localApp)
 
   const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
 
@@ -90,7 +111,7 @@ export async function pushConfig(options: PushOptions) {
     }
   }
 
-  if (!configuration.app_proxy && app.appProxy) {
+  if (!localApp.getConfigExtension(AppProxySpecIdentifier) && app.appProxy) {
     const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
 
     if (deleteResult?.userErrors?.length > 0) {
@@ -105,9 +126,10 @@ export async function pushConfig(options: PushOptions) {
   })
 }
 
-const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
+const getMutationVars = (app: App, localApp: AppInterface) => {
   let webhookApiVersion
   let gdprWebhooks
+  const configuration = localApp.configuration as CurrentAppConfiguration
 
   if (app.betas?.declarativeWebhooks) {
     // These fields will be updated by the deploy command
@@ -138,11 +160,12 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     variables.requestedAccessScopes = getAppScopesArray(configuration)
   }
 
-  if (configuration.app_proxy) {
+  const appProxyConfig = localApp.getConfigExtension(AppProxySpecIdentifier) as AppProxyConfiguration
+  if (appProxyConfig?.app_proxy) {
     variables.appProxy = {
-      proxySubPath: configuration.app_proxy.subpath,
-      proxySubPathPrefix: configuration.app_proxy.prefix,
-      proxyUrl: configuration.app_proxy.url,
+      proxySubPath: appProxyConfig.app_proxy.subpath,
+      proxySubPathPrefix: appProxyConfig.app_proxy.prefix,
+      proxyUrl: appProxyConfig.app_proxy.url,
     }
   }
 

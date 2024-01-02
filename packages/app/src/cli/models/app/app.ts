@@ -136,13 +136,6 @@ export const VersionedAppSchema = zod.object({
     })
     .optional(),
   webhooks: WebhooksSchemaWithDeclarative,
-  app_proxy: zod
-    .object({
-      url: validateUrl(zod.string()),
-      subpath: zod.string(),
-      prefix: zod.string(),
-    })
-    .optional(),
   pos: zod
     .object({
       embedded: zod.boolean(),
@@ -185,7 +178,7 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   const {path, ...rest} = item
-  return isType(AppSchema, rest)
+  return isType(AppSchema.nonstrict(), rest)
 }
 
 /**
@@ -256,7 +249,7 @@ export const WebConfigurationSchema = zod.union([
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string}
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & {[key: string]: unknown}
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
@@ -274,6 +267,7 @@ export interface Web {
 export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
+  configSchema: zod.ZodTypeAny
 }
 
 export interface AppInterface extends AppConfigurationInterface {
@@ -292,6 +286,7 @@ export interface AppInterface extends AppConfigurationInterface {
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+  getConfigExtension: (specIdentifier: string) => {[key: string]: unknown} | undefined
 }
 
 export class App implements AppInterface {
@@ -307,6 +302,7 @@ export class App implements AppInterface {
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
+  configSchema: zod.ZodTypeAny
 
   // eslint-disable-next-line max-params
   constructor(
@@ -322,6 +318,7 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
     specifications?: ExtensionSpecification[],
+    configSchema?: zod.ZodTypeAny,
   ) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
@@ -335,6 +332,7 @@ export class App implements AppInterface {
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
+    this.configSchema = configSchema ?? AppSchema
   }
 
   async updateDependencies() {
@@ -371,6 +369,13 @@ export class App implements AppInterface {
     this.allExtensions.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
+  }
+
+  getConfigExtension(specIdentifier: string) {
+    const extension = this.allExtensions.find((extension) => extension.specification.identifier === specIdentifier)
+    if (!extension) return
+
+    return extension.configuration as {[key: string]: unknown}
   }
 }
 

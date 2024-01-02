@@ -1,5 +1,11 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {
+  AppConfiguration,
+  AppConfigurationInterface,
+  AppInterface,
+  CurrentAppConfiguration,
+  isCurrentAppSchema,
+} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
@@ -184,7 +190,7 @@ export async function updateURLs(
   }
 
   if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
-    const localConfiguration: AppConfiguration = {
+    let localConfiguration: CurrentAppConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
       auth: {
@@ -194,14 +200,17 @@ export async function updateURLs(
     }
 
     if (urls.appProxy) {
-      localConfiguration.app_proxy = {
-        url: urls.appProxy.proxyUrl,
-        subpath: urls.appProxy.proxySubPath,
-        prefix: urls.appProxy.proxySubPathPrefix,
+      localConfiguration = {
+        ...localConfiguration,
+        app_proxy: {
+          url: urls.appProxy.proxyUrl,
+          subpath: urls.appProxy.proxySubPath,
+          prefix: urls.appProxy.proxySubPathPrefix,
+        },
       }
     }
 
-    await writeAppConfigurationFile(localConfiguration)
+    await writeAppConfigurationFile(localConfiguration, localApp.configSchema)
   }
 }
 
@@ -251,7 +260,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
-      await writeAppConfigurationFile(localConfiguration)
+      await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

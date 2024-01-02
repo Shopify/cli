@@ -223,7 +223,12 @@ class AppLoader {
       configName: this.configName,
       specifications: this.specifications,
     })
-    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
+    const {
+      directory: appDirectory,
+      configuration,
+      configurationLoadResultMetadata,
+      configSchema,
+    } = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
@@ -253,6 +258,7 @@ class AppLoader {
       dotenv,
       undefined,
       this.specifications,
+      configSchema,
     )
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
@@ -605,7 +611,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

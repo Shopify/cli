@@ -79,13 +79,6 @@ describe('app schema validation', () => {
     test('checks whether current app schema is valid -- fail', () => {
       const config = {
         ...CORRECT_CURRENT_APP_SCHEMA,
-        bad_key: 'i will fail',
-      }
-      expect(isCurrentAppSchema(config)).toBe(false)
-    })
-    test('checks whether current app schema is valid -- fail', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
       }
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
