@@ -34,6 +34,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export interface PushOptions {
   configuration: AppConfiguration
@@ -135,25 +136,12 @@ export async function pushConfig(options: PushOptions) {
 }
 
 const getMutationVars = (app: App, localApp: AppInterface) => {
-  let webhookApiVersion
-  let gdprWebhooks
   const configuration = localApp.configuration as CurrentAppConfiguration
-
-  if (app.betas?.declarativeWebhooks) {
-    // These fields will be updated by the deploy command
-    webhookApiVersion = app.webhookApiVersion
-    gdprWebhooks = app.gdprWebhooks
-  } else {
-    webhookApiVersion = configuration.webhooks?.api_version
-    gdprWebhooks = {
-      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url,
-      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url,
-      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url,
-    }
-  }
 
   const appHomeSchema = localApp.getConfigExtension(AppHomeSpecIdentifier) as AppHomeConfiguration
   const posSchema = localApp.getConfigExtension(PosSpecIdentifier) as PosConfiguration
+  // Once api_version and privacy_compliance are versioned, we should get the content using getConfigExtension
+  const {webhookApiVersion, gdprWebhooks} = getWebhookConfig(configuration)
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
@@ -184,4 +172,22 @@ const getMutationVars = (app: App, localApp: AppInterface) => {
 
 export const abort = (errorMessage: OutputMessage) => {
   throw new AbortError(errorMessage)
+}
+
+function getWebhookConfig(configuration: CurrentAppConfiguration): {
+  webhookApiVersion?: string
+  gdprWebhooks: {
+    customerDeletionUrl?: string
+    customerDataRequestUrl?: string
+    shopDeletionUrl?: string
+  }
+} {
+  return {
+    webhookApiVersion: getPathValue(configuration, 'webhooks.api_version'),
+    gdprWebhooks: {
+      customerDeletionUrl: getPathValue(configuration, 'webhooks.privacy_compliance.customer_deletion_url'),
+      customerDataRequestUrl: getPathValue(configuration, 'webhooks.privacy_compliance.customer_data_request_url'),
+      shopDeletionUrl: getPathValue(configuration, 'webhooks.privacy_compliance.shop_deletion_url'),
+    },
+  }
 }

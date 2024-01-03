@@ -2,11 +2,6 @@ import {AppErrors, isWebType} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {
-  validateInnerSubscriptions,
-  validateTopLevelSubscriptions,
-  httpsRegex,
-} from '../../utilities/app/config/webhooks.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -25,14 +20,9 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
-// example PubSub URI - pubsub://{project}:{topic}
-const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
-// example Eventbridge ARN - arn:aws:events:{region}::event-source/aws.partner/shopify.com/{app_id}/{path}
-const arnRegex =
-  /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/
-
 // adding http or https presence and absence of new lines to url validation
-const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
+export const httpsRegex = /^(https:\/\/)/
+export const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
   const regex = httpsOnly ? httpsRegex : /^(https?:\/\/)/
   return zodType
     .url()
@@ -41,63 +31,6 @@ const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Inva
 }
 
 const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
-const removeTrailingSlash = (arg: unknown) =>
-  typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
-const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
-  httpsOnly: true,
-  message: 'Only https urls are allowed',
-}).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
-
-const UriValidation = zod.union([
-  zod.string().regex(httpsRegex),
-  zod.string().regex(pubSubRegex),
-  zod.string().regex(arnRegex),
-])
-
-export const WebhookSubscriptionSchema = zod.object({
-  topic: zod.string(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
-  sub_topic: zod.string().optional(),
-  include_fields: zod.array(zod.string()).optional(),
-  metafield_namespaces: zod.array(zod.string()).optional(),
-  path: zod
-    .string()
-    .refine((path) => path.startsWith('/') && path.length > 1, {
-      message: 'Path must start with a forward slash and be longer than 1 character',
-    })
-    .optional(),
-})
-
-const WebhooksSchema = zod.object({
-  api_version: zod.string(),
-  privacy_compliance: zod
-    .object({
-      customer_deletion_url: ensureHttpsOnlyUrl.optional(),
-      customer_data_request_url: ensureHttpsOnlyUrl.optional(),
-      shop_deletion_url: ensureHttpsOnlyUrl.optional(),
-    })
-    .optional(),
-})
-
-const DeclarativeWebhooksSchema = zod.object({
-  topics: zod.array(zod.string()).nonempty().optional(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
-  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-})
-
-const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSchema).superRefine((schema, ctx) => {
-  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema)
-  if (topLevelSubscriptionErrors) {
-    ctx.addIssue(topLevelSubscriptionErrors)
-    return zod.NEVER
-  }
-
-  const innerSubscriptionErrors = validateInnerSubscriptions(schema)
-  if (innerSubscriptionErrors) {
-    ctx.addIssue(innerSubscriptionErrors)
-    return zod.NEVER
-  }
-})
 
 export const NonVersionedAppTopSchema = zod.object({
   name: zod.string().max(30),
@@ -127,11 +60,7 @@ export const NonVersionedAppBottomSchema = zod.object({
 })
 export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema)
 
-export const VersionedAppSchema = zod.object({
-  webhooks: WebhooksSchemaWithDeclarative,
-})
-
-export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merge(NonVersionedAppBottomSchema).strict()
+export const AppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
@@ -239,9 +168,6 @@ export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: 
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
-export type WebhookConfig = zod.infer<typeof AppSchema>['webhooks']
-export type DeclarativeWebhookConfig = zod.infer<typeof DeclarativeWebhooksSchema>
-export type NormalizedWebhookSubscription = zod.infer<typeof WebhookSubscriptionSchema>
 
 export interface Web {
   directory: string

@@ -182,22 +182,27 @@ export function mergeAppConfiguration(
     remoteApp.gdprWebhooks?.shopDeletionUrl
 
   if (hasAnyPrivacyWebhook) {
-    result.webhooks.privacy_compliance = {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
+    const webhookPrivacyComplianceConfiguration = {
+      webhooks: {
+        privacy_compliance: {
+          customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
+          customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
+          shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
+        },
+      },
     }
+    result = deepMergeObjects(result, webhookPrivacyComplianceConfiguration)
   }
 
   if (remoteApp.appProxy?.url) {
-    result = {
-      ...result,
+    const appProxyConfiguration = {
       app_proxy: {
         url: remoteApp.appProxy.url,
         subpath: remoteApp.appProxy.subPath,
         prefix: remoteApp.appProxy.subPathPrefix,
       },
     }
+    result = deepMergeObjects(result, appProxyConfiguration)
   }
 
   if (remoteApp.preferencesUrl) {

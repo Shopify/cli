@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -10,6 +10,7 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
+import {WebhookConfig} from '../extensions/specifications/types/app_config_webhooks.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',

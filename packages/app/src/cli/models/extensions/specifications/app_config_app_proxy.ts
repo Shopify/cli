@@ -1,4 +1,4 @@
-import {validateUrl} from './configuration/schema.js'
+import {validateUrl} from './validation/common.js'
 import {ExtensionSpecification, createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
