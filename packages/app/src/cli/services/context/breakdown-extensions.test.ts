@@ -7,15 +7,14 @@ import {
 } from './breakdown-extensions.js'
 import {RemoteSource} from './identifiers.js'
 import {fetchActiveAppVersion, fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {AppConfiguration, AppInterface} from '../../models/app/app.js'
-import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
+import {AppConfiguration, AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {buildVersionedAppSchema, testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 
 const REGISTRATION_A: RemoteSource = {
@@ -164,7 +163,7 @@ const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   },
 }
 
-const APP_CONFIGURATION: AppConfiguration = {
+const APP_CONFIGURATION: CurrentAppConfiguration = {
   path: 'shopify.app.development.toml',
   name: 'my app',
   client_id: '12345',
@@ -175,31 +174,33 @@ const APP_CONFIGURATION: AppConfiguration = {
   embedded: true,
 }
 
-const LOCAL_APP = (
+const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
   configuration: AppConfiguration = APP_CONFIGURATION,
-  specifications: ExtensionSpecification[] = [],
-): AppInterface => {
+): Promise<AppInterface> => {
+  const versionSchema = await buildVersionedAppSchema()
+
   return testApp({
     name: 'my-app',
     directory: '/app',
     configuration,
     allExtensions: [...uiExtensions],
-    specifications,
+    specifications: versionSchema.configSpecifications,
+    configSchema: versionSchema.schema,
   })
 }
 
 // Remove the fields from the list once they are versioned
 const NON_VERSIONED_NEW_FIELD_NAMES = ['webhooks']
 
-const options = (
+const options = async (
   uiExtensions: ExtensionInstance[],
   identifiers: any = {},
   partnersApp?: OrganizationApp,
   release = true,
 ) => {
   return {
-    app: LOCAL_APP(uiExtensions),
+    app: await LOCAL_APP(uiExtensions),
     token: 'token',
     appId: 'appId',
     appName: 'appName',
@@ -300,7 +301,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
 
       // When
       const result = await extensionsIdentifiersDeployBreakdown(
-        options([EXTENSION_A, EXTENSION_A_2], {}, undefined, false),
+        await options([EXTENSION_A, EXTENSION_A_2], {}, undefined, false),
       )
 
       // Then
@@ -337,7 +338,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(options([EXTENSION_A, EXTENSION_A_2]))
+      const result = await extensionsIdentifiersDeployBreakdown(await options([EXTENSION_A, EXTENSION_A_2]))
 
       // Then
       expect(result).toEqual({
@@ -371,7 +372,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(options([EXTENSION_A, EXTENSION_A_2]))
+      const result = await extensionsIdentifiersDeployBreakdown(await options([EXTENSION_A, EXTENSION_A_2]))
 
       // Then
       expect(result).toEqual({
@@ -407,7 +408,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(options([EXTENSION_A, EXTENSION_A_2]))
+      const result = await extensionsIdentifiersDeployBreakdown(await options([EXTENSION_A, EXTENSION_A_2]))
 
       // Then
       expect(result).toEqual({
@@ -447,7 +448,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(options([EXTENSION_A, EXTENSION_A_2]))
+      const result = await extensionsIdentifiersDeployBreakdown(await options([EXTENSION_A, EXTENSION_A_2]))
 
       // Then
       expect(result).toEqual({
@@ -494,7 +495,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
       // When
-      const result = await extensionsIdentifiersDeployBreakdown(options([EXTENSION_A, EXTENSION_A_2]))
+      const result = await extensionsIdentifiersDeployBreakdown(await options([EXTENSION_A, EXTENSION_A_2]))
 
       // Then
       expect(result).toEqual({
@@ -609,7 +610,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       }
 
       // When
-      const result = await configExtensionsIdentifiersBreakdown(LOCAL_APP([], configuration), [], false)
+      const result = await configExtensionsIdentifiersBreakdown(await LOCAL_APP([], configuration), [], false)
 
       // Then
       expect(result).toEqual({
@@ -642,11 +643,10 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
         },
       }
-      const specifications = await loadFSExtensionsSpecifications()
 
       // When
       const result = await configExtensionsIdentifiersBreakdown(
-        LOCAL_APP([], configuration, specifications),
+        await LOCAL_APP([], configuration),
         [configExistingRegistration],
         true,
       )
@@ -681,11 +681,10 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           config: JSON.stringify({app_url: 'https://myapp-edited.com', embedded: false}),
         },
       }
-      const specifications = await loadFSExtensionsSpecifications()
 
       // When
       const result = await configExtensionsIdentifiersBreakdown(
-        LOCAL_APP([], configuration, specifications),
+        await LOCAL_APP([], configuration),
         [configUpdatedRegistration],
         true,
       )
@@ -727,7 +726,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // When
       const result = await configExtensionsIdentifiersBreakdown(
-        LOCAL_APP([], configuration, specifications),
+        await LOCAL_APP([], configuration),
         [configUpdatedRegistration],
         true,
       )
@@ -771,11 +770,9 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         },
       }
 
-      const specifications = await loadFSExtensionsSpecifications()
-
       // When
       const result = await configExtensionsIdentifiersBreakdown(
-        LOCAL_APP([], configuration, specifications),
+        await LOCAL_APP([], configuration),
         [configUpdatedRegistration, configDeletedRegistration],
         true,
       )

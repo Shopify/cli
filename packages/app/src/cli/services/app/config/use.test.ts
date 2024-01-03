@@ -1,5 +1,10 @@
 import use, {UseOptions} from './use.js'
-import {testApp, testAppWithConfig, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {
+  buildVersionedAppSchema,
+  testApp,
+  testAppWithConfig,
+  testOrganizationApp,
+} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
@@ -84,10 +89,12 @@ describe('use', () => {
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.no-id.toml')
 
+      const {schema: configSchema} = await buildVersionedAppSchema()
       const appWithoutClientID = testApp()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
         configuration: appWithoutClientID.configuration,
+        configSchema,
       })
 
       // When
@@ -148,9 +155,11 @@ describe('use', () => {
           application_url: 'https://example.com',
         },
       })
+      const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
         configuration: app.configuration,
+        configSchema,
       })
 
       // When
@@ -184,9 +193,11 @@ describe('use', () => {
           webhooks: {api_version: '2023-04'},
         },
       })
+      const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
         configuration: app.configuration,
+        configSchema,
       })
 
       // When
@@ -223,7 +234,8 @@ describe('use', () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
       const {configuration} = testApp({}, 'current')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration})
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
 
@@ -240,7 +252,8 @@ describe('use', () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
       const {configuration} = testApp({}, 'current')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration})
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
 
@@ -257,7 +270,8 @@ describe('use', () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
       const {configuration} = testApp({}, 'current')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration})
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({directory, configuration, configSchema})
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
 

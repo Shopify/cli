@@ -19,6 +19,7 @@ import {PartnersSession, fetchPartnersSession} from '../../context/partner-accou
 import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
+import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -35,7 +36,7 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const {token, remoteApp, directory} = await selectRemoteApp(options)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp)
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
@@ -72,7 +73,7 @@ async function selectRemoteApp(options: LinkOptions) {
   }
 }
 
-async function loadLocalApp(options: LinkOptions, token: string, remoteApp: OrganizationApp) {
+async function loadLocalApp(options: LinkOptions, token: string, remoteApp: OrganizationApp, directory: string) {
   const specifications = await fetchSpecifications({
     token,
     apiKey: remoteApp.apiKey,
@@ -81,7 +82,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
 
   const localApp = await loadAppConfigFromDefaultToml(options, specifications)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
-  const configFilePath = joinPath(localApp.directory, configFileName)
+  const configFilePath = joinPath(directory, configFileName)
   return {
     localApp,
     configFileName,
@@ -103,7 +104,7 @@ async function loadAppConfigFromDefaultToml(
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp()
+    return new EmptyApp(await loadFSExtensionsSpecifications())
   }
 }
 

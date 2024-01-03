@@ -151,7 +151,7 @@ const getMutationVars = (app: App, localApp: AppInterface) => {
     embedded: appHomeSchema.embedded ?? app.embedded,
     gdprWebhooks,
     posEmbedded: posSchema.pos?.embedded ?? false,
-    preferencesUrl: appHomeSchema.app_preferences?.url ?? null,
+    preferencesUrl: appHomeSchema?.app_preferences?.url ?? null,
   }
 
   if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {

@@ -6,7 +6,6 @@ import {
   WebType,
   getAppScopesArray,
   AppConfigurationInterface,
-  AppSchema,
   LegacyAppSchema,
   AppConfiguration,
   CurrentAppConfiguration,
@@ -78,20 +77,6 @@ export async function loadConfigurationFile(
       throw err
     }
   }
-}
-
-const isCurrentSchema = (schema: unknown) => {
-  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
-  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
-
-  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-  for (const field in schema as {[key: string]: unknown}) {
-    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
-      return true
-    }
-  }
-
-  return false
 }
 
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
@@ -356,8 +341,8 @@ class AppLoader {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
-    const configExtensionPromises = isCurrentSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration as CurrentAppConfiguration)
+    const configExtensionPromises = isCurrentAppSchema(appConfiguration)
+      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
       : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
@@ -560,9 +545,7 @@ class AppConfigurationLoader {
   }
 
   async loaded() {
-    const configSpecifications = (this.specifications ?? (await loadFSExtensionsSpecifications())).filter((spec) =>
-      spec.appModuleFeatures().includes('app_config'),
-    )
+    const specifications = this.specifications ?? (await loadFSExtensionsSpecifications())
     const appDirectory = await this.getAppDirectory()
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
@@ -582,8 +565,8 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
-    const appVersionedSchema = getAppVersionedSchema(configSpecifications)
-    const appSchema = isCurrentSchema(file) ? appVersionedSchema : LegacyAppSchema
+    const appVersionedSchema = getAppVersionedSchema(specifications)
+    const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
     const configuration = await parseConfigurationFile(appSchema, configurationPath)
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 

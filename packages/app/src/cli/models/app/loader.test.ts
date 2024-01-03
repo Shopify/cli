@@ -5,14 +5,15 @@ import {
   loadDotEnv,
   parseConfigurationObject,
 } from './loader.js'
-import {AppSchema, LegacyAppSchema, WebConfigurationSchema, WebhookConfig} from './app.js'
-import {DEFAULT_CONFIG, getWebhookConfig} from './app.test-data.js'
+import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
+import {WebhookConfig, WebhookSchema} from '../extensions/specifications/types/app_config_webhooks.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -1964,8 +1965,9 @@ describe('parseConfigurationObject', () => {
     const expectedFormatted = outputContent`Fix a schema error in tmp:\n${JSON.stringify(errorObject, null, 2)}`
     const abortOrReport = vi.fn()
 
+    const {schema} = await buildVersionedAppSchema()
     const {path, ...toParse} = configurationObject
-    await parseConfigurationObject(AppSchema, 'tmp', toParse, abortOrReport)
+    await parseConfigurationObject(schema, 'tmp', toParse, abortOrReport)
 
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
@@ -2804,7 +2806,7 @@ describe('WebhooksSchema', () => {
     const abortOrReport = vi.fn()
 
     const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)
-    const parsedConfiguration = await parseConfigurationObject(AppSchema, 'tmp', toParse, abortOrReport)
+    const parsedConfiguration = await parseConfigurationObject(WebhookSchema, 'tmp', toParse, abortOrReport)
     return {abortOrReport, expectedFormatted, parsedConfiguration}
   }
 })
