@@ -5,6 +5,7 @@
       "id": "search",
       "description": "Starts a search on shopify.dev.",
       "strict": true,
+      "usage": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search <query>\n\n# search for a phrase on Shopify.dev\nshopify search \"<a search query separated by spaces>\"\n",
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
       "pluginType": "core",
@@ -18,7 +19,8 @@
     },
     "upgrade": {
       "id": "upgrade",
-      "description": "Upgrade the Shopify CLI.",
+      "summary": "Upgrade your CLI dependency.",
+      "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](/docs/api/shopify-cli#upgrade) documentation.",
       "strict": true,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
@@ -38,7 +40,7 @@
     },
     "version": {
       "id": "version",
-      "description": "Shopify CLI version.",
+      "description": "Shopify CLI version currently installed.",
       "strict": true,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
@@ -49,7 +51,7 @@
     },
     "auth:logout": {
       "id": "auth:logout",
-      "description": "Logout from Shopify.",
+      "description": "Logs you out of the Shopify account or Partner account and store.",
       "strict": true,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",
@@ -143,18 +145,6 @@
     "demo:print-ai-prompt": {
       "id": "demo:print-ai-prompt",
       "description": "Prints the prompts for a chat-enabled LLM to generate a demo",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "docs:generate-interfaces": {
-      "id": "docs:generate-interfaces",
-      "description": "Generate commands interfaces for the Shopify Documentation",
       "strict": true,
       "pluginName": "@shopify/cli",
       "pluginAlias": "@shopify/cli",

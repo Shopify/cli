@@ -23,7 +23,7 @@ export default class WebhookTrigger extends Command {
 
   - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.
   - Webhooks triggered using this method aren't retried when they fail.
-  - Trigger requests are rate-limited using the Partner API rate limit.
+  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
   `
 

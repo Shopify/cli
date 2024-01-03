@@ -1,1 +1,1 @@
-no usage
+shopify upgrade [flags]

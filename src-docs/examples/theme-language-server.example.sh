@@ -1,1 +1,1 @@
-no usage
+shopify theme language-server [flags]

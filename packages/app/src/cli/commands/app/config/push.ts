@@ -6,7 +6,9 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class ConfigPush extends Command {
-  static description = 'Push your app configuration to the Partner Dashboard.'
+  static summary = 'Pushes your default app configuration to Shopify.'
+
+  static description = `Pushes your default app configuration to Shopify. You can specify a different configuration file with the \`--config\` flag. This overwrites the settings for the app specified in the configuration file in your Partner Dashboard.`
 
   static flags = {
     ...globalFlags,

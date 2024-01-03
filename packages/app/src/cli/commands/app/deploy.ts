@@ -12,7 +12,14 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Deploy extends Command {
-  static description = 'Deploy your Shopify app.'
+  static summary = 'Deploy your Shopify app.'
+
+  static description = `[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and deploys app extensions.
+
+  When you run this command, Shopify CLI creates an app version that contains a snapshot of all of your app extensions, including the app extensions that you manage in the Partner Dashboard, and releases the app version to users.
+
+  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). When you're ready to deploy your app, you need to deploy these components to your own hosting solution. [Learn more about deploying your web app](https://shopify.dev/docs/apps/deployment/web).
+  `
 
   static flags = {
     ...globalFlags,

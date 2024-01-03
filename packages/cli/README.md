@@ -5,7 +5,7 @@
 * [`shopify app config push`](#shopify-app-config-push)
 * [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
 * [`shopify app deploy`](#shopify-app-deploy)
-* [`shopify shopify app dev [flags]`](#shopify-shopify-app-dev-flags)
+* [`shopify app dev`](#shopify-app-dev)
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
@@ -13,10 +13,9 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension [FILE]`](#shopify-app-generate-extension-file)
-* [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
-* [`shopify app release`](#shopify-app-release)
+* [`shopify shopify app release --version <version>`](#shopify-shopify-app-release---version-version)
 * [`shopify app update-url`](#shopify-app-update-url)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -36,20 +35,35 @@
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-1)
 * [`shopify plugins:uninstall PLUGIN...`](#shopify-pluginsuninstall-plugin-2)
 * [`shopify plugins update`](#shopify-plugins-update)
-* [`shopify search [QUERY]`](#shopify-search-query)
+* [`shopify # open the search modal on Shopify.dev
+shopify search
+
+# search for a term on Shopify.dev
+shopify search <query>
+
+# search for a phrase on Shopify.dev
+shopify search "<a search query separated by spaces>"
+`](#shopify--open-the-search-modal-on-shopifydevshopify-search-search-for-a-term-on-shopifydevshopify-search-query-search-for-a-phrase-on-shopifydevshopify-search-a-search-query-separated-by-spaces)
 * [`shopify theme check`](#shopify-theme-check)
-* [`shopify theme console`](#shopify-theme-console)
+* [`shopify 
+  shopify theme console
+
+  shopify theme console --url /products/classic-leather-jacket
+  `](#shopify---shopify-theme-console--shopify-theme-console---url-productsclassic-leather-jacket--)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
 * [`shopify theme info`](#shopify-theme-info)
-* [`shopify theme init [NAME]`](#shopify-theme-init-name)
+* [`shopify shopify theme init [name]`](#shopify-shopify-theme-init-name)
 * [`shopify theme language-server`](#shopify-theme-language-server)
 * [`shopify theme list`](#shopify-theme-list)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
-* [`shopify theme push`](#shopify-theme-push)
+* [`shopify shopify theme push
+
+shopify theme push --unpublished --json
+  `](#shopify-shopify-theme-pushshopify-theme-push---unpublished---json--)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
@@ -74,6 +88,14 @@ FLAGS
 
 DESCRIPTION
   Build the app.
+
+  This command executes the build script specified in the element's TOML file. You can specify a custom script in the
+  file. To learn about configuration files in Shopify apps, refer to [App
+  configuration](https://shopify.dev/docs/apps/tools/cli/configuration).
+
+  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
+  running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your
+  extension to ensure that it's valid.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/build.js)_
@@ -95,13 +117,30 @@ FLAGS
 
 DESCRIPTION
   Fetch your app configuration from the Partner Dashboard.
+
+  Pulls app configuration from the Partner Dashboard and creates or overwrites a configuration file. You can create a
+  new app with this command to start with a default configuration file.
+
+  This command presents you with a prompt with the following steps:
+
+  - Which Partner organization is this work for?
+  - This prompt shows only if the account you are logged into has more than one organization.
+  - Create this project as a new app on Shopify?
+  - Choosing yes will create a new app in your Partner Dashboard with the default configuration
+  - Choosing no will prompt you to choose from a list of all the apps in your organization
+  - Configuration file name
+  - Enter the name for this configuration file. The `shopify.app.{config-name}.toml` file will be created. If it already
+  exists, you will be prompted to confirm overwriting.
+
+  For more information on the format of the created TOML configuration file, refer to the [App
+  configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/config/link.js)_
 
 ## `shopify app config push`
 
-Push your app configuration to the Partner Dashboard.
+Pushes your default app configuration to Shopify.
 
 ```
 USAGE
@@ -115,7 +154,10 @@ FLAGS
   --verbose             Increase the verbosity of the logs.
 
 DESCRIPTION
-  Push your app configuration to the Partner Dashboard.
+  Pushes your default app configuration to Shopify.
+
+  Pushes your default app configuration to Shopify. You can specify a different configuration file with the `--config`
+  flag. This overwrites the settings for the app specified in the configuration file in your Partner Dashboard.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/config/push.js)_
@@ -139,6 +181,9 @@ FLAGS
 
 DESCRIPTION
   Activate an app configuration.
+
+  Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
+  be prompted to choose from the configuration files in your project.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/config/use.js)_
@@ -169,17 +214,29 @@ FLAGS
 
 DESCRIPTION
   Deploy your Shopify app.
+
+  [Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and deploys app extensions.
+
+  When you run this command, Shopify CLI creates an app version that contains a snapshot of all of your app extensions,
+  including the app extensions that you manage in the Partner Dashboard, and releases the app version to users.
+
+  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). When
+  you're ready to deploy your app, you need to deploy these components to your own hosting solution. [Learn more about
+  deploying your web app](https://shopify.dev/docs/apps/deployment/web).
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/deploy.js)_
 
-## `shopify shopify app dev [flags]`
+## `shopify app dev`
 
 Run the app.
 
 ```
 USAGE
-  $ shopify shopify app dev [flags]
+  $ shopify app dev [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [-s <value>]
+    [--reset | ] [--skip-dependencies-installation] [--no-update] [--subscription-product-url <value>]
+    [--checkout-cart-url <value>] [--tunnel-url <value> |  | ] [-t <value>] [--theme-app-extension-port <value>]
+    [--notify <value>]
 
 FLAGS
   -c, --config=<value>                The name of the app configuration.
@@ -257,6 +314,11 @@ FLAGS
 
 DESCRIPTION
   Pull app and extensions environment variables.
+
+  Creates or updates an `.env` files that contains app and app extension environment variables.
+
+  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing
+  variables and commented variables are preserved.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/env/pull.js)_
@@ -277,6 +339,8 @@ FLAGS
 
 DESCRIPTION
   Display app and extensions environment variables.
+
+  Displays environment variables that can be used to deploy apps and app extensions.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/env/show.js)_
@@ -297,6 +361,8 @@ FLAGS
 
 DESCRIPTION
   Compile a function to wasm.
+
+  Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/function/build.js)_
@@ -320,6 +386,11 @@ FLAGS
 
 DESCRIPTION
   Run a function locally for testing.
+
+  Runs the function from your current directory for [testing
+  purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug
+  functions when errors occur, refer to [Shopify Functions error
+  handling](https://shopify.dev/docs/api/functions/errors).
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/function/run.js)_
@@ -342,6 +413,12 @@ FLAGS
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
+
+  Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
+  function in your app. Run this command from the function directory.
+
+  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
+  latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/function/schema.js)_
@@ -362,13 +439,16 @@ FLAGS
 
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
+
+  Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a
+  function written in JavaScript.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/function/typegen.js)_
 
 ## `shopify app generate extension [FILE]`
 
-Scaffold an Extension.
+Generate a new app Extension.
 
 ```
 USAGE
@@ -389,35 +469,21 @@ FLAGS
   --verbose               Increase the verbosity of the logs.
 
 DESCRIPTION
-  Scaffold an Extension.
+  Generate a new app Extension.
+
+  Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you
+  can generate using this command, refer to [Supported
+  extensions](https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).
+
+  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
+  refer to [App structure](https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
+
 
 EXAMPLES
   $ shopify app generate extension
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/generate/extension.js)_
-
-## `shopify app generate schema`
-
-Fetch the latest GraphQL schema for a function.
-
-```
-USAGE
-  $ shopify app generate schema [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--stdout]
-
-FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --client-id=<value>   The Client ID to fetch the schema with.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your function directory.
-  --stdout              Output the schema to stdout instead of writing to a file.
-  --verbose             Increase the verbosity of the logs.
-
-DESCRIPTION
-  Fetch the latest GraphQL schema for a function.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/generate/schema.js)_
 
 ## `shopify app import-flow-legacy-extensions`
 
@@ -459,18 +525,26 @@ FLAGS
 
 DESCRIPTION
   Print basic information about your app and extensions.
+
+  The information returned includes the following:
+
+  - The app and development store or Plus sandbox store that's used when you run the
+  [dev](https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using [dev
+  --reset](https://shopify.dev/docs/apps/tools/cli/commands#dev).
+  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
+  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.
+  - System information, including the package manager and version of Shopify CLI used in the project.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/info.js)_
 
-## `shopify app release`
+## `shopify shopify app release --version <version>`
 
 Release an app version.
 
 ```
 USAGE
-  $ shopify app release --version <value> [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c
-    <value>] [--reset] [-f]
+  $ shopify shopify app release --version <version>
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
@@ -484,6 +558,8 @@ FLAGS
 
 DESCRIPTION
   Release an app version.
+
+  Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/release.js)_
@@ -509,6 +585,13 @@ FLAGS
 
 DESCRIPTION
   Update your app and redirect URLs in the Partners Dashboard.
+
+  Updates the app URL and allowed redirection URLs for your app. When you specify URLs using this command, the current
+  URLs are overwritten.
+
+  Your current app URLs are provided as placeholder responses. To keep either your app URL or redirect URLs the same,
+  submit the placeholder content. Alternatively, use the `--app-url` or `--redirect-urls` flag to update only one of
+  these settings.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.52.0/dist/cli/commands/app/update-url.js)_
@@ -533,6 +616,8 @@ FLAGS
 DESCRIPTION
   List deployed versions of your app.
 
+  Lists the deployed app versions. An app version is a snapshot of your app extensions.
+
 EXAMPLES
   $ shopify app versions list
 ```
@@ -541,14 +626,14 @@ _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/
 
 ## `shopify auth logout`
 
-Logout from Shopify.
+Logs you out of the Shopify account or Partner account and store.
 
 ```
 USAGE
   $ shopify auth logout
 
 DESCRIPTION
-  Logout from Shopify.
+  Logs you out of the Shopify account or Partner account and store.
 ```
 
 _See code: [dist/cli/commands/auth/logout.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/auth/logout.js)_
@@ -587,38 +672,59 @@ _See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blo
 
 ## `shopify shopify config autocorrect off`
 
-Disable autocorrect.
+Disable autocorrect. Off by default.
 
 ```
 USAGE
   $ shopify shopify config autocorrect off
 
 DESCRIPTION
-  Disable autocorrect.
+  Disable autocorrect. Off by default.
+
+  Disable autocorrect. Off by default.
+
+  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
+  available.
+
+  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
 ## `shopify shopify config autocorrect on`
 
-Enable autocorrect.  By default is on.
+Enable autocorrect. Off by default.
 
 ```
 USAGE
   $ shopify shopify config autocorrect on
 
 DESCRIPTION
-  Enable autocorrect.  By default is on.
+  Enable autocorrect. Off by default.
+
+  Enable autocorrect. Off by default.
+
+  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
+  available.
+
+  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
 ## `shopify shopify config autocorrect status`
 
-Check autocorrect current status. On by default.
+Check whether autocorrect is enabled or disabled. On by default.
 
 ```
 USAGE
   $ shopify shopify config autocorrect status
 
 DESCRIPTION
-  Check autocorrect current status. On by default.
+  Check whether autocorrect is enabled or disabled. On by default.
+
+  Check whether autocorrect is enabled or disabled. On by default.
+
+  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
+  available.
+
+  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
 ## `shopify help [COMMANDS]`
@@ -906,13 +1012,29 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-plugins](https://github.com/oclif/plugin-plugins/blob/v3.1.8/src/commands/plugins/update.ts)_
 
-## `shopify search [QUERY]`
+## `shopify # open the search modal on Shopify.dev
+shopify search
+
+# search for a term on Shopify.dev
+shopify search <query>
+
+# search for a phrase on Shopify.dev
+shopify search "<a search query separated by spaces>"
+`
 
 Starts a search on shopify.dev.
 
 ```
 USAGE
-  $ shopify search [QUERY]
+  $ shopify # open the search modal on Shopify.dev
+  shopify search
+
+  # search for a term on Shopify.dev
+  shopify search
+    <query>
+
+    # search for a phrase on Shopify.dev
+    shopify search "<a search query separated by spaces>"
 
 DESCRIPTION
   Starts a search on shopify.dev.
@@ -958,18 +1080,28 @@ FLAGS
 
 DESCRIPTION
   Validate the theme.
+
+  Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
+  and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check
+  runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/check.js)_
 
-## `shopify theme console`
+## `shopify 
+  shopify theme console
+
+  shopify theme console --url /products/classic-leather-jacket
+  `
 
 Shopify Liquid REPL (read-eval-print loop) tool
 
 ```
 USAGE
-  $ shopify theme console [--no-color] [--verbose] [-s <value>] [--password <value>] [-e <value>] [--url <value>]
-    [--port <value>]
+  $ shopify
+  shopify theme console
+
+  shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
@@ -983,6 +1115,11 @@ FLAGS
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool
+
+  Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for
+  evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.
+
+  You can also provide context to the console using a URL, as some Liquid objects are context-specific
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/console.js)_
@@ -1010,6 +1147,14 @@ FLAGS
 
 DESCRIPTION
   Delete remote themes from the connected store. This command can't be undone.
+
+  Deletes a theme from your store.
+
+  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you
+  want to delete from the list of themes in your store.
+
+  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this
+  confirmation using the `--force` flag.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/delete.js)_
@@ -1085,13 +1230,42 @@ FLAGS
 DESCRIPTION
   Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to
   your terminal. While running, changes will push to the store in real time.
+
+
+  Uploads the current theme as the specified theme, or a [development
+  theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
+
+  This command returns the following information:
+
+  - A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and
+  sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the
+  store's data.
+
+  You can specify a different network interface and port using `--host` and `--port`.
+
+  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+
+  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91
+  C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+
+  If you already have a development theme for your current environment, then this command replaces the development theme
+  with your local theme. You can override this using the `--theme-editor-sync` flag.
+
+  > Note: You can't preview checkout customizations using http://127.0.0.1:9292.
+
+  Development themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after
+  you log out, then you should [share](https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or
+  [push](https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.
+
+  You can run this command only in a directory that matches the [default Shopify theme folder
+  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/dev.js)_
 
 ## `shopify theme info`
 
-Print basic information about your theme environment.
+Displays information about your theme environment, including your current store.
 
 ```
 USAGE
@@ -1102,18 +1276,18 @@ FLAGS
   --verbose   Increase the verbosity of the logs.
 
 DESCRIPTION
-  Print basic information about your theme environment.
+  Displays information about your theme environment, including your current store.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/info.js)_
 
-## `shopify theme init [NAME]`
+## `shopify shopify theme init [name]`
 
 Clones a Git repository to use as a starting point for building a new theme.
 
 ```
 USAGE
-  $ shopify theme init [NAME] [--no-color] [--verbose] [--path <value>] [-u <value>] [-l]
+  $ shopify shopify theme init [name]
 
 ARGUMENTS
   NAME  Name of the new theme
@@ -1128,6 +1302,17 @@ FLAGS
 
 DESCRIPTION
   Clones a Git repository to use as a starting point for building a new theme.
+
+  Clones a Git repository to your local machine to use as the starting point for building a theme.
+
+  If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn),
+  Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted
+  to enter one.
+
+  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However,
+  the theme that you submit needs to be [substantively different from
+  Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn
+  about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/init.js)_
@@ -1154,7 +1339,7 @@ _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/th
 
 ## `shopify theme list`
 
-Lists your remote themes.
+Lists the themes in your store, along with their IDs and statuses.
 
 ```
 USAGE
@@ -1175,7 +1360,7 @@ FLAGS
   --verbose                  Increase the verbosity of the logs.
 
 DESCRIPTION
-  Lists your remote themes.
+  Lists the themes in your store, along with their IDs and statuses.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/list.js)_
@@ -1203,6 +1388,15 @@ FLAGS
 
 DESCRIPTION
   Opens the preview of your remote theme.
+
+  Returns links that let you preview the specified theme. The following links are returned:
+
+  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91
+  C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.
+
+  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your
+  store.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/open.js)_
@@ -1222,6 +1416,14 @@ FLAGS
 
 DESCRIPTION
   Package your theme into a .zip file, ready to upload to the Online Store.
+
+  Packages your local theme files into a ZIP file that can be uploaded to Shopify.
+
+  Only folders that match the [default Shopify theme folder
+  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.
+
+  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your
+  [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/package.js)_
@@ -1246,6 +1448,17 @@ FLAGS
 
 DESCRIPTION
   Set a remote theme as the live theme.
+
+  Publishes an unpublished theme from your theme library.
+
+  If no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes
+  in your store.
+
+  You can run this command only in a directory that matches the [default Shopify theme folder
+  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+
+  If you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that
+  you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/publish.js)_
@@ -1276,18 +1489,26 @@ FLAGS
 
 DESCRIPTION
   Download your remote theme files locally.
+
+  Retrieves theme files from Shopify.
+
+  If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/pull.js)_
 
-## `shopify theme push`
+## `shopify shopify theme push
+
+shopify theme push --unpublished --json
+  `
 
 Uploads your local theme files to the connected store, overwriting the remote version if specified.
 
 ```
 USAGE
-  $ shopify theme push [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e <value>]
-    [-t <value>] [-d] [-l] [-u] [-n] [-o <value>] [-x <value>] [-j] [-a] [-p]
+  $ shopify shopify theme push
+
+  shopify theme push --unpublished --json
 
 FLAGS
   -a, --allow-live           Allow push to a live theme.
@@ -1310,6 +1531,38 @@ FLAGS
 
 DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
+
+  Uploads your local theme files to Shopify, overwriting the remote version if specified.
+
+  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your
+  store.
+
+  You can run this command only in a directory that matches the [default Shopify theme folder
+  structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).
+
+  This command returns the following information:
+
+  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.
+  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91
+  C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
+
+  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a
+  machine-readable input for scripts or continuous integration.
+
+  Sample output:
+
+  ```json
+  {
+  "theme": {
+  "id": 108267175958,
+  "name": "MyTheme",
+  "role": "unpublished",
+  "shop": "mystore.myshopify.com",
+  "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+  "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+  }
+  }
+  ```
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/push.js)_
@@ -1334,15 +1587,18 @@ FLAGS
 DESCRIPTION
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name.
 
-  Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to
-  `shopify theme push -u -t=RANDOMIZED_NAME`.
+  Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
+
+  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a8
+  9-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others. Works like an alias
+  to `shopify theme push -u -t=RANDOMIZED_NAME`.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/share.js)_
 
 ## `shopify upgrade`
 
-Upgrade the Shopify CLI.
+Upgrade your CLI dependency.
 
 ```
 USAGE
@@ -1352,21 +1608,24 @@ FLAGS
   --path=<value>  [default: .] The path to your project directory.
 
 DESCRIPTION
-  Upgrade the Shopify CLI.
+  Upgrade your CLI dependency.
+
+  If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the
+  [upgrade](/docs/api/shopify-cli#upgrade) documentation.
 ```
 
 _See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/upgrade.js)_
 
 ## `shopify version`
 
-Shopify CLI version.
+Shopify CLI version currently installed.
 
 ```
 USAGE
   $ shopify version
 
 DESCRIPTION
-  Shopify CLI version.
+  Shopify CLI version currently installed.
 ```
 
 _See code: [dist/cli/commands/version.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/version.js)_
@@ -1431,7 +1690,8 @@ DESCRIPTION
   - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that
   differ based on the payload contents.
   - Webhooks triggered using this method aren't retried when they fail.
-  - Trigger requests are rate-limited using the Partner API rate limit.
+  - Trigger requests are rate-limited using the [Partner API rate
+  limit](https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
 ```
 

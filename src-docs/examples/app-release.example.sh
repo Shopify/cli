@@ -1,1 +1,1 @@
-no usage
+shopify app release --version <version>

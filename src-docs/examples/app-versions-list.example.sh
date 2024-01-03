@@ -1,1 +1,1 @@
-no usage
+shopify app versions list [flags]

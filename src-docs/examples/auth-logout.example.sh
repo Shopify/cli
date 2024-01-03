@@ -1,1 +1,1 @@
-no usage
+shopify auth logout 

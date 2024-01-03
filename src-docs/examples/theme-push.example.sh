@@ -1,1 +1,4 @@
-no usage
+shopify theme push
+
+shopify theme push --unpublished --json
+  

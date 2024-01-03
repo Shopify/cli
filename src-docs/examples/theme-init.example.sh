@@ -1,1 +1,1 @@
-no usage
+shopify theme init [name]

@@ -1,1 +1,1 @@
-no usage
+shopify app import-flow-legacy-extensions [flags]

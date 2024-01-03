@@ -1,1 +1,1 @@
-no usage
+shopify app env show [flags]

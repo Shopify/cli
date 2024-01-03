@@ -1,1 +1,1 @@
-no usage
+shopify theme package [flags]

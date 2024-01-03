@@ -7,7 +7,11 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class UpdateURL extends Command {
-  static description = 'Update your app and redirect URLs in the Partners Dashboard.'
+  static summary = 'Update your app and redirect URLs in the Partners Dashboard.'
+
+  static description = `Updates the app URL and allowed redirection URLs for your app. When you specify URLs using this command, the current URLs are overwritten.
+
+  Your current app URLs are provided as placeholder responses. To keep either your app URL or redirect URLs the same, submit the placeholder content. Alternatively, use the \`--app-url\` or \`--redirect-urls\` flag to update only one of these settings.`
 
   static flags = {
     ...globalFlags,

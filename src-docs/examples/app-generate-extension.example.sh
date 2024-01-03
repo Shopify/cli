@@ -1,1 +1,1 @@
-no usage
+shopify app generate extension [flags]

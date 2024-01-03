@@ -8,7 +8,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class List extends ThemeCommand {
-  static description = 'Lists your remote themes.'
+  static description = 'Lists the themes in your store, along with their IDs and statuses.'
 
   static flags = {
     ...globalFlags,

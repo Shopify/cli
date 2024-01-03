@@ -1,7 +1,7 @@
 [
   {
     "name": "app build",
-    "description": "Build the app.",
+    "description": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
     "overviewPreviewDescription": "Build the app.",
     "type": "command",
     "isVisualComponent": false,
@@ -10,7 +10,7 @@
         "tabs": [
           {
             "title": "app build",
-            "code": "no usage",
+            "code": "shopify app build [flags]",
             "language": "bash"
           }
         ],
@@ -19,7 +19,7 @@
     },
     "definitions": [
       {
-        "title": "app build",
+        "title": "Flags",
         "description": "The following flags are available for the `app build` command:",
         "type": "appbuild",
         "typeDefinitions": {
@@ -88,7 +88,7 @@
   },
   {
     "name": "app config link",
-    "description": "Fetch your app configuration from the Partner Dashboard.",
+    "description": "Pulls app configuration from the Partner Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  This command presents you with a prompt with the following steps:\n\n  - Which Partner organization is this work for?\n    - This prompt shows only if the account you are logged into has more than one organization.\n  - Create this project as a new app on Shopify?\n    - Choosing yes will create a new app in your Partner Dashboard with the default configuration\n    - Choosing no will prompt you to choose from a list of all the apps in your organization\n  - Configuration file name\n    - Enter the name for this configuration file. The `shopify.app.{config-name}.toml` file will be created. If it already exists, you will be prompted to confirm overwriting.\n\n  For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
     "overviewPreviewDescription": "Fetch your app configuration from the Partner Dashboard.",
     "type": "command",
     "isVisualComponent": false,
@@ -97,7 +97,7 @@
         "tabs": [
           {
             "title": "app config link",
-            "code": "no usage",
+            "code": "shopify app config link [flags]",
             "language": "bash"
           }
         ],
@@ -106,7 +106,7 @@
     },
     "definitions": [
       {
-        "title": "app config link",
+        "title": "Flags",
         "description": "The following flags are available for the `app config link` command:",
         "type": "appconfiglink",
         "typeDefinitions": {
@@ -167,8 +167,8 @@
   },
   {
     "name": "app config push",
-    "description": "Push your app configuration to the Partner Dashboard.",
-    "overviewPreviewDescription": "Push your app configuration to the Partner Dashboard.",
+    "description": "Pushes your default app configuration to Shopify. You can specify a different configuration file with the `--config` flag. This overwrites the settings for the app specified in the configuration file in your Partner Dashboard.",
+    "overviewPreviewDescription": "Pushes your default app configuration to Shopify.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -176,7 +176,7 @@
         "tabs": [
           {
             "title": "app config push",
-            "code": "no usage",
+            "code": "shopify app config push [flags]",
             "language": "bash"
           }
         ],
@@ -185,7 +185,7 @@
     },
     "definitions": [
       {
-        "title": "app config push",
+        "title": "Flags",
         "description": "The following flags are available for the `app config push` command:",
         "type": "appconfigpush",
         "typeDefinitions": {
@@ -246,7 +246,7 @@
   },
   {
     "name": "app config use",
-    "description": "Activate an app configuration.",
+    "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
     "overviewPreviewDescription": "Activate an app configuration.",
     "type": "command",
     "isVisualComponent": false,
@@ -255,7 +255,7 @@
         "tabs": [
           {
             "title": "app config use",
-            "code": "no usage",
+            "code": "shopify app config use [flags]",
             "language": "bash"
           }
         ],
@@ -264,7 +264,7 @@
     },
     "definitions": [
       {
-        "title": "app config use",
+        "title": "Flags",
         "description": "The following flags are available for the `app config use` command:",
         "type": "appconfiguse",
         "typeDefinitions": {
@@ -317,7 +317,7 @@
   },
   {
     "name": "app deploy",
-    "description": "Deploy your Shopify app.",
+    "description": "[Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and deploys app extensions.\n\n  When you run this command, Shopify CLI creates an app version that contains a snapshot of all of your app extensions, including the app extensions that you manage in the Partner Dashboard, and releases the app version to users.\n\n  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). When you're ready to deploy your app, you need to deploy these components to your own hosting solution. [Learn more about deploying your web app](https://shopify.dev/docs/apps/deployment/web).\n  ",
     "overviewPreviewDescription": "Deploy your Shopify app.",
     "type": "command",
     "isVisualComponent": false,
@@ -326,7 +326,7 @@
         "tabs": [
           {
             "title": "app deploy",
-            "code": "no usage",
+            "code": "shopify app deploy [flags]",
             "language": "bash"
           }
         ],
@@ -335,7 +335,7 @@
     },
     "definitions": [
       {
-        "title": "app deploy",
+        "title": "Flags",
         "description": "The following flags are available for the `app deploy` command:",
         "type": "appdeploy",
         "typeDefinitions": {
@@ -462,7 +462,7 @@
     },
     "definitions": [
       {
-        "title": "app dev",
+        "title": "Flags",
         "description": "The following flags are available for the `app dev` command:",
         "type": "appdev",
         "typeDefinitions": {
@@ -603,7 +603,7 @@
   },
   {
     "name": "app env pull",
-    "description": "Pull app and extensions environment variables.",
+    "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
     "overviewPreviewDescription": "Pull app and extensions environment variables.",
     "type": "command",
     "isVisualComponent": false,
@@ -612,7 +612,7 @@
         "tabs": [
           {
             "title": "app env pull",
-            "code": "no usage",
+            "code": "shopify app env pull [flags]",
             "language": "bash"
           }
         ],
@@ -621,7 +621,7 @@
     },
     "definitions": [
       {
-        "title": "app env pull",
+        "title": "Flags",
         "description": "The following flags are available for the `app env pull` command:",
         "type": "appenvpull",
         "typeDefinitions": {
@@ -682,7 +682,7 @@
   },
   {
     "name": "app env show",
-    "description": "Display app and extensions environment variables.",
+    "description": "Displays environment variables that can be used to deploy apps and app extensions.",
     "overviewPreviewDescription": "Display app and extensions environment variables.",
     "type": "command",
     "isVisualComponent": false,
@@ -691,7 +691,7 @@
         "tabs": [
           {
             "title": "app env show",
-            "code": "no usage",
+            "code": "shopify app env show [flags]",
             "language": "bash"
           }
         ],
@@ -700,7 +700,7 @@
     },
     "definitions": [
       {
-        "title": "app env show",
+        "title": "Flags",
         "description": "The following flags are available for the `app env show` command:",
         "type": "appenvshow",
         "typeDefinitions": {
@@ -753,7 +753,7 @@
   },
   {
     "name": "app function build",
-    "description": "Compile a function to wasm.",
+    "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
     "overviewPreviewDescription": "Compile a function to wasm.",
     "type": "command",
     "isVisualComponent": false,
@@ -762,7 +762,7 @@
         "tabs": [
           {
             "title": "app function build",
-            "code": "no usage",
+            "code": "shopify app function build [flags]",
             "language": "bash"
           }
         ],
@@ -771,7 +771,7 @@
     },
     "definitions": [
       {
-        "title": "app function build",
+        "title": "Flags",
         "description": "The following flags are available for the `app function build` command:",
         "type": "appfunctionbuild",
         "typeDefinitions": {
@@ -824,7 +824,7 @@
   },
   {
     "name": "app function run",
-    "description": "Run a function locally for testing.",
+    "description": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
     "overviewPreviewDescription": "Run a function locally for testing.",
     "type": "command",
     "isVisualComponent": false,
@@ -833,7 +833,7 @@
         "tabs": [
           {
             "title": "app function run",
-            "code": "no usage",
+            "code": "shopify app function run [flags]",
             "language": "bash"
           }
         ],
@@ -842,7 +842,7 @@
     },
     "definitions": [
       {
-        "title": "app function run",
+        "title": "Flags",
         "description": "The following flags are available for the `app function run` command:",
         "type": "appfunctionrun",
         "typeDefinitions": {
@@ -919,7 +919,7 @@
   },
   {
     "name": "app function schema",
-    "description": "Fetch the latest GraphQL schema for a function.",
+    "description": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
     "overviewPreviewDescription": "Fetch the latest GraphQL schema for a function.",
     "type": "command",
     "isVisualComponent": false,
@@ -928,7 +928,7 @@
         "tabs": [
           {
             "title": "app function schema",
-            "code": "no usage",
+            "code": "shopify app function schema [flags]",
             "language": "bash"
           }
         ],
@@ -937,7 +937,7 @@
     },
     "definitions": [
       {
-        "title": "app function schema",
+        "title": "Flags",
         "description": "The following flags are available for the `app function schema` command:",
         "type": "appfunctionschema",
         "typeDefinitions": {
@@ -1006,7 +1006,7 @@
   },
   {
     "name": "app function typegen",
-    "description": "Generate GraphQL types for a JavaScript function.",
+    "description": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
     "overviewPreviewDescription": "Generate GraphQL types for a JavaScript function.",
     "type": "command",
     "isVisualComponent": false,
@@ -1015,7 +1015,7 @@
         "tabs": [
           {
             "title": "app function typegen",
-            "code": "no usage",
+            "code": "shopify app function typegen [flags]",
             "language": "bash"
           }
         ],
@@ -1024,7 +1024,7 @@
     },
     "definitions": [
       {
-        "title": "app function typegen",
+        "title": "Flags",
         "description": "The following flags are available for the `app function typegen` command:",
         "type": "appfunctiontypegen",
         "typeDefinitions": {
@@ -1077,8 +1077,8 @@
   },
   {
     "name": "app generate extension",
-    "description": "Scaffold an Extension.",
-    "overviewPreviewDescription": "Scaffold an Extension.",
+    "description": "Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/tools/cli/commands#supported-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.\n  ",
+    "overviewPreviewDescription": "Generate a new app Extension.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1086,7 +1086,7 @@
         "tabs": [
           {
             "title": "app generate extension",
-            "code": "no usage",
+            "code": "shopify app generate extension [flags]",
             "language": "bash"
           }
         ],
@@ -1095,7 +1095,7 @@
     },
     "definitions": [
       {
-        "title": "app generate extension",
+        "title": "Flags",
         "description": "The following flags are available for the `app generate extension` command:",
         "type": "appgenerateextension",
         "typeDefinitions": {
@@ -1195,93 +1195,6 @@
     "related": []
   },
   {
-    "name": "app generate schema",
-    "description": "Fetch the latest GraphQL schema for a function.",
-    "overviewPreviewDescription": "Fetch the latest GraphQL schema for a function.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "app generate schema",
-            "code": "no usage",
-            "language": "bash"
-          }
-        ],
-        "title": "app generate schema"
-      }
-    },
-    "definitions": [
-      {
-        "title": "app generate schema",
-        "description": "The following flags are available for the `app generate schema` command:",
-        "type": "appgenerateschema",
-        "typeDefinitions": {
-          "appgenerateschema": {
-            "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-            "name": "appgenerateschema",
-            "description": "",
-            "members": [
-              {
-                "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the logs.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your function directory.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--client-id <value>",
-                "value": "string",
-                "description": "The Client ID to fetch the schema with.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/app-generate-schema.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--stdout",
-                "value": "\"\"",
-                "description": "Output the schema to stdout instead of writing to a file.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface appgenerateschema {\n  /**\n   * Disable color output.\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the logs.\n   */\n  '--verbose'?: ''\n\n  /**\n   * The path to your function directory.\n   */\n  '--path <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The Client ID to fetch the schema with.\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * Output the schema to stdout instead of writing to a file.\n   */\n  '--stdout'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "Commands",
-    "subCategory": "app",
-    "related": []
-  },
-  {
     "name": "app import-flow-legacy-extensions",
     "description": "Import dashboard-managed flow extensions into your app.",
     "overviewPreviewDescription": "Import dashboard-managed flow extensions into your app.",
@@ -1292,7 +1205,7 @@
         "tabs": [
           {
             "title": "app import-flow-legacy-extensions",
-            "code": "no usage",
+            "code": "shopify app import-flow-legacy-extensions [flags]",
             "language": "bash"
           }
         ],
@@ -1301,7 +1214,7 @@
     },
     "definitions": [
       {
-        "title": "app import-flow-legacy-extensions",
+        "title": "Flags",
         "description": "The following flags are available for the `app import-flow-legacy-extensions` command:",
         "type": "appimportflowlegacyextensions",
         "typeDefinitions": {
@@ -1362,7 +1275,7 @@
   },
   {
     "name": "app info",
-    "description": "Print basic information about your app and extensions.",
+    "description": "The information returned includes the following:\n\n  - The app and development store or Plus sandbox store that's used when you run the [dev](https://shopify.dev/docs/apps/tools/cli/commands#dev) command. You can reset these configurations using [dev --reset](https://shopify.dev/docs/apps/tools/cli/commands#dev).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
     "overviewPreviewDescription": "Print basic information about your app and extensions.",
     "type": "command",
     "isVisualComponent": false,
@@ -1371,7 +1284,7 @@
         "tabs": [
           {
             "title": "app info",
-            "code": "no usage",
+            "code": "shopify app info [flags]",
             "language": "bash"
           }
         ],
@@ -1380,7 +1293,7 @@
     },
     "definitions": [
       {
-        "title": "app info",
+        "title": "Flags",
         "description": "The following flags are available for the `app info` command:",
         "type": "appinfo",
         "typeDefinitions": {
@@ -1449,7 +1362,7 @@
   },
   {
     "name": "app release",
-    "description": "Release an app version.",
+    "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
     "overviewPreviewDescription": "Release an app version.",
     "type": "command",
     "isVisualComponent": false,
@@ -1458,7 +1371,7 @@
         "tabs": [
           {
             "title": "app release",
-            "code": "no usage",
+            "code": "shopify app release --version &lt;version&gt;",
             "language": "bash"
           }
         ],
@@ -1467,7 +1380,7 @@
     },
     "definitions": [
       {
-        "title": "app release",
+        "title": "Flags",
         "description": "The following flags are available for the `app release` command:",
         "type": "apprelease",
         "typeDefinitions": {
@@ -1551,7 +1464,7 @@
   },
   {
     "name": "app update-url",
-    "description": "Update your app and redirect URLs in the Partners Dashboard.",
+    "description": "Updates the app URL and allowed redirection URLs for your app. When you specify URLs using this command, the current URLs are overwritten.\n\n  Your current app URLs are provided as placeholder responses. To keep either your app URL or redirect URLs the same, submit the placeholder content. Alternatively, use the `--app-url` or `--redirect-urls` flag to update only one of these settings.",
     "overviewPreviewDescription": "Update your app and redirect URLs in the Partners Dashboard.",
     "type": "command",
     "isVisualComponent": false,
@@ -1560,7 +1473,7 @@
         "tabs": [
           {
             "title": "app update-url",
-            "code": "no usage",
+            "code": "shopify app update-url [flags]",
             "language": "bash"
           }
         ],
@@ -1569,7 +1482,7 @@
     },
     "definitions": [
       {
-        "title": "app update-url",
+        "title": "Flags",
         "description": "The following flags are available for the `app update-url` command:",
         "type": "appupdateurl",
         "typeDefinitions": {
@@ -1646,7 +1559,7 @@
   },
   {
     "name": "app versions list",
-    "description": "List deployed versions of your app.",
+    "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
     "overviewPreviewDescription": "List deployed versions of your app.",
     "type": "command",
     "isVisualComponent": false,
@@ -1655,7 +1568,7 @@
         "tabs": [
           {
             "title": "app versions list",
-            "code": "no usage",
+            "code": "shopify app versions list [flags]",
             "language": "bash"
           }
         ],
@@ -1664,7 +1577,7 @@
     },
     "definitions": [
       {
-        "title": "app versions list",
+        "title": "Flags",
         "description": "The following flags are available for the `app versions list` command:",
         "type": "appversionslist",
         "typeDefinitions": {
@@ -1733,8 +1646,8 @@
   },
   {
     "name": "auth logout",
-    "description": "Logout from Shopify.",
-    "overviewPreviewDescription": "Logout from Shopify.",
+    "description": "Logs you out of the Shopify account or Partner account and store.",
+    "overviewPreviewDescription": "Logs you out of the Shopify account or Partner account and store.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1742,172 +1655,22 @@
         "tabs": [
           {
             "title": "auth logout",
-            "code": "no usage",
+            "code": "shopify auth logout ",
             "language": "bash"
           }
         ],
         "title": "auth logout"
       }
     },
-    "definitions": [
-      {
-        "title": "auth logout",
-        "description": "The following flags are available for the `auth logout` command:",
-        "type": "authlogout",
-        "typeDefinitions": {
-          "authlogout": {
-            "filePath": "src-docs/interfaces/auth-logout.interface.ts",
-            "name": "authlogout",
-            "description": "",
-            "members": [],
-            "value": "export interface authlogout {\n\n}"
-          }
-        }
-      }
-    ],
+    "definitions": [],
     "category": "Commands",
     "subCategory": "auth",
     "related": []
   },
   {
-    "name": "commands",
-    "description": "list all the commands",
-    "overviewPreviewDescription": "list all the commands",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "commands",
-            "code": "no usage",
-            "language": "bash"
-          }
-        ],
-        "title": "commands"
-      }
-    },
-    "definitions": [
-      {
-        "title": "commands",
-        "description": "The following flags are available for the `commands` command:",
-        "type": "commands",
-        "typeDefinitions": {
-          "commands": {
-            "filePath": "src-docs/interfaces/commands.interface.ts",
-            "name": "commands",
-            "description": "",
-            "members": [
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--json",
-                "value": "\"\"",
-                "description": "Format output as json.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-h, --help",
-                "value": "\"\"",
-                "description": "Show CLI help.",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--hidden",
-                "value": "\"\"",
-                "description": "show hidden commands",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--tree",
-                "value": "\"\"",
-                "description": "show tree of commands",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--columns <value>",
-                "value": "string",
-                "description": "only show provided columns (comma-separated)",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--sort <value>",
-                "value": "string",
-                "description": "property to sort by (prepend '-' for descending)",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--filter <value>",
-                "value": "string",
-                "description": "filter property by partial string matching, ex: name=foo",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--csv",
-                "value": "\"\"",
-                "description": "output is csv format [alias: --output=csv]",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--output <value>",
-                "value": "string",
-                "description": "output in a more machine friendly format",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-x, --extended",
-                "value": "\"\"",
-                "description": "show extra columns",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-truncate",
-                "value": "\"\"",
-                "description": "do not truncate output to fit screen",
-                "isOptional": true
-              },
-              {
-                "filePath": "src-docs/interfaces/commands.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-header",
-                "value": "\"\"",
-                "description": "hide table header from output",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface commands {\n  /**\n   * Format output as json.\n   */\n  '--json'?: ''\n\n  /**\n   * Show CLI help.\n   */\n  '-h, --help'?: ''\n\n  /**\n   * show hidden commands\n   */\n  '--hidden'?: ''\n\n  /**\n   * show tree of commands\n   */\n  '--tree'?: ''\n\n  /**\n   * only show provided columns (comma-separated)\n   */\n  '--columns <value>'?: string\n\n  /**\n   * property to sort by (prepend '-' for descending)\n   */\n  '--sort <value>'?: string\n\n  /**\n   * filter property by partial string matching, ex: name=foo\n   */\n  '--filter <value>'?: string\n\n  /**\n   * output is csv format [alias: --output=csv]\n   */\n  '--csv'?: ''\n\n  /**\n   * output in a more machine friendly format\n   */\n  '--output <value>'?: string\n\n  /**\n   * show extra columns\n   */\n  '-x, --extended'?: ''\n\n  /**\n   * do not truncate output to fit screen\n   */\n  '--no-truncate'?: ''\n\n  /**\n   * hide table header from output\n   */\n  '--no-header'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "Commands",
-    "subCategory": "common",
-    "related": []
-  },
-  {
     "name": "config autocorrect off",
-    "description": "Disable autocorrect.",
-    "overviewPreviewDescription": "Disable autocorrect.",
+    "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+    "overviewPreviewDescription": "Disable autocorrect. Off by default.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1922,30 +1685,15 @@
         "title": "config autocorrect off"
       }
     },
-    "definitions": [
-      {
-        "title": "config autocorrect off",
-        "description": "The following flags are available for the `config autocorrect off` command:",
-        "type": "configautocorrectoff",
-        "typeDefinitions": {
-          "configautocorrectoff": {
-            "filePath": "src-docs/interfaces/config-autocorrect-off.interface.ts",
-            "name": "configautocorrectoff",
-            "description": "",
-            "members": [],
-            "value": "export interface configautocorrectoff {\n\n}"
-          }
-        }
-      }
-    ],
+    "definitions": [],
     "category": "Commands",
     "subCategory": "config",
     "related": []
   },
   {
     "name": "config autocorrect on",
-    "description": "Enable autocorrect.  By default is on.",
-    "overviewPreviewDescription": "Enable autocorrect.  By default is on.",
+    "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+    "overviewPreviewDescription": "Enable autocorrect. Off by default.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1960,30 +1708,15 @@
         "title": "config autocorrect on"
       }
     },
-    "definitions": [
-      {
-        "title": "config autocorrect on",
-        "description": "The following flags are available for the `config autocorrect on` command:",
-        "type": "configautocorrecton",
-        "typeDefinitions": {
-          "configautocorrecton": {
-            "filePath": "src-docs/interfaces/config-autocorrect-on.interface.ts",
-            "name": "configautocorrecton",
-            "description": "",
-            "members": [],
-            "value": "export interface configautocorrecton {\n\n}"
-          }
-        }
-      }
-    ],
+    "definitions": [],
     "category": "Commands",
     "subCategory": "config",
     "related": []
   },
   {
     "name": "config autocorrect status",
-    "description": "Check autocorrect current status. On by default.",
-    "overviewPreviewDescription": "Check autocorrect current status. On by default.",
+    "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+    "overviewPreviewDescription": "Check whether autocorrect is enabled or disabled. On by default.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -1998,71 +1731,9 @@
         "title": "config autocorrect status"
       }
     },
-    "definitions": [
-      {
-        "title": "config autocorrect status",
-        "description": "The following flags are available for the `config autocorrect status` command:",
-        "type": "configautocorrectstatus",
-        "typeDefinitions": {
-          "configautocorrectstatus": {
-            "filePath": "src-docs/interfaces/config-autocorrect-status.interface.ts",
-            "name": "configautocorrectstatus",
-            "description": "",
-            "members": [],
-            "value": "export interface configautocorrectstatus {\n\n}"
-          }
-        }
-      }
-    ],
+    "definitions": [],
     "category": "Commands",
     "subCategory": "config",
-    "related": []
-  },
-  {
-    "name": "help",
-    "description": "Display help for <%= config.bin %>.",
-    "overviewPreviewDescription": "Display help for <%= config.bin %>.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "help",
-            "code": "no usage",
-            "language": "bash"
-          }
-        ],
-        "title": "help"
-      }
-    },
-    "definitions": [
-      {
-        "title": "help",
-        "description": "The following flags are available for the `help` command:",
-        "type": "help",
-        "typeDefinitions": {
-          "help": {
-            "filePath": "src-docs/interfaces/help.interface.ts",
-            "name": "help",
-            "description": "",
-            "members": [
-              {
-                "filePath": "src-docs/interfaces/help.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-n, --nested-commands",
-                "value": "\"\"",
-                "description": "Include all nested commands in the output.",
-                "isOptional": true
-              }
-            ],
-            "value": "export interface help {\n  /**\n   * Include all nested commands in the output.\n   */\n  '-n, --nested-commands'?: ''\n}"
-          }
-        }
-      }
-    ],
-    "category": "Commands",
-    "subCategory": "common",
     "related": []
   },
   {
@@ -2076,36 +1747,21 @@
         "tabs": [
           {
             "title": "search",
-            "code": "no usage",
+            "code": "# open the search modal on Shopify.dev\nshopify search\n\n# search for a term on Shopify.dev\nshopify search &lt;query&gt;\n\n# search for a phrase on Shopify.dev\nshopify search \"&lt;a search query separated by spaces&gt;\"\n",
             "language": "bash"
           }
         ],
         "title": "search"
       }
     },
-    "definitions": [
-      {
-        "title": "search",
-        "description": "The following flags are available for the `search` command:",
-        "type": "search",
-        "typeDefinitions": {
-          "search": {
-            "filePath": "src-docs/interfaces/search.interface.ts",
-            "name": "search",
-            "description": "",
-            "members": [],
-            "value": "export interface search {\n\n}"
-          }
-        }
-      }
-    ],
+    "definitions": [],
     "category": "Commands",
     "subCategory": "common",
     "related": []
   },
   {
     "name": "theme check",
-    "description": "Validate the theme.",
+    "description": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
     "overviewPreviewDescription": "Validate the theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -2114,7 +1770,7 @@
         "tabs": [
           {
             "title": "theme check",
-            "code": "no usage",
+            "code": "shopify theme check [flags]",
             "language": "bash"
           }
         ],
@@ -2123,7 +1779,7 @@
     },
     "definitions": [
       {
-        "title": "theme check",
+        "title": "Flags",
         "description": "The following flags are available for the `theme check` command:",
         "type": "themecheck",
         "typeDefinitions": {
@@ -2272,7 +1928,7 @@
   },
   {
     "name": "theme console",
-    "description": "Shopify Liquid REPL (read-eval-print loop) tool",
+    "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
     "overviewPreviewDescription": "Shopify Liquid REPL (read-eval-print loop) tool",
     "type": "command",
     "isVisualComponent": false,
@@ -2281,7 +1937,7 @@
         "tabs": [
           {
             "title": "theme console",
-            "code": "no usage",
+            "code": "\n  shopify theme console\n\n  shopify theme console --url /products/classic-leather-jacket\n  ",
             "language": "bash"
           }
         ],
@@ -2290,7 +1946,7 @@
     },
     "definitions": [
       {
-        "title": "theme console",
+        "title": "Flags",
         "description": "The following flags are available for the `theme console` command:",
         "type": "themeconsole",
         "typeDefinitions": {
@@ -2367,7 +2023,7 @@
   },
   {
     "name": "theme delete",
-    "description": "Delete remote themes from the connected store. This command can't be undone.",
+    "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
     "overviewPreviewDescription": "Delete remote themes from the connected store. This command can't be undone.",
     "type": "command",
     "isVisualComponent": false,
@@ -2376,7 +2032,7 @@
         "tabs": [
           {
             "title": "theme delete",
-            "code": "no usage",
+            "code": "shopify theme delete [flags]",
             "language": "bash"
           }
         ],
@@ -2385,7 +2041,7 @@
     },
     "definitions": [
       {
-        "title": "theme delete",
+        "title": "Flags",
         "description": "The following flags are available for the `theme delete` command:",
         "type": "themedelete",
         "typeDefinitions": {
@@ -2478,7 +2134,7 @@
   },
   {
     "name": "theme dev",
-    "description": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
+    "description": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/themes/tools/cli/commands#share) your theme or [push](https://shopify.dev/docs/themes/tools/cli/commands#push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
     "overviewPreviewDescription": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
     "type": "command",
     "isVisualComponent": false,
@@ -2487,7 +2143,7 @@
         "tabs": [
           {
             "title": "theme dev",
-            "code": "no usage",
+            "code": "shopify theme dev [flags]",
             "language": "bash"
           }
         ],
@@ -2496,7 +2152,7 @@
     },
     "definitions": [
       {
-        "title": "theme dev",
+        "title": "Flags",
         "description": "The following flags are available for the `theme dev` command:",
         "type": "themedev",
         "typeDefinitions": {
@@ -2653,8 +2309,8 @@
   },
   {
     "name": "theme info",
-    "description": "Print basic information about your theme environment.",
-    "overviewPreviewDescription": "Print basic information about your theme environment.",
+    "description": "Displays information about your theme environment, including your current store.",
+    "overviewPreviewDescription": "Displays information about your theme environment, including your current store.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2662,7 +2318,7 @@
         "tabs": [
           {
             "title": "theme info",
-            "code": "no usage",
+            "code": "shopify theme info [flags]",
             "language": "bash"
           }
         ],
@@ -2671,7 +2327,7 @@
     },
     "definitions": [
       {
-        "title": "theme info",
+        "title": "Flags",
         "description": "The following flags are available for the `theme info` command:",
         "type": "themeinfo",
         "typeDefinitions": {
@@ -2708,7 +2364,7 @@
   },
   {
     "name": "theme init",
-    "description": "Clones a Git repository to use as a starting point for building a new theme.",
+    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of [Dawn](https://github.com/Shopify/dawn), Shopify's example theme, with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use Dawn as a starting point. However, the theme that you submit needs to be [substantively different from Dawn](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users. Learn about the [ways that you can use Dawn](https://shopify.dev/docs/themes/tools/dawn#ways-to-use-dawn).\n  ",
     "overviewPreviewDescription": "Clones a Git repository to use as a starting point for building a new theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -2717,7 +2373,7 @@
         "tabs": [
           {
             "title": "theme init",
-            "code": "no usage",
+            "code": "shopify theme init [name]",
             "language": "bash"
           }
         ],
@@ -2726,7 +2382,7 @@
     },
     "definitions": [
       {
-        "title": "theme init",
+        "title": "Flags",
         "description": "The following flags are available for the `theme init` command:",
         "type": "themeinit",
         "typeDefinitions": {
@@ -2796,7 +2452,7 @@
         "tabs": [
           {
             "title": "theme language-server",
-            "code": "no usage",
+            "code": "shopify theme language-server [flags]",
             "language": "bash"
           }
         ],
@@ -2805,7 +2461,7 @@
     },
     "definitions": [
       {
-        "title": "theme language-server",
+        "title": "Flags",
         "description": "The following flags are available for the `theme language-server` command:",
         "type": "themelanguageserver",
         "typeDefinitions": {
@@ -2850,8 +2506,8 @@
   },
   {
     "name": "theme list",
-    "description": "Lists your remote themes.",
-    "overviewPreviewDescription": "Lists your remote themes.",
+    "description": "Lists the themes in your store, along with their IDs and statuses.",
+    "overviewPreviewDescription": "Lists the themes in your store, along with their IDs and statuses.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -2859,7 +2515,7 @@
         "tabs": [
           {
             "title": "theme list",
-            "code": "no usage",
+            "code": "shopify theme list [flags]",
             "language": "bash"
           }
         ],
@@ -2868,7 +2524,7 @@
     },
     "definitions": [
       {
-        "title": "theme list",
+        "title": "Flags",
         "description": "The following flags are available for the `theme list` command:",
         "type": "themelist",
         "typeDefinitions": {
@@ -2961,7 +2617,7 @@
   },
   {
     "name": "theme open",
-    "description": "Opens the preview of your remote theme.",
+    "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
     "overviewPreviewDescription": "Opens the preview of your remote theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -2970,7 +2626,7 @@
         "tabs": [
           {
             "title": "theme open",
-            "code": "no usage",
+            "code": "shopify theme open [flags]",
             "language": "bash"
           }
         ],
@@ -2979,7 +2635,7 @@
     },
     "definitions": [
       {
-        "title": "theme open",
+        "title": "Flags",
         "description": "The following flags are available for the `theme open` command:",
         "type": "themeopen",
         "typeDefinitions": {
@@ -3072,7 +2728,7 @@
   },
   {
     "name": "theme package",
-    "description": "Package your theme into a .zip file, ready to upload to the Online Store.",
+    "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) are included in the package.\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/themes/architecture/config/settings-schema-json) file.",
     "overviewPreviewDescription": "Package your theme into a .zip file, ready to upload to the Online Store.",
     "type": "command",
     "isVisualComponent": false,
@@ -3081,7 +2737,7 @@
         "tabs": [
           {
             "title": "theme package",
-            "code": "no usage",
+            "code": "shopify theme package [flags]",
             "language": "bash"
           }
         ],
@@ -3090,7 +2746,7 @@
     },
     "definitions": [
       {
-        "title": "theme package",
+        "title": "Flags",
         "description": "The following flags are available for the `theme package` command:",
         "type": "themepackage",
         "typeDefinitions": {
@@ -3135,7 +2791,7 @@
   },
   {
     "name": "theme publish",
-    "description": "Set a remote theme as the live theme.",
+    "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
     "overviewPreviewDescription": "Set a remote theme as the live theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -3144,7 +2800,7 @@
         "tabs": [
           {
             "title": "theme publish",
-            "code": "no usage",
+            "code": "shopify theme publish [flags]",
             "language": "bash"
           }
         ],
@@ -3153,7 +2809,7 @@
     },
     "definitions": [
       {
-        "title": "theme publish",
+        "title": "Flags",
         "description": "The following flags are available for the `theme publish` command:",
         "type": "themepublish",
         "typeDefinitions": {
@@ -3230,7 +2886,7 @@
   },
   {
     "name": "theme pull",
-    "description": "Download your remote theme files locally.",
+    "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
     "overviewPreviewDescription": "Download your remote theme files locally.",
     "type": "command",
     "isVisualComponent": false,
@@ -3239,7 +2895,7 @@
         "tabs": [
           {
             "title": "theme pull",
-            "code": "no usage",
+            "code": "shopify theme pull [flags]",
             "language": "bash"
           }
         ],
@@ -3248,7 +2904,7 @@
     },
     "definitions": [
       {
-        "title": "theme pull",
+        "title": "Flags",
         "description": "The following flags are available for the `theme pull` command:",
         "type": "themepull",
         "typeDefinitions": {
@@ -3365,7 +3021,7 @@
   },
   {
     "name": "theme push",
-    "description": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
+    "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
     "overviewPreviewDescription": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
     "type": "command",
     "isVisualComponent": false,
@@ -3374,7 +3030,7 @@
         "tabs": [
           {
             "title": "theme push",
-            "code": "no usage",
+            "code": "shopify theme push\n\nshopify theme push --unpublished --json\n  ",
             "language": "bash"
           }
         ],
@@ -3383,7 +3039,7 @@
     },
     "definitions": [
       {
-        "title": "theme push",
+        "title": "Flags",
         "description": "The following flags are available for the `theme push` command:",
         "type": "themepush",
         "typeDefinitions": {
@@ -3532,7 +3188,7 @@
   },
   {
     "name": "theme share",
-    "description": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
+    "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
     "overviewPreviewDescription": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name.",
     "type": "command",
     "isVisualComponent": false,
@@ -3541,7 +3197,7 @@
         "tabs": [
           {
             "title": "theme share",
-            "code": "no usage",
+            "code": "shopify theme share [flags]",
             "language": "bash"
           }
         ],
@@ -3550,7 +3206,7 @@
     },
     "definitions": [
       {
-        "title": "theme share",
+        "title": "Flags",
         "description": "The following flags are available for the `theme share` command:",
         "type": "themeshare",
         "typeDefinitions": {
@@ -3619,8 +3275,8 @@
   },
   {
     "name": "upgrade",
-    "description": "Upgrade the Shopify CLI.",
-    "overviewPreviewDescription": "Upgrade the Shopify CLI.",
+    "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](/docs/api/shopify-cli#upgrade) documentation.",
+    "overviewPreviewDescription": "Upgrade your CLI dependency.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3628,7 +3284,7 @@
         "tabs": [
           {
             "title": "upgrade",
-            "code": "no usage",
+            "code": "shopify upgrade [flags]",
             "language": "bash"
           }
         ],
@@ -3637,7 +3293,7 @@
     },
     "definitions": [
       {
-        "title": "upgrade",
+        "title": "Flags",
         "description": "The following flags are available for the `upgrade` command:",
         "type": "upgrade",
         "typeDefinitions": {
@@ -3666,8 +3322,8 @@
   },
   {
     "name": "version",
-    "description": "Shopify CLI version.",
-    "overviewPreviewDescription": "Shopify CLI version.",
+    "description": "Shopify CLI version currently installed.",
+    "overviewPreviewDescription": "Shopify CLI version currently installed.",
     "type": "command",
     "isVisualComponent": false,
     "defaultExample": {
@@ -3675,36 +3331,21 @@
         "tabs": [
           {
             "title": "version",
-            "code": "no usage",
+            "code": "shopify version ",
             "language": "bash"
           }
         ],
         "title": "version"
       }
     },
-    "definitions": [
-      {
-        "title": "version",
-        "description": "The following flags are available for the `version` command:",
-        "type": "version",
-        "typeDefinitions": {
-          "version": {
-            "filePath": "src-docs/interfaces/version.interface.ts",
-            "name": "version",
-            "description": "",
-            "members": [],
-            "value": "export interface version {\n\n}"
-          }
-        }
-      }
-    ],
+    "definitions": [],
     "category": "Commands",
     "subCategory": "common",
     "related": []
   },
   {
     "name": "webhook trigger",
-    "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the Partner API rate limit.\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
+    "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
     "overviewPreviewDescription": "Trigger delivery of a sample webhook topic payload to a designated address.",
     "type": "command",
     "isVisualComponent": false,
@@ -3722,7 +3363,7 @@
     },
     "definitions": [
       {
-        "title": "webhook trigger",
+        "title": "Flags",
         "description": "The following flags are available for the `webhook trigger` command:",
         "type": "webhooktrigger",
         "typeDefinitions": {

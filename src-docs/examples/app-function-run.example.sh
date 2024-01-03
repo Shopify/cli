@@ -1,1 +1,1 @@
-no usage
+shopify app function run [flags]

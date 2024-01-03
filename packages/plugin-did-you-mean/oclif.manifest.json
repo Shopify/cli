@@ -3,7 +3,8 @@
   "commands": {
     "config:autocorrect:off": {
       "id": "config:autocorrect:off",
-      "description": "Disable autocorrect.",
+      "summary": "Disable autocorrect. Off by default.",
+      "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "strict": true,
       "usage": "shopify config autocorrect off",
       "pluginName": "@shopify/plugin-did-you-mean",
@@ -15,7 +16,8 @@
     },
     "config:autocorrect:on": {
       "id": "config:autocorrect:on",
-      "description": "Enable autocorrect.  By default is on.",
+      "summary": "Enable autocorrect. Off by default.",
+      "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "strict": true,
       "usage": "shopify config autocorrect on",
       "pluginName": "@shopify/plugin-did-you-mean",
@@ -27,7 +29,8 @@
     },
     "config:autocorrect:status": {
       "id": "config:autocorrect:status",
-      "description": "Check autocorrect current status. On by default.",
+      "summary": "Check whether autocorrect is enabled or disabled. On by default.",
+      "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "strict": true,
       "usage": "shopify config autocorrect status",
       "pluginName": "@shopify/plugin-did-you-mean",

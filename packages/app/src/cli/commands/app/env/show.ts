@@ -8,7 +8,9 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class EnvShow extends Command {
-  static description = 'Display app and extensions environment variables.'
+  static summary = 'Display app and extensions environment variables.'
+
+  static description = `Displays environment variables that can be used to deploy apps and app extensions.`
 
   static flags = {
     ...globalFlags,

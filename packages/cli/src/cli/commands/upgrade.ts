@@ -5,7 +5,10 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 export default class Upgrade extends Command {
-  static description = 'Upgrade the Shopify CLI.'
+  static summary = 'Upgrade your CLI dependency.'
+
+  static description =
+    'If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](/docs/api/shopify-cli#upgrade) documentation.'
 
   static flags = {
     path: Flags.string({

@@ -9,7 +9,10 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Args, Flags} from '@oclif/core'
 
 export default class VersionsList extends Command {
-  static description = 'List deployed versions of your app.'
+  static summary = 'List deployed versions of your app.'
+
+  static description = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
+
   static examples = ['<%= config.bin %> <%= command.id %>']
 
   static flags = {

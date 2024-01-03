@@ -10,7 +10,11 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 
 export default class Pull extends ThemeCommand {
-  static description = 'Download your remote theme files locally.'
+  static summary = 'Download your remote theme files locally.'
+
+  static description = `Retrieves theme files from Shopify.
+
+If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.`
 
   static flags = {
     ...globalFlags,

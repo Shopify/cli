@@ -1,1 +1,1 @@
-no usage
+shopify app info [flags]
