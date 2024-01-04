@@ -40,6 +40,8 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const partnersSession = await fetchPartnersSession()
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, partnersSession, directory)
 
+  await logMetadataForLoadedContext(remoteApp)
+
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
 
@@ -88,8 +90,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       ],
     })
   }
-
-  await logMetadataForLoadedContext(remoteApp)
 
   return configuration
 }
