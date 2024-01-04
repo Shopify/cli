@@ -212,6 +212,67 @@ dev_store_url = "my-store.myshopify.com"
       })
     })
   })
+  test('build section is removed if the client_id in the local configuration is different from the remote one', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      const localApp = {
+        configuration: {
+          path: 'shopify.app.staging.toml',
+          name: 'my app',
+          client_id: '12345',
+          scopes: 'write_products',
+          webhooks: {api_version: '2023-04'},
+          application_url: 'https://myapp.com',
+          embedded: true,
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: 'my-store.myshopify.com',
+          },
+        } as CurrentAppConfiguration,
+      }
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
+        testOrganizationApp({
+          apiKey: 'different-api-key',
+          applicationUrl: 'https://myapp.com',
+          title: 'my app',
+          requestedAccessScopes: ['write_products'],
+        }),
+      )
+      vi.mocked(selectConfigName).mockResolvedValue('staging')
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "my app"
+client_id = "different-api-key"
+application_url = "https://myapp.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
 
   test('updates the shopify.app.toml when it already exists and is unlinked', async () => {
     await inTemporaryDirectory(async (tmp) => {
