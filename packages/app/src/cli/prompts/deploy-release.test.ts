@@ -4,8 +4,15 @@ import {
   ConfigExtensionIdentifiersBreakdown,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
-import {SpyInstance, describe, expect, test, vi} from 'vitest'
+import {SpyInstance, beforeEach, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+
+vi.mock('@shopify/cli-kit/node/context/local')
+
+beforeEach(() => {
+  vi.mocked(useVersionedAppConfig).mockReturnValue(true)
+})
 
 describe('deployOrReleaseConfirmationPrompt', () => {
   describe('when release', () => {
@@ -226,6 +233,52 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 [{subdued: 'Extension:'}, 'remote extension'],
                 [{subdued: 'Configuration:'}, 'deleted field name1'],
               ],
+              bullet: '-',
+            },
+          ],
+          dangerPrompt: false,
+        }),
+      )
+      expect(result).toBe(true)
+    })
+
+    test('and no force with modified and deleted configuration but versioned app not enabled then the config information should not be displayed', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+
+      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
+      const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      const appTitle = undefined
+      vi.mocked(useVersionedAppConfig).mockReturnValue(false)
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        release: true,
+        force: false,
+      })
+
+      // Then
+      verifyMetada({
+        metadataSpyOn,
+        extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
+        confirmed: result,
+      })
+      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
+        renderConfirmationPromptContent({
+          appTitle,
+          infoTable: [
+            {
+              header: 'Extensions:',
+              items: [
+                ['to create extension', {subdued: '(new)'}],
+                ['to update extension', {subdued: ''}],
+                ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+              ],
+            },
+            {
+              header: 'Removes:',
+              items: [[{subdued: 'Extension:'}, 'remote extension']],
               bullet: '-',
             },
           ],

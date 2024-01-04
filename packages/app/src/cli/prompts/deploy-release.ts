@@ -3,6 +3,7 @@ import {
   ConfigExtensionIdentifiersBreakdown,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {InfoTableSection, renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOrReleaseConfirmationPromptOptions {
@@ -60,7 +61,7 @@ async function deployConfirmationPrompt({
   }
 
   let finalDeletedInfoTable = deletedInfoTable ?? {header: '', items: [], bullet: '-'}
-  if (configDeletedInfoTable) {
+  if (configDeletedInfoTable && useVersionedAppConfig()) {
     finalDeletedInfoTable = {
       ...finalDeletedInfoTable,
       header: configDeletedInfoTable.header,
@@ -69,7 +70,10 @@ async function deployConfirmationPrompt({
   }
 
   const infoTable = []
-  if (extensionsInfoTable || finalDeletedInfoTable.header !== '' || configInfoTable.items.length > 0) {
+  if (
+    useVersionedAppConfig() &&
+    (extensionsInfoTable || finalDeletedInfoTable.header !== '' || configInfoTable.items.length > 0)
+  ) {
     infoTable.push(
       configInfoTable.items.length === 0 ? {...configInfoTable, items: [{subdued: 'No changes'}]} : configInfoTable,
     )
