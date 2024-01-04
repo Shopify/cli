@@ -117,29 +117,39 @@ function resolveRemoteConfigExtensionIdentifiersBreakdown(
     false,
   )
 
-  // List of field included in the config except the ones that are not pushed to the server included in the AppSchema
-  const schemaFieldNames = filterNonVersionedAppFields(app)
-  const remoteModifiedFieldNames = diffConfigContent
+  // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
+  // (versioned fields)
+  const versionedLocalFieldNames = filterNonVersionedAppFields(app)
+  // List of remote fields that have different values to the local ones or are not present in the local config
+  const remoteDiffModifications = diffConfigContent
     ? getFieldsFromDiffConfigContent(diffConfigContent.baselineContent)
     : []
-  const localModifiedFieldNames = diffConfigContent
+  // List of local fields that have different values to the remote ones or  are not present in the remote config
+  const localDiffModifications = diffConfigContent
     ? getFieldsFromDiffConfigContent(diffConfigContent.updatedContent)
     : []
-  const existingFieldNames = schemaFieldNames.filter(
-    (field) => !remoteModifiedFieldNames.includes(field) && !localModifiedFieldNames.includes(field),
+  // List of versioned field that exists locally and remotely and have the same value
+  const notModifiedVersionedLocalFieldNames = versionedLocalFieldNames.filter(
+    (field) => !remoteDiffModifications.includes(field) && !localDiffModifications.includes(field),
   )
-  const existingUpdatedFieldNames = schemaFieldNames.filter(
-    (field) => remoteModifiedFieldNames.includes(field) && localModifiedFieldNames.includes(field),
+  // List of versioned field that exists locally and remotely and have different values
+  const modifiedVersionedLocalFieldNames = versionedLocalFieldNames.filter(
+    (field) => remoteDiffModifications.includes(field) && localDiffModifications.includes(field),
   )
-  const newFieldNames = localModifiedFieldNames.filter((field) => !remoteModifiedFieldNames.includes(field))
-
-  const deletedFieldNames = remoteModifiedFieldNames.filter((field) => !localModifiedFieldNames.includes(field))
+  // List of versioned field that exists locally but not remotely
+  const newVersionedLocalFieldNames = localDiffModifications.filter(
+    (field) => !remoteDiffModifications.includes(field) && versionedLocalFieldNames.includes(field),
+  )
+  // List of versioned field that exists remotely but not locally
+  const deletedVersionedLocalFieldNames = remoteDiffModifications.filter(
+    (field) => !localDiffModifications.includes(field),
+  )
 
   return {
-    existingFieldNames,
-    existingUpdatedFieldNames,
-    newFieldNames,
-    deletedFieldNames,
+    existingFieldNames: notModifiedVersionedLocalFieldNames,
+    existingUpdatedFieldNames: modifiedVersionedLocalFieldNames,
+    newFieldNames: newVersionedLocalFieldNames,
+    deletedFieldNames: deletedVersionedLocalFieldNames,
   }
 }
 
