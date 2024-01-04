@@ -158,6 +158,8 @@ export type MonorailEventSensitive = Schemas[typeof MONORAIL_COMMAND_TOPIC]['sen
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
 
+const publishedCommandNames = new Set<string>()
+
 /**
  * Publishes an event to Monorail.
  *
@@ -171,6 +173,15 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
   publicData: TPayload['public'],
   sensitiveData: TPayload['sensitive'],
 ): Promise<MonorailResult> {
+  // If a command has already been logged, never re-log it. This is to prevent duplication caused by unexpected errors.
+  const commandName = publicData.command
+  if (commandName && typeof commandName === 'string') {
+    if (publishedCommandNames.has(commandName)) {
+      return {type: 'ok'}
+    }
+    publishedCommandNames.add(commandName)
+  }
+
   try {
     const currentTime = new Date().getTime()
     const payload = {...publicData, ...sensitiveData}
