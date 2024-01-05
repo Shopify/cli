@@ -54,6 +54,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     app.usesWorkspaces ?? false,
     app.dotenv,
     app.errors,
+    app.specifications,
   )
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies

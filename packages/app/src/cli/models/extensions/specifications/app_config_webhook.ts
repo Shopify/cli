@@ -17,11 +17,12 @@ const spec = createConfigExtensionSpecification({
 
 // Transform methods
 export function transformWebhookConfig(content: object) {
-  const webhooks = getPathValue(content, 'webhooks') as WebhookConfig
+  const webhooks = getPathValue(content, 'webhooks')
+  if (!webhooks) return content
 
   // normalize webhook config with the top level config
   const webhookSubscriptions = []
-  const {topics, subscriptions, uri} = webhooks
+  const {topics, subscriptions, uri} = webhooks as WebhookConfig
 
   if (uri && topics?.length) {
     for (const topic of topics) {

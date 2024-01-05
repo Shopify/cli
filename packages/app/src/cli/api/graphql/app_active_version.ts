@@ -36,7 +36,7 @@ interface AppModuleVersionSpecification {
   }
 }
 
-interface AppModuleVersion {
+export interface AppModuleVersion {
   registrationId: string
   registrationUuid: string
   registrationTitle: string

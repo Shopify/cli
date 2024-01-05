@@ -11,11 +11,11 @@ export function filterFalsey(values: (string | boolean | undefined)[]) {
 
 const generateSubscriptionKey = (topic: string, uri: string) => `${topic}::${uri}`
 
-export function validateTopLevelSubscriptions(schema: WebhookConfig) {
-  const hasEndpoint = Boolean(schema.uri)
-  const hasTopics = Boolean(schema.topics?.length)
+export function validateTopLevelSubscriptions(webhookConfig: WebhookConfig) {
+  const hasEndpoint = Boolean(webhookConfig.uri)
+  const hasTopics = Boolean(webhookConfig.topics?.length)
 
-  if (hasEndpoint && !hasTopics && !schema.subscriptions?.length) {
+  if (hasEndpoint && !hasTopics && !webhookConfig.subscriptions?.length) {
     return {
       code: zod.ZodIssueCode.custom,
       message: 'To use a top-level `uri`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
@@ -33,7 +33,7 @@ export function validateTopLevelSubscriptions(schema: WebhookConfig) {
   }
 
   // given the uri will be static, the only way to have duplicate top-level subscriptions is if there are multiple identical topics
-  if (hasTopics && schema.topics?.length !== new Set(schema.topics).size) {
+  if (hasTopics && webhookConfig.topics?.length !== new Set(webhookConfig.topics).size) {
     return {
       code: zod.ZodIssueCode.custom,
       message: duplicateSubscriptionsError,
@@ -43,7 +43,8 @@ export function validateTopLevelSubscriptions(schema: WebhookConfig) {
   }
 }
 
-export function validateInnerSubscriptions({uri, subscriptions = [], ...schema}: WebhookConfig) {
+export function validateInnerSubscriptions(webhookConfig: WebhookConfig) {
+  const {uri, subscriptions = [], ...schema} = webhookConfig
   const uniqueSubscriptionEndpointSet = new Set()
 
   // add validated unique top level subscriptions to set
@@ -72,10 +73,10 @@ export function validateInnerSubscriptions({uri, subscriptions = [], ...schema}:
 
     // if there is no uri override, use top level uri. we are sure there will be one from earlier validation
     if (!finalEndpoint) {
-      finalEndpoint = uri
+      finalEndpoint = uri!
     }
 
-    if (subscription.path && !httpsRegex.test(finalEndpoint!)) {
+    if (subscription.path && !httpsRegex.test(finalEndpoint)) {
       return {
         code: zod.ZodIssueCode.custom,
         message: 'You must use an https `uri` to use a relative path',
@@ -89,7 +90,7 @@ export function validateInnerSubscriptions({uri, subscriptions = [], ...schema}:
       finalEndpoint = `${finalEndpoint}${subscription.path}`
     }
 
-    const key = generateSubscriptionKey(subscription.topic, finalEndpoint!)
+    const key = generateSubscriptionKey(subscription.topic, finalEndpoint)
 
     if (uniqueSubscriptionEndpointSet.has(key)) {
       return {

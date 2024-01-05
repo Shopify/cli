@@ -558,12 +558,12 @@ client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-04"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products"
-
-[webhooks]
-api_version = "2023-04"
 
 [build]
 dev_store_url = "domain1"
