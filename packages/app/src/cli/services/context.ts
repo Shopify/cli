@@ -102,10 +102,7 @@ export async function ensureGenerateContext(options: {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
-    await logMetadataForLoadedContext({
-      organizationId: app.organizationId,
-      apiKey: app.apiKey,
-    })
+    await logMetadataForLoadedContext(app)
     return app.apiKey
   }
 
