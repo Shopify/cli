@@ -38,7 +38,6 @@ export async function release(options: ReleaseOptions) {
     token,
     partnersApp.apiKey,
     options.version,
-    app.specifications ?? [],
   )
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
     token,

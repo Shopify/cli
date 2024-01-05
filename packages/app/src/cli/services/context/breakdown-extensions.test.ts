@@ -1,6 +1,8 @@
 /* eslint-disable @shopify/prefer-module-scope-constants */
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {
+  buildDashboardBreakdownInfo,
+  buildExtensionBreakdownInfo,
   configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersDeployBreakdown,
   extensionsIdentifiersReleaseBreakdown,
@@ -13,7 +15,6 @@ import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
-import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 
@@ -35,6 +36,16 @@ const REGISTRATION_DASHBOARD_A = {
   id: 'D_A',
   title: 'Dashboard A',
   uuid: 'UUID_D_A',
+  type: 'flow_action_definition',
+  activeVersion: {
+    config: '{}',
+  },
+}
+
+const REGISTRATION_DASHBOARD_NEW = {
+  id: 'D_NEW',
+  title: 'Dashboard New',
+  uuid: 'UUID_D_NEW',
   type: 'flow_action_definition',
   activeVersion: {
     config: '{}',
@@ -136,6 +147,10 @@ const VERSION_DIFF_CONFIG_A: AppVersionsDiffExtensionSchema = {
   registrationTitle: 'Registration title',
   specification: {
     identifier: 'app_access',
+    experience: 'configuration',
+    options: {
+      managementExperience: 'cli',
+    },
   },
 }
 
@@ -144,6 +159,10 @@ const VERSION_DIFF_DASH_A: AppVersionsDiffExtensionSchema = {
   registrationTitle: 'Dashboard A',
   specification: {
     identifier: 'flow_action_definition',
+    experience: 'legacy',
+    options: {
+      managementExperience: 'dashboard',
+    },
   },
 }
 
@@ -152,6 +171,10 @@ const VERSION_DIFF_CLI_A: AppVersionsDiffExtensionSchema = {
   registrationTitle: 'Checkout post purchase',
   specification: {
     identifier: 'post_purchase_ui_extension',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
   },
 }
 
@@ -160,6 +183,10 @@ const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   registrationTitle: 'Checkout post purchase Deleted B',
   specification: {
     identifier: 'post_purchase_ui_extension',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
   },
 }
 
@@ -309,8 +336,7 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [],
-          toUpdate: ['EXTENSION_A', 'extension-a-2'],
-          fromDashboard: [],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -344,9 +370,12 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: ['EXTENSION_A', 'extension-a-2'],
+          toCreate: [
+            buildExtensionBreakdownInfo('EXTENSION_A'),
+            buildExtensionBreakdownInfo('extension-a-2'),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
           toUpdate: [],
-          fromDashboard: ['Dashboard A'],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -378,9 +407,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: ['EXTENSION_A', 'extension-a-2'],
-          toUpdate: [],
-          fromDashboard: ['Dashboard A'],
+          toCreate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
+          toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -414,9 +442,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: ['extension-a-2'],
-          toUpdate: ['EXTENSION_A'],
-          fromDashboard: ['Dashboard A'],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2')],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -454,9 +481,11 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: ['DASH_MIGRATED_EXTENSION_A', 'extension-a-2'],
-          toUpdate: ['EXTENSION_A'],
-          fromDashboard: ['Dashboard A'],
+          toCreate: [
+            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
+            buildExtensionBreakdownInfo('extension-a-2'),
+          ],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -468,13 +497,17 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         app: {
           extensionRegistrations: [REGISTRATION_A, REGISTRATION_DASH_MIGRATED_A],
           configurationRegistrations: [],
-          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A, REGISTRATION_DASH_MIGRATED_A],
+          dashboardManagedExtensionRegistrations: [
+            REGISTRATION_DASHBOARD_A,
+            REGISTRATION_DASH_MIGRATED_A,
+            REGISTRATION_DASHBOARD_NEW,
+          ],
         },
       }
       vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue(remoteExtensionRegistrations)
       const extensionsToConfirm = {
         validMatches: {EXTENSION_A: 'UUID_A', DASH_MIGRATED_EXTENSION_A: 'UUID_DM_A'},
-        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A, REGISTRATION_DASH_MIGRATED_A],
+        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A, REGISTRATION_DASH_MIGRATED_A, REGISTRATION_DASHBOARD_NEW],
         extensionsToCreate: [EXTENSION_A_2],
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
@@ -500,10 +533,16 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       // Then
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
-          onlyRemote: ['Dashboard Deleted B', 'Checkout post purchase Deleted B'],
-          toCreate: ['DASH_MIGRATED_EXTENSION_A', 'extension-a-2'],
-          toUpdate: ['EXTENSION_A'],
-          fromDashboard: ['Dashboard A'],
+          onlyRemote: [
+            buildExtensionBreakdownInfo('Checkout post purchase Deleted B'),
+            buildDashboardBreakdownInfo('Dashboard Deleted B'),
+          ],
+          toCreate: [
+            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
+            buildExtensionBreakdownInfo('extension-a-2'),
+            buildDashboardBreakdownInfo('Dashboard New'),
+          ],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -515,7 +554,6 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
 describe('extensionsIdentifiersReleaseBreakdown', () => {
   test('when active version only includes app config modules then the response will be empty', async () => {
     // Given
-    const specifications = await loadFSExtensionsSpecifications()
     const versionDiff = {
       versionsDiff: {
         added: [],
@@ -534,7 +572,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0', specifications)
+    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0')
 
     // Then
     expect(result).toEqual({
@@ -542,7 +580,6 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         onlyRemote: [],
         toCreate: [],
         toUpdate: [],
-        fromDashboard: [],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -550,7 +587,6 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
 
   test('when active version only includes not only app config modules then the response will return them', async () => {
     // Given
-    const specifications = await loadFSExtensionsSpecifications()
     const versionDiff = {
       versionsDiff: {
         added: [VERSION_DIFF_CLI_A],
@@ -569,15 +605,14 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     vi.mocked(versionDiffByVersion).mockResolvedValue(versionDiff)
 
     // When
-    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0', specifications)
+    const result = await extensionsIdentifiersReleaseBreakdown('token', 'apiKey', ' 1.0.0')
 
     // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
-        onlyRemote: ['Checkout post purchase Deleted B'],
-        toCreate: ['Checkout post purchase'],
-        toUpdate: ['Dashboard A'],
-        fromDashboard: [],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
+        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
+        toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
       },
       versionDetails: versionDiff.versionDetails,
     })
