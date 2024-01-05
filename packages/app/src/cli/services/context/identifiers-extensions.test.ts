@@ -754,7 +754,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     expect(createExtension).not.toBeCalled()
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {},
+      extensionIds: {'point-of-sale': 'C_A'},
       extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
     })
   })
@@ -814,7 +814,7 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
     expect(createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {},
+      extensionIds: {'point-of-sale': 'C_A'},
       extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
     })
   })

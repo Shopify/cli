@@ -67,7 +67,6 @@ export interface AppDeployVariables {
 interface ErrorDetail {
   extension_id: number
   extension_title: string
-  specification_identifier?: string
 }
 
 export interface AppDeploySchema {

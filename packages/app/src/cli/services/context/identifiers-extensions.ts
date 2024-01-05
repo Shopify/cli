@@ -90,7 +90,7 @@ export async function deployConfirmed(
     extensionsToCreate: LocalSource[]
   },
 ) {
-  const extensionsNonUuidManaged = await ensureNonUuidManagedExtensionsIds(
+  const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
     configurationRegistrations,
     options.app.allExtensions.filter((ext) => !ext.isUuidManaged()),
     options.appId,
@@ -113,7 +113,7 @@ export async function deployConfirmed(
 
   return {
     extensions: validMatches,
-    extensionIds: validMatchesById,
+    extensionIds: {...validMatchesById, ...extensionsIdsNonUuidManaged},
     extensionsNonUuidManaged,
   }
 }
@@ -123,24 +123,28 @@ async function ensureNonUuidManagedExtensionsIds(
   localExtensionRegistrations: LocalSource[],
   appId: string,
 ) {
-  if (!useVersionedAppConfig()) return {}
+  if (!useVersionedAppConfig()) return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
 
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
+  const validMatchesById: {[key: string]: string} = {}
   localExtensionRegistrations.forEach((local) => {
     const possibleMatch = remoteConfigurationRegistrations.find((remote) => remote.type === local.graphQLType)
-    if (possibleMatch) validMatches[local.localIdentifier] = possibleMatch.uuid
-    else extensionsToCreate.push(local)
+    if (possibleMatch) {
+      validMatches[local.localIdentifier] = possibleMatch.uuid
+      validMatchesById[local.localIdentifier] = possibleMatch.id
+    } else extensionsToCreate.push(local)
   })
 
   if (extensionsToCreate.length > 0) {
     const newIdentifiers = await createExtensions(extensionsToCreate, appId, false)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
+      validMatchesById[localIdentifier] = registration.id
     }
   }
 
-  return validMatches
+  return {extensionsNonUuidManaged: validMatches, extensionsIdsNonUuidManaged: validMatchesById}
 }
 
 async function createExtensions(extensions: LocalSource[], appId: string, output = true) {

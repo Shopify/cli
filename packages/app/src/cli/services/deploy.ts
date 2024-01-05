@@ -113,7 +113,6 @@ export async function deploy(options: DeployOptions) {
               message: options.message,
               version: options.version,
               commitReference: options.commitReference,
-              specifications: app.specifications,
             })
 
             if (!useThemebundling()) {
