@@ -123,7 +123,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       time_start: startTime,
       time_end: currentTime,
       total_time: wallClockElapsed,
-      success: errorMessage === undefined,
+      success: exitMode === 'ok' && errorMessage === undefined,
       cli_version: CLI_KIT_VERSION,
       ruby_version: (await rubyVersion()) || '',
       node_version: process.version.replace('v', ''),

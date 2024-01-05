@@ -1,4 +1,5 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
+import {logMetadataForLoadedContext} from '../../context.js'
 import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
 import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -10,6 +11,8 @@ export async function showEnv(app: AppInterface): Promise<OutputMessage> {
 
 export async function outputEnv(app: AppInterface, format: Format): Promise<OutputMessage> {
   const orgApp = await fetchAppFromConfigOrSelect(app)
+
+  await logMetadataForLoadedContext(orgApp)
 
   if (format === 'json') {
     return outputContent`${outputToken.json({

@@ -1,4 +1,4 @@
-import {fetchAppAndIdentifiers} from './context.js'
+import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
 import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
@@ -21,6 +21,9 @@ interface ImportFlowOptions {
 export async function importFlowExtensions(options: ImportFlowOptions) {
   const partnersSession = await fetchPartnersSession()
   const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, partnersSession, false)
+
+  await logMetadataForLoadedContext(partnersApp)
+
   const flowExtensions = await getActiveDashboardExtensions({token: partnersSession.token, apiKey: partnersApp.apiKey})
 
   if (flowExtensions.length === 0) {
