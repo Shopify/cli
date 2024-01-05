@@ -20,12 +20,14 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
+import {getExtensionPointTargetSurface} from './dev/extension/utilities.js'
 import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -170,7 +172,13 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
 }
 
 async function actionsBeforeLaunchingDevProcesses(config: DevConfig) {
+  // console.log('Config:', config)
+  // config.localApp.allExtensions.forEach((e) => {
+  //   console.log('Extension:', e)
+  //   console.log(e.configuration.extension_points.target)
+  // })
   setPreviousAppId(config.commandOptions.directory, config.remoteApp.apiKey)
+  setMetafieldDefinitions(config.localApp.allExtensions)
 
   await logMetadataForDev({
     devOptions: config.commandOptions,
@@ -407,4 +415,27 @@ export async function validateCustomPorts(webConfigs: Web[], graphiqlPort: numbe
 
 export function setPreviousAppId(directory: string, apiKey: string) {
   setCachedAppInfo({directory, previousAppId: apiKey})
+}
+
+export function setMetafieldDefinitions(extensions: ExtensionInstance[]) {
+  // Get metafields required by customer account UI extensions
+  const metafields: {namespace: string; key: string}[] = []
+  extensions.forEach((extension) => {
+    const isCustomerAccountSurface = extension.configuration.extension_points.some(
+      (extensionPoint: {target: string}) =>
+        getExtensionPointTargetSurface(extensionPoint.target) === 'customer-accounts',
+    )
+
+    if (!isCustomerAccountSurface) return
+
+    // console.log('Extension Points:', extension.configuration.extension_points)
+    // console.log('Metafields: ', extension.configuration.metafields)
+    metafields.push(...extension.configuration.metafields)
+  })
+
+  // Create metafields on dev shop being used for preview (if needed)
+  metafields.forEach((metafield) => {
+    console.log(`Checking if metafield "${metafield.key}" in namespace "${metafield.namespace}" is defined...`)
+    console.log('Creating metafield...')
+  })
 }
