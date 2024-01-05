@@ -77,6 +77,40 @@ const ScriptServiceProxyQuery = gql`
   }
 `
 
+interface FunctionUploadUrlGenerateResponse {
+  uploadUrlGenerate: {
+    url: string
+    moduleId: string
+    headers: string
+    maxBytes: number
+    maxSize: string
+  }
+}
+
+/**
+ * Request a URL from partners to which we will upload our function.
+ *
+ * @param token - Partners token.
+ * @returns The response of the query.
+ */
+export async function getFunctionUploadUrl<T>(token: string): Promise<T> {
+  const functionUploadUrlGenerateMutation = FunctionUploadUrlGenerateMutation
+  const res: FunctionUploadUrlGenerateResponse = await partnersRequest(FunctionUploadUrlGenerateMutation, token)
+  return res as T
+}
+
+const FunctionUploadUrlGenerateMutation = gql`
+  mutation functionUploadUrlGenerateMutation {
+    uploadUrlGenerate(input: {}) {
+      url
+      moduleId
+      headers
+      maxBytes
+      maxSize
+    }
+  }
+`
+
 interface Deprecation {
   supportedUntilDate?: string
 }

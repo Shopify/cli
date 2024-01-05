@@ -21,3 +21,12 @@ export interface UploadUrlGenerateMutationSchema {
     }
   }
 }
+
+export interface UploadUrlGenerateMutationSchemaNew {
+  uploadUrlGenerate: {
+    url: string
+    moduleId: string
+    headers: {[key: string]: string}
+    maxSize: string
+  }
+}

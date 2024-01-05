@@ -1,4 +1,4 @@
-import {partnersRequest, functionProxyRequest, handleDeprecations} from './partners.js'
+import {partnersRequest, functionProxyRequest, getFunctionUploadUrl, handleDeprecations} from './partners.js'
 import {graphqlRequest, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
@@ -63,6 +63,25 @@ describe('functionProxyRequest', () => {
         query,
         variables: JSON.stringify(variables) || '{}',
       },
+      responseOptions: {onResponse: handleDeprecations},
+    })
+  })
+})
+
+describe('getFunctionUploadUrl', () => {
+  test('graphqlRequest is called with correct parameters', async () => {
+    // Given
+    vi.mocked(graphqlRequest).mockResolvedValue({})
+
+    // When
+    await getFunctionUploadUrl(mockedToken)
+
+    // Then
+    expect(graphqlRequest).toHaveBeenLastCalledWith({
+      query: expect.stringContaining('uploadUrlGenerate'),
+      api: 'Partners',
+      url,
+      token: mockedToken,
       responseOptions: {onResponse: handleDeprecations},
     })
   })

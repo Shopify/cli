@@ -3,6 +3,7 @@ import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.j
 import {
   UploadUrlGenerateMutation,
   UploadUrlGenerateMutationSchema,
+  UploadUrlGenerateMutationSchemaNew,
 } from '../../api/graphql/functions/upload_url_generate.js'
 import {
   ExtensionUpdateDraftInput,
@@ -22,7 +23,8 @@ import {
 } from '../../api/graphql/functions/app_function_set.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {functionProxyRequest} from '@shopify/cli-kit/node/api/partners'
+import {getFunctionUploadUrl, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
@@ -519,7 +521,7 @@ export async function uploadWasmBlob(
   apiKey: string,
   token: string,
 ): Promise<{url: string; moduleId: string}> {
-  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
+  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadUrlFromPartners({apiKey, token})
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = await readFile(wasmPath, {})
@@ -559,6 +561,13 @@ async function getFunctionExtensionUploadURL(
     functionProxyRequest(options.apiKey, UploadUrlGenerateMutation, options.token),
   )
   return res.data.uploadUrlGenerate
+}
+
+async function getFunctionExtensionUploadUrlFromPartners(
+  options: GetFunctionExtensionUploadURLOptions,
+): Promise<GetFunctionExtensionUploadURLOutput> {
+  const res: UploadUrlGenerateMutationSchemaNew = await handlePartnersErrors(() => getFunctionUploadUrl(options.token))
+  return res.uploadUrlGenerate
 }
 
 async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {
