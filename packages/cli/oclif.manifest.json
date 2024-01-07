@@ -195,7 +195,6 @@
     },
     "kitchen-sink": {
       "aliases": [
-        "kitchen-sink all"
       ],
       "args": {
       },
@@ -205,6 +204,7 @@
       "hasDynamicHelp": false,
       "hidden": true,
       "hiddenAliases": [
+        "kitchen-sink all"
       ],
       "id": "kitchen-sink",
       "isESM": true,

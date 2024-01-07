@@ -25,7 +25,6 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
-* [`shopify kitchen-sink all`](#shopify-kitchen-sink-all)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
@@ -610,21 +609,6 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.18/src/commands/help.ts)_
-
-## `shopify kitchen-sink all`
-
-View all the available UI kit components
-
-```
-USAGE
-  $ shopify kitchen-sink all
-
-DESCRIPTION
-  View all the available UI kit components
-
-ALIASES
-  $ shopify kitchen-sink all
-```
 
 ## `shopify plugins:install PLUGIN...`
 
