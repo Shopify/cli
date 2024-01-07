@@ -1,1585 +1,2139 @@
 {
-  "version": "3.53.0",
   "commands": {
     "app:build": {
-      "id": "app:build",
+      "aliases": [
+      ],
+      "args": {
+      },
       "description": "Build the app.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
       "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
+        "api-key": {
+          "description": "Application's API key that will be exposed at build time.",
+          "env": "SHOPIFY_FLAG_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
           "multiple": false,
-          "default": "."
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "Application's Client ID that will be exposed at build time.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
         },
         "config": {
-          "name": "config",
-          "type": "option",
           "char": "c",
           "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
           "hidden": false,
-          "multiple": false
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
         },
         "skip-dependencies-installation": {
-          "name": "skip-dependencies-installation",
-          "type": "boolean",
+          "allowNo": false,
           "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
+          "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
           "hidden": false,
-          "allowNo": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "Application's API key that will be exposed at build time.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "Application's Client ID that will be exposed at build time.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        }
-      },
-      "args": {}
-    },
-    "app:deploy": {
-      "id": "app:deploy",
-      "description": "Deploy your Shopify app.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
+          "name": "skip-dependencies-installation",
+          "type": "boolean"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
+          "allowNo": false,
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:build",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "build.js"
+      ],
+      "strict": true
+    },
+    "app:config:link": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Fetch your app configuration from the Partner Dashboard.",
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "hasDynamicHelp": false,
+          "hidden": false,
           "multiple": false,
-          "default": "."
+          "name": "client-id",
+          "type": "option"
         },
         "config": {
-          "name": "config",
-          "type": "option",
           "char": "c",
           "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key of your app.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
-          "exclusive": [
-            "config"
-          ]
+          "name": "config",
+          "type": "option"
         },
-        "reset": {
-          "name": "reset",
-          "type": "boolean",
-          "description": "Reset all your settings.",
-          "hidden": false,
+        "no-color": {
           "allowNo": false,
-          "exclusive": [
-            "config"
-          ]
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:config:link",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "config",
+        "link.js"
+      ],
+      "strict": true
+    },
+    "app:config:push": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Push your app configuration to the Partner Dashboard.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
         },
         "force": {
-          "name": "force",
-          "type": "boolean",
+          "allowNo": false,
           "char": "f",
-          "description": "Deploy without asking for confirmation.",
+          "description": "Push configuration without asking for confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
-          "allowNo": false
+          "name": "force",
+          "type": "boolean"
         },
-        "no-release": {
-          "name": "no-release",
-          "type": "boolean",
-          "description": "Creates a version but doesn't release it - it's not made available to merchants.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "message": {
-          "name": "message",
-          "type": "option",
-          "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
-          "hidden": false,
-          "multiple": false
-        },
-        "version": {
-          "name": "version",
-          "type": "option",
-          "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
-          "hidden": false,
-          "multiple": false
-        },
-        "source-control-url": {
-          "name": "source-control-url",
-          "type": "option",
-          "description": "URL associated with the new app version.",
-          "hidden": false,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:dev": {
-      "id": "app:dev",
-      "description": "Run the app.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
         "no-color": {
-          "name": "no-color",
-          "type": "boolean",
+          "allowNo": false,
           "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
+          "name": "no-color",
+          "type": "boolean"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
         },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:config:push",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "config",
+        "push.js"
+      ],
+      "strict": true
+    },
+    "app:config:use": {
+      "aliases": [
+      ],
+      "args": {
         "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
+          "description": "The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.",
+          "name": "config"
+        }
+      },
+      "description": "Activate an app configuration.",
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
           "hidden": false,
-          "multiple": false
+          "name": "no-color",
+          "type": "boolean"
         },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key of your app.",
-          "hidden": true,
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
           "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "store": {
-          "name": "store",
-          "type": "option",
-          "char": "s",
-          "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
-          "hidden": false,
-          "multiple": false
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
         },
         "reset": {
-          "name": "reset",
-          "type": "boolean",
-          "description": "Reset all your settings.",
-          "hidden": false,
           "allowNo": false,
+          "description": "Reset current configuration.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:config:use",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "config",
+        "use.js"
+      ],
+      "strict": true
+    },
+    "app:deploy": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Deploy your Shopify app.",
+      "flags": {
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
           "exclusive": [
             "config"
-          ]
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
         },
-        "skip-dependencies-installation": {
-          "name": "skip-dependencies-installation",
-          "type": "boolean",
-          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "no-update": {
-          "name": "no-update",
-          "type": "boolean",
-          "description": "Skips the Partners Dashboard URL update step.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "subscription-product-url": {
-          "name": "subscription-product-url",
-          "type": "option",
-          "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
-          "hidden": false,
-          "multiple": false
-        },
-        "checkout-cart-url": {
-          "name": "checkout-cart-url",
-          "type": "option",
-          "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
-          "hidden": false,
-          "multiple": false
-        },
-        "tunnel-url": {
-          "name": "tunnel-url",
-          "type": "option",
-          "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Deploy without asking for confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": false,
+          "name": "force",
+          "type": "boolean"
+        },
+        "message": {
+          "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
+          "env": "SHOPIFY_FLAG_MESSAGE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "message",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-release": {
+          "allowNo": false,
+          "description": "Creates a version but doesn't release it - it's not made available to merchants.",
+          "env": "SHOPIFY_FLAG_NO_RELEASE",
+          "hidden": false,
+          "name": "no-release",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
           "exclusive": [
-            "no-tunnel",
-            "tunnel"
-          ]
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "source-control-url": {
+          "description": "URL associated with the new app version.",
+          "env": "SHOPIFY_FLAG_SOURCE_CONTROL_URL",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "source-control-url",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:deploy",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "deploy.js"
+      ],
+      "strict": true
+    },
+    "app:dev": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Run the app.",
+      "flags": {
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "checkout-cart-url": {
+          "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
+          "env": "SHOPIFY_FLAG_CHECKOUT_CART_URL",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "checkout-cart-url",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "graphiql-key": {
+          "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
+          "env": "SHOPIFY_FLAG_GRAPHIQL_KEY",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "graphiql-key",
+          "type": "option"
+        },
+        "graphiql-port": {
+          "description": "Local port of the GraphiQL development server.",
+          "env": "SHOPIFY_FLAG_GRAPHIQL_PORT",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "graphiql-port",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
         },
         "no-tunnel": {
-          "name": "no-tunnel",
-          "type": "boolean",
-          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead",
-          "hidden": true,
           "allowNo": false,
+          "description": "Automatic creation of a tunnel is disabled. Service entry point will listen to localhost instead",
+          "env": "SHOPIFY_FLAG_NO_TUNNEL",
           "exclusive": [
             "tunnel-url",
             "tunnel"
-          ]
+          ],
+          "hidden": true,
+          "name": "no-tunnel",
+          "type": "boolean"
         },
-        "theme": {
-          "name": "theme",
-          "type": "option",
-          "char": "t",
-          "description": "Theme ID or name of the theme app extension host theme.",
+        "no-update": {
+          "allowNo": false,
+          "description": "Skips the Partners Dashboard URL update step.",
+          "env": "SHOPIFY_FLAG_NO_UPDATE",
           "hidden": false,
-          "multiple": false
-        },
-        "theme-app-extension-port": {
-          "name": "theme-app-extension-port",
-          "type": "option",
-          "description": "Local port of the theme app extension development server.",
-          "hidden": false,
-          "multiple": false
+          "name": "no-update",
+          "type": "boolean"
         },
         "notify": {
-          "name": "notify",
-          "type": "option",
           "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
-          "multiple": false
-        },
-        "graphiql-port": {
-          "name": "graphiql-port",
-          "type": "option",
-          "description": "Local port of the GraphiQL development server.",
-          "hidden": true,
-          "multiple": false
-        },
-        "graphiql-key": {
-          "name": "graphiql-key",
-          "type": "option",
-          "description": "Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.",
-          "hidden": true,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:import-flow-legacy-extensions": {
-      "id": "app:import-flow-legacy-extensions",
-      "description": "Import dashboard-managed flow extensions into your app.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
+          "env": "SHOPIFY_FLAG_NOTIFY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "notify",
+          "type": "option"
         },
         "path": {
-          "name": "path",
-          "type": "option",
           "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
           "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        }
-      },
-      "args": {}
-    },
-    "app:info": {
-      "id": "app:info",
-      "description": "Print basic information about your app and extensions.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
           "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "json": {
-          "name": "json",
-          "type": "boolean",
-          "description": "format output as JSON",
-          "hidden": false,
-          "allowNo": false
-        },
-        "web-env": {
-          "name": "web-env",
-          "type": "boolean",
-          "description": "Outputs environment variables necessary for running and deploying web/.",
-          "hidden": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "app:release": {
-      "id": "app:release",
-      "description": "Release an app version.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key of your app.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
+          "noCacheDefault": true,
+          "type": "option"
         },
         "reset": {
-          "name": "reset",
-          "type": "boolean",
+          "allowNo": false,
           "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
           "hidden": false,
-          "allowNo": false
+          "name": "reset",
+          "type": "boolean"
         },
-        "force": {
-          "name": "force",
-          "type": "boolean",
-          "char": "f",
-          "description": "Release without asking for confirmation.",
+        "skip-dependencies-installation": {
+          "allowNo": false,
+          "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
+          "env": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION",
           "hidden": false,
-          "allowNo": false
+          "name": "skip-dependencies-installation",
+          "type": "boolean"
         },
-        "version": {
-          "name": "version",
-          "type": "option",
-          "description": "The name of the app version to release.",
+        "store": {
+          "char": "s",
+          "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
           "hidden": false,
-          "required": true,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:update-url": {
-      "id": "app:update-url",
-      "description": "Update your app and redirect URLs in the Partners Dashboard.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "subscription-product-url": {
+          "description": "Resource URL for subscription UI extension. Format: \"/products/{productId}\"",
+          "env": "SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL",
+          "hasDynamicHelp": false,
           "hidden": false,
-          "allowNo": false
+          "multiple": false,
+          "name": "subscription-product-url",
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the theme app extension host theme.",
+          "env": "SHOPIFY_FLAG_THEME",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "theme",
+          "type": "option"
+        },
+        "theme-app-extension-port": {
+          "description": "Local port of the theme app extension development server.",
+          "env": "SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "theme-app-extension-port",
+          "type": "option"
+        },
+        "tunnel-url": {
+          "description": "Use a custom tunnel, it must be running before executing dev. Format: \"https://my-tunnel-url:port\".",
+          "env": "SHOPIFY_FLAG_TUNNEL_URL",
+          "exclusive": [
+            "no-tunnel",
+            "tunnel"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "tunnel-url",
+          "type": "option"
         },
         "verbose": {
-          "name": "verbose",
-          "type": "boolean",
+          "allowNo": false,
           "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
           "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key of your app.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "app-url": {
-          "name": "app-url",
-          "type": "option",
-          "description": "URL through which merchants will access your app.",
-          "hidden": false,
-          "multiple": false
-        },
-        "redirect-urls": {
-          "name": "redirect-urls",
-          "type": "option",
-          "description": "Comma separated list of allowed URLs where merchants are redirected after the app is installed",
-          "hidden": false,
-          "multiple": false
+          "name": "verbose",
+          "type": "boolean"
         }
       },
-      "args": {}
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:dev",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "dev.js"
+      ],
+      "strict": true
+    },
+    "app:draft-extensions:push": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Updates the content of the app draft version.",
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "enable-dev-preview": {
+          "allowNo": false,
+          "description": "Enable dev preview after the draft content is updated.",
+          "env": "SHOPIFY_FLAG_ENABLE_DEV_PREVIEW",
+          "hidden": false,
+          "name": "enable-dev-preview",
+          "type": "boolean"
+        },
+        "path": {
+          "default": ".",
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:draft-extensions:push",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "draft-extensions",
+        "push.js"
+      ],
+      "strict": true
+    },
+    "app:env:pull": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Pull app and extensions environment variables.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "env-file": {
+          "description": "Specify an environment file to update if the update flag is set",
+          "env": "SHOPIFY_FLAG_ENV_FILE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "env-file",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:env:pull",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "env",
+        "pull.js"
+      ],
+      "strict": true
+    },
+    "app:env:show": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Display app and extensions environment variables.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:env:show",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "env",
+        "show.js"
+      ],
+      "strict": true
+    },
+    "app:function:build": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Compile a function to wasm.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:build",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "function",
+        "build.js"
+      ],
+      "strict": true
+    },
+    "app:function:run": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Run a function locally for testing.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "export": {
+          "char": "e",
+          "default": "_start",
+          "description": "Name of the wasm export to invoke.",
+          "env": "SHOPIFY_FLAG_EXPORT",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "export",
+          "type": "option"
+        },
+        "input": {
+          "char": "i",
+          "description": "The input JSON to pass to the function. If omitted, standard input is used.",
+          "env": "SHOPIFY_FLAG_INPUT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "input",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Log the run result as a JSON object.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:run",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "function",
+        "run.js"
+      ],
+      "strict": true
+    },
+    "app:function:schema": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Fetch the latest GraphQL schema for a function.",
+      "flags": {
+        "api-key": {
+          "description": "The API key to fetch the schema with.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID to fetch the schema with.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "stdout": {
+          "allowNo": false,
+          "description": "Output the schema to stdout instead of writing to a file.",
+          "env": "SHOPIFY_FLAG_STDOUT",
+          "name": "stdout",
+          "required": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:schema",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "function",
+        "schema.js"
+      ],
+      "strict": true
+    },
+    "app:function:typegen": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Generate GraphQL types for a JavaScript function.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:typegen",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "function",
+        "typegen.js"
+      ],
+      "strict": true
+    },
+    "app:generate:extension": {
+      "aliases": [
+      ],
+      "args": {
+        "file": {
+          "name": "file"
+        }
+      },
+      "description": "Scaffold an Extension.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "clone-url": {
+          "char": "u",
+          "description": "The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples",
+          "env": "SHOPIFY_FLAG_CLONE_URL",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "clone-url",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "flavor": {
+          "description": "Choose a starting template for your extension, where applicable",
+          "env": "SHOPIFY_FLAG_FLAVOR",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "flavor",
+          "options": [
+            "vanilla-js",
+            "react",
+            "typescript",
+            "typescript-react",
+            "wasm",
+            "rust"
+          ],
+          "type": "option"
+        },
+        "name": {
+          "char": "n",
+          "description": "name of your Extension",
+          "env": "SHOPIFY_FLAG_NAME",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "template": {
+          "char": "t",
+          "description": "Extension template",
+          "env": "SHOPIFY_FLAG_EXTENSION_TEMPLATE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "template",
+          "type": "option"
+        },
+        "type": {
+          "char": "t",
+          "description": "Deprecated. Please use --template",
+          "env": "SHOPIFY_FLAG_EXTENSION_TYPE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "type",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:generate:extension",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "generate",
+        "extension.js"
+      ],
+      "strict": true
+    },
+    "app:generate:schema": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Fetch the latest GraphQL schema for a function.",
+      "flags": {
+        "api-key": {
+          "description": "The API key to fetch the schema with.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID to fetch the schema with.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "stdout": {
+          "allowNo": false,
+          "description": "Output the schema to stdout instead of writing to a file.",
+          "env": "SHOPIFY_FLAG_STDOUT",
+          "name": "stdout",
+          "required": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:generate:schema",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "generate",
+        "schema.js"
+      ]
+    },
+    "app:import-flow-legacy-extensions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Import dashboard-managed flow extensions into your app.",
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:import-flow-legacy-extensions",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "import-flow-legacy-extensions.js"
+      ],
+      "strict": true
+    },
+    "app:info": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Print basic information about your app and extensions.",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "format output as JSON",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "web-env": {
+          "allowNo": false,
+          "description": "Outputs environment variables necessary for running and deploying web/.",
+          "env": "SHOPIFY_FLAG_OUTPUT_WEB_ENV",
+          "hidden": false,
+          "name": "web-env",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:info",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "info.js"
+      ],
+      "strict": true
+    },
+    "app:release": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Release an app version.",
+      "flags": {
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Release without asking for confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": false,
+          "name": "force",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "The name of the app version to release.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "version",
+          "required": true,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:release",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "release.js"
+      ],
+      "strict": true
+    },
+    "app:scaffold:extension": {
+      "aliases": [
+      ],
+      "args": {
+        "file": {
+          "name": "file"
+        }
+      },
+      "description": "Scaffold an Extension.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "clone-url": {
+          "char": "u",
+          "description": "The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples",
+          "env": "SHOPIFY_FLAG_CLONE_URL",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "clone-url",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "flavor": {
+          "description": "Choose a starting template for your extension, where applicable",
+          "env": "SHOPIFY_FLAG_FLAVOR",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "flavor",
+          "options": [
+            "vanilla-js",
+            "react",
+            "typescript",
+            "typescript-react",
+            "wasm",
+            "rust"
+          ],
+          "type": "option"
+        },
+        "name": {
+          "char": "n",
+          "description": "name of your Extension",
+          "env": "SHOPIFY_FLAG_NAME",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "template": {
+          "char": "t",
+          "description": "Extension template",
+          "env": "SHOPIFY_FLAG_EXTENSION_TEMPLATE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "template",
+          "type": "option"
+        },
+        "type": {
+          "char": "t",
+          "description": "Deprecated. Please use --template",
+          "env": "SHOPIFY_FLAG_EXTENSION_TYPE",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "type",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:scaffold:extension",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "scaffold",
+        "extension.js"
+      ]
+    },
+    "app:update-url": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Update your app and redirect URLs in the Partners Dashboard.",
+      "flags": {
+        "api-key": {
+          "description": "The API key of your app.",
+          "env": "SHOPIFY_FLAG_APP_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "app-url": {
+          "description": "URL through which merchants will access your app.",
+          "env": "SHOPIFY_FLAG_APP_URL",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "app-url",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "redirect-urls": {
+          "description": "Comma separated list of allowed URLs where merchants are redirected after the app is installed",
+          "env": "SHOPIFY_FLAG_REDIRECT_URLS",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "redirect-urls",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:update-url",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "update-url.js"
+      ],
+      "strict": true
+    },
+    "app:versions:list": {
+      "aliases": [
+      ],
+      "args": {
+        "file": {
+          "name": "file"
+        }
+      },
+      "description": "List deployed versions of your app.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>"
+      ],
+      "flags": {
+        "api-key": {
+          "description": "Application's API key to fetch versions for.",
+          "env": "SHOPIFY_FLAG_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID to fetch versions for.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "description": "Output the versions list as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:versions:list",
+      "isESM": true,
+      "pluginAlias": "@shopify/app",
+      "pluginName": "@shopify/app",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "app",
+        "versions",
+        "list.js"
+      ],
+      "strict": true
     },
     "webhook:trigger": {
-      "id": "webhook:trigger",
+      "aliases": [
+      ],
+      "args": {
+      },
       "description": "Trigger delivery of a sample webhook topic payload to a designated address.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
       "flags": {
-        "help": {
-          "name": "help",
-          "type": "boolean",
-          "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
+        "address": {
+          "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
+          "env": "SHOPIFY_FLAG_ADDRESS",
+          "hasDynamicHelp": false,
           "hidden": false,
+          "multiple": false,
+          "name": "address",
           "required": false,
-          "allowNo": false
-        },
-        "topic": {
-          "name": "topic",
-          "type": "option",
-          "description": "The requested webhook topic.",
-          "hidden": false,
-          "required": false,
-          "multiple": false
+          "type": "option"
         },
         "api-version": {
-          "name": "api-version",
-          "type": "option",
           "description": "The API Version of the webhook topic.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
           "hidden": false,
+          "multiple": false,
+          "name": "api-version",
           "required": false,
-          "multiple": false
+          "type": "option"
+        },
+        "client-secret": {
+          "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
+          "env": "SHOPIFY_FLAG_CLIENT_SECRET",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-secret",
+          "required": false,
+          "type": "option"
         },
         "delivery-method": {
-          "name": "delivery-method",
-          "type": "option",
           "description": "Method chosen to deliver the topic payload. If not passed, it's inferred from the address.",
+          "env": "SHOPIFY_FLAG_DELIVERY_METHOD",
+          "hasDynamicHelp": false,
           "hidden": false,
-          "required": false,
           "multiple": false,
+          "name": "delivery-method",
           "options": [
             "http",
             "google-pub-sub",
             "event-bridge"
-          ]
+          ],
+          "required": false,
+          "type": "option"
+        },
+        "help": {
+          "allowNo": false,
+          "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
+          "env": "SHOPIFY_FLAG_HELP",
+          "hidden": false,
+          "name": "help",
+          "required": false,
+          "type": "boolean"
         },
         "shared-secret": {
-          "name": "shared-secret",
-          "type": "option",
           "description": "Deprecated. Please use client-secret.",
+          "env": "SHOPIFY_FLAG_SHARED_SECRET",
+          "hasDynamicHelp": false,
           "hidden": false,
+          "multiple": false,
+          "name": "shared-secret",
           "required": false,
-          "multiple": false
+          "type": "option"
         },
-        "client-secret": {
-          "name": "client-secret",
-          "type": "option",
-          "description": "Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate the origin of the response that you receive.",
+        "topic": {
+          "description": "The requested webhook topic.",
+          "env": "SHOPIFY_FLAG_TOPIC",
+          "hasDynamicHelp": false,
           "hidden": false,
+          "multiple": false,
+          "name": "topic",
           "required": false,
-          "multiple": false
-        },
-        "address": {
-          "name": "address",
-          "type": "option",
-          "description": "The URL where the webhook payload should be sent.\n                    You will need a different address type for each delivery-method:\n                          · For remote HTTP testing, use a URL that starts with https://\n      · For local HTTP testing, use http://localhost:{port}/{url-path}\n                          · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}\n                          · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:",
-          "hidden": false,
-          "required": false,
-          "multiple": false
+          "type": "option"
         }
       },
-      "args": {}
-    },
-    "app:config:link": {
-      "id": "app:config:link",
-      "description": "Fetch your app configuration from the Partner Dashboard.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:config:push": {
-      "id": "app:config:push",
-      "description": "Push your app configuration to the Partner Dashboard.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "force": {
-          "name": "force",
-          "type": "boolean",
-          "char": "f",
-          "description": "Push configuration without asking for confirmation.",
-          "hidden": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "app:config:use": {
-      "id": "app:config:use",
-      "description": "Activate an app configuration.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "reset": {
-          "name": "reset",
-          "type": "boolean",
-          "description": "Reset current configuration.",
-          "hidden": false,
-          "allowNo": false
-        }
-      },
-      "args": {
-        "config": {
-          "name": "config",
-          "description": "The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'."
-        }
-      }
-    },
-    "app:draft-extensions:push": {
-      "id": "app:draft-extensions:push",
-      "description": "Updates the content of the app draft version.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "reset": {
-          "name": "reset",
-          "type": "boolean",
-          "description": "Reset all your settings.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "enable-dev-preview": {
-          "name": "enable-dev-preview",
-          "type": "boolean",
-          "description": "Enable dev preview after the draft content is updated.",
-          "hidden": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "app:env:pull": {
-      "id": "app:env:pull",
-      "description": "Pull app and extensions environment variables.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "env-file": {
-          "name": "env-file",
-          "type": "option",
-          "description": "Specify an environment file to update if the update flag is set",
-          "hidden": false,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:env:show": {
-      "id": "app:env:show",
-      "description": "Display app and extensions environment variables.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:function:build": {
-      "id": "app:function:build",
-      "description": "Compile a function to wasm.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your function directory.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:function:run": {
-      "id": "app:function:run",
-      "description": "Run a function locally for testing.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your function directory.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "input": {
-          "name": "input",
-          "type": "option",
-          "char": "i",
-          "description": "The input JSON to pass to the function. If omitted, standard input is used.",
-          "multiple": false
-        },
-        "export": {
-          "name": "export",
-          "type": "option",
-          "char": "e",
-          "description": "Name of the wasm export to invoke.",
-          "hidden": false,
-          "multiple": false,
-          "default": "_start"
-        },
-        "json": {
-          "name": "json",
-          "type": "boolean",
-          "char": "j",
-          "description": "Log the run result as a JSON object.",
-          "hidden": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "app:function:schema": {
-      "id": "app:function:schema",
-      "description": "Fetch the latest GraphQL schema for a function.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your function directory.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key to fetch the schema with.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID to fetch the schema with.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "stdout": {
-          "name": "stdout",
-          "type": "boolean",
-          "description": "Output the schema to stdout instead of writing to a file.",
-          "required": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "app:function:typegen": {
-      "id": "app:function:typegen",
-      "description": "Generate GraphQL types for a JavaScript function.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your function directory.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        }
-      },
-      "args": {}
-    },
-    "app:generate:extension": {
-      "id": "app:generate:extension",
-      "description": "Scaffold an Extension.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "examples": [
-        "<%= config.bin %> <%= command.id %>"
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
       ],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "type": {
-          "name": "type",
-          "type": "option",
-          "char": "t",
-          "description": "Deprecated. Please use --template",
-          "hidden": false,
-          "multiple": false
-        },
-        "template": {
-          "name": "template",
-          "type": "option",
-          "char": "t",
-          "description": "Extension template",
-          "hidden": false,
-          "multiple": false
-        },
-        "name": {
-          "name": "name",
-          "type": "option",
-          "char": "n",
-          "description": "name of your Extension",
-          "hidden": false,
-          "multiple": false
-        },
-        "clone-url": {
-          "name": "clone-url",
-          "type": "option",
-          "char": "u",
-          "description": "The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples",
-          "hidden": true,
-          "multiple": false
-        },
-        "flavor": {
-          "name": "flavor",
-          "type": "option",
-          "description": "Choose a starting template for your extension, where applicable",
-          "hidden": false,
-          "multiple": false,
-          "options": [
-            "vanilla-js",
-            "react",
-            "typescript",
-            "typescript-react",
-            "wasm",
-            "rust"
-          ]
-        },
-        "reset": {
-          "name": "reset",
-          "type": "boolean",
-          "description": "Reset all your settings.",
-          "hidden": false,
-          "allowNo": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key of your app.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        }
-      },
-      "args": {
-        "file": {
-          "name": "file"
-        }
-      }
-    },
-    "app:generate:schema": {
-      "id": "app:generate:schema",
-      "description": "Fetch the latest GraphQL schema for a function.",
-      "strict": true,
-      "pluginName": "@shopify/app",
+      "id": "webhook:trigger",
+      "isESM": true,
       "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your function directory.",
-          "hidden": false,
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key to fetch the schema with.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID to fetch the schema with.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "stdout": {
-          "name": "stdout",
-          "type": "boolean",
-          "description": "Output the schema to stdout instead of writing to a file.",
-          "required": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "app:scaffold:extension": {
-      "id": "app:scaffold:extension",
-      "description": "Scaffold an Extension.",
-      "strict": true,
       "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
       "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "examples": [
-        "<%= config.bin %> <%= command.id %>"
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "webhook",
+        "trigger.js"
       ],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "type": {
-          "name": "type",
-          "type": "option",
-          "char": "t",
-          "description": "Deprecated. Please use --template",
-          "hidden": false,
-          "multiple": false
-        },
-        "template": {
-          "name": "template",
-          "type": "option",
-          "char": "t",
-          "description": "Extension template",
-          "hidden": false,
-          "multiple": false
-        },
-        "name": {
-          "name": "name",
-          "type": "option",
-          "char": "n",
-          "description": "name of your Extension",
-          "hidden": false,
-          "multiple": false
-        },
-        "clone-url": {
-          "name": "clone-url",
-          "type": "option",
-          "char": "u",
-          "description": "The Git URL to clone the function extensions templates from. Defaults to: https://github.com/Shopify/function-examples",
-          "hidden": true,
-          "multiple": false
-        },
-        "flavor": {
-          "name": "flavor",
-          "type": "option",
-          "description": "Choose a starting template for your extension, where applicable",
-          "hidden": false,
-          "multiple": false,
-          "options": [
-            "vanilla-js",
-            "react",
-            "typescript",
-            "typescript-react",
-            "wasm",
-            "rust"
-          ]
-        },
-        "reset": {
-          "name": "reset",
-          "type": "boolean",
-          "description": "Reset all your settings.",
-          "hidden": false,
-          "allowNo": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "The API key of your app.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID of your app.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        }
-      },
-      "args": {
-        "file": {
-          "name": "file"
-        }
-      }
-    },
-    "app:versions:list": {
-      "id": "app:versions:list",
-      "description": "List deployed versions of your app.",
-      "strict": true,
-      "pluginName": "@shopify/app",
-      "pluginAlias": "@shopify/app",
-      "pluginType": "core",
-      "aliases": [],
-      "examples": [
-        "<%= config.bin %> <%= command.id %>"
-      ],
-      "flags": {
-        "no-color": {
-          "name": "no-color",
-          "type": "boolean",
-          "description": "Disable color output.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "verbose": {
-          "name": "verbose",
-          "type": "boolean",
-          "description": "Increase the verbosity of the logs.",
-          "hidden": false,
-          "allowNo": false
-        },
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to your app directory.",
-          "multiple": false,
-          "default": "."
-        },
-        "config": {
-          "name": "config",
-          "type": "option",
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "hidden": false,
-          "multiple": false
-        },
-        "api-key": {
-          "name": "api-key",
-          "type": "option",
-          "description": "Application's API key to fetch versions for.",
-          "hidden": true,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "client-id": {
-          "name": "client-id",
-          "type": "option",
-          "description": "The Client ID to fetch versions for.",
-          "hidden": false,
-          "multiple": false,
-          "exclusive": [
-            "config"
-          ]
-        },
-        "json": {
-          "name": "json",
-          "type": "boolean",
-          "description": "Output the versions list as JSON.",
-          "allowNo": false
-        }
-      },
-      "args": {
-        "file": {
-          "name": "file"
-        }
-      }
+      "strict": true
     }
-  }
+  },
+  "version": "3.53.0"
 }

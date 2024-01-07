@@ -25,9 +25,6 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
-* [`shopify kitchen-sink async`](#shopify-kitchen-sink-async)
-* [`shopify kitchen-sink prompts`](#shopify-kitchen-sink-prompts)
-* [`shopify kitchen-sink static`](#shopify-kitchen-sink-static)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins:install PLUGIN...`](#shopify-pluginsinstall-plugin-1)
@@ -61,16 +58,16 @@ Build the app.
 
 ```
 USAGE
-  $ shopify app build [--no-color] [--verbose] [--path <value>] [--skip-dependencies-installation] [--client-id
-    <value> | -c <value>]
+  $ shopify app build [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--skip-dependencies-installation] [--verbose]
 
 FLAGS
-  -c, --config=<value>              The name of the app configuration.
-  --client-id=<value>               Application's Client ID that will be exposed at build time.
-  --no-color                        Disable color output.
-  --path=<value>                    [default: .] The path to your app directory.
-  --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
-  --verbose                         Increase the verbosity of the logs.
+  -c, --config=<value>                  The name of the app configuration.
+      --client-id=<value>               Application's Client ID that will be exposed at build time.
+      --no-color                        Disable color output.
+      --path=<value>                    The path to your app directory.
+      --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
+      --verbose                         Increase the verbosity of the logs.
 
 DESCRIPTION
   Build the app.
@@ -84,14 +81,14 @@ Fetch your app configuration from the Partner Dashboard.
 
 ```
 USAGE
-  $ shopify app config link [--no-color] [--verbose] [--path <value>] [-c <value>] [--client-id <value>]
+  $ shopify app config link [--client-id <value>] [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --client-id=<value>   The Client ID of your app.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   Fetch your app configuration from the Partner Dashboard.
@@ -105,14 +102,14 @@ Push your app configuration to the Partner Dashboard.
 
 ```
 USAGE
-  $ shopify app config push [--no-color] [--verbose] [--path <value>] [-c <value>] [-f]
+  $ shopify app config push [-c <value>] [-f] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
   -f, --force           Push configuration without asking for confirmation.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the logs.
 
 DESCRIPTION
   Push your app configuration to the Partner Dashboard.
@@ -126,14 +123,14 @@ Activate an app configuration.
 
 ```
 USAGE
-  $ shopify app config use [CONFIG] [--no-color] [--verbose] [--path <value>] [--reset]
+  $ shopify app config use [CONFIG] [--no-color] [--path <value>] [--reset] [--verbose]
 
 ARGUMENTS
   CONFIG  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
 
 FLAGS
   --no-color      Disable color output.
-  --path=<value>  [default: .] The path to your app directory.
+  --path=<value>  The path to your app directory.
   --reset         Reset current configuration.
   --verbose       Increase the verbosity of the logs.
 
@@ -149,23 +146,23 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--reset | ]
-    [-f] [--no-release] [--message <value>] [--version <value>] [--source-control-url <value>]
+  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-color] [--no-release]
+    [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
-  -c, --config=<value>          The name of the app configuration.
-  -f, --force                   Deploy without asking for confirmation.
-  --client-id=<value>           The Client ID of your app.
-  --message=<value>             Optional message that will be associated with this version. This is for internal use
-                                only and won't be available externally.
-  --no-color                    Disable color output.
-  --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
-  --path=<value>                [default: .] The path to your app directory.
-  --reset                       Reset all your settings.
-  --source-control-url=<value>  URL associated with the new app version.
-  --verbose                     Increase the verbosity of the logs.
-  --version=<value>             Optional version tag that will be associated with this app version. If not provided, an
-                                auto-generated identifier will be generated for this app version.
+  -c, --config=<value>              The name of the app configuration.
+  -f, --force                       Deploy without asking for confirmation.
+      --client-id=<value>           The Client ID of your app.
+      --message=<value>             Optional message that will be associated with this version. This is for internal use
+                                    only and won't be available externally.
+      --no-color                    Disable color output.
+      --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
+      --path=<value>                The path to your app directory.
+      --reset                       Reset all your settings.
+      --source-control-url=<value>  URL associated with the new app version.
+      --verbose                     Increase the verbosity of the logs.
+      --version=<value>             Optional version tag that will be associated with this app version. If not provided,
+                                    an auto-generated identifier will be generated for this app version.
 
 DESCRIPTION
   Deploy your Shopify app.
@@ -179,30 +176,31 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [-s <value>]
-    [--reset | ] [--skip-dependencies-installation] [--no-update] [--subscription-product-url <value>]
-    [--checkout-cart-url <value>] [--tunnel-url <value> |  | ] [-t <value>] [--theme-app-extension-port <value>]
-    [--notify <value>]
+  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--no-color]
+    [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>]
+    [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> |  | ]
+    [--verbose]
 
 FLAGS
-  -c, --config=<value>                The name of the app configuration.
-  -s, --store=<value>                 Store URL. Must be an existing development or Shopify Plus sandbox store.
-  -t, --theme=<value>                 Theme ID or name of the theme app extension host theme.
-  --checkout-cart-url=<value>         Resource URL for checkout UI extension. Format:
-                                      "/cart/{productVariantID}:{productQuantity}"
-  --client-id=<value>                 The Client ID of your app.
-  --no-color                          Disable color output.
-  --no-update                         Skips the Partners Dashboard URL update step.
-  --notify=<value>                    The file path or URL. The file path is to a file that you want updated on idle.
-                                      The URL path is where you want a webhook posted to report on file changes.
-  --path=<value>                      [default: .] The path to your app directory.
-  --reset                             Reset all your settings.
-  --skip-dependencies-installation    Skips the installation of dependencies. Deprecated, use workspaces instead.
-  --subscription-product-url=<value>  Resource URL for subscription UI extension. Format: "/products/{productId}"
-  --theme-app-extension-port=<value>  Local port of the theme app extension development server.
-  --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
-                                      "https://my-tunnel-url:port".
-  --verbose                           Increase the verbosity of the logs.
+  -c, --config=<value>                    The name of the app configuration.
+  -s, --store=<value>                     Store URL. Must be an existing development or Shopify Plus sandbox store.
+  -t, --theme=<value>                     Theme ID or name of the theme app extension host theme.
+      --checkout-cart-url=<value>         Resource URL for checkout UI extension. Format:
+                                          "/cart/{productVariantID}:{productQuantity}"
+      --client-id=<value>                 The Client ID of your app.
+      --no-color                          Disable color output.
+      --no-update                         Skips the Partners Dashboard URL update step.
+      --notify=<value>                    The file path or URL. The file path is to a file that you want updated on
+                                          idle. The URL path is where you want a webhook posted to report on file
+                                          changes.
+      --path=<value>                      The path to your app directory.
+      --reset                             Reset all your settings.
+      --skip-dependencies-installation    Skips the installation of dependencies. Deprecated, use workspaces instead.
+      --subscription-product-url=<value>  Resource URL for subscription UI extension. Format: "/products/{productId}"
+      --theme-app-extension-port=<value>  Local port of the theme app extension development server.
+      --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
+                                          "https://my-tunnel-url:port".
+      --verbose                           Increase the verbosity of the logs.
 
 DESCRIPTION
   Run the app.
@@ -216,14 +214,14 @@ Pull app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env pull [--no-color] [--verbose] [--path <value>] [-c <value>] [--env-file <value>]
+  $ shopify app env pull [-c <value>] [--env-file <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --env-file=<value>    Specify an environment file to update if the update flag is set
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
+  -c, --config=<value>    The name of the app configuration.
+      --env-file=<value>  Specify an environment file to update if the update flag is set
+      --no-color          Disable color output.
+      --path=<value>      The path to your app directory.
+      --verbose           Increase the verbosity of the logs.
 
 DESCRIPTION
   Pull app and extensions environment variables.
@@ -237,13 +235,13 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [--no-color] [--verbose] [--path <value>] [-c <value>]
+  $ shopify app env show [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the logs.
 
 DESCRIPTION
   Display app and extensions environment variables.
@@ -257,13 +255,13 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--no-color] [--verbose] [--path <value>] [-c <value>]
+  $ shopify app function build [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your function directory.
-  --verbose             Increase the verbosity of the logs.
+      --no-color        Disable color output.
+      --path=<value>    The path to your function directory.
+      --verbose         Increase the verbosity of the logs.
 
 DESCRIPTION
   Compile a function to wasm.
@@ -277,16 +275,16 @@ Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--no-color] [--verbose] [--path <value>] [-c <value>] [-i <value>] [-e <value>] [-j]
+  $ shopify app function run [-c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
   -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
   -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
   -j, --json            Log the run result as a JSON object.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your function directory.
-  --verbose             Increase the verbosity of the logs.
+      --no-color        Disable color output.
+      --path=<value>    The path to your function directory.
+      --verbose         Increase the verbosity of the logs.
 
 DESCRIPTION
   Run a function locally for testing.
@@ -300,15 +298,15 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--stdout]
+  $ shopify app function schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --client-id=<value>   The Client ID to fetch the schema with.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your function directory.
-  --stdout              Output the schema to stdout instead of writing to a file.
-  --verbose             Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID to fetch the schema with.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --stdout             Output the schema to stdout instead of writing to a file.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -322,13 +320,13 @@ Generate GraphQL types for a JavaScript function.
 
 ```
 USAGE
-  $ shopify app function typegen [--no-color] [--verbose] [--path <value>] [-c <value>]
+  $ shopify app function typegen [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your function directory.
-  --verbose             Increase the verbosity of the logs.
+      --no-color        Disable color output.
+      --path=<value>    The path to your function directory.
+      --verbose         Increase the verbosity of the logs.
 
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
@@ -342,21 +340,22 @@ Scaffold an Extension.
 
 ```
 USAGE
-  $ shopify app generate extension [FILE] [--no-color] [--verbose] [--path <value>] [-t <value>] [-t <value>] [-n <value>]
-    [--flavor vanilla-js|react|typescript|typescript-react|wasm|rust] [--reset | -c <value>] [--client-id <value> | ]
+  $ shopify app generate extension [FILE] [--client-id <value> | -c <value>] [--flavor
+    vanilla-js|react|typescript|typescript-react|wasm|rust] [-n <value>] [--no-color] [--path <value>] [--reset | ] [-t
+    <value>] [-t <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>    The name of the app configuration.
-  -n, --name=<value>      name of your Extension
-  -t, --template=<value>  Extension template
-  -t, --type=<value>      Deprecated. Please use --template
-  --client-id=<value>     The Client ID of your app.
-  --flavor=<option>       Choose a starting template for your extension, where applicable
-                          <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
-  --no-color              Disable color output.
-  --path=<value>          [default: .] The path to your app directory.
-  --reset                 Reset all your settings.
-  --verbose               Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration.
+  -n, --name=<value>       name of your Extension
+  -t, --template=<value>   Extension template
+  -t, --type=<value>       Deprecated. Please use --template
+      --client-id=<value>  The Client ID of your app.
+      --flavor=<option>    Choose a starting template for your extension, where applicable
+                           <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   Scaffold an Extension.
@@ -373,15 +372,15 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app generate schema [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--stdout]
+  $ shopify app generate schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --client-id=<value>   The Client ID to fetch the schema with.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your function directory.
-  --stdout              Output the schema to stdout instead of writing to a file.
-  --verbose             Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID to fetch the schema with.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --stdout             Output the schema to stdout instead of writing to a file.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -395,15 +394,15 @@ Import dashboard-managed flow extensions into your app.
 
 ```
 USAGE
-  $ shopify app import-flow-legacy-extensions [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c
-  <value>]
+  $ shopify app import-flow-legacy-extensions [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+  [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --client-id=<value>   The Client ID of your app.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   Import dashboard-managed flow extensions into your app.
@@ -417,15 +416,15 @@ Print basic information about your app and extensions.
 
 ```
 USAGE
-  $ shopify app info [--no-color] [--verbose] [--path <value>] [-c <value>] [--json] [--web-env]
+  $ shopify app info [-c <value>] [--json] [--no-color] [--path <value>] [--verbose] [--web-env]
 
 FLAGS
   -c, --config=<value>  The name of the app configuration.
-  --json                format output as JSON
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
-  --web-env             Outputs environment variables necessary for running and deploying web/.
+      --json            format output as JSON
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the logs.
+      --web-env         Outputs environment variables necessary for running and deploying web/.
 
 DESCRIPTION
   Print basic information about your app and extensions.
@@ -439,18 +438,18 @@ Release an app version.
 
 ```
 USAGE
-  $ shopify app release --version <value> [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c
-    <value>] [--reset] [-f]
+  $ shopify app release --version <value> [--client-id <value> | -c <value>] [-f] [--no-color] [--path <value>]
+    [--reset] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  -f, --force           Release without asking for confirmation.
-  --client-id=<value>   The Client ID of your app.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --reset               Reset all your settings.
-  --verbose             Increase the verbosity of the logs.
-  --version=<value>     (required) The name of the app version to release.
+  -c, --config=<value>     The name of the app configuration.
+  -f, --force              Release without asking for confirmation.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the logs.
+      --version=<value>    (required) The name of the app version to release.
 
 DESCRIPTION
   Release an app version.
@@ -464,18 +463,18 @@ Update your app and redirect URLs in the Partners Dashboard.
 
 ```
 USAGE
-  $ shopify app update-url [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>] [--app-url
-    <value>] [--redirect-urls <value>]
+  $ shopify app update-url [--app-url <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
+    [--redirect-urls <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-  --app-url=<value>        URL through which merchants will access your app.
-  --client-id=<value>      The Client ID of your app.
-  --no-color               Disable color output.
-  --path=<value>           [default: .] The path to your app directory.
-  --redirect-urls=<value>  Comma separated list of allowed URLs where merchants are redirected after the app is
-                           installed
-  --verbose                Increase the verbosity of the logs.
+  -c, --config=<value>         The name of the app configuration.
+      --app-url=<value>        URL through which merchants will access your app.
+      --client-id=<value>      The Client ID of your app.
+      --no-color               Disable color output.
+      --path=<value>           The path to your app directory.
+      --redirect-urls=<value>  Comma separated list of allowed URLs where merchants are redirected after the app is
+                               installed
+      --verbose                Increase the verbosity of the logs.
 
 DESCRIPTION
   Update your app and redirect URLs in the Partners Dashboard.
@@ -489,16 +488,16 @@ List deployed versions of your app.
 
 ```
 USAGE
-  $ shopify app versions list [FILE] [--no-color] [--verbose] [--path <value>] [--client-id <value> | -c <value>]
-    [--json]
+  $ shopify app versions list [FILE] [--client-id <value> | -c <value>] [--json] [--no-color] [--path <value>]
+    [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  --client-id=<value>   The Client ID to fetch versions for.
-  --json                Output the versions list as JSON.
-  --no-color            Disable color output.
-  --path=<value>        [default: .] The path to your app directory.
-  --verbose             Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID to fetch versions for.
+      --json               Output the versions list as JSON.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   List deployed versions of your app.
@@ -533,18 +532,18 @@ USAGE
     <value>] [--output csv|json|yaml |  | [--csv | --no-truncate]] [--no-header | ]
 
 FLAGS
-  -h, --help         Show CLI help.
-  -x, --extended     show extra columns
-  --columns=<value>  only show provided columns (comma-separated)
-  --csv              output is csv format [alias: --output=csv]
-  --filter=<value>   filter property by partial string matching, ex: name=foo
-  --hidden           show hidden commands
-  --no-header        hide table header from output
-  --no-truncate      do not truncate output to fit screen
-  --output=<option>  output in a more machine friendly format
-                     <options: csv|json|yaml>
-  --sort=<value>     property to sort by (prepend '-' for descending)
-  --tree             show tree of commands
+  -h, --help             Show CLI help.
+  -x, --extended         show extra columns
+      --columns=<value>  only show provided columns (comma-separated)
+      --csv              output is csv format [alias: --output=csv]
+      --filter=<value>   filter property by partial string matching, ex: name=foo
+      --hidden           show hidden commands
+      --no-header        hide table header from output
+      --no-truncate      do not truncate output to fit screen
+      --output=<option>  output in a more machine friendly format
+                         <options: csv|json|yaml>
+      --sort=<value>     property to sort by (prepend '-' for descending)
+      --tree             show tree of commands
 
 GLOBAL FLAGS
   --json  Format output as json.
@@ -611,55 +610,13 @@ DESCRIPTION
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.18/src/commands/help.ts)_
 
-## `shopify kitchen-sink async`
-
-View the UI kit components that process async tasks
-
-```
-USAGE
-  $ shopify kitchen-sink async
-
-DESCRIPTION
-  View the UI kit components that process async tasks
-```
-
-_See code: [dist/cli/commands/kitchen-sink/async.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.53.0/dist/cli/commands/kitchen-sink/async.js)_
-
-## `shopify kitchen-sink prompts`
-
-View the UI kit components prompts
-
-```
-USAGE
-  $ shopify kitchen-sink prompts
-
-DESCRIPTION
-  View the UI kit components prompts
-```
-
-_See code: [dist/cli/commands/kitchen-sink/prompts.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.53.0/dist/cli/commands/kitchen-sink/prompts.js)_
-
-## `shopify kitchen-sink static`
-
-View the UI kit components that display static output
-
-```
-USAGE
-  $ shopify kitchen-sink static
-
-DESCRIPTION
-  View the UI kit components that display static output
-```
-
-_See code: [dist/cli/commands/kitchen-sink/static.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.53.0/dist/cli/commands/kitchen-sink/static.js)_
-
 ## `shopify plugins:install PLUGIN...`
 
 Installs a plugin into the CLI.
 
 ```
 USAGE
-  $ shopify plugins:install PLUGIN...
+  $ shopify plugins add plugins:install PLUGIN...
 
 ARGUMENTS
   PLUGIN  Plugin to install.
@@ -697,7 +654,7 @@ Displays installation properties of a plugin.
 
 ```
 USAGE
-  $ shopify plugins:inspect PLUGIN...
+  $ shopify plugins inspect PLUGIN...
 
 ARGUMENTS
   PLUGIN  [default: .] Plugin to inspect.
@@ -724,7 +681,7 @@ Installs a plugin into the CLI.
 
 ```
 USAGE
-  $ shopify plugins:install PLUGIN...
+  $ shopify plugins install PLUGIN...
 
 ARGUMENTS
   PLUGIN  Plugin to install.
@@ -764,7 +721,7 @@ Links a plugin into the CLI for development.
 
 ```
 USAGE
-  $ shopify plugins:link PLUGIN
+  $ shopify plugins link PLUGIN
 
 ARGUMENTS
   PATH  [default: .] path to plugin
@@ -793,7 +750,7 @@ Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins:uninstall PLUGIN...
+  $ shopify plugins remove plugins:uninstall PLUGIN...
 
 ARGUMENTS
   PLUGIN  plugin to uninstall
@@ -816,7 +773,7 @@ Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins:uninstall PLUGIN...
+  $ shopify plugins uninstall PLUGIN...
 
 ARGUMENTS
   PLUGIN  plugin to uninstall
@@ -841,7 +798,7 @@ Removes a plugin from the CLI.
 
 ```
 USAGE
-  $ shopify plugins:uninstall PLUGIN...
+  $ shopify plugins unlink plugins:uninstall PLUGIN...
 
 ARGUMENTS
   PLUGIN  plugin to uninstall
@@ -896,9 +853,9 @@ Validate the theme.
 
 ```
 USAGE
-  $ shopify theme check [--no-color] [--verbose] [--dev-preview] [--path <value>] [-a] [-c <value>] [-C <value>]
-    [-x <value>] [--fail-level crash|error|suggestion|style|warning|info] [--update-docs] [--init] [--list] [-o
-    text|json] [--print] [-v] [-e <value>]
+  $ shopify theme check [-a] [-c <value>] [-C <value>] [--dev-preview] [-e <value>] [-x <value>] [--fail-level
+    crash|error|suggestion|style|warning|info] [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print]
+    [--update-docs] [--verbose] [-v]
 
 FLAGS
   -C, --config=<value>            Use the config provided, overriding .theme-check.yml if present
@@ -914,17 +871,17 @@ FLAGS
   -v, --version                   Print Theme Check version
   -x, --exclude-category=<value>  Exclude this category of checks
                                   Excludes checks matching any category when specified more than once
-  --dev-preview                   Use the dev preview version of theme check
+      --dev-preview               Use the dev preview version of theme check
                                   Applies the typescript implementation of theme check to the theme
-  --fail-level=<option>           [default: error] Minimum severity for exit with error code
+      --fail-level=<option>       [default: error] Minimum severity for exit with error code
                                   <options: crash|error|suggestion|style|warning|info>
-  --init                          Generate a .theme-check.yml file
-  --list                          List enabled checks
-  --no-color                      Disable color output.
-  --path=<value>                  [default: .] The path to your theme directory.
-  --print                         Output active config to STDOUT
-  --update-docs                   Update Theme Check docs (objects, filters, and tags)
-  --verbose                       Increase the verbosity of the logs.
+      --init                      Generate a .theme-check.yml file
+      --list                      List enabled checks
+      --no-color                  Disable color output.
+      --path=<value>              The path to your theme directory.
+      --print                     Output active config to STDOUT
+      --update-docs               Update Theme Check docs (objects, filters, and tags)
+      --verbose                   Increase the verbosity of the logs.
 
 DESCRIPTION
   Validate the theme.
@@ -938,18 +895,18 @@ Shopify Liquid REPL (read-eval-print loop) tool
 
 ```
 USAGE
-  $ shopify theme console [--no-color] [--verbose] [-s <value>] [--password <value>] [-e <value>] [--url <value>]
-    [--port <value>]
+  $ shopify theme console [-e <value>] [--no-color] [--password <value>] [--port <value>] [-s <value>] [--url
+    <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --port=<value>             [default: 9293] Local port to serve authentication service.
-  --url=<value>              [default: /] The url to be used as context
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --port=<value>         [default: 9293] Local port to serve authentication service.
+      --url=<value>          [default: /] The url to be used as context
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool
@@ -963,8 +920,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--no-color] [--verbose] [--password <value>] [-d] [-a] [-f] [-t <value>] [-s <value>]
-    [-e <value>]
+  $ shopify theme delete [-d] [-e <value>] [-f] [--no-color] [--password <value>] [-a] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -a, --show-all             Include others development themes in theme list.
@@ -974,9 +931,9 @@ FLAGS
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>...     Theme ID or name of the remote theme.
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Delete remote themes from the connected store. This command can't be undone.
@@ -990,9 +947,9 @@ Uploads the current theme as a development theme to the connected store, then pr
 
 ```
 USAGE
-  $ shopify theme dev [--no-color] [--verbose] [--path <value>] [--host <value>] [--live-reload
-    hot-reload|full-page|off] [--poll] [--theme-editor-sync] [--port <value>] [-s <value>] [-t <value>] [-n] [-o
-    <value>] [-x <value>] [--password <value>] [-e <value>] [--notify <value>] [--open]
+  $ shopify theme dev [-e <value>] [--host <value>] [-x <value>] [--live-reload hot-reload|full-page|off]
+    [--no-color] [-n] [--notify <value>] [-o <value>] [--open] [--password <value>] [--path <value>] [--poll] [--port
+    <value>] [-s <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -e, --environment=<value>
@@ -1038,7 +995,7 @@ FLAGS
       Password generated from the Theme Access app.
 
   --path=<value>
-      [default: .] The path to your theme directory.
+      The path to your theme directory.
 
   --poll
       Force polling to detect file changes.
@@ -1083,7 +1040,7 @@ Clones a Git repository to use as a starting point for building a new theme.
 
 ```
 USAGE
-  $ shopify theme init [NAME] [--no-color] [--verbose] [--path <value>] [-u <value>] [-l]
+  $ shopify theme init [NAME] [-u <value>] [-l] [--no-color] [--path <value>] [--verbose]
 
 ARGUMENTS
   NAME  Name of the new theme
@@ -1092,9 +1049,9 @@ FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
   -u, --clone-url=<value>  [default: https://github.com/Shopify/dawn.git] The Git URL to clone from. Defaults to
                            Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
-  --no-color               Disable color output.
-  --path=<value>           [default: .] The path to your theme directory.
-  --verbose                Increase the verbosity of the logs.
+      --no-color           Disable color output.
+      --path=<value>       The path to your theme directory.
+      --verbose            Increase the verbosity of the logs.
 
 DESCRIPTION
   Clones a Git repository to use as a starting point for building a new theme.
@@ -1108,7 +1065,7 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--no-color] [--verbose] [--dev-preview]
+  $ shopify theme language-server [--dev-preview] [--no-color] [--verbose]
 
 FLAGS
   --dev-preview  Use the dev preview version of theme check
@@ -1128,21 +1085,21 @@ Lists your remote themes.
 
 ```
 USAGE
-  $ shopify theme list [--no-color] [--verbose] [--password <value>] [-s <value>] [--role
-    live|unpublished|development] [--name <value>] [--id <value>] [--json] [-e <value>]
+  $ shopify theme list [-e <value>] [--id <value>] [--json] [--name <value>] [--no-color] [--password <value>]
+    [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  --id=<value>               Only list theme with the given ID.
-  --json                     Output the theme list as JSON.
-  --name=<value>             Only list themes that contain the given name.
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --role=<option>            Only list themes with the given role.
+      --id=<value>           Only list theme with the given ID.
+      --json                 Output the theme list as JSON.
+      --name=<value>         Only list themes that contain the given name.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --role=<option>        Only list themes with the given role.
                              <options: live|unpublished|development>
-  --verbose                  Increase the verbosity of the logs.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Lists your remote themes.
@@ -1156,8 +1113,8 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--no-color] [--verbose] [--password <value>] [-d] [-E] [-l] [-t <value>] [-s <value>]
-    [-e <value>]
+  $ shopify theme open [-d] [-E] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
   -E, --editor               Open the theme editor for the specified theme in the browser.
@@ -1167,9 +1124,9 @@ FLAGS
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Opens the preview of your remote theme.
@@ -1183,11 +1140,11 @@ Package your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
-  $ shopify theme package [--no-color] [--verbose] [--path <value>]
+  $ shopify theme package [--no-color] [--path <value>] [--verbose]
 
 FLAGS
   --no-color      Disable color output.
-  --path=<value>  [default: .] The path to your theme directory.
+  --path=<value>  The path to your theme directory.
   --verbose       Increase the verbosity of the logs.
 
 DESCRIPTION
@@ -1202,7 +1159,7 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--no-color] [--verbose] [--password <value>] [-f] [-t <value>] [-s <value>] [-e <value>]
+  $ shopify theme publish [-e <value>] [-f] [--no-color] [--password <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
@@ -1210,9 +1167,9 @@ FLAGS
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Set a remote theme as the live theme.
@@ -1226,8 +1183,8 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e <value>]
-    [-t <value>] [-d] [-l] [-n] [-o <value>] [-x <value>]
+  $ shopify theme pull [-d] [-e <value>] [-x <value>] [-l] [--no-color] [-n] [-o <value>] [--password <value>]
+    [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -d, --development          Pull theme files from your remote development theme.
@@ -1239,10 +1196,10 @@ FLAGS
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
   -t, --theme=<value>        Theme ID or name of the remote theme.
   -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --path=<value>             [default: .] The path to your theme directory.
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --path=<value>         The path to your theme directory.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Download your remote theme files locally.
@@ -1256,8 +1213,8 @@ Uploads your local theme files to the connected store, overwriting the remote ve
 
 ```
 USAGE
-  $ shopify theme push [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e <value>]
-    [-t <value>] [-d] [-l] [-u] [-n] [-o <value>] [-x <value>] [-j] [-a] [-p]
+  $ shopify theme push [-a] [-d] [-e <value>] [-x <value>] [-j] [-l] [--no-color] [-n] [-o <value>] [--password
+    <value>] [--path <value>] [-p] [-s <value>] [-t <value>] [-u] [--verbose]
 
 FLAGS
   -a, --allow-live           Allow push to a live theme.
@@ -1273,10 +1230,10 @@ FLAGS
   -t, --theme=<value>        Theme ID or name of the remote theme.
   -u, --unpublished          Create a new unpublished theme and push to it.
   -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --path=<value>             [default: .] The path to your theme directory.
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --path=<value>         The path to your theme directory.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
@@ -1290,16 +1247,16 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--no-color] [--verbose] [--path <value>] [--password <value>] [-s <value>] [-e <value>]
+  $ shopify theme share [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>  The environment to apply to the current command.
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
                              (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  --no-color                 Disable color output.
-  --password=<value>         Password generated from the Theme Access app.
-  --path=<value>             [default: .] The path to your theme directory.
-  --verbose                  Increase the verbosity of the logs.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --path=<value>         The path to your theme directory.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to
@@ -1345,8 +1302,8 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
-  $ shopify webhook trigger [--help] [--topic <value>] [--api-version <value>] [--delivery-method
-    http|google-pub-sub|event-bridge] [--shared-secret <value>] [--client-secret <value>] [--address <value>]
+  $ shopify webhook trigger [--address <value>] [--api-version <value>] [--client-secret <value>] [--delivery-method
+    http|google-pub-sub|event-bridge] [--help] [--shared-secret <value>] [--topic <value>]
 
 FLAGS
   --address=<value>

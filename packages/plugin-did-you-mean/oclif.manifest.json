@@ -1,38 +1,80 @@
 {
-  "version": "3.53.0",
   "commands": {
     "config:autocorrect:off": {
-      "id": "config:autocorrect:off",
+      "aliases": [
+      ],
+      "args": {
+      },
       "description": "Disable autocorrect.",
-      "strict": true,
-      "pluginName": "@shopify/plugin-did-you-mean",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:autocorrect:off",
+      "isESM": true,
       "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginName": "@shopify/plugin-did-you-mean",
       "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "off.js"
+      ],
+      "strict": true
     },
     "config:autocorrect:on": {
-      "id": "config:autocorrect:on",
+      "aliases": [
+      ],
+      "args": {
+      },
       "description": "Enable autocorrect.",
-      "strict": true,
-      "pluginName": "@shopify/plugin-did-you-mean",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:autocorrect:on",
+      "isESM": true,
       "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginName": "@shopify/plugin-did-you-mean",
       "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "on.js"
+      ],
+      "strict": true
     },
     "config:autocorrect:status": {
-      "id": "config:autocorrect:status",
+      "aliases": [
+      ],
+      "args": {
+      },
       "description": "Check autocorrect current status.",
-      "strict": true,
-      "pluginName": "@shopify/plugin-did-you-mean",
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "config:autocorrect:status",
+      "isESM": true,
       "pluginAlias": "@shopify/plugin-did-you-mean",
+      "pluginName": "@shopify/plugin-did-you-mean",
       "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "status.js"
+      ],
+      "strict": true
     }
-  }
+  },
+  "version": "3.53.0"
 }

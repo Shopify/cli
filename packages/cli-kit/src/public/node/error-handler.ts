@@ -167,7 +167,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
   const bugsnagConfigProjectRoot: string = Bugsnag?._client?._config?.projectRoot ?? path.cwd()
   const projectRoot = path.normalizePath(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
-    config.plugins.map(async (plugin) => {
+    [...config.plugins].map(async ([_, plugin]) => {
       const followSymlinks = await realpath(plugin.root)
       return {name: plugin.name, pluginPath: path.normalizePath(followSymlinks)}
     }),

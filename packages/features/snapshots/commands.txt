@@ -23,9 +23,6 @@
  config autocorrect on             @shopify/plugin-did-you-mean 
  config autocorrect status         @shopify/plugin-did-you-mean 
  help                              @oclif/plugin-help           
- kitchen-sink async                @shopify/cli                 
- kitchen-sink prompts              @shopify/cli                 
- kitchen-sink static               @shopify/cli                 
  plugins add                       @oclif/plugin-plugins        
  plugins inspect                   @oclif/plugin-plugins        
  plugins install                   @oclif/plugin-plugins        
