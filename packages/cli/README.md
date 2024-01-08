@@ -47,6 +47,7 @@
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
+* [`shopify theme rename NAME`](#shopify-theme-rename-name)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
@@ -1240,6 +1241,27 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.53.0/dist/cli/commands/theme/push.js)_
+
+## `shopify theme rename NAME`
+
+Renames an existing theme.
+
+```
+USAGE
+  $ shopify theme rename NAME [--no-color] [--verbose]
+
+ARGUMENTS
+  NAME  The new name for the theme.
+
+FLAGS
+  --no-color  Disable color output.
+  --verbose   Increase the verbosity of the logs.
+
+DESCRIPTION
+  Renames an existing theme.
+```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.53.0/dist/cli/commands/theme/rename.js)_
 
 ## `shopify theme share`
 

@@ -1475,6 +1475,52 @@
       ],
       "strict": true
     },
+    "theme:rename": {
+      "aliases": [
+      ],
+      "args": {
+        "name": {
+          "description": "The new name for the theme.",
+          "name": "name",
+          "required": true
+        }
+      },
+      "description": "Renames an existing theme.",
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the logs.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:rename",
+      "isESM": true,
+      "pluginAlias": "@shopify/theme",
+      "pluginName": "@shopify/theme",
+      "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "cli",
+        "commands",
+        "theme",
+        "rename.js"
+      ],
+      "strict": true
+    },
     "theme:serve": {
       "aliases": [
       ],
