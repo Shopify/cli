@@ -6,7 +6,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {PartnersAppForIdentifierMatching, ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
-import {tryWithRetryAfterRecoveryFunction} from '@shopify/cli-kit/common/retry'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
@@ -54,8 +54,8 @@ export const pushUpdatesForDraftableExtensions: DevProcessFunction<DraftableExte
         signal,
         onChange: async () => {
           // At this point the extension has already been built and is ready to be updated
-          return tryWithRetryAfterRecoveryFunction(
-            async () => await updateExtensionDraft({extension, token: currentToken, apiKey, registrationId, stdout, stderr}),
+          return performActionWithRetryAfterRecovery(
+            async () => updateExtensionDraft({extension, token: currentToken, apiKey, registrationId, stdout, stderr}),
             refreshToken,
           )
         },

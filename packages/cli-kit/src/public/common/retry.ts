@@ -1,12 +1,28 @@
-export async function tryWithRetryAfterRecoveryFunction<T>(action: () => Promise<T>, recovery: () => Promise<unknown>): Promise<T> {
+/**
+ * Perform an action optimistically. If it fails the first time, first initiate
+ * a provided recovery procedure, then retry the action. If it fails again,
+ * throw the error.
+ *
+ * This is useful for actions that may fail due to recoverable errors, such as
+ * an expired token that can be refreshed. In this case, the recovery procedure
+ * would refresh the token.
+ *
+ * @param performAction - The action to perform.
+ * @param recoveryProcedure - The recovery procedure to perform if the action
+ * fails the first time.
+ */
+export async function performActionWithRetryAfterRecovery<T>(
+  performAction: () => Promise<T>,
+  recoveryProcedure: () => Promise<unknown>,
+): Promise<T> {
   let returnVal: T | undefined
   try {
-    returnVal = await action()
+    returnVal = await performAction()
     return returnVal
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
-    // Retry once with a new token, in case the token expired or was revoked
-    await recovery()
-    return action()
+    // Run the provided recovery procedure, then retry the action
+    await recoveryProcedure()
+    return performAction()
   }
 }

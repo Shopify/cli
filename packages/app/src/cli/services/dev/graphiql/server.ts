@@ -2,7 +2,7 @@ import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import express from 'express'
 import bodyParser from 'body-parser'
-import {tryWithRetryAfterRecoveryFunction} from '@shopify/cli-kit/common/retry'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
@@ -102,7 +102,7 @@ export function setupGraphiQLServer({
   })
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
-    return tryWithRetryAfterRecoveryFunction(
+    return performActionWithRetryAfterRecovery(
       async () => supportedApiVersions({storeFqdn, token: await token()}),
       refreshToken,
     )

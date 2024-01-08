@@ -1,24 +1,30 @@
-import {tryWithRetryAfterRecoveryFunction} from './retry.js'
+import {performActionWithRetryAfterRecovery} from './retry.js'
 import {describe, expect, test} from 'vitest'
 
-describe('tryWithRetryAfterRecoveryFunction', () => {
+describe('performActionWithRetryAfterRecovery', () => {
   function failUntilRecovered() {
     let succeed = false
-    const action = () => {
+    async function action(): Promise<string> {
       if (!succeed) {
         throw new Error('fail')
       }
       return 'ok'
     }
-    const recover = () => {
+    async function recover(): Promise<void> {
       succeed = true
     }
-    return {action, recover}
+    async function failToRecover(): Promise<void> {
+      // dummy recovery action
+    }
+    return {action, recover, failToRecover}
   }
 
   test('succeeds when no error', async () => {
     // Given/When
-    const got = await tryWithRetryAfterRecoveryFunction(() => 'ok', () => 'recovered')
+    const got = await performActionWithRetryAfterRecovery<string>(
+      async () => 'ok',
+      async () => {},
+    )
 
     // Then
     expect(got).toBe('ok')
@@ -27,10 +33,10 @@ describe('tryWithRetryAfterRecoveryFunction', () => {
   test('succeeds when error on first try', async () => {
     // Given
     const {action, recover} = failUntilRecovered()
-    expect(action).toThrow('fail')
+    await expect(action()).rejects.toThrow('fail')
 
     // When
-    const got = await tryWithRetryAfterRecoveryFunction(action, recover)
+    const got = await performActionWithRetryAfterRecovery(action, recover)
 
     // Then
     expect(got).toBe('ok')
@@ -38,11 +44,10 @@ describe('tryWithRetryAfterRecoveryFunction', () => {
 
   test('fails when error afters recovery', async () => {
     // Given
-    const {action} = failUntilRecovered()
-    expect(action).toThrow('fail')
-
+    const {action, failToRecover} = failUntilRecovered()
+    await expect(action()).rejects.toThrow('fail')
 
     // When/Then
-    expect(tryWithRetryAfterRecoveryFunction(action, () => 'not recovering')).rejects.toThrow('fail')
+    await expect(performActionWithRetryAfterRecovery(action, failToRecover)).rejects.toThrow('fail')
   })
 })
