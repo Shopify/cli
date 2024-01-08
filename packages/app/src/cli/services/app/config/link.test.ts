@@ -91,8 +91,8 @@ describe('link', () => {
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "app1"
 client_id = "api-key"
+name = "app1"
 application_url = "https://example.com"
 embedded = true
 
@@ -170,8 +170,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "my app"
 client_id = "12345"
+name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 
@@ -252,8 +252,8 @@ dev_store_url = "my-store.myshopify.com"
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "my app"
 client_id = "different-api-key"
+name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 
@@ -295,8 +295,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "app1"
 client_id = "api-key"
+name = "app1"
 application_url = "https://example.com"
 embedded = true
 
@@ -354,8 +354,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "app1"
 client_id = "api-key"
+name = "app1"
 application_url = "https://example.com"
 embedded = true
 
@@ -478,8 +478,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "app1"
 client_id = "api-key"
+name = "app1"
 application_url = "https://example.com"
 embedded = true
 
@@ -520,8 +520,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "app1"
 client_id = "api-key"
+name = "app1"
 application_url = "https://example.com"
 embedded = true
 
@@ -562,8 +562,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "app1"
 client_id = "api-key"
+name = "app1"
 application_url = "https://example.com"
 embedded = true
 
@@ -688,8 +688,8 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-name = "my app"
 client_id = "12345"
+name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 

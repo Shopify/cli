@@ -83,7 +83,7 @@ describe('app schema validation', () => {
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      delete config.name
+      delete config.client_id
 
       expect(isCurrentAppSchema(config)).toBe(false)
     })

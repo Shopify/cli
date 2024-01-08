@@ -3,6 +3,7 @@ import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
 import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
 import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
+import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
@@ -12,6 +13,7 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
+  BrandingSpecIdentifier,
   WebhooksSpecIdentifier,
   AppProxySpecIdentifier,
   PosSpecIdentifier,
