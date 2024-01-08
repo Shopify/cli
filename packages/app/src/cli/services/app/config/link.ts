@@ -4,6 +4,7 @@ import {
   AppInterface,
   CurrentAppConfiguration,
   EmptyApp,
+  getAppScopes,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
@@ -241,9 +242,9 @@ function addRemoteAppAccessScopesConfig(appConfiguration: AppConfiguration, remo
       scopes: appConfiguration.scopes,
       use_legacy_install_flow: true,
     }
-  } else if (isCurrentAppSchema(appConfiguration) && appConfiguration.access_scopes?.scopes) {
+  } else if (isCurrentAppSchema(appConfiguration) && getAppScopes(appConfiguration) !== '') {
     accessScopesContent = {
-      scopes: appConfiguration.access_scopes.scopes,
+      scopes: getAppScopes(appConfiguration),
       use_legacy_install_flow: true,
     }
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true

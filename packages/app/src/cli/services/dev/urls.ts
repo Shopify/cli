@@ -199,7 +199,7 @@ export async function updateURLs(
       ...localApp.configuration,
       application_url: urls.applicationUrl,
       auth: {
-        ...localApp.configuration.auth,
+        ...(localApp.configuration.auth ?? {}),
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }

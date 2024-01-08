@@ -16,4 +16,11 @@ export interface SpecsAppConfiguration {
     url: string
   }
   webhooks?: WebhooksConfig
+  access_scopes?: {
+    scopes?: string
+    use_legacy_install_flow?: boolean
+  }
+  auth?: {
+    redirect_urls: string[]
+  }
 }
