@@ -8,6 +8,13 @@ export async function asyncTasks() {
   const videoDir = thisFileDir.concat('/../../../../assets/video/kitchen-sink')
 
   await renderVideo({
+    videoPath: videoDir.concat("/marquee/video.json"),
+    captionsPath: videoDir.concat("/marquee/captions.srt"),
+    duration: 48000,
+    maxWidth: 80,
+  })
+
+  await renderVideo({
     videoPath: videoDir.concat("/winter-edition-2023/video.gif"),
     audioPath: videoDir.concat("/winter-edition-2023/audio.mp3"),
     captionsPath: videoDir.concat("/winter-edition-2023//captions.srt"),
