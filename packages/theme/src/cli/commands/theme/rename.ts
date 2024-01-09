@@ -42,6 +42,7 @@ export default class Rename extends ThemeCommand {
     const renameOptions: RenameOptions = {
       development: flags.development,
       newName: args.name,
+      theme: flags.theme,
     }
 
     await renameTheme(adminSession, renameOptions)
