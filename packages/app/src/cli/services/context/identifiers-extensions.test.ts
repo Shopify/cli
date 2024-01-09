@@ -18,7 +18,6 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 const REGISTRATION_A = {
@@ -68,11 +67,20 @@ let EXTENSION_A_2: ExtensionInstance
 let EXTENSION_B: ExtensionInstance
 let FUNCTION_A: ExtensionInstance
 
-const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: ExtensionInstance[] = []): AppInterface => {
+const LOCAL_APP = (
+  uiExtensions: ExtensionInstance[],
+  functionExtensions: ExtensionInstance[] = [],
+  includeDeployConfig = false,
+): AppInterface => {
   return testApp({
     name: 'my-app',
     directory: '/app',
-    configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
+    configuration: {
+      path: '/shopify.app.toml',
+      scopes: 'read_products',
+      extension_directories: ['extensions/*'],
+      ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),
+    },
     allExtensions: [...uiExtensions, ...functionExtensions],
   })
 }
@@ -83,9 +91,10 @@ const options = (
   identifiers: any = {},
   partnersApp: OrganizationApp = testOrganizationApp(),
   release = true,
+  includeDeployConfig = false,
 ) => {
   return {
-    app: LOCAL_APP(uiExtensions, functionExtensions),
+    app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig),
     token: 'token',
     appId: 'appId',
     appName: 'appName',
@@ -195,7 +204,6 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
   vi.mocked(getUIExtensionsToMigrate).mockReturnValue([])
-  vi.mocked(useVersionedAppConfig).mockReturnValue(false)
 })
 
 describe('matchmaking returns more remote sources than local', () => {
@@ -729,7 +737,7 @@ describe('ensureExtensionsIds: Migrates extension', () => {
 })
 
 describe('ensuredeployConfirmed: handle non existent uuid managed extensions', () => {
-  test('when the beta flag is enabled configuration extensions are created', async () => {
+  test('when include config on deploy flag is enabled configuration extensions are created', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {}
@@ -739,10 +747,8 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
       title: 'C_A',
       type: 'POINT_OF_SALE',
     }
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
-
     // When
-    const ensureExtensionsIdsOptions = options([])
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true)
     const CONFIG_A = await testAppConfigExtensions()
     ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
@@ -758,7 +764,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
       extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
     })
   })
-  test('when the beta flag is disabled configuration extensions are not created', async () => {
+  test('when the include config on deploy flag is disabled configuration extensions are not created', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {}
@@ -789,7 +795,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
   })
 })
 describe('ensuredeployConfirmed: handle existent uuid managed extensions', () => {
-  test('when the beta flag is enabled configuration extensions are not created but the uuids are returned', async () => {
+  test('when the include config on deploy flag is enabled configuration extensions are not created but the uuids are returned', async () => {
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {}
@@ -799,10 +805,9 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
       title: 'C_A',
       type: 'POINT_OF_SALE',
     }
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
-    const ensureExtensionsIdsOptions = options([])
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true)
     const CONFIG_A = await testAppConfigExtensions()
     ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {

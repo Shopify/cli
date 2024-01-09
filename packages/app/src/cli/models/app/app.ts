@@ -30,6 +30,7 @@ export const AppSchema = zod.object({
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
       dev_store_url: zod.string().optional(),
+      include_config_on_deploy: zod.boolean().optional(),
     })
     .optional(),
   extension_directories: zod.array(zod.string()).optional(),
@@ -99,6 +100,11 @@ export function appIsLaunchable(app: AppInterface) {
   const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
 
   return Boolean(frontendConfig || backendConfig)
+}
+
+export function includeDeployConfig(configuration: AppConfiguration) {
+  if (isLegacyAppSchema(configuration)) return false
+  return Boolean(configuration.build?.include_config_on_deploy)
 }
 
 export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {

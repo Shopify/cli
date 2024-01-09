@@ -8,7 +8,6 @@ import {
   useDeviceAuth,
   cloudEnvironment,
   macAddress,
-  useVersionedAppConfig,
 } from './local.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
@@ -330,17 +329,5 @@ describe('ciPlatform', () => {
         url: 'https://github.com/user/repo/actions/runs/456',
       },
     })
-  })
-})
-describe('useVersionedAppConfig', () => {
-  test('returns true when SHOPIFY_CLI_VERSIONED_APP_CONFIG is debug', () => {
-    // Given
-    const env = {SHOPIFY_CLI_VERSIONED_APP_CONFIG: '1'}
-
-    // When
-    const got = useVersionedAppConfig(env)
-
-    // Then
-    expect(got).toBe(true)
   })
 })

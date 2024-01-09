@@ -10,12 +10,13 @@ import {
   testUIExtension,
   testOrganizationApp,
   testAppConfigExtensions,
+  DEFAULT_CONFIG,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
@@ -294,14 +295,18 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 non uuid managed extension if beta enabled', async () => {
+  test('uploads the extension bundle with 1 non uuid managed extension if include config on deploy is enabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
-    const app = testApp({allExtensions: [extensionNonUuidManaged]})
+    const localApp = {
+      allExtensions: [extensionNonUuidManaged],
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
+    }
+    const app = testApp(localApp)
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+    await testDeployBundle({app, released: false, commitReference})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -490,7 +495,6 @@ async function testDeployBundle({
   options,
   released = true,
   commitReference,
-  versionedAppConfig = false,
   appToDeploy,
 }: TestDeployBundleInput) {
   // Given
@@ -535,7 +539,6 @@ async function testDeployBundle({
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
-  vi.mocked(useVersionedAppConfig).mockReturnValue(versionedAppConfig)
 
   await deploy({
     app,
@@ -546,20 +549,5 @@ async function testDeployBundle({
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
     commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-  })
-}
-
-async function testWebhooks(app: AppInterface) {
-  return testDeployBundle({
-    app,
-    partnersApp: {
-      id: 'app-id',
-      organizationId: 'org-id',
-      applicationUrl: 'https://my-app.com',
-      redirectUrlWhitelist: ['https://my-app.com/auth'],
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {declarativeWebhooks: true},
-    },
   })
 }

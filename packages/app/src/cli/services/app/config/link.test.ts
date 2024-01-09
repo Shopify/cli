@@ -149,6 +149,7 @@ embedded = false
           build: {
             automatically_update_urls_on_dev: true,
             dev_store_url: 'my-store.myshopify.com',
+            include_config_on_deploy: true,
           },
         } as CurrentAppConfiguration,
       }
@@ -178,6 +179,7 @@ embedded = true
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
