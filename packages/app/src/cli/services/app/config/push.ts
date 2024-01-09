@@ -38,6 +38,7 @@ const FIELD_NAMES: {[key: string]: string} = {
   proxy_sub_path_prefix: 'app_proxy > prefix',
   proxy_url: 'app_proxy > url',
   preferences_url: 'app_preferences > url',
+  groups: 'group',
 }
 
 export async function pushConfig(options: PushOptions) {
@@ -132,7 +133,10 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
     gdprWebhooks,
     posEmbedded: configuration.pos?.embedded ?? false,
     preferencesUrl: configuration.app_preferences?.url ?? null,
+    groups: configuration.group,
   }
+
+  console.log(variables)
 
   if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
     variables.requestedAccessScopes = getAppScopesArray(configuration)

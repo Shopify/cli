@@ -13,6 +13,7 @@ export const PushConfig = gql`
     $posEmbedded: Boolean
     $embedded: Boolean
     $preferencesUrl: Url
+    $groups: [ExtensionGroupsInput]
   ) {
     appUpdate(
       input: {
@@ -27,6 +28,7 @@ export const PushConfig = gql`
         posEmbedded: $posEmbedded
         embedded: $embedded
         preferencesUrl: $preferencesUrl
+        extensionGroups: $groups
       }
     ) {
       userErrors {
@@ -41,6 +43,11 @@ interface GdprWebhooks {
   customerDeletionUrl?: string
   customerDataRequestUrl?: string
   shopDeletionUrl?: string
+}
+
+interface ExtensionGroup {
+  name: string
+  id: string
 }
 
 interface AppProxy {
@@ -61,6 +68,7 @@ export interface PushConfigVariables {
   posEmbedded?: boolean
   embedded?: boolean
   preferencesUrl?: string | null
+  groups?: ExtensionGroup[]
 }
 
 export interface PushConfigSchema {
