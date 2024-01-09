@@ -175,6 +175,10 @@ name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
@@ -187,10 +191,6 @@ api_version = "2023-07"
 
 [pos]
 embedded = false
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "my-store.myshopify.com"
 `
       expect(content).toEqual(expectedContent)
       expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.staging.toml', directory: tmp})

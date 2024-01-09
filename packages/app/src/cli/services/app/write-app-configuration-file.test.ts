@@ -52,6 +52,10 @@ name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "example.myshopify.com"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products"
@@ -80,10 +84,6 @@ embedded = false
 
 [app_preferences]
 url = "https://example.com/prefs"
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "example.myshopify.com"
 `
       expect(content).toEqual(expectedContent)
     })

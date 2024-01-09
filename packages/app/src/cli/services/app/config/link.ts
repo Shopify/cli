@@ -63,7 +63,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 }
 
 async function selectRemoteApp(options: LinkOptions) {
-  const localApp = await loadAppConfigFromDefaultToml(options)
+  const localApp = await loadAppConfigFromCurrentToml(options)
   const directory = localApp?.directory || options.directory
   const partnersSession = await fetchPartnersSession()
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, partnersSession, directory)
@@ -81,7 +81,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
     config: options.commandConfig,
   })
 
-  const localApp = await loadAppConfigFromDefaultToml(options, specifications)
+  const localApp = await loadAppConfigFromCurrentToml(options, specifications)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
@@ -91,7 +91,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
   }
 }
 
-async function loadAppConfigFromDefaultToml(
+async function loadAppConfigFromCurrentToml(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
 ): Promise<AppInterface> {
@@ -100,7 +100,7 @@ async function loadAppConfigFromDefaultToml(
       specifications,
       directory: options.directory,
       mode: 'report',
-      configName: configurationFileNames.app,
+      configName: undefined,
     })
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all

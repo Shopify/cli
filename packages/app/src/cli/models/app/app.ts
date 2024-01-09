@@ -24,11 +24,8 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
-export const NonVersionedAppTopSchema = zod.object({
+export const AppSchema = zod.object({
   client_id: zod.string(),
-})
-
-export const NonVersionedAppBottomSchema = zod.object({
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -38,18 +35,15 @@ export const NonVersionedAppBottomSchema = zod.object({
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
 })
-export const AppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.appModuleFeatures().includes('app_config')
-  const topAndConfigSpecsSchema = specs.filter(isConfigSpecification).reduce((schema, spec) => {
-    return schema.merge(spec.schema)
+  const schema = specs
+    .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }, NonVersionedAppTopSchema as any)
-
-  const schema = topAndConfigSpecsSchema.merge(NonVersionedAppBottomSchema)
+    .reduce((schema, spec) => schema.merge(spec.schema), AppSchema as any)
 
   return specs.length > 0 ? schema.strict() : schema
 }
