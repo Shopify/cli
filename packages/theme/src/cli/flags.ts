@@ -32,12 +32,3 @@ export const themeFlags = {
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
   }),
 }
-
-export const themeDevPreviewFlag = {
-  'dev-preview': Flags.boolean({
-    required: false,
-    description: `Use the dev preview version of theme check
-Applies the typescript implementation of theme check to the theme`,
-    env: 'SHOPIFY_FLAG_DEV_PREVIEW',
-  }),
-}
