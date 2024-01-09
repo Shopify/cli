@@ -13,14 +13,10 @@ import {capitalize} from '@shopify/cli-kit/common/string'
  *  - header:           the header presented when users select a theme
  *  - filter:           the filter ({@link FilterProps}) applied in the list
  *                      of themes in the store
- *  - developmentTheme: ID of current development theme, so that it can be tagged as [yours]
  *
  * @returns the selected {@link Theme}
  */
-export async function findOrSelectTheme(
-  session: AdminSession,
-  options: {header?: string; filter: FilterProps; developmentTheme?: number},
-) {
+export async function findOrSelectTheme(session: AdminSession, options: {header?: string; filter: FilterProps}) {
   const themes = await fetchStoreThemes(session)
   const filter = new Filter(options.filter)
   const store = session.storeFqdn
