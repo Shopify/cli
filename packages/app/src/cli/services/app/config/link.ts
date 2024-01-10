@@ -169,7 +169,6 @@ export function mergeAppConfiguration(
 ): CurrentAppConfiguration {
   return {
     ...addLocalAppConfig(appConfiguration, remoteApp),
-    client_id: remoteApp.apiKey,
     name: remoteApp.title,
     application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
     embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
@@ -253,12 +252,20 @@ function addRemoteAppAccessScopesConfig(appConfiguration: AppConfiguration, remo
 }
 
 function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
-  if (isCurrentAppSchema(appConfiguration)) {
-    const {build, ...otherNonVersionedConfig} = appConfiguration
-    return {...otherNonVersionedConfig, ...(appConfiguration.client_id === remoteApp.apiKey ? {build} : {})}
-  } else {
-    return {...appConfiguration}
+  let localAppConfig = {
+    ...appConfiguration,
+    client_id: remoteApp.apiKey,
   }
+  if (isCurrentAppSchema(appConfiguration)) {
+    localAppConfig = {
+      ...localAppConfig,
+      build: {
+        include_config_on_deploy: true,
+        ...(appConfiguration.client_id === remoteApp.apiKey ? appConfiguration.build : {}),
+      },
+    }
+  }
+  return localAppConfig
 }
 
 export function remoteAppConfigurationExtensionContent(
