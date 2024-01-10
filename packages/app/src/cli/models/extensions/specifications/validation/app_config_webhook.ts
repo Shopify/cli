@@ -1,5 +1,5 @@
-import {httpsRegex} from './common.js'
 import {WebhooksConfig} from '../../../../services/app/configuration.js'
+import {httpsRegex} from '../../../app/validation/common.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const generateSubscriptionKey = (topic: string, uri: string) => `${topic}::${uri}`

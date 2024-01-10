@@ -1,4 +1,5 @@
 import {AppErrors, isWebType} from './loader.js'
+import {ensurePathStartsWithSlash, validateUrl} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
@@ -19,18 +20,6 @@ export const LegacyAppSchema = zod
     web_directories: zod.array(zod.string()).optional(),
   })
   .strict()
-
-// adding http or https presence and absence of new lines to url validation
-export const httpsRegex = /^(https:\/\/)/
-export const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
-  const regex = httpsOnly ? httpsRegex : /^(https?:\/\/)/
-  return zodType
-    .url()
-    .refine((value) => Boolean(value.match(regex)), {message})
-    .refine((value) => !value.includes('\n'), {message})
-}
-
-const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
 
 export const NonVersionedAppTopSchema = zod.object({
   name: zod.string().max(30),
