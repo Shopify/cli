@@ -1,114 +1,54 @@
-import {httpsRegex} from '../../../app/validation/common.js'
-import {WebhooksConfig} from '../types/app_config_webhook.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+import type {WebhooksConfig} from '../types/app_config_webhook.js'
 
-const generateSubscriptionKey = (topic: string, uri: string) => `${topic}::${uri}`
-const duplicateSubscriptionsError = 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`'
+export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
+  const webhookSubscriptionErrors = validateSubscriptions(schema as WebhooksConfig)
 
-export function validateWebhookSubscriptions(schema: object, ctx: zod.RefinementCtx) {
-  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema as WebhooksConfig)
-  if (topLevelSubscriptionErrors) {
-    ctx.addIssue(topLevelSubscriptionErrors)
-    return zod.NEVER
-  }
-
-  const innerSubscriptionErrors = validateInnerSubscriptions(schema as WebhooksConfig)
-  if (innerSubscriptionErrors) {
-    ctx.addIssue(innerSubscriptionErrors)
+  if (webhookSubscriptionErrors) {
+    ctx.addIssue(webhookSubscriptionErrors)
     return zod.NEVER
   }
 }
 
-function validateTopLevelSubscriptions(webhookConfig: WebhooksConfig) {
-  const hasEndpoint = Boolean(webhookConfig.uri)
-  const hasTopics = Boolean(webhookConfig.topics?.length)
-
-  if (hasEndpoint && !hasTopics && !webhookConfig.subscriptions?.length) {
-    return {
-      code: zod.ZodIssueCode.custom,
-      message: 'To use a top-level `uri`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
-      fatal: true,
-    }
-  }
-
-  if (!hasEndpoint && hasTopics) {
-    return {
-      code: zod.ZodIssueCode.custom,
-      message: 'To use top-level topics, you must also provide a top-level `uri`',
-      fatal: true,
-      path: ['topics'],
-    }
-  }
-
-  // given the uri will be static, the only way to have duplicate top-level subscriptions is if there are multiple identical topics
-  if (hasTopics && webhookConfig.topics?.length !== new Set(webhookConfig.topics).size) {
-    return {
-      code: zod.ZodIssueCode.custom,
-      message: duplicateSubscriptionsError,
-      fatal: true,
-      path: ['topics'],
-    }
-  }
-}
-
-function validateInnerSubscriptions(webhookConfig: WebhooksConfig) {
-  const {uri, subscriptions = [], ...schema} = webhookConfig
-  const uniqueSubscriptionEndpointSet = new Set()
-
-  // add validated unique top level subscriptions to set
-  if (uri && schema.topics?.length) {
-    for (const topic of schema.topics) {
-      uniqueSubscriptionEndpointSet.add(generateSubscriptionKey(topic, uri))
-    }
-  }
+function validateSubscriptions(webhookConfig: WebhooksConfig) {
+  const {subscriptions = []} = webhookConfig
+  const uniqueSubscriptionSet = new Set()
+  const uniqueComplianceSubscriptionSet = new Set()
 
   if (!subscriptions.length) return
 
-  for (const [i, subscription] of subscriptions.entries()) {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  for (const [i, {uri, topics, compliance_topics = [], sub_topic = ''}] of subscriptions.entries()) {
     const path = ['subscriptions', i]
 
-    // If no top-level uris are provided, ensure each subscription has at least one uri
-    if (!uri && !subscription.uri) {
-      return {
-        code: zod.ZodIssueCode.custom,
-        message: 'You must include either a top-level uri or an uri per `[[webhooks.subscriptions]]`',
-        fatal: true,
-        path,
+    for (const [j, topic] of topics.entries()) {
+      const key = `${topic}::${sub_topic}::${uri}`
+
+      if (uniqueSubscriptionSet.has(key)) {
+        return {
+          code: zod.ZodIssueCode.custom,
+          message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+          fatal: true,
+          path: [...path, 'topics', j, topic],
+        }
       }
+
+      uniqueSubscriptionSet.add(key)
     }
 
-    let finalEndpoint = subscription.uri
+    for (const [j, complianceTopic] of compliance_topics.entries()) {
+      const key = `${complianceTopic}::${uri}`
 
-    // if there is no uri override, use top level uri. we are sure there will be one from earlier validation
-    if (!finalEndpoint) {
-      finalEndpoint = uri!
-    }
-
-    if (subscription.path && !httpsRegex.test(finalEndpoint)) {
-      return {
-        code: zod.ZodIssueCode.custom,
-        message: 'You must use an https `uri` to use a relative path',
-        fatal: true,
-        path,
+      if (uniqueComplianceSubscriptionSet.has(key)) {
+        return {
+          code: zod.ZodIssueCode.custom,
+          message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
+          fatal: true,
+          path: [...path, 'compliance_topics', j, complianceTopic],
+        }
       }
+
+      uniqueComplianceSubscriptionSet.add(key)
     }
-
-    // concat the path to the uri if it exists to ensure uniqueness
-    if (subscription.path) {
-      finalEndpoint = `${finalEndpoint}${subscription.path}`
-    }
-
-    const key = generateSubscriptionKey(subscription.topic, finalEndpoint)
-
-    if (uniqueSubscriptionEndpointSet.has(key)) {
-      return {
-        code: zod.ZodIssueCode.custom,
-        message: duplicateSubscriptionsError,
-        fatal: true,
-        path: [...path, subscription.topic],
-      }
-    }
-
-    uniqueSubscriptionEndpointSet.add(key)
   }
 }
