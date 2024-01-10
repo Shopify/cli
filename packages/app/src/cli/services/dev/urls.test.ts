@@ -604,9 +604,9 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
 
     const got = generatePartnersURLs(applicationUrl, [], {
-      proxyUrl: applicationUrl,
-      proxySubPath: 'subpath',
-      proxySubPathPrefix: 'prefix',
+      url: applicationUrl,
+      subpath: 'subpath',
+      prefix: 'prefix',
     })
 
     expect(got).toMatchObject({
@@ -629,9 +629,9 @@ describe('generatePartnersURLs', () => {
     const proxyUrl = 'http://old-base-url/subpath'
 
     const got = generatePartnersURLs(applicationUrl, [], {
-      proxyUrl,
-      proxySubPath: 'subpath',
-      proxySubPathPrefix: 'prefix',
+      url: proxyUrl,
+      subpath: 'subpath',
+      prefix: 'prefix',
     })
 
     expect(got).toMatchObject({

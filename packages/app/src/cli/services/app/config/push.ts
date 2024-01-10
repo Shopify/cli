@@ -7,7 +7,6 @@ import {
   isCurrentAppSchema,
   usesLegacyScopesBehavior,
   getAppScopesArray,
-  AppInterface,
 } from '../../../models/app/app.js'
 import {DeleteAppProxySchema, deleteAppProxy} from '../../../api/graphql/app_proxy_delete.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
@@ -16,13 +15,7 @@ import {fetchOrgFromId} from '../../dev/fetch.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {
-  WebhooksConfig,
-  getAppProxyConfiguration,
-  getHomeConfiguration,
-  getPosConfiguration,
-  getWebhooksConfig,
-} from '../configuration.js'
+import {WebhooksConfig} from '../../../models/extensions/specifications/types/app_config_webhook.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -53,24 +46,23 @@ const FIELD_NAMES: {[key: string]: string} = {
 }
 
 export async function pushConfig(options: PushOptions) {
-  let configuration = options.configuration
-  if (!isCurrentAppSchema(configuration)) return
+  if (!isCurrentAppSchema(options.configuration)) return
 
   // Load local complete configuration
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
-  const configFileName = isCurrentAppSchema(configuration) ? basename(configuration.path) : undefined
+  const configFileName = isCurrentAppSchema(options.configuration) ? basename(options.configuration.path) : undefined
   const specifications = await fetchSpecifications({
     token,
-    apiKey: configuration.client_id,
+    apiKey: options.configuration.client_id,
     config: options.commandConfig,
   })
   const localApp = await loadApp({
-    directory: dirname(configuration.path),
+    directory: dirname(options.configuration.path),
     specifications,
     configName: configFileName,
   })
-  configuration = localApp.configuration as CurrentAppConfiguration
+  const configuration = localApp.configuration as CurrentAppConfiguration
 
   // Fetch remote configuration
   const queryVariables = {apiKey: configuration.client_id}
@@ -85,7 +77,7 @@ export async function pushConfig(options: PushOptions) {
 
   if (!(await confirmPushChanges(options.force, configuration, app, localApp.configSchema))) return
 
-  const variables = getMutationVars(app, localApp)
+  const variables = getMutationVars(app, configuration)
 
   const result: PushConfigSchema = await partnersRequest(PushConfig, token, variables)
 
@@ -114,7 +106,7 @@ export async function pushConfig(options: PushOptions) {
     }
   }
 
-  if (!getAppProxyConfiguration(localApp.configuration) && app.appProxy) {
+  if (!configuration.app_proxy && app.appProxy) {
     const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
 
     if (deleteResult?.userErrors?.length > 0) {
@@ -129,34 +121,28 @@ export async function pushConfig(options: PushOptions) {
   })
 }
 
-const getMutationVars = (app: App, localApp: AppInterface) => {
-  const configuration = localApp.configuration as CurrentAppConfiguration
-
-  const homeConfiguration = getHomeConfiguration(configuration)
-  const posConfiguration = getPosConfiguration(configuration)
-  const {api_version: webhookApiVersion, privacy_compliance: privacyCompliance} = getWebhooksConfig(configuration)
+const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: homeConfiguration.applicationUrl,
-    webhookApiVersion,
+    applicationUrl: configuration.application_url,
+    webhookApiVersion: configuration.webhooks?.api_version ?? app.webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
-    embedded: homeConfiguration.embedded ?? app.embedded,
-    gdprWebhooks: mapPrivacyComplianceToGdprWebhooks(privacyCompliance),
-    posEmbedded: posConfiguration.embedded ?? false,
-    preferencesUrl: homeConfiguration.preferencesUrl ?? null,
+    embedded: configuration.embedded ?? app.embedded,
+    gdprWebhooks: mapPrivacyComplianceToGdprWebhooks(configuration.webhooks?.privacy_compliance),
+    posEmbedded: configuration.pos?.embedded ?? false,
+    preferencesUrl: configuration.app_preferences?.url ?? null,
   }
 
   if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
     variables.requestedAccessScopes = getAppScopesArray(configuration)
   }
 
-  const appProxyConfig = getAppProxyConfiguration(localApp.configuration)
-  if (appProxyConfig) {
+  if (configuration.app_proxy) {
     variables.appProxy = {
-      proxySubPath: appProxyConfig.proxySubPath,
-      proxySubPathPrefix: appProxyConfig.proxySubPathPrefix,
-      proxyUrl: appProxyConfig.proxyUrl,
+      proxySubPath: configuration.app_proxy.subpath,
+      proxySubPathPrefix: configuration.app_proxy.prefix,
+      proxyUrl: configuration.app_proxy.url,
     }
   }
 

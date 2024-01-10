@@ -211,7 +211,7 @@ export async function ensureDevContext(
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
   if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const newConfiguration: AppConfiguration = {
+    const newConfiguration = {
       ...configuration,
       build: {
         ...configuration.build,

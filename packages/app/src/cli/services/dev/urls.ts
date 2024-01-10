@@ -1,6 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
 import {
-  AppConfiguration,
   AppConfigurationInterface,
   AppInterface,
   CurrentAppConfiguration,
@@ -138,7 +137,7 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
 export function generatePartnersURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
-  proxyFields?: AppProxy,
+  proxyFields?: CurrentAppConfiguration['app_proxy'],
 ): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
@@ -160,9 +159,9 @@ export function generatePartnersURLs(
   const appProxy = proxyFields
     ? {
         appProxy: {
-          proxyUrl: replaceHost(proxyFields.proxyUrl, baseURL),
-          proxySubPath: proxyFields.proxySubPath,
-          proxySubPathPrefix: proxyFields.proxySubPathPrefix,
+          proxyUrl: replaceHost(proxyFields.url, baseURL),
+          proxySubPath: proxyFields.subpath,
+          proxySubPathPrefix: proxyFields.prefix,
         },
       }
     : {}
@@ -260,7 +259,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     )
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
-      const localConfiguration: AppConfiguration = options.localApp.configuration
+      const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,

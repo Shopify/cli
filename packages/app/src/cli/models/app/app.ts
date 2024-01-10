@@ -4,12 +4,15 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
+import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -149,7 +152,7 @@ export const WebConfigurationSchema = zod.union([
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & {[key: string]: unknown}
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & SpecsAppConfiguration
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
@@ -220,7 +223,7 @@ export class App implements AppInterface {
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
     this.packageManager = packageManager
-    this.configuration = configuration
+    this.configuration = this.configurationTyped(configuration)
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
@@ -265,6 +268,54 @@ export class App implements AppInterface {
     this.allExtensions.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
+  }
+
+  private configurationTyped(configuration: AppConfiguration) {
+    if (isLegacyAppSchema(configuration)) return configuration
+    return {
+      ...configuration,
+      ...this.homeConfiguration(configuration),
+      ...this.appProxyConfiguration(configuration),
+      ...this.posConfiguration(configuration),
+      ...this.webhooksConfig(configuration),
+    } as CurrentAppConfiguration & SpecsAppConfiguration
+  }
+
+  private appProxyConfiguration(configuration: AppConfiguration) {
+    if (!getPathValue(configuration, 'app_proxy')) return
+    return {
+      app_proxy: {
+        url: getPathValue<string>(configuration, 'app_proxy.url')!,
+        prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
+        subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
+      },
+    }
+  }
+
+  private homeConfiguration(configuration: AppConfiguration) {
+    const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
+    return {
+      application_url: getPathValue<string>(configuration, 'application_url')!,
+      embedded: getPathValue<boolean>(configuration, 'embedded')!,
+      ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
+    }
+  }
+
+  private posConfiguration(configuration: AppConfiguration) {
+    const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
+    return embedded === undefined
+      ? undefined
+      : {
+          pos: {
+            embedded,
+          },
+        }
+  }
+
+  private webhooksConfig(configuration: AppConfiguration) {
+    return {
+      webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
+    }
   }
 }
 

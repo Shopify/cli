@@ -1,13 +1,8 @@
-import {
-  WebhookSubscription,
-  WebhooksConfig,
-  getWebhooksConfig,
-  getWebhooksSubscriptions,
-} from '../../../../services/app/configuration.js'
-import {CurrentAppConfiguration} from '../../../app/app.js'
+import {WebhookSubscription, WebhooksConfig} from '../types/app_config_webhook.js'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export function transformWebhookConfig(content: object) {
-  const webhooks = getWebhooksConfig(content as CurrentAppConfiguration)
+  const webhooks = getPathValue<WebhooksConfig>(content, 'webhooks')
   if (!webhooks) return content
 
   // normalize webhook config with the top level config
@@ -42,7 +37,7 @@ export function transformWebhookConfig(content: object) {
 }
 
 export function transformToWebhookConfig(content: object) {
-  const serverWebhooks = getWebhooksSubscriptions(content) as WebhooksConfig['subscriptions']
+  const serverWebhooks = getPathValue<WebhookSubscription[]>(content, 'subscriptions')
   if (!serverWebhooks) return content
   const frequencyMap: {[key: string]: number} = {}
   serverWebhooks.forEach((item) => {

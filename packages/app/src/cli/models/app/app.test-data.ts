@@ -10,7 +10,7 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
-import {WebhooksConfig} from '../../services/app/configuration.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',

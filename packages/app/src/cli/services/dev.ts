@@ -19,7 +19,6 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
-import {getAppProxyConfiguration} from './app/configuration.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -197,7 +196,7 @@ async function handleUpdatingOfPartnerUrls(
       const newURLs = generatePartnersURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        isCurrentAppSchema(localApp.configuration) ? getAppProxyConfiguration(localApp.configuration) : undefined,
+        isCurrentAppSchema(localApp.configuration) ? localApp.configuration.app_proxy : undefined,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,

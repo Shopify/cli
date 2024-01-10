@@ -13,8 +13,8 @@ import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {WebhooksConfig} from '../../services/app/configuration.js'
 import {WebhookSchema} from '../extensions/specifications/app_config_webhook.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
