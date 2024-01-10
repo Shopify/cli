@@ -47,7 +47,7 @@
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
-* [`shopify theme rename NAME`](#shopify-theme-rename-name)
+* [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
@@ -1242,20 +1242,23 @@ DESCRIPTION
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.53.0/dist/cli/commands/theme/push.js)_
 
-## `shopify theme rename NAME`
+## `shopify theme rename`
 
 Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename NAME [--no-color] [--verbose]
-
-ARGUMENTS
-  NAME  The new name for the theme.
+  $ shopify theme rename -n <value> [-d] [--no-color] [--password <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  -d, --development       Rename your development theme.
+  -n, --name=<value>      (required) The new name for the theme.
+  -s, --store=<value>     Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                          (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -t, --theme=<value>     Theme ID or name of the remote theme.
+      --no-color          Disable color output.
+      --password=<value>  Password generated from the Theme Access app.
+      --verbose           Increase the verbosity of the logs.
 
 DESCRIPTION
   Renames an existing theme.
