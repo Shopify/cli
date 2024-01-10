@@ -2,7 +2,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {RenameOptions, renameTheme} from '../../services/rename.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
-import {Args, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
@@ -13,6 +13,12 @@ export default class Rename extends ThemeCommand {
     ...globalFlags,
     store: themeFlags.store,
     password: themeFlags.password,
+    name: Flags.string({
+      char: 'n',
+      description: 'The new name for the theme.',
+      env: 'SHOPIFY_FLAG_NEW_NAME',
+      required: true,
+    }),
     development: Flags.boolean({
       char: 'd',
       description: 'Rename your development theme.',
@@ -25,24 +31,17 @@ export default class Rename extends ThemeCommand {
     }),
   }
 
-  static args = {
-    name: Args.string({
-      name: 'name',
-      required: true,
-      description: 'The new name for the theme.',
-    }),
-  }
-
   public async run(): Promise<void> {
-    const {flags, args} = await this.parse(Rename)
+    const {flags} = await this.parse(Rename)
+    const {password, development, name, theme} = flags
 
     const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+    const adminSession = await ensureAuthenticatedThemes(store, password)
 
     const renameOptions: RenameOptions = {
-      development: flags.development,
-      newName: args.name,
-      theme: flags.theme,
+      development,
+      newName: name,
+      theme,
     }
 
     await renameTheme(adminSession, renameOptions)
