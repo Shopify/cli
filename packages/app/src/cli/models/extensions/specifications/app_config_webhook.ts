@@ -11,7 +11,6 @@ const spec = createConfigExtensionSpecification({
   identifier: WebhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: WebhookTransformConfig,
-  position: 1,
 })
 
 export default spec

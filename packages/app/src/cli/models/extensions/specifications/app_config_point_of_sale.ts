@@ -15,7 +15,6 @@ export const PosSpecIdentifier = 'point_of_sale'
 const spec = createConfigExtensionSpecification({
   identifier: PosSpecIdentifier,
   schema: PosConfigurationSchema,
-  position: 3,
 })
 
 export default spec

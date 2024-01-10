@@ -1655,13 +1655,13 @@ automatically_update_urls_on_dev = true
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       expect.objectContaining({
-        application_url: 'https://example.com/lala',
-        embedded: true,
-      }),
-      expect.objectContaining({
         pos: {
           embedded: true,
         },
+      }),
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
       }),
     ])
   })

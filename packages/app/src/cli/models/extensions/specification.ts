@@ -41,7 +41,6 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
-  position: number
   getBundleExtensionStdinContent?: (config: TConfiguration) => string
   deployConfig?: (
     config: TConfiguration,
@@ -112,7 +111,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     partnersWebIdentifier: spec.identifier,
     schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    position: spec.position ?? Number.MAX_SAFE_INTEGER,
     transform: spec.transform,
     reverseTransform: spec.reverseTransform,
   }
@@ -132,7 +130,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   schema: zod.ZodObject<any>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig?: TransformationConfig | CustomTransformationConfig
-  position?: number
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -145,7 +142,6 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
       : () => appModuleFeatures().concat('app_config'),
     transform: resolveAppConfigTransform(spec.transformConfig),
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
-    ...(spec.position ? {position: spec.position} : {}),
   })
 }
 

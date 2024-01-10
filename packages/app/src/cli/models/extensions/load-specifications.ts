@@ -1,4 +1,8 @@
 import {ExtensionSpecification} from './specification.js'
+import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
+import {WebhooksSpecIdentifier} from './specifications/types/app_config_webhooks.js'
+import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
+import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
 import {loadUIExtensionSpecificationsFromPlugins} from '../../private/plugins/extension.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {memoize} from '@shopify/cli-kit/common/function'
@@ -6,6 +10,13 @@ import {Config} from '@oclif/core'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {fileURLToPath} from 'url'
+
+const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
+  WebhooksSpecIdentifier,
+  AppProxySpecIdentifier,
+  PosSpecIdentifier,
+  AppHomeSpecIdentifier,
+]
 
 /**
  * Load all specifications from the local file system AND plugins
@@ -20,7 +31,10 @@ export async function loadLocalExtensionsSpecifications(config: Config): Promise
  * Load all specifications ONLY from the local file system
  */
 export async function loadFSExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
-  return memoizedLoadSpecs('specifications')
+  const sortConfigModules = (specA: ExtensionSpecification, specB: ExtensionSpecification) =>
+    SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specA.identifier) -
+    SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specB.identifier)
+  return (await memoizedLoadSpecs('specifications')).sort(sortConfigModules)
 }
 
 const memoizedLoadSpecs = memoize(loadSpecifications)

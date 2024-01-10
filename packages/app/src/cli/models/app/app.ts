@@ -64,15 +64,10 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.appModuleFeatures().includes('app_config')
-  const sortSpecsByPosition = (spec1: ExtensionSpecification, spec2: ExtensionSpecification) =>
-    spec1.position - spec2.position
-  const topAndConfigSpecsSchema = specs
-    .filter(isConfigSpecification)
-    .sort(sortSpecsByPosition)
-    .reduce((schema, spec) => {
-      return schema.merge(spec.schema)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }, NonVersionedAppTopSchema as any)
+  const topAndConfigSpecsSchema = specs.filter(isConfigSpecification).reduce((schema, spec) => {
+    return schema.merge(spec.schema)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  }, NonVersionedAppTopSchema as any)
 
   const schema = topAndConfigSpecsSchema.merge(NonVersionedAppBottomSchema)
 
