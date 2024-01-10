@@ -76,6 +76,7 @@ module ShopifyCLI
           end
 
           headers = get_response_headers(response, env)
+          headers = modify_headers(headers)
 
           unless headers["x-storefront-renderer-rendered"]
             @core_endpoints << env["PATH_INFO"]
@@ -267,6 +268,18 @@ module ShopifyCLI
           return false if path.start_with?("/cart/")
 
           true
+        end
+
+        def modify_headers(headers)
+          if headers["set-cookie"]&.include?("storefront_digest")
+            headers["set-cookie"] = modify_set_cookie_header_for_safari(headers["set-cookie"])
+          end
+
+          headers
+        end
+
+        def modify_set_cookie_header_for_safari(set_cookie_header)
+          set_cookie_header.gsub("secure;", "secure: false;")
         end
       end
     end
