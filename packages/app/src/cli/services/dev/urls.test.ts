@@ -603,7 +603,11 @@ describe('generatePartnersURLs', () => {
   test('Returns app proxy section when receiving proxy fields', () => {
     const applicationUrl = 'http://my-base-url'
 
-    const got = generatePartnersURLs(applicationUrl, [], {url: applicationUrl, subpath: 'subpath', prefix: 'prefix'})
+    const got = generatePartnersURLs(applicationUrl, [], {
+      proxyUrl: applicationUrl,
+      proxySubPath: 'subpath',
+      proxySubPathPrefix: 'prefix',
+    })
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -624,7 +628,11 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const proxyUrl = 'http://old-base-url/subpath'
 
-    const got = generatePartnersURLs(applicationUrl, [], {url: proxyUrl, subpath: 'subpath', prefix: 'prefix'})
+    const got = generatePartnersURLs(applicationUrl, [], {
+      proxyUrl,
+      proxySubPath: 'subpath',
+      proxySubPathPrefix: 'prefix',
+    })
 
     expect(got).toMatchObject({
       applicationUrl,

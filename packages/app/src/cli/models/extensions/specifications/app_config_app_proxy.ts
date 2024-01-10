@@ -12,7 +12,6 @@ const AppProxySchema = zod.object({
     .optional(),
 })
 
-export type AppProxyConfiguration = zod.infer<typeof AppProxySchema>
 export const AppProxySpecIdentifier = 'app_proxy'
 
 const spec: ExtensionSpecification = createConfigExtensionSpecification({

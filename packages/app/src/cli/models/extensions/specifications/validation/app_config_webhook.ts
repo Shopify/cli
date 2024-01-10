@@ -1,25 +1,25 @@
 import {httpsRegex} from './common.js'
-import {WebhookConfig} from '../types/app_config_webhooks.js'
+import {WebhooksConfig} from '../../../../services/app/configuration.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const generateSubscriptionKey = (topic: string, uri: string) => `${topic}::${uri}`
 const duplicateSubscriptionsError = 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`'
 
 export function validateWebhookSubscriptions(schema: object, ctx: zod.RefinementCtx) {
-  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema as WebhookConfig)
+  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema as WebhooksConfig)
   if (topLevelSubscriptionErrors) {
     ctx.addIssue(topLevelSubscriptionErrors)
     return zod.NEVER
   }
 
-  const innerSubscriptionErrors = validateInnerSubscriptions(schema as WebhookConfig)
+  const innerSubscriptionErrors = validateInnerSubscriptions(schema as WebhooksConfig)
   if (innerSubscriptionErrors) {
     ctx.addIssue(innerSubscriptionErrors)
     return zod.NEVER
   }
 }
 
-function validateTopLevelSubscriptions(webhookConfig: WebhookConfig) {
+function validateTopLevelSubscriptions(webhookConfig: WebhooksConfig) {
   const hasEndpoint = Boolean(webhookConfig.uri)
   const hasTopics = Boolean(webhookConfig.topics?.length)
 
@@ -51,7 +51,7 @@ function validateTopLevelSubscriptions(webhookConfig: WebhookConfig) {
   }
 }
 
-function validateInnerSubscriptions(webhookConfig: WebhookConfig) {
+function validateInnerSubscriptions(webhookConfig: WebhooksConfig) {
   const {uri, subscriptions = [], ...schema} = webhookConfig
   const uniqueSubscriptionEndpointSet = new Set()
 

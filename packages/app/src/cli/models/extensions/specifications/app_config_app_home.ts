@@ -18,7 +18,6 @@ const AppHomeTransformConfig: TransformationConfig = {
   preferences_url: 'app_preferences.url',
 }
 
-export type AppHomeConfiguration = zod.infer<typeof AppHomeSchema>
 export const AppHomeSpecIdentifier = 'app_home'
 
 const spec = createConfigExtensionSpecification({

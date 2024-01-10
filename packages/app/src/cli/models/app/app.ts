@@ -194,7 +194,6 @@ export interface AppInterface extends AppConfigurationInterface {
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
-  getConfigExtension: (specIdentifier: string) => {[key: string]: unknown} | undefined
 }
 
 export class App implements AppInterface {
@@ -277,13 +276,6 @@ export class App implements AppInterface {
     this.allExtensions.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
-  }
-
-  getConfigExtension(specIdentifier: string) {
-    const extension = this.allExtensions.find((extension) => extension.specification.identifier === specIdentifier)
-    if (!extension) return
-
-    return extension.configuration as {[key: string]: unknown}
   }
 }
 

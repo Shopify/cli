@@ -9,7 +9,6 @@ const PosConfigurationSchema = zod.object({
     .optional(),
 })
 
-export type PosConfiguration = zod.infer<typeof PosConfigurationSchema>
 export const PosSpecIdentifier = 'point_of_sale'
 
 const spec = createConfigExtensionSpecification({

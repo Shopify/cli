@@ -22,10 +22,16 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+export interface AppProxy {
+  proxyUrl: string
+  proxySubPath: string
+  proxySubPathPrefix: string
+}
+
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
-  appProxy?: {proxyUrl: string; proxySubPath: string; proxySubPathPrefix: string}
+  appProxy?: AppProxy
 }
 
 export interface FrontendURLOptions {
@@ -132,7 +138,7 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
 export function generatePartnersURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
-  proxyFields?: {url: string; subpath: string; prefix: string},
+  proxyFields?: AppProxy,
 ): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
@@ -154,9 +160,9 @@ export function generatePartnersURLs(
   const appProxy = proxyFields
     ? {
         appProxy: {
-          proxyUrl: replaceHost(proxyFields.url, baseURL),
-          proxySubPath: proxyFields.subpath,
-          proxySubPathPrefix: proxyFields.prefix,
+          proxyUrl: replaceHost(proxyFields.proxyUrl, baseURL),
+          proxySubPath: proxyFields.proxySubPath,
+          proxySubPathPrefix: proxyFields.proxySubPathPrefix,
         },
       }
     : {}

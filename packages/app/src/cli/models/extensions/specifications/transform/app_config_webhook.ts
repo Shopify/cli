@@ -1,13 +1,18 @@
-import {NormalizedWebhookSubscription, WebhookConfig, WebhooksSpecIdentifier} from '../types/app_config_webhooks.js'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {
+  WebhookSubscription,
+  WebhooksConfig,
+  getWebhooksConfig,
+  getWebhooksSubscriptions,
+} from '../../../../services/app/configuration.js'
+import {CurrentAppConfiguration} from '../../../app/app.js'
 
 export function transformWebhookConfig(content: object) {
-  const webhooks = getPathValue(content, WebhooksSpecIdentifier)
+  const webhooks = getWebhooksConfig(content as CurrentAppConfiguration)
   if (!webhooks) return content
 
   // normalize webhook config with the top level config
   const webhookSubscriptions = []
-  const {topics, subscriptions, uri} = webhooks as WebhookConfig
+  const {topics, subscriptions, uri} = webhooks
 
   if (uri && topics?.length) {
     for (const topic of topics) {
@@ -37,7 +42,8 @@ export function transformWebhookConfig(content: object) {
 }
 
 export function transformToWebhookConfig(content: object) {
-  const serverWebhooks = getPathValue(content, 'subscriptions') as NormalizedWebhookSubscription[]
+  const serverWebhooks = getWebhooksSubscriptions(content) as WebhooksConfig['subscriptions']
+  if (!serverWebhooks) return content
   const frequencyMap: {[key: string]: number} = {}
   serverWebhooks.forEach((item) => {
     frequencyMap[item.uri!] = (frequencyMap[item.uri!] || 0) + 1
@@ -46,7 +52,7 @@ export function transformToWebhookConfig(content: object) {
   const defaultUri = Object.keys(frequencyMap).find((key) => frequencyMap[key] === maxCount)
 
   const topics: string[] = []
-  const subscriptions: NormalizedWebhookSubscription[] = []
+  const subscriptions: WebhookSubscription[] = []
 
   for (const item of serverWebhooks) {
     if (item.uri === defaultUri && !item.sub_topic && !item.include_fields && !item.metafield_namespaces) {
@@ -66,7 +72,7 @@ export function transformToWebhookConfig(content: object) {
       }
 
       // Exclude undefined keys from the subscription object
-      const subscription: NormalizedWebhookSubscription = {...item}
+      const subscription: WebhookSubscription = {...item}
       if (path) subscription.path = path
       if (uri) subscription.uri = uri
       if (item.uri!.startsWith(defaultUri!)) {

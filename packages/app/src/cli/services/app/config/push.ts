@@ -1,4 +1,4 @@
-import {PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
+import {GdprWebhooks, PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
 import {ClearScopesSchema, clearRequestedScopes} from '../../../api/graphql/clear_requested_scopes.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
 import {
@@ -17,24 +17,18 @@ import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {
-  AppProxyConfiguration,
-  AppProxySpecIdentifier,
-} from '../../../models/extensions/specifications/app_config_app_proxy.js'
-import {
-  AppHomeConfiguration,
-  AppHomeSpecIdentifier,
-} from '../../../models/extensions/specifications/app_config_app_home.js'
-import {
-  PosConfiguration,
-  PosSpecIdentifier,
-} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
+  WebhooksConfig,
+  getAppProxyConfiguration,
+  getHomeConfiguration,
+  getPosConfiguration,
+  getWebhooksConfig,
+} from '../configuration.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
-import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export interface PushOptions {
   configuration: AppConfiguration
@@ -120,7 +114,7 @@ export async function pushConfig(options: PushOptions) {
     }
   }
 
-  if (!localApp.getConfigExtension(AppProxySpecIdentifier) && app.appProxy) {
+  if (!getAppProxyConfiguration(localApp.configuration) && app.appProxy) {
     const deleteResult: DeleteAppProxySchema = await partnersRequest(deleteAppProxy, token, {apiKey: app.apiKey})
 
     if (deleteResult?.userErrors?.length > 0) {
@@ -138,32 +132,31 @@ export async function pushConfig(options: PushOptions) {
 const getMutationVars = (app: App, localApp: AppInterface) => {
   const configuration = localApp.configuration as CurrentAppConfiguration
 
-  const appHomeSchema = localApp.getConfigExtension(AppHomeSpecIdentifier) as AppHomeConfiguration
-  const posSchema = localApp.getConfigExtension(PosSpecIdentifier) as PosConfiguration
-  // Once api_version and privacy_compliance are versioned, we should get the content using getConfigExtension
-  const {webhookApiVersion, gdprWebhooks} = getWebhookConfig(configuration)
+  const homeConfiguration = getHomeConfiguration(configuration)
+  const posConfiguration = getPosConfiguration(configuration)
+  const {api_version: webhookApiVersion, privacy_compliance: privacyCompliance} = getWebhooksConfig(configuration)
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
-    applicationUrl: appHomeSchema.application_url,
+    applicationUrl: homeConfiguration.applicationUrl,
     webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
-    embedded: appHomeSchema.embedded ?? app.embedded,
-    gdprWebhooks,
-    posEmbedded: posSchema.pos?.embedded ?? false,
-    preferencesUrl: appHomeSchema?.app_preferences?.url ?? null,
+    embedded: homeConfiguration.embedded ?? app.embedded,
+    gdprWebhooks: mapPrivacyComplianceToGdprWebhooks(privacyCompliance),
+    posEmbedded: posConfiguration.embedded ?? false,
+    preferencesUrl: homeConfiguration.preferencesUrl ?? null,
   }
 
   if (!usesLegacyScopesBehavior(configuration) && configuration.access_scopes?.scopes !== undefined) {
     variables.requestedAccessScopes = getAppScopesArray(configuration)
   }
 
-  const appProxyConfig = localApp.getConfigExtension(AppProxySpecIdentifier) as AppProxyConfiguration
-  if (appProxyConfig?.app_proxy) {
+  const appProxyConfig = getAppProxyConfiguration(localApp.configuration)
+  if (appProxyConfig) {
     variables.appProxy = {
-      proxySubPath: appProxyConfig.app_proxy.subpath,
-      proxySubPathPrefix: appProxyConfig.app_proxy.prefix,
-      proxyUrl: appProxyConfig.app_proxy.url,
+      proxySubPath: appProxyConfig.proxySubPath,
+      proxySubPathPrefix: appProxyConfig.proxySubPathPrefix,
+      proxyUrl: appProxyConfig.proxyUrl,
     }
   }
 
@@ -174,20 +167,10 @@ export const abort = (errorMessage: OutputMessage) => {
   throw new AbortError(errorMessage)
 }
 
-function getWebhookConfig(configuration: CurrentAppConfiguration): {
-  webhookApiVersion?: string
-  gdprWebhooks: {
-    customerDeletionUrl?: string
-    customerDataRequestUrl?: string
-    shopDeletionUrl?: string
-  }
-} {
+function mapPrivacyComplianceToGdprWebhooks(privacyCompliance: WebhooksConfig['privacy_compliance']): GdprWebhooks {
   return {
-    webhookApiVersion: getPathValue(configuration, 'webhooks.api_version'),
-    gdprWebhooks: {
-      customerDeletionUrl: getPathValue(configuration, 'webhooks.privacy_compliance.customer_deletion_url'),
-      customerDataRequestUrl: getPathValue(configuration, 'webhooks.privacy_compliance.customer_data_request_url'),
-      shopDeletionUrl: getPathValue(configuration, 'webhooks.privacy_compliance.shop_deletion_url'),
-    },
+    customerDeletionUrl: privacyCompliance?.customer_deletion_url,
+    customerDataRequestUrl: privacyCompliance?.customer_data_request_url,
+    shopDeletionUrl: privacyCompliance?.shop_deletion_url,
   }
 }

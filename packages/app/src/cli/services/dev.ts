@@ -19,15 +19,12 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
+import {getAppProxyConfiguration} from './app/configuration.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
-import {
-  AppProxyConfiguration,
-  AppProxySpecIdentifier,
-} from '../models/extensions/specifications/app_config_app_proxy.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -200,9 +197,7 @@ async function handleUpdatingOfPartnerUrls(
       const newURLs = generatePartnersURLs(
         network.proxyUrl,
         webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        isCurrentAppSchema(localApp.configuration)
-          ? (localApp.getConfigExtension(AppProxySpecIdentifier) as AppProxyConfiguration)?.app_proxy
-          : undefined,
+        isCurrentAppSchema(localApp.configuration) ? getAppProxyConfiguration(localApp.configuration) : undefined,
       )
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,

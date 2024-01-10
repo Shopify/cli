@@ -10,7 +10,7 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
-import {WebhookConfig} from '../extensions/specifications/types/app_config_webhooks.js'
+import {WebhooksConfig} from '../../services/app/configuration.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -93,7 +93,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
