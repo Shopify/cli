@@ -58,7 +58,7 @@ async function processPackageJson(packageJsonPath: string, wildcard: string): Pr
  */
 async function listDependencies(projectPath: string, wildcard: string): Promise<[string, string[]][]> {
   const packageJsonPath = `${projectPath}/package.json`
-
+  if (!fileExistsSync(packageJsonPath)) return []
   const data = await readFileAsync(packageJsonPath, 'utf8')
   const packageJson = JSON.parse(data)
   const workspaces = packageJson.workspaces || []
