@@ -1,6 +1,11 @@
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
+import {bootstrap as bootstrapGlobalAgent} from 'global-agent'
+// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import fs from 'fs'
+
+// Setup global support for environment variable based proxy configuration.
+bootstrapGlobalAgent()
 
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.
