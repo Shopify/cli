@@ -102,9 +102,9 @@ export function appIsLaunchable(app: AppInterface) {
   return Boolean(frontendConfig || backendConfig)
 }
 
-export function includeDeployConfig(configuration: AppConfiguration) {
+export function includeConfigOnDeploy(configuration: AppConfiguration) {
   if (isLegacyAppSchema(configuration)) return false
-  return Boolean(configuration.build?.include_config_on_deploy)
+  return configuration.build?.include_config_on_deploy
 }
 
 export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {

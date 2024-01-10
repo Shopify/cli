@@ -26,6 +26,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
 import {loadFSExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -55,7 +56,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {Config} from '@oclif/core'
 
 const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
@@ -137,11 +138,11 @@ const DEFAULT_SELECT_APP_OPTIONS = {
   scopesArray: [],
 }
 
-const options = (app: AppInterface): DeployContextOptions => {
+const options = (app: AppInterface, reset = false, force = false): DeployContextOptions => {
   return {
     app,
-    reset: false,
-    force: false,
+    reset,
+    force,
     noRelease: false,
     commandConfig: COMMAND_CONFIG,
   }
@@ -650,10 +651,10 @@ api_version = "2023-04"
           {
             list: {
               items: [
-                `Org:          ${ORG1.businessName}`,
-                `App:          ${APP2.title}`,
-                `Dev store:    ${STORE1.shopDomain}`,
-                'Update URLs:  Not yet configured',
+                `Org:             ${ORG1.businessName}`,
+                `App:             ${APP2.title}`,
+                `Dev store:       ${STORE1.shopDomain}`,
+                'Update URLs:     Not yet configured',
               ],
             },
           },
@@ -749,10 +750,10 @@ api_version = "2023-04"
         {
           list: {
             items: [
-              'Org:          org1',
-              'App:          app1',
-              'Dev store:    domain1',
-              'Update URLs:  Not yet configured',
+              'Org:             org1',
+              'App:             app1',
+              'Dev store:       domain1',
+              'Update URLs:     Not yet configured',
             ],
           },
         },
@@ -978,6 +979,9 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -991,6 +995,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
+    writeAppConfigurationFileSpy.mockRestore()
   })
 
   test('prompts the user to create or select an app and returns it with its id when the app has no extensions', async () => {
@@ -1057,6 +1062,9 @@ describe('ensureDeployContext', () => {
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(loadApp).mockResolvedValue(app)
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
 
     const opts = options(app)
     opts.reset = true
@@ -1083,6 +1091,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.appType).toEqual(APP1.appType)
     expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
+    writeAppConfigurationFileSpy.mockRestore()
   })
   test('load the app extension using the remote extensions specifications', async () => {
     // Given
@@ -1116,6 +1125,273 @@ describe('ensureDeployContext', () => {
     expect(got.app.allExtensions).toEqual(appWithExtensions.allExtensions)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
+  })
+  test('prompts the user to include the configuration if there is no flag in the configuration and set it to true when confirmed', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    await ensureDeployContext(options(app))
+
+    // Then
+    expect(renderConfirmationPrompt).toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
+      {...app.configuration, build: {include_config_on_deploy: true}},
+      app.configSchema,
+    )
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
+  })
+  test('prompts the user to include the configuration if there is no flag in the configuration and set it to false when not confirmed', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    await ensureDeployContext(options(app))
+
+    // Then
+    expect(renderConfirmationPrompt).toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
+      {...app.configuration, build: {include_config_on_deploy: false}},
+      app.configSchema,
+    )
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
+  })
+  test('doesnt prompt the user to include the configuration if there is flag in the configuration and display the current value', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    await ensureDeployContext(options(app))
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2', 'Include config:  Yes'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
+  })
+  test('prompts the user to include the configuration if there is flag in the configuration but reset is used', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    vi.mocked(link).mockResolvedValue(app.configuration)
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    await ensureDeployContext(options(app, true))
+
+    // Then
+    expect(renderConfirmationPrompt).toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
+      {...app.configuration, build: {include_config_on_deploy: false}},
+      app.configSchema,
+    )
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
+  })
+  test("doesnt prompt the user to include the configuration if there isn't flag in the configuration and force is used", async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    await ensureDeployContext(options(app, false, true))
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2', 'Include config:  No'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
+  })
+  test('doesnt prompt the user to include the configuration if there is a flag in the configuration and force is used', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+
+    // When
+    await ensureDeployContext(options(app, false, true))
+
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2', 'Include config:  Yes'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
   })
 })
 

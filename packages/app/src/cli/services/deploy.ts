@@ -3,7 +3,7 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {AppInterface, includeDeployConfig} from '../models/app/app.js'
+import {AppInterface, includeConfigOnDeploy} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
@@ -95,7 +95,7 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const filterConfigurationAppModules = (extension: ExtensionInstance) =>
-              includeDeployConfig(app.configuration) || !extension.isAppConfigExtension
+              includeConfigOnDeploy(app.configuration) || !extension.isAppConfigExtension
 
             const appModules = await Promise.all(
               app.allExtensions

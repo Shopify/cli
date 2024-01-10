@@ -33,6 +33,7 @@ export interface LinkOptions {
   directory: string
   apiKey?: string
   configName?: string
+  baseConfigName?: string
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
@@ -63,7 +64,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 }
 
 async function selectRemoteApp(options: LinkOptions) {
-  const localApp = await loadAppConfigFromCurrentToml(options)
+  const localApp = await loadAppOrEmptyApp(options)
   const directory = localApp?.directory || options.directory
   const partnersSession = await fetchPartnersSession()
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, partnersSession, directory)
@@ -81,7 +82,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
     config: options.commandConfig,
   })
 
-  const localApp = await loadAppConfigFromCurrentToml(options, specifications)
+  const localApp = await loadAppOrEmptyApp(options, specifications)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
@@ -91,7 +92,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
   }
 }
 
-async function loadAppConfigFromCurrentToml(
+async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
 ): Promise<AppInterface> {
@@ -100,7 +101,7 @@ async function loadAppConfigFromCurrentToml(
       specifications,
       directory: options.directory,
       mode: 'report',
-      configName: configurationFileNames.app,
+      configName: options.baseConfigName,
     })
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
