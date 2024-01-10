@@ -5,6 +5,7 @@ import glob from 'fast-glob'
 import yargs from 'yargs'
 import fs from 'fs'
 import util from 'util'
+import {fileExistsSync} from './fs.js'
 
 export class ShopifyConfig extends Config {
   async loadCorePlugins(): Promise<void> {
