@@ -58,8 +58,6 @@ export const NonVersionedAppBottomSchema = zod.object({
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
 })
-export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema)
-
 export const AppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
@@ -134,7 +132,7 @@ export function appIsLaunchable(app: AppInterface) {
 
 export function filterNonVersionedAppFields(app: AppInterface) {
   return Object.keys(app.configuration).filter(
-    (fieldName) => !Object.keys(NonVersionedAppSchema.shape).concat('path').includes(fieldName),
+    (fieldName) => !Object.keys(AppSchema.shape).concat('path').includes(fieldName),
   )
 }
 
