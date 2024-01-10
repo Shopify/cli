@@ -2083,14 +2083,18 @@ describe('WebhooksSchema', () => {
   test('throws an error if uri is not an https uri', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'http://example.com',
-      topics: ['products/create'],
+      subscriptions: [
+        {
+          uri: 'http://example.com',
+          topics: ['products/create'],
+        },
+      ],
     }
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
       message: 'Invalid',
-      path: ['webhooks', 'uri'],
+      path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2100,38 +2104,35 @@ describe('WebhooksSchema', () => {
   test('removes trailing slashes on uri', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'https://example.com/',
-      topics: ['products/create'],
+      subscriptions: [{uri: 'https://example.com/', topics: ['products/create']}],
     }
 
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    webhookConfig.uri = 'https://example.com'
+    webhookConfig.subscriptions![0]!.uri = 'https://example.com'
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if uri is not a valid formatted https URL, pubsub URI, or Eventbridge ARN', async () => {
+  test('throws an error if uri is not a valid https URL, pubsub URI, or Eventbridge ARN', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'my::URI-thing::Shopify::123',
-      topics: ['products/create'],
+      subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
     }
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
       message: 'Invalid',
-      path: ['webhooks', 'uri'],
+      path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('accepts a top level https uri', async () => {
+  test('accepts an https uri', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'https://example.com',
-      topics: ['products/create'],
+      subscriptions: [{uri: 'https://example.com', topics: ['products/create']}],
     }
 
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
@@ -2139,11 +2140,10 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('accepts a top level pub sub uri', async () => {
+  test('accepts a pub sub uri', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'pubsub://my-project-123:my-topic',
-      topics: ['products/create'],
+      subscriptions: [{uri: 'pubsub://my-project-123:my-topic', topics: ['products/create']}],
     }
 
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
@@ -2151,53 +2151,13 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('accepts a top level ARN uri', async () => {
+  test('accepts an ARN uri', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH"',
-      topics: ['products/create'],
-    }
-
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-  })
-
-  test('using a top level uri is invalid without a topics array and without sub webhook subscriptions', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      uri: 'https://example.com',
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'To use a top-level `uri`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
-      fatal: true,
-      path: ['webhooks'],
-    }
-
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-  })
-
-  test('using a top level uri is valid with topics array', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      uri: 'https://example.com',
-      topics: ['products/create'],
-    }
-
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-  })
-
-  test('using a top level uri is valid with sub webhook subscriptions', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      uri: 'pubsub://my-project-123:my-topic',
       subscriptions: [
         {
-          topic: 'products/create',
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/create'],
         },
       ],
     }
@@ -2207,28 +2167,23 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if we have duplicate top level topics with top level uri', async () => {
+  test('accepts combination of uris', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
-      uri: 'https://example.com',
-      topics: ['products/create', 'products/create'],
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-      fatal: true,
-      path: ['webhooks', 'topics'],
-    }
-
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-  })
-
-  test('allows unique top level topics with top level uri', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      uri: 'https://example.com',
-      topics: ['products/create', 'products/update'],
+      subscriptions: [
+        {
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          topics: ['products/create', 'products/update'],
+        },
+        {
+          uri: 'https://example.com',
+          topics: ['products/create', 'products/update'],
+        },
+        {
+          uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create', 'products/update'],
+        },
+      ],
     }
 
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
@@ -2236,606 +2191,338 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  describe('WebhookSubscriptionSchema', () => {
-    test('removes trailing forward slash', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'https://example.com/',
-          },
-        ],
-      }
+  test('throws an error if we have duplicate subscriptions in same topics array', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {uri: 'https://example.com', topics: ['products/create', 'products/create']},
+        {uri: 'https://example.com', topics: ['products/create']},
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 0, 'topics', 1, 'products/create'],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      webhookConfig.subscriptions![0]!.uri = 'https://example.com'
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('throws an error if topics and subscriptions are defined, but no top level uri is provided', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        topics: ['products/create', 'products/update'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'https://example.com',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'To use top-level topics, you must also provide a top-level `uri`',
-        fatal: true,
-        path: ['webhooks', 'topics'],
-      }
+  test('throws an error if we have duplicate subscriptions in different topics array', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
+        {uri: 'https://example.com', topics: ['products/create']},
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('throws an error if uri is not an https uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'http://example.com',
-          },
-        ],
-      }
-      const errorObj = {
-        validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-        code: zod.ZodIssueCode.invalid_string,
-        message: 'Invalid',
-        path: ['webhooks', 'subscriptions', 0, 'uri'],
-      }
+  test('allows unique topics in both same topic array and different subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {uri: 'https://example.com', topics: ['products/create', 'products/update']},
+        {uri: 'https://example.com2', topics: ['products/create', 'products/update']},
+        {uri: 'https://example.com', topics: ['products/delete']},
+      ],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
 
-    test('throws an error if path does not start with a forward slash', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            uri: 'https://example.com',
-            topic: 'products/create',
-            path: 'my-neat-new-path',
-          },
-        ],
-      }
-      const errorObj = [
+  test('removes trailing forward slash', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
         {
-          code: zod.ZodIssueCode.custom,
-          message: 'Path must start with a forward slash and be longer than 1 character',
-          path: ['webhooks', 'subscriptions', 0, 'path'],
+          topics: ['products/create'],
+          uri: 'https://example.com/',
         },
-      ]
+      ],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    webhookConfig.subscriptions![0]!.uri = 'https://example.com'
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
 
-    test('throws an error if path is only forward slash', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            uri: 'https://example.com',
-            topic: 'products/create',
-            path: '/',
-          },
-        ],
-      }
-      const errorObj = [
+  test('throws an error if uri is not an https uri', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
         {
-          code: zod.ZodIssueCode.custom,
-          message: 'Path must start with a forward slash and be longer than 1 character',
-          path: ['webhooks', 'subscriptions', 0, 'path'],
+          topics: ['products/create'],
+          uri: 'http://example.com',
         },
-      ]
+      ],
+    }
+    const errorObj = {
+      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
+      code: zod.ZodIssueCode.invalid_string,
+      message: 'Invalid',
+      path: ['webhooks', 'subscriptions', 0, 'uri'],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('throws an error if path is used with pub sub', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        subscriptions: [
-          {
-            uri: 'pubsub://my-project-123:my-topic',
-            topic: 'products/create',
-            path: '/test_path',
-          },
-        ],
-      }
-      const errorObj = [
+  test('accepts a pub sub config with both project and topic', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
         {
-          code: zod.ZodIssueCode.custom,
-          message: 'You must use an https `uri` to use a relative path',
-          fatal: true,
-          path: ['webhooks', 'subscriptions', 0],
+          topics: ['products/create'],
+          uri: 'pubsub://my-project-123:my-topic',
         },
-      ]
+      ],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
 
-    test('throws an error if path is used with arn', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        subscriptions: [
-          {
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-            topic: 'products/create',
-            path: '/test_path',
-          },
-        ],
-      }
-      const errorObj = [
+  test('throws an error if we have duplicate https subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
         {
-          code: zod.ZodIssueCode.custom,
-          message: 'You must use an https `uri` to use a relative path',
-          fatal: true,
-          path: ['webhooks', 'subscriptions', 0],
+          topics: ['products/create'],
+          uri: 'https://example.com',
         },
-      ]
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('throws an error if uri is not a valid https URL, pub sub URI, or Eventbridge ARN', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'my::test-thing::Shopify::123',
-          },
-        ],
-      }
-      const errorObj = {
-        validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-        code: zod.ZodIssueCode.invalid_string,
-        message: 'Invalid',
-        path: ['webhooks', 'subscriptions', 0, 'uri'],
-      }
+  test('throws an error if we have duplicate pub sub subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'pubsub://my-project-123:my-topic',
+        },
+        {
+          topics: ['products/create'],
+          uri: 'pubsub://my-project-123:my-topic',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('accepts a pub sub config with both project and topic', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'pubsub://my-project-123:my-topic',
-          },
-        ],
-      }
+  test('throws an error if we have duplicate arn subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        },
+        {
+          topics: ['products/create'],
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'products/create'],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('throws an error if there is no top level uri and no subscription uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You must include either a top-level uri or an uri per `[[webhooks.subscriptions]]`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0],
-      }
+  test('does not allow identical topic and uri and sub_topic in different subscriptions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_one',
+        },
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_one',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'topics', 0, 'metaobjects/create'],
+    }
 
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('accepts a subscription with top level uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
+  test('allows identical topic and uri if sub_topic is different', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_one',
+        },
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_two',
+        },
+      ],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
 
-    test('accepts a subscription with top level pub sub uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'pubsub://my-project-123:my-topic',
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
+  test('does not allow identical compliance_topics and uri', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_one',
+          compliance_topics: ['shop/redact'],
+        },
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_two',
+          compliance_topics: ['shop/redact'],
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 1, 'compliance_topics', 0, 'shop/redact'],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('accepts a subscription with a top level arn', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
+  test('does not allow identical compliance_topics in same subscription (will get by zod enum validation)', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_one',
+          compliance_topics: ['shop/redact', 'shop/redact'],
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
+      fatal: true,
+      path: ['webhooks', 'subscriptions', 0, 'compliance_topics', 1, 'shop/redact'],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
 
-    test('accepts a subscription with no top level uri but defined local uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'https://example.com',
-          },
-        ],
-      }
+  test('allows same compliance_topics if uri is different', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['metaobjects/create'],
+          uri: 'https://example.com',
+          sub_topic: 'type:metaobject_one',
+          compliance_topics: ['shop/redact'],
+        },
+        {
+          topics: ['products/create'],
+          uri: 'https://example-two.com',
+          sub_topic: 'type:metaobject_two',
+          compliance_topics: ['shop/redact'],
+        },
+      ],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
 
-    test('accepts a subscription with no top level uri but defined pub sub uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'pubsub://my-project-123:my-topic',
-          },
-        ],
-      }
+  test('allows same compliance_topics across https, pub sub and arn with multiple topics', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/all_webhooks',
+          compliance_topics: ['shop/redact', 'customers/data_request', 'customers/redact'],
+        },
+        {
+          topics: ['products/create'],
+          uri: 'pubsub://my-project-123:my-topic',
+          compliance_topics: ['customers/data_request', 'customers/redact'],
+        },
+        {
+          topics: ['products/create'],
+          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/compliance',
+          compliance_topics: ['shop/redact', 'customers/redact'],
+        },
+      ],
+    }
 
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('accepts a subscription with no top level uri but a defined arn uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('throws an error if there is no defined uri at any level and a path is included', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            path: '/my-webhook-path',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You must use an https `uri` to use a relative path',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('accepts a relative path with top level uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            path: '/my-webhook-path',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('accepts a relative path with subscription level uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'https://example.com',
-            path: '/my-webhook-path',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using https uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'https://example.com',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited https uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using uri with path', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com/path',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'https://example.com',
-            path: '/path',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('allows unique top level topics and unique inner subscription config using https uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/delete',
-            uri: 'https://example.com',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('allows same top level topics and same inner subscription config with unique paths using https uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'https://example.com',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-            path: '/path-1',
-          },
-          {
-            topic: 'products/create',
-            path: '/path-2',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using pub sub', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'pubsub://my-project-123:my-topic',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'pubsub://my-project-123:my-topic',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited pub sub', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'pubsub://my-project-123:my-topic',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('allows unique top level topics and unique inner subscription config using pub sub', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'pubsub://my-project-123:my-topic',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/delete',
-            uri: 'pubsub://my-project-123:my-topic',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using arn uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited arn uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/create',
-          },
-        ],
-      }
-      const errorObj = {
-        code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
-        fatal: true,
-        path: ['webhooks', 'subscriptions', 0, 'products/create'],
-      }
-
-      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
-    })
-
-    test('allows unique top level topics and unique inner subscription config using arn uri', async () => {
-      const webhookConfig: WebhooksConfig = {
-        api_version: '2021-07',
-        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-        topics: ['products/update', 'products/create'],
-        subscriptions: [
-          {
-            topic: 'products/delete',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
-          },
-        ],
-      }
-
-      const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-      expect(abortOrReport).not.toHaveBeenCalled()
-      expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-    })
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
