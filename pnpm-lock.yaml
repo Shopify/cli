@@ -176,8 +176,8 @@ importers:
         specifier: 7.9.0
         version: 7.9.0
       '@shopify/theme-check-node':
-        specifier: 1.22.0
-        version: 1.22.0
+        specifier: 2.0.0
+        version: 2.0.0
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0
@@ -4673,6 +4673,20 @@ packages:
       - encoding
     dev: false
 
+  /@shopify/theme-check-common@2.0.0:
+    resolution: {integrity: sha512-z5g4AyyJ63tcpQLy9hoZLTHDNAIvIfRFiiq+Rd+ulC2zSGUCGhR488hKwKYvw7XstGUVPLhKDXkMpU4zq+rb6g==}
+    dependencies:
+      '@shopify/liquid-html-parser': 2.0.1
+      cross-fetch: 4.0.0
+      json-to-ast: 2.1.0
+      line-column: 1.0.2
+      lodash.set: 4.3.2
+      lodash.unset: 4.5.2
+      minimatch: 9.0.3
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /@shopify/theme-check-docs-updater@1.22.0:
     resolution: {integrity: sha512-jyz5KnZWwz4WPcxHZGkWaGcb1Ah4swhLi8s3nEp8YZyIS9z7nmxnQHD1DyRfInXlMuXUZBWXp2eshcW1J7cUTA==}
     hasBin: true
@@ -4685,11 +4699,34 @@ packages:
       - encoding
     dev: false
 
+  /@shopify/theme-check-docs-updater@2.0.0:
+    resolution: {integrity: sha512-TGF8ckyGGDTS5tfB1AhUxUQXQQWjJuOnXz2i3xzQeOF0RdJJU8txKdpR/Z7gBP88/hVjooTXhA3w6W7IbRZy0w==}
+    hasBin: true
+    dependencies:
+      '@shopify/theme-check-common': 2.0.0
+      ajv: 8.12.0
+      env-paths: 2.2.1
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /@shopify/theme-check-node@1.22.0:
     resolution: {integrity: sha512-oGoJxoAUkSOkVNqwdVSDA4I8tFfiVl6sW+NZHa0VNh048KcEfB99F1NnIWgUBYxjNa4FyV4iKOKfHh9B9Hvw8Q==}
     dependencies:
       '@shopify/theme-check-common': 1.22.0
       '@shopify/theme-check-docs-updater': 1.22.0
+      glob: 8.1.0
+      yaml: 2.3.2
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@shopify/theme-check-node@2.0.0:
+    resolution: {integrity: sha512-dlTNLNjf3W28ApWaWuZtgo3kO82O7aP40Snd3UUchNfKiVVnDg3p20pTBP/9Rq25GPq60QDFxSEjFg9E18WOCQ==}
+    dependencies:
+      '@shopify/theme-check-common': 2.0.0
+      '@shopify/theme-check-docs-updater': 2.0.0
       glob: 8.1.0
       yaml: 2.3.2
     transitivePeerDependencies:
