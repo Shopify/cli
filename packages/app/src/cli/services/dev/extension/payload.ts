@@ -20,6 +20,8 @@ export async function getUIExtensionPayload(
   const {localization, status: localizationStatus} = await getLocalization(extension, options)
 
   const renderer = await getUIExtensionRendererVersion(extension)
+
+  console.log(extension.configuration.group_handle)
   const defaultConfig = {
     assets: {
       main: {
@@ -69,6 +71,7 @@ export async function getUIExtensionPayload(
     apiVersion: extension.configuration.api_version,
     approvalScopes: options.grantedScopes,
     settings: extension.configuration.settings,
+    groupHandle: extension.groupHandle,
   }
   return defaultConfig
 }

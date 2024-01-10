@@ -83,6 +83,7 @@ export interface UIExtensionPayload {
       validations?: unknown[]
     }[]
   }
+  groupHandle?: string
 }
 
 export type ExtensionAssetBuildStatus = 'success' | 'error' | ''

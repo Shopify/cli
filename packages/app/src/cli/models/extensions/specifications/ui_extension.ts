@@ -21,6 +21,7 @@ const UIExtensionSchema = BaseSchema.extend({
 })
   .refine((config) => validatePoints(config), missingExtensionPointsMessage)
   .transform((config) => {
+    console.log(config)
     const extensionPoints = (config.targeting ?? config.extension_points ?? []).map((targeting) => {
       return {
         target: targeting.target,
@@ -47,6 +48,7 @@ const spec = createExtensionSpecification({
     return validateUIExtensionPointConfig(directory, config.extension_points, config.path)
   },
   deployConfig: async (config, directory) => {
+    console.log(config)
     return {
       api_version: config.api_version,
       extension_points: config.extension_points,
@@ -55,6 +57,7 @@ const spec = createExtensionSpecification({
       description: config.description,
       settings: config.settings,
       localization: await loadLocalesConfig(directory, config.type),
+      group_handle: config.group_handle,
     }
   },
   getBundleExtensionStdinContent: (config) => {

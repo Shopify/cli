@@ -145,6 +145,7 @@ export interface ExtensionPayload {
       validations?: any[]
     }[]
   }
+  groupHandle?: string
 }
 
 export enum Status {

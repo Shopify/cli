@@ -49,6 +49,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.configuration.type
   }
 
+  get groupHandle() {
+    return this.configuration.group_handle
+  }
+
   get humanName() {
     return this.specification.externalName
   }
