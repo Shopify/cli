@@ -1,4 +1,5 @@
 import {RenameOptions, renameTheme} from './rename.js'
+import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {updateTheme} from '@shopify/cli-kit/node/themes/themes-api'
 import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, expect, vi} from 'vitest'
@@ -6,24 +7,22 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/themes-api')
-vi.mock('../utilities/development-theme-manager.js', () => {
-  const DevelopmentThemeManager = vi.fn()
-  DevelopmentThemeManager.prototype.find = () => theme1
-  DevelopmentThemeManager.prototype.fetch = () => theme1
-  return {DevelopmentThemeManager}
+vi.mock('../utilities/theme-selector.js', () => {
+  return {findOrSelectTheme: vi.fn()}
 })
-
-vi.mock('../utilities/theme-selector.js', () => ({
-  findOrSelectTheme: () => theme1,
-}))
 
 const adminSession = {
   token: 'token',
   storeFqdn: 'my-shop.myshopify.com',
 }
 
-const theme1 = {
+const developmentTheme = {
   id: 1,
+  name: 'my development theme',
+} as Theme
+
+const theme1 = {
+  id: 2,
   name: 'my theme',
 } as Theme
 
@@ -35,8 +34,24 @@ const options: RenameOptions = {
 describe('renameTheme', () => {
   test('renames the development theme', async () => {
     // Given
+    vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
+
     // When
     await renameTheme(adminSession, {...options, development: true})
+
+    // Then
+    expect(updateTheme).toBeCalledWith(developmentTheme.id, {name: options.newName}, adminSession)
+    expect(renderSuccess).toBeCalledWith({
+      body: `The theme ${developmentTheme.name} was renamed to ${options.newName}`,
+    })
+  })
+
+  test('should rename a theme by ID', async () => {
+    // Given
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
+
+    // When
+    await renameTheme(adminSession, {...options, theme: '2'})
 
     // Then
     expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
@@ -45,15 +60,17 @@ describe('renameTheme', () => {
     })
   })
 
-  test('should rename a theme by ID', async () => {
+  test('development theme should take precedence over theme ID', async () => {
     // Given
+    vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
+
     // When
-    await renameTheme(adminSession, {...options, development: false, theme: '1'})
+    await renameTheme(adminSession, {...options, development: true, theme: '2'})
 
     // Then
-    expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
+    expect(updateTheme).toBeCalledWith(developmentTheme.id, {name: options.newName}, adminSession)
     expect(renderSuccess).toBeCalledWith({
-      body: `The theme ${theme1.name} was renamed to ${options.newName}`,
+      body: `The theme ${developmentTheme.name} was renamed to ${options.newName}`,
     })
   })
 })

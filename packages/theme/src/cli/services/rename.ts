@@ -1,4 +1,3 @@
-import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {updateTheme} from '@shopify/cli-kit/node/themes/themes-api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -11,15 +10,11 @@ export interface RenameOptions {
 }
 
 export async function renameTheme(adminSession: AdminSession, options: RenameOptions) {
-  const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-  const developmentTheme = (
-    await (options.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
-  )?.id
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to open',
-    developmentTheme,
     filter: {
-      theme: options.development ? `${developmentTheme}` : options.theme,
+      theme: options.theme,
+      development: options.development,
     },
   })
   const originalName = theme.name
