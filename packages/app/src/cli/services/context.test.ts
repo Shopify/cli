@@ -25,6 +25,8 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {loadFSExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -34,6 +36,7 @@ import {
   testAppWithConfig,
   testOrganizationApp,
   testThemeExtensions,
+  testAppConfigExtensions,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {
@@ -45,47 +48,13 @@ import {
 } from '../models/app/loader.js'
 import {AppInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {Config} from '@oclif/core'
-
-vi.mock('./local-storage.js')
-vi.mock('./dev/fetch')
-vi.mock('./dev/create-extension')
-vi.mock('./dev/select-app')
-vi.mock('./dev/select-store')
-vi.mock('../prompts/dev')
-vi.mock('../models/app/identifiers')
-vi.mock('./context/identifiers')
-vi.mock('../models/app/loader.js')
-vi.mock('@shopify/cli-kit/node/node-package-manager.js')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('./deploy/mode.js')
-vi.mock('./app/config/link.js')
-vi.mock('./context/partner-account-info.js')
-
-beforeEach(() => {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-  vi.mocked(isWebType).mockReturnValue(true)
-
-  // this is needed because using importActual to mock the ui module
-  // creates a circular dependency between ui and context/local
-  // so we need to mock the whole module and just replace the functions we use
-  vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
-    for (const task of tasks) {
-      // eslint-disable-next-line no-await-in-loop
-      await task.task({}, task)
-    }
-  })
-})
-
-afterEach(() => {
-  mockAndCaptureOutput().clear()
-})
 
 const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
@@ -185,6 +154,26 @@ const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptio
   }
 }
 
+vi.mock('./local-storage.js')
+vi.mock('./dev/fetch')
+vi.mock('./dev/create-extension')
+vi.mock('./dev/select-app')
+vi.mock('./dev/select-store')
+vi.mock('../prompts/dev')
+vi.mock('../models/app/identifiers')
+vi.mock('./context/identifiers')
+vi.mock('../models/app/loader.js')
+vi.mock('@shopify/cli-kit/node/node-package-manager.js')
+vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('./deploy/mode.js')
+vi.mock('./app/config/link.js')
+vi.mock('./context/partner-account-info.js')
+vi.mock('./generate/fetch-extension-specifications.js')
+
+beforeAll(async () => {
+  vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
+})
+
 beforeEach(async () => {
   vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
   vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
@@ -194,6 +183,22 @@ beforeEach(async () => {
   vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
   vi.mocked(fetchOrgAndApps).mockResolvedValue(FETCH_RESPONSE)
   vi.mocked(getPackageManager).mockResolvedValue('npm')
+  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
+  vi.mocked(isWebType).mockReturnValue(true)
+
+  // this is needed because using importActual to mock the ui module
+  // creates a circular dependency between ui and context/local
+  // so we need to mock the whole module and just replace the functions we use
+  vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+    for (const task of tasks) {
+      // eslint-disable-next-line no-await-in-loop
+      await task.task({}, task)
+    }
+  })
+})
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
 })
 
 describe('ensureGenerateContext', () => {
@@ -553,12 +558,12 @@ client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
 
+[webhooks]
+api_version = "2023-04"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products"
-
-[webhooks]
-api_version = "2023-04"
 
 [build]
 dev_store_url = "domain1"
@@ -846,10 +851,12 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -872,12 +879,14 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(reuseDevConfigPrompt).mockResolvedValueOnce(true)
+    vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -899,10 +908,12 @@ describe('ensureDeployContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
     const got = await ensureDeployContext(options(app))
@@ -925,10 +936,13 @@ describe('ensureDeployContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+
     // When
     const got = await ensureDeployContext(options(app))
 
@@ -949,7 +963,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
-    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
   })
 
@@ -958,6 +972,7 @@ describe('ensureDeployContext', () => {
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(undefined)
+    vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
     await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with Client ID key1/)
@@ -970,12 +985,14 @@ describe('ensureDeployContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
 
     const opts = options(app)
     opts.reset = true
@@ -1000,8 +1017,41 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.id).toEqual(APP1.id)
     expect(got.partnersApp.title).toEqual(APP1.title)
     expect(got.partnersApp.appType).toEqual(APP1.appType)
-    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}})
+    expect(got.identifiers).toEqual({app: APP1.apiKey, extensions: {}, extensionIds: {}, extensionsNonUuidManaged: {}})
     expect(got.release).toEqual(true)
+  })
+  test('load the app extension using the remote extensions specifications', async () => {
+    // Given
+    const app = testApp()
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+
+    const appWithExtensions = testApp({
+      allExtensions: [await testAppConfigExtensions()],
+    })
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(appWithExtensions)
+    vi.mocked(updateAppIdentifiers).mockResolvedValue(appWithExtensions)
+
+    // When
+    const got = await ensureDeployContext(options(app))
+
+    // Then
+    expect(selectOrCreateApp).not.toHaveBeenCalled()
+    expect(got.partnersApp.id).toEqual(APP2.id)
+    expect(got.partnersApp.title).toEqual(APP2.title)
+    expect(got.partnersApp.appType).toEqual(APP2.appType)
+    expect(got.identifiers).toEqual(identifiers)
+    expect(got.release).toEqual(true)
+    expect(got.app.allExtensions).toEqual(appWithExtensions.allExtensions)
+
+    expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
 })
 
@@ -1013,6 +1063,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
@@ -1041,6 +1092,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
@@ -1069,6 +1121,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP2.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
@@ -1096,6 +1149,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
@@ -1140,6 +1194,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       app: APP1.apiKey,
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
 
     vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
@@ -1226,6 +1281,7 @@ describe('ensureThemeExtensionDevContext', () => {
             type: 'THEME_APP_EXTENSION',
           },
         ],
+        configurationRegistrations: [],
         dashboardManagedExtensionRegistrations: [],
       },
     })
@@ -1247,7 +1303,7 @@ describe('ensureThemeExtensionDevContext', () => {
     const extension = await testThemeExtensions()
 
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-      app: {extensionRegistrations: [], dashboardManagedExtensionRegistrations: []},
+      app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
     })
     vi.mocked(createExtension).mockResolvedValue({
       id: 'new ID',

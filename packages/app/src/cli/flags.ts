@@ -10,6 +10,7 @@ export const appFlags = {
     description: 'The path to your app directory.',
     parse: async (input) => resolvePath(input),
     default: async () => cwd(),
+    noCacheDefault: true,
     env: 'SHOPIFY_FLAG_PATH',
   }),
   config: Flags.string({

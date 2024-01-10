@@ -12,6 +12,7 @@ export const themeFlags = {
     env: 'SHOPIFY_FLAG_PATH',
     parse: async (input) => resolvePath(input),
     default: async () => cwd(),
+    noCacheDefault: true,
   }),
   password: Flags.string({
     description: 'Password generated from the Theme Access app.',

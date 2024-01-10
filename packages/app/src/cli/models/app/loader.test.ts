@@ -32,11 +32,6 @@ import {resolve} from 'path'
 vi.mock('../../services/local-storage.js')
 vi.mock('../../services/app/config/use.js')
 
-vi.mock('../../utilities/app/config/webhooks.js', async () => ({
-  ...((await vi.importActual('../../utilities/app/config/webhooks.js')) as any),
-  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA: false,
-}))
-
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []
 
@@ -1178,6 +1173,7 @@ automatically_update_urls_on_dev = true
         api_access = true
 
         [extensions.capabilities.collect_buyer_consent]
+        write_privacy_consent = false
         sms_marketing = true
 
         [extensions.settings]
@@ -1245,6 +1241,7 @@ automatically_update_urls_on_dev = true
           block_progress: true,
           api_access: true,
           collect_buyer_consent: {
+            write_privacy_consent: false,
             sms_marketing: true,
           },
         },
@@ -1534,6 +1531,7 @@ automatically_update_urls_on_dev = true
       api_access = true
 
       [capabilities.collect_buyer_consent]
+      write_privacy_consent = true
       sms_marketing = true
 
       [settings]
@@ -1570,6 +1568,7 @@ automatically_update_urls_on_dev = true
           block_progress: true,
           network_access: true,
           collect_buyer_consent: {
+            write_privacy_consent: true,
             sms_marketing: true,
           },
         },
@@ -1629,6 +1628,41 @@ automatically_update_urls_on_dev = true
         name: 'my-product-subscription',
       })
     }
+  })
+
+  test('loads the app with a Pos configuration app access extension configured inside the toml file', async () => {
+    // Given
+    const linkedAppConfigurationWithPosConfiguration = `
+    name = "for-testing"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [pos]
+    embedded = true
+    `
+    await writeConfig(linkedAppConfigurationWithPosConfiguration)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(2)
+    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        application_url: 'https://example.com/lala',
+        embedded: true,
+      }),
+      expect.objectContaining({
+        pos: {
+          embedded: true,
+        },
+      }),
+    ])
   })
 
   test('loads the app with several functions that have valid configurations', async () => {
@@ -2006,53 +2040,57 @@ describe('parseConfigurationObject', () => {
 })
 
 describe('WebhooksSchema', () => {
-  test('throws an error if endpoint is not an https endpoint', async () => {
+  test('throws an error if uri is not an https uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'http://example.com',
+      api_version: '2021-07',
+      uri: 'http://example.com',
       topics: ['products/create'],
     }
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
       message: 'Invalid',
-      path: ['webhooks', 'endpoint'],
+      path: ['webhooks', 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('removes trailing slashes on endpoint', async () => {
+  test('removes trailing slashes on uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'https://example.com/',
+      api_version: '2021-07',
+      uri: 'https://example.com/',
       topics: ['products/create'],
     }
 
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    webhookConfig.endpoint = 'https://example.com'
+    webhookConfig.uri = 'https://example.com'
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if endpoint is not a valid formatted https URL, pubsub URI, or Eventbridge ARN', async () => {
+  test('throws an error if uri is not a valid formatted https URL, pubsub URI, or Eventbridge ARN', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'my::URI-thing::Shopify::123',
+      api_version: '2021-07',
+      uri: 'my::URI-thing::Shopify::123',
       topics: ['products/create'],
     }
     const errorObj = {
       validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
       code: zod.ZodIssueCode.invalid_string,
       message: 'Invalid',
-      path: ['webhooks', 'endpoint'],
+      path: ['webhooks', 'uri'],
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('accepts a top level https endpoint', async () => {
+  test('accepts a top level https uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'https://example.com',
+      api_version: '2021-07',
+      uri: 'https://example.com',
       topics: ['products/create'],
     }
 
@@ -2061,9 +2099,10 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('accepts a top level pub sub endpoint', async () => {
+  test('accepts a top level pub sub uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'pubsub://my-project-123:my-topic',
+      api_version: '2021-07',
+      uri: 'pubsub://my-project-123:my-topic',
       topics: ['products/create'],
     }
 
@@ -2072,9 +2111,10 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('accepts a top level ARN endpoint', async () => {
+  test('accepts a top level ARN uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH"',
+      api_version: '2021-07',
+      uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH"',
       topics: ['products/create'],
     }
 
@@ -2083,13 +2123,14 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('using a top level endpoint is invalid without a topics array and without sub webhook subscriptions', async () => {
+  test('using a top level uri is invalid without a topics array and without sub webhook subscriptions', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'https://example.com',
+      api_version: '2021-07',
+      uri: 'https://example.com',
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'To use a top-level `endpoint`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
+      message: 'To use a top-level `uri`, you must also provide a `topics` array or `[[webhooks.subscriptions]]`',
       fatal: true,
       path: ['webhooks'],
     }
@@ -2098,9 +2139,10 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('using a top level endpoint is valid with topics array', async () => {
+  test('using a top level uri is valid with topics array', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'https://example.com',
+      api_version: '2021-07',
+      uri: 'https://example.com',
       topics: ['products/create'],
     }
 
@@ -2109,9 +2151,10 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('using a top level endpoint is valid with sub webhook subscriptions', async () => {
+  test('using a top level uri is valid with sub webhook subscriptions', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'pubsub://my-project-123:my-topic',
+      api_version: '2021-07',
+      uri: 'pubsub://my-project-123:my-topic',
       subscriptions: [
         {
           topic: 'products/create',
@@ -2124,14 +2167,15 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if we have duplicate top level topics with top level endpoint', async () => {
+  test('throws an error if we have duplicate top level topics with top level uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'https://example.com',
+      api_version: '2021-07',
+      uri: 'https://example.com',
       topics: ['products/create', 'products/create'],
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+      message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
       fatal: true,
       path: ['webhooks', 'topics'],
     }
@@ -2140,9 +2184,10 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('allows unique top level topics with top level endpoint', async () => {
+  test('allows unique top level topics with top level uri', async () => {
     const webhookConfig: WebhookConfig = {
-      endpoint: 'https://example.com',
+      api_version: '2021-07',
+      uri: 'https://example.com',
       topics: ['products/create', 'products/update'],
     }
 
@@ -2154,33 +2199,35 @@ describe('WebhooksSchema', () => {
   describe('WebhookSubscriptionSchema', () => {
     test('removes trailing forward slash', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://example.com/',
+            uri: 'https://example.com/',
           },
         ],
       }
 
       const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
       expect(abortOrReport).not.toHaveBeenCalled()
-      webhookConfig.subscriptions![0]!.endpoint = 'https://example.com'
+      webhookConfig.subscriptions![0]!.uri = 'https://example.com'
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('throws an error if topics and subscriptions are defined, but no top level endpoint is provided', async () => {
+    test('throws an error if topics and subscriptions are defined, but no top level uri is provided', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         topics: ['products/create', 'products/update'],
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
           },
         ],
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'To use top-level topics, you must also provide a top-level `endpoint`',
+        message: 'To use top-level topics, you must also provide a top-level `uri`',
         fatal: true,
         path: ['webhooks', 'topics'],
       }
@@ -2189,12 +2236,13 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('throws an error if endpoint is not an https endpoint', async () => {
+    test('throws an error if uri is not an https uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'http://example.com',
+            uri: 'http://example.com',
           },
         ],
       }
@@ -2202,7 +2250,7 @@ describe('WebhooksSchema', () => {
         validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
         code: zod.ZodIssueCode.invalid_string,
         message: 'Invalid',
-        path: ['webhooks', 'subscriptions', 0, 'endpoint'],
+        path: ['webhooks', 'subscriptions', 0, 'uri'],
       }
 
       const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2211,9 +2259,10 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path does not start with a forward slash', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
             topic: 'products/create',
             path: 'my-neat-new-path',
           },
@@ -2233,9 +2282,10 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path is only forward slash', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
             topic: 'products/create',
             path: '/',
           },
@@ -2255,10 +2305,11 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path is used with pub sub', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         subscriptions: [
           {
-            endpoint: 'pubsub://my-project-123:my-topic',
+            uri: 'pubsub://my-project-123:my-topic',
             topic: 'products/create',
             path: '/test_path',
           },
@@ -2267,7 +2318,7 @@ describe('WebhooksSchema', () => {
       const errorObj = [
         {
           code: zod.ZodIssueCode.custom,
-          message: 'You must use an https `endpoint` to use a relative path',
+          message: 'You must use an https `uri` to use a relative path',
           fatal: true,
           path: ['webhooks', 'subscriptions', 0],
         },
@@ -2279,10 +2330,11 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if path is used with arn', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         subscriptions: [
           {
-            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
             topic: 'products/create',
             path: '/test_path',
           },
@@ -2291,7 +2343,7 @@ describe('WebhooksSchema', () => {
       const errorObj = [
         {
           code: zod.ZodIssueCode.custom,
-          message: 'You must use an https `endpoint` to use a relative path',
+          message: 'You must use an https `uri` to use a relative path',
           fatal: true,
           path: ['webhooks', 'subscriptions', 0],
         },
@@ -2301,12 +2353,13 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('throws an error if endpoint is not a valid https URL, pub sub URI, or Eventbridge ARN', async () => {
+    test('throws an error if uri is not a valid https URL, pub sub URI, or Eventbridge ARN', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'my::test-thing::Shopify::123',
+            uri: 'my::test-thing::Shopify::123',
           },
         ],
       }
@@ -2314,7 +2367,7 @@ describe('WebhooksSchema', () => {
         validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
         code: zod.ZodIssueCode.invalid_string,
         message: 'Invalid',
-        path: ['webhooks', 'subscriptions', 0, 'endpoint'],
+        path: ['webhooks', 'subscriptions', 0, 'uri'],
       }
 
       const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
@@ -2323,10 +2376,11 @@ describe('WebhooksSchema', () => {
 
     test('accepts a pub sub config with both project and topic', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'pubsub://my-project-123:my-topic',
+            uri: 'pubsub://my-project-123:my-topic',
           },
         ],
       }
@@ -2336,8 +2390,9 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('throws an error if there is no top level endpoint and no subscription endpoint', async () => {
+    test('throws an error if there is no top level uri and no subscription uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2346,7 +2401,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You must include either a top-level endpoint or an endpoint per `[[webhooks.subscriptions]]`',
+        message: 'You must include either a top-level uri or an uri per `[[webhooks.subscriptions]]`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0],
       }
@@ -2355,9 +2410,10 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('accepts a subscription with top level endpoint', async () => {
+    test('accepts a subscription with top level uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2370,9 +2426,10 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('accepts a subscription with top level pub sub endpoint', async () => {
+    test('accepts a subscription with top level pub sub uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'pubsub://my-project-123:my-topic',
+        api_version: '2021-07',
+        uri: 'pubsub://my-project-123:my-topic',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2387,7 +2444,8 @@ describe('WebhooksSchema', () => {
 
     test('accepts a subscription with a top level arn', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        api_version: '2021-07',
+        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2400,12 +2458,13 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('accepts a subscription with no top level endpoint but defined local endpoint', async () => {
+    test('accepts a subscription with no top level uri but defined local uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
           },
         ],
       }
@@ -2415,12 +2474,13 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('accepts a subscription with no top level endpoint but defined pub sub endpoint', async () => {
+    test('accepts a subscription with no top level uri but defined pub sub uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'pubsub://my-project-123:my-topic',
+            uri: 'pubsub://my-project-123:my-topic',
           },
         ],
       }
@@ -2430,12 +2490,13 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('accepts a subscription with no top level endpoint but a defined arn endpoint', async () => {
+    test('accepts a subscription with no top level uri but a defined arn uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           },
         ],
       }
@@ -2445,9 +2506,10 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('throws an error if there is no defined endpoint at any level and a path is included', async () => {
+    test('throws an error if there is no defined uri at any level and a path is included', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        api_version: '2021-07',
+        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2457,7 +2519,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You must use an https `endpoint` to use a relative path',
+        message: 'You must use an https `uri` to use a relative path',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0],
       }
@@ -2466,9 +2528,10 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('accepts a relative path with top level endpoint', async () => {
+    test('accepts a relative path with top level uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         subscriptions: [
           {
             topic: 'products/create',
@@ -2482,12 +2545,13 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('accepts a relative path with subscription level endpoint', async () => {
+    test('accepts a relative path with subscription level uri', async () => {
       const webhookConfig: WebhookConfig = {
+        api_version: '2021-07',
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
             path: '/my-webhook-path',
           },
         ],
@@ -2498,20 +2562,21 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using https endpoint', async () => {
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using https uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
           },
         ],
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2520,9 +2585,10 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited https endpoint', async () => {
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited https uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
@@ -2532,7 +2598,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2541,21 +2607,22 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using endpoint with path', async () => {
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using uri with path', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com/path',
+        api_version: '2021-07',
+        uri: 'https://example.com/path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
             path: '/path',
           },
         ],
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2564,14 +2631,15 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('allows unique top level topics and unique inner subscription config using https endpoint', async () => {
+    test('allows unique top level topics and unique inner subscription config using https uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/delete',
-            endpoint: 'https://example.com',
+            uri: 'https://example.com',
           },
         ],
       }
@@ -2581,9 +2649,10 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('allows same top level topics and same inner subscription config with unique paths using https endpoint', async () => {
+    test('allows same top level topics and same inner subscription config with unique paths using https uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'https://example.com',
+        api_version: '2021-07',
+        uri: 'https://example.com',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
@@ -2604,18 +2673,19 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using pub sub', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'pubsub://my-project-123:my-topic',
+        api_version: '2021-07',
+        uri: 'pubsub://my-project-123:my-topic',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'pubsub://my-project-123:my-topic',
+            uri: 'pubsub://my-project-123:my-topic',
           },
         ],
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2626,7 +2696,8 @@ describe('WebhooksSchema', () => {
 
     test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited pub sub', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'pubsub://my-project-123:my-topic',
+        api_version: '2021-07',
+        uri: 'pubsub://my-project-123:my-topic',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
@@ -2636,7 +2707,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2647,12 +2718,13 @@ describe('WebhooksSchema', () => {
 
     test('allows unique top level topics and unique inner subscription config using pub sub', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'pubsub://my-project-123:my-topic',
+        api_version: '2021-07',
+        uri: 'pubsub://my-project-123:my-topic',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/delete',
-            endpoint: 'pubsub://my-project-123:my-topic',
+            uri: 'pubsub://my-project-123:my-topic',
           },
         ],
       }
@@ -2662,20 +2734,21 @@ describe('WebhooksSchema', () => {
       expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
     })
 
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using arn endpoint', async () => {
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using arn uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        api_version: '2021-07',
+        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/create',
-            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           },
         ],
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2684,9 +2757,10 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited arn endpoint', async () => {
+    test('throws an error if we have duplicate topics with the top level topics array and inner subscription config using inherited arn uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        api_version: '2021-07',
+        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
@@ -2696,7 +2770,7 @@ describe('WebhooksSchema', () => {
       }
       const errorObj = {
         code: zod.ZodIssueCode.custom,
-        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `endpoint`',
+        message: 'You can’t have duplicate subscriptions with the exact same `topic` and `uri`',
         fatal: true,
         path: ['webhooks', 'subscriptions', 0, 'products/create'],
       }
@@ -2705,14 +2779,15 @@ describe('WebhooksSchema', () => {
       expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
     })
 
-    test('allows unique top level topics and unique inner subscription config using arn endpoint', async () => {
+    test('allows unique top level topics and unique inner subscription config using arn uri', async () => {
       const webhookConfig: WebhookConfig = {
-        endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+        api_version: '2021-07',
+        uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
         topics: ['products/update', 'products/create'],
         subscriptions: [
           {
             topic: 'products/delete',
-            endpoint: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/123/my_webhook_path',
           },
         ],
       }

@@ -265,8 +265,8 @@ export class ExportJavyBuilder implements JavyBuilder {
 
   get wit() {
     // % escapes the name to avoid conflict with reserved words, if any
-    const witExports = this.exports.map((name) => `export %${hyphenate(name)}: func()`)
-    return `package function:impl
+    const witExports = this.exports.map((name) => `export %${hyphenate(name)}: func();`)
+    return `package function:impl;
 
 world ${JAVY_WORLD} {
   ${witExports.join('\n  ')}

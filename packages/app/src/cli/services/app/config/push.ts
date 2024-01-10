@@ -57,6 +57,8 @@ export async function pushConfig(options: PushOptions) {
   const {businessName: org} = await fetchOrgFromId(app.organizationId, partnersSession)
   renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
 
+  await logMetadataForLoadedContext(app)
+
   if (!(await confirmPushChanges(options, app))) return
 
   const variables = getMutationVars(app, configuration)
@@ -96,8 +98,6 @@ export async function pushConfig(options: PushOptions) {
       abort(errors)
     }
   }
-
-  await logMetadataForLoadedContext(app)
 
   renderSuccess({
     headline: `Updated your app config for ${configuration.name}`,

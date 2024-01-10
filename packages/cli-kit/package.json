@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli-kit",
-  "version": "3.52.0",
+  "version": "3.53.0",
   "private": false,
   "description": "A set of utilities, interfaces, and models that are common across all the platform features",
   "keywords": [
@@ -103,7 +103,7 @@
   "dependencies": {
     "@bugsnag/js": "7.21.0",
     "@iarna/toml": "2.2.5",
-    "@oclif/core": "2.11.7",
+    "@oclif/core": "3.15.1",
     "@opentelemetry/api": "1.6.0",
     "@opentelemetry/core": "1.17.1",
     "@opentelemetry/exporter-metrics-otlp-http": "0.43.0",
@@ -174,7 +174,7 @@
     "@types/git-diff": "^2.0.3",
     "@types/gradient-string": "^1.1.2",
     "@types/lodash": "4.14.195",
-    "@types/node": "16.18.57",
+    "@types/node": "18.19.3",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
     "@vitest/coverage-istanbul": "^0.34.3",
@@ -186,7 +186,7 @@
     "vitest": "^0.34.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.12.0"
   },
   "os": [
     "darwin",

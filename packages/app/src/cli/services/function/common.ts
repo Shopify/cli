@@ -13,6 +13,7 @@ export const functionFlags = {
     description: 'The path to your function directory.',
     parse: async (input) => resolvePath(input),
     default: async () => cwd(),
+    noCacheDefault: true,
     env: 'SHOPIFY_FLAG_PATH',
   }),
 }

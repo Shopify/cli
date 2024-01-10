@@ -16,6 +16,7 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
+import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -27,7 +28,13 @@ import {
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
-import {getAppConfigurationFileName, loadApp, loadAppConfiguration, loadAppName} from '../models/app/loader.js'
+import {
+  getAppConfigurationFileName,
+  getAppConfigurationShorthand,
+  loadApp,
+  loadAppConfiguration,
+  loadAppName,
+} from '../models/app/loader.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -95,6 +102,7 @@ export async function ensureGenerateContext(options: {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
+    await logMetadataForLoadedContext(app)
     return app.apiKey
   }
 
@@ -108,6 +116,10 @@ export async function ensureGenerateContext(options: {
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
     }
     showReusedGenerateValues(org.businessName, cachedInfo)
+    await logMetadataForLoadedContext({
+      organizationId: app.organizationId,
+      apiKey: app.apiKey,
+    })
     return app.apiKey
   } else {
     const orgId = cachedInfo?.orgId || (await selectOrg(options.partnersSession))
@@ -281,7 +293,7 @@ interface DeployContextOutput {
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
  */
-export async function fetchDevAppAndPrompt(
+async function fetchDevAppAndPrompt(
   app: AppInterface,
   partnersSession: PartnersSession,
 ): Promise<OrganizationApp | undefined> {
@@ -343,13 +355,24 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const token = partnersSession.token
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
 
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey: partnersApp.apiKey,
+    config: options.commandConfig,
+  })
+  const app: AppInterface = await loadApp({
+    specifications,
+    directory: options.app.directory,
+    configName: getAppConfigurationShorthand(options.app.configuration.path),
+  })
+
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
-  showReusedDeployValues(org.businessName, options.app, partnersApp)
+  showReusedDeployValues(org.businessName, app, partnersApp)
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
   identifiers = await ensureDeploymentIdsPresence({
-    app: options.app,
+    app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
     force: options.force,
@@ -362,7 +385,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   // eslint-disable-next-line no-param-reassign
   options = {
     ...options,
-    app: await updateAppIdentifiers({app: options.app, identifiers, command: 'deploy'}),
+    app: await updateAppIdentifiers({app, identifiers, command: 'deploy'}),
   }
 
   const result = {
@@ -496,6 +519,7 @@ export async function ensureVersionsListContext(
   const partnersSession = await fetchPartnersSession()
   const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
 
+  await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
   return {
     partnersSession,
     partnersApp,
@@ -516,6 +540,9 @@ export async function fetchOrCreateOrganizationApp(
     scopesArray,
     directory,
   })
+
+  await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
+
   return partnersApp
 }
 
@@ -558,6 +585,8 @@ export async function fetchAppAndIdentifiers(
   if (!partnersApp) {
     partnersApp = await fetchOrCreateOrganizationApp(app, partnersSession)
   }
+
+  await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
 
   return [partnersApp, envIdentifiers]
 }
@@ -688,6 +717,8 @@ export async function getAppContext({
       storeFqdn: configuration.build?.dev_store_url,
       updateURLs: configuration.build?.automatically_update_urls_on_dev,
     }
+
+    await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
   }
 
   return {
@@ -778,7 +809,7 @@ export function renderCurrentlyUsedConfigInfo({
   })
 }
 
-export function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
+function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
   renderCurrentlyUsedConfigInfo({
     org,
     appName: cachedAppInfo.title!,
@@ -787,7 +818,7 @@ export function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppIn
   })
 }
 
-export function showReusedDeployValues(
+function showReusedDeployValues(
   org: string,
   app: AppInterface,
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,

@@ -9,6 +9,8 @@ import {
   AppConfigurationInterface,
   AppSchema,
   LegacyAppSchema,
+  AppConfiguration,
+  CurrentAppConfiguration,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -160,7 +162,7 @@ interface AppLoaderConstructorArgs {
   directory: string
   mode?: AppLoaderMode
   configName?: string
-  specifications: ExtensionSpecification[]
+  specifications?: ExtensionSpecification[]
 }
 
 /**
@@ -196,7 +198,7 @@ class AppLoader {
   constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
-    this.specifications = specifications
+    this.specifications = specifications ?? []
     this.configName = configName
   }
 
@@ -223,10 +225,7 @@ class AppLoader {
 
     const dotenv = await loadDotEnv(appDirectory, configuration.path)
 
-    const {allExtensions, usedCustomLayout} = await this.loadExtensions(
-      appDirectory,
-      configuration.extension_directories,
-    )
+    const allExtensions = await this.loadExtensions(appDirectory, configuration)
 
     const packageJSONPath = joinPath(appDirectory, 'package.json')
     const name = await loadAppName(appDirectory)
@@ -249,13 +248,15 @@ class AppLoader {
       allExtensions,
       usesWorkspaces,
       dotenv,
+      undefined,
+      this.specifications,
     )
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
     await logMetadataForLoadedApp(appClass, {
       usedCustomLayoutForWeb,
-      usedCustomLayoutForExtensions: usedCustomLayout,
+      usedCustomLayoutForExtensions: configuration.extension_directories !== undefined,
     })
 
     return appClass
@@ -342,17 +343,46 @@ class AppLoader {
     return extensionInstance
   }
 
-  async loadExtensions(
-    appDirectory: string,
-    extensionDirectories?: string[],
-  ): Promise<{allExtensions: ExtensionInstance[]; usedCustomLayout: boolean}> {
+  async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+    if (this.specifications.length === 0) return []
+
+    const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
+    const configExtensionPromises = isCurrentSchema(appConfiguration)
+      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration as CurrentAppConfiguration)
+      : []
+
+    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
+    const allExtensions = getArrayRejectingUndefined(extensions.flat())
+
+    // Validate that all extensions have a unique handle.
+    const handles = new Set()
+    allExtensions.forEach((extension) => {
+      if (extension.handle && handles.has(extension.handle)) {
+        const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
+        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
+        const handle = outputToken.cyan(extension.handle)
+
+        this.abortOrReport(
+          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
+          undefined,
+          extension.configuration.path,
+        )
+      } else if (extension.handle) {
+        handles.add(extension.handle)
+      }
+    })
+
+    return allExtensions
+  }
+
+  async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
 
-    const extensionPromises = configPaths.map(async (configurationPath) => {
+    return configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
       const obj = await loadConfigurationFile(configurationPath)
       const {extensions, type} = ExtensionsArraySchema.parse(obj)
@@ -392,29 +422,38 @@ class AppLoader {
         )
       }
     })
+  }
 
-    const extensions = await Promise.all(extensionPromises)
-    const allExtensions = getArrayRejectingUndefined(extensions.flat())
-
-    // Validate that all extensions have a unique handle.
-    const handles = new Set()
-    allExtensions.forEach((extension) => {
-      if (extension.handle && handles.has(extension.handle)) {
-        const matchingExtensions = allExtensions.filter((ext) => ext.handle === extension.handle)
-        const result = joinWithAnd(matchingExtensions.map((ext) => ext.configuration.name))
-        const handle = outputToken.cyan(extension.handle)
-
-        this.abortOrReport(
-          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
-          undefined,
-          extension.configuration.path,
+  async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+    return this.specifications
+      .filter((specification) => specification.appModuleFeatures().includes('app_config'))
+      .map(async (specification) => {
+        const specConfiguration = await parseConfigurationObject(
+          specification.schema,
+          appConfiguration.path,
+          appConfiguration,
+          this.abortOrReport.bind(this),
         )
-      } else if (extension.handle) {
-        handles.add(extension.handle)
-      }
-    })
 
-    return {allExtensions, usedCustomLayout: extensionDirectories !== undefined}
+        const {path, ...specConfigurationWithouPath} = specConfiguration
+        if (Object.keys(specConfigurationWithouPath).length === 0) return
+
+        return this.createExtensionInstance(
+          specification.identifier,
+          specConfiguration,
+          appConfiguration.path,
+          directory,
+        ).then((extensionInstance) =>
+          this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
+        )
+      })
+  }
+
+  async validateConfigurationExtensionInstance(apiKey: string, extensionInstance?: ExtensionInstance) {
+    if (!extensionInstance) return
+
+    const configContent = await extensionInstance.commonDeployConfig(apiKey)
+    return configContent ? extensionInstance : undefined
   }
 
   async findEntryPath(directory: string, specification: ExtensionSpecification) {
@@ -686,11 +725,12 @@ async function logMetadataForLoadedApp(
   await metadata.addPublicMetadata(async () => {
     const projectType = await getProjectType(app.webs)
 
-    const extensionFunctionCount = app.allExtensions.filter((extension) => extension.isFunctionExtension).length
-    const extensionUICount = app.allExtensions.filter((extension) => extension.isESBuildExtension).length
-    const extensionThemeCount = app.allExtensions.filter((extension) => extension.isThemeExtension).length
+    const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
+    const extensionFunctionCount = extensionsToAddToMetrics.filter((extension) => extension.isFunctionExtension).length
+    const extensionUICount = extensionsToAddToMetrics.filter((extension) => extension.isESBuildExtension).length
+    const extensionThemeCount = extensionsToAddToMetrics.filter((extension) => extension.isThemeExtension).length
 
-    const extensionTotalCount = app.allExtensions.length
+    const extensionTotalCount = extensionsToAddToMetrics.length
 
     const webBackendCount = app.webs.filter((web) => isWebType(web, WebType.Backend)).length
     const webBackendFramework =
@@ -698,7 +738,7 @@ async function logMetadataForLoadedApp(
     const webFrontendCount = app.webs.filter((web) => isWebType(web, WebType.Frontend)).length
 
     const extensionsBreakdownMapping: {[key: string]: number} = {}
-    for (const extension of app.allExtensions) {
+    for (const extension of extensionsToAddToMetrics) {
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {

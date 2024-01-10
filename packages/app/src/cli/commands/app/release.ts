@@ -33,6 +33,12 @@ export default class Release extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Release without asking for confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      char: 'f',
+    }),
     version: Flags.string({
       hidden: false,
       description: 'The name of the app version to release.',
@@ -54,6 +60,11 @@ export default class Release extends Command {
 
     const specifications = await loadLocalExtensionsSpecifications(this.config)
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+
+    const requiredNonTTYFlags = ['force']
+    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
+
     await release({
       app,
       apiKey,

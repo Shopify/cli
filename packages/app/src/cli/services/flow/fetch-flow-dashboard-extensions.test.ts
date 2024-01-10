@@ -10,6 +10,7 @@ describe('getActiveDashboardExtensions', (it) => {
     vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
       app: {
         extensionRegistrations: [],
+        configurationRegistrations: [],
         dashboardManagedExtensionRegistrations: [
           {
             id: 'id-1',

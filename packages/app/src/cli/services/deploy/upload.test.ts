@@ -61,6 +61,7 @@ describe('uploadFunctionExtensions', () => {
       app: 'api=key',
       extensions: {},
       extensionIds: {},
+      extensionsNonUuidManaged: {},
     }
   })
 

@@ -11,11 +11,12 @@ module ShopifyCLI
 
         def_delegators :@listener, :add_observer, :changed, :notify_observers
 
-        def initialize(ctx, theme:, syncer:, ignore_filter: nil, poll: false)
+        def initialize(ctx, theme:, syncer:, ignore_filter: nil, poll: false, delete: true)
           @ctx = ctx
           @theme = theme
           @syncer = syncer
           @ignore_filter = ignore_filter
+          @delete = delete
           @listener = FileSystemListener.new(root: @theme.root, force_poll: poll,
             ignore_regex: @ignore_filter&.regexes)
 
@@ -35,6 +36,8 @@ module ShopifyCLI
           if modified_theme_files.any?
             @syncer.enqueue_updates(modified_theme_files)
           end
+
+          return unless @delete
 
           removed_theme_files = filter_remote_files(removed)
           if removed_theme_files.any?

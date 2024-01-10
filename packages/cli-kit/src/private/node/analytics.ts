@@ -84,8 +84,6 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
 }
 
 function getPluginNames(config: Interfaces.Config) {
-  return config.plugins
-    .map((plugin) => plugin.name)
-    .sort()
-    .filter((plugin) => !plugin.startsWith('@oclif/'))
+  const pluginNames = [...config.plugins.keys()]
+  return pluginNames.sort().filter((plugin) => !plugin.startsWith('@oclif/'))
 }

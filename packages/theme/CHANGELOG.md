@@ -1,5 +1,21 @@
 # @shopify/theme
 
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+- 72b1daaee: Add new `nodelete` flag to `shopify theme dev` command
+
+### Patch Changes
+
+- Updated dependencies [1d6fe3475]
+- Updated dependencies [cc3ada0a2]
+- Updated dependencies [0896e62b1]
+- Updated dependencies [72b1daaee]
+  - @shopify/cli-kit@3.53.0
+
 ## 3.52.0
 
 ### Patch Changes

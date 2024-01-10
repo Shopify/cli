@@ -24,7 +24,9 @@ function relativeScore(commandBigrams: string[], userCommandBigrams: string[]): 
   return result.length
 }
 
-export function findAlternativeCommand(opts: Parameters<Hook.CommandNotFound>[0]): string | undefined {
+export function findAlternativeCommand(
+  opts: Pick<Parameters<Hook.CommandNotFound>[0], 'id' | 'argv' | 'config'>,
+): string | undefined {
   if (opts.id.length < 2) return undefined
   const hiddenCommands = new Set(opts.config.commands.filter((cmd) => cmd.hidden).map((cmd) => cmd.id))
   const availableCommands = Array.from(

@@ -46,6 +46,11 @@ export default class Dev extends ThemeCommand {
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
+    nodelete: Flags.boolean({
+      char: 'n',
+      description: 'Runs the dev command without deleting local files.',
+      env: 'SHOPIFY_FLAG_NODELETE',
+    }),
     only: Flags.string({
       char: 'o',
       multiple: true,
@@ -92,6 +97,7 @@ export default class Dev extends ThemeCommand {
     'overwrite-json',
     'port',
     'theme',
+    'nodelete',
     'only',
     'ignore',
     'stable',

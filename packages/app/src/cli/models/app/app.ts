@@ -3,11 +3,11 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {
-  TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA,
   validateInnerSubscriptions,
   validateTopLevelSubscriptions,
   httpsRegex,
 } from '../../utilities/app/config/webhooks.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -48,16 +48,18 @@ const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   message: 'Only https urls are allowed',
 }).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-const EndpointValidation = zod
-  .union([zod.string().regex(httpsRegex), zod.string().regex(pubSubRegex), zod.string().regex(arnRegex)])
-  .optional()
+const UriValidation = zod.union([
+  zod.string().regex(httpsRegex),
+  zod.string().regex(pubSubRegex),
+  zod.string().regex(arnRegex),
+])
 
 export const WebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
   sub_topic: zod.string().optional(),
   include_fields: zod.array(zod.string()).optional(),
   metafield_namespaces: zod.array(zod.string()).optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
   path: zod
     .string()
     .refine((path) => path.startsWith('/') && path.length > 1, {
@@ -77,15 +79,13 @@ const WebhooksSchema = zod.object({
     .optional(),
 })
 
-const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
+const DeclarativeWebhooksSchema = zod.object({
   topics: zod.array(zod.string()).nonempty().optional(),
-  endpoint: zod.preprocess(removeTrailingSlash, EndpointValidation),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-}).superRefine((schema, ctx) => {
-  // eslint-disable-next-line no-warning-comments
-  // TODO - remove once declarative webhooks are live, don't validate properties we are not using yet
-  if (TEMP_OMIT_DECLARATIVE_WEBHOOKS_SCHEMA) return
+})
 
+const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSchema).superRefine((schema, ctx) => {
   const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema)
   if (topLevelSubscriptionErrors) {
     ctx.addIssue(topLevelSubscriptionErrors)
@@ -99,51 +99,63 @@ const WebhooksSchemaWithDeclarative = WebhooksSchema.extend({
   }
 })
 
-export const AppSchema = zod
-  .object({
-    name: zod.string().max(30),
-    client_id: zod.string(),
-    application_url: validateUrl(zod.string()),
-    embedded: zod.boolean(),
-    access_scopes: zod
-      .object({
-        scopes: zod.string().optional(),
-        use_legacy_install_flow: zod.boolean().optional(),
-      })
-      .optional(),
-    auth: zod
-      .object({
-        redirect_urls: zod.array(validateUrl(zod.string())),
-      })
-      .optional(),
-    webhooks: WebhooksSchemaWithDeclarative,
-    app_proxy: zod
-      .object({
-        url: validateUrl(zod.string()),
-        subpath: zod.string(),
-        prefix: zod.string(),
-      })
-      .optional(),
-    pos: zod
-      .object({
-        embedded: zod.boolean(),
-      })
-      .optional(),
-    app_preferences: zod
-      .object({
-        url: validateUrl(zod.string().max(255)),
-      })
-      .optional(),
-    build: zod
-      .object({
-        automatically_update_urls_on_dev: zod.boolean().optional(),
-        dev_store_url: zod.string().optional(),
-      })
-      .optional(),
-    extension_directories: zod.array(zod.string()).optional(),
-    web_directories: zod.array(zod.string()).optional(),
-  })
-  .strict()
+export const NonVersionedAppTopSchema = zod.object({
+  name: zod.string().max(30),
+  client_id: zod.string(),
+})
+
+export const NonVersionedAppBottomSchema = zod.object({
+  access_scopes: zod
+    .object({
+      scopes: zod.string().optional(),
+      use_legacy_install_flow: zod.boolean().optional(),
+    })
+    .optional(),
+  auth: zod
+    .object({
+      redirect_urls: zod.array(validateUrl(zod.string())),
+    })
+    .optional(),
+  build: zod
+    .object({
+      automatically_update_urls_on_dev: zod.boolean().optional(),
+      dev_store_url: zod.string().optional(),
+    })
+    .optional(),
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
+})
+export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema)
+
+export const VersionedAppSchema = zod.object({
+  application_url: validateUrl(zod.string()),
+  embedded: zod.boolean(),
+  access: zod
+    .object({
+      direct_api_offline_access: zod.boolean().optional(),
+    })
+    .optional(),
+  webhooks: WebhooksSchemaWithDeclarative,
+  app_proxy: zod
+    .object({
+      url: validateUrl(zod.string()),
+      subpath: zod.string(),
+      prefix: zod.string(),
+    })
+    .optional(),
+  pos: zod
+    .object({
+      embedded: zod.boolean(),
+    })
+    .optional(),
+  app_preferences: zod
+    .object({
+      url: validateUrl(zod.string().max(255)),
+    })
+    .optional(),
+})
+
+export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
@@ -198,6 +210,12 @@ export function appIsLaunchable(app: AppInterface) {
   return Boolean(frontendConfig || backendConfig)
 }
 
+export function filterNonVersionedAppFields(app: AppInterface) {
+  return Object.keys(app.configuration).filter(
+    (fieldName) => !Object.keys(NonVersionedAppSchema.shape).concat('path').includes(fieldName),
+  )
+}
+
 export enum WebType {
   Frontend = 'frontend',
   Backend = 'backend',
@@ -232,8 +250,9 @@ export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: 
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
-export type WebhookConfig = Partial<zod.infer<typeof AppSchema>['webhooks']>
-export type NormalizedWebhookSubscriptions = Partial<zod.infer<typeof WebhookSubscriptionSchema>>[]
+export type WebhookConfig = zod.infer<typeof AppSchema>['webhooks']
+export type DeclarativeWebhookConfig = zod.infer<typeof DeclarativeWebhooksSchema>
+export type NormalizedWebhookSubscription = zod.infer<typeof WebhookSubscriptionSchema>
 
 export interface Web {
   directory: string
@@ -255,6 +274,7 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  specifications?: ExtensionSpecification[]
   errors?: AppErrors
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -275,6 +295,7 @@ export class App implements AppInterface {
   dotenv?: DotEnvFile
   errors?: AppErrors
   allExtensions: ExtensionInstance[]
+  specifications?: ExtensionSpecification[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -289,6 +310,7 @@ export class App implements AppInterface {
     usesWorkspaces: boolean,
     dotenv?: DotEnvFile,
     errors?: AppErrors,
+    specifications?: ExtensionSpecification[],
   ) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
@@ -301,6 +323,7 @@ export class App implements AppInterface {
     this.allExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
+    this.specifications = specifications
   }
 
   async updateDependencies() {

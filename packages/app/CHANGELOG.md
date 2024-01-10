@@ -1,5 +1,28 @@
 # @shopify/app
 
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0d60cf64b: Emit semicolons in generated WIT for Functions
+- 1b81646ff: Serve GraphiQL on localhost
+- 0896e62b1: Versioned app config support
+- 3cb5c5900: Enable GraphiQL for everyone by default
+
+### Patch Changes
+
+- a53985314: Eliminate status flicker when reconnecting to dev
+- cc3ada0a2: Raise an error properly and prompt reauthentication when authentication expires
+- e76f79ac6: Restyle GraphiQL top bar yet again for better icons, alignment, and arrangement
+- 121cc9f93: Add a custom user agent for GraphiQL
+- Updated dependencies [1d6fe3475]
+- Updated dependencies [cc3ada0a2]
+- Updated dependencies [0896e62b1]
+- Updated dependencies [72b1daaee]
+  - @shopify/plugin-cloudflare@3.53.0
+  - @shopify/cli-kit@3.53.0
+
 ## 3.52.0
 
 ### Minor Changes

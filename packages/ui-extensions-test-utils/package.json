@@ -1,6 +1,6 @@
 {
   "name": "@shopify/ui-extensions-test-utils",
-  "version": "3.25.0",
+  "version": "3.26.0",
   "private": true,
   "license": "MIT",
   "main": "dist/index",
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@shopify/react-testing": "^3.0.0",
-    "@types/node": "16.18.57",
+    "@types/node": "18.19.3",
     "@types/react": "16.14.0",
     "@types/react-dom": "^16.9.11",
     "mock-socket": "^9.2.1",
