@@ -169,30 +169,28 @@ export function mergeAppConfiguration(
 ): CurrentAppConfiguration {
   return {
     ...addLocalAppConfig(appConfiguration, remoteApp),
-    name: remoteApp.title,
-    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
-    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
-    auth: {
-      redirect_urls: remoteApp.redirectUrlWhitelist,
-    },
-    pos: {
-      embedded: remoteApp.posEmbedded || false,
-    },
+    ...addBrandingConfig(remoteApp),
+    ...addPosConfig(remoteApp),
     ...addRemoteAppWebhooksConfig(remoteApp),
-    ...addRemoteAppAccessScopesConfig(appConfiguration, remoteApp),
+    ...addRemoteAppAccessConfig(appConfiguration, remoteApp),
     ...addRemoteAppProxyConfig(remoteApp),
-    ...addRemoteAppPreferencesConfig(remoteApp),
+    ...addRemoteAppHomeConfig(remoteApp),
   }
 }
 
-function addRemoteAppPreferencesConfig(remoteApp: OrganizationApp) {
+function addRemoteAppHomeConfig(remoteApp: OrganizationApp) {
+  const homeConfig = {
+    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
+    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
+  }
   return remoteApp.preferencesUrl
     ? {
+        ...homeConfig,
         app_preferences: {
           url: remoteApp.preferencesUrl,
         },
       }
-    : {}
+    : {...homeConfig}
 }
 
 function addRemoteAppProxyConfig(remoteApp: OrganizationApp) {
@@ -229,7 +227,7 @@ function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
   }
 }
 
-function addRemoteAppAccessScopesConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
+function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
   let accessScopesContent = {}
   // if we have upstream scopes, use them
   if (remoteApp.requestedAccessScopes) {
@@ -248,7 +246,12 @@ function addRemoteAppAccessScopesConfig(appConfiguration: AppConfiguration, remo
       use_legacy_install_flow: true,
     }
   }
-  return {access_scopes: accessScopesContent}
+  return {
+    auth: {
+      redirect_urls: remoteApp.redirectUrlWhitelist,
+    },
+    access_scopes: accessScopesContent,
+  }
 }
 
 function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
@@ -256,16 +259,31 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
     ...appConfiguration,
     client_id: remoteApp.apiKey,
   }
-  if (isCurrentAppSchema(appConfiguration)) {
+  if (isCurrentAppSchema(localAppConfig)) {
+    const {auth, ...otherLocalAppConfig} = localAppConfig
     localAppConfig = {
-      ...localAppConfig,
+      ...otherLocalAppConfig,
       build: {
         include_config_on_deploy: true,
-        ...(appConfiguration.client_id === remoteApp.apiKey ? appConfiguration.build : {}),
+        ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
       },
     }
   }
   return localAppConfig
+}
+
+function addPosConfig(remoteApp: OrganizationApp) {
+  return {
+    pos: {
+      embedded: remoteApp.posEmbedded || false,
+    },
+  }
+}
+
+function addBrandingConfig(remoteApp: OrganizationApp) {
+  return {
+    name: remoteApp.title,
+  }
 }
 
 export function remoteAppConfigurationExtensionContent(
