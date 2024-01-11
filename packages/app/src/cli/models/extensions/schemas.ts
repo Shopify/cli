@@ -18,6 +18,7 @@ export const CapabilitiesSchema = zod.object({
   network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
+  cookies: zod.array(zod.string()).optional(),
   collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
 })
 

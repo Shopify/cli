@@ -100,7 +100,6 @@ export type ExtensionPoints = string[] | ExtensionPoint[] | null
 interface CollectBuyerConsentCapabilities {
   smsMarketing: boolean
   writePrivacyConsent: boolean
-  privacyCookies: [string]
 }
 
 interface Capabilities {
@@ -108,6 +107,7 @@ interface Capabilities {
   blockProgress: boolean
   networkAccess: boolean
   collectBuyerConsent: CollectBuyerConsentCapabilities
+  cookies: [string]
 }
 
 export interface ExtensionPayload {

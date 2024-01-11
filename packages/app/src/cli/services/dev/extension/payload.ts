@@ -32,11 +32,12 @@ export async function getUIExtensionPayload(
       blockProgress: extension.configuration.capabilities?.block_progress || false,
       networkAccess: extension.configuration.capabilities?.network_access || false,
       apiAccess: extension.configuration.capabilities?.api_access || false,
+      cookies: extension.configuration.capabilities?.cookies || [],
       collectBuyerConsent: {
         smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing || false,
         writePrivacyConsent:
           extension.configuration.capabilities?.collect_buyer_consent?.write_privacy_consent || false,
-        privacyCookies: extension.configuration.capabilities?.collect_buyer_consent?.privacy_cookies || [],
+        // privacyCookies: extension.configuration.capabilities?.collect_buyer_consent?.privacy_cookies || [],
       },
     },
     development: {

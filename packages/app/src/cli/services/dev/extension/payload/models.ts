@@ -92,5 +92,5 @@ interface Capability {
 }
 
 export interface Capabilities {
-  [key: string]: Capability | boolean | undefined
+  [key: string]: Capability | boolean | string[] | undefined
 }
