@@ -213,20 +213,7 @@ export function graphiqlTemplate({
                           onChange={() => {}}
                         />
                       </div>
-                      <div id="outbound-links" className="top-bar-section with-shrunk-icon">
-                        <span className="top-bar-section-title">Store: </span>
-                        <Link url={`https://${storeFqdn}/admin`} target="_blank">
-                          <Badge tone="info" icon={LinkMinor}>
-                            {storeFqdn}
-                          </Badge>
-                        </Link>
-                        <span className="top-bar-section-title">App: </span>
-                        <Link url={appUrl} target="_blank">
-                          <Badge tone="info" icon={LinkMinor}>
-                            {appName}
-                          </Badge>
-                        </Link>
-                      </div>
+                      {linkPills({storeFqdn, appName, appUrl})}
                     </InlineStack>
                   </Grid.Cell>
                   <Grid.Cell columnSpan={{xs: 3, sm: 3, md: 3, lg: 5, xl: 5}}>
@@ -325,15 +312,48 @@ export function graphiqlTemplate({
           })
       }, 2000)
 
-      // Warn when the app has been uninstalled
+      // Verify the current store/app connection
       setInterval(function() {
         fetch('{{ url }}/graphiql/status')
           .then(async function(response) {
-            appIsInstalled = (await response.json()).status === 'OK'
+            const {status, storeFqdn, appName, appUrl} = await response.json()
+            appIsInstalled = status === 'OK'
+            if (storeFqdn) {
+              document.getElementById('outbound-links').innerHTML = \`${renderToStaticMarkup(
+                // Create HTML string with substitutions included
+                <AppProvider i18n={{}}>
+                  {
+                    // eslint-disable-next-line no-template-curly-in-string
+                    linkPills({storeFqdn: '${storeFqdn}', appName: '${appName}', appUrl: '${appUrl}'})
+                  }
+                </AppProvider>,
+              )}\`
+            }
           })
       }, 5000)
     </script>
   </body>
 </html>
 `
+}
+
+interface LinkPillOptions {
+  storeFqdn: string
+  appName: string
+  appUrl: string
+}
+
+function linkPills({storeFqdn, appName, appUrl}: LinkPillOptions) {
+  return (
+    <div id="outbound-links" className="top-bar-section with-shrunk-icon">
+      <span className="top-bar-section-title">Store: </span>
+      <Link url={`https://${storeFqdn}/admin`} target="_blank">
+        <Badge tone="info" icon={LinkMinor} children={storeFqdn} />
+      </Link>
+      <span className="top-bar-section-title">App: </span>
+      <Link url={appUrl} target="_blank">
+        <Badge tone="info" icon={LinkMinor} children={appName} />
+      </Link>
+    </div>
+  )
 }

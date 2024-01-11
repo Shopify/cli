@@ -115,7 +115,7 @@ export function setupGraphiQLServer({
 
   app.get('/graphiql/status', (_req, res) => {
     fetchApiVersionsWithTokenRefresh()
-      .then(() => res.send({status: 'OK'}))
+      .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl}))
       .catch(() => res.send({status: 'UNAUTHENTICATED'}))
   })
 
