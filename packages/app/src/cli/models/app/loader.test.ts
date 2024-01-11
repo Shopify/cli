@@ -172,8 +172,8 @@ automatically_update_urls_on_dev = true
     expect(app.name).toBe('my_app')
   })
 
-  describe('loads the app when capabilities.api_access.admin = ', () => {
-    test('true', async () => {
+  describe('loads the app when', () => {
+    test('capabilities.api_access.admin = true', async () => {
       // Given
       const config = `
       name = "for-testing"
@@ -196,7 +196,7 @@ automatically_update_urls_on_dev = true
       expect(app.name).toBe('my_app')
     })
 
-    test('false', async () => {
+    test('capabilities.api_access.admin = false', async () => {
       // Given
       const config = `
       name = "for-testing"
@@ -219,7 +219,7 @@ automatically_update_urls_on_dev = true
       expect(app.name).toBe('my_app')
     })
 
-    test('{mode = "online"}', async () => {
+    test('capabilities.api_access.admin = {mode = "online"}', async () => {
       // Given
       const config = `
       name = "for-testing"
@@ -242,7 +242,7 @@ automatically_update_urls_on_dev = true
       expect(app.name).toBe('my_app')
     })
 
-    test('{mode = "offline"}', async () => {
+    test('capabilities.api_access.admin = {mode = "offline"}', async () => {
       // Given
       const config = `
       name = "for-testing"
@@ -265,7 +265,7 @@ automatically_update_urls_on_dev = true
       expect(app.name).toBe('my_app')
     })
 
-    test('foo', async () => {
+    test('capabilities.api_access.admin = foo', async () => {
       // Given
       const config = `
       name = "for-testing"
