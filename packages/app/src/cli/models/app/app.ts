@@ -135,6 +135,22 @@ export const VersionedAppSchema = zod.object({
       direct_api_offline_access: zod.boolean().optional(),
     })
     .optional(),
+  capabilities: zod
+    .object({
+      api_access: zod
+        .object({
+          admin: zod
+            .union([
+              zod.boolean(),
+              zod.object({
+                mode: zod.enum(['online', 'offline']),
+              }),
+            ])
+            .optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   webhooks: WebhooksSchemaWithDeclarative,
   app_proxy: zod
     .object({
