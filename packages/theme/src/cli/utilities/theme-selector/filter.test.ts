@@ -45,6 +45,34 @@ describe('filterThemes', () => {
     expect(filtered[1]!.name).toBe('theme (8)')
   })
 
+  test('does not filter by theme if role filter is provided', async () => {
+    // Given
+    const developmentFilter = new Filter({
+      development: true,
+      themes: ['4', '5'],
+    })
+
+    const liveFilter = new Filter({
+      live: true,
+      themes: ['4', '5'],
+    })
+
+    // When
+    const filteredDevelopmentThemes = filterThemes(store, themes, developmentFilter)
+    const filteredLiveThemes = filterThemes(store, themes, liveFilter)
+
+    // Then
+    expect(filteredDevelopmentThemes).toHaveLength(2)
+    expect(filteredDevelopmentThemes[0]!.name).toBe('theme (7)')
+    expect(filteredDevelopmentThemes[0]!.role).toBe('development')
+    expect(filteredDevelopmentThemes[1]!.name).toBe('theme (8)')
+    expect(filteredDevelopmentThemes[0]!.role).toBe('development')
+
+    expect(filteredLiveThemes).toHaveLength(1)
+    expect(filteredLiveThemes[0]!.name).toBe('theme (3)')
+    expect(filteredLiveThemes[0]!.role).toBe('live')
+  })
+
   test('filters by theme (exact name)', async () => {
     // Given
     const filter = new Filter({
