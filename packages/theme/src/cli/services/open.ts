@@ -1,6 +1,5 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
-import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/theme-urls'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -10,16 +9,12 @@ export async function open(
   adminSession: AdminSession,
   options: {development: boolean; live: boolean; editor: boolean; theme: string | undefined},
 ) {
-  const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-  const developmentTheme = (
-    await (options.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
-  )?.id
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to open',
-    developmentTheme,
     filter: {
       live: options.live,
-      theme: options.development ? `${developmentTheme}` : options.theme,
+      development: options.development,
+      theme: options.theme,
     },
   })
 

@@ -108,14 +108,13 @@ describe('open', () => {
     })
 
     test('should call with no development theme and no theme to filter', async () => {
-      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(undefined)
-
       await open(session, {...options, theme: undefined})
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
         developmentTheme: undefined,
         filter: {
+          development: options.development,
           live,
           theme: undefined,
         },
@@ -123,31 +122,27 @@ describe('open', () => {
     })
 
     test('should call with development theme and theme to filter', async () => {
-      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(developmentTheme)
-
       await open(session, options)
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: developmentTheme.id,
         filter: {
           live,
+          development: options.development,
           theme: options.theme,
         },
       })
     })
 
     test('should call with development theme to filter', async () => {
-      vi.spyOn(DevelopmentThemeManager.prototype, 'find').mockResolvedValue(developmentTheme)
-
       await open(session, {...options, development: true})
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: developmentTheme.id,
         filter: {
           live,
-          theme: developmentTheme.id.toString(),
+          development: true,
+          theme: options.theme,
         },
       })
     })
