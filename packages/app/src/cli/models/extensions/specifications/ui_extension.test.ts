@@ -29,7 +29,7 @@ describe('ui_extension', async () => {
         network_access: false,
         api_access: false,
         collect_buyer_consent: {
-          write_privacy_consent: true,
+          customer_privacy: true,
           sms_marketing: false,
         },
       },
@@ -90,7 +90,7 @@ describe('ui_extension', async () => {
           network_access: false,
           api_access: false,
           collect_buyer_consent: {
-            write_privacy_consent: true,
+            customer_privacy: true,
             sms_marketing: false,
           },
         },
@@ -125,7 +125,7 @@ describe('ui_extension', async () => {
           network_access: false,
           api_access: false,
           collect_buyer_consent: {
-            write_privacy_consent: true,
+            customer_privacy: true,
             sms_marketing: false,
           },
         },

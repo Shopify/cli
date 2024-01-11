@@ -34,7 +34,7 @@ describe('getUIExtensionPayload', () => {
             block_progress: false,
             collect_buyer_consent: {
               sms_marketing: false,
-              write_privacy_consent: false,
+              customer_privacy: false,
             },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
@@ -159,7 +159,7 @@ describe('getUIExtensionPayload', () => {
             api_access: false,
             collect_buyer_consent: {
               sms_marketing: false,
-              write_privacy_consent: false,
+              customer_privacy: false,
             },
           },
           extension_points: [
@@ -245,7 +245,7 @@ describe('getUIExtensionPayload', () => {
             api_access: false,
             collect_buyer_consent: {
               sms_marketing: false,
-              write_privacy_consent: false,
+              customer_privacy: false,
             },
           },
           extension_points: [

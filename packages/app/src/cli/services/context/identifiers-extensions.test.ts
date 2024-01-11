@@ -136,7 +136,7 @@ beforeAll(async () => {
         api_access: false,
         collect_buyer_consent: {
           sms_marketing: false,
-          write_privacy_consent: false,
+          customer_privacy: false,
         },
       },
     },
@@ -156,7 +156,7 @@ beforeAll(async () => {
         api_access: false,
         collect_buyer_consent: {
           sms_marketing: false,
-          write_privacy_consent: false,
+          customer_privacy: false,
         },
       },
     },
@@ -177,7 +177,7 @@ beforeAll(async () => {
         api_access: false,
         collect_buyer_consent: {
           sms_marketing: false,
-          write_privacy_consent: false,
+          customer_privacy: false,
         },
       },
     },
