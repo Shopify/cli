@@ -1,7 +1,7 @@
 import spec from './app_config_app_access.js'
 import {describe, expect, test} from 'vitest'
 
-describe('app_cofig_app_access', () => {
+describe('app_config_app_access', () => {
   describe('transform', () => {
     test('should return the transformed object', () => {
       // Given
