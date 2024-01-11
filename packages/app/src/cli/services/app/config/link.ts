@@ -27,6 +27,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -260,13 +261,18 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
     client_id: remoteApp.apiKey,
   }
   if (isCurrentAppSchema(localAppConfig)) {
-    const {auth, ...otherLocalAppConfig} = localAppConfig
-    localAppConfig = {
-      ...otherLocalAppConfig,
-      build: {
-        include_config_on_deploy: true,
-        ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
-      },
+    delete localAppConfig.auth
+    const build = {
+      ...(useVersionedAppConfig() ? {include_config_on_deploy: true} : {}),
+      ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
+    }
+    if (isEmpty(build)) {
+      delete localAppConfig.build
+    } else {
+      localAppConfig = {
+        ...localAppConfig,
+        build,
+      }
     }
   }
   return localAppConfig

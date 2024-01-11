@@ -21,6 +21,7 @@ import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@sh
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 const REMOTE_APP = testOrganizationApp()
 
@@ -40,6 +41,7 @@ vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../generate/fetch-extension-specifications.js')
+vi.mock('@shopify/cli-kit/node/context/local')
 
 beforeEach(async () => {
   vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
@@ -51,6 +53,7 @@ beforeEach(async () => {
     },
   })
   vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
+  vi.mocked(useVersionedAppConfig).mockResolvedValue(true)
 })
 
 describe('link', () => {
@@ -95,6 +98,9 @@ client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
+
+[build]
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -259,6 +265,9 @@ name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 
+[build]
+include_config_on_deploy = true
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
@@ -301,6 +310,9 @@ client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
+
+[build]
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -360,6 +372,9 @@ client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
+
+[build]
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -485,6 +500,9 @@ name = "app1"
 application_url = "https://example.com"
 embedded = true
 
+[build]
+include_config_on_deploy = true
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 use_legacy_install_flow = true
@@ -527,6 +545,9 @@ name = "app1"
 application_url = "https://example.com"
 embedded = true
 
+[build]
+include_config_on_deploy = true
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
@@ -568,6 +589,9 @@ client_id = "api-key"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
+
+[build]
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -694,6 +718,9 @@ client_id = "12345"
 name = "my app"
 application_url = "https://myapp.com"
 embedded = true
+
+[build]
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

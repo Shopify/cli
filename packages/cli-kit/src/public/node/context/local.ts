@@ -282,3 +282,15 @@ export function opentelemetryDomain(env = process.env): string | undefined {
   }
   return 'https://otlp-http-production-cli.shopifysvc.com'
 }
+
+export type CIMetadata = Metadata
+
+/**
+ * Returns true if configuration extensions are enabled.
+ *
+ * @param env - Environment variables used when the cli is launched.
+ * @returns True if SHOPIFY_CLI_VERSIONED_APP_CONFIG is truthy.
+ */
+export function useVersionedAppConfig(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.versionedAppConfig])
+}

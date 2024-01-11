@@ -16,7 +16,7 @@ import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
@@ -295,7 +295,7 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 non uuid managed extension if include config on deploy is enabled', async () => {
+  test('pushes the configuration extension if include config on deploy and the beta flag are enabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const localApp = {
@@ -306,7 +306,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference})
+    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -328,14 +328,40 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('doesnt upload the extension bundle with 1 non uuid managed extension if beta disabled', async () => {
+  test('doesnt push the configuration extension if include config on deploy is disabled and the beta flag is enabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const app = testApp({allExtensions: [extensionNonUuidManaged]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference})
+    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+
+    // Then
+    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      apiKey: 'app-id',
+      appModules: [],
+      token: 'api-token',
+      extensionIds: {},
+      release: true,
+      commitReference,
+    })
+    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
+    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
+  })
+
+  test('doesnt push the configuration extension if include config on deploy is enabled and the beta flag is disabled', async () => {
+    // Given
+    const extensionNonUuidManaged = await testAppConfigExtensions()
+    const localApp = {
+      allExtensions: [extensionNonUuidManaged],
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
+    }
+    const app = testApp(localApp)
+    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
+
+    // When
+    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: false})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -495,6 +521,7 @@ async function testDeployBundle({
   options,
   released = true,
   commitReference,
+  versionedAppConfig = false,
   appToDeploy,
 }: TestDeployBundleInput) {
   // Given
@@ -539,6 +566,7 @@ async function testDeployBundle({
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
+  vi.mocked(useVersionedAppConfig).mockReturnValue(versionedAppConfig)
 
   await deploy({
     app,

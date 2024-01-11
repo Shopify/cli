@@ -56,6 +56,7 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -515,7 +516,7 @@ async function ensureIncludeConfigOnDeploy({
 }
 
 async function shouldOrPromptIncludeConfigDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
-  if (options.cachedIncludeConfigOnDeploy !== undefined) return
+  if (options.cachedIncludeConfigOnDeploy !== undefined || !useVersionedAppConfig()) return
 
   const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt()
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
@@ -914,7 +915,7 @@ function showReusedDeployValues(
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
-    includeConfigOnDeploy,
+    includeConfigOnDeploy: useVersionedAppConfig() ? includeConfigOnDeploy : undefined,
   })
 }
 

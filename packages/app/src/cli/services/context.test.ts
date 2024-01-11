@@ -58,6 +58,7 @@ import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/no
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {Config} from '@oclif/core'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
@@ -172,6 +173,7 @@ vi.mock('./deploy/mode.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context/partner-account-info.js')
 vi.mock('./generate/fetch-extension-specifications.js')
+vi.mock('@shopify/cli-kit/node/context/local')
 
 beforeAll(async () => {
   vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
@@ -1126,7 +1128,7 @@ describe('ensureDeployContext', () => {
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })
-  test('prompts the user to include the configuration if there is no flag in the configuration and set it to true when confirmed', async () => {
+  test('prompts the user to include the configuration and persist the flag if the flag is not present and the beta is enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
@@ -1144,6 +1146,7 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app))
@@ -1172,7 +1175,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
-  test('prompts the user to include the configuration if there is no flag in the configuration and set it to false when not confirmed', async () => {
+  test('prompts the user to include the configuration and set it to false when not confirmed if the flag is not present and the beta is enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
@@ -1190,6 +1193,7 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app))
@@ -1218,7 +1222,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
-  test('doesnt prompt the user to include the configuration if there is flag in the configuration and display the current value', async () => {
+  test('doesnt prompt the user to include the configuration and display the current value if the flag and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -1235,6 +1239,7 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app))
@@ -1260,7 +1265,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
-  test('prompts the user to include the configuration if there is flag in the configuration but reset is used', async () => {
+  test('prompts the user to include the configuration when reset is used if the flag and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -1279,6 +1284,7 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app, true))
@@ -1307,7 +1313,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
-  test("doesnt prompt the user to include the configuration if there isn't flag in the configuration and force is used", async () => {
+  test('doesnt prompt the user to include the configuration when force is used if the flag is not present and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
@@ -1325,6 +1331,7 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app, false, true))
@@ -1350,7 +1357,7 @@ describe('ensureDeployContext', () => {
     })
     writeAppConfigurationFileSpy.mockRestore()
   })
-  test('doesnt prompt the user to include the configuration if there is a flag in the configuration and force is used', async () => {
+  test('prompt the user to include the configuration when force is used  if the flag and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -1368,6 +1375,7 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app, false, true))
@@ -1380,6 +1388,51 @@ describe('ensureDeployContext', () => {
         {
           list: {
             items: ['Org:             org1', 'App:             app2', 'Include config:  Yes'],
+          },
+        },
+        '\n',
+        'You can pass',
+        {
+          command: '--reset',
+        },
+        'to your command to reset your app configuration.',
+      ],
+      headline: 'Using shopify.app.toml:',
+    })
+    writeAppConfigurationFileSpy.mockRestore()
+  })
+  test('doesnt prompt the user to include the configuration regardless the value of the flag is the beta is not enabled', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
+    vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(loadApp).mockResolvedValue(app)
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    const writeAppConfigurationFileSpy = vi
+      .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
+      .mockResolvedValue()
+    vi.mocked(useVersionedAppConfig).mockReturnValue(false)
+
+    // When
+    await ensureDeployContext(options(app, false, true))
+
+    // Then
+    // Then
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
+    expect(renderInfo).toHaveBeenCalledWith({
+      body: [
+        {
+          list: {
+            items: ['Org:             org1', 'App:             app2'],
           },
         },
         '\n',

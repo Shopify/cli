@@ -19,6 +19,7 @@ import {createExtension} from '../dev/create-extension.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 const REGISTRATION_A = {
   uuid: 'UUID_A',
@@ -747,6 +748,8 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
       title: 'C_A',
       type: 'POINT_OF_SALE',
     }
+    vi.mocked(useVersionedAppConfig).mockResolvedValue(true)
+
     // When
     const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true)
     const CONFIG_A = await testAppConfigExtensions()
@@ -805,6 +808,7 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
       title: 'C_A',
       type: 'POINT_OF_SALE',
     }
+    vi.mocked(useVersionedAppConfig).mockResolvedValue(true)
 
     // When
     const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true)
