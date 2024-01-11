@@ -1,4 +1,4 @@
-import {buildNURInfoTableSection} from './ui/NURInfoTableSection.js'
+import {buildDeployReleaseInfoTableSection} from './ui/deploy-release-info-table-section.js'
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
@@ -106,7 +106,7 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
     updated: [...toUpdate, ...fromDashboard.map((identifier) => [identifier, {subdued: '(from Partner Dashboard)'}])],
     removed: onlyRemote,
   }
-  const extensionsInfo = buildNURInfoTableSection(section)
+  const extensionsInfo = buildDeployReleaseInfoTableSection(section)
 
   const hasDeletedExtensions = onlyRemote.length > 0
   if (extensionsInfo.length > 0) {
@@ -142,7 +142,7 @@ async function buildConfigContentPrompt(
     updated: [...existingUpdatedFieldNames, ...existingFieldNames],
     removed: deletedFieldNames,
   }
-  const configurationInfo = buildNURInfoTableSection(section)
+  const configurationInfo = buildDeployReleaseInfoTableSection(section)
 
   const hasModifiedFields = newFieldNames.length > 0 || existingUpdatedFieldNames.length > 0
   const configInfoTable = {

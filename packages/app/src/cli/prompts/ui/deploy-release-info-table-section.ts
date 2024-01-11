@@ -1,4 +1,4 @@
-export interface NURInfoTableSection<T> {
+export interface DeployReleaseInfoTableSection<T> {
   new: T[]
   updated: T[]
   removed: T[]
@@ -22,10 +22,10 @@ const RemovedItem = {
   suffix: '(removed)',
 }
 
-export function buildNURInfoTableSection<T>(section: NURInfoTableSection<T>) {
+export function buildDeployReleaseInfoTableSection<T>(section: DeployReleaseInfoTableSection<T>) {
   return [
     ...section.new.map((item) => buildItem(item, NewItem)),
-    ...section.updated.map((item) => item),
+    ...section.updated,
     ...section.removed.map((item) => buildItem(item, RemovedItem)),
   ]
 }

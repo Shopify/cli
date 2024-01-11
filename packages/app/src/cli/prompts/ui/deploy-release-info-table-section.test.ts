@@ -1,4 +1,4 @@
-import {buildNURInfoTableSection} from './NURInfoTableSection.js'
+import {buildDeployReleaseInfoTableSection} from './deploy-release-info-table-section.js'
 import {describe, expect, test} from 'vitest'
 
 describe('buildNURInfoTableSection', () => {
@@ -11,7 +11,7 @@ describe('buildNURInfoTableSection', () => {
     }
 
     // When
-    const result = buildNURInfoTableSection(section)
+    const result = buildDeployReleaseInfoTableSection(section)
 
     // Then
     expect(result).toEqual([
@@ -29,7 +29,7 @@ describe('buildNURInfoTableSection', () => {
     }
 
     // When
-    const result = buildNURInfoTableSection(section)
+    const result = buildDeployReleaseInfoTableSection(section)
 
     // Then
     expect(result).toEqual([])
@@ -43,7 +43,7 @@ describe('buildNURInfoTableSection', () => {
     }
 
     // When
-    const result = buildNURInfoTableSection(section)
+    const result = buildDeployReleaseInfoTableSection(section)
 
     // Then
     expect(result).toEqual([{bullet: '+', item: ['new', {subdued: '(my new suffix)'}], color: 'green'}])
@@ -57,7 +57,7 @@ describe('buildNURInfoTableSection', () => {
     }
 
     // When
-    const result = buildNURInfoTableSection(section)
+    const result = buildDeployReleaseInfoTableSection(section)
 
     // Then
     expect(result).toEqual([{bullet: '-', item: ['deleted', {subdued: '(my deleted suffix)'}], color: 'red'}])
