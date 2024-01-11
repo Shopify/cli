@@ -172,6 +172,120 @@ automatically_update_urls_on_dev = true
     expect(app.name).toBe('my_app')
   })
 
+  describe('loads the app when capabilities.api_access.admin = ', () => {
+    test('true', async () => {
+      // Given
+      const config = `
+      name = "for-testing"
+      client_id = "1234567890"
+      application_url = "https://example.com/lala"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [capabilities.api_access]
+      admin = true
+      `
+      await writeConfig(config)
+
+      // When
+      const app = await loadApp({directory: tmpDir, specifications})
+
+      // Then
+      expect(app.name).toBe('my_app')
+    })
+
+    test('false', async () => {
+      // Given
+      const config = `
+      name = "for-testing"
+      client_id = "1234567890"
+      application_url = "https://example.com/lala"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [capabilities.api_access]
+      admin = false
+      `
+      await writeConfig(config)
+
+      // When
+      const app = await loadApp({directory: tmpDir, specifications})
+
+      // Then
+      expect(app.name).toBe('my_app')
+    })
+
+    test('{mode = "online"}', async () => {
+      // Given
+      const config = `
+      name = "for-testing"
+      client_id = "1234567890"
+      application_url = "https://example.com/lala"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [capabilities.api_access]
+      admin = {mode = "online"}
+      `
+      await writeConfig(config)
+
+      // When
+      const app = await loadApp({directory: tmpDir, specifications})
+
+      // Then
+      expect(app.name).toBe('my_app')
+    })
+
+    test('{mode = "offline"}', async () => {
+      // Given
+      const config = `
+      name = "for-testing"
+      client_id = "1234567890"
+      application_url = "https://example.com/lala"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [capabilities.api_access]
+      admin = {mode = "offline"}
+      `
+      await writeConfig(config)
+
+      // When
+      const app = await loadApp({directory: tmpDir, specifications})
+
+      // Then
+      expect(app.name).toBe('my_app')
+    })
+
+    test('foo', async () => {
+      // Given
+      const config = `
+      name = "for-testing"
+      client_id = "1234567890"
+      application_url = "https://example.com/lala"
+      embedded = true
+
+      [webhooks]
+      api_version = "2023-07"
+
+      [capabilities.api_access]
+      admin = "foo"
+      `
+      await writeConfig(config)
+
+      // When
+      await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+    })
+  })
+
   test('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
