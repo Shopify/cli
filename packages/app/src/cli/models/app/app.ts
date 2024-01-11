@@ -329,6 +329,7 @@ export class App implements AppInterface {
     const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
     const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
     const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
+
     return {
       ...(scopes || useLegacyInstallFlow
         ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}}

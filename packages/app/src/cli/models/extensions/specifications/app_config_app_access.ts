@@ -5,7 +5,12 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const AppAccessSchema = zod.object({
   access: zod
     .object({
-      direct_api_offline_access: zod.boolean().optional(),
+      admin: zod
+        .object({
+          direct_api_mode: zod.union([zod.literal('online'), zod.literal('offline')]).optional(),
+          embedded_app_direct_api_access: zod.boolean().optional(),
+        })
+        .optional(),
     })
     .optional(),
   access_scopes: zod

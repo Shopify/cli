@@ -434,8 +434,8 @@ class AppLoader {
           this.abortOrReport.bind(this),
         )
 
-        const {path, ...specConfigurationWithouPath} = specConfiguration
-        if (Object.keys(specConfigurationWithouPath).length === 0) return
+        const {path, ...specConfigurationWithoutPath} = specConfiguration
+        if (Object.keys(specConfigurationWithoutPath).length === 0) return
 
         return this.createExtensionInstance(
           specification.identifier,
