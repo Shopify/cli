@@ -76,6 +76,7 @@ interface DevContextOutput {
   storeFqdn: string
   storeId: string
   updateURLs: boolean | undefined
+  localApp: AppInterface
 }
 
 /**
@@ -195,18 +196,30 @@ export async function ensureDevContext(
     }
   }
 
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey: selectedApp.apiKey,
+    config: options.commandConfig,
+  })
+  const localApp = await loadApp({
+    directory: options.directory,
+    specifications,
+    configName: getAppConfigurationShorthand(configuration.path),
+  })
+
   // We only update the cache or config if the current app is the right one
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
   if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const newConfiguration: AppConfiguration = {
+    const newConfiguration = {
       ...configuration,
       build: {
         ...configuration.build,
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    await writeAppConfigurationFile(newConfiguration)
+    localApp.configuration = newConfiguration
+    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -224,7 +237,7 @@ export async function ensureDevContext(
     organization,
   })
 
-  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
   await logMetadataForLoadedContext({
     organizationId: result.remoteApp.organizationId,
     apiKey: result.remoteApp.apiKey,
@@ -250,7 +263,12 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
   }
 }
 
-function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
+function buildOutput(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  localApp: AppInterface,
+  cachedInfo?: CachedAppInfo,
+): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -260,6 +278,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
     storeFqdn: store.shopDomain,
     storeId: store.shopId,
     updateURLs: cachedInfo?.updateURLs,
+    localApp,
   }
 }
 

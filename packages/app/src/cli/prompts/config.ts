@@ -1,5 +1,4 @@
 /* eslint-disable no-await-in-loop */
-import {PushOptions} from '../services/app/config/push.js'
 import {AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -79,10 +78,14 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(options: PushOptions, app: App, schema: zod.ZodTypeAny = AppSchema) {
-  if (options.force) return true
+export async function confirmPushChanges(
+  force: boolean,
+  configuration: CurrentAppConfiguration,
+  app: App,
+  schema: zod.ZodTypeAny = AppSchema,
+) {
+  if (force) return true
 
-  const configuration = options.configuration as CurrentAppConfiguration
   const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
 
   const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)

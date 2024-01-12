@@ -1,4 +1,4 @@
-import {PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
+import {GdprWebhooks, PushConfig, PushConfigSchema, PushConfigVariables} from '../../../api/graphql/push_config.js'
 import {ClearScopesSchema, clearRequestedScopes} from '../../../api/graphql/clear_requested_scopes.js'
 import {App, GetConfig, GetConfigQuerySchema} from '../../../api/graphql/get_config.js'
 import {
@@ -13,15 +13,20 @@ import {confirmPushChanges} from '../../../prompts/config.js'
 import {logMetadataForLoadedContext, renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
+import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
+import {loadApp} from '../../../models/app/loader.js'
+import {WebhooksConfig} from '../../../models/extensions/specifications/types/app_config_webhook.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename, dirname} from '@shopify/cli-kit/node/path'
+import {Config} from '@oclif/core'
 
 export interface PushOptions {
   configuration: AppConfiguration
   force: boolean
+  commandConfig: Config
 }
 
 const FIELD_NAMES: {[key: string]: string} = {
@@ -41,16 +46,27 @@ const FIELD_NAMES: {[key: string]: string} = {
 }
 
 export async function pushConfig(options: PushOptions) {
-  const {configuration} = options
-  if (!isCurrentAppSchema(configuration)) return
+  if (!isCurrentAppSchema(options.configuration)) return
 
+  // Load local complete configuration
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
-  const configFileName = isCurrentAppSchema(configuration) ? basename(configuration.path) : undefined
+  const configFileName = isCurrentAppSchema(options.configuration) ? basename(options.configuration.path) : undefined
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey: options.configuration.client_id,
+    config: options.commandConfig,
+  })
+  const localApp = await loadApp({
+    directory: dirname(options.configuration.path),
+    specifications,
+    configName: configFileName,
+  })
+  const configuration = localApp.configuration as CurrentAppConfiguration
 
+  // Fetch remote configuration
   const queryVariables = {apiKey: configuration.client_id}
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
-
   if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
   const {app} = queryResult
 
@@ -59,7 +75,7 @@ export async function pushConfig(options: PushOptions) {
 
   await logMetadataForLoadedContext(app)
 
-  if (!(await confirmPushChanges(options, app))) return
+  if (!(await confirmPushChanges(options.force, configuration, app, localApp.configSchema))) return
 
   const variables = getMutationVars(app, configuration)
 
@@ -106,30 +122,14 @@ export async function pushConfig(options: PushOptions) {
 }
 
 const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
-  let webhookApiVersion
-  let gdprWebhooks
-
-  if (app.betas?.declarativeWebhooks) {
-    // These fields will be updated by the deploy command
-    webhookApiVersion = app.webhookApiVersion
-    gdprWebhooks = app.gdprWebhooks
-  } else {
-    webhookApiVersion = configuration.webhooks?.api_version
-    gdprWebhooks = {
-      customerDeletionUrl: configuration.webhooks?.privacy_compliance?.customer_deletion_url,
-      customerDataRequestUrl: configuration.webhooks?.privacy_compliance?.customer_data_request_url,
-      shopDeletionUrl: configuration.webhooks?.privacy_compliance?.shop_deletion_url,
-    }
-  }
-
   const variables: PushConfigVariables = {
     apiKey: configuration.client_id,
     title: configuration.name,
     applicationUrl: configuration.application_url,
-    webhookApiVersion,
+    webhookApiVersion: configuration.webhooks?.api_version ?? app.webhookApiVersion,
     redirectUrlAllowlist: configuration.auth?.redirect_urls ?? null,
     embedded: configuration.embedded ?? app.embedded,
-    gdprWebhooks,
+    gdprWebhooks: mapPrivacyComplianceToGdprWebhooks(configuration.webhooks?.privacy_compliance),
     posEmbedded: configuration.pos?.embedded ?? false,
     preferencesUrl: configuration.app_preferences?.url ?? null,
   }
@@ -151,4 +151,12 @@ const getMutationVars = (app: App, configuration: CurrentAppConfiguration) => {
 
 export const abort = (errorMessage: OutputMessage) => {
   throw new AbortError(errorMessage)
+}
+
+function mapPrivacyComplianceToGdprWebhooks(privacyCompliance: WebhooksConfig['privacy_compliance']): GdprWebhooks {
+  return {
+    customerDeletionUrl: privacyCompliance?.customer_deletion_url,
+    customerDataRequestUrl: privacyCompliance?.customer_data_request_url,
+    shopDeletionUrl: privacyCompliance?.shop_deletion_url,
+  }
 }

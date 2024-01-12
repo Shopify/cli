@@ -97,26 +97,29 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, 'token', appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith({
-      path: appWithConfig.configuration.path,
-      access_scopes: {
-        scopes: 'read_products',
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(
+      {
+        path: appWithConfig.configuration.path,
+        access_scopes: {
+          scopes: 'read_products',
+        },
+        application_url: 'https://example.com',
+        auth: {
+          redirect_urls: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
+        },
+        client_id: '12345',
+        embedded: true,
+        name: 'my app',
+        webhooks: {
+          api_version: '2023-04',
+        },
       },
-      application_url: 'https://example.com',
-      auth: {
-        redirect_urls: [
-          'https://example.com/auth/callback',
-          'https://example.com/auth/shopify/callback',
-          'https://example.com/api/auth/callback',
-        ],
-      },
-      client_id: '12345',
-      embedded: true,
-      name: 'my app',
-      webhooks: {
-        api_version: '2023-04',
-      },
-    })
+      appWithConfig.configSchema,
+    )
   })
 
   test('throws an error if requests has a user error', async () => {
@@ -187,31 +190,34 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, 'token', appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith({
-      path: appWithConfig.configuration.path,
-      access_scopes: {
-        scopes: 'read_products',
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(
+      {
+        path: appWithConfig.configuration.path,
+        access_scopes: {
+          scopes: 'read_products',
+        },
+        application_url: 'https://example.com',
+        auth: {
+          redirect_urls: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
+        },
+        app_proxy: {
+          url: 'https://example.com',
+          subpath: 'subpath',
+          prefix: 'prefix',
+        },
+        client_id: '12345',
+        embedded: true,
+        name: 'my app',
+        webhooks: {
+          api_version: '2023-04',
+        },
       },
-      application_url: 'https://example.com',
-      auth: {
-        redirect_urls: [
-          'https://example.com/auth/callback',
-          'https://example.com/auth/shopify/callback',
-          'https://example.com/api/auth/callback',
-        ],
-      },
-      app_proxy: {
-        url: 'https://example.com',
-        subpath: 'subpath',
-        prefix: 'prefix',
-      },
-      client_id: '12345',
-      embedded: true,
-      name: 'my app',
-      webhooks: {
-        api_version: '2023-04',
-      },
-    })
+      appWithConfig.configSchema,
+    )
   })
 })
 
@@ -372,7 +378,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration)
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration, localApp.configSchema)
   })
 })
 
@@ -597,7 +603,11 @@ describe('generatePartnersURLs', () => {
   test('Returns app proxy section when receiving proxy fields', () => {
     const applicationUrl = 'http://my-base-url'
 
-    const got = generatePartnersURLs(applicationUrl, [], {url: applicationUrl, subpath: 'subpath', prefix: 'prefix'})
+    const got = generatePartnersURLs(applicationUrl, [], {
+      url: applicationUrl,
+      subpath: 'subpath',
+      prefix: 'prefix',
+    })
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -618,7 +628,11 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const proxyUrl = 'http://old-base-url/subpath'
 
-    const got = generatePartnersURLs(applicationUrl, [], {url: proxyUrl, subpath: 'subpath', prefix: 'prefix'})
+    const got = generatePartnersURLs(applicationUrl, [], {
+      url: proxyUrl,
+      subpath: 'subpath',
+      prefix: 'prefix',
+    })
 
     expect(got).toMatchObject({
       applicationUrl,

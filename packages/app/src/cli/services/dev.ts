@@ -9,7 +9,6 @@ import {
   updateURLs,
 } from './dev/urls.js'
 import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
@@ -20,7 +19,6 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
-import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -84,15 +82,11 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
+    localApp: app,
   } = await ensureDevContext(commandOptions, partnersSession)
 
   const apiKey = remoteApp.apiKey
-  const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
-  let localApp = await loadApp({
-    directory: commandOptions.directory,
-    specifications,
-    configName: commandOptions.configName,
-  })
+  let localApp = app
 
   if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)

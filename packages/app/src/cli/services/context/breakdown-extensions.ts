@@ -4,12 +4,7 @@ import {fetchActiveAppVersion, fetchAppExtensionRegistrations} from '../dev/fetc
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
-import {
-  AppInterface,
-  CurrentAppConfiguration,
-  VersionedAppSchema,
-  filterNonVersionedAppFields,
-} from '../../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
 import {remoteAppConfigurationExtensionContent} from '../app/config/link.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
@@ -113,7 +108,7 @@ function resolveRemoteConfigExtensionIdentifiersBreakdown(
   const diffConfigContent = buildDiffConfigContent(
     localConfig as CurrentAppConfiguration,
     remoteConfig,
-    VersionedAppSchema,
+    app.configSchema,
     false,
   )
 

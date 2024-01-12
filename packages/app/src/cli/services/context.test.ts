@@ -31,12 +31,14 @@ import {Organization, OrganizationApp, OrganizationStore} from '../models/organi
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
+  DEFAULT_CONFIG,
   testPartnersUserSession,
   testApp,
   testAppWithConfig,
   testOrganizationApp,
   testThemeExtensions,
   testAppConfigExtensions,
+  buildVersionedAppSchema,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {
@@ -46,7 +48,7 @@ import {
   loadAppConfiguration,
   loadAppName,
 } from '../models/app/loader.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -202,13 +204,15 @@ afterEach(() => {
 })
 
 describe('ensureGenerateContext', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const {schema: configSchema} = await buildVersionedAppSchema()
     vi.mocked(loadAppConfiguration).mockResolvedValue({
       directory: '/app',
       configuration: {
         path: '/app/shopify.app.toml',
         scopes: 'read_products',
       },
+      configSchema,
     })
   })
 
@@ -258,10 +262,12 @@ describe('ensureGenerateContext', () => {
     }
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
+    const {schema: configSchema} = await buildVersionedAppSchema()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       directory: '/app',
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
+      configSchema,
     })
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
@@ -283,10 +289,12 @@ describe('ensureGenerateContext', () => {
     }
     vi.mocked(getCachedAppInfo).mockReturnValueOnce(undefined).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
+    const {schema: configSchema} = await buildVersionedAppSchema()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       directory: '/app',
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
+      configSchema,
     })
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
@@ -309,10 +317,12 @@ describe('ensureGenerateContext', () => {
     }
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
     vi.mocked(loadAppConfiguration).mockReset()
+    const {schema: configSchema} = await buildVersionedAppSchema()
     vi.mocked(loadAppConfiguration).mockResolvedValueOnce({
       directory: '/app',
       configuration: testAppWithConfig({config: {path: CACHED1_WITH_CONFIG.configFile, client_id: APP2.apiKey}})
         .configuration,
+      configSchema,
     })
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
 
@@ -358,13 +368,15 @@ describe('ensureGenerateContext', () => {
 })
 
 describe('ensureDevContext', async () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const {schema: configSchema} = await buildVersionedAppSchema()
     vi.mocked(loadAppConfiguration).mockResolvedValue({
       directory: '/app',
       configuration: {
         path: '/app/shopify.app.toml',
         scopes: 'read_products',
       },
+      configSchema,
     })
   })
 
@@ -373,22 +385,28 @@ describe('ensureDevContext', async () => {
       // Given
       vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       vi.mocked(loadAppConfiguration).mockReset()
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      const localApp = {
+        configuration: {
+          ...DEFAULT_CONFIG,
+          path: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
+          name: APP2.apiKey,
+          client_id: APP2.apiKey,
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: STORE1.shopDomain,
+          },
+        } as CurrentAppConfiguration,
+      }
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configuration: testAppWithConfig({
-          config: {
-            path: joinPath(tmp, CACHED1_WITH_CONFIG.configFile!),
-            name: APP2.apiKey,
-            client_id: APP2.apiKey,
-            build: {
-              automatically_update_urls_on_dev: true,
-              dev_store_url: STORE1.shopDomain,
-            },
-          },
-        }).configuration,
+        configuration: localApp.configuration,
+        configSchema,
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+      const app = await mockApp(tmp, localApp)
+      vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
       const got = await ensureDevContext(
@@ -407,6 +425,7 @@ describe('ensureDevContext', async () => {
         storeId: STORE1.shopId,
         remoteAppUpdated: true,
         updateURLs: true,
+        localApp: app,
       })
       expect(setCachedAppInfo).not.toHaveBeenCalled()
 
@@ -440,6 +459,7 @@ dev_store_url = "domain1"
       writeFileSync(filePath, expectedContent)
       vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1_WITH_CONFIG)
       vi.mocked(loadAppConfiguration).mockReset()
+      const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
         configuration: testAppWithConfig({
@@ -453,6 +473,7 @@ dev_store_url = "domain1"
             },
           },
         }).configuration,
+        configSchema,
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP1).mockResolvedValue(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
@@ -493,8 +514,7 @@ dev_store_url = "domain1"
       // Given
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory: tmp,
+      const localApp = {
         configuration: {
           path: joinPath(tmp, 'shopify.app.dev.toml'),
           name: 'my app',
@@ -503,10 +523,18 @@ dev_store_url = "domain1"
           webhooks: {api_version: '2023-04'},
           application_url: 'https://myapp.com',
           embedded: true,
-        },
+        } as CurrentAppConfiguration,
+      }
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configuration: localApp.configuration,
+        configSchema,
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+      const app = await mockApp(tmp, localApp)
+      vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
       await ensureDevContext(
@@ -531,12 +559,22 @@ dev_store_url = "domain1"
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
       writeFileSync(filePath, '')
       vi.mocked(loadAppConfiguration).mockReset()
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      const localApp = {
+        configuration: {
+          ...DEFAULT_CONFIG,
+          path: joinPath(tmp, 'shopify.app.dev.toml'),
+        } as CurrentAppConfiguration,
+      }
+
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configuration: testAppWithConfig({app: {}, config: {path: joinPath(tmp, 'shopify.app.dev.toml')}})
-          .configuration,
+        configuration: localApp.configuration,
+        configSchema,
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
+      const app = await mockApp(tmp, localApp)
+      vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
       await ensureDevContext(
@@ -558,12 +596,12 @@ client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
 
-[webhooks]
-api_version = "2023-04"
-
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products"
+
+[webhooks]
+api_version = "2023-04"
 
 [build]
 dev_store_url = "domain1"
@@ -577,14 +615,24 @@ dev_store_url = "domain1"
       // Given
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(loadAppConfiguration).mockReset()
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      const localApp = {
+        configuration: {
+          ...DEFAULT_CONFIG,
+          path: joinPath(tmp, 'shopify.app.toml'),
+        } as CurrentAppConfiguration,
+      }
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configuration: testAppWithConfig({config: {path: joinPath(tmp, 'shopify.app.toml')}}).configuration,
+        configuration: localApp.configuration,
+        configSchema,
       })
 
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
       vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
+      const app = await mockApp(tmp, localApp)
+      vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
       const val = await ensureDevContext(
@@ -782,18 +830,26 @@ dev_store_url = "domain1"
       // Given
       vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
       const filePath = joinPath(tmp, 'shopify.app.dev.toml')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory: tmp,
+      const localApp = {
         configuration: {
+          ...DEFAULT_CONFIG,
           path: filePath,
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
           webhooks: {api_version: '2023-04'},
           embedded: true,
-        },
+        } as CurrentAppConfiguration,
+      }
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configuration: localApp.configuration,
+        configSchema,
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
+      const app = await mockApp(tmp, localApp)
+      vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
       const got = await ensureDevContext({...INPUT, reset: true}, testPartnersUserSession)
@@ -820,18 +876,26 @@ dev_store_url = "domain1"
       // Given
       vi.mocked(getCachedAppInfo).mockReturnValueOnce(CACHED1_WITH_CONFIG)
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory: tmp,
+      const {schema: configSchema} = await buildVersionedAppSchema()
+      const localApp = {
         configuration: {
+          ...DEFAULT_CONFIG,
           path: filePath,
           client_id: APP2.apiKey,
           name: APP2.apiKey,
           application_url: APP2.applicationUrl,
           webhooks: {api_version: '2023-04'},
           embedded: true,
-        },
+        } as CurrentAppConfiguration,
+      }
+      vi.mocked(loadAppConfiguration).mockResolvedValue({
+        directory: tmp,
+        configuration: localApp.configuration,
+        configSchema,
       })
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(APP2)
+      const app = await mockApp(tmp, localApp)
+      vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
       const got = await ensureDevContext({...INPUT}, testPartnersUserSession)
@@ -1344,3 +1408,12 @@ describe('ensureVersionsListContext', () => {
     })
   })
 })
+
+async function mockApp(directory: string, app?: Partial<AppInterface>) {
+  const versionSchema = await buildVersionedAppSchema()
+  const localApp = testApp(app)
+  localApp.configSchema = versionSchema.schema
+  localApp.specifications = versionSchema.configSpecifications
+  localApp.directory = directory
+  return localApp
+}

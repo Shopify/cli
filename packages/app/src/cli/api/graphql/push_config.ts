@@ -37,7 +37,7 @@ export const PushConfig = gql`
   }
 `
 
-interface GdprWebhooks {
+export interface GdprWebhooks {
   customerDeletionUrl?: string
   customerDataRequestUrl?: string
   shopDeletionUrl?: string

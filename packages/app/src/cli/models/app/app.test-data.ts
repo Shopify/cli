@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -10,6 +10,7 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -55,6 +56,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     app.dotenv,
     app.errors,
     app.specifications,
+    app.configSchema,
   )
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
@@ -91,7 +93,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
@@ -565,4 +567,14 @@ export const testPartnersServiceSession: PartnersSession = {
     type: 'ServiceAccount',
     orgName: 'organization',
   },
+}
+
+export async function buildVersionedAppSchema() {
+  const configSpecifications = (await loadFSExtensionsSpecifications()).filter((spec) =>
+    spec.appModuleFeatures().includes('app_config'),
+  )
+  return {
+    schema: getAppVersionedSchema(configSpecifications),
+    configSpecifications,
+  }
 }

@@ -1,10 +1,21 @@
-import {AppSchema} from '../../app/app.js'
-import {createConfigExtensionSpecification} from '../specification.js'
+import {validateUrl} from '../../app/validation/common.js'
+import {ExtensionSpecification, createConfigExtensionSpecification} from '../specification.js'
+import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppProxySchema = AppSchema.pick({app_proxy: true}).strip()
+const AppProxySchema = zod.object({
+  app_proxy: zod
+    .object({
+      url: validateUrl(zod.string()),
+      subpath: zod.string(),
+      prefix: zod.string(),
+    })
+    .optional(),
+})
 
-const spec = createConfigExtensionSpecification({
-  identifier: 'app_proxy',
+export const AppProxySpecIdentifier = 'app_proxy'
+
+const spec: ExtensionSpecification = createConfigExtensionSpecification({
+  identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
 })
 
