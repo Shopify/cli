@@ -1,11 +1,6 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadWasmBlob} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {
-  UploadUrlGenerateMutation,
-  UploadUrlGenerateMutationSchema,
-  UploadUrlGenerateMutationSchemaNew,
-} from '../../api/graphql/functions/upload_url_generate.js'
-import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
+import {UploadUrlGenerateMutationSchema} from '../../api/graphql/functions/upload_url_generate.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -57,7 +52,8 @@ describe('uploadWasmBlob', () => {
         metafields: [],
       },
     })
-    ;(apiKey = 'api-key'), (token = 'token')
+    apiKey = 'api-key'
+    token = 'token'
     identifiers = {
       app: 'api=key',
       extensions: {},
@@ -90,7 +86,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchemaNew = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         uploadUrlGenerate: {
           headers: {},
           maxSize: '200 kb',
@@ -118,7 +114,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchemaNew = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         uploadUrlGenerate: {
           headers: {},
           maxSize: '200 kb',
@@ -158,7 +154,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchemaNew = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         uploadUrlGenerate: {
           headers: {},
           maxSize: '200 kb',
@@ -198,7 +194,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchemaNew = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         uploadUrlGenerate: {
           headers: {},
           maxSize: '200 kb',
@@ -234,7 +230,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchemaNew = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         uploadUrlGenerate: {
           headers: {},
           maxSize: '200 kb',
@@ -270,7 +266,7 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchemaNew = {
+      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
         uploadUrlGenerate: {
           headers: {},
           maxSize: '200 kb',

@@ -1,10 +1,6 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {
-  UploadUrlGenerateMutation,
-  UploadUrlGenerateMutationSchema,
-  UploadUrlGenerateMutationSchemaNew,
-} from '../../api/graphql/functions/upload_url_generate.js'
+import {UploadUrlGenerateMutationSchema} from '../../api/graphql/functions/upload_url_generate.js'
 import {
   ExtensionUpdateDraftInput,
   ExtensionUpdateDraftMutation,
@@ -16,19 +12,13 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
-import {
-  AppFunctionSetMutation,
-  AppFunctionSetMutationSchema,
-  AppFunctionSetVariables,
-} from '../../api/graphql/functions/app_function_set.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {getFunctionUploadUrl, partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand, outputContent} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -430,7 +420,7 @@ interface GetFunctionExtensionUploadURLOutput {
 async function getFunctionExtensionUploadUrlFromPartners(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res: UploadUrlGenerateMutationSchemaNew = await handlePartnersErrors(() => getFunctionUploadUrl(options.token))
+  const res: UploadUrlGenerateMutationSchema = await handlePartnersErrors(() => getFunctionUploadUrl(options.token))
   return res.uploadUrlGenerate
 }
 
