@@ -20,7 +20,7 @@ import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -567,7 +567,11 @@ class AppConfigurationLoader {
     const file = await loadConfigurationFile(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(specifications)
     const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
-    const configuration = await parseConfigurationFile(appSchema, configurationPath)
+    const parseStrictSchemaEnabled = specifications.length > 0
+    const configuration = await parseConfigurationFile(
+      parseStrictSchemaEnabled ? deepStrict(appSchema) : appSchema,
+      configurationPath,
+    )
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {

@@ -174,6 +174,43 @@ automatically_update_urls_on_dev = true
     expect(app.name).toBe('my_app')
   })
 
+  test('throws an error when the configuration file has invalid nested elements and the schema is generated from the specifications', async () => {
+    // Given
+    const appConfiguration = `
+name = "for-testing"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
+
+[access]
+wrong = "property"
+`
+    await writeConfig(appConfiguration)
+
+    // When/Then
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+  })
+
+  test('loads the app when the configuration file has invalid nested elements but the schema isnt generated from the specifications', async () => {
+    // Given
+    const appConfiguration = `
+name = "for-testing"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
+
+[access]
+wrong = "property"
+`
+    await writeConfig(appConfiguration)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications: []})
+
+    // Then
+    expect(app.name).toBe('my_app')
+  })
+
   test('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
