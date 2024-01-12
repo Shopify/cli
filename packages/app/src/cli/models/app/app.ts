@@ -117,8 +117,8 @@ export function appIsLaunchable(app: AppInterface) {
   return Boolean(frontendConfig || backendConfig)
 }
 
-export function filterNonVersionedAppFields(app: AppInterface) {
-  return Object.keys(app.configuration).filter(
+export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {
+  return Object.keys(configuration).filter(
     (fieldName) => !Object.keys(AppSchema.shape).concat('path').includes(fieldName),
   )
 }

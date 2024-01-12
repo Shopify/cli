@@ -1,6 +1,9 @@
 import {ensureReleaseContext} from './context.js'
 import {release} from './release.js'
-import {extensionsIdentifiersReleaseBreakdown} from './context/breakdown-extensions.js'
+import {
+  configExtensionsIdentifiersBreakdown,
+  extensionsIdentifiersReleaseBreakdown,
+} from './context/breakdown-extensions.js'
 import {testApp} from '../models/app/app.test-data.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -158,6 +161,7 @@ async function testRelease(
   })
 
   vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())
+  vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue(buildConfigExtensionsBreakdown())
 
   await release({
     app,
@@ -182,6 +186,16 @@ function buildExtensionsBreakdown() {
       location: 'https://example.com',
       versionTag: '1.0.0',
       message: 'message',
+      appModuleVersions: [],
     },
+  }
+}
+
+function buildConfigExtensionsBreakdown() {
+  return {
+    existingFieldNames: [],
+    existingUpdatedFieldNames: [],
+    newFieldNames: [],
+    deletedFieldNames: [],
   }
 }
