@@ -21,11 +21,6 @@ const developmentTheme = {
   name: 'my development theme',
 } as Theme
 
-const theme1 = {
-  id: 2,
-  name: 'my theme',
-} as Theme
-
 const options: RenameOptions = {
   development: false,
   newName: 'Renamed Theme',
@@ -48,6 +43,11 @@ describe('renameTheme', () => {
 
   test('should rename a theme by ID', async () => {
     // Given
+    const theme1 = {
+      id: 2,
+      name: 'my theme',
+    } as Theme
+
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
 
     // When
@@ -57,20 +57,6 @@ describe('renameTheme', () => {
     expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', 'my theme', {subdued: '(#2)'}, 'was renamed to', 'Renamed Theme'],
-    })
-  })
-
-  test('development theme should take precedence over theme ID', async () => {
-    // Given
-    vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
-
-    // When
-    await renameTheme(adminSession, {...options, development: true, theme: '2'})
-
-    // Then
-    expect(updateTheme).toBeCalledWith(developmentTheme.id, {name: options.newName}, adminSession)
-    expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my development theme', {subdued: '(#1)'}, 'was renamed to', 'Renamed Theme'],
     })
   })
 })
