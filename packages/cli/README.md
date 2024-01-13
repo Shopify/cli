@@ -1248,17 +1248,19 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename -n <value> [-d] [--no-color] [--password <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme rename -n <value> [-d] [-e <value>] [--no-color] [--password <value>] [-s <value>] [-t <value>]
+    [--verbose]
 
 FLAGS
-  -d, --development       Rename your development theme.
-  -n, --name=<value>      (required) The new name for the theme.
-  -s, --store=<value>     Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                          (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>     Theme ID or name of the remote theme.
-      --no-color          Disable color output.
-      --password=<value>  Password generated from the Theme Access app.
-      --verbose           Increase the verbosity of the logs.
+  -d, --development          Rename your development theme.
+  -e, --environment=<value>  The environment to apply to the current command.
+  -n, --name=<value>         (required) The new name for the theme.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -t, --theme=<value>        Theme ID or name of the remote theme.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Renames an existing theme.
