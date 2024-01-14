@@ -2,12 +2,13 @@ import useAbortSignal from '../hooks/use-abort-signal.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import {sleep} from '../../../../public/node/system.js'
 import React, {useRef, useState, useCallback, useEffect} from 'react'
-import {Box, Text} from 'ink'
+import {Box, Text, useInput} from 'ink'
 import PlaySound from 'play-sound'
 import terminalImage from 'terminal-image'
 import {parseSync as parseCaptions} from 'subtitle'
 import {readFile} from '../../../../public/node/fs.js'
 import {unstyled} from '../../../../public/node/output.js'
+import {handleCtrlC} from '../../ui.js'
 
 type AudioPlayer = ReturnType<Awaited<typeof PlaySound>>
 
@@ -33,7 +34,6 @@ async function playAudio(path: string): Promise<PlayResults> {
 
 interface PlayGifOptions {
   path: string
-  duration: number
   maxWidth?: number
   renderFrame: (text: string) => void
 }
@@ -57,16 +57,15 @@ interface PlayAsVideoOptions {
   setCaption: (caption: string) => void
 }
 
-async function playAsVideo({audioPath, videoPath, captionsPath, duration, maxWidth, setContents, setCaption}: PlayAsVideoOptions): Promise<PlayResults> {
+async function playAsVideo({audioPath, videoPath, captionsPath, maxWidth, setContents, setCaption}: PlayAsVideoOptions): Promise<PlayResults> {
   const audio = audioPath ? await playAudio(audioPath) : undefined
   let killVideo: () => void
   let videoStartTime = Date.now()
   let videoStopped = false
-  if (duration && duration > 0 && videoPath) {
+  if (videoPath) {
     if (videoPath.endsWith('.gif')) {
       const video = await playGif({
         path: videoPath,
-        duration,
         maxWidth,
         renderFrame: (text: string) => {
           setContents(text.trim())
@@ -120,6 +119,7 @@ export interface VideoAnimationProps {
   captionsPath?: string
   duration?: number
   maxWidth?: number
+  hideKey?: string
   abortSignal?: AbortSignal
   onComplete?: () => void
 }
@@ -127,7 +127,7 @@ export interface VideoAnimationProps {
 /**
  * `VideoAnimation` plays a video in a box.
  */
-export function VideoAnimation({audioPath, videoPath, captionsPath, duration, maxWidth, abortSignal, onComplete}: VideoAnimationProps): JSX.Element | null {
+export function VideoAnimation({audioPath, videoPath, captionsPath, duration, maxWidth, hideKey, abortSignal, onComplete}: VideoAnimationProps): JSX.Element | null {
   const isPlaying = useRef(false)
   const [contents, setContents] = useState<string>('')
   const [caption, setCaption] = useState<string>('')
@@ -148,7 +148,7 @@ export function VideoAnimation({audioPath, videoPath, captionsPath, duration, ma
       return
     }
     isPlaying.current = true
-    const {kill: killFunc} = await playAsVideo({audioPath, videoPath, captionsPath, duration, maxWidth, setContents, setCaption})
+    const {kill: killFunc} = await playAsVideo({audioPath, videoPath, captionsPath, maxWidth, setContents, setCaption})
     kill.current = () => {
       killFunc()
       isPlaying.current = false
@@ -156,14 +156,16 @@ export function VideoAnimation({audioPath, videoPath, captionsPath, duration, ma
       setCaption("")
       onComplete?.()
     }
-    const killTimeout = setTimeout(kill.current, duration)
-    const pingInterval = setInterval(() => {
-      if (!isPlaying.current) {
-        clearInterval(pingInterval)
-        clearTimeout(killTimeout)
-        kill.current?.()
-      }
-    }, 20)
+    if (typeof duration === 'number') {
+      const killTimeout = setTimeout(kill.current, duration)
+      const pingInterval = setInterval(() => {
+        if (!isPlaying.current) {
+          clearInterval(pingInterval)
+          clearTimeout(killTimeout)
+          kill.current?.()
+        }
+      }, 20)
+    }
   }, [audioPath, videoPath, duration, maxWidth])
 
   useEffect(() => {
@@ -180,6 +182,14 @@ export function VideoAnimation({audioPath, videoPath, captionsPath, duration, ma
     }
   }, [playVideo])
 
+  useInput((input, key) => {
+    handleCtrlC(input, key)
+
+    if (input === hideKey) {
+      kill.current?.()
+    }
+  })
+
   const boxWidth = (contents ? Math.max(...unstyled(contents).split('\n').map(line => line.length)) : 0) ?? 0
   if (boxWidth > maxBoxWidth.current) {
     maxBoxWidth.current = boxWidth
@@ -190,9 +200,10 @@ export function VideoAnimation({audioPath, videoPath, captionsPath, duration, ma
       <Box width={contents?.length ?? 0}>
         <Text wrap="truncate">{contents}</Text>
       </Box>
-      {captionsPath ?
-        <Box width={maxBoxWidth.current} minHeight={3} flexDirection="row" justifyContent="center" borderStyle="double">
-          <Text>{caption}</Text>
+      {(captionsPath || hideKey) ?
+        <Box width={maxBoxWidth.current} minHeight={3} gap={1} flexDirection="column" justifyContent="center" borderStyle="double">
+          {caption ? <Box width="100%" flexDirection="row" justifyContent="center"><Text>{caption}</Text></Box> : null}
+          {hideKey ? <Box width="100%" flexDirection="row" justifyContent="center"><Text>Press <Text bold>{hideKey}</Text> to hide</Text></Box> : null}
         </Box> : null}
     </Box>
   )

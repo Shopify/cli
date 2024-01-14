@@ -10,8 +10,8 @@ export async function asyncTasks() {
   await renderVideo({
     videoPath: videoDir.concat("/marquee/video.json"),
     captionsPath: videoDir.concat("/marquee/captions.srt"),
-    duration: 48000,
-    maxWidth: 80,
+    maxWidth: 60,
+    hideKey: 'h',
   })
 
   await renderVideo({

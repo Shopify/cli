@@ -1,12 +1,13 @@
 import metadata from '../../../../metadata.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {ConcurrentOutput} from '@shopify/cli-kit/node/ui/components'
+import {ConcurrentOutput, VideoAnimation} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useRef, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Box, Text, useInput, useStdin} from 'ink'
 import {handleCtrlC} from '@shopify/cli-kit/node/ui'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {moduleDirectory} from '@shopify/cli-kit/node/path'
 import figures from '@shopify/cli-kit/node/figures'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {treeKill} from '@shopify/cli-kit/node/tree-kill'
@@ -184,6 +185,9 @@ const Dev: FunctionComponent<DevProps> = ({
     {isActive: Boolean(canUseShortcuts)},
   )
 
+  const thisFileDir = moduleDirectory(import.meta.url)
+  const videoDir = thisFileDir.concat('/../../../../../../assets/video/edition-winter-2024')
+
   return (
     <>
       <ConcurrentOutput
@@ -204,6 +208,14 @@ const Dev: FunctionComponent<DevProps> = ({
           borderRight={false}
           borderTop
         >
+          <Box flexDirection="column" flexGrow={1}>
+            <VideoAnimation
+              videoPath={videoDir.concat("/video.json")}
+              captionsPath={videoDir.concat("/captions.srt")}
+              maxWidth={80}
+              hideKey='h'
+            />
+          </Box>
           {canUseShortcuts ? (
             <Box flexDirection="column">
               {canEnablePreviewMode ? (
