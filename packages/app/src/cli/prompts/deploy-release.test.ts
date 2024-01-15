@@ -30,7 +30,12 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       })
 
       // Then
-      expect(metadataSpyOn).not.toHaveBeenCalled()
+      verifyMetada({
+        metadataSpyOn,
+        confirmed: result,
+        configExtensionIdentifiersBreakdown: configExtensionIdentifiersBreakdown!,
+        showConfig: true,
+      })
       expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
@@ -58,6 +63,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown,
+        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -91,6 +98,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
+        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -144,6 +153,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
+        showConfig: true,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -201,6 +212,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
+        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -253,6 +266,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
+        showConfig: false,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -298,6 +313,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown,
+        showConfig: true,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -349,6 +366,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
+        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -451,19 +470,55 @@ function verifyMetada({
   metadataSpyOn,
   extensionIdentifiersBreakdown,
   confirmed,
+  configExtensionIdentifiersBreakdown,
+  showConfig,
 }: {
   metadataSpyOn: SpyInstance
-  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  extensionIdentifiersBreakdown?: ExtensionIdentifiersBreakdown
   confirmed: boolean
+  configExtensionIdentifiersBreakdown: ConfigExtensionIdentifiersBreakdown
+  showConfig: boolean
 }) {
+  const currentConfiguration = [
+    ...configExtensionIdentifiersBreakdown.existingUpdatedFieldNames,
+    ...configExtensionIdentifiersBreakdown.newFieldNames,
+    ...configExtensionIdentifiersBreakdown.existingFieldNames,
+  ]
+
   expect(metadataSpyOn).toHaveBeenNthCalledWith(1, expect.any(Function))
   expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({
+    cmd_deploy_include_config_used: showConfig,
+    ...(showConfig
+      ? {
+          ...(currentConfiguration.length > 0
+            ? {cmd_deploy_config_modules_breakdown: currentConfiguration.join(',')}
+            : {}),
+          ...(configExtensionIdentifiersBreakdown.existingUpdatedFieldNames.length > 0
+            ? {
+                cmd_deploy_config_modules_updated:
+                  configExtensionIdentifiersBreakdown.existingUpdatedFieldNames.join(','),
+              }
+            : {}),
+          ...(configExtensionIdentifiersBreakdown.newFieldNames.length > 0
+            ? {cmd_deploy_config_modules_new: configExtensionIdentifiersBreakdown.newFieldNames.join(',')}
+            : {}),
+          ...(configExtensionIdentifiersBreakdown.deletedFieldNames.length > 0
+            ? {cmd_deploy_config_modules_deleted: configExtensionIdentifiersBreakdown.deletedFieldNames.join(',')}
+            : {}),
+        }
+      : {}),
+  })
+
+  if (!extensionIdentifiersBreakdown) return
+
+  expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
+  expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({
     cmd_deploy_confirm_new_registrations: extensionIdentifiersBreakdown.toCreate.length,
     cmd_deploy_confirm_updated_registrations: extensionIdentifiersBreakdown.toUpdate.length,
     cmd_deploy_confirm_removed_registrations: extensionIdentifiersBreakdown.onlyRemote.length,
   })
-  expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
-  expect(metadataSpyOn.mock.calls[1]![0]()).toEqual(
+  expect(metadataSpyOn).toHaveBeenNthCalledWith(3, expect.any(Function))
+  expect(metadataSpyOn.mock.calls[2]![0]()).toEqual(
     expect.objectContaining({
       cmd_deploy_confirm_cancelled: !confirmed,
     }),
