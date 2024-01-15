@@ -1,6 +1,5 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {UploadUrlGenerateMutationSchema} from '../../api/graphql/functions/upload_url_generate.js'
 import {
   ExtensionUpdateDraftInput,
   ExtensionUpdateDraftMutation,
@@ -417,11 +416,24 @@ interface GetFunctionExtensionUploadURLOutput {
   headers: {[key: string]: string}
 }
 
+export interface FunctionUploadUrlGenerateMutationSchema {
+  functionUploadUrlGenerate: {
+    generatedUrlDetails: {
+      url: string
+      moduleId: string
+      headers: {[key: string]: string}
+      maxSize: string
+    }
+  }
+}
+
 async function getFunctionExtensionUploadUrlFromPartners(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res: UploadUrlGenerateMutationSchema = await handlePartnersErrors(() => getFunctionUploadUrl(options.token))
-  return res.uploadUrlGenerate
+  const res: FunctionUploadUrlGenerateMutationSchema = await handlePartnersErrors(() =>
+    getFunctionUploadUrl(options.token),
+  )
+  return res.functionUploadUrlGenerate.generatedUrlDetails
 }
 
 async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {

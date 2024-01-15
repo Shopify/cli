@@ -48,7 +48,7 @@ describe('getFunctionUploadUrl', () => {
 
     // Then
     expect(graphqlRequest).toHaveBeenLastCalledWith({
-      query: expect.stringContaining('uploadUrlGenerate'),
+      query: expect.stringContaining('functionUploadUrlGenerate'),
       api: 'Partners',
       url,
       token: mockedToken,

@@ -38,13 +38,15 @@ export async function partnersRequest<T>(query: string, token: string, variables
   return result
 }
 
-interface FunctionUploadUrlGenerateResponse {
-  uploadUrlGenerate: {
-    url: string
-    moduleId: string
-    headers: string
-    maxBytes: number
-    maxSize: string
+export interface FunctionUploadUrlGenerateResponse {
+  functionUploadUrlGenerate: {
+    generatedUrlDetails: {
+      url: string
+      moduleId: string
+      headers: {[key: string]: string}
+      maxBytes: number
+      maxSize: string
+    }
   }
 }
 
@@ -54,20 +56,22 @@ interface FunctionUploadUrlGenerateResponse {
  * @param token - Partners token.
  * @returns The response of the query.
  */
-export async function getFunctionUploadUrl<T>(token: string): Promise<T> {
+export async function getFunctionUploadUrl(token: string): Promise<FunctionUploadUrlGenerateResponse> {
   const functionUploadUrlGenerateMutation = FunctionUploadUrlGenerateMutation
   const res: FunctionUploadUrlGenerateResponse = await partnersRequest(FunctionUploadUrlGenerateMutation, token)
-  return res as T
+  return res
 }
 
 const FunctionUploadUrlGenerateMutation = gql`
   mutation functionUploadUrlGenerateMutation {
-    uploadUrlGenerate(input: {}) {
-      url
-      moduleId
-      headers
-      maxBytes
-      maxSize
+    functionUploadUrlGenerate {
+      generatedUrlDetails {
+        url
+        moduleId
+        headers
+        maxBytes
+        maxSize
+      }
     }
   }
 `

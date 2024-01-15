@@ -1,11 +1,14 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadWasmBlob} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {UploadUrlGenerateMutationSchema} from '../../api/graphql/functions/upload_url_generate.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {getFunctionUploadUrl, partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {
+  FunctionUploadUrlGenerateResponse,
+  getFunctionUploadUrl,
+  partnersRequest,
+} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -86,12 +89,15 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        uploadUrlGenerate: {
-          headers: {},
-          maxSize: '200 kb',
-          url: uploadUrl,
-          moduleId: 'module-id',
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            headers: {},
+            maxSize: '200 kb',
+            url: uploadUrl,
+            moduleId: 'module-id',
+            maxBytes: 200,
+          },
         },
       }
       const uploadError = new Error('error')
@@ -114,12 +120,15 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        uploadUrlGenerate: {
-          headers: {},
-          maxSize: '200 kb',
-          url: uploadUrl,
-          moduleId: 'module-id',
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            headers: {},
+            maxSize: '200 kb',
+            url: uploadUrl,
+            moduleId: 'module-id',
+            maxBytes: 200,
+          },
         },
       }
       vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
@@ -154,12 +163,15 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        uploadUrlGenerate: {
-          headers: {},
-          maxSize: '200 kb',
-          url: uploadUrl,
-          moduleId: 'module-id',
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            headers: {},
+            maxSize: '200 kb',
+            url: uploadUrl,
+            moduleId: 'module-id',
+            maxBytes: 200,
+          },
         },
       }
       vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
@@ -194,12 +206,15 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        uploadUrlGenerate: {
-          headers: {},
-          maxSize: '200 kb',
-          url: uploadUrl,
-          moduleId: 'module-id',
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            headers: {},
+            maxSize: '200 kb',
+            url: uploadUrl,
+            moduleId: 'module-id',
+            maxBytes: 200,
+          },
         },
       }
       vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
@@ -230,12 +245,15 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        uploadUrlGenerate: {
-          headers: {},
-          maxSize: '200 kb',
-          url: uploadUrl,
-          moduleId: 'module-id',
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            headers: {},
+            maxSize: '200 kb',
+            url: uploadUrl,
+            moduleId: 'module-id',
+            maxBytes: 200,
+          },
         },
       }
       vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
@@ -266,12 +284,15 @@ describe('uploadWasmBlob', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        uploadUrlGenerate: {
-          headers: {},
-          maxSize: '200 kb',
-          url: uploadUrl,
-          moduleId: 'module-id',
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            headers: {},
+            maxSize: '200 kb',
+            url: uploadUrl,
+            moduleId: 'module-id',
+            maxBytes: 200,
+          },
         },
       }
       const uploadError = new Error('error')
