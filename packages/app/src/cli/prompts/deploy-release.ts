@@ -2,6 +2,7 @@ import {buildDeployReleaseInfoTableSection} from './ui/deploy-release-info-table
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
+  ExtensionIdentifierBreakdownInfo,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
 import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
@@ -98,13 +99,21 @@ async function deployConfirmationPrompt({
 }
 
 async function buildExtensionsContentPrompt(extensionsContentBreakdown: ExtensionIdentifiersBreakdown) {
-  const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = extensionsContentBreakdown
+  const {onlyRemote, toCreate: toCreateBreakdown, toUpdate} = extensionsContentBreakdown
 
+  const mapExtensionToInfoTableItem = (extension: ExtensionIdentifierBreakdownInfo, preffix: string) => {
+    switch (extension.experience) {
+      case 'dashboard':
+        return [extension.title, {subdued: `(${preffix}from Partner Dashboard)`}]
+      case 'extension':
+        return extension.title
+    }
+  }
   let extensionsInfoTable
   const section = {
-    new: toCreateBreakdown,
-    updated: [...toUpdate, ...fromDashboard.map((identifier) => [identifier, {subdued: '(from Partner Dashboard)'}])],
-    removed: onlyRemote,
+    new: toCreateBreakdown.map((extension) => mapExtensionToInfoTableItem(extension, 'new, ')),
+    updated: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
+    removed: onlyRemote.map((extension) => mapExtensionToInfoTableItem(extension, 'removed, ')),
   }
   const extensionsInfo = buildDeployReleaseInfoTableSection(section)
 
