@@ -7,6 +7,7 @@ describe('webhooks', () => {
       // Given
       const object = {
         webhooks: {
+          api_version: '2021-01',
           uri: 'https://my-app.com/webhooks',
           topics: ['products/create', 'products/update', 'products/delete'],
           subscriptions: [
@@ -38,6 +39,7 @@ describe('webhooks', () => {
 
       // Then
       expect(result).toEqual({
+        api_version: '2021-01',
         subscriptions: [
           {
             topic: 'products/create',
@@ -73,11 +75,29 @@ describe('webhooks', () => {
         ],
       })
     })
+    test('when there is no subscriptions only api version is sent', () => {
+      // Given
+      const object = {
+        webhooks: {
+          api_version: '2021-01',
+        },
+      }
+      const webhookSpec = spec
+
+      // When
+      const result = webhookSpec.transform!(object)
+
+      // Then
+      expect(result).toEqual({
+        api_version: '2021-01',
+      })
+    })
   })
   describe('reverseTransform', () => {
     test('should return the reversed transformed object', () => {
       // Given
       const object = {
+        api_version: '2021-01',
         subscriptions: [
           {
             topic: 'products/create',
@@ -116,6 +136,7 @@ describe('webhooks', () => {
       // Then
       expect(result).toMatchObject({
         webhooks: {
+          api_version: '2021-01',
           uri: 'https://my-app.com/webhooks',
           topics: ['products/create', 'products/update', 'products/delete'],
           subscriptions: [
@@ -135,6 +156,23 @@ describe('webhooks', () => {
               uri: 'https://valid-url',
             },
           ],
+        },
+      })
+    })
+    test('when no subscriptions are received only api version is returned', () => {
+      // Given
+      const object = {
+        api_version: '2021-01',
+      }
+      const webhookSpec = spec
+
+      // When
+      const result = webhookSpec.reverseTransform!(object)
+
+      // Then
+      expect(result).toMatchObject({
+        webhooks: {
+          api_version: '2021-01',
         },
       })
     })

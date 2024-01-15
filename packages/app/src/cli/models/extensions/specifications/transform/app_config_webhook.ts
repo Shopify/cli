@@ -1,5 +1,5 @@
 import {WebhookSubscription, WebhooksConfig} from '../types/app_config_webhook.js'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 
 export function transformWebhookConfig(content: object) {
   const webhooks = getPathValue<WebhooksConfig>(content, 'webhooks')
@@ -7,7 +7,7 @@ export function transformWebhookConfig(content: object) {
 
   // normalize webhook config with the top level config
   const webhookSubscriptions = []
-  const {topics, subscriptions, uri} = webhooks
+  const {topics, subscriptions, uri, api_version: apiVersion} = webhooks
 
   if (uri && topics?.length) {
     for (const topic of topics) {
@@ -33,12 +33,18 @@ export function transformWebhookConfig(content: object) {
       webhookSubscriptions.push(subscriptionConfig)
     }
   }
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
+  return webhookSubscriptions.length > 0
+    ? {api_version: apiVersion, subscriptions: webhookSubscriptions}
+    : {api_version: apiVersion}
 }
 
 export function transformToWebhookConfig(content: object) {
+  let webhooks = {}
+  const apiVersion = getPathValue(content, 'api_version') as string
+  webhooks = {...(apiVersion ? {webhooks: {api_version: apiVersion}} : {})}
   const serverWebhooks = getPathValue<WebhookSubscription[]>(content, 'subscriptions')
-  if (!serverWebhooks) return content
+  if (!serverWebhooks) return webhooks
+
   const frequencyMap: {[key: string]: number} = {}
   serverWebhooks.forEach((item) => {
     frequencyMap[item.uri!] = (frequencyMap[item.uri!] || 0) + 1
@@ -77,5 +83,5 @@ export function transformToWebhookConfig(content: object) {
     }
   }
 
-  return {webhooks: {uri: defaultUri, topics, subscriptions}}
+  return deepMergeObjects(webhooks, {webhooks: {uri: defaultUri, topics, subscriptions}})
 }
