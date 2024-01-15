@@ -47,6 +47,7 @@
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
+* [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
@@ -1240,6 +1241,33 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.53.0/dist/cli/commands/theme/push.js)_
+
+## `shopify theme rename`
+
+Renames an existing theme.
+
+```
+USAGE
+  $ shopify theme rename -n <value> [-d] [-e <value>] [-l] [--no-color] [--password <value>] [-s <value>] [-t
+    <value>] [--verbose]
+
+FLAGS
+  -d, --development          Rename your development theme.
+  -e, --environment=<value>  The environment to apply to the current command.
+  -l, --live                 Rename your remote live theme.
+  -n, --name=<value>         (required) The new name for the theme.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -t, --theme=<value>        Theme ID or name of the remote theme.
+      --no-color             Disable color output.
+      --password=<value>     Password generated from the Theme Access app.
+      --verbose              Increase the verbosity of the logs.
+
+DESCRIPTION
+  Renames an existing theme.
+```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.53.0/dist/cli/commands/theme/rename.js)_
 
 ## `shopify theme share`
 
