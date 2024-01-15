@@ -53,7 +53,6 @@ describe('findOrSelectTheme', () => {
     // When
     await findOrSelectTheme(session, {
       header,
-      developmentTheme: themes[0]!.id,
       filter: {},
     })
 

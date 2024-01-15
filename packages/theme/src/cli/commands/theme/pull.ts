@@ -81,7 +81,6 @@ export default class Pull extends ThemeCommand {
 
       const theme = await findOrSelectTheme(adminSession, {
         header: 'Select a theme to open',
-        developmentTheme: developmentTheme?.id,
         filter: {
           live,
           theme: development ? `${developmentTheme?.id}` : flags.theme,

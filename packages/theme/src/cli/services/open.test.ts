@@ -114,7 +114,6 @@ describe('open', () => {
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: undefined,
         filter: {
           live,
           theme: undefined,
@@ -129,7 +128,6 @@ describe('open', () => {
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: developmentTheme.id,
         filter: {
           live,
           theme: options.theme,
@@ -144,7 +142,6 @@ describe('open', () => {
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: developmentTheme.id,
         filter: {
           live,
           theme: developmentTheme.id.toString(),

@@ -16,7 +16,6 @@ export async function open(
   )?.id
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to open',
-    developmentTheme,
     filter: {
       live: options.live,
       theme: options.development ? `${developmentTheme}` : options.theme,
