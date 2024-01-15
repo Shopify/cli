@@ -1,12 +1,12 @@
 import {RenameOptions, renameTheme} from './rename.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {updateTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {updateTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/themes-api')
+vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-selector.js', () => {
   return {findOrSelectTheme: vi.fn()}
 })
@@ -24,10 +24,11 @@ const developmentTheme = {
 const options: RenameOptions = {
   development: false,
   newName: 'Renamed Theme',
+  live: false,
 }
 
 describe('renameTheme', () => {
-  test('renames the development theme', async () => {
+  test('calls updateTheme with the development flag', async () => {
     // Given
     vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
 
@@ -41,7 +42,7 @@ describe('renameTheme', () => {
     })
   })
 
-  test('should rename a theme by ID', async () => {
+  test('calls updateTheme with a theme ID', async () => {
     // Given
     const theme1 = {
       id: 2,
@@ -57,6 +58,25 @@ describe('renameTheme', () => {
     expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', 'my theme', {subdued: '(#2)'}, 'was renamed to', 'Renamed Theme'],
+    })
+  })
+
+  test('calls updateTheme with the live flag', async () => {
+    // Given
+    const theme1 = {
+      id: 2,
+      name: 'live theme',
+    } as Theme
+
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme1)
+
+    // When
+    await renameTheme(adminSession, {...options, live: true})
+
+    // Then
+    expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
+    expect(renderSuccess).toBeCalledWith({
+      body: ['The theme', 'live theme', {subdued: '(#2)'}, 'was renamed to', 'Renamed Theme'],
     })
   })
 })

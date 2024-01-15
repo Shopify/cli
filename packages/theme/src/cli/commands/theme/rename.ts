@@ -30,19 +30,25 @@ export default class Rename extends ThemeCommand {
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
+    live: Flags.boolean({
+      char: 'l',
+      description: 'Rename your remote live theme.',
+      env: 'SHOPIFY_FLAG_LIVE',
+    }),
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Rename)
-    const {password, development, name, theme} = flags
+    const {password, development, name, theme, live} = flags
 
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, password)
 
     const renameOptions: RenameOptions = {
-      development,
       newName: name,
+      development,
       theme,
+      live,
     }
 
     await renameTheme(adminSession, renameOptions)

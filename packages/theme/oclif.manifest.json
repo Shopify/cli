@@ -1499,6 +1499,14 @@
           "name": "environment",
           "type": "option"
         },
+        "live": {
+          "allowNo": false,
+          "char": "l",
+          "description": "Rename your remote live theme.",
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "type": "boolean"
+        },
         "name": {
           "char": "n",
           "description": "The new name for the theme.",
