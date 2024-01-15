@@ -37,6 +37,11 @@ describe('<ExtensionRow/>', () => {
     extensionPoints: [{target: 'purchase.checkout.cart-line-list.render-after'}],
   })
 
+  const posUiExtension = mockExtension({
+    type: 'ui_extension',
+    extensionPoints: [{target: 'pos.home.tile.render', surface: 'point_of_sale'}],
+  })
+
   const defaultProps = {
     uuid: legacyAdminExtension.uuid,
   }
@@ -48,6 +53,7 @@ describe('<ExtensionRow/>', () => {
       legacyCheckoutExtension,
       adminUiExtension,
       checkoutUiExtension,
+      posUiExtension,
     ],
   }
 
@@ -55,6 +61,18 @@ describe('<ExtensionRow/>', () => {
     const container = render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {state: defaultState})
 
     expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
+  })
+
+  test('renders a <Button/> to open the QRCodeModal for a POS UI extension', () => {
+    const container = render(
+      <ExtensionRow {...defaultProps} uuid={posUiExtension.uuid} />,
+      withProviders(DefaultProviders),
+      {
+        state: defaultState,
+      },
+    )
+
+    expect(container).toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
   })
 
   test('renders a <Button/> to open the QRCodeModal for a legacy Admin extension', () => {
