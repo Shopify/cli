@@ -21,13 +21,13 @@ import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_regi
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export interface LinkOptions {
   commandConfig: Config
@@ -39,6 +39,7 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const {token, remoteApp, directory} = await selectRemoteApp(options)
+  const betas = await fetchAppRemoteBetaFlags(remoteApp.apiKey, token)
   const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
@@ -46,6 +47,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const remoteAppConfigurationFromApiClient = mergeAppConfiguration(
     {...localApp.configuration, path: configFilePath},
     remoteApp,
+    betas.includes(BetaFlag.VersionedAppConfig),
   )
   const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
     token,
@@ -167,9 +169,10 @@ async function loadConfigurationFileName(
 export function mergeAppConfiguration(
   appConfiguration: AppConfiguration,
   remoteApp: OrganizationApp,
+  useVersionedAppConfig: boolean,
 ): CurrentAppConfiguration {
   return {
-    ...addLocalAppConfig(appConfiguration, remoteApp),
+    ...addLocalAppConfig(appConfiguration, remoteApp, useVersionedAppConfig),
     ...addBrandingConfig(remoteApp),
     ...addPosConfig(remoteApp),
     ...addRemoteAppWebhooksConfig(remoteApp),
@@ -255,7 +258,11 @@ function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp:
   }
 }
 
-function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
+function addLocalAppConfig(
+  appConfiguration: AppConfiguration,
+  remoteApp: OrganizationApp,
+  useVersionedAppConfig: boolean,
+) {
   let localAppConfig = {
     ...appConfiguration,
     client_id: remoteApp.apiKey,
@@ -263,7 +270,7 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
   if (isCurrentAppSchema(localAppConfig)) {
     delete localAppConfig.auth
     const build = {
-      ...(useVersionedAppConfig() ? {include_config_on_deploy: true} : {}),
+      ...(useVersionedAppConfig ? {include_config_on_deploy: true} : {}),
       ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
     }
     if (isEmpty(build)) {

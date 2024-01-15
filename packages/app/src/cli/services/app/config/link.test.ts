@@ -15,13 +15,13 @@ import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
+import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 const REMOTE_APP = testOrganizationApp()
 
@@ -41,7 +41,7 @@ vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../generate/fetch-extension-specifications.js')
-vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('../select-app.js')
 
 beforeEach(async () => {
   vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
@@ -53,7 +53,7 @@ beforeEach(async () => {
     },
   })
   vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
-  vi.mocked(useVersionedAppConfig).mockResolvedValue(true)
+  vi.mocked(fetchAppRemoteBetaFlags).mockResolvedValue([BetaFlag.VersionedAppConfig])
 })
 
 describe('link', () => {

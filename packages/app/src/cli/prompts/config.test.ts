@@ -203,7 +203,11 @@ describe('confirmPushChanges', () => {
 
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const configuration = mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+        true,
+      )
 
       configuration.name = 'app2'
       configuration.access_scopes = {scopes: 'read_themes, read_customers'}
@@ -255,7 +259,11 @@ api_version = "unstable"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
-      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const configuration = mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+        true,
+      )
       const options: PushOptions = {
         configuration,
         force: false,
@@ -358,7 +366,11 @@ api_version = "unstable"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
-      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const configuration = mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+        true,
+      )
       const options: PushOptions = {
         configuration: {
           ...configuration,

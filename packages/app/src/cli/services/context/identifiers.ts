@@ -17,6 +17,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   force: boolean
   release: boolean
   partnersApp?: PartnersAppForIdentifierMatching
+  useVersionedAppConfig?: boolean
 }
 
 export interface RemoteSource {
@@ -51,7 +52,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     appTitle: options.partnersApp?.title,
     release: options.release,
     force: options.force,
-    showConfig: includeConfigOnDeploy(options.app.configuration),
+    showConfig: includeConfigOnDeploy(options.app.configuration) && options.useVersionedAppConfig,
   })
   if (!confirmed) throw new AbortSilentError()
 

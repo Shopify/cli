@@ -94,6 +94,7 @@ export async function deployConfirmed(
     configurationRegistrations,
     options.app,
     options.appId,
+    options.useVersionedAppConfig ?? false,
   )
 
   const validMatchesById: {[key: string]: string} = {}
@@ -122,8 +123,10 @@ async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
   appId: string,
+  useVersionedAppConfig: boolean,
 ) {
-  if (!includeConfigOnDeploy(app.configuration)) return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
+  if (!includeConfigOnDeploy(app.configuration) || !useVersionedAppConfig)
+    return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
 
   const localExtensionRegistrations = app.allExtensions.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []

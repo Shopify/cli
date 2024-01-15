@@ -13,7 +13,6 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export const LegacyAppSchema = zod
   .object({
@@ -105,7 +104,7 @@ export function appIsLaunchable(app: AppInterface) {
 
 export function includeConfigOnDeploy(configuration: AppConfiguration) {
   if (isLegacyAppSchema(configuration)) return false
-  return configuration.build?.include_config_on_deploy && useVersionedAppConfig()
+  return configuration.build?.include_config_on_deploy
 }
 
 export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {

@@ -17,6 +17,7 @@ import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {BetaFlag, fetchAppRemoteBetaFlags} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -56,7 +57,6 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
@@ -305,6 +305,7 @@ interface DeployContextOutput {
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
   release: boolean
+  betas: BetaFlag[]
 }
 
 /**
@@ -376,6 +377,8 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
+  const betas = await fetchAppRemoteBetaFlags(partnersApp.apiKey, token)
+  const useVersionedAppConfig = betas.includes(BetaFlag.VersionedAppConfig)
 
   const specifications = await fetchSpecifications({
     token,
@@ -390,7 +393,14 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
 
-  await ensureIncludeConfigOnDeploy({org, app, partnersApp, reset: options.reset, force: options.force})
+  await ensureIncludeConfigOnDeploy({
+    org,
+    app,
+    partnersApp,
+    reset: options.reset,
+    force: options.force,
+    useVersionedAppConfig,
+  })
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -403,6 +413,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     token,
     envIdentifiers,
     partnersApp,
+    useVersionedAppConfig,
   })
 
   // eslint-disable-next-line no-param-reassign
@@ -425,6 +436,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     identifiers,
     token,
     release: !options.noRelease,
+    betas,
   }
 
   await logMetadataForLoadedContext({
@@ -455,10 +467,18 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   })
 
   const [partnersApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, partnersSession)
+  const betas = await fetchAppRemoteBetaFlags(partnersApp.apiKey, token)
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
 
-  await ensureIncludeConfigOnDeploy({org, app, partnersApp, reset: draftExtensionsPushOptions.reset, force: true})
+  await ensureIncludeConfigOnDeploy({
+    org,
+    app,
+    partnersApp,
+    reset: draftExtensionsPushOptions.reset,
+    force: true,
+    useVersionedAppConfig: betas.includes(BetaFlag.VersionedAppConfig),
+  })
 
   const prodEnvIdentifiers = getAppIdentifiers({app})
 
@@ -485,6 +505,7 @@ interface ShouldOrPromptIncludeConfigDeployOptions {
   appDirectory: string
   localApp: AppInterface
   cachedIncludeConfigOnDeploy: boolean | undefined
+  useVersionedAppConfig: boolean
 }
 
 async function ensureIncludeConfigOnDeploy({
@@ -493,12 +514,14 @@ async function ensureIncludeConfigOnDeploy({
   partnersApp,
   reset,
   force,
+  useVersionedAppConfig = false,
 }: {
   org: Organization
   app: AppInterface
   partnersApp: OrganizationApp
   reset: boolean
   force: boolean
+  useVersionedAppConfig: boolean
 }) {
   const cachedIncludeConfigOnDeploy = reset ? undefined : includeConfigOnDeploy(app.configuration)
   showReusedDeployValues(
@@ -506,17 +529,19 @@ async function ensureIncludeConfigOnDeploy({
     app,
     partnersApp,
     force ? cachedIncludeConfigOnDeploy ?? false : cachedIncludeConfigOnDeploy,
+    useVersionedAppConfig,
   )
   if (force) return
   await shouldOrPromptIncludeConfigDeploy({
     appDirectory: app.directory,
     localApp: app,
     cachedIncludeConfigOnDeploy,
+    useVersionedAppConfig,
   })
 }
 
 async function shouldOrPromptIncludeConfigDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
-  if (options.cachedIncludeConfigOnDeploy !== undefined || !useVersionedAppConfig()) return
+  if (options.cachedIncludeConfigOnDeploy !== undefined || !options.useVersionedAppConfig) return
 
   const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt()
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
@@ -905,6 +930,7 @@ function showReusedDeployValues(
   app: AppInterface,
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
   cachedIncludeConfigOnDeploy: boolean | undefined,
+  useVersionedAppConfig: boolean,
 ) {
   let includeConfigOnDeploy
   if (cachedIncludeConfigOnDeploy !== undefined) includeConfigOnDeploy = cachedIncludeConfigOnDeploy ? 'Yes' : 'No'
@@ -915,7 +941,7 @@ function showReusedDeployValues(
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
-    includeConfigOnDeploy: useVersionedAppConfig() ? includeConfigOnDeploy : undefined,
+    includeConfigOnDeploy: useVersionedAppConfig ? includeConfigOnDeploy : undefined,
   })
 }
 
