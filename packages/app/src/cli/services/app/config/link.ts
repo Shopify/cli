@@ -100,7 +100,7 @@ async function loadAppConfigFromCurrentToml(
       specifications,
       directory: options.directory,
       mode: 'report',
-      configName: undefined,
+      configName: configurationFileNames.app,
     })
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -236,20 +236,15 @@ function addRemoteAppAccessScopesConfig(appConfiguration: AppConfiguration, remo
     accessScopesContent = {
       scopes: remoteApp.requestedAccessScopes.join(','),
     }
-    // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
-  } else if (isLegacyAppSchema(appConfiguration) && appConfiguration.scopes) {
-    accessScopesContent = {
-      scopes: appConfiguration.scopes,
-      use_legacy_install_flow: true,
-    }
-  } else if (isCurrentAppSchema(appConfiguration) && getAppScopes(appConfiguration) !== '') {
-    accessScopesContent = {
-      scopes: getAppScopes(appConfiguration),
-      use_legacy_install_flow: true,
-    }
     // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
+  } else if (getAppScopes(appConfiguration) === '') {
+    accessScopesContent = {
+      use_legacy_install_flow: true,
+    }
+    // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
   } else {
     accessScopesContent = {
+      scopes: getAppScopes(appConfiguration),
       use_legacy_install_flow: true,
     }
   }
