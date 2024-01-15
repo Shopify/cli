@@ -116,7 +116,7 @@ export async function pushConfig(options: PushOptions) {
   }
 
   renderSuccess({
-    headline: `Updated your app config for ${configuration.name}`,
+    headline: `Updated your app config for ${variables.title}`,
     body: [`Your ${configFileName} config is live for your app users.`],
   })
 }

@@ -653,7 +653,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
+        existingFieldNames: ['name', 'application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -688,6 +688,21 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
+      const brandingActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_B',
+        registrationUuid: 'UUID_C_B',
+        registrationTitle: 'Registration title',
+        type: 'branding',
+        config: JSON.stringify({name: 'my app'}),
+        specification: {
+          identifier: 'branding',
+          name: 'branding',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
       const webhooksActiveAppModule: AppModuleVersion = {
         registrationId: 'C_C',
         registrationUuid: 'UUID_C_C',
@@ -705,7 +720,14 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       }
       const activeVersion = {
         app: {
-          activeAppVersion: {appModuleVersions: [configActiveAppModule, webhooksActiveAppModule, MODULE_DASHBOARD_A]},
+          activeAppVersion: {
+            appModuleVersions: [
+              configActiveAppModule,
+              brandingActiveAppModule,
+              webhooksActiveAppModule,
+              MODULE_DASHBOARD_A,
+            ],
+          },
         },
       }
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
@@ -720,7 +742,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded', 'webhooks'],
+        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -754,6 +776,21 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
+      const brandingActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_B',
+        registrationUuid: 'UUID_C_B',
+        registrationTitle: 'Registration title',
+        type: 'branding',
+        config: JSON.stringify({name: 'my app'}),
+        specification: {
+          identifier: 'branding',
+          name: 'branding',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
       const webhooksActiveAppModule: AppModuleVersion = {
         registrationId: 'C_C',
         registrationUuid: 'UUID_C_C',
@@ -771,7 +808,14 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       }
       const activeVersion = {
         app: {
-          activeAppVersion: {appModuleVersions: [configActiveAppModule, webhooksActiveAppModule, MODULE_DASHBOARD_A]},
+          activeAppVersion: {
+            appModuleVersions: [
+              configActiveAppModule,
+              brandingActiveAppModule,
+              webhooksActiveAppModule,
+              MODULE_DASHBOARD_A,
+            ],
+          },
         },
       }
       vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
@@ -786,7 +830,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['webhooks'],
+        existingFieldNames: ['name', 'webhooks'],
         existingUpdatedFieldNames: ['application_url', 'embedded'],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -843,7 +887,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       expect(result).toEqual({
         existingFieldNames: ['application_url', 'embedded'],
         existingUpdatedFieldNames: [],
-        newFieldNames: ['webhooks', 'pos'],
+        newFieldNames: ['name', 'webhooks', 'pos'],
         deletedFieldNames: [],
       })
     })
@@ -874,17 +918,15 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
-      const configActivePosConfigurationAppModule: AppModuleVersion = {
+      const brandingActiveAppModule: AppModuleVersion = {
         registrationId: 'C_B',
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
-        type: 'point_of_sale',
-        config: JSON.stringify({
-          embedded: false,
-        }),
+        type: 'branding',
+        config: JSON.stringify({name: 'my app'}),
         specification: {
-          identifier: 'point_of_sale',
-          name: 'Pos configuration',
+          identifier: 'branding',
+          name: 'Branding',
           experience: 'configuration',
           options: {
             managementExperience: 'cli',
@@ -906,12 +948,30 @@ describe('configExtensionsIdentifiersBreakdown', () => {
           },
         },
       }
+      const configActivePosConfigurationAppModule: AppModuleVersion = {
+        registrationId: 'C_B',
+        registrationUuid: 'UUID_C_B',
+        registrationTitle: 'Registration title',
+        type: 'point_of_sale',
+        config: JSON.stringify({
+          embedded: false,
+        }),
+        specification: {
+          identifier: 'point_of_sale',
+          name: 'Pos configuration',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
       const activeVersion = {
         app: {
           activeAppVersion: {
             appModuleVersions: [
               configActiveAppModule,
               configActivePosConfigurationAppModule,
+              brandingActiveAppModule,
               webhooksActiveAppModule,
               MODULE_DASHBOARD_A,
             ],
@@ -930,7 +990,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded', 'webhooks'],
+        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: ['pos'],

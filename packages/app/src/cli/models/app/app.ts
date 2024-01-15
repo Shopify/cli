@@ -25,7 +25,6 @@ export const LegacyAppSchema = zod
   .strict()
 
 export const NonVersionedAppTopSchema = zod.object({
-  name: zod.string().max(30),
   client_id: zod.string(),
   access_scopes: zod
     .object({

@@ -1,16 +1,13 @@
-import spec from './app_config_app_proxy.js'
+import spec from './app_config_branding.js'
 import {describe, expect, test} from 'vitest'
 
-describe('app_config_app_proxy', () => {
+describe('branding', () => {
   describe('transform', () => {
     test('should return the transformed object', () => {
       // Given
       const object = {
-        app_proxy: {
-          url: 'https://my-proxy-new.dev',
-          subpath: 'subpath-whatever',
-          prefix: 'apps',
-        },
+        name: 'my-app',
+        app_handle: 'my-app-handle',
       }
       const appConfigSpec = spec
 
@@ -19,9 +16,8 @@ describe('app_config_app_proxy', () => {
 
       // Then
       expect(result).toMatchObject({
-        url: 'https://my-proxy-new.dev',
-        subpath: 'subpath-whatever',
-        prefix: 'apps',
+        name: 'my-app',
+        app_handle: 'my-app-handle',
       })
     })
   })
@@ -30,9 +26,8 @@ describe('app_config_app_proxy', () => {
     test('should return the reversed transformed object', () => {
       // Given
       const object = {
-        url: 'https://my-proxy-new.dev',
-        subpath: 'subpath-whatever',
-        prefix: 'apps',
+        name: 'my-app',
+        app_handle: 'my-app-handle',
       }
       const appConfigSpec = spec
 
@@ -41,11 +36,8 @@ describe('app_config_app_proxy', () => {
 
       // Then
       expect(result).toMatchObject({
-        app_proxy: {
-          url: 'https://my-proxy-new.dev',
-          subpath: 'subpath-whatever',
-          prefix: 'apps',
-        },
+        name: 'my-app',
+        app_handle: 'my-app-handle',
       })
     })
   })

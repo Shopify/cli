@@ -1,6 +1,7 @@
 import {WebhooksConfig} from './app_config_webhook.js'
 
 export interface SpecsAppConfiguration {
+  name: string
   application_url: string
   embedded: boolean
   pos?: {
