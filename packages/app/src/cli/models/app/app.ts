@@ -1,5 +1,5 @@
 import {AppErrors, isWebType} from './loader.js'
-import {ensurePathStartsWithSlash, validateUrl} from './validation/common.js'
+import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
@@ -24,22 +24,8 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
-export const NonVersionedAppTopSchema = zod.object({
+export const AppSchema = zod.object({
   client_id: zod.string(),
-  access_scopes: zod
-    .object({
-      scopes: zod.string().optional(),
-      use_legacy_install_flow: zod.boolean().optional(),
-    })
-    .optional(),
-  auth: zod
-    .object({
-      redirect_urls: zod.array(validateUrl(zod.string())),
-    })
-    .optional(),
-})
-
-export const NonVersionedAppBottomSchema = zod.object({
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -49,18 +35,15 @@ export const NonVersionedAppBottomSchema = zod.object({
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
 })
-export const AppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.appModuleFeatures().includes('app_config')
-  const topAndConfigSpecsSchema = specs.filter(isConfigSpecification).reduce((schema, spec) => {
-    return schema.merge(spec.schema)
+  const schema = specs
+    .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  }, NonVersionedAppTopSchema as any)
-
-  const schema = topAndConfigSpecsSchema.merge(NonVersionedAppBottomSchema)
+    .reduce((schema, spec) => schema.merge(spec.schema), AppSchema as any)
 
   return specs.length > 0 ? schema.strict() : schema
 }
@@ -87,12 +70,13 @@ export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppCo
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopes(config: AppConfiguration) {
+export function getAppScopes(config: AppConfiguration): string {
   if (isLegacyAppSchema(config)) {
     return config.scopes
-  } else {
+  } else if (isCurrentAppSchema(config)) {
     return config.access_scopes?.scopes ?? ''
   }
+  return ''
 }
 
 /**
@@ -106,7 +90,8 @@ export function getAppScopesArray(config: AppConfiguration) {
 
 export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
-  return Boolean(config.access_scopes?.use_legacy_install_flow)
+  if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
+  return false
 }
 
 export function appIsLaunchable(app: AppInterface) {
@@ -276,7 +261,8 @@ export class App implements AppInterface {
       ...this.homeConfiguration(configuration),
       ...this.appProxyConfiguration(configuration),
       ...this.posConfiguration(configuration),
-      ...this.webhooksConfig(configuration),
+      ...this.webhooksConfiguration(configuration),
+      ...this.accessConfiguration(configuration),
     } as CurrentAppConfiguration & SpecsAppConfiguration
   }
 
@@ -311,9 +297,21 @@ export class App implements AppInterface {
         }
   }
 
-  private webhooksConfig(configuration: AppConfiguration) {
+  private webhooksConfiguration(configuration: AppConfiguration) {
     return {
       webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
+    }
+  }
+
+  private accessConfiguration(configuration: AppConfiguration) {
+    const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
+    const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
+    const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
+    return {
+      ...(scopes || useLegacyInstallFlow
+        ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}}
+        : {}),
+      ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
     }
   }
 }

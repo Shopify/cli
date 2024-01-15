@@ -596,15 +596,15 @@ name = "my app"
 application_url = "https://myapp.com"
 embedded = true
 
+[build]
+dev_store_url = "domain1"
+
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products"
 
 [webhooks]
 api_version = "2023-04"
-
-[build]
-dev_store_url = "domain1"
 `
       expect(content).toEqual(expectedContent)
     })

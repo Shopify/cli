@@ -95,9 +95,14 @@ describe('pushConfig', () => {
   })
 
   test('successfully calls the update mutation without scopes when legacy behavior. does not call scopes clear when upstream doesnt have scopes.', async () => {
-    const app = await mockApp({}, 'current')
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: {scopes: 'write_products', use_legacy_install_flow: true},
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
-    app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
@@ -141,9 +146,14 @@ describe('pushConfig', () => {
   })
 
   test('successfully calls the update mutation without scopes when legacy behavior. does call scopes clear when upstream has scopes.', async () => {
-    const app = await mockApp({}, 'current')
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: {scopes: 'write_products', use_legacy_install_flow: true},
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
-    app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
@@ -189,8 +199,13 @@ describe('pushConfig', () => {
   })
 
   test('successfully calls the update mutation with empty scopes', async () => {
-    const app = await mockApp({}, 'current')
-    app.configuration = {...app.configuration, access_scopes: {scopes: ''}}
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: {scopes: ''},
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
     const options: PushOptions = {
       configuration: app.configuration,
@@ -234,8 +249,13 @@ describe('pushConfig', () => {
   })
 
   test('deletes requested access scopes when scopes are omitted', async () => {
-    const app = await mockApp({}, 'current')
-    app.configuration = {...app.configuration, access_scopes: undefined}
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: undefined,
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
     const options: PushOptions = {
       configuration: app.configuration,

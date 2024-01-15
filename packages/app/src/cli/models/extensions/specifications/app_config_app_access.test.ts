@@ -9,6 +9,13 @@ describe('app_cofig_app_access', () => {
         access: {
           direct_api_offline_access: true,
         },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
       }
       const appAccessSpec = spec
 
@@ -20,6 +27,9 @@ describe('app_cofig_app_access', () => {
         access: {
           direct_api_offline_access: true,
         },
+        scopes: 'read_products,write_products',
+        use_legacy_install_flow: true,
+        redirect_url_allowlist: ['https://example.com/auth/callback'],
       })
     })
   })
@@ -31,6 +41,9 @@ describe('app_cofig_app_access', () => {
         access: {
           direct_api_offline_access: true,
         },
+        scopes: 'read_products,write_products',
+        use_legacy_install_flow: true,
+        redirect_url_allowlist: ['https://example.com/auth/callback'],
       }
       const appAccessSpec = spec
 
@@ -41,6 +54,13 @@ describe('app_cofig_app_access', () => {
       expect(result).toMatchObject({
         access: {
           direct_api_offline_access: true,
+        },
+        access_scopes: {
+          scopes: 'read_products,write_products',
+          use_legacy_install_flow: true,
+        },
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
         },
       })
     })
