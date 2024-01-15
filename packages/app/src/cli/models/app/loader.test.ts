@@ -1689,9 +1689,14 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
+    expect(app.allExtensions).toHaveLength(3)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        webhooks: {
+          api_version: '2023-07',
+        },
+      }),
       expect.objectContaining({
         pos: {
           embedded: true,

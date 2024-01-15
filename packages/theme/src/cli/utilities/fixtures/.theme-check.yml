@@ -1,0 +1,10 @@
+root: '.'
+
+ignore:
+- config/settings_data.json
+- layout/password.liquid
+- layout/theme.liquid
+- locales/en.default.json
+- sections/announcement-bar.liquid
+- snippets/language-localization.liquid
+

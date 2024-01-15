@@ -3,6 +3,8 @@ import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
   ExtensionIdentifiersBreakdown,
+  buildDashboardBreakdownInfo,
+  buildExtensionBreakdownInfo,
 } from '../services/context/breakdown-extensions.js'
 import {SpyInstance, beforeEach, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
@@ -126,7 +128,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
     test('and no force with deleted extensions should display the complete danger confirmation prompt', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
-
+      breakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildDashboardBreakdownInfo('remote dashboard'))
+      breakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildDashboardBreakdownInfo('to create dashboard'))
       const renderDangerousConfirmationPromptSpyOn = vi
         .spyOn(ui, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
@@ -165,9 +168,15 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               helperText: 'Removing extensions can permanentely delete app user data',
               items: [
                 {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                {
+                  bullet: '+',
+                  item: ['to create dashboard', {subdued: '(new, from Partner Dashboard)'}],
+                  color: 'green',
+                },
                 'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
                 {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
+                {bullet: '-', item: ['remote dashboard', {subdued: '(removed, from Partner Dashboard)'}], color: 'red'},
               ],
             },
           ],
@@ -400,10 +409,12 @@ function renderConfirmationPromptContent(options: RenderConfirmationPromptConten
 function buildCompleteBreakdownInfo() {
   const emptyBreakdownInfo = buildEmptyBreakdownInfo()
 
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push('remote extension')
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.toCreate.push('to create extension')
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.toUpdate.push('to update extension')
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.fromDashboard.push('from dashboard extension')
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildExtensionBreakdownInfo('remote extension'))
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildExtensionBreakdownInfo('to create extension'))
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.toUpdate.push(
+    buildExtensionBreakdownInfo('to update extension'),
+    buildDashboardBreakdownInfo('from dashboard extension'),
+  )
 
   emptyBreakdownInfo.configExtensionIdentifiersBreakdown!.existingFieldNames.push('existing field name1')
   emptyBreakdownInfo.configExtensionIdentifiersBreakdown!.existingUpdatedFieldNames.push('updating field name1')
@@ -428,7 +439,6 @@ function buildEmptyExtensionsBreakdownInfo(): ExtensionIdentifiersBreakdown {
     onlyRemote: [],
     toCreate: [],
     toUpdate: [],
-    fromDashboard: [],
   }
 }
 

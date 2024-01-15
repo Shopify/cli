@@ -1232,6 +1232,14 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "stable": {
+          "allowNo": false,
+          "description": "Performs the pull command by relying on the legacy download implementation.",
+          "env": "SHOPIFY_FLAG_STABLE",
+          "hidden": true,
+          "name": "stable",
+          "type": "boolean"
+        },
         "store": {
           "char": "s",
           "description": "Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).",
