@@ -178,15 +178,24 @@ export function appendFileSync(path: string, data: string): void {
   fsAppendFileSync(path, data)
 }
 
+export interface WriteOptions {
+  encoding: BufferEncoding
+}
+
 /**
  * Writes content to file at path.
  *
  * @param path - Path to the file to be written.
  * @param data - Content to be written.
+ * @param options - Options to write the file with (defaults to utf-8 encoding).
  */
-export async function writeFile(path: string, data: string): Promise<void> {
+export async function writeFile(
+  path: string,
+  data: string | Buffer,
+  options: WriteOptions = {encoding: 'utf8'},
+): Promise<void> {
   outputDebug(outputContent`Writing some content to file at ${outputToken.path(path)}...`)
-  await fsWriteFile(path, data, {encoding: 'utf8'})
+  await fsWriteFile(path, data, options)
 }
 
 /**
@@ -427,10 +436,6 @@ export async function fileExists(path: string): Promise<boolean> {
 
 export function fileExistsSync(path: string): boolean {
   return fsFileExistsSync(path)
-}
-
-interface FileOptions {
-  path: string
 }
 
 interface GenerateRandomDirectoryOptions {

@@ -1,13 +1,13 @@
 import {publish} from './publish.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {publishTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {renderSuccess, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {test, describe, expect, vi} from 'vitest'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {publishTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/themes-api')
+vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-selector.js')
 
 const session = {

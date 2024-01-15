@@ -1,8 +1,9 @@
-import {fetchTheme, createTheme} from './themes-api.js'
-import {DEVELOPMENT_THEME_ROLE, Theme} from './models/theme.js'
+import {fetchTheme, createTheme} from './api.js'
 import {generateThemeName} from '../../../private/node/themes/generate-theme-name.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
 export abstract class ThemeManager {
   protected themeId: string | undefined

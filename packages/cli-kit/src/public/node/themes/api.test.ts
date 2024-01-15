@@ -6,7 +6,8 @@ import {
   updateTheme,
   publishTheme,
   upgradeTheme,
-} from './themes-api.js'
+  fetchChecksums,
+} from './api.js'
 import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -44,6 +45,49 @@ describe('fetchThemes', () => {
 
     expect(themes[0]!.processing).toBeFalsy()
     expect(themes[1]!.processing).toBeTruthy()
+  })
+})
+
+describe('fetchChecksums', () => {
+  test('returns theme checksums', async () => {
+    // Given
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {
+        assets: [
+          {
+            key: 'snippets/product-variant-picker.liquid',
+            checksum: '29e2e56057c3b58c02bc7946d7600481',
+          },
+          {
+            key: 'templates/404.json',
+            checksum: 'f14a0bd594f4fee47b13fc09543098ff',
+          },
+          {
+            key: 'templates/article.json',
+            // May be null if an asset has not been updated recently.
+            checksum: null,
+          },
+        ],
+      },
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const id = 123
+    const checksum = await fetchChecksums(id, session)
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith('GET', `/themes/${id}/assets`, session, undefined, {
+      fields: 'key,checksum',
+    })
+    expect(checksum).toHaveLength(3)
+    expect(checksum[0]!.key).toEqual('snippets/product-variant-picker.liquid')
+    expect(checksum[1]!.key).toEqual('templates/404.json')
+    expect(checksum[2]!.key).toEqual('templates/article.json')
+    expect(checksum[0]!.checksum).toEqual('29e2e56057c3b58c02bc7946d7600481')
+    expect(checksum[1]!.checksum).toEqual('f14a0bd594f4fee47b13fc09543098ff')
+    expect(checksum[2]!.checksum).toEqual(null)
   })
 })
 
