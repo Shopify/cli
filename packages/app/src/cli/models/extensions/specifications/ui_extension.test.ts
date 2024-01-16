@@ -14,7 +14,7 @@ const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformCl
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
     directory: string
-    extensionPoints?: {target: string; module: string; label?: string}[]
+    extensionPoints?: {target: string; module: string; label?: string; default_placement_reference?: string}[]
   }
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
@@ -110,6 +110,48 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
+          default_placement_reference: undefined,
+        },
+      ])
+    })
+
+    test('targeting object accepts a default_placement_reference', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            default_placement_reference: 'PLACEMENT_REFERENCE1',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const got = specification.schema.parse(configuration)
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: 'PLACEMENT_REFERENCE1',
         },
       ])
     })
