@@ -35,7 +35,11 @@ export async function deployOrReleaseConfirmationPrompt({
   appTitle,
   release,
 }: DeployOrReleaseConfirmationPromptOptions) {
-  if (configExtensionIdentifiersBreakdown) await addConfigurationMetada(configExtensionIdentifiersBreakdown, showConfig)
+  if (configExtensionIdentifiersBreakdown) {
+    await metadata.addPublicMetadata(() =>
+      buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown, showConfig),
+    )
+  }
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
@@ -159,34 +163,29 @@ async function buildConfigContentPrompt(
   return {configInfoTable}
 }
 
-async function addConfigurationMetada(
-  breakdownInfo: ConfigExtensionIdentifiersBreakdown,
+export function buildConfigurationBreakdownMetadata(
+  {
+    existingUpdatedFieldNames,
+    newFieldNames,
+    existingFieldNames,
+    deletedFieldNames,
+  }: ConfigExtensionIdentifiersBreakdown,
   includeConfigOnDeploy: boolean,
 ) {
-  const currentConfiguration = [
-    ...breakdownInfo.existingUpdatedFieldNames,
-    ...breakdownInfo.newFieldNames,
-    ...breakdownInfo.existingFieldNames,
-  ]
-  await metadata.addPublicMetadata(() => {
-    return {
-      cmd_deploy_include_config_used: includeConfigOnDeploy,
-      ...(includeConfigOnDeploy
-        ? {
-            ...(currentConfiguration.length > 0
-              ? {cmd_deploy_config_modules_breakdown: currentConfiguration.join(',')}
-              : {}),
-            ...(breakdownInfo.existingUpdatedFieldNames.length > 0
-              ? {cmd_deploy_config_modules_updated: breakdownInfo.existingUpdatedFieldNames.join(',')}
-              : {}),
-            ...(breakdownInfo.newFieldNames.length > 0
-              ? {cmd_deploy_config_modules_new: breakdownInfo.newFieldNames.join(',')}
-              : {}),
-            ...(breakdownInfo.deletedFieldNames.length > 0
-              ? {cmd_deploy_config_modules_deleted: breakdownInfo.deletedFieldNames.join(',')}
-              : {}),
-          }
-        : {}),
-    }
-  })
+  if (!includeConfigOnDeploy) return {cmd_deploy_include_config_used: false}
+
+  const currentConfiguration = [...existingUpdatedFieldNames, ...newFieldNames, ...existingFieldNames]
+  return {
+    cmd_deploy_include_config_used: true,
+    ...(currentConfiguration.length > 0
+      ? {cmd_deploy_config_modules_breakdown: JSON.stringify(currentConfiguration.sort())}
+      : {}),
+    ...(existingUpdatedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_updated: JSON.stringify(existingUpdatedFieldNames.sort())}
+      : {}),
+    ...(newFieldNames.length > 0 ? {cmd_deploy_config_modules_added: JSON.stringify(newFieldNames.sort())} : {}),
+    ...(deletedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_deleted: JSON.stringify(deletedFieldNames.sort())}
+      : {}),
+  }
 }

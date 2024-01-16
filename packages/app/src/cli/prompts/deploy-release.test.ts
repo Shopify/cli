@@ -1,4 +1,4 @@
-import {deployOrReleaseConfirmationPrompt} from './deploy-release.js'
+import {buildConfigurationBreakdownMetadata, deployOrReleaseConfirmationPrompt} from './deploy-release.js'
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
@@ -479,35 +479,13 @@ function verifyMetada({
   configExtensionIdentifiersBreakdown: ConfigExtensionIdentifiersBreakdown
   showConfig: boolean
 }) {
-  const currentConfiguration = [
-    ...configExtensionIdentifiersBreakdown.existingUpdatedFieldNames,
-    ...configExtensionIdentifiersBreakdown.newFieldNames,
-    ...configExtensionIdentifiersBreakdown.existingFieldNames,
-  ]
+  const configurationBreakdownMetadata = buildConfigurationBreakdownMetadata(
+    configExtensionIdentifiersBreakdown,
+    showConfig,
+  )
 
   expect(metadataSpyOn).toHaveBeenNthCalledWith(1, expect.any(Function))
-  expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({
-    cmd_deploy_include_config_used: showConfig,
-    ...(showConfig
-      ? {
-          ...(currentConfiguration.length > 0
-            ? {cmd_deploy_config_modules_breakdown: currentConfiguration.join(',')}
-            : {}),
-          ...(configExtensionIdentifiersBreakdown.existingUpdatedFieldNames.length > 0
-            ? {
-                cmd_deploy_config_modules_updated:
-                  configExtensionIdentifiersBreakdown.existingUpdatedFieldNames.join(','),
-              }
-            : {}),
-          ...(configExtensionIdentifiersBreakdown.newFieldNames.length > 0
-            ? {cmd_deploy_config_modules_new: configExtensionIdentifiersBreakdown.newFieldNames.join(',')}
-            : {}),
-          ...(configExtensionIdentifiersBreakdown.deletedFieldNames.length > 0
-            ? {cmd_deploy_config_modules_deleted: configExtensionIdentifiersBreakdown.deletedFieldNames.join(',')}
-            : {}),
-        }
-      : {}),
-  })
+  expect(metadataSpyOn.mock.calls[0]![0]()).toEqual(configurationBreakdownMetadata)
 
   if (!extensionIdentifiersBreakdown) return
 

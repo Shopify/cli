@@ -110,7 +110,7 @@ export interface Schemas {
       cmd_deploy_include_config_used?: Optional<boolean>
       cmd_deploy_config_modules_breakdown?: Optional<string>
       cmd_deploy_config_modules_updated?: Optional<string>
-      cmd_deploy_config_modules_new?: Optional<string>
+      cmd_deploy_config_modules_added?: Optional<string>
       cmd_deploy_config_modules_deleted?: Optional<string>
 
       // Release related commands
