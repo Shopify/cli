@@ -255,7 +255,7 @@ describe('bundleConfig', async () => {
 
     expect(got).toEqual(
       expect.objectContaining({
-        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks/my-neat-path","topic":"orders/delete"}]}',
+        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}]}',
       }),
     )
   })

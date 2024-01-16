@@ -604,7 +604,7 @@ embedded = false
     })
   })
 
-  test('the api client configuration is deep merged with the remote app_config extension registrarions', async () => {
+  test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
@@ -702,8 +702,10 @@ redirect_urls = [ "https://example.com/callback1" ]
 
 [webhooks]
 api_version = "2023-07"
-topics = [ "products/create" ]
-uri = "https://my-app.com/webhooks"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://my-app.com/webhooks"
 
 [pos]
 embedded = true
