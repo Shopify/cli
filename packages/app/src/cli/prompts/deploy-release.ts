@@ -97,7 +97,7 @@ async function deployConfirmationPrompt({
 
   await metadata.addPublicMetadata(() => ({
     cmd_deploy_confirm_cancelled: !confirmationResponse,
-    cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
+    cmd_deploy_confirm_time_to_complete_ms: timeToConfirmOrCancelMs,
   }))
 
   return confirmationResponse
