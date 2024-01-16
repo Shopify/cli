@@ -26,6 +26,7 @@ const UIExtensionSchema = BaseSchema.extend({
         target: targeting.target,
         module: targeting.module,
         metafields: targeting.metafields ?? config.metafields ?? [],
+        editor_placement_reference: targeting.editor_placement_reference,
       }
     })
     return {...config, extension_points: extensionPoints}
