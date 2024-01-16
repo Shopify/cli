@@ -6,7 +6,8 @@ export type OffsitePaymentsAppExtensionConfigType = zod.infer<typeof OffsitePaym
 const MAX_LABEL_SIZE = 50
 
 export const OffsitePaymentsAppExtensionSchema = BaseSchema.extend({
-  target: zod.literal('payments.offsite.render'),
+  targeting: zod.array(zod.object({target: zod.literal('payments.offsite.render')})).length(1),
+  api_version: zod.string(),
   payment_session_url: zod.string().url(),
   refund_session_url: zod.string().url().optional(),
   capture_session_url: zod.string().url().optional(),
@@ -22,7 +23,6 @@ export const OffsitePaymentsAppExtensionSchema = BaseSchema.extend({
   supported_countries: zod.array(zod.string()),
   supported_payment_methods: zod.array(zod.string()),
   test_mode_available: zod.boolean(),
-  api_version: zod.string(),
   input: zod
     .object({
       metafield_identifiers: zod
@@ -46,6 +46,8 @@ export async function offsitePaymentsAppExtensionDeployConfig(
   config: OffsitePaymentsAppExtensionConfigType,
 ): Promise<{[key: string]: unknown} | undefined> {
   return {
+    target: config.targeting[0]!.target,
+    api_version: config.api_version,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
     start_capture_session_url: config.capture_session_url,
@@ -55,12 +57,10 @@ export async function offsitePaymentsAppExtensionDeployConfig(
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
     test_mode_available: config.test_mode_available,
-    target: config.target,
     default_buyer_label: config.buyer_label,
     buyer_label_to_locale: config.buyer_label_translations,
     supports_oversell_protection: config.supports_oversell_protection,
     supports_3ds: config.supports_3ds,
-    api_version: config.api_version,
     supports_deferred_payments: config.supports_deferred_payments,
     supports_installments: config.supports_installments,
   }

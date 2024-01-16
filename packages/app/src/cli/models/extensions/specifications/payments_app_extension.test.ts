@@ -33,7 +33,7 @@ describe('PaymentsAppExtension', () => {
     test_mode_available: true,
     supports_deferred_payments: false,
     supports_installments: false,
-    target: 'payments.offsite.render',
+    targeting: [{target: 'payments.offsite.render'}],
     input: {
       metafield_identifiers: {
         namespace: 'namespace',
@@ -66,9 +66,12 @@ describe('PaymentsAppExtension', () => {
       // When
       const result = await extension.deployConfig({apiKey, token})
       const extensionConfiguration = extension.configuration as OffsitePaymentsAppExtensionConfigType
+      const configTargeting = extensionConfiguration.targeting[0]!
 
       // Then
       expect(result).toEqual({
+        target: configTargeting.target,
+        api_version: extensionConfiguration.api_version,
         start_payment_session_url: extensionConfiguration.payment_session_url,
         start_refund_session_url: extensionConfiguration.refund_session_url,
         start_capture_session_url: extensionConfiguration.capture_session_url,
@@ -78,12 +81,10 @@ describe('PaymentsAppExtension', () => {
         supported_countries: extensionConfiguration.supported_countries,
         supported_payment_methods: extensionConfiguration.supported_payment_methods,
         test_mode_available: extensionConfiguration.test_mode_available,
-        target: extensionConfiguration.target,
         default_buyer_label: extensionConfiguration.buyer_label,
         buyer_label_to_locale: extensionConfiguration.buyer_label_translations,
         supports_oversell_protection: extensionConfiguration.supports_oversell_protection,
         supports_3ds: extensionConfiguration.supports_3ds,
-        api_version: extensionConfiguration.api_version,
         supports_deferred_payments: extensionConfiguration.supports_deferred_payments,
         supports_installments: extensionConfiguration.supports_installments,
       })
@@ -94,9 +95,13 @@ describe('PaymentsAppExtension', () => {
     // Given
     const allSpecs = await loadFSExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
-    const {target, ...rest} = config
 
     // When/Then
-    expect(() => specification.schema.parse(rest)).toThrowError(zod.ZodError)
+    expect(() =>
+      specification.schema.parse({
+        ...config,
+        targeting: [{target: undefined}],
+      }),
+    ).toThrowError(zod.ZodError)
   })
 })

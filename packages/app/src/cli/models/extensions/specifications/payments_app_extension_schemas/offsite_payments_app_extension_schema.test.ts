@@ -22,16 +22,16 @@ const config: OffsitePaymentsAppExtensionConfigType = {
   test_mode_available: true,
   supports_deferred_payments: false,
   supports_installments: false,
-  target: 'payments.offsite.render',
+  targeting: [{target: 'payments.offsite.render'}],
+  api_version: '2022-07',
+  description: 'my payments app extension',
+  metafields: [],
   input: {
     metafield_identifiers: {
       namespace: 'namespace',
       key: 'key',
     },
   },
-  api_version: '2022-07',
-  description: 'my payments app extension',
-  metafields: [],
 }
 
 describe('OffsitePaymentsAppExtensionSchema', () => {
@@ -45,13 +45,18 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
 
   test('returns an error if no target is provided', async () => {
     // When/Then
-    expect(() => OffsitePaymentsAppExtensionSchema.parse({...config, target: null})).toThrowError(
+    expect(() =>
+      OffsitePaymentsAppExtensionSchema.parse({
+        ...config,
+        targeting: [{...config.targeting[0]!, target: null}],
+      }),
+    ).toThrowError(
       new zod.ZodError([
         {
           received: null,
           code: zod.ZodIssueCode.invalid_literal,
           expected: 'payments.offsite.render',
-          path: ['target'],
+          path: ['targeting', 0, 'target'],
           message: 'Invalid literal value, expected "payments.offsite.render"',
         },
       ]),
@@ -59,13 +64,12 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
   })
 
   test('returns an error if no confirmation_callback_url is provided with supports oversell protection', async () => {
-    const {confirmation_callback_url: _unused, ...invalidConfig} = config
-
     // When/Then
     expect(() =>
       OffsitePaymentsAppExtensionSchema.parse({
-        ...invalidConfig,
+        ...config,
         supports_oversell_protection: true,
+        confirmation_callback_url: undefined,
       }),
     ).toThrowError(
       new zod.ZodError([
@@ -125,6 +129,7 @@ describe('offsitePaymentsAppExtensionDeployConfig', () => {
 
     // Then
     expect(result).toMatchObject({
+      api_version: config.api_version,
       start_payment_session_url: config.payment_session_url,
       start_refund_session_url: config.refund_session_url,
       start_capture_session_url: config.capture_session_url,
@@ -134,12 +139,11 @@ describe('offsitePaymentsAppExtensionDeployConfig', () => {
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
       test_mode_available: config.test_mode_available,
-      target: config.target,
+      target: config.targeting[0]!.target,
       default_buyer_label: config.buyer_label,
       buyer_label_to_locale: config.buyer_label_translations,
       supports_oversell_protection: config.supports_oversell_protection,
       supports_3ds: config.supports_3ds,
-      api_version: config.api_version,
       supports_deferred_payments: config.supports_deferred_payments,
       supports_installments: config.supports_installments,
     })
