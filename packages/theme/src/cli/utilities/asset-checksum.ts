@@ -7,6 +7,8 @@ export async function checksum(root: string, path: string) {
 
   if (!content) return ''
 
+  if (Buffer.isBuffer(content)) return md5(content)
+
   if (isTextFile(path)) content = content.replace(/\r\n/g, '\n')
 
   if (isJson(path)) {
@@ -49,8 +51,8 @@ export function normalizeJson(jsonStr: string) {
   return formattedStr
 }
 
-function md5(content: string) {
-  const buffer = Buffer.from(content)
+function md5(content: string | Buffer) {
+  const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content)
 
   return fileHash(buffer)
 }
@@ -70,14 +72,24 @@ function md5(content: string) {
  * This function filters out the generated files (like 'assets/basic.css'),
  * as these are not needed for theme comparison.
  */
-export function rejectLiquidChecksums(themeChecksums: Checksum[]) {
+export function rejectGeneratedStaticAssets(themeChecksums: Checksum[]) {
   return themeChecksums.filter(({key}) => {
     const isStaticAsset = key.startsWith('assets/')
 
     if (isStaticAsset) {
-      return !themeChecksums.some((checksum) => checksum.key === `${key}.liquid`)
+      return !hasLiquidSource(themeChecksums, key)
     }
 
     return true
   })
+}
+
+/**
+ * Checks if a given key has a corresponding liquid source in the provided checksums.
+ * @param checksums - The array of checksums to search through.
+ * @param key - The key to check for a liquid source.
+ * @returns True if a liquid source exists for the given key, false otherwise.
+ */
+function hasLiquidSource(checksums: Checksum[], key: string) {
+  return checksums.some((checksum) => checksum.key === `${key}.liquid`)
 }

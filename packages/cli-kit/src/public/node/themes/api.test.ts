@@ -11,6 +11,7 @@ import {
   AssetParams,
   deleteThemeAsset,
 } from './api.js'
+import {RemoteBulkUploadResponse} from './factories.js'
 import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -322,40 +323,25 @@ describe('bulkUploadThemeAssets', async () => {
     const id = 123
     const assets: AssetParams[] = [
       {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-      {key: 'templates/404.json', value: 'content'},
+      {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
     ]
 
-    const mockResults = [
+    const mockResults: RemoteBulkUploadResponse[] = [
       {
         code: 200,
         body: {
           asset: {
             key: 'assets/test.liquid',
-            public_url: 'https://cdn.shopify.com/dummy_url',
-            created_at: '2024-01-24T16:26:13-08:00',
-            updated_at: '2024-01-24T16:26:13-08:00',
-            content_type: 'application/x-liquid',
-            size: 20,
             checksum: '3f26c8569292ce6f1cc991c5fa7d3fcb',
-            theme_id: 139503010036,
-            warnings: [],
+            attachment: '',
+            value: '',
           },
         },
       },
       {
-        code: 200,
+        code: 400,
         body: {
-          asset: {
-            key: 'config/settings_data.json',
-            public_url: null,
-            created_at: '2024-01-24T16:18:30-08:00',
-            updated_at: '2024-01-24T16:26:14-08:00',
-            content_type: 'application/json',
-            size: 19,
-            checksum: '336e955222ddd34b61d0f11940208640',
-            theme_id: 139503010036,
-            warnings: [],
-          },
+          errors: {asset: ['expected Hash to be a String']},
         },
       },
     ]
@@ -377,27 +363,30 @@ describe('bulkUploadThemeAssets', async () => {
       {
         assets: [
           {key: 'snippets/product-variant-picker.liquid', value: 'content'},
-          {key: 'templates/404.json', value: 'content'},
+          {key: 'templates/404.json', value: 'to_be_replaced_with_hash'},
         ],
       },
       {},
     )
     expect(bulkUploadresults).toHaveLength(2)
     expect(bulkUploadresults[0]).toEqual({
-      key: 'assets/test.liquid',
+      key: 'snippets/product-variant-picker.liquid',
       success: true,
-      errors: [],
+      errors: {},
+      operation: 'UPLOAD',
       asset: {
+        attachment: '',
         key: 'assets/test.liquid',
-        public_url: 'https://cdn.shopify.com/dummy_url',
-        created_at: '2024-01-24T16:26:13-08:00',
-        updated_at: '2024-01-24T16:26:13-08:00',
-        content_type: 'application/x-liquid',
-        size: 20,
         checksum: '3f26c8569292ce6f1cc991c5fa7d3fcb',
-        theme_id: 139503010036,
-        warnings: [],
+        value: '',
       },
+    })
+    expect(bulkUploadresults[1]).toEqual({
+      key: 'templates/404.json',
+      operation: 'UPLOAD',
+      success: false,
+      errors: {asset: ['expected Hash to be a String']},
+      asset: undefined,
     })
   })
 })
