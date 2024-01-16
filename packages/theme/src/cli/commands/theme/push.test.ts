@@ -4,7 +4,7 @@ import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {describe, vi, expect, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 
@@ -14,22 +14,20 @@ vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/session')
 
 describe('Push', () => {
-  describe('run', () => {
-    const adminSession = {token: '', storeFqdn: ''}
-    const path = '/my-theme'
+  const adminSession = {token: '', storeFqdn: ''}
+  const path = '/my-theme'
 
+  describe('run with CLI 3 implementation', () => {
+    test('should pass call the CLI 3 command', async () => {
+      await runPushCommand([], path, adminSession)
+
+      expect(execCLI2).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('run with CLI 2 implementation', () => {
     async function run(argv: string[], theme?: Theme) {
-      vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
-      if (theme) {
-        vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
-      }
-      vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
-
-      const config = {} as Config
-      const push = new Push([`--path=${path}`, ...argv], config)
-
-      await push.run()
+      await runPushCommand(['--stable', ...argv], path, adminSession, theme)
     }
 
     function expectCLI2ToHaveBeenCalledWith(command: string) {
@@ -73,4 +71,18 @@ describe('Push', () => {
       expectCLI2ToHaveBeenCalledWith(`theme push ${path} --theme ${theme.id} --development-theme-id ${theme.id}`)
     })
   })
+
+  async function runPushCommand(argv: string[], path: string, adminSession: AdminSession, theme?: Theme) {
+    vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+    if (theme) {
+      vi.spyOn(DevelopmentThemeManager.prototype, 'findOrCreate').mockResolvedValue(theme)
+    }
+    vi.spyOn(DevelopmentThemeManager.prototype, 'fetch').mockResolvedValue(theme)
+
+    const config = {} as Config
+    const push = new Push([`--path=${path}`, ...argv], config)
+
+    await push.run()
+  }
 })

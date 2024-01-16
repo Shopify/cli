@@ -91,7 +91,6 @@ export default class Push extends ThemeCommand {
     'json',
     'allow-live',
     'publish',
-    'stable',
     'force',
     'development-theme-id',
   ]
@@ -100,6 +99,10 @@ export default class Push extends ThemeCommand {
     const {flags} = await this.parse(Push)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+
+    if (!flags.stable) {
+      return
+    }
 
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
     const theme = await (flags.development ? developmentThemeManager.findOrCreate() : developmentThemeManager.fetch())
