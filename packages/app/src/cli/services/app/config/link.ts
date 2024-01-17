@@ -39,28 +39,29 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const {token, remoteApp, directory} = await selectRemoteApp(options)
-  const betas = await fetchAppRemoteBetaFlags(remoteApp.apiKey, token)
   const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
-  const remoteAppConfigurationFromApiClient = mergeAppConfiguration(
+  let configuration = mergeAppConfiguration(
     {...localApp.configuration, path: configFilePath},
     remoteApp,
-    betas.includes(BetaFlag.VersionedAppConfig),
+    localApp.useVersionedAppConfig,
   )
-  const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
-    token,
-    remoteApp,
-    localApp,
-  )
-  const configuration = deepMergeObjects(remoteAppConfigurationFromApiClient, remoteAppConfigurationFromExtensions)
+  if (localApp.useVersionedAppConfig) {
+    const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
+      token,
+      remoteApp,
+      localApp,
+    )
+    configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions)
+  }
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
-    renderSuccessMessage(configFileName, remoteApp, localApp, !isEmpty(remoteAppConfigurationFromExtensions))
+    renderSuccessMessage(configFileName, remoteApp, localApp, localApp.useVersionedAppConfig)
   }
 
   return configuration
@@ -85,7 +86,8 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
     config: options.commandConfig,
   })
 
-  const localApp = await loadAppOrEmptyApp(options, specifications)
+  const betas = await fetchAppRemoteBetaFlags(remoteApp.apiKey, token)
+  const localApp = await loadAppOrEmptyApp(options, specifications, betas)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
@@ -98,6 +100,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
 async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
+  remoteBetas?: BetaFlag[],
 ): Promise<AppInterface> {
   try {
     const app = await loadApp({
@@ -105,11 +108,12 @@ async function loadAppOrEmptyApp(
       directory: options.directory,
       mode: 'report',
       configName: options.baseConfigName,
+      remoteBetas,
     })
     return app
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadFSExtensionsSpecifications())
+    return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas)
   }
 }
 
@@ -270,7 +274,7 @@ function addLocalAppConfig(
   if (isCurrentAppSchema(localAppConfig)) {
     delete localAppConfig.auth
     const build = {
-      ...(useVersionedAppConfig ? {include_config_on_deploy: true} : {}),
+      ...(useVersionedAppConfig && remoteApp.newApp ? {include_config_on_deploy: true} : {}),
       ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
     }
     if (isEmpty(build)) {

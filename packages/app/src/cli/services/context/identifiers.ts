@@ -1,6 +1,6 @@
 import {deployConfirmed} from './identifiers-extensions.js'
 import {configExtensionsIdentifiersBreakdown, extensionsIdentifiersDeployBreakdown} from './breakdown-extensions.js'
-import {AppInterface, includeConfigOnDeploy} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
@@ -17,7 +17,6 @@ export interface EnsureDeploymentIdsPresenceOptions {
   force: boolean
   release: boolean
   partnersApp?: PartnersAppForIdentifierMatching
-  useVersionedAppConfig?: boolean
 }
 
 export interface RemoteSource {
@@ -52,7 +51,6 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     appTitle: options.partnersApp?.title,
     release: options.release,
     force: options.force,
-    showConfig: includeConfigOnDeploy(options.app.configuration) && options.useVersionedAppConfig,
   })
   if (!confirmed) throw new AbortSilentError()
 

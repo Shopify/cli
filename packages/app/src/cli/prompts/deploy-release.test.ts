@@ -231,9 +231,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       expect(result).toBe(true)
     })
 
-    test('and no force with modified and deleted configuration but versioned app not enabled then the config information should not be displayed', async () => {
+    test('and the configuration extension breakdown is undefined then the config information should not be displayed', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
+      breakdownInfo.configExtensionIdentifiersBreakdown = undefined
 
       const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})

@@ -3,10 +3,8 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {BetaFlag} from './app/select-app.js'
-import {AppInterface, includeConfigOnDeploy} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -95,14 +93,8 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const filterConfigurationAppModules = (extension: ExtensionInstance) =>
-              (includeConfigOnDeploy(app.configuration) && remoteAppBetaFlags.includes(BetaFlag.VersionedAppConfig)) ||
-              !extension.isAppConfigExtension
-
             const appModules = await Promise.all(
-              app.allExtensions
-                .filter(filterConfigurationAppModules)
-                .flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
+              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({

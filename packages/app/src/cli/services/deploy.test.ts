@@ -21,6 +21,7 @@ import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 const versionTag = 'unique-version-tag'
 
@@ -304,6 +305,7 @@ describe('deploy', () => {
       configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
     }
     const app = testApp(localApp)
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When

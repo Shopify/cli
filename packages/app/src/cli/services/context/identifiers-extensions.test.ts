@@ -16,9 +16,11 @@ import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/m
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
+import {BetaFlag} from '../app/select-app.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 const REGISTRATION_A = {
   uuid: 'UUID_A',
@@ -71,6 +73,7 @@ const LOCAL_APP = (
   uiExtensions: ExtensionInstance[],
   functionExtensions: ExtensionInstance[] = [],
   includeDeployConfig = false,
+  configExtensions: ExtensionInstance[] = [],
 ): AppInterface => {
   return testApp({
     name: 'my-app',
@@ -81,7 +84,7 @@ const LOCAL_APP = (
       extension_directories: ['extensions/*'],
       ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),
     },
-    allExtensions: [...uiExtensions, ...functionExtensions],
+    allExtensions: [...uiExtensions, ...functionExtensions, ...configExtensions],
   })
 }
 
@@ -93,9 +96,11 @@ const options = (
   release = true,
   includeDeployConfig = false,
   useVersionedAppConfig = false,
+  configExtensions: ExtensionInstance[] = [],
+  betas = [BetaFlag.VersionedAppConfig],
 ) => {
-  return {
-    app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig),
+  const localApp = {
+    app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
     token: 'token',
     appId: 'appId',
     appName: 'appName',
@@ -105,6 +110,8 @@ const options = (
     release,
     useVersionedAppConfig,
   }
+  setPathValue(localApp.app, 'remoteBetaFlags', betas)
+  return localApp
 }
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -666,7 +673,7 @@ describe('excludes non uuid managed extensions', () => {
     // When
     const ensureExtensionsIdsOptions = options([EXTENSION_A])
     const CONFIG_A = await testAppConfigExtensions()
-    ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
+    ensureExtensionsIdsOptions.app.addExtensions([CONFIG_A])
     await ensureExtensionsIds(ensureExtensionsIdsOptions, {
       extensionRegistrations: [REGISTRATION_A],
       dashboardManagedExtensionRegistrations: [],
@@ -750,9 +757,8 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     }
 
     // When
-    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, true)
     const CONFIG_A = await testAppConfigExtensions()
-    ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, true, [CONFIG_A])
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
       extensionsToCreate,
       validMatches,
@@ -779,9 +785,9 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     vi.mocked(createExtension).mockResolvedValueOnce(REGISTRATION_CONFIG_A)
 
     // When
-    const ensureExtensionsIdsOptions = options([])
+
     const CONFIG_A = await testAppConfigExtensions()
-    ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, false, [CONFIG_A])
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
       extensionsToCreate,
       validMatches,
@@ -791,8 +797,8 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     expect(createExtension).not.toHaveBeenCalled()
     expect(got).toEqual({
       extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
+      extensionIds: {'point-of-sale': 'C_A'},
+      extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
     })
   })
 })
@@ -809,9 +815,9 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
     }
 
     // When
-    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, true)
     const CONFIG_A = await testAppConfigExtensions()
-    ensureExtensionsIdsOptions.app.allExtensions.push(CONFIG_A)
+
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, true, [CONFIG_A])
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
       extensionsToCreate,
       validMatches,

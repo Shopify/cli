@@ -101,13 +101,9 @@ describe('setup-dev-processes', () => {
     })
 
     const previewable = await testUIExtension({type: 'checkout_ui_extension'})
-    localApp.allExtensions.push(previewable)
-
     const draftable = await testTaxCalculationExtension()
-    localApp.allExtensions.push(draftable)
-
     const theme = await testThemeExtensions()
-    localApp.allExtensions.push(theme)
+    localApp.addExtensions([previewable, draftable, theme])
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',

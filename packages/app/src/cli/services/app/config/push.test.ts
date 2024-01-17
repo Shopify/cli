@@ -539,9 +539,11 @@ async function mockApp(
   const localApp = testApp(app, schemaType)
   localApp.configSchema = versionSchema.schema
   localApp.specifications = versionSchema.configSpecifications
-  localApp.allExtensions = await createConfigExtensionInstances(
-    localApp.configuration as CurrentAppConfiguration,
-    versionSchema.configSpecifications,
+  localApp.addExtensions(
+    await createConfigExtensionInstances(
+      localApp.configuration as CurrentAppConfiguration,
+      versionSchema.configSpecifications,
+    ),
   )
   return localApp
 }
