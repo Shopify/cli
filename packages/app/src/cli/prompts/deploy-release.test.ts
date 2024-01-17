@@ -6,15 +6,10 @@ import {
   buildDashboardBreakdownInfo,
   buildExtensionBreakdownInfo,
 } from '../services/context/breakdown-extensions.js'
-import {SpyInstance, beforeEach, describe, expect, test, vi} from 'vitest'
+import {SpyInstance, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/context/local')
-
-beforeEach(() => {
-  vi.mocked(useVersionedAppConfig).mockReturnValue(true)
-})
 
 describe('deployOrReleaseConfirmationPrompt', () => {
   describe('when release', () => {
@@ -243,13 +238,13 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = undefined
-      vi.mocked(useVersionedAppConfig).mockReturnValue(false)
 
       // When
       const result = await deployOrReleaseConfirmationPrompt({
         ...breakdownInfo,
         release: true,
         force: false,
+        showConfig: false,
       })
 
       // Then

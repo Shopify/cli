@@ -7,6 +7,7 @@ import {describe, expect, test} from 'vitest'
 
 const FULL_CONFIGURATION = {
   build: {
+    include_config_on_deploy: true,
     automatically_update_urls_on_dev: true,
     dev_store_url: 'example.myshopify.com',
   },
@@ -55,6 +56,7 @@ embedded = true
 [build]
 automatically_update_urls_on_dev = true
 dev_store_url = "example.myshopify.com"
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

@@ -6,9 +6,9 @@ import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
+import {AppInterface, includeConfigOnDeploy} from '../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 interface AppWithExtensions {
@@ -92,7 +92,7 @@ export async function deployConfirmed(
 ) {
   const {extensionsNonUuidManaged, extensionsIdsNonUuidManaged} = await ensureNonUuidManagedExtensionsIds(
     configurationRegistrations,
-    options.app.allExtensions.filter((ext) => !ext.isUuidManaged()),
+    options.app,
     options.appId,
   )
 
@@ -120,11 +120,12 @@ export async function deployConfirmed(
 
 async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
-  localExtensionRegistrations: LocalSource[],
+  app: AppInterface,
   appId: string,
 ) {
-  if (!useVersionedAppConfig()) return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
+  if (!includeConfigOnDeploy(app.configuration)) return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
 
+  const localExtensionRegistrations = app.allExtensions.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}

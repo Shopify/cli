@@ -5,7 +5,6 @@ import {
   ExtensionIdentifierBreakdownInfo,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {InfoTableSection, renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOrReleaseConfirmationPromptOptions {
@@ -14,6 +13,7 @@ export interface DeployOrReleaseConfirmationPromptOptions {
   appTitle?: string
   release: boolean
   force: boolean
+  showConfig?: boolean
 }
 
 export interface DeployConfirmationPromptOptions {
@@ -26,6 +26,7 @@ export interface DeployConfirmationPromptOptions {
     configInfoTable: InfoTableSection
   }
   release: boolean
+  showConfig: boolean
 }
 
 export async function deployOrReleaseConfirmationPrompt({
@@ -34,6 +35,7 @@ export async function deployOrReleaseConfirmationPrompt({
   configExtensionIdentifiersBreakdown,
   appTitle,
   release,
+  showConfig = true,
 }: DeployOrReleaseConfirmationPromptOptions) {
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
@@ -44,6 +46,7 @@ export async function deployOrReleaseConfirmationPrompt({
     extensionsContentPrompt,
     configContentPrompt,
     release,
+    showConfig,
   })
 }
 
@@ -52,12 +55,13 @@ async function deployConfirmationPrompt({
   extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
   configContentPrompt: {configInfoTable},
   release,
+  showConfig,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
 
   const infoTable = []
-  if ((extensionsInfoTable || configInfoTable.items.length > 0) && useVersionedAppConfig()) {
+  if ((extensionsInfoTable || configInfoTable.items.length > 0) && showConfig) {
     infoTable.push(
       configInfoTable.items.length === 0
         ? {...configInfoTable, emptyItemsText: 'No changes', items: []}
