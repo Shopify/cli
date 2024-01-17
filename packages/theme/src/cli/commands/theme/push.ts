@@ -2,10 +2,12 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 
 export default class Push extends ThemeCommand {
   static description =
@@ -96,6 +98,7 @@ export default class Push extends ThemeCommand {
   ]
 
   async run(): Promise<void> {
+    showEmbeddedCLIWarning()
     const {flags} = await this.parse(Push)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
@@ -111,7 +114,9 @@ export default class Push extends ThemeCommand {
         flags.theme = `${theme.id}`
         flags.development = false
       }
-      flags['development-theme-id'] = theme.id
+      if (useEmbeddedThemeCLI()) {
+        flags['development-theme-id'] = developmentTheme.id
+      }
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})
