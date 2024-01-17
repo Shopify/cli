@@ -32,6 +32,24 @@ describe('Push', () => {
       expect(execCLI2).not.toHaveBeenCalled()
       expect(push).toHaveBeenCalled()
     })
+
+    test('should pass theme selection flags to FindOrSelectTheme', async () => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      await runPushCommand(['--live', '--development', '--unpublished', '-t', '1'], path, adminSession)
+
+      expect(findOrSelectTheme).toHaveBeenCalledWith(adminSession, {
+        header: 'Select a theme to open',
+        filter: {
+          live: true,
+          unpublished: true,
+          development: true,
+          theme: '1',
+        },
+      })
+    })
   })
 
   describe('run with CLI 2 implementation', () => {

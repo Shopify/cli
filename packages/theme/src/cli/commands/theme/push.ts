@@ -112,13 +112,15 @@ export default class Push extends ThemeCommand {
       : developmentThemeManager.fetch())
 
     if (!flags.stable) {
-      const {live, development} = flags
+      const {live, development, unpublished} = flags
 
       const theme = await findOrSelectTheme(adminSession, {
         header: 'Select a theme to open',
         filter: {
           live,
-          theme: development ? `${developmentTheme?.id}` : flags.theme,
+          development,
+          unpublished,
+          theme: flags.theme,
         },
       })
 
