@@ -7,7 +7,7 @@ describe('branding', () => {
       // Given
       const object = {
         name: 'my-app',
-        app_handle: 'my-app-handle',
+        handle: 'my-app-handle',
       }
       const appConfigSpec = spec
 
@@ -37,7 +37,7 @@ describe('branding', () => {
       // Then
       expect(result).toMatchObject({
         name: 'my-app',
-        app_handle: 'my-app-handle',
+        handle: 'my-app-handle',
       })
     })
   })
