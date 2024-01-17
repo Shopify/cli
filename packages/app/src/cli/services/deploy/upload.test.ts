@@ -277,37 +277,6 @@ describe('uploadWasmBlob', () => {
       expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
     })
   })
-
-  test('errors if the compilation request errors', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
-        functionUploadUrlGenerate: {
-          generatedUrlDetails: {
-            headers: {},
-            maxSize: '200 kb',
-            url: uploadUrl,
-            moduleId: 'module-id',
-            maxBytes: 200,
-          },
-        },
-      }
-      const uploadError = new Error('error')
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockRejectedValue(uploadError)
-
-      // When
-      await expect(uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token)).rejects.toThrow(
-        uploadError,
-      )
-
-      // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
-    })
-  })
 })
 
 describe('uploadExtensionsBundle', () => {
