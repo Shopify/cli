@@ -3,11 +3,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 const BrandingSchema = zod.object({
   name: zod.string().max(30),
-  handle: zod
-    .string()
-    .max(256)
-    .refine((value) => value && /^\w*(?!-)[a-z0-9-]+(?<!-)$/.test(value))
-    .optional(),
+  handle: zod.string().optional(),
 })
 
 const BrandingTransformConfig: TransformationConfig = {
