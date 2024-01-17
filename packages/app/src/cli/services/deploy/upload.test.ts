@@ -65,6 +65,44 @@ describe('uploadWasmBlob', () => {
     }
   })
 
+  test('returns the url and moduleId successfully', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
+      const url = 'url'
+      const moduleId = '1698984f-7848-4b9a-9c07-4c0bce7e68e1'
+      const uploadURLResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            url,
+            moduleId,
+            headers: {},
+            maxSize: '256 KB',
+            maxBytes: 200,
+          },
+        },
+      }
+      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
+
+      const mockedFetch = vi.fn().mockResolvedValueOnce({
+        status: 200,
+      })
+      vi.mocked(fetch).mockImplementation(mockedFetch)
+
+      // When
+      await expect(
+        uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token),
+      ).resolves.toStrictEqual({
+        url,
+        moduleId,
+      })
+
+      // Then
+      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
+    })
+  })
+
   test('throws an error if the request to return the url errors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
