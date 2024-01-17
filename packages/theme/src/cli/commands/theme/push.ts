@@ -2,6 +2,8 @@ import {themeFlags} from '../../flags.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {push} from '../../services/push.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -99,19 +101,35 @@ export default class Push extends ThemeCommand {
 
   async run(): Promise<void> {
     showEmbeddedCLIWarning()
+
     const {flags} = await this.parse(Push)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
+    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
+    const developmentTheme = await (flags.development
+      ? developmentThemeManager.findOrCreate()
+      : developmentThemeManager.fetch())
+
     if (!flags.stable) {
+      const {live, development} = flags
+
+      const theme = await findOrSelectTheme(adminSession, {
+        header: 'Select a theme to open',
+        filter: {
+          live,
+          theme: development ? `${developmentTheme?.id}` : flags.theme,
+        },
+      })
+
+      await push(theme, adminSession, {})
+
       return
     }
 
-    const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-    const theme = await (flags.development ? developmentThemeManager.findOrCreate() : developmentThemeManager.fetch())
-    if (theme) {
+    if (developmentTheme) {
       if (flags.development) {
-        flags.theme = `${theme.id}`
+        flags.theme = `${developmentTheme.id}`
         flags.development = false
       }
       if (useEmbeddedThemeCLI()) {

@@ -1,6 +1,8 @@
 import Push from './push.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {push} from '../../services/push.js'
 import {describe, vi, expect, test} from 'vitest'
 import {Config} from '@oclif/core'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -8,8 +10,10 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 
+vi.mock('../../services/push.js')
 vi.mock('../../utilities/development-theme-manager.js')
 vi.mock('../../utilities/theme-store.js')
+vi.mock('../../utilities/theme-selector.js')
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/session')
 
@@ -19,9 +23,14 @@ describe('Push', () => {
 
   describe('run with CLI 3 implementation', () => {
     test('should pass call the CLI 3 command', async () => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
       await runPushCommand([], path, adminSession)
 
       expect(execCLI2).not.toHaveBeenCalled()
+      expect(push).toHaveBeenCalled()
     })
   })
 
