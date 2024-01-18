@@ -1,6 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
+import {uploadWasmBlob, uploadExtensionsBundle} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {
@@ -554,7 +554,6 @@ async function testDeployBundle({
   })
 
   vi.mocked(useThemebundling).mockReturnValue(true)
-  vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],
     versionTag,
