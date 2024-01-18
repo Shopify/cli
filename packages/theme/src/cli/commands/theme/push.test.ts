@@ -50,6 +50,16 @@ describe('Push', () => {
         },
       })
     })
+
+    test('should call create with an unpublished role if unpublished flag is provided', async () => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      await runPushCommand(['--unpublished'], path, adminSession)
+
+      expect(DevelopmentThemeManager.prototype.create).toHaveBeenCalledWith('unpublished')
+    })
   })
 
   describe('run with CLI 2 implementation', () => {

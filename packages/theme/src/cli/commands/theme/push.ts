@@ -105,9 +105,9 @@ export default class Push extends ThemeCommand {
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-    const developmentTheme = await (flags.development
-      ? developmentThemeManager.findOrCreate()
-      : developmentThemeManager.fetch())
+    const targetTheme = flags.unpublished
+      ? await developmentThemeManager.create('unpublished')
+      : await (flags.development ? developmentThemeManager.findOrCreate() : developmentThemeManager.fetch())
 
     if (flags.stable) {
       showEmbeddedCLIWarning()
@@ -118,8 +118,8 @@ export default class Push extends ThemeCommand {
         header: 'Select a theme to open',
         filter: {
           live,
-          development,
           unpublished,
+          development,
           theme: flags.theme,
         },
       })
@@ -129,13 +129,13 @@ export default class Push extends ThemeCommand {
       return
     }
 
-    if (developmentTheme) {
+    if (targetTheme) {
       if (flags.development) {
-        flags.theme = `${developmentTheme.id}`
+        flags.theme = `${targetTheme.id}`
         flags.development = false
       }
       if (useEmbeddedThemeCLI()) {
-        flags['development-theme-id'] = developmentTheme.id
+        flags['development-theme-id'] = targetTheme.id
       }
     }
 
