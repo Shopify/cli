@@ -25,6 +25,7 @@ import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -314,19 +315,11 @@ export function developerPreviewController(apiKey: string, originalToken: string
 
   const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
     try {
-      const result = await fn(currentToken)
+      const result = await performActionWithRetryAfterRecovery(async () => fn(currentToken), refreshToken)
       return result
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_err) {
-      try {
-        await refreshToken()
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (_err) {
-        outputDebug('Failed to refresh token')
-        // Swallow the error, this isn't important enough to crash the process
-      }
-      return fn(currentToken)
-      // If it fails after refresh, let it crash the process
+    } catch (err) {
+      outputDebug('Failed to refresh token')
+      throw err
     }
   }
 
