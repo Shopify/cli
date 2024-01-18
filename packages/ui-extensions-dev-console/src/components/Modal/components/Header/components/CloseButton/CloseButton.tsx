@@ -1,6 +1,6 @@
 import en from './translations/en.json'
 import React from 'react'
-import {MobileCancelMajor} from '@shopify/polaris-icons'
+import {XIcon} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 import {IconButton} from '@/components/IconButton/IconButton'
 
@@ -17,7 +17,7 @@ export function CloseButton({pressed, onClick}: CloseButtonProps) {
 
   return (
     <IconButton
-      source={MobileCancelMajor}
+      source={XIcon}
       type="button"
       onClick={onClick}
       selected={pressed}

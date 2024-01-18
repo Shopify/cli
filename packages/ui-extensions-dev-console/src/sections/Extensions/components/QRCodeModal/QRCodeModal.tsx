@@ -7,7 +7,7 @@ import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {toast} from 'react-toastify'
 import {Surface} from '@shopify/ui-extensions-server-kit'
-import {ClipboardMinor} from '@shopify/polaris-icons'
+import {ClipboardIcon} from '@shopify/polaris-icons'
 import {Modal, ModalProps} from '@/components/Modal'
 import {IconButton} from '@/components/IconButton'
 
@@ -87,7 +87,7 @@ export function QRCodeContent({url, type}: Code) {
           {i18n.translate('right.two')}{' '}
           <IconButton
             type="button"
-            source={ClipboardMinor}
+            source={ClipboardIcon}
             accessibilityLabel={i18n.translate('qrcode.copy')}
             onClick={onButtonClick}
           />

@@ -2,7 +2,7 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'
-import {CircleAlertMajor, CircleDisabledMajor, LinkMinor} from '@shopify/polaris-icons'
+import {AlertCircleIcon, DisabledIcon, LinkIcon} from '@shopify/polaris-icons'
 
 const controlKey = platformAndArch().platform === 'darwin' ? 'MAC_COMMAND_KEY' : 'Ctrl'
 
@@ -68,7 +68,7 @@ export function graphiqlTemplate({
   <head>
     <title>GraphiQL</title>
     <link rel="shortcut icon" href="{{url}}/graphiql/favicon.ico" type="image/x-icon" />
-    <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.1.1/build/esm/styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@12.10.0/build/esm/styles.css" />
     <style>
       body {
         height: 100%;
@@ -192,13 +192,13 @@ export function graphiqlTemplate({
                         </div>
                         <div className="status-badge-option with-shrunk-icon" id="status-badge-unauthorized">
                           <span className="top-bar-section-title">Status: </span>
-                          <Badge tone="attention" icon={CircleAlertMajor}>
+                          <Badge tone="attention" icon={AlertCircleIcon}>
                             App uninstalled
                           </Badge>
                         </div>
                         <div className="status-badge-option with-shrunk-icon" id="status-badge-disconnected">
                           <span className="top-bar-section-title">Status: </span>
-                          <Badge tone="critical" icon={CircleDisabledMajor}>
+                          <Badge tone="critical" icon={DisabledIcon}>
                             Disconnected
                           </Badge>
                         </div>
@@ -225,7 +225,7 @@ export function graphiqlTemplate({
                   </Grid.Cell>
                 </Grid>
                 <div id="top-error-bar">
-                  <Banner tone="critical" onDismiss={() => {}} icon={CircleDisabledMajor}>
+                  <Banner tone="critical" onDismiss={() => {}} icon={DisabledIcon}>
                     <p>
                       The server has been stopped. Restart <code>dev</code> from the CLI.
                     </p>
@@ -348,11 +348,11 @@ function linkPills({storeFqdn, appName, appUrl}: LinkPillOptions) {
     <div id="outbound-links" className="top-bar-section with-shrunk-icon">
       <span className="top-bar-section-title">Store: </span>
       <Link url={`https://${storeFqdn}/admin`} target="_blank">
-        <Badge tone="info" icon={LinkMinor} children={storeFqdn} />
+        <Badge tone="info" icon={LinkIcon} children={storeFqdn} />
       </Link>
       <span className="top-bar-section-title">App: </span>
       <Link url={appUrl} target="_blank">
-        <Badge tone="info" icon={LinkMinor} children={appName} />
+        <Badge tone="info" icon={LinkIcon} children={appName} />
       </Link>
     </div>
   )

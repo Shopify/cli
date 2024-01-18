@@ -3,7 +3,7 @@ import en from './translations/en.json'
 import {useNavigate} from '../../hooks/useNavigate.js'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {ClipboardMinor} from '@shopify/polaris-icons'
+import {ClipboardIcon} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
 import {isEmbedded} from '@/utilities/embedded'
@@ -53,7 +53,7 @@ export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
       <IconButton
         type="button"
         onClick={() => handleCopyPreviewLink()}
-        source={ClipboardMinor}
+        source={ClipboardIcon}
         accessibilityLabel={i18n.translate('iconLabel', {title})}
       />
     </span>

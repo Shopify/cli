@@ -2,7 +2,7 @@ import en from './translations/en.json'
 import * as styles from './PostPurchaseModal.module.scss'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {ClipboardMinor} from '@shopify/polaris-icons'
+import {ClipboardIcon} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
 import {IconButton} from '@/components/IconButton'
 import {Modal, ModalProps} from '@/components/Modal'
@@ -52,7 +52,7 @@ export function PostPurchaseModal({url, onClose, open}: Props) {
               <IconButton
                 type="button"
                 onClick={() => handleCopyPreviewLink()}
-                source={ClipboardMinor}
+                source={ClipboardIcon}
                 accessibilityLabel={i18n.translate('copy.label')}
               />
             </span>
