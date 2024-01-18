@@ -1212,7 +1212,7 @@ wrong = "property"
         api_access = true
 
         [extensions.capabilities.collect_buyer_consent]
-        write_privacy_consent = false
+        customer_privacy = false
         sms_marketing = true
 
         [extensions.settings]
@@ -1280,7 +1280,7 @@ wrong = "property"
           block_progress: true,
           api_access: true,
           collect_buyer_consent: {
-            write_privacy_consent: false,
+            customer_privacy: false,
             sms_marketing: true,
           },
         },
@@ -1570,7 +1570,7 @@ wrong = "property"
       api_access = true
 
       [capabilities.collect_buyer_consent]
-      write_privacy_consent = true
+      customer_privacy = true
       sms_marketing = true
 
       [settings]
@@ -1607,7 +1607,7 @@ wrong = "property"
           block_progress: true,
           network_access: true,
           collect_buyer_consent: {
-            write_privacy_consent: true,
+            customer_privacy: true,
             sms_marketing: true,
           },
         },
