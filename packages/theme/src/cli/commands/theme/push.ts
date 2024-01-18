@@ -100,8 +100,6 @@ export default class Push extends ThemeCommand {
   ]
 
   async run(): Promise<void> {
-    showEmbeddedCLIWarning()
-
     const {flags} = await this.parse(Push)
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
@@ -111,7 +109,9 @@ export default class Push extends ThemeCommand {
       ? developmentThemeManager.findOrCreate()
       : developmentThemeManager.fetch())
 
-    if (!flags.stable) {
+    if (flags.stable) {
+      showEmbeddedCLIWarning()
+    } else {
       const {live, development, unpublished} = flags
 
       const theme = await findOrSelectTheme(adminSession, {
