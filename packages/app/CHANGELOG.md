@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.53.1
+
+### Patch Changes
+
+- edb0a4fe1: Renames nested write_privacy_consent capability to customer_privacy under collect_buyer_consent
+  - @shopify/cli-kit@3.53.1
+  - @shopify/plugin-cloudflare@3.53.1
+
 ## 3.53.0
 
 ### Minor Changes

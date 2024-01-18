@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.2.1
+
+### Patch Changes
+
+- edb0a4fe1: Renames nested write_privacy_consent capability to customer_privacy under collect_buyer_consent
+
 ## 5.2.0
 
 ### Minor Changes
