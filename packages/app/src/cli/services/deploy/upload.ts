@@ -12,7 +12,11 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {getFunctionUploadUrl, partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {
+  getFunctionUploadUrl,
+  FunctionUploadUrlGenerateResponse,
+  partnersRequest,
+} from '@shopify/cli-kit/node/api/partners'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
@@ -416,23 +420,10 @@ interface GetFunctionExtensionUploadURLOutput {
   headers: {[key: string]: string}
 }
 
-export interface FunctionUploadUrlGenerateMutationSchema {
-  functionUploadUrlGenerate: {
-    generatedUrlDetails: {
-      url: string
-      moduleId: string
-      headers: {[key: string]: string}
-      maxSize: string
-    }
-  }
-}
-
 async function getFunctionExtensionUploadUrlFromPartners(
   options: GetFunctionExtensionUploadURLOptions,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res: FunctionUploadUrlGenerateMutationSchema = await handlePartnersErrors(() =>
-    getFunctionUploadUrl(options.token),
-  )
+  const res: FunctionUploadUrlGenerateResponse = await handlePartnersErrors(() => getFunctionUploadUrl(options.token))
   return res.functionUploadUrlGenerate.generatedUrlDetails
 }
 
