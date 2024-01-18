@@ -11,6 +11,7 @@ import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extens
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -297,6 +298,30 @@ export async function testFunctionExtension(
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    entryPath: opts.entryPath,
+    directory,
+    specification,
+  })
+  return extension
+}
+
+interface TestPaymentsAppExtensionOptions {
+  dir?: string
+  config: PaymentsAppExtensionConfigType
+  entryPath?: string
+}
+export async function testPaymentsAppExtension(
+  opts: TestPaymentsAppExtensionOptions,
+): Promise<ExtensionInstance<PaymentsAppExtensionConfigType>> {
+  const directory = opts.dir ?? '/tmp/project/extensions/my-payments-app-extension'
+  const configuration = opts.config
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
   const extension = new ExtensionInstance({
     configuration,
