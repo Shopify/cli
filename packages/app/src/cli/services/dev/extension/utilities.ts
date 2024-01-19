@@ -51,7 +51,7 @@ export function getExtensionPointTargetSurface(extensionPointTarget: string) {
     }
 
     // Covers POS UI extensions (future)
-    case 'retail': {
+    case 'pos': {
       return 'point_of_sale'
     }
 
