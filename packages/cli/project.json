@@ -68,7 +68,7 @@
     "refresh-manifests": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm oclif manifest",
+        "command": "pnpm oclif manifest && node ./bin/merge-manifests.js",
         "cwd": "packages/cli"
       }
     },

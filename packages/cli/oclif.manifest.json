@@ -154,97 +154,6 @@
     },
     "hydrogen:build": {
       "id": "hydrogen:build",
-      "description": "Build a hydrogen project",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "hydrogen:deploy": {
-      "id": "hydrogen:deploy",
-      "description": "Start dev for a hydrogen project",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "hydrogen:dev": {
-      "id": "hydrogen:dev",
-      "description": "Start dev for a hydrogen project",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "kitchen-sink:async": {
-      "id": "kitchen-sink:async",
-      "description": "View the UI kit components that process async tasks",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "kitchen-sink": {
-      "id": "kitchen-sink",
-      "description": "View all the available UI kit components",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [
-        "kitchen-sink all"
-      ],
-      "flags": {},
-      "args": {}
-    },
-    "kitchen-sink:prompts": {
-      "id": "kitchen-sink:prompts",
-      "description": "View the UI kit components prompts",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "kitchen-sink:static": {
-      "id": "kitchen-sink:static",
-      "description": "View the UI kit components that display static output",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "plugins": {
-      "id": "plugins",
-      "strict": true,
-      "pluginName": "@shopify/cli",
-      "pluginAlias": "@shopify/cli",
-      "pluginType": "core",
-      "hidden": true,
-      "aliases": [],
-      "flags": {},
-      "args": {}
-    },
-    "hydrogen:build": {
-      "id": "hydrogen:build",
       "description": "Builds a Hydrogen storefront for production.",
       "strict": true,
       "pluginName": "@shopify/cli-hydrogen",
@@ -303,72 +212,6 @@
           "name": "diff",
           "type": "boolean",
           "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "required": false,
-          "allowNo": false
-        }
-      },
-      "args": {}
-    },
-    "hydrogen:check": {
-      "id": "hydrogen:check",
-      "description": "Returns diagnostic information about a Hydrogen storefront.",
-      "strict": true,
-      "pluginName": "@shopify/cli-hydrogen",
-      "pluginAlias": "@shopify/cli-hydrogen",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to the directory of the Hydrogen storefront. The default is the current directory.",
-          "multiple": false
-        }
-      },
-      "args": {
-        "resource": {
-          "name": "resource",
-          "description": "The resource to check. Currently only 'routes' is supported.",
-          "required": true,
-          "options": [
-            "routes"
-          ]
-        }
-      }
-    },
-    "hydrogen:codegen": {
-      "id": "hydrogen:codegen",
-      "description": "Generate types for the Storefront API queries found in your project.",
-      "strict": true,
-      "pluginName": "@shopify/cli-hydrogen",
-      "pluginAlias": "@shopify/cli-hydrogen",
-      "pluginType": "core",
-      "aliases": [],
-      "flags": {
-        "path": {
-          "name": "path",
-          "type": "option",
-          "description": "The path to the directory of the Hydrogen storefront. The default is the current directory.",
-          "multiple": false
-        },
-        "codegen-config-path": {
-          "name": "codegen-config-path",
-          "type": "option",
-          "description": "Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.",
-          "required": false,
-          "multiple": false
-        },
-        "force-sfapi-version": {
-          "name": "force-sfapi-version",
-          "type": "option",
-          "description": "Force generating Storefront API types for a specific version instead of using the one provided in Hydrogen. A token can also be provided with this format: `<version>:<token>`.",
-          "hidden": true,
-          "multiple": false
-        },
-        "watch": {
-          "name": "watch",
-          "type": "boolean",
-          "description": "Watch the project for changes to update types on file save.",
           "required": false,
           "allowNo": false
         }
@@ -561,6 +404,130 @@
           "name": "diff",
           "type": "boolean",
           "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
+          "required": false,
+          "allowNo": false
+        }
+      },
+      "args": {}
+    },
+    "kitchen-sink:async": {
+      "id": "kitchen-sink:async",
+      "description": "View the UI kit components that process async tasks",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "kitchen-sink": {
+      "id": "kitchen-sink",
+      "description": "View all the available UI kit components",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [
+        "kitchen-sink all"
+      ],
+      "flags": {},
+      "args": {}
+    },
+    "kitchen-sink:prompts": {
+      "id": "kitchen-sink:prompts",
+      "description": "View the UI kit components prompts",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "kitchen-sink:static": {
+      "id": "kitchen-sink:static",
+      "description": "View the UI kit components that display static output",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "plugins": {
+      "id": "plugins",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "hidden": true,
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "hydrogen:check": {
+      "id": "hydrogen:check",
+      "description": "Returns diagnostic information about a Hydrogen storefront.",
+      "strict": true,
+      "pluginName": "@shopify/cli-hydrogen",
+      "pluginAlias": "@shopify/cli-hydrogen",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to the directory of the Hydrogen storefront. The default is the current directory.",
+          "multiple": false
+        }
+      },
+      "args": {
+        "resource": {
+          "name": "resource",
+          "description": "The resource to check. Currently only 'routes' is supported.",
+          "required": true,
+          "options": [
+            "routes"
+          ]
+        }
+      }
+    },
+    "hydrogen:codegen": {
+      "id": "hydrogen:codegen",
+      "description": "Generate types for the Storefront API queries found in your project.",
+      "strict": true,
+      "pluginName": "@shopify/cli-hydrogen",
+      "pluginAlias": "@shopify/cli-hydrogen",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {
+        "path": {
+          "name": "path",
+          "type": "option",
+          "description": "The path to the directory of the Hydrogen storefront. The default is the current directory.",
+          "multiple": false
+        },
+        "codegen-config-path": {
+          "name": "codegen-config-path",
+          "type": "option",
+          "description": "Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.",
+          "required": false,
+          "multiple": false
+        },
+        "force-sfapi-version": {
+          "name": "force-sfapi-version",
+          "type": "option",
+          "description": "Force generating Storefront API types for a specific version instead of using the one provided in Hydrogen. A token can also be provided with this format: `<version>:<token>`.",
+          "hidden": true,
+          "multiple": false
+        },
+        "watch": {
+          "name": "watch",
+          "type": "boolean",
+          "description": "Watch the project for changes to update types on file save.",
           "required": false,
           "allowNo": false
         }
