@@ -6,6 +6,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {ExtensionCollectionConfig} from '../extensions/specifications/types/app_config_extension_collection.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -270,6 +271,7 @@ export class App implements AppInterface {
       ...this.posConfiguration(configuration),
       ...this.webhooksConfiguration(configuration),
       ...this.accessConfiguration(configuration),
+      ...this.extensionCollectionConfiguration(configuration),
     } as CurrentAppConfiguration & SpecsAppConfiguration
   }
 
@@ -307,6 +309,13 @@ export class App implements AppInterface {
   private webhooksConfiguration(configuration: AppConfiguration) {
     return {
       webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
+    }
+  }
+
+  private extensionCollectionConfiguration(configuration: AppConfiguration) {
+    console.log(configuration)
+    return {
+      extension_collection: {...getPathValue<ExtensionCollectionConfig[]>(configuration, 'extension_collection')},
     }
   }
 
