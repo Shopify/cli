@@ -16,7 +16,7 @@ const AppExtensionCollectionSchema = zod.object({
 })
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'extension_collection',
+  identifier: AppExtensionCollectionIdentifier,
   schema: AppExtensionCollectionSchema,
 })
 
