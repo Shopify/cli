@@ -152,6 +152,39 @@
       "flags": {},
       "args": {}
     },
+    "hydrogen:build": {
+      "id": "hydrogen:build",
+      "description": "Build a hydrogen project",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "hydrogen:deploy": {
+      "id": "hydrogen:deploy",
+      "description": "Start dev for a hydrogen project",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
+    "hydrogen:dev": {
+      "id": "hydrogen:dev",
+      "description": "Start dev for a hydrogen project",
+      "strict": true,
+      "pluginName": "@shopify/cli",
+      "pluginAlias": "@shopify/cli",
+      "pluginType": "core",
+      "aliases": [],
+      "flags": {},
+      "args": {}
+    },
     "kitchen-sink:async": {
       "id": "kitchen-sink:async",
       "description": "View the UI kit components that process async tasks",

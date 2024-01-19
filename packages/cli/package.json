@@ -156,6 +156,9 @@
       "auth": {
         "description": "Auth operations."
       },
+      "hydrogen": {
+        "description": "Build Hydrogen storefronts."
+      },
       "kitchen-sink": {
         "description": "View the available UI kit components.",
         "hidden": true

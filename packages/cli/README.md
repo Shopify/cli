@@ -25,6 +25,9 @@
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
 * [`shopify config autocorrect status`](#shopify-config-autocorrect-status)
 * [`shopify help [COMMANDS]`](#shopify-help-commands)
+* [`shopify hydrogen build`](#shopify-hydrogen-build)
+* [`shopify hydrogen deploy`](#shopify-hydrogen-deploy)
+* [`shopify hydrogen dev`](#shopify-hydrogen-dev)
 * [`shopify kitchen-sink async`](#shopify-kitchen-sink-async)
 * [`shopify kitchen-sink prompts`](#shopify-kitchen-sink-prompts)
 * [`shopify kitchen-sink static`](#shopify-kitchen-sink-static)
@@ -50,6 +53,7 @@
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
 * [`shopify theme push`](#shopify-theme-push)
+* [`shopify theme rename`](#shopify-theme-rename)
 * [`shopify theme share`](#shopify-theme-share)
 * [`shopify upgrade`](#shopify-upgrade)
 * [`shopify version`](#shopify-version)
@@ -609,6 +613,48 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.18/src/commands/help.ts)_
+
+## `shopify hydrogen build`
+
+Build a hydrogen project
+
+```
+USAGE
+  $ shopify hydrogen build
+
+DESCRIPTION
+  Build a hydrogen project
+```
+
+_See code: [dist/cli/commands/hydrogen/build.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/hydrogen/build.js)_
+
+## `shopify hydrogen deploy`
+
+Start dev for a hydrogen project
+
+```
+USAGE
+  $ shopify hydrogen deploy
+
+DESCRIPTION
+  Start dev for a hydrogen project
+```
+
+_See code: [dist/cli/commands/hydrogen/deploy.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/hydrogen/deploy.js)_
+
+## `shopify hydrogen dev`
+
+Start dev for a hydrogen project
+
+```
+USAGE
+  $ shopify hydrogen dev
+
+DESCRIPTION
+  Start dev for a hydrogen project
+```
+
+_See code: [dist/cli/commands/hydrogen/dev.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.52.0/dist/cli/commands/hydrogen/dev.js)_
 
 ## `shopify kitchen-sink async`
 
@@ -1279,6 +1325,33 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/push.js)_
+
+## `shopify theme rename`
+
+Renames an existing theme.
+
+```
+USAGE
+  $ shopify theme rename -n <value> [--no-color] [--verbose] [-s <value>] [--password <value>] [-e <value>] [-d]
+    [-t <value>] [-l]
+
+FLAGS
+  -d, --development          Rename your development theme.
+  -e, --environment=<value>  The environment to apply to the current command.
+  -l, --live                 Rename your remote live theme.
+  -n, --name=<value>         (required) The new name for the theme.
+  -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
+  -t, --theme=<value>        Theme ID or name of the remote theme.
+  --no-color                 Disable color output.
+  --password=<value>         Password generated from the Theme Access app.
+  --verbose                  Increase the verbosity of the logs.
+
+DESCRIPTION
+  Renames an existing theme.
+```
+
+_See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.52.0/dist/cli/commands/theme/rename.js)_
 
 ## `shopify theme share`
 
