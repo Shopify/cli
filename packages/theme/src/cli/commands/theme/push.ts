@@ -10,7 +10,9 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {RenderConfirmationPromptOptions, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
+import {UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 
 export default class Push extends ThemeCommand {
   static description =
@@ -106,14 +108,14 @@ export default class Push extends ThemeCommand {
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-    const targetTheme = flags.unpublished
-      ? await developmentThemeManager.create('unpublished')
-      : await (flags.development ? developmentThemeManager.findOrCreate() : developmentThemeManager.fetch())
 
-    if (flags.stable) {
-      showEmbeddedCLIWarning()
-    } else {
+    if (!flags.stable) {
       const {live, development, unpublished} = flags
+
+      if (unpublished) {
+        const themeName = flags.theme || (await promptThemeName(flags.path))
+        await developmentThemeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
+      }
 
       const theme = await findOrSelectTheme(adminSession, {
         header: 'Select a theme to open',
@@ -136,6 +138,12 @@ export default class Push extends ThemeCommand {
       return
     }
 
+    showEmbeddedCLIWarning()
+
+    const targetTheme = await (flags.development
+      ? developmentThemeManager.findOrCreate()
+      : developmentThemeManager.fetch())
+
     if (targetTheme) {
       if (flags.development) {
         flags.theme = `${targetTheme.id}`
@@ -151,6 +159,15 @@ export default class Push extends ThemeCommand {
 
     await execCLI2(command, {store, adminToken: adminSession.token})
   }
+}
+
+async function promptThemeName(path: string) {
+  const defaultName = await generateRandomNameForSubdirectory({
+    suffix: 'theme',
+    directory: path,
+    family: 'creative',
+  })
+  return renderTextPrompt({message: 'Name of the new theme', defaultValue: defaultName})
 }
 
 async function confirmPushToLiveTheme(store: string) {

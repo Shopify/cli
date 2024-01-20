@@ -9,7 +9,7 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../../services/push.js')
 vi.mock('../../utilities/development-theme-manager.js')
@@ -58,21 +58,32 @@ describe('Push', () => {
 
       vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
 
-      await runPushCommand(['--unpublished'], path, adminSession)
+      await runPushCommand(['--unpublished', '--theme', 'test_theme'], path, adminSession)
 
-      expect(DevelopmentThemeManager.prototype.create).toHaveBeenCalledWith('unpublished')
+      expect(DevelopmentThemeManager.prototype.create).toHaveBeenCalledWith('unpublished', 'test_theme')
     })
 
     test("should render confirmation prompt if 'allow-live' flag is not provided and selected theme role is live", async () => {
       const theme = buildTheme({id: 1, name: 'Theme', role: 'live'})!
-      const confirmed = true
 
       vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
       await runPushCommand([], path, adminSession)
 
       expect(renderConfirmationPrompt).toHaveBeenCalled()
+    })
+
+    test('should render text prompt if unpublished flag is provided and theme flag is not provided', async () => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+
+      vi.mocked(renderTextPrompt).mockResolvedValue('test_name')
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      await runPushCommand(['--unpublished'], path, adminSession)
+
+      expect(renderTextPrompt).toHaveBeenCalled()
+      expect(DevelopmentThemeManager.prototype.create).toHaveBeenCalledWith('unpublished', 'test_name')
     })
   })
 

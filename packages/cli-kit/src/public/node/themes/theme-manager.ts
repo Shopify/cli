@@ -32,8 +32,8 @@ export abstract class ThemeManager {
     return theme
   }
 
-  async create(themeRole?: Role) {
-    const name = generateThemeName(this.context)
+  async create(themeRole?: Role, themeName?: string) {
+    const name = themeName || generateThemeName(this.context)
     const role = themeRole || DEVELOPMENT_THEME_ROLE
     const theme = await createTheme(
       {
