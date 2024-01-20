@@ -13,6 +13,7 @@ import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {RenderConfirmationPromptOptions, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {publishTheme} from '@shopify/cli-kit/node/themes/api'
 
 export default class Push extends ThemeCommand {
   static description =
@@ -134,6 +135,10 @@ export default class Push extends ThemeCommand {
       }
 
       await push(theme, adminSession, {})
+
+      if (flags.publish) {
+        await publishTheme(theme.id, adminSession)
+      }
 
       return
     }

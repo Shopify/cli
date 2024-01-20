@@ -10,6 +10,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {publishTheme} from '@shopify/cli-kit/node/themes/api'
 
 vi.mock('../../services/push.js')
 vi.mock('../../utilities/development-theme-manager.js')
@@ -17,6 +18,7 @@ vi.mock('../../utilities/theme-store.js')
 vi.mock('../../utilities/theme-selector.js')
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('Push', () => {
@@ -84,6 +86,17 @@ describe('Push', () => {
 
       expect(renderTextPrompt).toHaveBeenCalled()
       expect(DevelopmentThemeManager.prototype.create).toHaveBeenCalledWith('unpublished', 'test_name')
+    })
+
+    test('should call publishTheme if publish flag is provided', async () => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+      vi.mocked(publishTheme).mockResolvedValue(theme)
+
+      await runPushCommand(['--publish'], path, adminSession)
+
+      expect(publishTheme).toHaveBeenCalledWith(theme.id, adminSession)
     })
   })
 
