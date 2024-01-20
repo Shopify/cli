@@ -3,13 +3,14 @@ import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {push} from '../../services/push.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
+import {push} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {RenderConfirmationPromptOptions, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export default class Push extends ThemeCommand {
   static description =
@@ -124,6 +125,12 @@ export default class Push extends ThemeCommand {
         },
       })
 
+      if (theme.role === 'live' && !flags['allow-live']) {
+        if (!(await confirmPushToLiveTheme(adminSession.storeFqdn))) {
+          return
+        }
+      }
+
       await push(theme, adminSession, {})
 
       return
@@ -144,4 +151,16 @@ export default class Push extends ThemeCommand {
 
     await execCLI2(command, {store, adminToken: adminSession.token})
   }
+}
+
+async function confirmPushToLiveTheme(store: string) {
+  const message = `Push theme files to the published theme on ${store}?`
+
+  const options: RenderConfirmationPromptOptions = {
+    message,
+    confirmationMessage: 'Yes, confirm changes',
+    cancellationMessage: 'Cancel',
+  }
+
+  return renderConfirmationPrompt(options)
 }

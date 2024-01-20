@@ -9,6 +9,7 @@ import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../../services/push.js')
 vi.mock('../../utilities/development-theme-manager.js')
@@ -16,6 +17,7 @@ vi.mock('../../utilities/theme-store.js')
 vi.mock('../../utilities/theme-selector.js')
 vi.mock('@shopify/cli-kit/node/ruby')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/ui')
 
 describe('Push', () => {
   const adminSession = {token: '', storeFqdn: ''}
@@ -59,6 +61,18 @@ describe('Push', () => {
       await runPushCommand(['--unpublished'], path, adminSession)
 
       expect(DevelopmentThemeManager.prototype.create).toHaveBeenCalledWith('unpublished')
+    })
+
+    test("should render confirmation prompt if 'allow-live' flag is not provided and selected theme role is live", async () => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'live'})!
+      const confirmed = true
+
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(confirmed)
+
+      await runPushCommand([], path, adminSession)
+
+      expect(renderConfirmationPrompt).toHaveBeenCalled()
     })
   })
 
