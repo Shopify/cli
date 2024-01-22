@@ -16,6 +16,12 @@ import {
   customOnsitePaymentsAppExtensionDeployConfig,
   CustomOnsitePaymentsAppExtensionSchema,
 } from './payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
+import {
+  CUSTOM_CREDIT_CARD_TARGET,
+  CustomCreditCardPaymentsAppExtensionConfigType,
+  customCreditCardPaymentsAppExtensionDeployConfig,
+  CustomCreditCardPaymentsAppExtensionSchema,
+} from './payments_app_extension_schemas/custom_credit_card_payments_app_extension_schema.js'
 import {createExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -23,6 +29,7 @@ const PaymentsAppExtensionSchema = zod.union([
   OffsitePaymentsAppExtensionSchema,
   RedeemablePaymentsAppExtensionSchema,
   CustomOnsitePaymentsAppExtensionSchema,
+  CustomCreditCardPaymentsAppExtensionSchema,
 ])
 
 export type PaymentsAppExtensionConfigType = zod.infer<typeof PaymentsAppExtensionSchema>
@@ -40,6 +47,10 @@ const spec = createExtensionSpecification({
         return redeemablePaymentsAppExtensionDeployConfig(config as RedeemablePaymentsAppExtensionConfigType)
       case CUSTOM_ONSITE_TARGET:
         return customOnsitePaymentsAppExtensionDeployConfig(config as CustomOnsitePaymentsAppExtensionConfigType)
+      case CUSTOM_CREDIT_CARD_TARGET:
+        return customCreditCardPaymentsAppExtensionDeployConfig(
+          config as CustomCreditCardPaymentsAppExtensionConfigType,
+        )
       default:
         return {}
     }
