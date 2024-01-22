@@ -58,17 +58,21 @@ export default async function install() {
     throw new Error(`Unsupported system platform: ${process.platform} or arch: ${process.arch}`)
   }
 
-  const fileUrlPath = CLOUDFLARE_REPO + fileName;
+  const fileUrlPath = CLOUDFLARE_REPO + fileName
   const binTarget = getBinPathTarget()
 
   if (existsSync(binTarget)) {
     // --version returns an string like "cloudflared version 2023.3.1 (built 2023-03-13-1444 UTC)"
-    const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
-    const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
-    const needsUpdate = semver.gt(CLOUDFLARE_VERSION, versionNumber)
-    if (!needsUpdate) {
-      console.log('cloudflared already installed, skipping')
-      return
+    try {
+      const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
+      const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
+      const needsUpdate = semver.gt(CLOUDFLARE_VERSION, versionNumber)
+      if (!needsUpdate) {
+        console.log('cloudflared already installed, skipping')
+        return
+      }
+    } catch {
+      console.log('version check failed, reinstalling')
     }
   }
 
