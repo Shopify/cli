@@ -313,9 +313,8 @@ export class App implements AppInterface {
   }
 
   private extensionCollectionConfiguration(configuration: AppConfiguration) {
-    console.log(configuration)
     return {
-      extension_collection: {...getPathValue<ExtensionCollectionConfig[]>(configuration, 'extension_collection')},
+      extension_collection: getPathValue<ExtensionCollectionConfig[]>(configuration, 'extension_collection'),
     }
   }
 
