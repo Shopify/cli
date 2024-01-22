@@ -3,7 +3,12 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
 import {themeExtensionArgs} from '../theme-extension-args.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
+import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+
+// Tokens are valid for 120 min, better to be safe and refresh every 110 min
+const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
 
 export interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
@@ -20,6 +25,17 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
   {stdout, stderr, abortSignal},
   {adminSession, themeExtensionServerArgs: args, storefrontToken, token},
 ) => {
+  setInterval(() => {
+    outputDebug('Refreshing theme session token...', stdout)
+    refreshToken(adminSession.storeFqdn)
+      .then(() => {
+        outputDebug('Refreshed theme session token successfully', stdout)
+      })
+      .catch((error) => {
+        throw error
+      })
+  }, THEME_REFRESH_TIMEOUT_IN_MS)
+
   await execCLI2(['extension', 'serve', ...args], {
     store: adminSession.storeFqdn,
     adminToken: adminSession.token,
@@ -83,4 +99,12 @@ export async function setupPreviewThemeAppExtensionsProcess({
       token,
     },
   }
+}
+
+async function refreshToken(store: string) {
+  const adminSession = await ensureAuthenticatedAdmin(store, [], false, {noPrompt: true})
+  if (useEmbeddedThemeCLI()) {
+    await execCLI2(['theme', 'token', '--admin', adminSession.token])
+  }
+  return {adminSession}
 }
