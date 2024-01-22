@@ -174,7 +174,6 @@ export interface AppInterface extends AppConfigurationInterface {
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
-  addExtensions: (extension: ExtensionInstance[]) => void
 }
 
 export class App implements AppInterface {
@@ -230,10 +229,6 @@ export class App implements AppInterface {
     return this.realExtensions.filter(
       (ext) => !ext.isAppConfigExtension || (this.useVersionedAppConfig && this.includeConfigOnDeploy),
     )
-  }
-
-  addExtensions(extensions: ExtensionInstance[]) {
-    this.realExtensions = [...this.realExtensions, ...extensions]
   }
 
   async updateDependencies() {

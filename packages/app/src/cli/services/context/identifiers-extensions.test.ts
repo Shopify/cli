@@ -671,9 +671,10 @@ describe('excludes non uuid managed extensions', () => {
     })
 
     // When
-    const ensureExtensionsIdsOptions = options([EXTENSION_A])
     const CONFIG_A = await testAppConfigExtensions()
-    ensureExtensionsIdsOptions.app.addExtensions([CONFIG_A])
+    const ensureExtensionsIdsOptions = options([EXTENSION_A], [], {}, testOrganizationApp(), true, false, false, [
+      CONFIG_A,
+    ])
     await ensureExtensionsIds(ensureExtensionsIdsOptions, {
       extensionRegistrations: [REGISTRATION_A],
       dashboardManagedExtensionRegistrations: [],
