@@ -1,11 +1,11 @@
 import {joinPath, cwd} from './path.js'
+import {fileExistsSync} from './fs.js'
 import {Config} from '@oclif/core'
 import {minimatch} from 'minimatch'
 import glob from 'fast-glob'
 import yargs from 'yargs'
 import fs from 'fs'
 import util from 'util'
-import {fileExistsSync} from './fs.js'
 
 export class ShopifyConfig extends Config {
   async loadCorePlugins(): Promise<void> {
@@ -20,14 +20,14 @@ export class ShopifyConfig extends Config {
     const thisPath = cwd()
     matches.push(...(await listDependencies(thisPath, '@shopify/*')))
 
+    // Load as usual
+    await super.loadCorePlugins()
+
     // Load gathered potential plugins
     for (const [root, names] of matches) {
       // eslint-disable-next-line no-await-in-loop
       await this.loadPlugins(root, 'custom', names)
     }
-
-    // Load as usual
-    await super.loadCorePlugins()
   }
 }
 

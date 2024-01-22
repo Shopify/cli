@@ -161,3 +161,6 @@ index.mjs
 testing.d.ts
 testing.js
 testing.mjs
+
+# nx folder
+.nx
