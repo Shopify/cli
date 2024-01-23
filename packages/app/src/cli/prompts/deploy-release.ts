@@ -35,11 +35,7 @@ export async function deployOrReleaseConfirmationPrompt({
   appTitle,
   release,
 }: DeployOrReleaseConfirmationPromptOptions) {
-  if (configExtensionIdentifiersBreakdown) {
-    await metadata.addPublicMetadata(() =>
-      buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown, showConfig),
-    )
-  }
+  await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
@@ -164,16 +160,12 @@ async function buildConfigContentPrompt(
 }
 
 export function buildConfigurationBreakdownMetadata(
-  {
-    existingUpdatedFieldNames,
-    newFieldNames,
-    existingFieldNames,
-    deletedFieldNames,
-  }: ConfigExtensionIdentifiersBreakdown,
-  includeConfigOnDeploy: boolean,
+  configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown,
 ) {
-  if (!includeConfigOnDeploy) return {cmd_deploy_include_config_used: false}
+  if (!configExtensionIdentifiersBreakdown) return {cmd_deploy_include_config_used: false}
 
+  const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} =
+    configExtensionIdentifiersBreakdown
   const currentConfiguration = [...existingUpdatedFieldNames, ...newFieldNames, ...existingFieldNames]
   return {
     cmd_deploy_include_config_used: true,

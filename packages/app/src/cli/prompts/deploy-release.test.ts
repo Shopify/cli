@@ -34,7 +34,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         confirmed: result,
         configExtensionIdentifiersBreakdown: configExtensionIdentifiersBreakdown!,
-        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
       expect(result).toBe(true)
@@ -64,7 +63,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown,
-        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -99,7 +97,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
-        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -154,7 +151,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
-        showConfig: true,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -213,7 +209,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
-        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -267,7 +262,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
-        showConfig: false,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -314,7 +308,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown,
-        showConfig: true,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -367,7 +360,6 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
-        showConfig: true,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -471,18 +463,13 @@ function verifyMetada({
   extensionIdentifiersBreakdown,
   confirmed,
   configExtensionIdentifiersBreakdown,
-  showConfig,
 }: {
   metadataSpyOn: SpyInstance
   extensionIdentifiersBreakdown?: ExtensionIdentifiersBreakdown
   confirmed: boolean
   configExtensionIdentifiersBreakdown: ConfigExtensionIdentifiersBreakdown
-  showConfig: boolean
 }) {
-  const configurationBreakdownMetadata = buildConfigurationBreakdownMetadata(
-    configExtensionIdentifiersBreakdown,
-    showConfig,
-  )
+  const configurationBreakdownMetadata = buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown)
 
   expect(metadataSpyOn).toHaveBeenNthCalledWith(1, expect.any(Function))
   expect(metadataSpyOn.mock.calls[0]![0]()).toEqual(configurationBreakdownMetadata)
