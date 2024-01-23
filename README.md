@@ -72,3 +72,5 @@ If you'd like to contribute to the project, check out the [contributors docs](/d
 ## References
 
 - [oclif](https://oclif.io/)
+
+Testing shopify/cla update
