@@ -27,6 +27,7 @@ import link from './app/config/link.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as writeAppConfigurationFile from './app/write-app-configuration-file.js'
+import {BetaFlag} from './app/select-app.js'
 import {loadFSExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
@@ -58,7 +59,7 @@ import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/no
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt, renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {Config} from '@oclif/core'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
@@ -173,7 +174,7 @@ vi.mock('./deploy/mode.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context/partner-account-info.js')
 vi.mock('./generate/fetch-extension-specifications.js')
-vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('./app/select-app.js')
 
 beforeAll(async () => {
   vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
@@ -1131,6 +1132,7 @@ describe('ensureDeployContext', () => {
   test('prompts the user to include the configuration and persist the flag if the flag is not present and the beta is enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1146,7 +1148,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app))
@@ -1178,6 +1179,7 @@ describe('ensureDeployContext', () => {
   test('prompts the user to include the configuration and set it to false when not confirmed if the flag is not present and the beta is enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1193,7 +1195,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app))
@@ -1225,6 +1226,7 @@ describe('ensureDeployContext', () => {
   test('doesnt prompt the user to include the configuration and display the current value if the flag and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1239,7 +1241,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app))
@@ -1268,6 +1269,7 @@ describe('ensureDeployContext', () => {
   test('prompts the user to include the configuration when reset is used if the flag and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1284,7 +1286,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app, true))
@@ -1316,6 +1317,7 @@ describe('ensureDeployContext', () => {
   test('doesnt prompt the user to include the configuration when force is used if the flag is not present and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1331,7 +1333,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app, false, true))
@@ -1360,6 +1361,7 @@ describe('ensureDeployContext', () => {
   test('prompt the user to include the configuration when force is used  if the flag and beta are enabled', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const identifiers = {
       app: APP2.apiKey,
       extensions: {},
@@ -1375,7 +1377,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(true)
 
     // When
     await ensureDeployContext(options(app, false, true))
@@ -1419,7 +1420,6 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
-    vi.mocked(useVersionedAppConfig).mockReturnValue(false)
 
     // When
     await ensureDeployContext(options(app, false, true))

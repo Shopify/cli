@@ -6,6 +6,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {BetaFlag} from '../../services/app/select-app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -13,7 +14,6 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export const LegacyAppSchema = zod
   .object({
@@ -103,11 +103,6 @@ export function appIsLaunchable(app: AppInterface) {
   return Boolean(frontendConfig || backendConfig)
 }
 
-export function includeConfigOnDeploy(configuration: AppConfiguration) {
-  if (isLegacyAppSchema(configuration)) return false
-  return configuration.build?.include_config_on_deploy && useVersionedAppConfig()
-}
-
 export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {
   return Object.keys(configuration).filter(
     (fieldName) => !Object.keys(AppSchema.shape).concat('path').includes(fieldName),
@@ -172,6 +167,8 @@ export interface AppInterface extends AppConfigurationInterface {
   allExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
+  useVersionedAppConfig: boolean
+  includeConfigOnDeploy: boolean | undefined
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -190,9 +187,10 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  allExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
+  private remoteBetaFlags: BetaFlag[]
+  private realExtensions: ExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -209,6 +207,7 @@ export class App implements AppInterface {
     errors?: AppErrors,
     specifications?: ExtensionSpecification[],
     configSchema?: zod.ZodTypeAny,
+    remoteBetaFlags?: BetaFlag[],
   ) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
@@ -218,11 +217,18 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.allExtensions = extensions
+    this.realExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
+    this.remoteBetaFlags = remoteBetaFlags ?? []
+  }
+
+  get allExtensions() {
+    return this.realExtensions.filter(
+      (ext) => !ext.isAppConfigExtension || (this.useVersionedAppConfig && this.includeConfigOnDeploy),
+    )
   }
 
   async updateDependencies() {
@@ -259,6 +265,15 @@ export class App implements AppInterface {
     this.allExtensions.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
+  }
+
+  get useVersionedAppConfig() {
+    return this.remoteBetaFlags.includes(BetaFlag.VersionedAppConfig)
+  }
+
+  get includeConfigOnDeploy() {
+    if (isLegacyAppSchema(this.configuration)) return false
+    return this.configuration.build?.include_config_on_deploy
   }
 
   private configurationTyped(configuration: AppConfiguration) {
@@ -350,10 +365,25 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 }
 
 export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[]) {
+  constructor(specifications?: ExtensionSpecification[], betas?: BetaFlag[]) {
     const configuration = {scopes: '', extension_directories: [], path: ''}
     const configSchema = getAppVersionedSchema(specifications ?? [])
-    super('', '', '', 'npm', configuration, {}, [], [], false, undefined, undefined, specifications, configSchema)
+    super(
+      '',
+      '',
+      '',
+      'npm',
+      configuration,
+      {},
+      [],
+      [],
+      false,
+      undefined,
+      undefined,
+      specifications,
+      configSchema,
+      betas,
+    )
   }
 }
 

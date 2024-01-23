@@ -3,6 +3,7 @@ import {deploy} from './deploy.js'
 import {uploadWasmBlob, uploadExtensionsBundle} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
+import {BetaFlag} from './app/select-app.js'
 import {
   testApp,
   testFunctionExtension,
@@ -16,10 +17,11 @@ import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 const versionTag = 'unique-version-tag'
 
@@ -303,10 +305,11 @@ describe('deploy', () => {
       configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
     }
     const app = testApp(localApp)
+    setPathValue(app, 'remoteBetaFlags', [BetaFlag.VersionedAppConfig])
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+    await testDeployBundle({app, released: false, commitReference, betas: [BetaFlag.VersionedAppConfig]})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -335,7 +338,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+    await testDeployBundle({app, released: false, commitReference, betas: [BetaFlag.VersionedAppConfig]})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -361,7 +364,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: false})
+    await testDeployBundle({app, released: false, commitReference})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -511,8 +514,8 @@ interface TestDeployBundleInput {
   }
   released?: boolean
   commitReference?: string
-  versionedAppConfig?: boolean
   appToDeploy?: AppInterface
+  betas?: BetaFlag[]
 }
 
 async function testDeployBundle({
@@ -521,8 +524,8 @@ async function testDeployBundle({
   options,
   released = true,
   commitReference,
-  versionedAppConfig = false,
   appToDeploy,
+  betas = [],
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -551,6 +554,7 @@ async function testDeployBundle({
       }),
     token: 'api-token',
     release: !options?.noRelease,
+    betas,
   })
 
   vi.mocked(useThemebundling).mockReturnValue(true)
@@ -565,7 +569,6 @@ async function testDeployBundle({
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
-  vi.mocked(useVersionedAppConfig).mockReturnValue(versionedAppConfig)
 
   await deploy({
     app,

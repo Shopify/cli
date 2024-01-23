@@ -6,7 +6,7 @@ import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
-import {AppInterface, includeConfigOnDeploy} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -123,8 +123,6 @@ async function ensureNonUuidManagedExtensionsIds(
   app: AppInterface,
   appId: string,
 ) {
-  if (!includeConfigOnDeploy(app.configuration)) return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
-
   const localExtensionRegistrations = app.allExtensions.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}

@@ -536,13 +536,14 @@ async function mockApp(
   schemaType: 'current' | 'legacy' = 'legacy',
 ): Promise<AppInterface> {
   const versionSchema = await buildVersionedAppSchema()
-  const localApp = testApp(app, schemaType)
-  localApp.configSchema = versionSchema.schema
-  localApp.specifications = versionSchema.configSpecifications
-  localApp.allExtensions = await createConfigExtensionInstances(
+  let localApp = testApp(app, schemaType)
+  const extensions = await createConfigExtensionInstances(
     localApp.configuration as CurrentAppConfiguration,
     versionSchema.configSpecifications,
   )
+  localApp = testApp({...app, allExtensions: extensions}, schemaType)
+  localApp.configSchema = versionSchema.schema
+  localApp.specifications = versionSchema.configSpecifications
   return localApp
 }
 

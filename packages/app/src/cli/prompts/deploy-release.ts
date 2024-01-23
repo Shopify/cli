@@ -22,11 +22,10 @@ export interface DeployConfirmationPromptOptions {
     extensionsInfoTable?: InfoTableSection
     hasDeletedExtensions: boolean
   }
-  configContentPrompt: {
+  configContentPrompt?: {
     configInfoTable: InfoTableSection
   }
   release: boolean
-  showConfig: boolean
 }
 
 export async function deployOrReleaseConfirmationPrompt({
@@ -35,7 +34,6 @@ export async function deployOrReleaseConfirmationPrompt({
   configExtensionIdentifiersBreakdown,
   appTitle,
   release,
-  showConfig = true,
 }: DeployOrReleaseConfirmationPromptOptions) {
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
@@ -46,26 +44,24 @@ export async function deployOrReleaseConfirmationPrompt({
     extensionsContentPrompt,
     configContentPrompt,
     release,
-    showConfig,
   })
 }
 
 async function deployConfirmationPrompt({
   appTitle,
   extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
-  configContentPrompt: {configInfoTable},
+  configContentPrompt,
   release,
-  showConfig,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
 
   const infoTable = []
-  if ((extensionsInfoTable || configInfoTable.items.length > 0) && showConfig) {
+  if (configContentPrompt && (extensionsInfoTable || configContentPrompt.configInfoTable.items.length > 0)) {
     infoTable.push(
-      configInfoTable.items.length === 0
-        ? {...configInfoTable, emptyItemsText: 'No changes', items: []}
-        : configInfoTable,
+      configContentPrompt.configInfoTable.items.length === 0
+        ? {...configContentPrompt.configInfoTable, emptyItemsText: 'No changes', items: []}
+        : configContentPrompt.configInfoTable,
     )
   }
   const isDangerous = appTitle !== undefined && hasDeletedExtensions
@@ -142,11 +138,7 @@ async function buildConfigContentPrompt(
   release: boolean,
   configContentBreakdown?: ConfigExtensionIdentifiersBreakdown,
 ) {
-  if (!configContentBreakdown)
-    return {
-      configInfoTable: {header: 'Configuration: ', items: []},
-      deletedInfoTable: undefined,
-    }
+  if (!configContentBreakdown) return
 
   const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} = configContentBreakdown
 
