@@ -1,52 +1,40 @@
-import {BaseSchema} from '../../schemas.js'
+import {
+  BasePaymentsAppExtensionSchema,
+  ConfirmationSchema,
+  DeferredPaymentsSchema,
+} from './base_payments_app_extension_schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
 
-const MAX_LABEL_SIZE = 50
 const CERTIFICATE_REGEX = /^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$/
 
 export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
-export const CreditCardPaymentsAppExtensionSchema = BaseSchema.extend({
-  targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
-  api_version: zod.string(),
-  payment_session_url: zod.string().url(),
-  refund_session_url: zod.string().url(),
-  capture_session_url: zod.string().url(),
-  void_session_url: zod.string().url(),
-  verification_session_url: zod.string().url().optional(),
-  confirmation_callback_url: zod.string().url().optional(),
-  supports_3ds: zod.boolean(),
-  supported_countries: zod.array(zod.string()),
-  supported_payment_methods: zod.array(zod.string()),
-  supports_installments: zod.boolean(),
-  supports_deferred_payments: zod.boolean(),
-  test_mode_available: zod.boolean(),
-  merchant_label: zod.string().max(MAX_LABEL_SIZE),
-  encryption_certificate: zod.object({
-    fingerprint: zod.string(),
-    certificate: zod.string().regex(CERTIFICATE_REGEX),
-  }),
-  checkout_payment_method_fields: zod
-    .array(
-      zod.object({
-        type: zod.union([zod.literal('string'), zod.literal('number'), zod.literal('boolean')]),
-        required: zod.boolean(),
-        key: zod.string(),
-      }),
-    )
-    .optional(),
-  input: zod
-    .object({
-      metafield_identifiers: zod
-        .object({
-          namespace: zod.string(),
+
+export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(DeferredPaymentsSchema)
+  .merge(ConfirmationSchema)
+  .required({
+    refund_session_url: true,
+    capture_session_url: true,
+    void_session_url: true,
+  })
+  .extend({
+    targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
+    verification_session_url: zod.string().url().optional(),
+    encryption_certificate: zod.object({
+      fingerprint: zod.string(),
+      certificate: zod.string().regex(CERTIFICATE_REGEX),
+    }),
+    checkout_payment_method_fields: zod
+      .array(
+        zod.object({
+          type: zod.union([zod.literal('string'), zod.literal('number'), zod.literal('boolean')]),
+          required: zod.boolean(),
           key: zod.string(),
-        })
-        .optional(),
-    })
-    .optional(),
-})
+        }),
+      )
+      .optional(),
+  })
   .refine((schema) => !schema.supports_3ds || schema.confirmation_callback_url, {
     message: 'Property required when supports_3ds is true',
     path: ['confirmation_callback_url'],
