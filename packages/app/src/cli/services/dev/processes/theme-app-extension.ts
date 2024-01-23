@@ -36,9 +36,10 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
       })
   }, THEME_REFRESH_TIMEOUT_IN_MS)
 
+  await refreshToken(adminSession.storeFqdn)
+
   await execCLI2(['extension', 'serve', ...args], {
     store: adminSession.storeFqdn,
-    adminToken: adminSession.token,
     storefrontToken,
     token,
     stdout,
@@ -101,8 +102,8 @@ export async function setupPreviewThemeAppExtensionsProcess({
   }
 }
 
-async function refreshToken(store: string) {
-  const adminSession = await ensureAuthenticatedAdmin(store, [], false, {noPrompt: true})
+async function refreshToken(storeFqdn: string) {
+  const adminSession = await ensureAuthenticatedAdmin(storeFqdn, [], false, {noPrompt: true})
   if (useEmbeddedThemeCLI()) {
     await execCLI2(['theme', 'token', '--admin', adminSession.token])
   }
