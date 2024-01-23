@@ -31,6 +31,7 @@ Initialize your project using one of the following commands:
 
 Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started/create)
 
+Testing shopify-cla-action
 <p>&nbsp;</p>
 
 ## Developing themes with Shopify CLI
