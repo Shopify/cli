@@ -16,12 +16,74 @@ import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {WebhooksConfig} from '../../../models/extensions/specifications/types/app_config_webhook.js'
+import {validateUrl} from '../../../models/app/validation/common.js'
+import {ensureHttpsOnlyUrl} from '../../../models/extensions/specifications/validation/common.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
+import {zod} from '@shopify/cli-kit/node/schema'
+
+const LegacyPushAppSchema = zod.object({
+  name: zod.string().max(30),
+  client_id: zod.string(),
+  application_url: validateUrl(zod.string()),
+  embedded: zod.boolean(),
+  access_scopes: zod
+    .object({
+      scopes: zod.string().optional(),
+      use_legacy_install_flow: zod.boolean().optional(),
+    })
+    .optional(),
+  auth: zod
+    .object({
+      redirect_urls: zod.array(validateUrl(zod.string())),
+    })
+    .optional(),
+  webhooks: zod.object({
+    api_version: zod.string(),
+    privacy_compliance: zod
+      .object({
+        customer_deletion_url: ensureHttpsOnlyUrl.optional(),
+        customer_data_request_url: ensureHttpsOnlyUrl.optional(),
+        shop_deletion_url: ensureHttpsOnlyUrl.optional(),
+      })
+      .optional(),
+  }),
+  app_proxy: zod
+    .object({
+      url: validateUrl(zod.string()),
+      subpath: zod.string(),
+      prefix: zod.string(),
+    })
+    .optional(),
+  pos: zod
+    .object({
+      embedded: zod.boolean(),
+    })
+    .optional(),
+  app_preferences: zod
+    .object({
+      url: validateUrl(zod.string().max(255)),
+    })
+    .optional(),
+  build: zod
+    .object({
+      automatically_update_urls_on_dev: zod.boolean().optional(),
+      dev_store_url: zod.string().optional(),
+    })
+    .optional(),
+  extension_directories: zod.array(zod.string()).optional(),
+  web_directories: zod.array(zod.string()).optional(),
+})
+
+export const DeprecatedPushMessage =
+  'Command no longer supported.\n\nTo update your app configuration, upgrade Shopify CLI to the latest version and ' +
+  'run the `app deploy` command. It will update all extensions and also app configuration, if you opt-in for your ' +
+  'app. Review the documentation[1] for more details.\n\n' +
+  '[1] https://shopify.dev/docs/apps/tools/cli/configuration#migrate-from-config-push'
 
 export interface PushOptions {
   configuration: AppConfiguration
@@ -70,12 +132,14 @@ export async function pushConfig(options: PushOptions) {
   if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
   const {app} = queryResult
 
+  if (app.betas?.versionedAppConfig) abort(DeprecatedPushMessage)
+
   const {businessName: org} = await fetchOrgFromId(app.organizationId, partnersSession)
   renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
 
   await logMetadataForLoadedContext(app)
 
-  if (!(await confirmPushChanges(options.force, configuration, app, localApp.configSchema))) return
+  if (!(await confirmPushChanges(options.force, configuration, app, LegacyPushAppSchema))) return
 
   const variables = getMutationVars(app, configuration)
 

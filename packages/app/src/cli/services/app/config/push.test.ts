@@ -1,4 +1,4 @@
-import {PushOptions, pushConfig} from './push.js'
+import {DeprecatedPushMessage, PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
 import {
   DEFAULT_CONFIG,
@@ -317,6 +317,36 @@ describe('pushConfig', () => {
 
     // Then
     await expect(result).rejects.toThrow("Couldn't find app. Make sure you have a valid client ID.")
+  })
+
+  test('returns error when versioned app config beta flag is enabled', async () => {
+    // Given
+    const app = await mockApp({}, 'current')
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+    }
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {
+        apiKey: '43534543',
+        title: 'name of the app',
+        betas: {
+          versionedAppConfig: true,
+        },
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
+
+    // When
+    const result = pushConfig(options)
+
+    // Then
+    await expect(result).rejects.toThrow(DeprecatedPushMessage)
   })
 
   test('returns error when update mutation fails', async () => {
