@@ -343,18 +343,10 @@ describe('bulkUploadThemeAssets', async () => {
         },
       },
       {
-        code: 200,
+        code: 400,
         body: {
-          asset: {
-            key: 'config/settings_data.json',
-            public_url: null,
-            created_at: '2024-01-24T16:18:30-08:00',
-            updated_at: '2024-01-24T16:26:14-08:00',
-            content_type: 'application/json',
-            size: 19,
-            checksum: '336e955222ddd34b61d0f11940208640',
-            theme_id: 139503010036,
-            warnings: [],
+          errors: {
+            value: 'expected Hash to be a String',
           },
         },
       },
@@ -386,7 +378,7 @@ describe('bulkUploadThemeAssets', async () => {
     expect(bulkUploadresults[0]).toEqual({
       key: 'assets/test.liquid',
       success: true,
-      errors: [],
+      errors: {},
       asset: {
         key: 'assets/test.liquid',
         public_url: 'https://cdn.shopify.com/dummy_url',
@@ -398,6 +390,12 @@ describe('bulkUploadThemeAssets', async () => {
         theme_id: 139503010036,
         warnings: [],
       },
+    })
+    expect(bulkUploadresults[1]).toEqual({
+      key: undefined,
+      success: false,
+      errors: {value: 'expected Hash to be a String'},
+      asset: undefined,
     })
   })
 })

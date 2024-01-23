@@ -14,7 +14,7 @@ import {
 import {BulkUploadResult, Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
-export type AssetParams = Partial<Pick<ThemeAsset, 'key' | 'value'>>
+export type AssetParams = Partial<Pick<ThemeAsset, 'key' | 'value' | 'attachment'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,name,role,processing'})

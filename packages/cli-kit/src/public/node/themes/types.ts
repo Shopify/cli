@@ -87,20 +87,20 @@ export interface BulkUploadResult {
   /**
    * The unique identifier for the file being uploaded.
    */
-  key: string
+  key?: string
 
-  /**
+  /* *
    * Indicates whether the upload operation for this file was successful.
    */
   success: boolean
 
   /**
-   * An array of error messages that were generated during the upload operation for this file.
+   * Error message that was generated during the upload operation for this file.
    */
-  errors?: string[]
+  errors?: {value?: string}
 
-  /**
+  /* *
    * The asset that was uploaded as part of the upload operation for this file.
    */
-  asset: ThemeAsset
+  asset?: ThemeAsset
 }

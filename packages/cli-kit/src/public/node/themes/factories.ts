@@ -16,9 +16,8 @@ interface RemoteAssetResponse {
 }
 
 interface RemoteBulkUploadResponse {
-  body: {asset: RemoteAssetResponse}
+  body: {asset?: RemoteAssetResponse; errors?: {value: string}}
   code: number
-  errors?: string[]
 }
 
 export function buildTheme(themeJson?: RemoteThemeResponse): Theme | undefined {
@@ -56,9 +55,9 @@ export function buildBulkUploadResults(bulkUpload?: RemoteBulkUploadResponse): B
   if (!bulkUpload) return
 
   return {
-    key: bulkUpload.body.asset.key,
+    key: bulkUpload.body.asset?.key,
     success: bulkUpload.code === 200,
-    errors: bulkUpload.errors || [],
-    asset: bulkUpload.body.asset || {},
+    errors: bulkUpload.body.errors || {},
+    asset: bulkUpload.body.asset,
   }
 }

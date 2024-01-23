@@ -34,6 +34,13 @@ const THEME_DIRECTORY_PATTERNS = [
   'templates/customers/**/*.{liquid,json}',
 ]
 
+const THEME_PARTITION_REGEX = {
+  liquidRegex: /\.liquid$/,
+  configRegex: /^config\/(settings_schema|settings_data)\.json$/,
+  jsonRegex: /^(?!config\/).*\.json$/,
+  staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
+}
+
 export async function mountThemeFileSystem(root: string): Promise<ThemeFileSystem> {
   const filesPaths = await glob(THEME_DIRECTORY_PATTERNS, {
     cwd: root,
@@ -73,7 +80,7 @@ export async function writeThemeFile(root: string, {key, attachment, value}: The
   }
 }
 
-export async function readThemeFile(root: string, path: Key) {
+export async function readThemeFile(root: string, path: Key): Promise<string | Buffer | undefined> {
   const options: ReadOptions = isTextFile(path) ? {encoding: 'utf8'} : {}
   const absolutePath = joinPath(root, path)
 
@@ -104,6 +111,26 @@ export function isThemeAsset(path: string) {
 
 export function isJson(path: string) {
   return lookupMimeType(path) === 'application/json'
+}
+
+export function partitionThemeFiles(files: string[]) {
+  const liquidFiles: string[] = []
+  const jsonFiles: string[] = []
+  const configFiles: string[] = []
+  const staticAssetFiles: string[] = []
+
+  files.forEach((key) => {
+    if (THEME_PARTITION_REGEX.liquidRegex.test(key)) {
+      liquidFiles.push(key)
+    } else if (THEME_PARTITION_REGEX.configRegex.test(key)) {
+      configFiles.push(key)
+    } else if (THEME_PARTITION_REGEX.jsonRegex.test(key)) {
+      jsonFiles.push(key)
+    } else if (THEME_PARTITION_REGEX.staticAssetRegex.test(key)) {
+      staticAssetFiles.push(key)
+    }
+  })
+  return {liquidFiles, jsonFiles, configFiles, staticAssetFiles}
 }
 
 export function isTextFile(path: string) {

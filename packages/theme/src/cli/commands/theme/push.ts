@@ -111,10 +111,10 @@ export default class Push extends ThemeCommand {
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
 
     if (!flags.stable) {
-      const {live, development, unpublished} = flags
+      const {live, development, unpublished, path} = flags
 
       if (unpublished) {
-        const themeName = flags.theme || (await promptThemeName(flags.path))
+        const themeName = flags.theme || (await promptThemeName(path))
         await developmentThemeManager.create(UNPUBLISHED_THEME_ROLE, themeName)
       }
 
@@ -134,7 +134,7 @@ export default class Push extends ThemeCommand {
         }
       }
 
-      await push(theme, adminSession, {})
+      await push(theme, adminSession, {path, nodelete: flags.nodelete})
 
       if (flags.publish) {
         await publishTheme(theme.id, adminSession)

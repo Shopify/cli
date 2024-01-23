@@ -7,6 +7,7 @@ import {
   readThemeFile,
   removeThemeFile,
   writeThemeFile,
+  partitionThemeFiles,
 } from './theme-fs.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
@@ -195,6 +196,54 @@ describe('theme-fs', () => {
 
       // Then
       expect(result).toBeFalsy()
+    })
+  })
+
+  describe('partitionThemeFiles', () => {
+    test('should partition theme files correctly', () => {
+      // Given
+      const files = [
+        'assets/base.css',
+        'assets/base.css.liquid',
+        'assets/sparkle.gif',
+        'layout/password.liquid',
+        'layout/theme.liquid',
+        'locales/en.default.json',
+        'templates/404.json',
+        'config/settings_schema.json',
+        'config/settings_data.json',
+        'sections/announcement-bar.liquid',
+        'snippets/language-localization.liquid',
+      ]
+
+      // When
+      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+
+      // Then
+      expect(liquidFiles).toEqual([
+        'assets/base.css.liquid',
+        'layout/password.liquid',
+        'layout/theme.liquid',
+        'sections/announcement-bar.liquid',
+        'snippets/language-localization.liquid',
+      ])
+      expect(jsonFiles).toEqual(['locales/en.default.json', 'templates/404.json'])
+      expect(configFiles).toEqual(['config/settings_schema.json', 'config/settings_data.json'])
+      expect(staticAssetFiles).toEqual(['assets/base.css', 'assets/sparkle.gif'])
+    })
+
+    test('should handle empty file array', () => {
+      // Given
+      const files: string[] = []
+
+      // When
+      const {liquidFiles, jsonFiles, configFiles, staticAssetFiles} = partitionThemeFiles(files)
+
+      // Then
+      expect(liquidFiles).toEqual([])
+      expect(jsonFiles).toEqual([])
+      expect(configFiles).toEqual([])
+      expect(staticAssetFiles).toEqual([])
     })
   })
 
