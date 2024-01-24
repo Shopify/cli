@@ -7,6 +7,8 @@ import {
   publishTheme,
   upgradeTheme,
   fetchChecksums,
+  bulkUploadThemeAssets,
+  AssetParams,
 } from './api.js'
 import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
@@ -270,6 +272,48 @@ describe('request errors', () => {
 
         // Then
       }).rejects.toThrowError(AbortError)
+    })
+  })
+})
+
+describe('bulkUploadThemeAssets', async () => {
+  test('uploads multiple assets', async () => {
+    const id = 123
+    const assets: AssetParams[] = [
+      {key: 'snippets/product-variant-picker.liquid', value: 'content'},
+      {key: 'templates/404.json', value: 'content'},
+    ]
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {assets},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const themeAssets = await bulkUploadThemeAssets(id, assets, session)
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith(
+      'PUT',
+      `/themes/${id}/assets/bulk`,
+      session,
+      {
+        assets: [
+          {key: 'snippets/product-variant-picker.liquid', value: 'content'},
+          {key: 'templates/404.json', value: 'content'},
+        ],
+      },
+      {},
+    )
+    expect(themeAssets).not.toBeNull()
+    expect(themeAssets).toContainEqual({
+      key: 'snippets/product-variant-picker.liquid',
+      value: 'content',
+    })
+    expect(themeAssets).toContainEqual({
+      key: 'templates/404.json',
+      value: 'content',
     })
   })
 })

@@ -9,6 +9,7 @@ import {buildChecksum, buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/
 import {Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
+export type AssetParams = Partial<Pick<ThemeAsset, 'key' | 'value'>>
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,name,role,processing'})
@@ -34,9 +35,22 @@ export async function fetchThemeAsset(id: number, key: Key, session: AdminSessio
   return buildThemeAsset(response.json.asset)
 }
 
+export async function bulkUploadThemeAssets(
+  id: number,
+  assets: AssetParams[],
+  session: AdminSession,
+): Promise<ThemeAsset[]> {
+  const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
+  const uploadedAssets = response.json.assets
+
+  if (uploadedAssets?.length > 0) return uploadedAssets.map(buildThemeAsset)
+
+  return []
+}
+
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
   const response = await request('GET', `/themes/${id}/assets`, session, undefined, {fields: 'key,checksum'})
-  const assets = response.json?.assets
+  const assets = response.json.assets
 
   if (assets?.length > 0) return assets.map(buildChecksum)
 
