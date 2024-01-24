@@ -17,7 +17,7 @@ import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {BetaFlag, fetchAppRemoteBetaFlags} from './app/select-app.js'
+import {fetchAppRemoteBetaFlags} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -203,10 +203,13 @@ export async function ensureDevContext(
     apiKey: selectedApp.apiKey,
     config: options.commandConfig,
   })
+  const betas = await fetchAppRemoteBetaFlags(selectedApp.apiKey, token)
+
   const localApp = await loadApp({
     directory: options.directory,
     specifications,
     configName: getAppConfigurationShorthand(configuration.path),
+    remoteBetas: betas,
   })
 
   // We only update the cache or config if the current app is the right one
@@ -304,7 +307,6 @@ interface DeployContextOutput {
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
   release: boolean
-  betas: BetaFlag[]
 }
 
 /**
@@ -433,7 +435,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     identifiers,
     token,
     release: !options.noRelease,
-    betas,
   }
 
   await logMetadataForLoadedContext({

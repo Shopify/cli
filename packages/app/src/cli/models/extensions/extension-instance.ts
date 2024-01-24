@@ -132,7 +132,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension && !this.isAppConfigExtension
+    return !this.isThemeExtension
+  }
+
+  displayDraftUpdateSuccesMessage() {
+    return this.isDraftable() && !this.isAppConfigExtension
   }
 
   isUuidManaged() {
@@ -231,6 +235,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return watchPaths.map((path) => joinPath(this.directory, path))
     } else if (this.isESBuildExtension) {
       return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
+    } else if (this.isAppConfigExtension) {
+      return [this.configuration.path]
     } else {
       return []
     }

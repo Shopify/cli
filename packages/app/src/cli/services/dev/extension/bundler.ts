@@ -12,6 +12,7 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
+import {deepCompare} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
 export interface WatchEvent {
@@ -199,13 +200,20 @@ Redeploy Paths:
       environment: 'development',
       appURL: url,
     })
-      .then(() => {
-        if (!buildSignal.aborted) {
-          return onChange()
-        }
+      .then((reloadedConfig) => {
+        if (buildSignal.aborted) return
+        if (!extension.isAppConfigExtension) return onChange()
+
+        const isChanged = !deepCompare(
+          reloadedConfig!.newExtension.configuration,
+          reloadedConfig!.previousExtension.configuration,
+        )
+        if (isChanged) extension.configuration = reloadedConfig!.newExtension.configuration
+        return isChanged ? onChange() : undefined
       })
-      .catch((updateError: unknown) => {
-        outputWarn(`Error while deploying updated extension draft: ${JSON.stringify(updateError, null, 2)}`, stdout)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .catch((updateError: any) => {
+        outputWarn(`Error while deploying updated extension draft: ${updateError.message}`, stdout)
       })
   })
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)
@@ -216,7 +224,7 @@ export async function reloadAndbuildIfNecessary(
   build: boolean,
   options: ExtensionBuildOptions,
 ) {
-  await reloadExtensionConfig({extension, stdout: options.stdout})
+  const reloadedConfig = reloadExtensionConfig({extension, stdout: options.stdout})
   if (!build) return
-  return extension.build(options)
+  return extension.build(options).then(() => reloadedConfig)
 }
