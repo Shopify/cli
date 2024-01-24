@@ -224,6 +224,9 @@ importers:
         specifier: 8.13.0
         version: 8.13.0
     devDependencies:
+      '@hyrious/esbuild-plugin-commonjs':
+        specifier: ^0.2.4
+        version: 0.2.4(esbuild@0.19.8)
       '@types/body-parser':
         specifier: ^1.19.2
         version: 1.19.2
@@ -3224,6 +3227,19 @@ packages:
 
   /@humanwhocodes/object-schema@1.2.1:
     resolution: {integrity: sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==}
+
+  /@hyrious/esbuild-plugin-commonjs@0.2.4(esbuild@0.19.8):
+    resolution: {integrity: sha512-NKR8bsDbNP7EpM//cjoo8Bpihmc97gPpnwrggG+18iSGow6oaJpfmy3Bv+oBgPkPlxcGzC9SXh+6szoCoKFvCw==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      cjs-module-lexer: '*'
+      esbuild: '*'
+    peerDependenciesMeta:
+      cjs-module-lexer:
+        optional: true
+    dependencies:
+      esbuild: 0.19.8
+    dev: true
 
   /@iarna/toml@2.2.5:
     resolution: {integrity: sha512-trnsAYxU3xnS1gPHPyU961coFyLkh4gAD/0zQ5mymY4yOZ+CYvsPqUbOFSw0aDM4y0tV7tiFxL/1XfXPNC6IPg==}
