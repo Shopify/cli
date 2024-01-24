@@ -49,7 +49,7 @@ module ShopifyCLI
           return [204, {}, []] if IGNORED_ENDPOINTS.any? { |endpoint| env["PATH_INFO"].include?(endpoint) }
 
           headers = extract_http_request_headers(env)
-          is_chrome = headers['User-Agent'] =~ /[Cc]hrome/
+          is_chrome = headers["User-Agent"] =~ /[Cc]hrome/
           headers["Host"] = shop
           headers["Cookie"] = add_session_cookie(headers["Cookie"])
           headers["Accept-Encoding"] = "none"
