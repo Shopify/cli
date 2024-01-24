@@ -5,7 +5,7 @@ import {themeExtensionArgs} from '../theme-extension-args.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedPartners, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 
 // Tokens are valid for 120 min, better to be safe and refresh every 110 min
 const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
@@ -23,11 +23,11 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
 
 export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
-  {adminSession, themeExtensionServerArgs: args, storefrontToken, token},
+  {adminSession, themeExtensionServerArgs: args, storefrontToken},
 ) => {
   setInterval(() => {
     outputDebug('Refreshing theme session token...', stdout)
-    refreshToken(adminSession.storeFqdn)
+    refreshToken()
       .then(() => {
         outputDebug('Refreshed theme session token successfully', stdout)
       })
@@ -36,12 +36,11 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
       })
   }, THEME_REFRESH_TIMEOUT_IN_MS)
 
-  await refreshToken(adminSession.storeFqdn)
-
+  await refreshToken()
   await execCLI2(['extension', 'serve', ...args], {
     store: adminSession.storeFqdn,
+    adminToken: adminSession.token,
     storefrontToken,
-    token,
     stdout,
     stderr,
     signal: abortSignal,
@@ -102,10 +101,9 @@ export async function setupPreviewThemeAppExtensionsProcess({
   }
 }
 
-async function refreshToken(storeFqdn: string) {
-  const adminSession = await ensureAuthenticatedAdmin(storeFqdn, [], false, {noPrompt: true})
+async function refreshToken() {
+  const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
   if (useEmbeddedThemeCLI()) {
-    await execCLI2(['theme', 'token', '--admin', adminSession.token])
+    await execCLI2(['theme', 'token', '--partners', newToken])
   }
-  return {adminSession}
 }
