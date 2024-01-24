@@ -25,17 +25,24 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
   {stdout, stderr, abortSignal},
   {adminSession, themeExtensionServerArgs: args, storefrontToken},
 ) => {
-  setInterval(() => {
-    outputDebug('Refreshing theme session token...', stdout)
+  const refreshSequence = (attempt = 0) => {
+    outputDebug(`Refreshing partners token (attempt ${attempt})...`, stdout)
     refreshToken()
       .then(() => {
-        outputDebug('Refreshed theme session token successfully', stdout)
+        outputDebug('Refreshed partners token successfully', stdout)
       })
       .catch((error) => {
-        outputDebug(`Failed to refresh theme session token: ${error}`, stderr)
-        throw error
+        outputDebug(`Failed to refresh partners token: ${error}`, stderr)
+        if (attempt < 3) {
+          // Retry after 30 seconds. Sometimes we see random ECONNREFUSED errors
+          // so let's let the network sort itself out and retry.
+          setTimeout(() => refreshSequence(attempt + 1), 30 * 1000)
+        } else {
+          throw error
+        }
       })
-  }, PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS)
+  }
+  setInterval(refreshSequence, PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS)
 
   await refreshToken()
   await execCLI2(['extension', 'serve', ...args], {
