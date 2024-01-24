@@ -1,5 +1,25 @@
 # @shopify/app
 
+## 3.54.0
+
+### Minor Changes
+
+- d0c388f4f: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- ea76f79e2: Update @shopify/polaris and @shopify/polaris-icons to latest version
+- 97f0c6b3e: Refresh token when updating extension draft
+- f9aabda1e: Update app and store links from GraphiQL when dev is restarted
+- Updated dependencies [947fab35a]
+- Updated dependencies [2d42d74ec]
+- Updated dependencies [ea76f79e2]
+- Updated dependencies [d0c388f4f]
+- Updated dependencies [97f0c6b3e]
+- Updated dependencies [437147ae0]
+  - @shopify/plugin-cloudflare@3.54.0
+  - @shopify/cli-kit@3.54.0
+
 ## 3.53.0
 
 ### Minor Changes
