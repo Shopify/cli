@@ -7,8 +7,8 @@ import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedPartners, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 
-// Tokens are valid for 120 min, better to be safe and refresh every 110 min
-const THEME_REFRESH_TIMEOUT_IN_MS = 110 * 60 * 1000
+// Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
+const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000
 
 export interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
@@ -32,9 +32,10 @@ export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExte
         outputDebug('Refreshed theme session token successfully', stdout)
       })
       .catch((error) => {
+        outputDebug(`Failed to refresh theme session token: ${error}`, stderr)
         throw error
       })
-  }, THEME_REFRESH_TIMEOUT_IN_MS)
+  }, PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS)
 
   await refreshToken()
   await execCLI2(['extension', 'serve', ...args], {
