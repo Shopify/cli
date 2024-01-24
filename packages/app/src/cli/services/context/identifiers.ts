@@ -17,6 +17,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   force: boolean
   release: boolean
   partnersApp?: PartnersAppForIdentifierMatching
+  includeDraftExtensions?: boolean
 }
 
 export interface RemoteSource {

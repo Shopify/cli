@@ -165,6 +165,7 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  draftExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
   useVersionedAppConfig: boolean
@@ -228,6 +229,12 @@ export class App implements AppInterface {
   get allExtensions() {
     return this.realExtensions.filter(
       (ext) => !ext.isAppConfigExtension || (this.useVersionedAppConfig && this.includeConfigOnDeploy),
+    )
+  }
+
+  get draftExtensions() {
+    return this.realExtensions.filter(
+      (ext) => ext.isDraftable() && (!ext.isAppConfigExtension || this.useVersionedAppConfig),
     )
   }
 
