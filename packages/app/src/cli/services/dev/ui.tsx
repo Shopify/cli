@@ -9,6 +9,8 @@ import {render, renderInfo} from '@shopify/cli-kit/node/ui'
 import {basename} from '@shopify/cli-kit/node/path'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 
 export async function outputUpdateURLsResult(
   updated: boolean,
@@ -79,6 +81,7 @@ export async function renderDev({
         graphiqlUrl={graphiqlUrl}
         graphiqlPort={graphiqlPort}
         developerPreview={developerPreview}
+        isEditionWeek={isEditionWeek()}
       />,
       {
         exitOnCtrlC: false,
@@ -115,4 +118,14 @@ async function renderDevNonInteractive({
       await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
     }),
   )
+}
+
+// We should make this better later, but for now, we'll hardcode and see how it's received.
+function isEditionWeek() {
+  if (isTruthy(process.env.IS_EDITION_WEEK)) return true
+  if (isUnitTest()) return false
+  const editionStart = new Date('2024-01-31T17:00:00.000Z')
+  const editionWeekEnd = new Date('2024-02-07T17:00:00.000Z')
+  const now = new Date()
+  return now >= editionStart && now <= editionWeekEnd
 }
