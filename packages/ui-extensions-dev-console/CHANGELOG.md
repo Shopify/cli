@@ -1,11 +1,5 @@
 # @shopify/ui-extensions-dev-console-app
 
-## 3.54.0
-
-### Patch Changes
-
-- ea76f79e2: Update @shopify/polaris and @shopify/polaris-icons to latest version
-
 ## 3.53.0
 
 ### Minor Changes
