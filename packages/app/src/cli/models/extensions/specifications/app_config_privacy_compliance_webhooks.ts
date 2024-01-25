@@ -1,10 +1,5 @@
-import {WebhooksSchemaWithDeclarative} from './app_config_webhook.js'
+import {WebhookSchema} from './app_config_webhook.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {zod} from '@shopify/cli-kit/node/schema'
-
-const PrivacyComplianceWebbhooksSchema = zod.object({
-  webhooks: WebhooksSchemaWithDeclarative,
-})
 
 const PrivacyComplianceWebbhooksTransformConfig: TransformationConfig = {
   customers_redact_url: 'webhooks.privacy_compliance.customer_deletion_url',
@@ -14,9 +9,10 @@ const PrivacyComplianceWebbhooksTransformConfig: TransformationConfig = {
 
 export const PrivacyComplianceWebbhooksSpecIdentifier = 'privacy_compliance_webhooks'
 
+// Uses the same schema as the webhooks specs because its content is nested under the same webhooks section
 const spec = createConfigExtensionSpecification({
   identifier: PrivacyComplianceWebbhooksSpecIdentifier,
-  schema: PrivacyComplianceWebbhooksSchema,
+  schema: WebhookSchema,
   transformConfig: PrivacyComplianceWebbhooksTransformConfig,
 })
 
