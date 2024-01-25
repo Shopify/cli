@@ -1,5 +1,22 @@
 # @shopify/theme
 
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Refine `shopify theme pull` implementation to no longer require a Ruby setup
+- a9e847717: Introduce `shopify theme rename` command
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+  - @shopify/cli-kit@3.54.0
+
 ## 3.53.0
 
 ### Minor Changes
