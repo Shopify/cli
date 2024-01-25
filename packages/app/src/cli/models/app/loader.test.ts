@@ -51,6 +51,9 @@ embedded = true
 [webhooks]
 api_version = "2023-07"
 
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+
 [build]
 automatically_update_urls_on_dev = true
 `
@@ -1684,6 +1687,9 @@ wrong = "property"
     [webhooks]
     api_version = "2023-07"
 
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
     [pos]
     embedded = true
     `
@@ -1693,11 +1699,16 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications, remoteBetas: [BetaFlag.VersionedAppConfig]})
 
     // Then
-    expect(app.allExtensions).toHaveLength(4)
+    expect(app.allExtensions).toHaveLength(5)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       expect.objectContaining({
         name: 'for-testing',
+      }),
+      expect.objectContaining({
+        auth: {
+          redirect_urls: ['https://example.com/api/auth'],
+        },
       }),
       expect.objectContaining({
         webhooks: {
@@ -2004,6 +2015,13 @@ describe('parseConfigurationObject', () => {
     }
 
     const errorObject = [
+      {
+        code: 'invalid_type',
+        expected: 'object',
+        received: 'undefined',
+        path: ['auth'],
+        message: 'Required',
+      },
       {
         code: 'invalid_type',
         expected: 'boolean',

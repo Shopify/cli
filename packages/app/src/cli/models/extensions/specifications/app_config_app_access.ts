@@ -14,11 +14,9 @@ const AppAccessSchema = zod.object({
       use_legacy_install_flow: zod.boolean().optional(),
     })
     .optional(),
-  auth: zod
-    .object({
-      redirect_urls: zod.array(validateUrl(zod.string())),
-    })
-    .optional(),
+  auth: zod.object({
+    redirect_urls: zod.array(validateUrl(zod.string())),
+  }),
 })
 
 export const AppAccessSpecIdentifier = 'app_access'
