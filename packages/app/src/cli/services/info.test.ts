@@ -60,6 +60,9 @@ describe('info', () => {
 
       [webhooks]
       api_version = "2023-07"
+
+      [auth]
+      redirect_urls = [ "https://example.com/api/auth" ]
       `
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
