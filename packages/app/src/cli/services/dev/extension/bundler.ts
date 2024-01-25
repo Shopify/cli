@@ -9,7 +9,6 @@ import {ExtensionBuildOptions} from '../../build/extension.js'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {fileExists} from '@shopify/cli-kit/node/fs'
 import {FSWatcher} from 'chokidar'
 import micromatch from 'micromatch'
 import {deepCompare} from '@shopify/cli-kit/common/object'
@@ -136,30 +135,25 @@ export async function setupExtensionWatcher({
 }: SetupExtensionWatcherOptions) {
   const {default: chokidar} = await import('chokidar')
 
-  const rebuildAndRedeployWatchPaths = extension.watchPaths
-  const redeployWatchPaths: string[] = []
+  const buildPaths = extension.watchBuildPaths
 
-  if (!rebuildAndRedeployWatchPaths) {
+  if (!buildPaths) {
     outputWarn(
       `Extension ${extension.localIdentifier} is missing the 'build.watch' setting, automatic builds are disabled.`,
       stdout,
     )
     return
   }
-
-  if (await fileExists(joinPath(extension.directory, 'locales'))) {
-    redeployWatchPaths.push(joinPath(extension.directory, 'locales', '**.json'))
-  }
-  redeployWatchPaths.push(joinPath(extension.directory, '**.toml'))
+  const configurationPaths: string[] = await extension.watchConfigurationPaths()
 
   outputDebug(
     `
 Watching extension: ${extension.localIdentifier} for:
 Rebuild and Redeploy Paths:
-\t${rebuildAndRedeployWatchPaths.join('\n\t')}
+\t${buildPaths.join('\n\t')}
 
 Redeploy Paths:
-\t${redeployWatchPaths.join('\n\t')}
+\t${configurationPaths.join('\n\t')}
 `.trim(),
     stdout,
   )
@@ -180,7 +174,7 @@ Redeploy Paths:
   }
 
   let buildController: AbortController | null
-  const allPaths = [...rebuildAndRedeployWatchPaths, ...redeployWatchPaths]
+  const allPaths = [...buildPaths, ...configurationPaths]
   const functionRebuildAndRedeployWatcher = chokidar.watch(allPaths, {ignored: '**/*.test.*'}).on('change', (path) => {
     outputDebug(`Extension file at path ${path} changed`, stdout)
     if (buildController) {
@@ -189,7 +183,7 @@ Redeploy Paths:
     }
     buildController = new AbortController()
     const buildSignal = buildController.signal
-    const shouldBuild = micromatch.isMatch(path, rebuildAndRedeployWatchPaths)
+    const shouldBuild = micromatch.isMatch(path, buildPaths)
 
     reloadAndbuildIfNecessary(extension, shouldBuild, {
       app,
@@ -201,16 +195,19 @@ Redeploy Paths:
       appURL: url,
     })
       .then(({newConfig, previousConfig}) => {
-        if (buildSignal.aborted) return
-        if (!extension.isAppConfigExtension) return onChange()
+        if (shouldBuild) {
+          if (buildSignal.aborted) return
+          return onChange()
+        }
 
         if (deepCompare(newConfig, previousConfig)) return
-
-        extension.configuration = newConfig
         return onChange()
       })
       .catch((updateError: Error) => {
-        outputWarn(`Error while deploying updated extension draft: ${updateError.message}`, stdout)
+        const draftUpdateErrorMessage = extension.draftMessages.errorMessage
+        if (draftUpdateErrorMessage) {
+          outputWarn(`${draftUpdateErrorMessage}: ${updateError.message}`, stdout)
+        }
       })
   })
   listenForAbortOnWatcher(functionRebuildAndRedeployWatcher)

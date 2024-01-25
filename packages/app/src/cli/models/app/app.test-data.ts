@@ -192,7 +192,7 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
 
   const extension = new ExtensionInstance({
     configuration,
-    configurationPath: '',
+    configurationPath: 'shopify.app.toml',
     directory: './',
     specification,
   })

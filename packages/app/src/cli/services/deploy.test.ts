@@ -554,7 +554,6 @@ async function testDeployBundle({
       }),
     token: 'api-token',
     release: !options?.noRelease,
-    betas,
   })
 
   vi.mocked(useThemebundling).mockReturnValue(true)

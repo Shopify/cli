@@ -56,8 +56,9 @@ export async function updateExtensionDraft({
   if (mutationResult.extensionUpdateDraft?.userErrors?.length > 0) {
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)
-  } else if (extension.displayDraftUpdateSuccesMessage()) {
-    outputInfo(`Draft updated successfully for extension: ${extension.localIdentifier}`, stdout)
+  } else {
+    const draftUpdateSuccesMessage = extension.draftMessages.successMessage
+    if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
   }
 }
 
@@ -105,8 +106,11 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     abort,
   )
 
+  const previousConfig = extension.configuration
+  extension.configuration = {...newConfig}
+
   return {
-    previousConfig: extension.configuration,
+    previousConfig,
     newConfig,
   }
 }
