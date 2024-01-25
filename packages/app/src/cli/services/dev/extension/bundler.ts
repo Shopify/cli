@@ -205,10 +205,10 @@ Redeploy Paths:
         if (!extension.isAppConfigExtension) return onChange()
 
         const isChanged = !deepCompare(
-          reloadedConfig!.newExtension.configuration,
-          reloadedConfig!.previousExtension.configuration,
+          reloadedConfig.newExtension.configuration,
+          reloadedConfig.previousExtension.configuration,
         )
-        if (isChanged) extension.configuration = reloadedConfig!.newExtension.configuration
+        if (isChanged) extension.configuration = reloadedConfig.newExtension.configuration
         return isChanged ? onChange() : undefined
       })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -225,6 +225,6 @@ export async function reloadAndbuildIfNecessary(
   options: ExtensionBuildOptions,
 ) {
   const reloadedConfig = reloadExtensionConfig({extension, stdout: options.stdout})
-  if (!build) return
+  if (!build) return reloadedConfig
   return extension.build(options).then(() => reloadedConfig)
 }
