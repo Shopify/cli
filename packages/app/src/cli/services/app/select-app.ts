@@ -25,7 +25,6 @@ export async function fetchAppRemoteBetaFlags(apiKey: string, token: string) {
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, {apiKey})
   if (queryResult.app) {
     const {app} = queryResult
-    if (app.betas?.versionedAppConfig) betas.push(BetaFlag.VersionedAppConfig)
   } else {
     outputDebug("Couldn't find app for beta flags. Make sure you have a valid client ID.")
   }
