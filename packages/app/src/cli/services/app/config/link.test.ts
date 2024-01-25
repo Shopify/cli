@@ -714,10 +714,6 @@ redirect_urls = [ "https://example.com/callback1" ]
 [webhooks]
 api_version = "2023-07"
 
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "https://my-app.com/webhooks"
-
 [pos]
 embedded = true
 `

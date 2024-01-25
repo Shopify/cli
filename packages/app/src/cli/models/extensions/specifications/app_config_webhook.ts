@@ -22,7 +22,6 @@ const WebhooksSchema = zod.object({
       shop_deletion_url: UriValidation.optional(),
     })
     .optional(),
-  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
 const WebhooksSchemaWithDeclarative = WebhooksSchema.superRefine(webhookValidator)
