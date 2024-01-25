@@ -122,15 +122,3 @@ export function isEmpty(object: object): boolean {
 
   return isEmpty(object)
 }
-
-/**
- * Creates a shallow recursively clone of value.
- *
- * @param object - The value to recursively clone.
- * @returns - Returns the deep cloned value.
- */
-export function deepClone(object: object): object {
-  const cloneDeep = require('lodash/cloneDeep.js')
-
-  return cloneDeep(object)
-}

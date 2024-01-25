@@ -200,19 +200,16 @@ Redeploy Paths:
       environment: 'development',
       appURL: url,
     })
-      .then((reloadedConfig) => {
+      .then(({newConfig, previousConfig}) => {
         if (buildSignal.aborted) return
         if (!extension.isAppConfigExtension) return onChange()
 
-        const isChanged = !deepCompare(
-          reloadedConfig.newExtension.configuration,
-          reloadedConfig.previousExtension.configuration,
-        )
-        if (isChanged) extension.configuration = reloadedConfig.newExtension.configuration
-        return isChanged ? onChange() : undefined
+        if (deepCompare(newConfig, previousConfig)) return
+
+        extension.configuration = newConfig
+        return onChange()
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .catch((updateError: any) => {
+      .catch((updateError: Error) => {
         outputWarn(`Error while deploying updated extension draft: ${updateError.message}`, stdout)
       })
   })

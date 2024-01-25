@@ -74,7 +74,7 @@ export async function setupDraftableExtensionsProcess({
   remoteApp: PartnersAppForIdentifierMatching
 }): Promise<DraftableExtensionProcess | undefined> {
   // it would be good if this process didn't require the full local & remote app instances
-  const draftableExtensions = localApp.draftExtensions
+  const draftableExtensions = localApp.draftableExtensions
   if (draftableExtensions.length === 0) {
     return
   }

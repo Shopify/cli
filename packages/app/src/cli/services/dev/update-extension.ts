@@ -6,7 +6,6 @@ import {
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
-import {deepClone} from '@shopify/cli-kit/common/object'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -105,10 +104,9 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     configObject,
     abort,
   )
-  const newExtension = deepClone(extension) as ExtensionInstance
-  newExtension.configuration = newConfig
+
   return {
-    previousExtension: extension,
-    newExtension,
+    previousConfig: extension.configuration,
+    newConfig,
   }
 }
