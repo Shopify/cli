@@ -1880,6 +1880,9 @@ wrong = "property"
     [webhooks]
     api_version = "2023-07"
 
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
     [access.admin]
     direct_api_mode = "online"
     `
@@ -1902,6 +1905,9 @@ wrong = "property"
 
     [webhooks]
     api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
 
     [access.admin]
     direct_api_mode = "offline"
@@ -1926,6 +1932,9 @@ wrong = "property"
     [webhooks]
     api_version = "2023-07"
 
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
     [access.admin]
     direct_api_mode = "foo"
     `
@@ -1945,6 +1954,9 @@ wrong = "property"
 
     [webhooks]
     api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
 
     [access.admin]
     embedded_app_direct_api_access = true
@@ -1969,6 +1981,9 @@ wrong = "property"
     [webhooks]
     api_version = "2023-07"
 
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
     [access.admin]
     embedded_app_direct_api_access = false
     `
@@ -1991,6 +2006,9 @@ wrong = "property"
 
     [webhooks]
     api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
 
     [access.admin]
     embedded_app_direct_api_access = "foo"
