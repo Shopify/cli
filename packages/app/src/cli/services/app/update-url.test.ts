@@ -1,5 +1,7 @@
 import updateURL, {UpdateURLOptions} from './update-url.js'
 import {fetchAppFromConfigOrSelect} from './fetch-app-from-config-or-select.js'
+import {BetaFlag, fetchAppRemoteBetaFlags} from './select-app.js'
+import {DeprecatedPushMessage} from './config/push.js'
 import {getURLs, updateURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
 import {testAppWithConfig, testOrganizationApp} from '../../models/app/app.test-data.js'
@@ -10,6 +12,7 @@ vi.mock('./fetch-app-from-config-or-select.js')
 vi.mock('../dev/urls.js')
 vi.mock('../../prompts/update-url.js')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./select-app.js')
 
 const APP1 = testAppWithConfig({
   app: {},
@@ -23,6 +26,7 @@ const ORG_APP1 = testOrganizationApp()
 
 beforeEach(async () => {
   vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
+  vi.mocked(fetchAppRemoteBetaFlags).mockResolvedValue([])
 })
 
 describe('update-url', () => {
@@ -126,5 +130,22 @@ describe('update-url', () => {
       'token',
       APP1,
     )
+  })
+
+  test('returns error when versioned app config beta flag is enabled', async () => {
+    // Given
+    const options: UpdateURLOptions = {
+      app: APP1,
+      appURL: 'https://example.com',
+      redirectURLs: ['https://example.com/callback'],
+    }
+    vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(ORG_APP1)
+    vi.mocked(fetchAppRemoteBetaFlags).mockResolvedValue([BetaFlag.VersionedAppConfig])
+
+    // When
+    const result = updateURL(options)
+
+    // Then
+    await expect(result).rejects.toThrow(DeprecatedPushMessage)
   })
 })
