@@ -1,5 +1,18 @@
 # @shopify/cli-kit
 
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Refine `shopify theme pull` implementation to no longer require a Ruby setup
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+- a9e847717: Add `performActionWithRetryAfterRecovery` to codify pattern of optimistic attempt + recovery/retry mechanism
+- a9e847717: Fix password page error for safari
+
+### Patch Changes
+
+- a9e847717: Update @shopify/polaris and @shopify/polaris-icons to latest version
+
 ## 3.53.0
 
 ### Minor Changes
