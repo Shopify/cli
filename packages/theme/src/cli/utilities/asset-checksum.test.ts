@@ -19,7 +19,7 @@ describe('asset-checksum', () => {
     testCases.forEach(({file, expectedChecksum}) => {
       test(`returns the expected checksum for "${file}"`, async () => {
         // Given
-        const root = 'packages/theme/src/cli/utilities/fixtures'
+        const root = 'src/cli/utilities/fixtures'
 
         // When
         const actualChecksum = await checksum(root, file)

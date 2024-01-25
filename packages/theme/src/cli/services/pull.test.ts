@@ -6,7 +6,7 @@ describe('pull', () => {
   describe('isEmptyDir', () => {
     test('returns true when directory is empty', async () => {
       // Given
-      const root = 'packages/theme/src/cli/utilities/fixtures'
+      const root = 'src/cli/utilities/fixtures'
 
       // When
       const result = await isEmptyDir(root)
