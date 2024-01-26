@@ -56,6 +56,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         title: 'name of the app',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -112,6 +113,7 @@ describe('pushConfig', () => {
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -164,6 +166,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         requestedAccessScopes: ['read_orders'],
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -216,6 +219,7 @@ describe('pushConfig', () => {
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -267,6 +271,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '12345',
         requestedAccessScopes: ['read_orders'],
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -332,9 +337,7 @@ describe('pushConfig', () => {
       app: {
         apiKey: '43534543',
         title: 'name of the app',
-        betas: {
-          versionedAppConfig: true,
-        },
+        disabledBetas: [],
       },
       appUpdate: {
         userErrors: [],
@@ -358,7 +361,7 @@ describe('pushConfig', () => {
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
-      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
+      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id, disabledBetas: ['versioned_app_config']},
       appUpdate: {
         userErrors: [{message: 'failed to update app'}],
       },
@@ -382,7 +385,7 @@ describe('pushConfig', () => {
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
-      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
+      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id, disabledBetas: ['versioned_app_config']},
       appUpdate: {
         userErrors: [
           {message: "I don't like this name", field: ['input', 'title']},
@@ -446,6 +449,7 @@ app_preferences > url: this url is blocked 6`)
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -495,6 +499,7 @@ app_preferences > url: this url is blocked 6`)
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
@@ -513,6 +518,7 @@ app_preferences > url: this url is blocked 6`)
       app: {
         apiKey: '12345',
         webhookApiVersion: '2023-04',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
