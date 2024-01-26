@@ -175,6 +175,9 @@ importers:
       '@shopify/polaris-icons':
         specifier: 8.0.0
         version: 8.0.0
+      '@shopify/theme-check-node':
+        specifier: 2.0.0
+        version: 2.0.0
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0
