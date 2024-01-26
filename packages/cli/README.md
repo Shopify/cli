@@ -854,35 +854,27 @@ Validate the theme.
 
 ```
 USAGE
-  $ shopify theme check [-a] [-c <value>] [-C <value>] [--dev-preview] [-e <value>] [-x <value>] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print]
-    [--update-docs] [--verbose] [-v]
+  $ shopify theme check [-a] [-C <value>] [-e <value>] [--fail-level crash|error|suggestion|style|warning|info]
+    [--init] [--list] [--no-color] [-o text|json] [--path <value>] [--print] [--verbose] [-v]
 
 FLAGS
-  -C, --config=<value>            Use the config provided, overriding .theme-check.yml if present
-                                  Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
-                                  theme-check:recommended, theme-check:all
-                                  For backwards compatibility, :theme_app_extension is also supported
-  -a, --auto-correct              Automatically fix offenses
-  -c, --category=<value>          Only run this category of checks
-                                  Runs checks matching all categories when specified more than once
-  -e, --environment=<value>       The environment to apply to the current command.
-  -o, --output=<option>           [default: text] The output format to use
-                                  <options: text|json>
-  -v, --version                   Print Theme Check version
-  -x, --exclude-category=<value>  Exclude this category of checks
-                                  Excludes checks matching any category when specified more than once
-      --dev-preview               Use the dev preview version of theme check
-                                  Applies the typescript implementation of theme check to the theme
-      --fail-level=<option>       [default: error] Minimum severity for exit with error code
-                                  <options: crash|error|suggestion|style|warning|info>
-      --init                      Generate a .theme-check.yml file
-      --list                      List enabled checks
-      --no-color                  Disable color output.
-      --path=<value>              The path to your theme directory.
-      --print                     Output active config to STDOUT
-      --update-docs               Update Theme Check docs (objects, filters, and tags)
-      --verbose                   Increase the verbosity of the logs.
+  -C, --config=<value>       Use the config provided, overriding .theme-check.yml if present
+                             Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
+                             theme-check:recommended, theme-check:all
+                             For backwards compatibility, :theme_app_extension is also supported
+  -a, --auto-correct         Automatically fix offenses
+  -e, --environment=<value>  The environment to apply to the current command.
+  -o, --output=<option>      [default: text] The output format to use
+                             <options: text|json>
+  -v, --version              Print Theme Check version
+      --fail-level=<option>  [default: error] Minimum severity for exit with error code
+                             <options: crash|error|suggestion|style|warning|info>
+      --init                 Generate a .theme-check.yml file
+      --list                 List enabled checks
+      --no-color             Disable color output.
+      --path=<value>         The path to your theme directory.
+      --print                Output active config to STDOUT
+      --verbose              Increase the verbosity of the logs.
 
 DESCRIPTION
   Validate the theme.
@@ -1066,13 +1058,11 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--dev-preview] [--no-color] [--verbose]
+  $ shopify theme language-server [--no-color] [--verbose]
 
 FLAGS
-  --dev-preview  Use the dev preview version of theme check
-                 Applies the typescript implementation of theme check to the theme
-  --no-color     Disable color output.
-  --verbose      Increase the verbosity of the logs.
+  --no-color  Disable color output.
+  --verbose   Increase the verbosity of the logs.
 
 DESCRIPTION
   Start a Language Server Protocol server.

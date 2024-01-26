@@ -23,7 +23,7 @@ describe('Check', () => {
 
     async function run(argv: string[]) {
       const config = {} as Config
-      const check = new Check(['--dev-preview', `--path=${path}`, ...argv], config)
+      const check = new Check([`--path=${path}`, ...argv], config)
 
       await check.run()
     }
