@@ -175,6 +175,9 @@ importers:
       '@shopify/polaris-icons':
         specifier: 8.0.0
         version: 8.0.0
+      '@shopify/theme-check-node':
+        specifier: 2.0.0
+        version: 2.0.0
       abort-controller:
         specifier: 3.0.0
         version: 3.0.0
@@ -4550,6 +4553,13 @@ packages:
       ohm-js: 16.6.0
     dev: false
 
+  /@shopify/liquid-html-parser@2.0.1:
+    resolution: {integrity: sha512-qq8dXvi9vDoNIb+Nh2eTKr/QKaITSZG7mbYuuzrWLGVFnzcmjS8bcwUpWecqi2oBCzUSB6ENnNA0jOBNcqMJXg==}
+    dependencies:
+      line-column: 1.0.2
+      ohm-js: 16.6.0
+    dev: false
+
   /@shopify/polaris-icons@8.0.0:
     resolution: {integrity: sha512-NyO/gkBvJfLiIDHywTFRQpwrA+wHHb9xk3uiApArBBB3zluWK1Gos+6zldfXPRZzHSzk2gB6IP2dQDJ2zJmIcg==}
     engines: {node: ^16.17.0 || >=18.12.0}
@@ -4659,11 +4669,37 @@ packages:
       - encoding
     dev: false
 
+  /@shopify/theme-check-common@2.0.0:
+    resolution: {integrity: sha512-z5g4AyyJ63tcpQLy9hoZLTHDNAIvIfRFiiq+Rd+ulC2zSGUCGhR488hKwKYvw7XstGUVPLhKDXkMpU4zq+rb6g==}
+    dependencies:
+      '@shopify/liquid-html-parser': 2.0.1
+      cross-fetch: 4.0.0
+      json-to-ast: 2.1.0
+      line-column: 1.0.2
+      lodash.set: 4.3.2
+      lodash.unset: 4.5.2
+      minimatch: 9.0.3
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /@shopify/theme-check-docs-updater@1.22.0:
     resolution: {integrity: sha512-jyz5KnZWwz4WPcxHZGkWaGcb1Ah4swhLi8s3nEp8YZyIS9z7nmxnQHD1DyRfInXlMuXUZBWXp2eshcW1J7cUTA==}
     hasBin: true
     dependencies:
       '@shopify/theme-check-common': 1.22.0
+      ajv: 8.12.0
+      env-paths: 2.2.1
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@shopify/theme-check-docs-updater@2.0.0:
+    resolution: {integrity: sha512-TGF8ckyGGDTS5tfB1AhUxUQXQQWjJuOnXz2i3xzQeOF0RdJJU8txKdpR/Z7gBP88/hVjooTXhA3w6W7IbRZy0w==}
+    hasBin: true
+    dependencies:
+      '@shopify/theme-check-common': 2.0.0
       ajv: 8.12.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
@@ -4682,10 +4718,21 @@ packages:
       - encoding
     dev: false
 
+  /@shopify/theme-check-node@2.0.0:
+    resolution: {integrity: sha512-dlTNLNjf3W28ApWaWuZtgo3kO82O7aP40Snd3UUchNfKiVVnDg3p20pTBP/9Rq25GPq60QDFxSEjFg9E18WOCQ==}
+    dependencies:
+      '@shopify/theme-check-common': 2.0.0
+      '@shopify/theme-check-docs-updater': 2.0.0
+      glob: 8.1.0
+      yaml: 2.3.2
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /@shopify/theme-language-server-common@1.7.1:
     resolution: {integrity: sha512-UQj28xRSEQnGQrmn3e162XyrxUPnvEompDKGUakLKATZNv6D19DaxpG0DZ6bCKdyp2o+1QYX+Z4Hy2Q5cMPPeQ==}
     dependencies:
-      '@shopify/liquid-html-parser': 2.0.0
+      '@shopify/liquid-html-parser': 2.0.1
       '@shopify/theme-check-common': 1.22.0
       '@vscode/web-custom-data': 0.4.8
       vscode-languageserver: 8.1.0
