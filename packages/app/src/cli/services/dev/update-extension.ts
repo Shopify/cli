@@ -107,7 +107,7 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
   )
 
   const previousConfig = extension.configuration
-  extension.configuration = {...newConfig}
+  extension.configuration = newConfig
 
   return {
     previousConfig,

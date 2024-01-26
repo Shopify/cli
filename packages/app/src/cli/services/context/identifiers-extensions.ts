@@ -125,8 +125,7 @@ async function ensureNonUuidManagedExtensionsIds(
   appId: string,
   includeDraftExtensions = false,
 ) {
-  let localExtensionRegistrations = app.allExtensions
-  if (includeDraftExtensions) localExtensionRegistrations = app.draftableExtensions
+  let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
 
   localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []
