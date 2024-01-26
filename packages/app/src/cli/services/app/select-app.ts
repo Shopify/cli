@@ -30,9 +30,10 @@ export async function fetchAppRemoteBetaFlags(apiKey: string, token: string) {
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, {apiKey})
   if (queryResult.app) {
     const {app} = queryResult
-    const defaultKeys = Object.keys(FlagMap) as (keyof typeof FlagMap)[]
-    const activeBetas = defaultKeys.filter((flag) => !app.disabledBetas.includes(flag))
-    betas = activeBetas.map((beta) => FlagMap[beta])
+    const possibleBetaKeys = Object.keys(FlagMap) as (keyof typeof FlagMap)[]
+    const activeBetasKeys = possibleBetaKeys.filter((flag) => !app.disabledBetas.includes(flag))
+    const activeBetaFlags = activeBetasKeys.map((beta) => FlagMap[beta])
+    betas = defaultActiveBetas.filter((beta) => activeBetaFlags.includes(beta))
   } else {
     outputDebug("Couldn't find app for beta flags. Make sure you have a valid client ID.")
   }
