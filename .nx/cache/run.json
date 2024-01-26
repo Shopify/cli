@@ -1,0 +1,131 @@
+{
+  "run": {
+    "command": "nx build cli",
+    "startTime": "2024-01-25T14:57:53.942Z",
+    "endTime": "2024-01-25T14:57:55.699Z",
+    "inner": false
+  },
+  "tasks": [
+    {
+      "taskId": "ui-extensions-test-utils:build",
+      "target": "build",
+      "projectName": "ui-extensions-test-utils",
+      "hash": "17340963798899417507",
+      "startTime": "2024-01-25T14:57:53.945Z",
+      "endTime": "2024-01-25T14:57:53.990Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "cli-kit:build",
+      "target": "build",
+      "projectName": "cli-kit",
+      "hash": "4571792219306416524",
+      "startTime": "2024-01-25T14:57:53.945Z",
+      "endTime": "2024-01-25T14:57:53.999Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "plugin-cloudflare:build",
+      "target": "build",
+      "projectName": "plugin-cloudflare",
+      "hash": "4089345396175379441",
+      "startTime": "2024-01-25T14:57:54.004Z",
+      "endTime": "2024-01-25T14:57:54.009Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "theme:build",
+      "target": "build",
+      "projectName": "theme",
+      "hash": "13573697568396211076",
+      "startTime": "2024-01-25T14:57:54.011Z",
+      "endTime": "2024-01-25T14:57:54.012Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "plugin-did-you-mean:build",
+      "target": "build",
+      "projectName": "plugin-did-you-mean",
+      "hash": "4757116638998622754",
+      "startTime": "2024-01-25T14:57:54.012Z",
+      "endTime": "2024-01-25T14:57:54.014Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "ui-extensions-server-kit:build:code",
+      "target": "build:code",
+      "projectName": "ui-extensions-server-kit",
+      "hash": "1289912733747682829",
+      "startTime": "2024-01-25T14:57:53.945Z",
+      "endTime": "2024-01-25T14:57:55.565Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 0
+    },
+    {
+      "taskId": "ui-extensions-server-kit:build:types",
+      "target": "build:types",
+      "projectName": "ui-extensions-server-kit",
+      "hash": "16407342884407106356",
+      "startTime": "2024-01-25T14:57:53.993Z",
+      "endTime": "2024-01-25T14:57:55.692Z",
+      "params": "",
+      "cacheStatus": "cache-miss",
+      "status": 0
+    },
+    {
+      "taskId": "ui-extensions-server-kit:build",
+      "target": "build",
+      "projectName": "ui-extensions-server-kit",
+      "hash": "7503767295611260656",
+      "startTime": "2024-01-25T14:57:55.693Z",
+      "endTime": "2024-01-25T14:57:55.694Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "ui-extensions-dev-console:build",
+      "target": "build",
+      "projectName": "ui-extensions-dev-console",
+      "hash": "17084678426262660753",
+      "startTime": "2024-01-25T14:57:55.695Z",
+      "endTime": "2024-01-25T14:57:55.696Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "app:build",
+      "target": "build",
+      "projectName": "app",
+      "hash": "5260737973576427039",
+      "startTime": "2024-01-25T14:57:55.696Z",
+      "endTime": "2024-01-25T14:57:55.697Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    },
+    {
+      "taskId": "cli:build",
+      "target": "build",
+      "projectName": "cli",
+      "hash": "10581861943427677659",
+      "startTime": "2024-01-25T14:57:55.698Z",
+      "endTime": "2024-01-25T14:57:55.699Z",
+      "params": "",
+      "cacheStatus": "local-cache-hit",
+      "status": 0
+    }
+  ]
+}

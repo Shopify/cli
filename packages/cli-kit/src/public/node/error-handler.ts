@@ -121,7 +121,7 @@ export async function sendErrorToBugsnag(
           resolve(reportableError)
         }
       }
-      Bugsnag.notify(reportableError, eventHandler, errorHandler)
+      Bugsnag.default.notify(reportableError, eventHandler, errorHandler)
     })
   }
   return {error: reportableError, reported: report, unhandled}
@@ -164,7 +164,8 @@ export function cleanStackFrameFilePath({
 export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
   // Bugsnag have their own plug-ins that use this private field
 
-  const bugsnagConfigProjectRoot: string = Bugsnag?._client?._config?.projectRoot ?? path.cwd()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const bugsnagConfigProjectRoot: string = (Bugsnag as any)?._client?._config?.projectRoot ?? path.cwd()
   const projectRoot = path.normalizePath(bugsnagConfigProjectRoot)
   const pluginLocations = await Promise.all(
     [...config.plugins].map(async ([_, plugin]) => {
@@ -245,12 +246,12 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
 function initializeBugsnag() {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  if (Bugsnag.isStarted()) {
+  if (Bugsnag.default.isStarted()) {
     return
   }
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  Bugsnag.start({
+  Bugsnag.default.start({
     appType: 'node',
     apiKey: bugsnagApiKey,
     logger: null,

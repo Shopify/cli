@@ -1,6 +1,3 @@
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
-const {default: Bugsnag} = require('@bugsnag/js')
+import Bugsnag from '@bugsnag/js'
 
 export {Bugsnag}

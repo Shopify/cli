@@ -1,6 +1,6 @@
 import {build as esBuild} from 'esbuild'
-import {commonjs} from '@hyrious/esbuild-plugin-commonjs'
-import commonjsPlugin from '@chialab/esbuild-plugin-commonjs';
+// import {commonjs} from '@hyrious/esbuild-plugin-commonjs'
+// import commonjsPlugin from '@chialab/esbuild-plugin-commonjs';
 
 
 await esBuild({
@@ -10,7 +10,8 @@ await esBuild({
   platform: 'node',
   format: 'esm',
   inject: ['./bin/cjs-shims.js'],
-  external: ['react-devtools-core', 'yoga-wasm-web', 'stacktracey'],
+  external: ['react-devtools-core', 'yoga-wasm-web', 'git-diff'],
+
   loader: {'.node': 'copy'},
   splitting: true,
   plugins: [

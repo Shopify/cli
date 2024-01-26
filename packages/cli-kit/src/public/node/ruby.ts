@@ -141,7 +141,7 @@ async function validateRuby() {
   const isValid = version?.compare(MinRubyVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Ruby version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
+      `Ruby version ${outputContent`${outputToken.yellow(version?.raw ?? 'unknown')}`.value} is not supported`,
       `Make sure you have at least Ruby ${
         outputContent`${outputToken.yellow(MinRubyVersion)}`.value
       } installed on your system. ${
@@ -172,7 +172,7 @@ async function validateBundler() {
   const isValid = version?.compare(MinBundlerVersion)
   if (isValid === -1 || isValid === undefined) {
     throw new AbortError(
-      `Bundler version ${outputContent`${outputToken.yellow(version.raw)}`.value} is not supported`,
+      `Bundler version ${outputContent`${outputToken.yellow(version?.raw ?? 'unknown')}`.value} is not supported`,
       `To update to the latest version of Bundler, run ${
         outputContent`${outputToken.genericShellCommand(`${gemExecutable()} install bundler`)}`.value
       }`,
