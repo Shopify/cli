@@ -28,7 +28,7 @@ export const GetConfig = gql`
       }
       betas {
         declarativeWebhooks
-        versionedAppConfig
+        # versionedAppConfig
       }
     }
   }

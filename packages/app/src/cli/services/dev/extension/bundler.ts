@@ -149,7 +149,7 @@ export async function setupExtensionWatcher({
   if (await fileExists(joinPath(extension.directory, 'locales'))) {
     redeployWatchPaths.push(joinPath(extension.directory, 'locales', '**.json'))
   }
-  redeployWatchPaths.push(joinPath(extension.directory, '**.toml'))
+  redeployWatchPaths.push(joinPath(extension.directory, '**.json'))
 
   outputDebug(
     `

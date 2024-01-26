@@ -1,7 +1,6 @@
 import {configFromSerializedFields} from './serialize-partners-fields.js'
 import {FlowPartnersExtensionTypes} from './types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 interface FlowConfig {
@@ -50,5 +49,5 @@ export function buildTomlObject(extension: ExtensionRegistration) {
     settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return encodeToml(localExtensionRepresentation as any)
+  return JSON.stringify(localExtensionRepresentation as any, null, 2)
 }

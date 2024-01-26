@@ -4,8 +4,8 @@ export const environmentVariableNames = {
 }
 
 export const configurationFileNames = {
-  app: 'shopify.app.toml',
-  web: 'shopify.web.toml',
+  app: 'shopify.app.json',
+  web: 'shopify.web.json',
   appEnvironments: 'shopify.environments.toml',
 } as const
 

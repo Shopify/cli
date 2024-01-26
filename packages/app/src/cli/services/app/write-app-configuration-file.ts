@@ -1,6 +1,5 @@
 import {AppConfiguration, AppSchema} from '../../models/app/app.js'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 // toml does not support comments and there aren't currently any good/maintained libs for this,
@@ -10,20 +9,20 @@ export async function writeAppConfigurationFile(configuration: AppConfiguration,
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
   const sorted = rewriteConfiguration(schema, configuration) as {[key: string]: string | boolean | object}
-  const fileSplit = encodeToml(sorted as JsonMapType).split(/(\r\n|\r|\n)/)
+  // const fileSplit = encodeToml(sorted as JsonMapType).split(/(\r\n|\r|\n)/)
 
-  fileSplit.unshift('\n')
-  fileSplit.unshift(initialComment)
+  // fileSplit.unshift('\n')
+  // fileSplit.unshift(initialComment)
 
-  fileSplit.forEach((line, index) => {
-    if (line === '[access_scopes]') {
-      fileSplit.splice(index + 1, 0, scopesComment)
-    }
-  })
+  // fileSplit.forEach((line, index) => {
+  //   if (line === '[access_scopes]') {
+  //     fileSplit.splice(index + 1, 0, scopesComment)
+  //   }
+  // })
 
-  const file = fileSplit.join('')
+  // const file = fileSplit.join('')
 
-  writeFileSync(configuration.path, file)
+  writeFileSync(configuration.path, JSON.stringify(sorted, null, 2))
 }
 
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {

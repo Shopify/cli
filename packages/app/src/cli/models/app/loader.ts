@@ -32,7 +32,6 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -52,7 +51,7 @@ export async function loadConfigurationFile(
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
   },
-  decode: (input: string) => object = decodeToml,
+  decode: (input: string) => object = JSON.parse,
 ): Promise<unknown> {
   if (!(await fileExists(filepath))) {
     return abortOrReport(
@@ -86,7 +85,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport = (errorMessage) => {
     throw new AbortError(errorMessage)
   },
-  decode: (input: string) => object = decodeToml,
+  decode: (input: string) => object = JSON.parse,
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
@@ -201,7 +200,7 @@ class AppLoader {
     schema: TSchema,
     filepath: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
+    decode: (input: any) => any = JSON.parse,
   ) {
     return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
   }
@@ -376,7 +375,7 @@ class AppLoader {
 
   async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
     const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
-      return joinPath(appDirectory, extensionPath, '*.extension.toml')
+      return joinPath(appDirectory, extensionPath, '*.extension.json')
     })
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
     const configPaths = await glob(extensionConfigPaths)
@@ -808,8 +807,8 @@ async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadR
   })
 }
 
-export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.toml$/
-const appConfigurationFileNameGlob = 'shopify.app*.toml'
+export const appConfigurationFileNameRegex = /^shopify\.app(\.[-\w]+)?\.json$/
+const appConfigurationFileNameGlob = 'shopify.app*.json'
 
 export function getAppConfigurationFileName(configName?: string) {
   if (!configName) {
@@ -819,7 +818,7 @@ export function getAppConfigurationFileName(configName?: string) {
   if (appConfigurationFileNameRegex.test(configName)) {
     return configName
   } else {
-    return `shopify.app.${slugify(configName)}.toml`
+    return `shopify.app.${slugify(configName)}.json`
   }
 }
 

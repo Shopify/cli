@@ -15,7 +15,6 @@ import {fileExists, glob} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {deepCompare, deepDifference, setPathValue} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -29,7 +28,7 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   const namePromptOptions = buildTextPromptOptions(defaultName)
   let configName = slugify(await renderTextPrompt(namePromptOptions))
 
-  while (await fileExists(joinPath(directory, `shopify.app.${configName}.toml`))) {
+  while (await fileExists(joinPath(directory, `shopify.app.${configName}.json`))) {
     const askAgain = await renderConfirmationPrompt({
       message: `Configuration file shopify.app.${configName}.toml already exists. Do you want to choose a different configuration name?`,
       confirmationMessage: "Yes, I'll choose a different name",
@@ -47,7 +46,7 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
 }
 
 export async function selectConfigFile(directory: string): Promise<Result<string, string>> {
-  const files = (await glob(joinPath(directory, 'shopify.app*.toml'))).map((path) => basename(path))
+  const files = (await glob(joinPath(directory, 'shopify.app*.json'))).map((path) => basename(path))
 
   if (files.length === 0) return err('Could not find any shopify.app.toml file in the directory.')
   if (files.length === 1) return ok(files[0]!)
@@ -128,7 +127,7 @@ export function buildDiffConfigContent(
   }
 
   return {
-    baselineContent: encodeToml(baseline),
-    updatedContent: encodeToml(updated),
+    baselineContent: JSON.stringify(baseline, null, 2),
+    updatedContent: JSON.stringify(updated, null, 2),
   }
 }
