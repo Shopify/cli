@@ -284,14 +284,49 @@ describe('bulkUploadThemeAssets', async () => {
       {key: 'templates/404.json', value: 'content'},
     ]
 
+    const mockResults = [
+      {
+        code: 200,
+        body: {
+          asset: {
+            key: 'assets/test.liquid',
+            public_url: 'https://cdn.shopify.com/dummy_url',
+            created_at: '2024-01-24T16:26:13-08:00',
+            updated_at: '2024-01-24T16:26:13-08:00',
+            content_type: 'application/x-liquid',
+            size: 20,
+            checksum: '3f26c8569292ce6f1cc991c5fa7d3fcb',
+            theme_id: 139503010036,
+            warnings: [],
+          },
+        },
+      },
+      {
+        code: 200,
+        body: {
+          asset: {
+            key: 'config/settings_data.json',
+            public_url: null,
+            created_at: '2024-01-24T16:18:30-08:00',
+            updated_at: '2024-01-24T16:26:14-08:00',
+            content_type: 'application/json',
+            size: 19,
+            checksum: '336e955222ddd34b61d0f11940208640',
+            theme_id: 139503010036,
+            warnings: [],
+          },
+        },
+      },
+    ]
+
     vi.mocked(restRequest).mockResolvedValue({
-      json: {assets},
-      status: 200,
+      json: {results: mockResults},
+      status: 207,
       headers: {},
     })
 
     // When
-    const themeAssets = await bulkUploadThemeAssets(id, assets, session)
+    const bulkUploadresults = await bulkUploadThemeAssets(id, assets, session)
 
     // Then
     expect(restRequest).toHaveBeenCalledWith(
@@ -306,14 +341,23 @@ describe('bulkUploadThemeAssets', async () => {
       },
       {},
     )
-    expect(themeAssets).not.toBeNull()
-    expect(themeAssets).toContainEqual({
-      key: 'snippets/product-variant-picker.liquid',
-      value: 'content',
-    })
-    expect(themeAssets).toContainEqual({
-      key: 'templates/404.json',
-      value: 'content',
+    expect(bulkUploadresults).toHaveLength(2)
+    expect(bulkUploadresults[0]).toEqual({
+      key: 'assets/test.liquid',
+      size: 20,
+      success: true,
+      errors: [],
+      asset: {
+        key: 'assets/test.liquid',
+        public_url: 'https://cdn.shopify.com/dummy_url',
+        created_at: '2024-01-24T16:26:13-08:00',
+        updated_at: '2024-01-24T16:26:13-08:00',
+        content_type: 'application/x-liquid',
+        size: 20,
+        checksum: '3f26c8569292ce6f1cc991c5fa7d3fcb',
+        theme_id: 139503010036,
+        warnings: [],
+      },
     })
   })
 })

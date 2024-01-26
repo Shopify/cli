@@ -5,11 +5,25 @@ import {retry} from '../../../private/node/themes/themes-api/retry.js'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {buildChecksum, buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {RemoteAssetJson, buildChecksum, buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
 export type AssetParams = Partial<Pick<ThemeAsset, 'key' | 'value'>>
+
+interface BulkResponse {
+  body: {asset: RemoteAssetJson}
+  code: number
+  errors: string[]
+}
+
+interface BulkUploadResult {
+  key: string
+  size: number
+  success: boolean
+  errors: string[]
+  asset: AssetParams
+}
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const response = await request('GET', `/themes/${id}`, session, undefined, {fields: 'id,name,role,processing'})
@@ -39,11 +53,11 @@ export async function bulkUploadThemeAssets(
   id: number,
   assets: AssetParams[],
   session: AdminSession,
-): Promise<ThemeAsset[]> {
+): Promise<BulkUploadResult[]> {
   const response = await request('PUT', `/themes/${id}/assets/bulk`, session, {assets})
-  const uploadedAssets = response.json.assets
+  const bulkResults = response.json.results
 
-  if (uploadedAssets?.length > 0) return uploadedAssets.map(buildThemeAsset)
+  if (bulkResults?.length > 0) return bulkResults.map(buildBulkUploadResults)
 
   return []
 }
@@ -132,6 +146,16 @@ function buildThemes(response: RestResponse): Theme[] {
   }
 
   return []
+}
+
+function buildBulkUploadResults(response: BulkResponse): BulkUploadResult {
+  return {
+    key: response.body.asset.key,
+    size: response.body.asset.size || 0,
+    success: response.code === 200,
+    errors: response.errors || [],
+    asset: response.body.asset || {},
+  }
 }
 
 function handleForbiddenError(session: AdminSession): never {

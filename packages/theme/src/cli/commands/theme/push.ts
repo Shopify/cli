@@ -6,6 +6,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AssetParams, bulkUploadThemeAssets} from '@shopify/cli-kit/node/themes/api'
 
 export default class Push extends ThemeCommand {
   static description =
@@ -109,6 +110,16 @@ export default class Push extends ThemeCommand {
         flags.development = false
       }
       flags['development-theme-id'] = theme.id
+    }
+
+    if (flags.stable) {
+      const assets: AssetParams[] = [
+        {key: 'assets/test.liquid', value: '<h1>hello world</h1>'},
+        {key: 'config/settings_data.json', value: '{"hello": "goodbye"}'},
+      ]
+
+      await bulkUploadThemeAssets(139503010036, assets, adminSession)
+      return
     }
 
     const flagsToPass = this.passThroughFlags(flags, {allowedFlags: Push.cli2Flags})

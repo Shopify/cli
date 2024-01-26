@@ -8,11 +8,12 @@ interface RemoteThemeJson {
   processing?: boolean
 }
 
-interface RemoteAssetJson {
+export interface RemoteAssetJson {
   key: string
   checksum: string
   attachment: string
   value: string
+  size?: number
 }
 
 export function buildTheme(themeJson?: RemoteThemeJson): Theme | undefined {
