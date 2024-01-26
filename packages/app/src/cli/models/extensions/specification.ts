@@ -175,7 +175,7 @@ function resolveReverseAppConfigTransform<T>(
  * ```json
  * { source: { fieldSourceA: 'valueA' } }
  * ```
- *  and a transform config content like this:
+ *  and a tranform config content like this:
  * ```json
  * { 'target.fieldTargetA': 'source.fieldSourceA'}
  * ```
