@@ -5,14 +5,26 @@ import {retry} from '../../../private/node/themes/themes-api/retry.js'
 import {restRequest, RestResponse} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {RemoteAssetJson, buildChecksum, buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {buildChecksum, buildTheme, buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {Checksum, Key, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing'>>
 export type AssetParams = Partial<Pick<ThemeAsset, 'key' | 'value'>>
 
-interface BulkResponse {
-  body: {asset: RemoteAssetJson}
+interface BulkUploadResponseAsset {
+  key: string
+  public_url: string | null
+  created_at: string
+  updated_at: string
+  content_type: string
+  size: number
+  checksum: string
+  theme_id: number
+  warnings: string[]
+}
+
+interface BulkUploadResponse {
+  body: {asset: BulkUploadResponseAsset}
   code: number
   errors: string[]
 }
@@ -22,7 +34,7 @@ interface BulkUploadResult {
   size: number
   success: boolean
   errors: string[]
-  asset: AssetParams
+  asset: BulkUploadResponseAsset
 }
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
@@ -148,7 +160,7 @@ function buildThemes(response: RestResponse): Theme[] {
   return []
 }
 
-function buildBulkUploadResults(response: BulkResponse): BulkUploadResult {
+function buildBulkUploadResults(response: BulkUploadResponse): BulkUploadResult {
   return {
     key: response.body.asset.key,
     size: response.body.asset.size || 0,
