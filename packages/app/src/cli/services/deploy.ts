@@ -50,7 +50,7 @@ interface TasksContext {
 
 export async function deploy(options: DeployOptions) {
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token, release, betas: remoteAppBetaFlags} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, token, release} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 
   outputNewline()

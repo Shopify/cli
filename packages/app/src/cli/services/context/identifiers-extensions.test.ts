@@ -3,7 +3,7 @@ import {automaticMatchmaking} from './id-matching.js'
 import {deployConfirmed, ensureExtensionsIds} from './identifiers-extensions.js'
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
-import {LocalSource} from './identifiers.js'
+import {EnsureDeploymentIdsPresenceOptions, LocalSource} from './identifiers.js'
 import {AppInterface} from '../../models/app/app.js'
 import {
   testApp,
@@ -95,10 +95,9 @@ const options = (
   partnersApp: OrganizationApp = testOrganizationApp(),
   release = true,
   includeDeployConfig = false,
-  useVersionedAppConfig = false,
   configExtensions: ExtensionInstance[] = [],
   betas = [BetaFlag.VersionedAppConfig],
-) => {
+): EnsureDeploymentIdsPresenceOptions => {
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
     token: 'token',
@@ -108,7 +107,6 @@ const options = (
     force: false,
     partnersApp,
     release,
-    useVersionedAppConfig,
   }
   setPathValue(localApp.app, 'remoteBetaFlags', betas)
   return localApp
@@ -672,9 +670,7 @@ describe('excludes non uuid managed extensions', () => {
 
     // When
     const CONFIG_A = await testAppConfigExtensions()
-    const ensureExtensionsIdsOptions = options([EXTENSION_A], [], {}, testOrganizationApp(), true, false, false, [
-      CONFIG_A,
-    ])
+    const ensureExtensionsIdsOptions = options([EXTENSION_A], [], {}, testOrganizationApp(), true, false, [CONFIG_A])
     await ensureExtensionsIds(ensureExtensionsIdsOptions, {
       extensionRegistrations: [REGISTRATION_A],
       dashboardManagedExtensionRegistrations: [],
@@ -759,7 +755,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
 
     // When
     const CONFIG_A = await testAppConfigExtensions()
-    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, true, [CONFIG_A])
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, [CONFIG_A])
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
       extensionsToCreate,
       validMatches,
@@ -777,6 +773,27 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     // Given
     const extensionsToCreate: LocalSource[] = []
     const validMatches = {}
+
+    // When
+    const CONFIG_A = await testAppConfigExtensions()
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, false, [CONFIG_A])
+    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
+      extensionsToCreate,
+      validMatches,
+    })
+
+    // Then
+    expect(createExtension).not.toHaveBeenCalled()
+    expect(got).toEqual({
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    })
+  })
+  test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created', async () => {
+    // Given
+    const extensionsToCreate: LocalSource[] = []
+    const validMatches = {}
     const REGISTRATION_CONFIG_A = {
       uuid: 'UUID_C_A',
       id: 'C_A',
@@ -788,14 +805,15 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
     // When
 
     const CONFIG_A = await testAppConfigExtensions()
-    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, false, [CONFIG_A])
-    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, false, [CONFIG_A])
+    ensureExtensionsIdsOptions.includeDraftExtensions = true
+    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
       extensionsToCreate,
       validMatches,
     })
 
     // Then
-    expect(createExtension).not.toHaveBeenCalled()
+    expect(createExtension).toBeCalledTimes(1)
     expect(got).toEqual({
       extensions: {},
       extensionIds: {'point-of-sale': 'C_A'},
@@ -818,7 +836,7 @@ describe('ensuredeployConfirmed: handle existent uuid managed extensions', () =>
     // When
     const CONFIG_A = await testAppConfigExtensions()
 
-    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, true, [CONFIG_A])
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, true, [CONFIG_A])
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [REGISTRATION_CONFIG_A], {
       extensionsToCreate,
       validMatches,

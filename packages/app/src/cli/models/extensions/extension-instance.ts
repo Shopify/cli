@@ -16,7 +16,7 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 
 /**
  * Class that represents an instance of a local extension
@@ -132,7 +132,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension && !this.isAppConfigExtension
+    return !this.isThemeExtension
+  }
+
+  get draftMessages() {
+    const successMessage =
+      this.isDraftable() && !this.isAppConfigExtension
+        ? `Draft updated successfully for extension: ${this.localIdentifier}`
+        : undefined
+    const errorMessage =
+      this.isDraftable() && !this.isAppConfigExtension ? `Error while deploying updated extension draft` : undefined
+    return {successMessage, errorMessage}
   }
 
   isUuidManaged() {
@@ -213,7 +223,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build.command
   }
 
-  get watchPaths() {
+  get watchBuildPaths() {
     if (this.isFunctionExtension) {
       const config = this.configuration as unknown as FunctionConfigType
       const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
@@ -233,6 +243,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
     } else {
       return []
+    }
+  }
+
+  async watchConfigurationPaths() {
+    if (this.isAppConfigExtension) {
+      return [this.configuration.path]
+    } else {
+      const additionalPaths = []
+      if (await fileExists(joinPath(this.directory, 'locales'))) {
+        additionalPaths.push(joinPath(this.directory, 'locales', '**.json'))
+      }
+      additionalPaths.push(joinPath(this.directory, '**.toml'))
+      return additionalPaths
     }
   }
 

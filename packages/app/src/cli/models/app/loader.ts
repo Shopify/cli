@@ -44,7 +44,12 @@ const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
-type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
+type AbortOrReport = <T>(
+  errorMessage: OutputMessage,
+  fallback: T,
+  configurationPath: string,
+  rawErrors?: zod.ZodIssueBase[],
+) => T
 const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
 
 export async function loadConfigurationFile(
@@ -112,6 +117,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
       outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
       fallbackOutput,
       filepath,
+      parseResult.error.issues,
     )
   }
   return {...parseResult.data, path: filepath}
