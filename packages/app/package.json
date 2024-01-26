@@ -81,7 +81,7 @@
     "@vitest/coverage-istanbul": "^0.34.3",
     "graphql": "^16.8.1",
     "graphql-tag": "^2.12.6",
-    "vite": "^4.4.9",
+    "vite": "^4.5.2",
     "vitest": "^0.34.3"
   },
   "peerDependencies": {

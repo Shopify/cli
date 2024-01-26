@@ -43,7 +43,7 @@
     "semver": "7.5.4"
   },
   "devDependencies": {
-    "vite": "^4.4.9",
+    "vite": "^4.5.2",
     "vitest": "^0.34.3"
   },
   "engines": {
