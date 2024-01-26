@@ -161,3 +161,6 @@ index.mjs
 testing.d.ts
 testing.js
 testing.mjs
+
+# NX
+.nx/cache
