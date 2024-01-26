@@ -1148,11 +1148,15 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     // When
     await ensureDeployContext(options(app))
 
     // Then
+    expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
+    expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: true})
+
     expect(renderConfirmationPrompt).toHaveBeenCalled()
     expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
       {...app.configuration, build: {include_config_on_deploy: true}},
@@ -1241,11 +1245,17 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     // When
     await ensureDeployContext(options(app))
 
     // Then
+    expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
+    expect(metadataSpyOn.mock.calls[1]![0]()).toEqual(
+      expect.not.objectContaining({cmd_deploy_confirm_include_config_used: expect.anything()}),
+    )
+
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(writeAppConfigurationFileSpy).not.toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
@@ -1286,11 +1296,15 @@ describe('ensureDeployContext', () => {
     const writeAppConfigurationFileSpy = vi
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
+    const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     // When
     await ensureDeployContext(options(app, true))
 
     // Then
+    expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
+    expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({cmd_deploy_confirm_include_config_used: false})
+
     expect(renderConfirmationPrompt).toHaveBeenCalled()
     expect(writeAppConfigurationFileSpy).toHaveBeenCalledWith(
       {...app.configuration, build: {include_config_on_deploy: false}},

@@ -35,6 +35,7 @@ export async function deployOrReleaseConfirmationPrompt({
   appTitle,
   release,
 }: DeployOrReleaseConfirmationPromptOptions) {
+  await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
@@ -92,7 +93,7 @@ async function deployConfirmationPrompt({
 
   await metadata.addPublicMetadata(() => ({
     cmd_deploy_confirm_cancelled: !confirmationResponse,
-    cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
+    cmd_deploy_confirm_time_to_complete_ms: timeToConfirmOrCancelMs,
   }))
 
   return confirmationResponse
@@ -156,4 +157,27 @@ async function buildConfigContentPrompt(
   }
 
   return {configInfoTable}
+}
+
+export function buildConfigurationBreakdownMetadata(
+  configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown,
+) {
+  if (!configExtensionIdentifiersBreakdown) return {cmd_deploy_include_config_used: false}
+
+  const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} =
+    configExtensionIdentifiersBreakdown
+  const currentConfiguration = [...existingUpdatedFieldNames, ...newFieldNames, ...existingFieldNames]
+  return {
+    cmd_deploy_include_config_used: true,
+    ...(currentConfiguration.length > 0
+      ? {cmd_deploy_config_modules_breakdown: JSON.stringify(currentConfiguration.sort())}
+      : {}),
+    ...(existingUpdatedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_updated: JSON.stringify(existingUpdatedFieldNames.sort())}
+      : {}),
+    ...(newFieldNames.length > 0 ? {cmd_deploy_config_modules_added: JSON.stringify(newFieldNames.sort())} : {}),
+    ...(deletedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_deleted: JSON.stringify(deletedFieldNames.sort())}
+      : {}),
+  }
 }

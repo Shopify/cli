@@ -544,6 +544,8 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   }
 
   await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
+
+  await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 
 function includeConfigOnDeployPrompt(): Promise<boolean> {
