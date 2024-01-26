@@ -1,16 +1,22 @@
 import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from './config.js'
 import {PushOptions} from '../services/app/config/push.js'
-import {testOrganizationApp, testAppWithConfig, DEFAULT_CONFIG} from '../models/app/app.test-data.js'
+import {
+  testOrganizationApp,
+  testAppWithConfig,
+  DEFAULT_CONFIG,
+  buildVersionedAppSchema,
+} from '../models/app/app.test-data.js'
 import {App} from '../api/graphql/get_config.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
-import {AppConfiguration} from '../models/app/app.js'
+import {CurrentAppConfiguration} from '../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -178,11 +184,12 @@ describe('confirmPushChanges', () => {
     const options: PushOptions = {
       configuration: testAppWithConfig().configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
     const app = testOrganizationApp() as App
 
     // When
-    const result = await confirmPushChanges(options, app)
+    const result = await confirmPushChanges(options.force, options.configuration as CurrentAppConfiguration, app)
 
     // Then
     expect(result).toBeTruthy()
@@ -196,22 +203,27 @@ describe('confirmPushChanges', () => {
 
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
-      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const configuration = mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+        true,
+      )
 
       configuration.name = 'app2'
       configuration.access_scopes = {scopes: 'read_themes, read_customers'}
       configuration.webhooks = {
-        ...configuration.webhooks,
         api_version: 'unstable',
       }
 
       const options: PushOptions = {
         configuration,
         force: false,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
 
       // When
-      const result = await confirmPushChanges(options, app)
+      const {schema} = await buildVersionedAppSchema()
+      const result = await confirmPushChanges(options.force, configuration, app, schema)
 
       // Then
       expect(renderConfirmationPrompt).toHaveBeenCalledWith({
@@ -219,19 +231,19 @@ describe('confirmPushChanges', () => {
         gitDiff: {
           baselineContent: `name = "app1"
 
-[webhooks]
-api_version = "2023-07"
-
 [access_scopes]
 scopes = "read_products"
+
+[webhooks]
+api_version = "2023-07"
 `,
           updatedContent: `name = "app2"
 
-[webhooks]
-api_version = "unstable"
-
 [access_scopes]
 scopes = "read_themes,read_customers"
+
+[webhooks]
+api_version = "unstable"
 `,
         },
         defaultValue: true,
@@ -247,15 +259,20 @@ scopes = "read_themes,read_customers"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
-      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const configuration = mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+        true,
+      )
       const options: PushOptions = {
         configuration,
         force: false,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
       // When
-      const result = await confirmPushChanges(options, app)
+      const result = await confirmPushChanges(options.force, configuration, app)
 
       // Then
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
@@ -287,13 +304,14 @@ scopes = "read_themes,read_customers"
       use_legacy_install_flow = true
       scopes = "read_products"
       `
-      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const configuration = decodeToml(updatedContent) as CurrentAppConfiguration
       const options: PushOptions = {
         configuration,
         force: false,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       // When
-      const result = await confirmPushChanges(options, app)
+      const result = await confirmPushChanges(options.force, configuration, app)
 
       // Then
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
@@ -327,14 +345,15 @@ scopes = "read_themes,read_customers"
       scopes = "read_products"
       use_legacy_install_flow = true
       `
-      const configuration = decodeToml(updatedContent) as AppConfiguration
+      const configuration = decodeToml(updatedContent) as CurrentAppConfiguration
       const options: PushOptions = {
         configuration,
         force: false,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
 
       // When
-      const result = await confirmPushChanges(options, app)
+      const result = await confirmPushChanges(options.force, configuration, app)
 
       // Then
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
@@ -347,18 +366,23 @@ scopes = "read_themes,read_customers"
       // Given
       const configurationPath = joinPath(tmpDir, 'shopify.app.toml')
       const app = testOrganizationApp() as App
-      const configuration = mergeAppConfiguration({...DEFAULT_CONFIG, path: configurationPath}, app as OrganizationApp)
+      const configuration = mergeAppConfiguration(
+        {...DEFAULT_CONFIG, path: configurationPath},
+        app as OrganizationApp,
+        true,
+      )
       const options: PushOptions = {
         configuration: {
           ...configuration,
           build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
         },
         force: false,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
       // When
-      const result = await confirmPushChanges(options, app)
+      const result = await confirmPushChanges(options.force, configuration, app)
 
       // Then
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()

@@ -49,6 +49,7 @@ module ShopifyCLI
           return [204, {}, []] if IGNORED_ENDPOINTS.any? { |endpoint| env["PATH_INFO"].include?(endpoint) }
 
           headers = extract_http_request_headers(env)
+          is_chrome = headers["User-Agent"] =~ /[Cc]hrome/
           headers["Host"] = shop
           headers["Cookie"] = add_session_cookie(headers["Cookie"])
           headers["Accept-Encoding"] = "none"
@@ -76,6 +77,7 @@ module ShopifyCLI
           end
 
           headers = get_response_headers(response, env)
+          headers = modify_headers(headers) unless is_chrome
 
           unless headers["x-storefront-renderer-rendered"]
             @core_endpoints << env["PATH_INFO"]
@@ -267,6 +269,18 @@ module ShopifyCLI
           return false if path.start_with?("/cart/")
 
           true
+        end
+
+        def modify_headers(headers)
+          if headers["set-cookie"]&.include?("storefront_digest")
+            headers["set-cookie"] = modify_set_cookie_header_for_safari(headers["set-cookie"])
+          end
+
+          headers
+        end
+
+        def modify_set_cookie_header_for_safari(set_cookie_header)
+          set_cookie_header.gsub("secure;", "secure: false;")
         end
       end
     end

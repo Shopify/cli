@@ -1,13 +1,26 @@
-import {PushOptions, pushConfig} from './push.js'
+import {DeprecatedPushMessage, PushOptions, pushConfig} from './push.js'
 import {confirmPushChanges} from '../../../prompts/config.js'
-import {DEFAULT_CONFIG, testApp, testAppWithConfig, testPartnersUserSession} from '../../../models/app/app.test-data.js'
+import {
+  DEFAULT_CONFIG,
+  buildVersionedAppSchema,
+  testApp,
+  testPartnersUserSession,
+} from '../../../models/app/app.test-data.js'
 import {renderCurrentlyUsedConfigInfo} from '../../context.js'
 import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
+import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
+import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
+import * as loader from '../../../models/app/loader.js'
+import {ExtensionSpecification} from '../../../models/extensions/specification.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {describe, vi, test, expect, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {Config} from '@oclif/core'
+import {relativizePath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -15,6 +28,7 @@ vi.mock('../../context/partner-account-info.js')
 vi.mock('../../../prompts/config.js')
 vi.mock('../../context.js')
 vi.mock('../../dev/fetch.js')
+vi.mock('../../generate/fetch-extension-specifications.js')
 
 const ORG1: Organization = {
   id: '1',
@@ -23,28 +37,32 @@ const ORG1: Organization = {
 }
 
 describe('pushConfig', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.mocked(confirmPushChanges).mockResolvedValue(true)
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
     vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
+    vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
   })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {
-    const app = testApp({}, 'current')
+    const app = await mockApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
         title: 'name of the app',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -78,22 +96,30 @@ describe('pushConfig', () => {
   })
 
   test('successfully calls the update mutation without scopes when legacy behavior. does not call scopes clear when upstream doesnt have scopes.', async () => {
-    const app = testApp({}, 'current')
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: {scopes: 'write_products', use_legacy_install_flow: true},
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
-    app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -122,23 +148,31 @@ describe('pushConfig', () => {
   })
 
   test('successfully calls the update mutation without scopes when legacy behavior. does call scopes clear when upstream has scopes.', async () => {
-    const app = testApp({}, 'current')
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: {scopes: 'write_products', use_legacy_install_flow: true},
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
-    app.configuration = {...app.configuration, access_scopes: {scopes: 'write_products', use_legacy_install_flow: true}}
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
         requestedAccessScopes: ['read_orders'],
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -168,22 +202,30 @@ describe('pushConfig', () => {
   })
 
   test('successfully calls the update mutation with empty scopes', async () => {
-    const app = testApp({}, 'current')
-    app.configuration = {...app.configuration, access_scopes: {scopes: ''}}
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: {scopes: ''},
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -211,23 +253,31 @@ describe('pushConfig', () => {
   })
 
   test('deletes requested access scopes when scopes are omitted', async () => {
-    const app = testApp({}, 'current')
-    app.configuration = {...app.configuration, access_scopes: undefined}
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        access_scopes: undefined,
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
 
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
         requestedAccessScopes: ['read_orders'],
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -257,10 +307,15 @@ describe('pushConfig', () => {
 
   test('returns error when client id cannot be found', async () => {
     // Given
-    const {configuration} = testApp({}, 'current')
-    const options: PushOptions = {configuration, force: true}
+    const app = await mockApp({}, 'current')
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+    }
 
     vi.mocked(partnersRequest).mockResolvedValue({app: null})
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     // When
     const result = pushConfig(options)
@@ -269,19 +324,49 @@ describe('pushConfig', () => {
     await expect(result).rejects.toThrow("Couldn't find app. Make sure you have a valid client ID.")
   })
 
-  test('returns error when update mutation fails', async () => {
-    const app = testApp({}, 'current')
+  test('returns error when versioned app config beta flag is enabled', async () => {
+    // Given
+    const app = await mockApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
-      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
+      app: {
+        apiKey: '43534543',
+        title: 'name of the app',
+        disabledBetas: [],
+      },
+      appUpdate: {
+        userErrors: [],
+      },
+    })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
+
+    // When
+    const result = pushConfig(options)
+
+    // Then
+    await expect(result).rejects.toThrow(DeprecatedPushMessage)
+  })
+
+  test('returns error when update mutation fails', async () => {
+    const app = await mockApp({}, 'current')
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+    }
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id, disabledBetas: ['versioned_app_config']},
       appUpdate: {
         userErrors: [{message: 'failed to update app'}],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     // When
     const result = pushConfig(options)
@@ -292,11 +377,15 @@ describe('pushConfig', () => {
 
   test('returns error with field names when update mutation fails and userErrors includes field', async () => {
     // Given
-    const {configuration} = testApp({}, 'current')
-    const options: PushOptions = {configuration, force: true}
+    const app = await mockApp({}, 'current')
+    const options: PushOptions = {
+      configuration: app.configuration,
+      force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+    }
 
     vi.mocked(partnersRequest).mockResolvedValue({
-      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id},
+      app: {id: 1, apiKey: DEFAULT_CONFIG.client_id, disabledBetas: ['versioned_app_config']},
       appUpdate: {
         userErrors: [
           {message: "I don't like this name", field: ['input', 'title']},
@@ -316,6 +405,7 @@ describe('pushConfig', () => {
         ],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     // When
     const result = pushConfig(options)
@@ -338,29 +428,34 @@ app_preferences > url: this url is blocked 6`)
   })
 
   test('app proxy is updated upstream when defined', async () => {
-    const app = testApp({}, 'current')
-    app.configuration = {
-      ...app.configuration,
-      app_proxy: {
-        url: 'https://foo/',
-        subpath: 'foo',
-        prefix: 'foo',
-      },
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
+        app_proxy: {
+          url: 'https://foo/',
+          subpath: 'foo',
+          prefix: 'foo',
+        },
+      } as CurrentAppConfiguration,
     }
+    const app = await mockApp(localApp, 'current')
 
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -393,21 +488,24 @@ app_preferences > url: this url is blocked 6`)
   })
 
   test('does nothing when the operation is not confirmed', async () => {
-    const app = testApp({}, 'current')
+    const app = await mockApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
       force: false,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
     vi.mocked(confirmPushChanges).mockReset()
     vi.mocked(confirmPushChanges).mockResolvedValue(false)
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -415,22 +513,21 @@ app_preferences > url: this url is blocked 6`)
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
-  test('does not update webhooks configurations when declarative webhooks beta is true', async () => {
+  test('it does update webhooks configurations when configuration is present', async () => {
     vi.mocked(partnersRequest).mockResolvedValue({
       app: {
         apiKey: '12345',
         webhookApiVersion: '2023-04',
-        betas: {
-          declarativeWebhooks: true,
-        },
+        disabledBetas: ['versioned_app_config'],
       },
       appUpdate: {
         userErrors: [],
       },
     })
 
-    const app = testAppWithConfig({
-      config: {
+    const localApp = {
+      configuration: {
+        ...DEFAULT_CONFIG,
         webhooks: {
           api_version: '2023-11',
           privacy_compliance: {
@@ -439,58 +536,15 @@ app_preferences > url: this url is blocked 6`)
             shop_deletion_url: 'https://myapp.com/shop-deletion',
           },
         },
-      },
-    })
-
+      } as CurrentAppConfiguration,
+    }
+    const app = await mockApp(localApp, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
-
-    await pushConfig(options)
-
-    expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual(
-      expect.objectContaining({
-        apiKey: '12345',
-        gdprWebhooks: undefined,
-        webhookApiVersion: '2023-04',
-      }),
-    )
-
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Updated your app config for my app',
-      body: ['Your shopify.app.toml config is live for your app users.'],
-    })
-  })
-
-  test('it does update webhooks configurations when declarative webhooks beta is false', async () => {
-    vi.mocked(partnersRequest).mockResolvedValue({
-      app: {
-        apiKey: '12345',
-        webhookApiVersion: '2023-04',
-      },
-      appUpdate: {
-        userErrors: [],
-      },
-    })
-
-    const app = testAppWithConfig({
-      config: {
-        webhooks: {
-          api_version: '2023-11',
-          privacy_compliance: {
-            customer_data_request_url: 'https://myapp.com/customer-data-request',
-            customer_deletion_url: 'https://myapp.com/customer-deletion',
-            shop_deletion_url: 'https://myapp.com/shop-deletion',
-          },
-        },
-      },
-    })
-
-    const options: PushOptions = {
-      configuration: app.configuration,
-      force: true,
-    }
+    vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 
     await pushConfig(options)
 
@@ -512,3 +566,47 @@ app_preferences > url: this url is blocked 6`)
     })
   })
 })
+
+async function mockApp(
+  app?: Partial<AppInterface>,
+  schemaType: 'current' | 'legacy' = 'legacy',
+): Promise<AppInterface> {
+  const versionSchema = await buildVersionedAppSchema()
+  let localApp = testApp(app, schemaType)
+  const extensions = await createConfigExtensionInstances(
+    localApp.configuration as CurrentAppConfiguration,
+    versionSchema.configSpecifications,
+  )
+  localApp = testApp({...app, allExtensions: extensions}, schemaType)
+  localApp.configSchema = versionSchema.schema
+  localApp.specifications = versionSchema.configSpecifications
+  return localApp
+}
+
+async function createConfigExtensionInstances(
+  appConfiguration: CurrentAppConfiguration,
+  configSpecifications: ExtensionSpecification[],
+) {
+  const extensionInstances = []
+  for (const specification of configSpecifications) {
+    // eslint-disable-next-line no-await-in-loop
+    const specConfiguration = await loader.parseConfigurationObject(
+      specification.schema,
+      appConfiguration.path,
+      appConfiguration,
+      vi.fn(),
+    )
+
+    if (!specConfiguration) continue
+
+    extensionInstances.push(
+      new ExtensionInstance({
+        configuration: specConfiguration,
+        configurationPath: appConfiguration.path,
+        directory: relativizePath(appConfiguration.path),
+        specification,
+      }),
+    )
+  }
+  return extensionInstances
+}

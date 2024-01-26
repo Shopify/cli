@@ -4,7 +4,7 @@ As you might all know, for the past months the team has put a lot of thought int
 
 First, we think the **CLI should make easy things easy, and hard things possible**. Unfortunately, the easy things are not easy at the moment. Building for Shopify requires doing a lot of plumbing yourself which involves making decisions, forming opinions, setting up your project's workspace. Users often end up spending their time figuring out cryptic errors and understanding some complexity and internal details of the platform that they get exposed to. **We need their mental energy to go into building.**
 
-**How do we make the easy things easy?** By simplifying the the default development experience down to three phases most developers are used to: *clone the repo, install dependencies, run a dev command.*
+**How do we make the easy things easy?** By simplifying the default development experience down to three phases most developers are used to: *clone the repo, install dependencies, run a dev command.*
 
 The current approach to **dependencies** scattered across package.json's has a lot of indirection, can lead to inconsistencies, and places some burden on developers to maintain, update, and set them up in the most efficient way (e.g. using workspaces). Furthermore, the DX is inconsistent across blocks: *naming conventions, formatting, and handling of errors, formatting of output..*. Users experience that when they use the CLI. Note it's hard to see when focused on a small portion of the CLI, but when looked at holistically, it looks very inconsistent.
 

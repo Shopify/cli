@@ -1,10 +1,10 @@
-import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
+import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
-import {access} from 'node:fs/promises'
 
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
@@ -29,7 +29,7 @@ export interface DevOptions {
 export async function dev(options: DevOptions) {
   const command = ['theme', 'serve', options.directory, ...options.flagsToPass]
 
-  if (!(await validThemeDirectory(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
+  if (!(await hasRequiredThemeDirectories(options.directory)) && !(await currentDirectoryConfirmed(options.force))) {
     return
   }
 
@@ -93,32 +93,6 @@ export function renderLinks(store: string, themeId: string, host = DEFAULT_HOST,
         },
       ],
     ],
-  })
-}
-
-export const REQUIRED_FOLDERS = ['config', 'layout', 'sections', 'templates']
-
-export function validThemeDirectory(currentDirectory: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    Promise.all(REQUIRED_FOLDERS.map((requiredFolder) => access(joinPath(currentDirectory, requiredFolder))))
-      .then(() => resolve(true))
-      .catch(() => resolve(false))
-  })
-}
-
-export function currentDirectoryConfirmed(force: boolean) {
-  if (force) {
-    return true
-  }
-
-  renderWarning({body: 'It doesn’t seem like you’re running this command in a theme directory.'})
-
-  if (!process.stdout.isTTY) {
-    return true
-  }
-
-  return renderConfirmationPrompt({
-    message: 'Do you want to proceed?',
   })
 }
 

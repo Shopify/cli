@@ -1,19 +1,14 @@
 import {ensureExtensionsIds} from './identifiers-extensions.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
 import {fetchActiveAppVersion, fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
-import {
-  AppInterface,
-  CurrentAppConfiguration,
-  VersionedAppSchema,
-  filterNonVersionedAppFields,
-} from '../../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
 import {remoteAppConfigurationExtensionContent} from '../app/config/link.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
+import {ActiveAppVersionQuerySchema, AppModuleVersion} from '../../api/graphql/app_active_version.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -22,11 +17,23 @@ export interface ConfigExtensionIdentifiersBreakdown {
   deletedFieldNames: string[]
 }
 
+export interface ExtensionIdentifierBreakdownInfo {
+  title: string
+  experience: 'extension' | 'dashboard'
+}
+
+export function buildExtensionBreakdownInfo(title: string): ExtensionIdentifierBreakdownInfo {
+  return {title, experience: 'extension'}
+}
+
+export function buildDashboardBreakdownInfo(title: string): ExtensionIdentifierBreakdownInfo {
+  return {title, experience: 'dashboard'}
+}
+
 export interface ExtensionIdentifiersBreakdown {
-  onlyRemote: string[]
-  toCreate: string[]
-  toUpdate: string[]
-  fromDashboard: string[]
+  onlyRemote: ExtensionIdentifierBreakdownInfo[]
+  toCreate: ExtensionIdentifierBreakdownInfo[]
+  toUpdate: ExtensionIdentifierBreakdownInfo[]
 }
 
 export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploymentIdsPresenceOptions) {
@@ -36,10 +43,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   })
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
-  let extensionIdentifiersBreakdown = loadLocalExtensionsIdentifiersBreakdown(
-    extensionsToConfirm.validMatches,
-    extensionsToConfirm.extensionsToCreate,
-  )
+  let extensionIdentifiersBreakdown = loadLocalExtensionsIdentifiersBreakdown(extensionsToConfirm)
   if (options.release) {
     extensionIdentifiersBreakdown = await resolveRemoteExtensionIdentifiersBreakdown(
       options.token,
@@ -56,48 +60,70 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   }
 }
 
-export async function extensionsIdentifiersReleaseBreakdown(
-  token: string,
-  apiKey: string,
-  version: string,
-  specifications: ExtensionSpecification[],
-) {
+export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKey: string, version: string) {
   const {versionsDiff, versionDetails} = await versionDiffByVersion(apiKey, version, token)
 
-  // The content of the app_config extensions are not included in the versions diff so it's not possible to get the
-  // comparison between the version to release and the current active version
-  const filterAppConfigExtension = (remoteExtension: AppVersionsDiffExtensionSchema) =>
-    !specifications
-      .filter((specification) => specification.appModuleFeatures().includes('app_config'))
-      .map((specification) => specification.identifier)
-      .includes(remoteExtension.specification.identifier)
+  const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
+    extensions
+      .filter((extension) => extension.specification.experience === 'extension')
+      .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle))
+  const mapIsDashboard = (extensions: AppVersionsDiffExtensionSchema[]) =>
+    extensions
+      .filter((extension) => extension.specification.options.managementExperience === 'dashboard')
+      .map((extension) => buildDashboardBreakdownInfo(extension.registrationTitle))
 
   const extensionIdentifiersBreakdown = {
-    onlyRemote: versionsDiff.removed.filter(filterAppConfigExtension).map((extension) => extension.registrationTitle),
-    toCreate: versionsDiff.added.filter(filterAppConfigExtension).map((extension) => extension.registrationTitle),
-    toUpdate: versionsDiff.updated.filter(filterAppConfigExtension).map((extension) => extension.registrationTitle),
-    // dashboard specs will appear in the oher sections
-    fromDashboard: [] as string[],
+    onlyRemote: [...mapIsExtension(versionsDiff.removed), ...mapIsDashboard(versionsDiff.removed)],
+    toCreate: [...mapIsExtension(versionsDiff.added), ...mapIsDashboard(versionsDiff.added)],
+    toUpdate: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
   }
 
   return {extensionIdentifiersBreakdown, versionDetails}
 }
 
-export async function configExtensionsIdentifiersBreakdown(
-  localApp: AppInterface,
-  extensionRegistrations: ExtensionRegistration[],
-  release?: boolean,
-) {
-  let configContentBreakdown = loadLocalConfigExtensionIdentifiersBreakdown(localApp)
-  if (release) {
-    configContentBreakdown = resolveRemoteConfigExtensionIdentifiersBreakdown(extensionRegistrations, localApp)
+export async function configExtensionsIdentifiersBreakdown({
+  token,
+  apiKey,
+  localApp,
+  versionAppModules,
+  release,
+}: {
+  token: string
+  apiKey: string
+  localApp: AppInterface
+  versionAppModules?: AppModuleVersion[]
+  release?: boolean
+}) {
+  if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
+  if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
+
+  const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
+  const appModuleVersionsConfig =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+      (module) => module.specification?.experience === 'configuration',
+    ) || []
+
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(
+    appModuleVersionsConfig.map(mapAppModuleToExtensionRegistration),
+    localApp,
+    versionAppModules ? versionAppModules.map(mapAppModuleToExtensionRegistration) : undefined,
+  )
+}
+
+function mapAppModuleToExtensionRegistration(appModule: AppModuleVersion): ExtensionRegistration {
+  return {
+    id: appModule.registrationId,
+    uuid: appModule.registrationUuid,
+    title: appModule.registrationTitle,
+    type: appModule.specification?.identifier ?? '',
+    draftVersion: appModule.config ? {config: appModule.config} : undefined,
+    activeVersion: appModule.config ? {config: appModule.config} : undefined,
   }
-  return configContentBreakdown
 }
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
   return {
-    existingFieldNames: filterNonVersionedAppFields(app),
+    existingFieldNames: filterNonVersionedAppFields(app.configuration),
     existingUpdatedFieldNames: [] as string[],
     newFieldNames: [] as string[],
     deletedFieldNames: [] as string[],
@@ -107,19 +133,22 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 function resolveRemoteConfigExtensionIdentifiersBreakdown(
   extensionRegistrations: ExtensionRegistration[],
   app: AppInterface,
+  versionExtensionRegistrations?: ExtensionRegistration[],
 ): ConfigExtensionIdentifiersBreakdown {
   const remoteConfig = remoteAppConfigurationExtensionContent(extensionRegistrations, app.specifications ?? [])
-  const localConfig = app.configuration
+  const baselineConfig = versionExtensionRegistrations
+    ? remoteAppConfigurationExtensionContent(versionExtensionRegistrations, app.specifications ?? [])
+    : app.configuration
   const diffConfigContent = buildDiffConfigContent(
-    localConfig as CurrentAppConfiguration,
+    baselineConfig as CurrentAppConfiguration,
     remoteConfig,
-    VersionedAppSchema,
+    app.configSchema,
     false,
   )
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
   // (versioned fields)
-  const versionedLocalFieldNames = filterNonVersionedAppFields(app)
+  const versionedLocalFieldNames = filterNonVersionedAppFields(baselineConfig)
   // List of remote fields that have different values to the local ones or are not present in the local config
   const remoteDiffModifications = diffConfigContent
     ? getFieldsFromDiffConfigContent(diffConfigContent.baselineContent)
@@ -207,17 +236,24 @@ function getFieldsFromDiffConfigContent(diffConfigContent: string): string[] {
   return Array.from(new Set(fields))
 }
 
-function loadLocalExtensionsIdentifiersBreakdown(
-  localRegistration: IdentifiersExtensions,
-  localSourceToCreate: LocalSource[],
-): ExtensionIdentifiersBreakdown {
-  const identifiersToUpdate = Object.keys(localRegistration)
-  const identifiersToCreate = localSourceToCreate.map((source) => source.localIdentifier)
+function loadLocalExtensionsIdentifiersBreakdown({
+  validMatches: localRegistration,
+  extensionsToCreate: localSourceToCreate,
+  dashboardOnlyExtensions,
+}: {
+  validMatches: IdentifiersExtensions
+  extensionsToCreate: LocalSource[]
+  dashboardOnlyExtensions: RemoteSource[]
+}): ExtensionIdentifiersBreakdown {
+  const identifiersToUpdate = Object.keys(localRegistration).map(buildExtensionBreakdownInfo)
+  const identifiersToCreate = localSourceToCreate.map((source) => buildExtensionBreakdownInfo(source.localIdentifier))
+  const dashboardToUpdate = dashboardOnlyExtensions
+    .filter((dashboard) => !Object.values(localRegistration).includes(dashboard.uuid))
+    .map((dashboard) => buildDashboardBreakdownInfo(dashboard.title))
   return {
-    onlyRemote: [] as string[],
-    toCreate: [] as string[],
-    toUpdate: [...identifiersToUpdate, ...identifiersToCreate],
-    fromDashboard: [] as string[],
+    onlyRemote: [] as ExtensionIdentifierBreakdownInfo[],
+    toCreate: [] as ExtensionIdentifierBreakdownInfo[],
+    toUpdate: [...identifiersToUpdate, ...identifiersToCreate, ...dashboardToUpdate],
   }
 }
 
@@ -230,45 +266,88 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
 ): Promise<ExtensionIdentifiersBreakdown> {
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
 
-  const appModuleVersionsNonConfig =
+  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
+    activeAppVersion,
+    localRegistration,
+    toCreate,
+  )
+
+  const dashboardOnlyFinal = dashboardOnly.filter(
+    (dashboardOnly) =>
+      !Object.values(localRegistration).includes(dashboardOnly.uuid) &&
+      !toCreate.map((source) => source.localIdentifier).includes(dashboardOnly.uuid),
+  )
+  const dashboardIdentifiersBreakdown = loadDashboardIdentifiersBreakdown(dashboardOnlyFinal, activeAppVersion)
+
+  return {
+    onlyRemote: [...extensionIdentifiersBreakdown.onlyRemote, ...dashboardIdentifiersBreakdown.onlyRemote],
+    toCreate: [...extensionIdentifiersBreakdown.toCreate, ...dashboardIdentifiersBreakdown.toCreate],
+    toUpdate: [...extensionIdentifiersBreakdown.toUpdate, ...dashboardIdentifiersBreakdown.toUpdate],
+  }
+}
+
+function loadExtensionsIdentifiersBreakdown(
+  activeAppVersion: ActiveAppVersionQuerySchema,
+  localRegistration: IdentifiersExtensions,
+  toCreate: LocalSource[],
+) {
+  const extensionModules =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
-      (module) => !module.specification || module.specification.experience !== 'configuration',
+      (module) => !module.specification || module.specification.experience === 'extension',
     ) || []
 
-  const nonDashboardRemoteRegistrationUuids =
-    appModuleVersionsNonConfig
-      .filter((module) => module.specification!.options.managementExperience !== 'dashboard')
-      .map((remoteRegistration) => remoteRegistration.registrationUuid) ?? []
+  const extensionsToUpdate = Object.entries(localRegistration)
+    .filter(([_identifier, uuid]) => extensionModules.map((module) => module.registrationUuid).includes(uuid))
+    .map(([identifier, _uuid]) => identifier)
 
-  let toCreateFinal: string[] = []
-  const toUpdate: string[] = []
-  let dashboardOnlyFinal = dashboardOnly
+  let extensionsToCreate = Object.entries(localRegistration)
+    .filter(([_identifier, uuid]) => !extensionModules.map((module) => module.registrationUuid).includes(uuid))
+    .map(([identifier, _uuid]) => identifier)
+  extensionsToCreate = Array.from(new Set(extensionsToCreate.concat(toCreate.map((source) => source.localIdentifier))))
 
-  for (const [identifier, uuid] of Object.entries(localRegistration)) {
-    if (nonDashboardRemoteRegistrationUuids.includes(uuid)) {
-      toUpdate.push(identifier)
-    } else {
-      toCreateFinal.push(identifier)
-    }
+  const extensionsOnlyRemote = extensionModules
+    .filter(
+      (module) =>
+        !Object.values(localRegistration).includes(module.registrationUuid) &&
+        !toCreate.map((source) => source.localIdentifier).includes(module.registrationUuid),
+    )
+    .map((module) => module.registrationTitle)
 
-    dashboardOnlyFinal = dashboardOnlyFinal.filter((dashboardOnly) => dashboardOnly.uuid !== uuid)
+  return {
+    onlyRemote: extensionsOnlyRemote.map(buildExtensionBreakdownInfo),
+    toCreate: extensionsToCreate.map(buildExtensionBreakdownInfo),
+    toUpdate: extensionsToUpdate.map(buildExtensionBreakdownInfo),
   }
+}
 
-  toCreateFinal = Array.from(new Set(toCreateFinal.concat(toCreate.map((source) => source.localIdentifier))))
+function loadDashboardIdentifiersBreakdown(
+  currentRegistrations: RemoteSource[],
+  activeAppVersion: ActiveAppVersionQuerySchema,
+) {
+  const currentVersions =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+      (module) => module.specification!.options.managementExperience === 'dashboard',
+    ) || []
 
-  const localRegistrationAndDashboard = [
-    ...Object.values(localRegistration),
-    ...dashboardOnly.map((source) => source.uuid),
-  ]
-  const onlyRemote =
-    appModuleVersionsNonConfig
-      .filter((module) => !localRegistrationAndDashboard.includes(module.registrationUuid))
-      .map((module) => module.registrationTitle) ?? []
+  const versionsNotIncluded = (version: AppModuleVersion) =>
+    !currentRegistrations.map((registration) => registration.uuid).includes(version.registrationUuid)
+  const onlyRemote = currentVersions
+    .filter(versionsNotIncluded)
+    .map((module) => buildDashboardBreakdownInfo(module.registrationTitle))
+
+  const registrationIncluded = (registration: RemoteSource) =>
+    currentVersions.map((version) => version.registrationUuid).includes(registration.uuid)
+  const registrationNotIncluded = (registration: RemoteSource) => !registrationIncluded(registration)
+  const toCreate = currentRegistrations
+    .filter(registrationNotIncluded)
+    .map((registration) => buildDashboardBreakdownInfo(registration.title))
+  const toUpdate = currentRegistrations
+    .filter(registrationIncluded)
+    .map((registration) => buildDashboardBreakdownInfo(registration.title))
 
   return {
     onlyRemote,
-    toCreate: toCreateFinal.map((identifier) => identifier),
+    toCreate,
     toUpdate,
-    fromDashboard: dashboardOnlyFinal.map((source) => source.title),
   }
 }

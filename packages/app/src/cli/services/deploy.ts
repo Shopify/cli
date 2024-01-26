@@ -5,12 +5,11 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Config} from '@oclif/core'
 import type {Task} from '@shopify/cli-kit/node/ui'
@@ -94,13 +93,8 @@ export async function deploy(options: DeployOptions) {
         {
           title: uploadTaskTitle,
           task: async () => {
-            const filterConfigurationAppModules = (extension: ExtensionInstance) =>
-              useVersionedAppConfig() || !extension.isAppConfigExtension
-
             const appModules = await Promise.all(
-              app.allExtensions
-                .filter(filterConfigurationAppModules)
-                .flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
+              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({

@@ -175,7 +175,7 @@ function resolveReverseAppConfigTransform<T>(
  * ```json
  * { source: { fieldSourceA: 'valueA' } }
  * ```
- *  and a tranform config content like this:
+ *  and a transform config content like this:
  * ```json
  * { 'target.fieldTargetA': 'source.fieldSourceA'}
  * ```
@@ -229,18 +229,20 @@ function appConfigTransform(
  * @returns A single level object
  */
 function defaultAppConfigTransform(content: {[key: string]: unknown}) {
-  const firstKey = Object.keys(content)[0]
-  return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
+  return Object.keys(content).reduce((result, key) => {
+    const isObjectNotArray = content[key] !== null && typeof content[key] === 'object' && !Array.isArray(content[key])
+    return {...result, ...(isObjectNotArray ? {...(content[key] as object)} : {[key]: content[key]})}
+  }, {})
 }
 
 /**
- * Nest the content inside the first level object expected by the local schema.
+ * Nest the content inside the first level objects expected by the local schema.
  * ```json
  * {
  *  embedded = true
  * }
  * ```
- * will be flattened to applying the proper schema will return:
+ * will be nested after applying the proper schema:
  * ```json
  * {
  *   pos: {
@@ -254,8 +256,17 @@ function defaultAppConfigTransform(content: {[key: string]: unknown}) {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
-  const configSection: {[key: string]: unknown} = {}
-  const firstLevelObjectName = Object.keys(schema._def.shape())[0]!
-  configSection[firstLevelObjectName] = content
-  return configSection
+  return Object.keys(schema._def.shape()).reduce((result: {[key: string]: unknown}, key: string) => {
+    let innerSchema = schema._def.shape()[key]
+    if (innerSchema instanceof zod.ZodOptional) {
+      innerSchema = innerSchema._def.innerType
+    }
+    if (innerSchema instanceof zod.ZodObject) {
+      result[key] = defaultAppConfigReverseTransform(innerSchema, content)
+    } else {
+      if (content[key] !== undefined) result[key] = content[key]
+      delete content[key]
+    }
+    return result
+  }, {})
 }

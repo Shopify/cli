@@ -1,19 +1,19 @@
 import {AppErrors, isWebType} from './loader.js'
+import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {
-  validateInnerSubscriptions,
-  validateTopLevelSubscriptions,
-  httpsRegex,
-} from '../../utilities/app/config/webhooks.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
+import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {BetaFlag} from '../../services/app/select-app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const LegacyAppSchema = zod
   .object({
@@ -25,139 +25,30 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
-// example PubSub URI - pubsub://{project}:{topic}
-const pubSubRegex = /^pubsub:\/\/(?<gcp_project_id>[^:]+):(?<gcp_topic>.+)$/
-// example Eventbridge ARN - arn:aws:events:{region}::event-source/aws.partner/shopify.com/{app_id}/{path}
-const arnRegex =
-  /^arn:aws:events:(?<aws_region>[a-z]{2}-[a-z]+-[0-9]+)::event-source\/aws\.partner\/shopify\.com(\.test)?\/(?<api_client_id>\d+)\/(?<event_source_name>.+)$/
-
-// adding http or https presence and absence of new lines to url validation
-const validateUrl = (zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid url'} = {}) => {
-  const regex = httpsOnly ? httpsRegex : /^(https?:\/\/)/
-  return zodType
-    .url()
-    .refine((value) => Boolean(value.match(regex)), {message})
-    .refine((value) => !value.includes('\n'), {message})
-}
-
-const ensurePathStartsWithSlash = (arg: unknown) => (typeof arg === 'string' && !arg.startsWith('/') ? `/${arg}` : arg)
-const removeTrailingSlash = (arg: unknown) =>
-  typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
-const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
-  httpsOnly: true,
-  message: 'Only https urls are allowed',
-}).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
-
-const UriValidation = zod.union([
-  zod.string().regex(httpsRegex),
-  zod.string().regex(pubSubRegex),
-  zod.string().regex(arnRegex),
-])
-
-export const WebhookSubscriptionSchema = zod.object({
-  topic: zod.string(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
-  sub_topic: zod.string().optional(),
-  include_fields: zod.array(zod.string()).optional(),
-  metafield_namespaces: zod.array(zod.string()).optional(),
-  path: zod
-    .string()
-    .refine((path) => path.startsWith('/') && path.length > 1, {
-      message: 'Path must start with a forward slash and be longer than 1 character',
-    })
-    .optional(),
-})
-
-const WebhooksSchema = zod.object({
-  api_version: zod.string(),
-  privacy_compliance: zod
-    .object({
-      customer_deletion_url: ensureHttpsOnlyUrl.optional(),
-      customer_data_request_url: ensureHttpsOnlyUrl.optional(),
-      shop_deletion_url: ensureHttpsOnlyUrl.optional(),
-    })
-    .optional(),
-})
-
-const DeclarativeWebhooksSchema = zod.object({
-  topics: zod.array(zod.string()).nonempty().optional(),
-  uri: zod.preprocess(removeTrailingSlash, UriValidation).optional(),
-  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-})
-
-const WebhooksSchemaWithDeclarative = WebhooksSchema.merge(DeclarativeWebhooksSchema).superRefine((schema, ctx) => {
-  const topLevelSubscriptionErrors = validateTopLevelSubscriptions(schema)
-  if (topLevelSubscriptionErrors) {
-    ctx.addIssue(topLevelSubscriptionErrors)
-    return zod.NEVER
-  }
-
-  const innerSubscriptionErrors = validateInnerSubscriptions(schema)
-  if (innerSubscriptionErrors) {
-    ctx.addIssue(innerSubscriptionErrors)
-    return zod.NEVER
-  }
-})
-
-export const NonVersionedAppTopSchema = zod.object({
-  name: zod.string().max(30),
+export const AppSchema = zod.object({
   client_id: zod.string(),
-})
-
-export const NonVersionedAppBottomSchema = zod.object({
-  access_scopes: zod
-    .object({
-      scopes: zod.string().optional(),
-      use_legacy_install_flow: zod.boolean().optional(),
-    })
-    .optional(),
-  auth: zod
-    .object({
-      redirect_urls: zod.array(validateUrl(zod.string())),
-    })
-    .optional(),
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
       dev_store_url: zod.string().optional(),
+      include_config_on_deploy: zod.boolean().optional(),
     })
     .optional(),
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
 })
-export const NonVersionedAppSchema = NonVersionedAppTopSchema.merge(NonVersionedAppBottomSchema)
-
-export const VersionedAppSchema = zod.object({
-  application_url: validateUrl(zod.string()),
-  embedded: zod.boolean(),
-  access: zod
-    .object({
-      direct_api_offline_access: zod.boolean().optional(),
-    })
-    .optional(),
-  webhooks: WebhooksSchemaWithDeclarative,
-  app_proxy: zod
-    .object({
-      url: validateUrl(zod.string()),
-      subpath: zod.string(),
-      prefix: zod.string(),
-    })
-    .optional(),
-  pos: zod
-    .object({
-      embedded: zod.boolean(),
-    })
-    .optional(),
-  app_preferences: zod
-    .object({
-      url: validateUrl(zod.string().max(255)),
-    })
-    .optional(),
-})
-
-export const AppSchema = NonVersionedAppTopSchema.merge(VersionedAppSchema).merge(NonVersionedAppBottomSchema).strict()
 
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
+
+export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
+  const isConfigSpecification = (spec: ExtensionSpecification) => spec.appModuleFeatures().includes('app_config')
+  const schema = specs
+    .filter(isConfigSpecification)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .reduce((schema, spec) => schema.merge(spec.schema), AppSchema as any)
+
+  return specs.length > 0 ? schema.strict() : schema
+}
 
 /**
  * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
@@ -174,19 +65,20 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   const {path, ...rest} = item
-  return isType(AppSchema, rest)
+  return isType(AppSchema.nonstrict(), rest)
 }
 
 /**
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopes(config: AppConfiguration) {
+export function getAppScopes(config: AppConfiguration): string {
   if (isLegacyAppSchema(config)) {
     return config.scopes
-  } else {
+  } else if (isCurrentAppSchema(config)) {
     return config.access_scopes?.scopes ?? ''
   }
+  return ''
 }
 
 /**
@@ -200,7 +92,8 @@ export function getAppScopesArray(config: AppConfiguration) {
 
 export function usesLegacyScopesBehavior(config: AppConfiguration) {
   if (isLegacyAppSchema(config)) return true
-  return Boolean(config.access_scopes?.use_legacy_install_flow)
+  if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
+  return false
 }
 
 export function appIsLaunchable(app: AppInterface) {
@@ -210,9 +103,9 @@ export function appIsLaunchable(app: AppInterface) {
   return Boolean(frontendConfig || backendConfig)
 }
 
-export function filterNonVersionedAppFields(app: AppInterface) {
-  return Object.keys(app.configuration).filter(
-    (fieldName) => !Object.keys(NonVersionedAppSchema.shape).concat('path').includes(fieldName),
+export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {
+  return Object.keys(configuration).filter(
+    (fieldName) => !Object.keys(AppSchema.shape).concat('path').includes(fieldName),
   )
 }
 
@@ -245,14 +138,11 @@ export const WebConfigurationSchema = zod.union([
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string}
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & SpecsAppConfiguration
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
-export type WebhookConfig = zod.infer<typeof AppSchema>['webhooks']
-export type DeclarativeWebhookConfig = zod.infer<typeof DeclarativeWebhooksSchema>
-export type NormalizedWebhookSubscription = zod.infer<typeof WebhookSubscriptionSchema>
 
 export interface Web {
   directory: string
@@ -263,6 +153,7 @@ export interface Web {
 export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
+  configSchema: zod.ZodTypeAny
 }
 
 export interface AppInterface extends AppConfigurationInterface {
@@ -274,8 +165,11 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  draftableExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
+  useVersionedAppConfig: boolean
+  includeConfigOnDeploy: boolean | undefined
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -294,8 +188,10 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  allExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
+  configSchema: zod.ZodTypeAny
+  private remoteBetaFlags: BetaFlag[]
+  private realExtensions: ExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -311,19 +207,35 @@ export class App implements AppInterface {
     dotenv?: DotEnvFile,
     errors?: AppErrors,
     specifications?: ExtensionSpecification[],
+    configSchema?: zod.ZodTypeAny,
+    remoteBetaFlags?: BetaFlag[],
   ) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
     this.packageManager = packageManager
-    this.configuration = configuration
+    this.configuration = this.configurationTyped(configuration)
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.allExtensions = extensions
+    this.realExtensions = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
+    this.configSchema = configSchema ?? AppSchema
+    this.remoteBetaFlags = remoteBetaFlags ?? []
+  }
+
+  get allExtensions() {
+    return this.realExtensions.filter(
+      (ext) => !ext.isAppConfigExtension || (this.useVersionedAppConfig && this.includeConfigOnDeploy),
+    )
+  }
+
+  get draftableExtensions() {
+    return this.realExtensions.filter(
+      (ext) => ext.isDraftable() && (!ext.isAppConfigExtension || this.useVersionedAppConfig),
+    )
   }
 
   async updateDependencies() {
@@ -361,6 +273,76 @@ export class App implements AppInterface {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
   }
+
+  get useVersionedAppConfig() {
+    return this.remoteBetaFlags.includes(BetaFlag.VersionedAppConfig)
+  }
+
+  get includeConfigOnDeploy() {
+    if (isLegacyAppSchema(this.configuration)) return false
+    return this.configuration.build?.include_config_on_deploy
+  }
+
+  private configurationTyped(configuration: AppConfiguration) {
+    if (isLegacyAppSchema(configuration)) return configuration
+    return {
+      ...configuration,
+      ...this.homeConfiguration(configuration),
+      ...this.appProxyConfiguration(configuration),
+      ...this.posConfiguration(configuration),
+      ...this.webhooksConfiguration(configuration),
+      ...this.accessConfiguration(configuration),
+    } as CurrentAppConfiguration & SpecsAppConfiguration
+  }
+
+  private appProxyConfiguration(configuration: AppConfiguration) {
+    if (!getPathValue(configuration, 'app_proxy')) return
+    return {
+      app_proxy: {
+        url: getPathValue<string>(configuration, 'app_proxy.url')!,
+        prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
+        subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
+      },
+    }
+  }
+
+  private homeConfiguration(configuration: AppConfiguration) {
+    const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
+    return {
+      application_url: getPathValue<string>(configuration, 'application_url')!,
+      embedded: getPathValue<boolean>(configuration, 'embedded')!,
+      ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
+    }
+  }
+
+  private posConfiguration(configuration: AppConfiguration) {
+    const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
+    return embedded === undefined
+      ? undefined
+      : {
+          pos: {
+            embedded,
+          },
+        }
+  }
+
+  private webhooksConfiguration(configuration: AppConfiguration) {
+    return {
+      webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
+    }
+  }
+
+  private accessConfiguration(configuration: AppConfiguration) {
+    const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
+    const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
+    const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
+    return {
+      ...(scopes || useLegacyInstallFlow
+        ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}}
+        : {}),
+      ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
+    }
+  }
 }
 
 export function validateFunctionExtensionsWithUiHandle(
@@ -390,9 +372,25 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 }
 
 export class EmptyApp extends App {
-  constructor() {
+  constructor(specifications?: ExtensionSpecification[], betas?: BetaFlag[]) {
     const configuration = {scopes: '', extension_directories: [], path: ''}
-    super('', '', '', 'npm', configuration, {}, [], [], false)
+    const configSchema = getAppVersionedSchema(specifications ?? [])
+    super(
+      '',
+      '',
+      '',
+      'npm',
+      configuration,
+      {},
+      [],
+      [],
+      false,
+      undefined,
+      undefined,
+      specifications,
+      configSchema,
+      betas,
+    )
   }
 }
 

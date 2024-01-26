@@ -24,27 +24,6 @@ describe('app_config_app_proxy', () => {
         prefix: 'apps',
       })
     })
-    test('should return the transformed object', () => {
-      // Given
-      const object = {
-        app_proxy: {
-          url: 'https://my-proxy-new.dev',
-          subpath: 'subpath-whatever',
-          prefix: 'apps',
-        },
-      }
-      const appConfigSpec = spec
-
-      // When
-      const result = appConfigSpec.transform!(object)
-
-      // Then
-      expect(result).toMatchObject({
-        url: 'https://my-proxy-new.dev',
-        subpath: 'subpath-whatever',
-        prefix: 'apps',
-      })
-    })
   })
 
   describe('reverseTransform', () => {

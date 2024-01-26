@@ -11,6 +11,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
 import {relativizePath} from '@shopify/cli-kit/node/path'
+import {errorsToString as zodErrorsToString, zod} from '@shopify/cli-kit/node/schema'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -56,7 +57,8 @@ export async function updateExtensionDraft({
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)
   } else {
-    outputInfo(`Draft updated successfully for extension: ${extension.localIdentifier}`, stdout)
+    const draftUpdateSuccesMessage = extension.draftMessages.successMessage
+    if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
   }
 }
 
@@ -65,10 +67,16 @@ interface UpdateExtensionConfigOptions {
   stdout: Writable
 }
 
-export async function reloadExtensionConfig({extension, stdout}: UpdateExtensionConfigOptions) {
-  const abort = (errorMessage: OutputMessage) => {
-    stdout.write(errorMessage)
-    throw new AbortError(errorMessage)
+export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOptions) {
+  const abort = (
+    errorMessage: OutputMessage,
+    _fallbackOutput?: unknown,
+    _path?: string,
+    rawErrors?: zod.ZodIssueBase[],
+  ) => {
+    let message = typeof errorMessage === 'string' ? errorMessage : errorMessage.value
+    if (rawErrors) message = zodErrorsToString(rawErrors)
+    throw new AbortError(message)
   }
 
   let configObject = await loadConfigurationFile(extension.configuration.path)
@@ -98,6 +106,11 @@ export async function reloadExtensionConfig({extension, stdout}: UpdateExtension
     abort,
   )
 
-  // eslint-disable-next-line require-atomic-updates
+  const previousConfig = extension.configuration
   extension.configuration = newConfig
+
+  return {
+    previousConfig,
+    newConfig,
+  }
 }

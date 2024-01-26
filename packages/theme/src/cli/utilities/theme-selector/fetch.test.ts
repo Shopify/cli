@@ -1,12 +1,12 @@
 import {fetchStoreThemes} from './fetch.js'
-import {fetchThemes} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {fetchThemes} from '@shopify/cli-kit/node/themes/api'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, vi, describe, expect} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
 
-vi.mock('@shopify/cli-kit/node/themes/themes-api')
+vi.mock('@shopify/cli-kit/node/themes/api')
 
 describe('fetchStoreThemes', () => {
   test('returns only allowed themes', async () => {

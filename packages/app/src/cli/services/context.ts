@@ -17,6 +17,7 @@ import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {fetchAppRemoteBetaFlags} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -24,6 +25,7 @@ import {
   isCurrentAppSchema,
   appIsLaunchable,
   getAppScopesArray,
+  CurrentAppConfiguration,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -45,7 +47,7 @@ import {
 } from '../api/graphql/development_preview.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {TokenItem, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -76,6 +78,7 @@ interface DevContextOutput {
   storeFqdn: string
   storeId: string
   updateURLs: boolean | undefined
+  localApp: AppInterface
 }
 
 /**
@@ -195,18 +198,33 @@ export async function ensureDevContext(
     }
   }
 
+  const specifications = await fetchSpecifications({
+    token,
+    apiKey: selectedApp.apiKey,
+    config: options.commandConfig,
+  })
+  const betas = await fetchAppRemoteBetaFlags(selectedApp.apiKey, token)
+
+  const localApp = await loadApp({
+    directory: options.directory,
+    specifications,
+    configName: getAppConfigurationShorthand(configuration.path),
+    remoteBetas: betas,
+  })
+
   // We only update the cache or config if the current app is the right one
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
   if (isCurrentAppSchema(configuration) && rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
-    const newConfiguration: AppConfiguration = {
+    const newConfiguration = {
       ...configuration,
       build: {
         ...configuration.build,
         dev_store_url: selectedStore?.shopDomain,
       },
     }
-    await writeAppConfigurationFile(newConfiguration)
+    localApp.configuration = newConfiguration
+    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -224,7 +242,7 @@ export async function ensureDevContext(
     organization,
   })
 
-  const result = buildOutput(selectedApp, selectedStore, cachedInfo)
+  const result = buildOutput(selectedApp, selectedStore, localApp, cachedInfo)
   await logMetadataForLoadedContext({
     organizationId: result.remoteApp.organizationId,
     apiKey: result.remoteApp.apiKey,
@@ -250,7 +268,12 @@ const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): P
   }
 }
 
-function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?: CachedAppInfo): DevContextOutput {
+function buildOutput(
+  app: OrganizationApp,
+  store: OrganizationStore,
+  localApp: AppInterface,
+  cachedInfo?: CachedAppInfo,
+): DevContextOutput {
   return {
     remoteApp: {
       ...app,
@@ -260,6 +283,7 @@ function buildOutput(app: OrganizationApp, store: OrganizationStore, cachedInfo?
     storeFqdn: store.shopDomain,
     storeId: store.shopId,
     updateURLs: cachedInfo?.updateURLs,
+    localApp,
   }
 }
 
@@ -354,6 +378,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
+  const betas = await fetchAppRemoteBetaFlags(partnersApp.apiKey, token)
 
   const specifications = await fetchSpecifications({
     token,
@@ -364,10 +389,18 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     specifications,
     directory: options.app.directory,
     configName: getAppConfigurationShorthand(options.app.configuration.path),
+    remoteBetas: betas,
   })
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
-  showReusedDeployValues(org.businessName, app, partnersApp)
+
+  await ensureIncludeConfigOnDeploy({
+    org,
+    app,
+    partnersApp,
+    reset: options.reset,
+    force: options.force,
+  })
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -425,6 +458,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const token = partnersSession.token
 
   const specifications = await loadLocalExtensionsSpecifications(draftExtensionsPushOptions.commandConfig)
+
   const app: AppInterface = await loadApp({
     specifications,
     directory: draftExtensionsPushOptions.directory,
@@ -434,7 +468,14 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const [partnersApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, partnersSession)
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
-  showReusedDeployValues(org.businessName, app, partnersApp)
+
+  await ensureIncludeConfigOnDeploy({
+    org,
+    app,
+    partnersApp,
+    reset: draftExtensionsPushOptions.reset,
+    force: true,
+  })
 
   const prodEnvIdentifiers = getAppIdentifiers({app})
 
@@ -455,6 +496,65 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   })
 
   return {app, partnersSession, remoteExtensionIds, remoteApp: partnersApp}
+}
+
+interface ShouldOrPromptIncludeConfigDeployOptions {
+  appDirectory: string
+  localApp: AppInterface
+}
+
+async function ensureIncludeConfigOnDeploy({
+  org,
+  app,
+  partnersApp,
+  reset,
+  force,
+}: {
+  org: Organization
+  app: AppInterface
+  partnersApp: OrganizationApp
+  reset: boolean
+  force: boolean
+}) {
+  let previousIncludeConfigOnDeploy = app.includeConfigOnDeploy
+  if (reset) previousIncludeConfigOnDeploy = undefined
+  if (force) previousIncludeConfigOnDeploy = previousIncludeConfigOnDeploy ?? false
+
+  renderCurrentlyUsedConfigInfo({
+    org: org.businessName,
+    appName: partnersApp.title,
+    appDotEnv: app.dotenv?.path,
+    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+    resetMessage: resetHelpMessage,
+    includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
+  })
+
+  if (!app.useVersionedAppConfig || force || previousIncludeConfigOnDeploy !== undefined) return
+  await promptIncludeConfigOnDeploy({
+    appDirectory: app.directory,
+    localApp: app,
+  })
+}
+
+async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
+  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt()
+  const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
+  localConfiguration.build = {
+    ...localConfiguration.build,
+    include_config_on_deploy: shouldIncludeConfigDeploy,
+  }
+
+  await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
+
+  await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
+}
+
+function includeConfigOnDeployPrompt(): Promise<boolean> {
+  return renderConfirmationPrompt({
+    message: 'Include app configuration on `deploy`?',
+    confirmationMessage: 'Yes, always (Recommended)',
+    cancellationMessage: 'No, never',
+  })
 }
 
 /**
@@ -694,7 +794,7 @@ export async function getAppContext({
     previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
 
   if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
-    await link({directory, commandConfig}, false)
+    await link({directory, commandConfig, baseConfigName: previousCachedInfo?.configFile}, false)
   }
 
   let cachedInfo = getCachedAppInfo(directory)
@@ -776,6 +876,7 @@ interface CurrentlyUsedConfigInfoOptions {
   updateURLs?: string
   configFile?: string
   appDotEnv?: string
+  includeConfigOnDeploy?: boolean
   resetMessage?: (
     | string
     | {
@@ -792,11 +893,13 @@ export function renderCurrentlyUsedConfigInfo({
   configFile,
   appDotEnv,
   resetMessage,
+  includeConfigOnDeploy,
 }: CurrentlyUsedConfigInfoOptions): void {
-  const items = [`Org:          ${org}`, `App:          ${appName}`]
+  const items = [`Org:             ${org}`, `App:             ${appName}`]
 
-  if (devStore) items.push(`Dev store:    ${devStore}`)
-  if (updateURLs) items.push(`Update URLs:  ${updateURLs}`)
+  if (devStore) items.push(`Dev store:       ${devStore}`)
+  if (updateURLs) items.push(`Update URLs:     ${updateURLs}`)
+  if (includeConfigOnDeploy !== undefined) items.push(`Include config:  ${includeConfigOnDeploy ? 'Yes' : 'No'}`)
 
   let body: TokenItem = [{list: {items}}]
   if (resetMessage) body = [...body, '\n', ...resetMessage]
@@ -814,20 +917,6 @@ function showReusedGenerateValues(org: string, cachedAppInfo: CachedAppInfo) {
     org,
     appName: cachedAppInfo.title!,
     configFile: cachedAppInfo.configFile,
-    resetMessage: resetHelpMessage,
-  })
-}
-
-function showReusedDeployValues(
-  org: string,
-  app: AppInterface,
-  remoteApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>,
-) {
-  renderCurrentlyUsedConfigInfo({
-    org,
-    appName: remoteApp.title,
-    appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
   })
 }

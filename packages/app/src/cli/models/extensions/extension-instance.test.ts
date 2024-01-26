@@ -37,7 +37,7 @@ describe('watchPaths', async () => {
       dir: 'foo',
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([joinPath('foo', 'src', 'single-path.foo'), joinPath('foo', '**', '!(.)*.graphql')])
   })
@@ -51,7 +51,7 @@ describe('watchPaths', async () => {
       dir: 'foo',
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([joinPath('foo', 'src', '**', '*.{js,ts}'), joinPath('foo', '**', '!(.)*.graphql')])
   })
@@ -59,7 +59,7 @@ describe('watchPaths', async () => {
   test('returns js and ts paths for esbuild extensions', async () => {
     const extensionInstance = await testUIExtension({directory: 'foo'})
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([joinPath('foo', 'src', '**', '*.{ts,tsx,js,jsx}')])
   })
@@ -67,7 +67,7 @@ describe('watchPaths', async () => {
   test('return empty array for non-function non-esbuild extensions', async () => {
     const extensionInstance = await testTaxCalculationExtension('foo')
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([])
   })
@@ -82,7 +82,7 @@ describe('watchPaths', async () => {
       dir: 'foo',
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([
       joinPath('foo', 'src/**/*.rs'),
@@ -98,7 +98,7 @@ describe('watchPaths', async () => {
       config,
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toBeNull()
   })
@@ -118,7 +118,7 @@ describe('isDraftable', () => {
 
     const got1 = extensionInstance.isDraftable()
 
-    expect(got1).toBe(false)
+    expect(got1).toBe(true)
   })
 
   test('returns true for web pixel extensions', async () => {
@@ -255,8 +255,54 @@ describe('bundleConfig', async () => {
 
     expect(got).toEqual(
       expect.objectContaining({
-        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks/my-neat-path","topic":"orders/delete"}]}',
+        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}]}',
       }),
     )
+  })
+})
+
+describe('draftMessages', async () => {
+  test('returns correct success message when the extension is draftable and not configuration', async () => {
+    // Given
+    const extensionInstance = await testUIExtension()
+
+    // When
+    const result = extensionInstance.draftMessages.successMessage
+
+    // Then
+    expect(result).toEqual('Draft updated successfully for extension: test-ui-extension')
+  })
+
+  test('returns no success message when the extension is draftable but configuration', async () => {
+    // Given
+    const extensionInstance = await testAppConfigExtensions()
+
+    // When
+    const result = extensionInstance.draftMessages.successMessage
+
+    // Then
+    expect(result).toBeUndefined()
+  })
+
+  test('returns correct error message when the extension is draftable and not configuration', async () => {
+    // Given
+    const extensionInstance = await testUIExtension()
+
+    // When
+    const result = extensionInstance.draftMessages.errorMessage
+
+    // Then
+    expect(result).toEqual('Error while deploying updated extension draft')
+  })
+
+  test('returns no error message when the extension is draftable but configuration', async () => {
+    // Given
+    const extensionInstance = await testAppConfigExtensions()
+
+    // When
+    const result = extensionInstance.draftMessages.successMessage
+
+    // Then
+    expect(result).toBeUndefined()
   })
 })

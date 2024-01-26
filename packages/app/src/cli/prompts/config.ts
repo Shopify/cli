@@ -1,6 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import {PushOptions} from '../services/app/config/push.js'
-import {AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
+import {AppSchema, CurrentAppConfiguration, getAppScopes, getAppScopesArray} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
@@ -17,7 +16,7 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
+import {deepCompare, deepDifference, setPathValue} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -79,11 +78,16 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(options: PushOptions, app: App, schema: zod.ZodTypeAny = AppSchema) {
-  if (options.force) return true
+export async function confirmPushChanges(
+  force: boolean,
+  configuration: CurrentAppConfiguration,
+  app: App,
+  schema: zod.ZodTypeAny = AppSchema,
+) {
+  if (force) return true
 
-  const configuration = options.configuration as CurrentAppConfiguration
-  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
+  const useVersionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
+  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp, useVersionedAppConfig)
 
   const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)
   if (!gitDiff) return false
@@ -106,7 +110,9 @@ export function buildDiffConfigContent(
   schema: zod.ZodTypeAny = AppSchema,
   renderNoChanges = true,
 ) {
-  if (localConfig.access_scopes?.scopes) localConfig.access_scopes.scopes = getAppScopesArray(localConfig).join(',')
+  if (getAppScopes(localConfig) !== '') {
+    setPathValue(localConfig, 'access_scopes.scopes', getAppScopesArray(localConfig).join(','))
+  }
 
   const [updated, baseline] = deepDifference(
     {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},

@@ -39,7 +39,6 @@ export const environmentVariables = {
   identityToken: 'SHOPIFY_CLI_IDENTITY_TOKEN',
   refreshToken: 'SHOPIFY_CLI_REFRESH_TOKEN',
   otelURL: 'SHOPIFY_CLI_OTEL_EXPORTER_OTLP_ENDPOINT',
-  versionedAppConfig: 'SHOPIFY_CLI_VERSIONED_APP_CONFIG',
 }
 
 export const systemEnvironmentVariables = {

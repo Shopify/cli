@@ -1,5 +1,5 @@
 import {ALLOWED_ROLES} from './fetch.js'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function filterThemes(store: string, themes: Theme[], filter: Filter): Theme[] {

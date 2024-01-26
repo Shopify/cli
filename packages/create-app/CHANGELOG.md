@@ -1,5 +1,20 @@
 # @shopify/create-app
 
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+  - @shopify/cli-kit@3.54.0
+
 ## 3.53.0
 
 ### Minor Changes
