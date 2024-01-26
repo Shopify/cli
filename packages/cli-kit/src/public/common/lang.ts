@@ -1,6 +1,4 @@
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
+import lodash from 'lodash'
 
 /**
  * Performs a deep comparison between two values to determine if they are
@@ -18,6 +16,5 @@ const require = createRequire(import.meta.url)
  * @example
  */
 export function isEqual(value: unknown, other: unknown): boolean {
-  const lodashIsEqual = require('lodash/isEqual')
-  return lodashIsEqual(value, other)
+  return lodash.isEqual(value, other)
 }

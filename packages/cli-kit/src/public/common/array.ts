@@ -1,3 +1,4 @@
+import lodash from 'lodash'
 import {createRequire} from 'module'
 import type {List, ValueIteratee} from 'lodash'
 
@@ -43,8 +44,7 @@ export function getArrayContainsDuplicates<T>(array: T[]): boolean {
  * @returns Returns the new duplicate free array.
  */
 export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIteratee<T>): T[] {
-  const lodashUniqBy = require('lodash/uniqBy')
-  return lodashUniqBy(array, iteratee)
+  return lodash.uniqBy(array, iteratee)
 }
 
 /**
@@ -56,6 +56,5 @@ export function uniqBy<T>(array: List<T> | null | undefined, iteratee: ValueIter
  * @returns Returns the new array of filtered values.
  */
 export function difference<T>(array: List<T> | null | undefined, ...values: List<T>[]): T[] {
-  const lodashDifference = require('lodash/difference')
-  return lodashDifference(array, ...values)
+  return lodash.difference(array, ...values)
 }

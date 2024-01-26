@@ -96,7 +96,7 @@ export function setupGraphiQLServer({
     res.sendFile(faviconPath)
   })
 
-  const stylePath = require.resolve('@shopify/cli-kit/assets/style.css')
+  const stylePath = '' // require.resolve('@shopify/cli-kit/assets/style.css')
   app.get('/graphiql/simple.css', (_req, res) => {
     res.sendFile(stylePath)
   })

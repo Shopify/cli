@@ -1,10 +1,7 @@
 import {unstyled, shouldDisplayColors} from '../../../../../public/node/output.js'
 import {Text} from 'ink'
 import React, {FunctionComponent} from 'react'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
-const gitDiff = require('git-diff')
+import gitDiff from 'git-diff'
 
 export interface GitDiffProps {
   gitDiff: {
