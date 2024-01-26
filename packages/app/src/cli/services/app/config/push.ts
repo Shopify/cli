@@ -131,8 +131,8 @@ export async function pushConfig(options: PushOptions) {
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
   if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
   const {app} = queryResult
-  const versionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
-  if (versionedAppConfig) abort(DeprecatedPushMessage)
+  const useVersionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
+  if (useVersionedAppConfig) abort(DeprecatedPushMessage)
 
   const {businessName: org} = await fetchOrgFromId(app.organizationId, partnersSession)
   renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
