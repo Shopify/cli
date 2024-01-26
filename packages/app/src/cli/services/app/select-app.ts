@@ -20,7 +20,7 @@ export enum BetaFlag {
   VersionedAppConfig,
 }
 
-const FlagMap = {
+const FlagMap: {[key: string]: BetaFlag} = {
   versioned_app_config: BetaFlag.VersionedAppConfig,
 }
 
@@ -29,10 +29,8 @@ export async function fetchAppRemoteBetaFlags(apiKey: string, token: string) {
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, {apiKey})
   if (queryResult.app) {
     const {app} = queryResult
-    const possibleBetaKeys = Object.keys(FlagMap) as (keyof typeof FlagMap)[]
-    const remoteActiveBetaKeys = possibleBetaKeys.filter((flag) => !app.disabledBetas.includes(flag))
-    const remoteActiveBetaFlags = remoteActiveBetaKeys.map((beta) => FlagMap[beta])
-    return defaultActiveBetas.filter((beta) => remoteActiveBetaFlags.includes(beta))
+    const remoteDisabledFlags = app.disabledBetas.map((flag) => FlagMap[flag])
+    return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
   } else {
     outputDebug("Couldn't find app for beta flags. Make sure you have a valid client ID.")
     return []
