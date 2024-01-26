@@ -45,6 +45,7 @@
  theme publish                     @shopify/theme               
  theme pull                        @shopify/theme               
  theme push                        @shopify/theme               
+ theme rename                      @shopify/theme               
  theme share                       @shopify/theme               
  upgrade                           @shopify/cli                 
  version                           @shopify/cli                 

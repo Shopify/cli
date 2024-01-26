@@ -1,8 +1,8 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
-import {publishTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {themePreviewUrl} from '@shopify/cli-kit/node/themes/theme-urls'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 

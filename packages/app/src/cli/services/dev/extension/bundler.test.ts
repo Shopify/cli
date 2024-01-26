@@ -5,12 +5,18 @@ import {
   setupExtensionWatcher,
 } from './bundler.js'
 import * as bundle from '../../extensions/bundle.js'
-import {testUIExtension, testFunctionExtension, testApp} from '../../../models/app/app.test-data.js'
+import {
+  testUIExtension,
+  testFunctionExtension,
+  testApp,
+  testAppConfigExtensions,
+} from '../../../models/app/app.test-data.js'
 import {reloadExtensionConfig} from '../update-extension.js'
 import {FunctionConfigType} from '../../../models/extensions/specifications/function.js'
 import * as extensionBuild from '../../../services/build/extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {describe, expect, test, vi} from 'vitest'
+import {BaseConfigType} from '../../../models/extensions/schemas.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {BuildResult} from 'esbuild'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -24,6 +30,7 @@ vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../../models/app/loader.js')
 vi.mock('../update-extension.js')
 vi.mock('../../../services/build/extension.js')
+vi.mock('../update-extension.js')
 
 async function testBundlerAndFileWatcher() {
   const extension1 = await testUIExtension({
@@ -231,6 +238,10 @@ describe('setupBundlerAndFileWatcher()', () => {
 })
 
 describe('setupExtensionWatcher', () => {
+  beforeEach(() => {
+    const config = {type: 'type', name: 'name', path: 'path', metafields: []}
+    vi.mocked(reloadExtensionConfig).mockResolvedValue({newConfig: config, previousConfig: config})
+  })
   interface MockWatcherOptionsArgs {
     watchPath: string | undefined
     signal?: AbortSignal | undefined
@@ -255,6 +266,20 @@ describe('setupExtensionWatcher', () => {
       stdout: new Writable(),
       stderr: new Writable(),
       signal: signal ?? new AbortController().signal,
+      onChange: vi.fn(),
+    }
+  }
+
+  async function mockWatcherConfigurationOptions(): Promise<SetupExtensionWatcherOptions> {
+    const configurationExtension = await testAppConfigExtensions()
+
+    return {
+      app: testApp(),
+      extension: configurationExtension,
+      url: 'mock/url',
+      stdout: new Writable(),
+      stderr: new Writable(),
+      signal: new AbortController().signal,
       onChange: vi.fn(),
     }
   }
@@ -476,5 +501,92 @@ describe('setupExtensionWatcher', () => {
 
     await expect(chokidarCloseSpy).rejects.toThrow(new Error('fail'))
     expect(outputDebug).toHaveBeenLastCalledWith(expect.stringContaining('fail'), watchOptions.stderr)
+  })
+  test('deploy the configuration extension when the values are modified', async () => {
+    // Given
+    const newConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType & {path: string}
+    const previousConfig = {pos: {embeded: false}, path: 'shopify.app.toml'} as unknown as BaseConfigType & {
+      path: string
+    }
+    vi.mocked(reloadExtensionConfig).mockResolvedValue({newConfig, previousConfig})
+    const watchOptions = await mockWatcherConfigurationOptions()
+    const buildSpy = vi.spyOn(watchOptions.extension, 'build')
+    const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
+      // call the file watch handler immediately
+      handler('shopify.app.toml')
+    })
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      return {on: chokidarOnSpy} as any
+    })
+
+    // When
+    await setupExtensionWatcher(watchOptions)
+    await flushPromises()
+
+    // Them
+    expect(buildSpy).not.toHaveBeenCalled()
+    expect(chokidarOnSpy).toHaveBeenCalled()
+    expect(reloadExtensionConfig).toHaveBeenCalledWith({
+      extension: watchOptions.extension,
+      stdout: watchOptions.stdout,
+    })
+    expect(watchOptions.onChange).toHaveBeenCalled()
+  })
+  test('dont deploy the configuration extension when the values are the same', async () => {
+    // Given
+    const newConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType & {path: string}
+    const previousConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType & {
+      path: string
+    }
+    vi.mocked(reloadExtensionConfig).mockResolvedValue({newConfig, previousConfig})
+    const watchOptions = await mockWatcherConfigurationOptions()
+    const buildSpy = vi.spyOn(watchOptions.extension, 'build')
+    const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
+      // call the file watch handler immediately
+      handler('shopify.app.toml')
+    })
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      return {on: chokidarOnSpy} as any
+    })
+
+    // When
+    await setupExtensionWatcher(watchOptions)
+    await flushPromises()
+
+    // Them
+    expect(buildSpy).not.toHaveBeenCalled()
+    expect(chokidarOnSpy).toHaveBeenCalled()
+    expect(reloadExtensionConfig).toHaveBeenCalledWith({
+      extension: watchOptions.extension,
+      stdout: watchOptions.stdout,
+    })
+    expect(watchOptions.onChange).not.toHaveBeenCalled()
+  })
+  test('dont deploy the configuration extension when an error is produced', async () => {
+    // Given
+    vi.mocked(reloadExtensionConfig).mockRejectedValue(new Error('config.path: wrong value'))
+    const watchOptions = await mockWatcherConfigurationOptions()
+    const buildSpy = vi.spyOn(watchOptions.extension, 'build')
+    const chokidarOnSpy = vi.fn().mockImplementation((_event, handler) => {
+      // call the file watch handler immediately
+      handler('shopify.app.toml')
+    })
+    vi.spyOn(chokidar, 'watch').mockImplementation((path) => {
+      return {on: chokidarOnSpy} as any
+    })
+
+    // When
+    await setupExtensionWatcher(watchOptions)
+    await flushPromises()
+
+    // Them
+    expect(buildSpy).not.toHaveBeenCalled()
+    expect(chokidarOnSpy).toHaveBeenCalled()
+    expect(reloadExtensionConfig).toHaveBeenCalledWith({
+      extension: watchOptions.extension,
+      stdout: watchOptions.stdout,
+    })
+    expect(watchOptions.onChange).not.toHaveBeenCalled()
+    expect(outputWarn).not.toHaveBeenCalled()
   })
 })

@@ -9,7 +9,6 @@ import {
   updateURLs,
 } from './dev/urls.js'
 import {ensureDevContext, enableDeveloperPreview, disableDeveloperPreview, developerPreviewUpdate} from './context.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
@@ -20,13 +19,13 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
-import {loadApp} from '../models/app/loader.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
 import {Config} from '@oclif/core'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
@@ -84,15 +83,11 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteApp,
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
+    localApp: app,
   } = await ensureDevContext(commandOptions, partnersSession)
 
   const apiKey = remoteApp.apiKey
-  const specifications = await fetchSpecifications({token, apiKey, config: commandOptions.commandConfig})
-  let localApp = await loadApp({
-    directory: commandOptions.directory,
-    specifications,
-    configName: commandOptions.configName,
-  })
+  let localApp = app
 
   if (!commandOptions.skipDependenciesInstallation && !localApp.usesWorkspaces) {
     localApp = await installAppDependencies(localApp)
@@ -320,19 +315,11 @@ export function developerPreviewController(apiKey: string, originalToken: string
 
   const withRefreshToken = async <T>(fn: (token: string) => Promise<T>): Promise<T> => {
     try {
-      const result = await fn(currentToken)
+      const result = await performActionWithRetryAfterRecovery(async () => fn(currentToken), refreshToken)
       return result
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_err) {
-      try {
-        await refreshToken()
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (_err) {
-        outputDebug('Failed to refresh token')
-        // Swallow the error, this isn't important enough to crash the process
-      }
-      return fn(currentToken)
-      // If it fails after refresh, let it crash the process
+    } catch (err) {
+      outputDebug('Failed to refresh token')
+      throw err
     }
   }
 

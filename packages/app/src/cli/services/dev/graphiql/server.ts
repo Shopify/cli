@@ -2,6 +2,7 @@ import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import express from 'express'
 import bodyParser from 'body-parser'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
@@ -101,21 +102,15 @@ export function setupGraphiQLServer({
   })
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
-    let apiVersions: string[]
-    try {
-      apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (err) {
-      // Retry once with a new token, in case the token expired or was revoked
-      await refreshToken()
-      apiVersions = await supportedApiVersions({storeFqdn, token: await token()})
-    }
-    return apiVersions
+    return performActionWithRetryAfterRecovery(
+      async () => supportedApiVersions({storeFqdn, token: await token()}),
+      refreshToken,
+    )
   }
 
   app.get('/graphiql/status', (_req, res) => {
     fetchApiVersionsWithTokenRefresh()
-      .then(() => res.send({status: 'OK'}))
+      .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl}))
       .catch(() => res.send({status: 'UNAUTHENTICATED'}))
   })
 

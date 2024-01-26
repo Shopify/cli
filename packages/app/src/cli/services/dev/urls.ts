@@ -1,5 +1,10 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {
+  AppConfigurationInterface,
+  AppInterface,
+  CurrentAppConfiguration,
+  isCurrentAppSchema,
+} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
@@ -16,10 +21,16 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+export interface AppProxy {
+  proxyUrl: string
+  proxySubPath: string
+  proxySubPathPrefix: string
+}
+
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
-  appProxy?: {proxyUrl: string; proxySubPath: string; proxySubPathPrefix: string}
+  appProxy?: AppProxy
 }
 
 export interface FrontendURLOptions {
@@ -126,7 +137,7 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
 export function generatePartnersURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
-  proxyFields?: {url: string; subpath: string; prefix: string},
+  proxyFields?: CurrentAppConfiguration['app_proxy'],
 ): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
@@ -184,24 +195,27 @@ export async function updateURLs(
   }
 
   if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
-    const localConfiguration: AppConfiguration = {
+    let localConfiguration: CurrentAppConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
       auth: {
-        ...localApp.configuration.auth,
+        ...(localApp.configuration.auth ?? {}),
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
 
     if (urls.appProxy) {
-      localConfiguration.app_proxy = {
-        url: urls.appProxy.proxyUrl,
-        subpath: urls.appProxy.proxySubPath,
-        prefix: urls.appProxy.proxySubPathPrefix,
+      localConfiguration = {
+        ...localConfiguration,
+        app_proxy: {
+          url: urls.appProxy.proxyUrl,
+          subpath: urls.appProxy.proxySubPath,
+          prefix: urls.appProxy.proxySubPathPrefix,
+        },
       }
     }
 
-    await writeAppConfigurationFile(localConfiguration)
+    await writeAppConfigurationFile(localConfiguration, localApp.configSchema)
   }
 }
 
@@ -245,13 +259,13 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     )
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
-      const localConfiguration: AppConfiguration = options.localApp.configuration
+      const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
-      await writeAppConfigurationFile(localConfiguration)
+      await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

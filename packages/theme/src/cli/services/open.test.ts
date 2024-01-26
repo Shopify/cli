@@ -1,7 +1,7 @@
 import {open} from './open.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -114,7 +114,6 @@ describe('open', () => {
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: undefined,
         filter: {
           live,
           theme: undefined,
@@ -129,7 +128,6 @@ describe('open', () => {
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: developmentTheme.id,
         filter: {
           live,
           theme: options.theme,
@@ -144,7 +142,6 @@ describe('open', () => {
 
       expect(findOrSelectTheme).toHaveBeenCalledWith(session, {
         header,
-        developmentTheme: developmentTheme.id,
         filter: {
           live,
           theme: developmentTheme.id.toString(),

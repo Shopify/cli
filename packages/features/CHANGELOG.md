@@ -1,5 +1,11 @@
 # @shopify/features
 
+## 0.11.0
+
+### Minor Changes
+
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
 ## 0.10.0
 
 ### Minor Changes

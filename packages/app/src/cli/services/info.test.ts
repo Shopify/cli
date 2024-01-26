@@ -3,7 +3,7 @@ import {fetchAppDetailsFromApiKey, fetchOrgAndApps, fetchOrganizations} from './
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import * as accountInfo from './context/partner-account-info.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   testPartnersUserSession,
@@ -60,26 +60,30 @@ describe('info', () => {
 
       [webhooks]
       api_version = "2023-07"
+
+      [auth]
+      redirect_urls = [ "https://example.com/api/auth" ]
       `
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
       vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
         testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'}),
       )
 
+      const configuration: CurrentAppConfiguration = {
+        path: joinPath(tmp, 'shopify.app.toml'),
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://example.com/lala',
+        embedded: true,
+        webhooks: {api_version: '2023-07'},
+        access_scopes: {scopes: 'read_products'},
+      }
       const app = mockApp({
         directory: tmp,
         app: testApp({
           name: 'my app',
           directory: tmp,
-          configuration: {
-            path: joinPath(tmp, 'shopify.app.toml'),
-            name: 'my app',
-            client_id: '12345',
-            application_url: 'https://example.com/lala',
-            embedded: true,
-            webhooks: {api_version: '2023-07'},
-            access_scopes: {scopes: 'read_products'},
-          },
+          configuration,
         }),
         configContents: testConfig,
       })

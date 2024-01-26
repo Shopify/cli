@@ -10,7 +10,7 @@ export const MetafieldSchema = zod.object({
 
 export const CollectBuyerConsentCapabilitySchema = zod.object({
   sms_marketing: zod.boolean().optional(),
-  write_privacy_consent: zod.boolean().optional(),
+  customer_privacy: zod.boolean().optional(),
 })
 
 export const CapabilitiesSchema = zod.object({

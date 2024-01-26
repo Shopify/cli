@@ -1,18 +1,15 @@
-import {deployOrReleaseConfirmationPrompt} from './deploy-release.js'
+import {buildConfigurationBreakdownMetadata, deployOrReleaseConfirmationPrompt} from './deploy-release.js'
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
   ExtensionIdentifiersBreakdown,
+  buildDashboardBreakdownInfo,
+  buildExtensionBreakdownInfo,
 } from '../services/context/breakdown-extensions.js'
-import {SpyInstance, beforeEach, describe, expect, test, vi} from 'vitest'
+import {SpyInstance, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/context/local')
-
-beforeEach(() => {
-  vi.mocked(useVersionedAppConfig).mockReturnValue(true)
-})
 
 describe('deployOrReleaseConfirmationPrompt', () => {
   describe('when release', () => {
@@ -33,7 +30,11 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       })
 
       // Then
-      expect(metadataSpyOn).not.toHaveBeenCalled()
+      verifyMetada({
+        metadataSpyOn,
+        confirmed: result,
+        configExtensionIdentifiersBreakdown: configExtensionIdentifiersBreakdown!,
+      })
       expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
@@ -61,6 +62,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -94,6 +96,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -102,23 +105,19 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Configuration:'}, 'deleted field name1']],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -130,7 +129,8 @@ describe('deployOrReleaseConfirmationPrompt', () => {
     test('and no force with deleted extensions should display the complete danger confirmation prompt', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
-
+      breakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildDashboardBreakdownInfo('remote dashboard'))
+      breakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildDashboardBreakdownInfo('to create dashboard'))
       const renderDangerousConfirmationPromptSpyOn = vi
         .spyOn(ui, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
@@ -150,6 +150,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -158,26 +159,27 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
+              helperText: 'Removing extensions can permanentely delete app user data',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                {
+                  bullet: '+',
+                  item: ['to create dashboard', {subdued: '(new, from Partner Dashboard)'}],
+                  color: 'green',
+                },
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
+                {bullet: '-', item: ['remote dashboard', {subdued: '(removed, from Partner Dashboard)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [
-                [{subdued: 'Extension:'}, 'remote extension'],
-                [{subdued: 'Configuration:'}, 'deleted field name1'],
-              ],
-              bullet: '-',
             },
           ],
           dangerPrompt: true,
@@ -206,6 +208,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -214,26 +217,20 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [
-                [{subdued: 'Extension:'}, 'remote extension'],
-                [{subdued: 'Configuration:'}, 'deleted field name1'],
-              ],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -242,20 +239,21 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       expect(result).toBe(true)
     })
 
-    test('and no force with modified and deleted configuration but versioned app not enabled then the config information should not be displayed', async () => {
+    test('and the configuration extension breakdown is undefined then the config information should not be displayed', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
+      breakdownInfo.configExtensionIdentifiersBreakdown = undefined
 
       const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
       const appTitle = undefined
-      vi.mocked(useVersionedAppConfig).mockReturnValue(false)
 
       // When
       const result = await deployOrReleaseConfirmationPrompt({
         ...breakdownInfo,
         release: true,
         force: false,
+        showConfig: false,
       })
 
       // Then
@@ -263,6 +261,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -271,15 +270,11 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Extension:'}, 'remote extension']],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -312,6 +307,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -319,20 +315,18 @@ describe('deployOrReleaseConfirmationPrompt', () => {
           infoTable: [
             {
               header: 'Configuration:',
-              items: [{subdued: 'No changes'}],
+              items: [],
+              emptyItemsText: 'No changes',
             },
             {
               header: 'Extensions:',
+              helperText: 'Removing extensions can permanentely delete app user data',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
+                {bullet: '-', item: ['remote extension', {subdued: '(removed)'}], color: 'red'},
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Extension:'}, 'remote extension']],
-              bullet: '-',
             },
           ],
           dangerPrompt: true,
@@ -365,6 +359,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -373,23 +368,19 @@ describe('deployOrReleaseConfirmationPrompt', () => {
             {
               header: 'Configuration:',
               items: [
-                ['existing field name1', {subdued: ''}],
-                ['updating field name1', {subdued: '(updated)'}],
-                ['new field name1', {subdued: '(new)'}],
+                {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
+                'updating field name1',
+                'existing field name1',
+                {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
             },
             {
               header: 'Extensions:',
               items: [
-                ['to create extension', {subdued: '(new)'}],
-                ['to update extension', {subdued: ''}],
+                {bullet: '+', item: ['to create extension', {subdued: '(new)'}], color: 'green'},
+                'to update extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
-            },
-            {
-              header: 'Removes:',
-              items: [[{subdued: 'Configuration:'}, 'deleted field name1']],
-              bullet: '-',
             },
           ],
           dangerPrompt: false,
@@ -425,10 +416,12 @@ function renderConfirmationPromptContent(options: RenderConfirmationPromptConten
 function buildCompleteBreakdownInfo() {
   const emptyBreakdownInfo = buildEmptyBreakdownInfo()
 
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push('remote extension')
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.toCreate.push('to create extension')
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.toUpdate.push('to update extension')
-  emptyBreakdownInfo.extensionIdentifiersBreakdown.fromDashboard.push('from dashboard extension')
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildExtensionBreakdownInfo('remote extension'))
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildExtensionBreakdownInfo('to create extension'))
+  emptyBreakdownInfo.extensionIdentifiersBreakdown.toUpdate.push(
+    buildExtensionBreakdownInfo('to update extension'),
+    buildDashboardBreakdownInfo('from dashboard extension'),
+  )
 
   emptyBreakdownInfo.configExtensionIdentifiersBreakdown!.existingFieldNames.push('existing field name1')
   emptyBreakdownInfo.configExtensionIdentifiersBreakdown!.existingUpdatedFieldNames.push('updating field name1')
@@ -453,7 +446,6 @@ function buildEmptyExtensionsBreakdownInfo(): ExtensionIdentifiersBreakdown {
     onlyRemote: [],
     toCreate: [],
     toUpdate: [],
-    fromDashboard: [],
   }
 }
 
@@ -470,19 +462,28 @@ function verifyMetada({
   metadataSpyOn,
   extensionIdentifiersBreakdown,
   confirmed,
+  configExtensionIdentifiersBreakdown,
 }: {
   metadataSpyOn: SpyInstance
-  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  extensionIdentifiersBreakdown?: ExtensionIdentifiersBreakdown
   confirmed: boolean
+  configExtensionIdentifiersBreakdown: ConfigExtensionIdentifiersBreakdown
 }) {
+  const configurationBreakdownMetadata = buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown)
+
   expect(metadataSpyOn).toHaveBeenNthCalledWith(1, expect.any(Function))
-  expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({
+  expect(metadataSpyOn.mock.calls[0]![0]()).toEqual(configurationBreakdownMetadata)
+
+  if (!extensionIdentifiersBreakdown) return
+
+  expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
+  expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({
     cmd_deploy_confirm_new_registrations: extensionIdentifiersBreakdown.toCreate.length,
     cmd_deploy_confirm_updated_registrations: extensionIdentifiersBreakdown.toUpdate.length,
     cmd_deploy_confirm_removed_registrations: extensionIdentifiersBreakdown.onlyRemote.length,
   })
-  expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
-  expect(metadataSpyOn.mock.calls[1]![0]()).toEqual(
+  expect(metadataSpyOn).toHaveBeenNthCalledWith(3, expect.any(Function))
+  expect(metadataSpyOn.mock.calls[2]![0]()).toEqual(
     expect.objectContaining({
       cmd_deploy_confirm_cancelled: !confirmed,
     }),

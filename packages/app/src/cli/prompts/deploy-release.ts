@@ -1,9 +1,10 @@
+import {buildDeployReleaseInfoTableSection} from './ui/deploy-release-info-table-section.js'
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
+  ExtensionIdentifierBreakdownInfo,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 import {InfoTableSection, renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOrReleaseConfirmationPromptOptions {
@@ -12,17 +13,17 @@ export interface DeployOrReleaseConfirmationPromptOptions {
   appTitle?: string
   release: boolean
   force: boolean
+  showConfig?: boolean
 }
 
 export interface DeployConfirmationPromptOptions {
   appTitle?: string
   extensionsContentPrompt: {
     extensionsInfoTable?: InfoTableSection
-    deletedInfoTable?: InfoTableSection
+    hasDeletedExtensions: boolean
   }
-  configContentPrompt: {
+  configContentPrompt?: {
     configInfoTable: InfoTableSection
-    deletedInfoTable?: InfoTableSection
   }
   release: boolean
 }
@@ -34,6 +35,7 @@ export async function deployOrReleaseConfirmationPrompt({
   appTitle,
   release,
 }: DeployOrReleaseConfirmationPromptOptions) {
+  await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
@@ -48,41 +50,30 @@ export async function deployOrReleaseConfirmationPrompt({
 
 async function deployConfirmationPrompt({
   appTitle,
-  extensionsContentPrompt: {extensionsInfoTable, deletedInfoTable},
-  configContentPrompt: {configInfoTable, deletedInfoTable: configDeletedInfoTable},
+  extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
+  configContentPrompt,
   release,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
 
-  let question = `Create a new version${appTitle ? ` of ${appTitle}` : ''}?`
-  if (release) {
-    question = `Release a new version${appTitle ? ` of ${appTitle}` : ''}?`
-  }
-
-  let finalDeletedInfoTable = deletedInfoTable ?? {header: '', items: [], bullet: '-'}
-  if (configDeletedInfoTable && useVersionedAppConfig()) {
-    finalDeletedInfoTable = {
-      ...finalDeletedInfoTable,
-      header: configDeletedInfoTable.header,
-      items: [...finalDeletedInfoTable.items, ...configDeletedInfoTable.items],
-    }
-  }
-
   const infoTable = []
-  if (
-    useVersionedAppConfig() &&
-    (extensionsInfoTable || finalDeletedInfoTable.header !== '' || configInfoTable.items.length > 0)
-  ) {
+  if (configContentPrompt && (extensionsInfoTable || configContentPrompt.configInfoTable.items.length > 0)) {
     infoTable.push(
-      configInfoTable.items.length === 0 ? {...configInfoTable, items: [{subdued: 'No changes'}]} : configInfoTable,
+      configContentPrompt.configInfoTable.items.length === 0
+        ? {...configContentPrompt.configInfoTable, emptyItemsText: 'No changes', items: []}
+        : configContentPrompt.configInfoTable,
     )
   }
-  if (extensionsInfoTable) infoTable.push(extensionsInfoTable)
-  if (finalDeletedInfoTable.header !== '') infoTable.push(finalDeletedInfoTable)
+  const isDangerous = appTitle !== undefined && hasDeletedExtensions
+  if (extensionsInfoTable)
+    infoTable.push(
+      isDangerous
+        ? {...extensionsInfoTable, helperText: 'Removing extensions can permanentely delete app user data'}
+        : extensionsInfoTable,
+    )
 
-  const isDangerous = appTitle !== undefined && deletedInfoTable
-
+  const question = `${release ? 'Release' : 'Create'} a new version${appTitle ? ` of ${appTitle}` : ''}?`
   if (isDangerous) {
     confirmationResponse = await renderDangerousConfirmationPrompt({
       message: question,
@@ -90,18 +81,10 @@ async function deployConfirmationPrompt({
       confirmation: appTitle,
     })
   } else {
-    let confirmationMessage
-
-    if (release) {
-      confirmationMessage = 'Yes, release this new version'
-    } else {
-      confirmationMessage = 'Yes, create this new version'
-    }
-
     confirmationResponse = await renderConfirmationPrompt({
       message: question,
       infoTable,
-      confirmationMessage,
+      confirmationMessage: `Yes, ${release ? 'release' : 'create'} this new version`,
       cancellationMessage: 'No, cancel',
     })
   }
@@ -110,32 +93,36 @@ async function deployConfirmationPrompt({
 
   await metadata.addPublicMetadata(() => ({
     cmd_deploy_confirm_cancelled: !confirmationResponse,
-    cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
+    cmd_deploy_confirm_time_to_complete_ms: timeToConfirmOrCancelMs,
   }))
 
   return confirmationResponse
 }
 
 async function buildExtensionsContentPrompt(extensionsContentBreakdown: ExtensionIdentifiersBreakdown) {
-  const {fromDashboard, onlyRemote, toCreate: toCreateBreakdown, toUpdate} = extensionsContentBreakdown
+  const {onlyRemote, toCreate: toCreateBreakdown, toUpdate} = extensionsContentBreakdown
 
-  let extensionsInfoTable
-  const extensionsInfo = [
-    ...toCreateBreakdown.map((identifier) => [identifier, {subdued: '(new)'}]),
-    ...toUpdate.map((identifier) => [identifier, {subdued: ''}]),
-    ...fromDashboard.map((identifier) => [identifier, {subdued: '(from Partner Dashboard)'}]),
-  ]
-  if (extensionsInfo.length > 0) {
-    extensionsInfoTable = {header: 'Extensions:', items: extensionsInfo}
+  const mapExtensionToInfoTableItem = (extension: ExtensionIdentifierBreakdownInfo, preffix: string) => {
+    switch (extension.experience) {
+      case 'dashboard':
+        return [extension.title, {subdued: `(${preffix}from Partner Dashboard)`}]
+      case 'extension':
+        return extension.title
+    }
   }
+  let extensionsInfoTable
+  const section = {
+    new: toCreateBreakdown.map((extension) => mapExtensionToInfoTableItem(extension, 'new, ')),
+    updated: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
+    removed: onlyRemote.map((extension) => mapExtensionToInfoTableItem(extension, 'removed, ')),
+  }
+  const extensionsInfo = buildDeployReleaseInfoTableSection(section)
 
-  let deletedInfoTable
-  const deleted = onlyRemote.map((field) => [{subdued: 'Extension:'}, field])
-  if (deleted.length > 0) {
-    deletedInfoTable = {
-      header: 'Removes:',
-      items: deleted,
-      bullet: '-',
+  const hasDeletedExtensions = onlyRemote.length > 0
+  if (extensionsInfo.length > 0) {
+    extensionsInfoTable = {
+      header: 'Extensions:',
+      items: extensionsInfo,
     }
   }
 
@@ -145,40 +132,52 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
     cmd_deploy_confirm_removed_registrations: onlyRemote.length,
   }))
 
-  return {extensionsInfoTable, deletedInfoTable}
+  return {extensionsInfoTable, hasDeletedExtensions}
 }
 
 async function buildConfigContentPrompt(
   release: boolean,
   configContentBreakdown?: ConfigExtensionIdentifiersBreakdown,
 ) {
-  if (!configContentBreakdown)
-    return {
-      configInfoTable: {header: 'Configuration: ', items: []},
-      deletedInfoTable: undefined,
-    }
+  if (!configContentBreakdown) return
 
   const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} = configContentBreakdown
 
-  const modifiedFieldNames = [
-    ...existingUpdatedFieldNames.map((field) => [field, {subdued: '(updated)'}]),
-    ...newFieldNames.map((field) => [field, {subdued: '(new)'}]),
-  ]
-  const configurationInfo = [...existingFieldNames.map((field) => [field, {subdued: ''}]), ...modifiedFieldNames]
+  const section = {
+    new: newFieldNames,
+    updated: [...existingUpdatedFieldNames, ...existingFieldNames],
+    removed: deletedFieldNames,
+  }
+  const configurationInfo = buildDeployReleaseInfoTableSection(section)
+
+  const hasModifiedFields = newFieldNames.length > 0 || existingUpdatedFieldNames.length > 0
   const configInfoTable = {
     header: 'Configuration:',
-    items: modifiedFieldNames.length > 0 || !release ? configurationInfo : [],
+    items: hasModifiedFields || deletedFieldNames.length > 0 || !release ? configurationInfo : [],
   }
 
-  let deletedInfoTable
-  const deleted = deletedFieldNames.map((field) => [{subdued: 'Configuration:'}, field])
-  if (deleted.length > 0) {
-    deletedInfoTable = {
-      header: 'Removes:',
-      items: deleted,
-      bullet: '-',
-    }
-  }
+  return {configInfoTable}
+}
 
-  return {configInfoTable, deletedInfoTable}
+export function buildConfigurationBreakdownMetadata(
+  configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown,
+) {
+  if (!configExtensionIdentifiersBreakdown) return {cmd_deploy_include_config_used: false}
+
+  const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} =
+    configExtensionIdentifiersBreakdown
+  const currentConfiguration = [...existingUpdatedFieldNames, ...newFieldNames, ...existingFieldNames]
+  return {
+    cmd_deploy_include_config_used: true,
+    ...(currentConfiguration.length > 0
+      ? {cmd_deploy_config_modules_breakdown: JSON.stringify(currentConfiguration.sort())}
+      : {}),
+    ...(existingUpdatedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_updated: JSON.stringify(existingUpdatedFieldNames.sort())}
+      : {}),
+    ...(newFieldNames.length > 0 ? {cmd_deploy_config_modules_added: JSON.stringify(newFieldNames.sort())} : {}),
+    ...(deletedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_deleted: JSON.stringify(deletedFieldNames.sort())}
+      : {}),
+  }
 }

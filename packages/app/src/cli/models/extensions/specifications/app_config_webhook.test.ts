@@ -7,26 +7,37 @@ describe('webhooks', () => {
       // Given
       const object = {
         webhooks: {
-          uri: 'https://my-app.com/webhooks',
-          topics: ['products/create', 'products/update', 'products/delete'],
+          api_version: '2024-01',
           subscriptions: [
             {
-              topic: 'orders/delete',
-              path: '/my-neat-path',
+              uri: 'https://example.com/webhooks/orders',
+              topics: ['orders/delete', 'orders/create', 'orders/edited'],
+              metafield_namespaces: ['id', 'size'],
             },
             {
-              topic: 'payment_terms.challenged',
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks/products',
             },
             {
-              topic: 'metaobjects/create',
-              sub_topic: 'something',
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              sub_topic: 'type:metaobject_one',
+              topics: ['metaobjects/create', 'metaobjects/update'],
             },
             {
-              topic: 'orders/create',
-              include_fields: ['variants', 'title'],
+              topics: ['metaobjects/create', 'metaobjects/update'],
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+              sub_topic: 'type:metaobject_two',
+            },
+            {
               metafield_namespaces: ['size'],
+              topics: ['orders/create'],
               uri: 'https://valid-url',
+              include_fields: ['variants', 'title'],
+            },
+            {
+              topics: ['metaobjects/create', 'metaobjects/delete'],
+              uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+              sub_topic: 'type:metaobject_one',
             },
           ],
         },
@@ -38,39 +49,81 @@ describe('webhooks', () => {
 
       // Then
       expect(result).toEqual({
+        api_version: '2024-01',
         subscriptions: [
           {
-            topic: 'products/create',
-            uri: 'https://my-app.com/webhooks',
-          },
-          {
-            topic: 'products/update',
-            uri: 'https://my-app.com/webhooks',
-          },
-          {
-            topic: 'products/delete',
-            uri: 'https://my-app.com/webhooks',
-          },
-          {
-            uri: 'https://my-app.com/webhooks/my-neat-path',
+            metafield_namespaces: ['id', 'size'],
             topic: 'orders/delete',
+            uri: 'https://example.com/webhooks/orders',
           },
           {
-            uri: 'https://my-app.com/webhooks',
-            topic: 'payment_terms.challenged',
-          },
-          {
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-            topic: 'metaobjects/create',
-            sub_topic: 'something',
-          },
-          {
-            uri: 'https://valid-url',
+            metafield_namespaces: ['id', 'size'],
             topic: 'orders/create',
+            uri: 'https://example.com/webhooks/orders',
+          },
+          {
+            metafield_namespaces: ['id', 'size'],
+            topic: 'orders/edited',
+            uri: 'https://example.com/webhooks/orders',
+          },
+          {
+            topic: 'products/create',
+            uri: 'https://example.com/webhooks/products',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/create',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/update',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
+            sub_topic: 'type:metaobject_two',
+            topic: 'metaobjects/create',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
+            sub_topic: 'type:metaobject_two',
+            topic: 'metaobjects/update',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
             include_fields: ['variants', 'title'],
             metafield_namespaces: ['size'],
+            topic: 'orders/create',
+            uri: 'https://valid-url',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/create',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/delete',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
         ],
+      })
+    })
+    test('when there is no subscriptions only api version is sent', () => {
+      // Given
+      const object = {
+        webhooks: {
+          api_version: '2021-01',
+        },
+      }
+      const webhookSpec = spec
+
+      // When
+      const result = webhookSpec.transform!(object)
+
+      // Then
+      expect(result).toEqual({
+        api_version: '2021-01',
       })
     })
   })
@@ -78,33 +131,57 @@ describe('webhooks', () => {
     test('should return the reversed transformed object', () => {
       // Given
       const object = {
+        api_version: '2024-01',
         subscriptions: [
           {
-            topic: 'products/create',
-            uri: 'https://my-app.com/webhooks',
-          },
-          {
-            topic: 'products/update',
-            uri: 'https://my-app.com/webhooks',
-          },
-          {
-            topic: 'products/delete',
-            uri: 'https://my-app.com/webhooks',
-          },
-          {
-            uri: 'https://my-app.com/webhooks/my-neat-path',
+            metafield_namespaces: ['id', 'size'],
             topic: 'orders/delete',
+            uri: 'https://example.com/webhooks/orders',
           },
           {
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-            topic: 'metaobjects/create',
-            sub_topic: 'something',
-          },
-          {
-            uri: 'https://valid-url',
+            metafield_namespaces: ['id', 'size'],
             topic: 'orders/create',
+            uri: 'https://example.com/webhooks/orders',
+          },
+          {
+            metafield_namespaces: ['id', 'size'],
+            topic: 'orders/edited',
+            uri: 'https://example.com/webhooks/orders',
+          },
+          {
+            topic: 'products/create',
+            uri: 'https://example.com/webhooks/products',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/create',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
+            sub_topic: 'type:metaobject_two',
+            topic: 'metaobjects/create',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/update',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+          },
+          {
             include_fields: ['variants', 'title'],
             metafield_namespaces: ['size'],
+            topic: 'orders/create',
+            uri: 'https://valid-url',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/create',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+          },
+          {
+            sub_topic: 'type:metaobject_one',
+            topic: 'metaobjects/delete',
+            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
         ],
       }
@@ -116,25 +193,56 @@ describe('webhooks', () => {
       // Then
       expect(result).toMatchObject({
         webhooks: {
-          uri: 'https://my-app.com/webhooks',
-          topics: ['products/create', 'products/update', 'products/delete'],
+          api_version: '2024-01',
           subscriptions: [
             {
-              topic: 'orders/delete',
-              path: '/my-neat-path',
+              metafield_namespaces: ['id', 'size'],
+              topics: ['orders/delete', 'orders/create', 'orders/edited'],
+              uri: 'https://example.com/webhooks/orders',
             },
             {
-              topic: 'metaobjects/create',
-              sub_topic: 'something',
+              topics: ['products/create'],
+              uri: 'https://example.com/webhooks/products',
+            },
+            {
+              sub_topic: 'type:metaobject_one',
+              topics: ['metaobjects/create', 'metaobjects/update'],
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
             {
-              topic: 'orders/create',
+              sub_topic: 'type:metaobject_two',
+              topics: ['metaobjects/create'],
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
+            },
+            {
               include_fields: ['variants', 'title'],
               metafield_namespaces: ['size'],
+              topics: ['orders/create'],
               uri: 'https://valid-url',
             },
+            {
+              sub_topic: 'type:metaobject_one',
+              topics: ['metaobjects/create', 'metaobjects/delete'],
+              uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
+            },
           ],
+        },
+      })
+    })
+    test('when no subscriptions are received only api version is returned', () => {
+      // Given
+      const object = {
+        api_version: '2021-01',
+      }
+      const webhookSpec = spec
+
+      // When
+      const result = webhookSpec.reverseTransform!(object)
+
+      // Then
+      expect(result).toMatchObject({
+        webhooks: {
+          api_version: '2021-01',
         },
       })
     })

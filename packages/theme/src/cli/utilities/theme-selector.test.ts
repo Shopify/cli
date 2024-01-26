@@ -1,9 +1,9 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemes} from './theme-selector.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
 import {test, describe, vi, expect} from 'vitest'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('./theme-selector/fetch.js')
 vi.mock('../services/local-storage.js')
@@ -53,7 +53,6 @@ describe('findOrSelectTheme', () => {
     // When
     await findOrSelectTheme(session, {
       header,
-      developmentTheme: themes[0]!.id,
       filter: {},
     })
 

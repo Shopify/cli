@@ -38,42 +38,41 @@ export async function partnersRequest<T>(query: string, token: string, variables
   return result
 }
 
-interface ProxyResponse {
-  scriptServiceProxy: string
+export interface FunctionUploadUrlGenerateResponse {
+  functionUploadUrlGenerate: {
+    generatedUrlDetails: {
+      url: string
+      moduleId: string
+      headers: {[key: string]: string}
+      maxBytes: number
+      maxSize: string
+    }
+  }
 }
 
 /**
- * Function queries are proxied through the script service proxy.
- * To execute a query, we encapsulate it inside another query (including the variables)
- * This is done automatically, you just need to provide the query and the variables.
+ * Request a URL from partners to which we will upload our function.
  *
- * @param apiKey - APIKey of the app where the query will be executed.
- * @param query - GraphQL query to execute.
  * @param token - Partners token.
- * @param variables - GraphQL variables to pass to the query.
  * @returns The response of the query.
  */
-export async function functionProxyRequest<T>(
-  apiKey: string,
-  query: unknown,
-  token: string,
-  variables?: unknown,
-): Promise<T> {
-  const proxyVariables = {
-    api_key: apiKey,
-    query,
-    variables: JSON.stringify(variables) || '{}',
-  }
-  const proxyQuery = ScriptServiceProxyQuery
-  const res: ProxyResponse = await partnersRequest(proxyQuery, token, proxyVariables)
-  const json = JSON.parse(res.scriptServiceProxy)
-  handleDeprecations(json)
-  return json as T
+export async function getFunctionUploadUrl(token: string): Promise<FunctionUploadUrlGenerateResponse> {
+  const functionUploadUrlGenerateMutation = FunctionUploadUrlGenerateMutation
+  const res: FunctionUploadUrlGenerateResponse = await partnersRequest(FunctionUploadUrlGenerateMutation, token)
+  return res
 }
 
-const ScriptServiceProxyQuery = gql`
-  query ProxyRequest($api_key: String, $query: String!, $variables: String) {
-    scriptServiceProxy(apiKey: $api_key, query: $query, variables: $variables)
+const FunctionUploadUrlGenerateMutation = gql`
+  mutation functionUploadUrlGenerateMutation {
+    functionUploadUrlGenerate {
+      generatedUrlDetails {
+        url
+        moduleId
+        headers
+        maxBytes
+        maxSize
+      }
+    }
   }
 `
 

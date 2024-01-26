@@ -39,6 +39,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
     url: string
   }
   developmentStorePreviewEnabled?: boolean
+  disabledBetas?: string[]
 }
 
 export interface OrganizationStore {

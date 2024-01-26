@@ -29,6 +29,7 @@ export const GetConfig = gql`
       betas {
         declarativeWebhooks
       }
+      disabledBetas
     }
   }
 `
@@ -60,6 +61,7 @@ export interface App {
   betas?: {
     declarativeWebhooks?: boolean
   }
+  disabledBetas: string[]
 }
 
 export interface GetConfigQuerySchema {

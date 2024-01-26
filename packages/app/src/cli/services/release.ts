@@ -1,5 +1,8 @@
 import {ensureReleaseContext} from './context.js'
-import {extensionsIdentifiersReleaseBreakdown} from './context/breakdown-extensions.js'
+import {
+  configExtensionsIdentifiersBreakdown,
+  extensionsIdentifiersReleaseBreakdown,
+} from './context/breakdown-extensions.js'
 import {AppInterface} from '../models/app/app.js'
 import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
@@ -35,9 +38,16 @@ export async function release(options: ReleaseOptions) {
     token,
     partnersApp.apiKey,
     options.version,
-    app.specifications ?? [],
   )
+  const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
+    token,
+    apiKey: partnersApp.apiKey,
+    localApp: app,
+    versionAppModules: versionDetails.appModuleVersions,
+    release: true,
+  })
   const confirmed = await deployOrReleaseConfirmationPrompt({
+    configExtensionIdentifiersBreakdown,
     extensionIdentifiersBreakdown,
     appTitle: partnersApp.title,
     release: true,

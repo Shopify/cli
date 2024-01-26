@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -10,6 +10,8 @@ import productSubscriptionUIExtension from '../templates/ui-specifications/produ
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -55,6 +57,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     app.dotenv,
     app.errors,
     app.specifications,
+    app.configSchema,
   )
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
@@ -91,7 +94,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
@@ -111,6 +114,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     grantedScopes: [],
     applicationUrl: 'https://example.com',
     redirectUrlWhitelist: ['https://example.com/callback1'],
+    disabledBetas: [],
   }
   return {...defaultApp, ...app}
 }
@@ -132,7 +136,7 @@ export async function testUIExtension(
       api_access: false,
       collect_buyer_consent: {
         sms_marketing: false,
-        write_privacy_consent: false,
+        customer_privacy: false,
       },
     },
   }
@@ -189,7 +193,7 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
 
   const extension = new ExtensionInstance({
     configuration,
-    configurationPath: '',
+    configurationPath: 'shopify.app.toml',
     directory: './',
     specification,
   })
@@ -204,8 +208,7 @@ export async function testWebhookExtensions(emptyConfig = false): Promise<Extens
         webhooks: {
           subscriptions: [
             {
-              topic: 'orders/delete',
-              path: '/my-neat-path',
+              topics: ['orders/delete'],
               uri: 'https://my-app.com/webhooks',
             },
           ],
@@ -296,6 +299,30 @@ export async function testFunctionExtension(
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    entryPath: opts.entryPath,
+    directory,
+    specification,
+  })
+  return extension
+}
+
+interface TestPaymentsAppExtensionOptions {
+  dir?: string
+  config: PaymentsAppExtensionConfigType
+  entryPath?: string
+}
+export async function testPaymentsAppExtension(
+  opts: TestPaymentsAppExtensionOptions,
+): Promise<ExtensionInstance<PaymentsAppExtensionConfigType>> {
+  const directory = opts.dir ?? '/tmp/project/extensions/my-payments-app-extension'
+  const configuration = opts.config
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -565,4 +592,14 @@ export const testPartnersServiceSession: PartnersSession = {
     type: 'ServiceAccount',
     orgName: 'organization',
   },
+}
+
+export async function buildVersionedAppSchema() {
+  const configSpecifications = (await loadFSExtensionsSpecifications()).filter((spec) =>
+    spec.appModuleFeatures().includes('app_config'),
+  )
+  return {
+    schema: getAppVersionedSchema(configSpecifications),
+    configSpecifications,
+  }
 }

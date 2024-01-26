@@ -1,4 +1,6 @@
 import {fetchAppFromConfigOrSelect} from './fetch-app-from-config-or-select.js'
+import {BetaFlag, fetchAppRemoteBetaFlags} from './select-app.js'
+import {abort, DeprecatedPushMessage} from './config/push.js'
 import {getURLs, PartnersURLs, updateURLs, validatePartnersURLs} from '../dev/urls.js'
 import {allowedRedirectionURLsPrompt, appUrlPrompt} from '../../prompts/update-url.js'
 import {AppConfigurationInterface} from '../../models/app/app.js'
@@ -15,6 +17,9 @@ export interface UpdateURLOptions {
 export default async function updateURL(options: UpdateURLOptions): Promise<void> {
   const token = await ensureAuthenticatedPartners()
   const apiKey = options.apiKey || (await fetchAppFromConfigOrSelect(options.app)).apiKey
+
+  const remoteBetas = await fetchAppRemoteBetaFlags(apiKey, token)
+  if (remoteBetas.includes(BetaFlag.VersionedAppConfig)) abort(DeprecatedPushMessage)
 
   const newURLs = await getNewURLs(token, apiKey, options)
   await updateURLs(newURLs, apiKey, token, options.app)

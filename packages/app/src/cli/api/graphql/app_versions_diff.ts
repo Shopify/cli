@@ -9,6 +9,10 @@ export const AppVersionsDiffQuery = gql`
           registrationTitle
           specification {
             identifier
+            experience
+            options {
+              managementExperience
+            }
           }
         }
         updated {
@@ -16,6 +20,10 @@ export const AppVersionsDiffQuery = gql`
           registrationTitle
           specification {
             identifier
+            experience
+            options {
+              managementExperience
+            }
           }
         }
         removed {
@@ -23,6 +31,10 @@ export const AppVersionsDiffQuery = gql`
           registrationTitle
           specification {
             identifier
+            experience
+            options {
+              managementExperience
+            }
           }
         }
       }
@@ -35,6 +47,10 @@ export interface AppVersionsDiffExtensionSchema {
   registrationTitle: string
   specification: {
     identifier: string
+    experience: string
+    options: {
+      managementExperience: string
+    }
   }
 }
 

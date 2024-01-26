@@ -1,8 +1,37 @@
+import {transformToWebhookConfig, transformWebhookConfig} from './transform/app_config_webhook.js'
+import {UriValidation, removeTrailingSlash} from './validation/common.js'
+import {webhookValidator} from './validation/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {AppSchema, NormalizedWebhookSubscription, WebhookConfig} from '../../app/app.js'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
 
-export const WebhookSchema = AppSchema.pick({webhooks: true}).strip()
+const WebhookSubscriptionSchema = zod.object({
+  topics: zod.array(zod.string()).nonempty(),
+  uri: zod.preprocess(removeTrailingSlash, UriValidation),
+  sub_topic: zod.string().optional(),
+  include_fields: zod.array(zod.string()).optional(),
+  metafield_namespaces: zod.array(zod.string()).optional(),
+  compliance_topics: zod.array(zod.enum(['customers/redact', 'customers/data_request', 'shop/redact'])).optional(),
+})
+
+const WebhooksSchema = zod.object({
+  api_version: zod.string(),
+  privacy_compliance: zod
+    .object({
+      customer_deletion_url: UriValidation.optional(),
+      customer_data_request_url: UriValidation.optional(),
+      shop_deletion_url: UriValidation.optional(),
+    })
+    .optional(),
+  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
+})
+
+export const WebhooksSchemaWithDeclarative = WebhooksSchema.superRefine(webhookValidator)
+
+export const WebhookSchema = zod.object({
+  webhooks: WebhooksSchemaWithDeclarative,
+})
+
+export const WebhooksSpecIdentifier = 'webhooks'
 
 const WebhookTransformConfig: CustomTransformationConfig = {
   forward: (content: object) => transformWebhookConfig(content),
@@ -10,88 +39,9 @@ const WebhookTransformConfig: CustomTransformationConfig = {
 }
 
 const spec = createConfigExtensionSpecification({
-  identifier: 'webhooks',
+  identifier: WebhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: WebhookTransformConfig,
 })
-
-// Transform methods
-export function transformWebhookConfig(content: object) {
-  const webhooks = getPathValue(content, 'webhooks')
-  if (!webhooks) return content
-
-  // normalize webhook config with the top level config
-  const webhookSubscriptions = []
-  const {topics, subscriptions, uri} = webhooks as WebhookConfig
-
-  if (uri && topics?.length) {
-    for (const topic of topics) {
-      webhookSubscriptions.push({
-        topic,
-        uri,
-      })
-    }
-  }
-
-  if (subscriptions?.length) {
-    for (const {path, uri: localUri, ...subscription} of subscriptions) {
-      // we can assume this is valid from earlier validation, and local URI will overwrite top level if there is any
-      const subscriptionConfig = {
-        uri: localUri || uri,
-        ...subscription,
-      }
-
-      if (path) {
-        subscriptionConfig.uri = `${subscriptionConfig.uri}${path}`
-      }
-
-      webhookSubscriptions.push(subscriptionConfig)
-    }
-  }
-  return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions} : {}
-}
-
-export function transformToWebhookConfig(content: object) {
-  const serverWebhooks = getPathValue(content, 'subscriptions') as NormalizedWebhookSubscription[]
-  const frequencyMap: {[key: string]: number} = {}
-  serverWebhooks.forEach((item) => {
-    frequencyMap[item.uri!] = (frequencyMap[item.uri!] || 0) + 1
-  })
-  const maxCount = Math.max(...Object.values(frequencyMap))
-  const defaultUri = Object.keys(frequencyMap).find((key) => frequencyMap[key] === maxCount)
-
-  const topics: string[] = []
-  const subscriptions: NormalizedWebhookSubscription[] = []
-
-  for (const item of serverWebhooks) {
-    if (item.uri === defaultUri && !item.sub_topic && !item.include_fields && !item.metafield_namespaces) {
-      topics.push(item.topic)
-    } else {
-      let path: string | undefined
-      let uri: string | undefined
-
-      // If the URI starts with the defaultUri, extract the rest of the string as the path
-      if (item.uri!.startsWith(defaultUri!)) {
-        path = item.uri!.slice(defaultUri!.length)
-      } else {
-        // If the URI does not start with the defaultUri, extract the path using a regular expression
-        const pathMatch = item.uri!.match(/^[^:]+:\/\/[^/]+\/(.*)/)
-        path = pathMatch ? pathMatch[1] : undefined
-        uri = item.uri
-      }
-
-      // Exclude undefined keys from the subscription object
-      const subscription: NormalizedWebhookSubscription = {...item}
-      if (path) subscription.path = path
-      if (uri) subscription.uri = uri
-      if (item.uri!.startsWith(defaultUri!)) {
-        delete subscription.uri
-      }
-      subscriptions.push(subscription)
-    }
-  }
-
-  return {webhooks: {uri: defaultUri, topics, subscriptions}}
-}
 
 export default spec
