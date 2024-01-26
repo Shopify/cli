@@ -86,11 +86,8 @@ export async function confirmPushChanges(
 ) {
   if (force) return true
 
-  const remoteConfiguration = mergeAppConfiguration(
-    configuration,
-    app as OrganizationApp,
-    app.betas?.versionedAppConfig ?? false,
-  )
+  const versionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
+  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp, versionedAppConfig)
 
   const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)
   if (!gitDiff) return false

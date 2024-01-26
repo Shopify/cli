@@ -10,6 +10,7 @@ export const FindAppQuery = gql`
       apiSecretKeys {
         secret
       }
+      disabledBetas
       appType
       grantedScopes
       applicationUrl
@@ -43,6 +44,7 @@ export interface FindAppQuerySchema {
     apiSecretKeys: {
       secret: string
     }[]
+    disabledBetas: string[]
     appType: string
     grantedScopes: string[]
     applicationUrl: string
