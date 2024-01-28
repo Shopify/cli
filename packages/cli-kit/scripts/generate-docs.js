@@ -25,4 +25,4 @@ async function main() {
   }
 }
 
-await main().catch(console.error)
+await main()
