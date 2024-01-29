@@ -1,4 +1,5 @@
 import spec from './app_config_privacy_compliance_webhooks.js'
+import {isEmpty} from '@shopify/cli-kit/common/object'
 import {describe, expect, test} from 'vitest'
 
 describe('privacy_compliance_webhooks', () => {
@@ -51,6 +52,21 @@ describe('privacy_compliance_webhooks', () => {
           },
         },
       })
+    })
+    test('should return undefined if all properties are empty', () => {
+      // Given
+      const object = {
+        customers_redact_url: '',
+        customers_data_request_url: '',
+        shop_redact_url: undefined,
+      }
+      const privacyComplianceSpec = spec
+
+      // When
+      const result = privacyComplianceSpec.reverseTransform!(object)
+
+      // Then
+      expect(isEmpty(result)).toBeTruthy()
     })
   })
 })
