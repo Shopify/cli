@@ -1,4 +1,4 @@
-import {Checksum, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {BulkUploadResult, Checksum, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 interface RemoteThemeJson {
   id: number
@@ -8,11 +8,17 @@ interface RemoteThemeJson {
   processing?: boolean
 }
 
-interface RemoteAssetJson {
+export interface RemoteAssetJson {
   key: string
   checksum: string
   attachment: string
   value: string
+}
+
+export interface BulkUploadResponse {
+  body: {asset: RemoteAssetJson}
+  code: number
+  errors?: string[]
 }
 
 export function buildTheme(themeJson?: RemoteThemeJson): Theme | undefined {
@@ -44,4 +50,15 @@ export function buildThemeAsset(assetJson?: RemoteAssetJson): ThemeAsset | undef
 
   const {key, checksum, attachment, value} = assetJson
   return {key, checksum, attachment, value}
+}
+
+export function buildBulkUploadResults(response?: BulkUploadResponse): BulkUploadResult | undefined {
+  if (!response) return
+
+  return {
+    key: response.body.asset.key,
+    success: response.code === 200,
+    errors: response.errors || [],
+    asset: response.body.asset || {},
+  }
 }

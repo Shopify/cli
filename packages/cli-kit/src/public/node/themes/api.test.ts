@@ -344,7 +344,6 @@ describe('bulkUploadThemeAssets', async () => {
     expect(bulkUploadresults).toHaveLength(2)
     expect(bulkUploadresults[0]).toEqual({
       key: 'assets/test.liquid',
-      size: 20,
       success: true,
       errors: [],
       asset: {
