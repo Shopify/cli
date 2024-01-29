@@ -21,7 +21,10 @@ const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   supports_3ds: true,
   test_mode_available: true,
   multiple_capture: true,
-  encryption_certificate: {},
+  encryption_certificate: {
+    fingerprint: 'fingerprint',
+    certificate: '-----BEGIN CERTIFICATE-----\nSample certificate\n-----END CERTIFICATE-----',
+  },
   api_version: '2022-07',
   checkout_payment_method_fields: [],
   checkout_hosted_fields: ['fields'],
