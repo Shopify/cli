@@ -6,7 +6,7 @@ describe('themeComponent', () => {
   test('returns the ui for a theme', async () => {
     const component = themeComponent(theme(1))
 
-    expect(component).toEqual(['theme 1', {subdued: '(#1)'}])
+    expect(component).toEqual(["'theme 1'", {subdued: '(#1)'}])
   })
 })
 
@@ -17,9 +17,9 @@ describe('themesComponent', () => {
     expect(component).toEqual({
       list: {
         items: [
-          ['theme 1', {subdued: '(#1)'}],
-          ['theme 2', {subdued: '(#2)'}],
-          ['theme 3', {subdued: '(#3)'}],
+          ["'theme 1'", {subdued: '(#1)'}],
+          ["'theme 2'", {subdued: '(#2)'}],
+          ["'theme 3'", {subdued: '(#3)'}],
         ],
       },
     })

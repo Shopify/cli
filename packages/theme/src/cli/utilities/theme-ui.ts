@@ -3,7 +3,7 @@ import {renderConfirmationPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function themeComponent(theme: Theme) {
   return [
-    theme.name,
+    `'${theme.name}'`,
     {
       subdued: `(#${theme.id})`,
     },
