@@ -180,7 +180,7 @@
     "@vitest/coverage-istanbul": "^0.34.3",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
-    "typedoc": "^0.25.0",
+    "typedoc": "^0.25.7",
     "typescript": "5.2.2",
     "vite": "^4.4.9",
     "vitest": "^0.34.3"
