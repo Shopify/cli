@@ -33,6 +33,7 @@ export interface DevProps {
   }
   pollingTime?: number
   developerPreview: DeveloperPreviewController
+  isEditionWeek?: boolean
 }
 
 const Dev: FunctionComponent<DevProps> = ({
@@ -44,6 +45,7 @@ const Dev: FunctionComponent<DevProps> = ({
   app,
   pollingTime = 5000,
   developerPreview,
+  isEditionWeek,
 }) => {
   const {canEnablePreviewMode, developmentStorePreviewEnabled} = app
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -155,6 +157,8 @@ const Dev: FunctionComponent<DevProps> = ({
             await openURL(localhostGraphiqlUrl)
           } else if (input === 'q') {
             abortController.abort()
+          } else if (input === 'e' && isEditionWeek) {
+            await openURL('https://shopify.link/yQmk')
           } else if (input === 'd' && canEnablePreviewMode) {
             await metadata.addPublicMetadata(() => ({
               cmd_dev_dev_preview_toggle_used: true,
@@ -184,6 +188,10 @@ const Dev: FunctionComponent<DevProps> = ({
     {isActive: Boolean(canUseShortcuts)},
   )
 
+  const now = new Date()
+  const season = now.getMonth() > 3 ? 'Summer' : 'Winter'
+  const year = now.getFullYear()
+
   return (
     <>
       <ConcurrentOutput
@@ -206,6 +214,12 @@ const Dev: FunctionComponent<DevProps> = ({
         >
           {canUseShortcuts ? (
             <Box flexDirection="column">
+              {isEditionWeek ? (
+                <Text>
+                  {figures.pointerSmall} Press <Text bold>e</Text> {figures.lineVertical} check out {season} Edition
+                  {` ${year}`}, live NOW with 100+ product announcements!
+                </Text>
+              ) : null}
               {canEnablePreviewMode ? (
                 <Text>
                   {figures.pointerSmall} Press <Text bold>d</Text> {figures.lineVertical} toggle development store
