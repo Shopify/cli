@@ -1,12 +1,13 @@
 import {buildDeployReleaseInfoTableSection} from './deploy-release-info-table-section.js'
 import {describe, expect, test} from 'vitest'
 
-describe('buildNURInfoTableSection', () => {
+describe('buildDeployReleaseInfoTableSection', () => {
   test('when section includes content in all lists the complete result is returned', async () => {
     // Given
     const section = {
       new: ['new'],
       updated: ['updated'],
+      unchanged: ['unchanged'],
       removed: ['removed'],
     }
 
@@ -16,7 +17,8 @@ describe('buildNURInfoTableSection', () => {
     // Then
     expect(result).toEqual([
       {bullet: '+', item: ['new', {subdued: '(new)'}], color: 'green'},
-      'updated',
+      {item: ['updated', {subdued: '(updated)'}], color: '#FF8800'},
+      'unchanged',
       {bullet: '-', item: ['removed', {subdued: '(removed)'}], color: 'red'},
     ])
   })
@@ -24,7 +26,7 @@ describe('buildNURInfoTableSection', () => {
     // Given
     const section = {
       new: [],
-      updated: [],
+      unchanged: [],
       removed: [],
     }
 
@@ -38,7 +40,7 @@ describe('buildNURInfoTableSection', () => {
     // Given
     const section = {
       new: [['new', {subdued: '(my new suffix)'}]],
-      updated: [],
+      unchanged: [],
       removed: [],
     }
 
@@ -52,7 +54,7 @@ describe('buildNURInfoTableSection', () => {
     // Given
     const section = {
       new: [],
-      updated: [],
+      unchanged: [],
       removed: [['deleted', {subdued: '(my deleted suffix)'}]],
     }
 

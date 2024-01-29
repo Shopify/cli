@@ -113,7 +113,7 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
   let extensionsInfoTable
   const section = {
     new: toCreateBreakdown.map((extension) => mapExtensionToInfoTableItem(extension, 'new, ')),
-    updated: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
+    unchanged: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
     removed: onlyRemote.map((extension) => mapExtensionToInfoTableItem(extension, 'removed, ')),
   }
   const extensionsInfo = buildDeployReleaseInfoTableSection(section)
@@ -145,7 +145,8 @@ async function buildConfigContentPrompt(
 
   const section = {
     new: newFieldNames,
-    updated: [...existingUpdatedFieldNames, ...existingFieldNames],
+    updated: existingUpdatedFieldNames,
+    unchanged: existingFieldNames,
     removed: deletedFieldNames,
   }
   const configurationInfo = buildDeployReleaseInfoTableSection(section)

@@ -106,7 +106,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -160,7 +160,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -218,7 +218,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -369,7 +369,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
