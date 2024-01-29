@@ -38,7 +38,7 @@ describe('renameTheme', () => {
     // Then
     expect(updateTheme).toBeCalledWith(developmentTheme.id, {name: options.newName}, adminSession)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my development theme', {subdued: '(#1)'}, 'was renamed to', 'Renamed Theme'],
+      body: ['The theme', "'my development theme'", {subdued: '(#1)'}, 'was renamed to', "'Renamed Theme'"],
     })
   })
 
@@ -57,7 +57,7 @@ describe('renameTheme', () => {
     // Then
     expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my theme', {subdued: '(#2)'}, 'was renamed to', 'Renamed Theme'],
+      body: ['The theme', "'my theme'", {subdued: '(#2)'}, 'was renamed to', "'Renamed Theme'"],
     })
   })
 
@@ -76,7 +76,7 @@ describe('renameTheme', () => {
     // Then
     expect(updateTheme).toBeCalledWith(theme1.id, {name: options.newName}, adminSession)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'live theme', {subdued: '(#2)'}, 'was renamed to', 'Renamed Theme'],
+      body: ['The theme', "'live theme'", {subdued: '(#2)'}, 'was renamed to', "'Renamed Theme'"],
     })
   })
 })
