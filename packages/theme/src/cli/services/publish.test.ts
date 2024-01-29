@@ -37,15 +37,15 @@ describe('publish', () => {
 
     // Then
     expect(renderConfirmationPrompt).toBeCalledWith({
-      message: `Do you want to make my theme the new live theme on my-shop.myshopify.com?`,
-      confirmationMessage: `Yes, make my theme the new live theme`,
+      message: `Do you want to make 'my theme' the new live theme on my-shop.myshopify.com?`,
+      confirmationMessage: `Yes, make 'my theme' the new live theme`,
       cancellationMessage: 'No, cancel publish',
     })
 
     expect(renderSuccess).toBeCalledWith({
       body: [
         'The theme',
-        'my theme',
+        "'my theme'",
         {subdued: `(#1)`},
         'is now live at',
         {
@@ -70,8 +70,8 @@ describe('publish', () => {
 
     // Then
     expect(renderConfirmationPrompt).toBeCalledWith({
-      message: `Do you want to make my theme the new live theme on my-shop.myshopify.com?`,
-      confirmationMessage: `Yes, make my theme the new live theme`,
+      message: `Do you want to make 'my theme' the new live theme on my-shop.myshopify.com?`,
+      confirmationMessage: `Yes, make 'my theme' the new live theme`,
       cancellationMessage: 'No, cancel publish',
     })
     expect(renderSuccess).not.toBeCalled()
@@ -91,7 +91,7 @@ describe('publish', () => {
     expect(renderSuccess).toBeCalledWith({
       body: [
         'The theme',
-        'my theme',
+        "'my theme'",
         {subdued: `(#1)`},
         'is now live at',
         {
