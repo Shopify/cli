@@ -1090,6 +1090,14 @@
       ],
       "description": "Download your remote theme files locally.",
       "flags": {
+        "beta": {
+          "allowNo": false,
+          "description": "Performs the pull command by relying on the new download implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "beta",
+          "type": "boolean"
+        },
         "development": {
           "allowNo": false,
           "char": "d",
