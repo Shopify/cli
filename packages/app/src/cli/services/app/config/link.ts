@@ -87,7 +87,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
   })
 
   const betas = await fetchAppRemoteBetaFlags(remoteApp.apiKey, token)
-  const localApp = await loadAppOrEmptyApp(options, specifications, betas)
+  const localApp = await loadAppOrEmptyApp(options, specifications, betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
@@ -101,7 +101,9 @@ async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
   remoteBetas?: BetaFlag[],
+  remoteApp?: OrganizationApp,
 ): Promise<AppInterface> {
+  const emptyApp = new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas)
   try {
     const app = await loadApp({
       specifications,
@@ -110,10 +112,11 @@ async function loadAppOrEmptyApp(
       configName: options.baseConfigName,
       remoteBetas,
     })
-    return app
+    if (remoteApp?.apiKey === app.configuration.client_id?.toString()) return app
+    return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas)
+    return emptyApp
   }
 }
 
@@ -162,7 +165,7 @@ async function loadConfigurationFileName(
     return getAppConfigurationFileName(options.configName)
   }
 
-  if (!localApp.configuration || (localApp && isLegacyAppSchema(localApp.configuration))) {
+  if (isLegacyAppSchema(localApp.configuration)) {
     return configurationFileNames.app
   }
 

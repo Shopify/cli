@@ -372,8 +372,10 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 }
 
 export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[], betas?: BetaFlag[]) {
-    const configuration = {scopes: '', extension_directories: [], path: ''}
+  constructor(specifications?: ExtensionSpecification[], betas?: BetaFlag[], clientId?: string) {
+    const configuration = clientId
+      ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
+      : {scopes: '', path: ''}
     const configSchema = getAppVersionedSchema(specifications ?? [])
     super(
       '',
