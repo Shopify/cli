@@ -1,5 +1,3 @@
-import {RemoteAssetJson} from './factories.js'
-
 /**
  * {@link Key} represents the unique identifier of a file in a theme.
  */
@@ -104,5 +102,5 @@ export interface BulkUploadResult {
   /**
    * The asset that was uploaded as part of the upload operation for this file.
    */
-  asset: RemoteAssetJson
+  asset: ThemeAsset
 }
