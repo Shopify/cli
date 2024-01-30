@@ -101,7 +101,3 @@ export async function isEmptyDir(path: string) {
 
   return entries.length === 0
 }
-
-function isConfirmed() {
-  return true
-}
