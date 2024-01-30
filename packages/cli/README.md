@@ -16,6 +16,7 @@
 * [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
+* [`shopify app lint`](#shopify-app-lint)
 * [`shopify app release`](#shopify-app-release)
 * [`shopify app update-url`](#shopify-app-update-url)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
@@ -432,6 +433,26 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.55.0/dist/cli/commands/app/info.js)_
+
+## `shopify app lint`
+
+Lint your Shopify app for common reasons to reject from the app store.
+
+```
+USAGE
+  $ shopify app lint [-c <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>  The name of the app configuration.
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the logs.
+
+DESCRIPTION
+  Lint your Shopify app for common reasons to reject from the app store.
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.54.0/dist/cli/commands/app/lint.js)_
 
 ## `shopify app release`
 
