@@ -1,8 +1,5 @@
 import lodash from 'lodash'
-import {createRequire} from 'module'
 import type {List, ValueIteratee} from 'lodash'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Creates an object composed of keys generated from the results of running each element of collection through

@@ -133,9 +133,6 @@ importers:
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2
-      shx:
-        specifier: ^0.3.4
-        version: 0.3.4
       tempy:
         specifier: ^3.0.0
         version: 3.0.0
@@ -12772,15 +12769,6 @@ packages:
       jsonc-parser: 3.2.0
       vscode-oniguruma: 1.7.0
       vscode-textmate: 8.0.0
-    dev: true
-
-  /shx@0.3.4:
-    resolution: {integrity: sha512-N6A9MLVqjxZYcVn8hLmtneQWIJtp8IKzMP4eMnx+nqkvXoqinUPCbUFLp2UcWTEIUONhlk0ewxr/jaVGlc+J+g==}
-    engines: {node: '>=6'}
-    hasBin: true
-    dependencies:
-      minimist: 1.2.8
-      shelljs: 0.8.5
     dev: true
 
   /side-channel@1.0.4:

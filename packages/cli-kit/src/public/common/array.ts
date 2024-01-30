@@ -1,8 +1,5 @@
 import lodash from 'lodash'
-import {createRequire} from 'module'
 import type {List, ValueIteratee} from 'lodash'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Takes a random value from an array.

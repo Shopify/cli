@@ -1,8 +1,5 @@
 import lodash from 'lodash'
-import {createRequire} from 'module'
 import type {DebouncedFunc, DebounceSettings} from 'lodash'
-
-const require = createRequire(import.meta.url)
 
 /**
  * Creates a function that memoizes the result of func. If resolver is provided it determines the cache key for

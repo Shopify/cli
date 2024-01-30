@@ -1,6 +1,6 @@
 import {unionArrayStrategy} from '../../private/common/array.js'
 import deepMerge from 'deepmerge'
-import lodash, {Dictionary, ObjectIterator, ValueKeyIterateeTypeGuard} from 'lodash'
+import lodash, {Dictionary, ObjectIterator, ValueKeyIteratee} from 'lodash'
 
 /**
  * Deep merges the two objects and returns a new object with the merge result.
@@ -27,11 +27,7 @@ export function deepMergeObjects<T1, T2>(
  * @param predicate - The function invoked per property.
  * @returns Returns the new object.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function pickBy<T, S extends T>(
-  object: Dictionary<T> | null | undefined,
-  predicate: ValueKeyIterateeTypeGuard<T, S>,
-): Dictionary<S> {
+export function pickBy<T>(object: Dictionary<T> | null | undefined, predicate: ValueKeyIteratee<T>): Dictionary<T> {
   return lodash.pickBy(object, predicate)
 }
 

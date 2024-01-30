@@ -1,3 +1,0 @@
-src/public/node/ruby.ts(212,58): error TS18047: 'version' is possibly 'null'.
-src/public/node/ruby.ts(243,61): error TS18047: 'version' is possibly 'null'.
-Warning: run-commands command "pnpm tsc -b ./tsconfig.build.json" exited with non-zero status code
