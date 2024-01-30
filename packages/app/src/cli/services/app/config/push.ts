@@ -107,6 +107,12 @@ const FIELD_NAMES: {[key: string]: string} = {
   preferences_url: 'app_preferences > url',
 }
 
+export function isPushCommandDeprecated(disabledBetas: App['disabledBetas'] | undefined) {
+  const betas = disabledBetas ?? []
+  const versionedAppConfigIsEnabled = !betas.includes('versioned_app_config')
+  return versionedAppConfigIsEnabled
+}
+
 export async function pushConfig(options: PushOptions) {
   if (!isCurrentAppSchema(options.configuration)) return
 
@@ -131,8 +137,8 @@ export async function pushConfig(options: PushOptions) {
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
   if (!queryResult.app) abort("Couldn't find app. Make sure you have a valid client ID.")
   const {app} = queryResult
-  const useVersionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
-  if (useVersionedAppConfig) abort(DeprecatedPushMessage)
+  const pushCommandDeprecated = isPushCommandDeprecated(app.disabledBetas)
+  if (pushCommandDeprecated) abort(DeprecatedPushMessage)
 
   const {businessName: org} = await fetchOrgFromId(app.organizationId, partnersSession)
   renderCurrentlyUsedConfigInfo({org, appName: app.title, configFile: configFileName})
