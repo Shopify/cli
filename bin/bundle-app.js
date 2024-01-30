@@ -3,14 +3,30 @@ import {build as esBuild} from 'esbuild'
 // import commonjsPlugin from '@chialab/esbuild-plugin-commonjs';
 
 
+// await esBuild({
+//   bundle: true,
+//   entryPoints: ['./packages/app/src/**/*.ts'],
+//   outdir: './packages/app/bundled',
+//   platform: 'node',
+//   format: 'esm',
+//   inject: ['./bin/cjs-shims.js'],
+//   external: ['react-devtools-core', 'yoga-wasm-web', 'git-diff'],
+
+//   loader: {'.node': 'copy'},
+//   splitting: true,
+//   plugins: [
+//     // commonjsPlugin(),
+//   ],
+// })
+
 await esBuild({
   bundle: true,
-  entryPoints: ['./packages/app/src/**/*.ts'],
-  outdir: './packages/app/bundled',
+  entryPoints: ['./packages/theme/src/**/*.ts'],
+  outdir: './packages/theme/bundled',
   platform: 'node',
   format: 'esm',
   inject: ['./bin/cjs-shims.js'],
-  external: ['react-devtools-core', 'yoga-wasm-web', 'git-diff'],
+  external: ['react-devtools-core', 'yoga-wasm-web'],
 
   loader: {'.node': 'copy'},
   splitting: true,
