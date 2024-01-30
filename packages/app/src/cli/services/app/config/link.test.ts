@@ -221,7 +221,7 @@ embedded = false
       })
     })
 
-    test('user selects a new file if the client_id in the local configuration is different from the remote one', async () => {
+    test('the local configuration is discarded if the client_id is different from the remote one', async () => {
       await inTemporaryDirectory(async (tmp) => {
         // Given
         const options: LinkOptions = {
