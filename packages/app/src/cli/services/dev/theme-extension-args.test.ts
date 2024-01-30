@@ -10,7 +10,7 @@ describe('themeExtensionArgs', async () => {
     const apiKey = 'api_key_0000_1111_2222'
     const developerPlatformClient = testDeveloperPlatformClient()
     const options = {themeExtensionPort: 8282, theme: 'theme ID'}
-    const extension = await testThemeExtensions()
+    const extension = await testThemeExtensions({buildDirectory: 'build'})
 
     const registration = {
       id: 'extension ID',
@@ -24,7 +24,7 @@ describe('themeExtensionArgs', async () => {
     const args = await themeExtensionArgs(extension, apiKey, developerPlatformClient, options)
 
     expect(args).toEqual([
-      './my-extension',
+      'my-extension/build',
       '--api-key',
       'api_key_0000_1111_2222',
 
