@@ -112,6 +112,7 @@ async function loadAppOrEmptyApp(
       configName: options.baseConfigName,
       remoteBetas,
     })
+    if (app.configuration.client_id === undefined) return emptyApp
     if (remoteApp?.apiKey === app.configuration.client_id?.toString()) return app
     return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
