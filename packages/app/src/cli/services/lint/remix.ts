@@ -18,6 +18,18 @@ function flattenedRemixRoutes(routes: RemixRoute[]): RemixRoute[] {
   }, [])
 }
 
+async function usesLocalStorage(remixApp: Web): Promise<boolean> {
+  const target = joinPath(remixApp.directory, '*/**.{js,ts}')
+  const serverFiles = await glob(target, {ignore: ['**.d.ts', '**.test.ts']})
+  for await (const file of serverFiles) {
+    const fileContents = await readFile(file)
+    if (fileContents.includes('localStorage')) {
+      return true
+    }
+  }
+  return false
+}
+
 export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void> {
   const serverPath = joinPath(remixApp.directory, 'app/shopify.server.{js,ts}')
   let serverFiles = await glob(serverPath, {ignore: ['**.d.ts', '**.test.ts']})
@@ -63,12 +75,13 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
     ),
   )
 
-  if (isCurrentAppSchema(app.configuration)) {
-    const appConfig = decodeToml(await readFile(joinPath(app.directory, 'shopify.app.toml'))) as {
-      application_url: string
-      auth?: {redirect_urls?: string[]}
-    }
+  const appConfig = decodeToml(await readFile(joinPath(app.directory, 'shopify.app.toml'))) as {
+    application_url: string
+    auth?: {redirect_urls?: string[]}
+    embedded: boolean
+  }
 
+  if (isCurrentAppSchema(app.configuration)) {
     function pathMatches(routePath: string, concretePath: string): boolean {
       return new RegExp(`^/?${routePath.replace(/\/\*$/, '.*')}$`).test(concretePath)
     }
@@ -111,6 +124,31 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
           ],
         })
       }
+    }
+  }
+
+  if (appConfig.embedded === true) {
+    if (await usesLocalStorage(remixApp)) {
+      renderWarning({
+        headline: 'Use of local storage detected',
+        body: [
+          'Embedded apps should not use local storage. For more information, see',
+          {
+            link: {
+              url: 'https://shopify.dev/docs/apps/store/requirements#a-embedding-into-the-shopify-admin',
+              label: 'Embedding into the Shopify admin',
+            },
+          },
+        ],
+        reference: [
+          {
+            link: {
+              url: 'https://shopify.dev/docs/apps/store/requirements',
+              label: 'Requirements for apps in the Shopify App Store',
+            },
+          },
+        ],
+      })
     }
   }
 }
