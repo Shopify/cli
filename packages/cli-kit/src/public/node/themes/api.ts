@@ -110,16 +110,6 @@ async function request<T>(
   }
 }
 
-function buildThemes(response: RestResponse): Theme[] {
-  const themes = response.json?.themes
-
-  if (themes?.length > 0) {
-    return themes.map(buildTheme)
-  }
-
-  return []
-}
-
 function handleForbiddenError(session: AdminSession): never {
   const store = session.storeFqdn
   const adminUrl = storeAdminUrl(session)
