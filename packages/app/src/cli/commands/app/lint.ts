@@ -1,6 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {loadApp} from '../../models/app/loader.js'
-import {AppInterface, CurrentAppConfiguration, isCurrentAppSchema} from '../../models/app/app.js'
+import {isCurrentAppSchema} from '../../models/app/app.js'
 import Command from '../../utilities/app-command.js'
 // import metadata from '../../metadata.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -12,9 +12,14 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {captureOutput} from '@shopify/cli-kit/node/system'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
 
-function traversedRemixRoutes(routes: any[]): string[] {
-  return routes.reduce((paths: string[], route: any) => {
-    if (route.path) {
+interface RemixRoute {
+  path: string
+  children?: RemixRoute[]
+}
+
+function traversedRemixRoutes(routes: RemixRoute[]): string[] {
+  return routes.reduce((paths: string[], route: RemixRoute) => {
+    if (typeof route.path === 'string') {
       paths.push(route.path)
     }
     if (route.children) {
@@ -48,31 +53,30 @@ export default class Lint extends Command {
 
     const serverPath = joinPath(remixApp.directory, 'app/shopify.server.{js,ts}')
     let serverFiles = await glob(serverPath, {ignore: ['**.d.ts', '**.test.ts']})
-    if (serverFiles.length === 0) {
-      console.log('no server file')
-    }
-    const fileContents = await readFile(serverFiles[0]!)
-    if (!fileContents.includes('billing')) {
-      renderWarning({
-        headline: 'Billing configuration not detected',
-        body: [
-          'Billing has not been set up for your app. Your app will not be able to charge merchants for usage in a manner compliant with app store regulations. For more information, see',
-          {
-            link: {
-              url: 'https://shopify.dev/docs/api/shopify-app-remix/v1/apis/billing',
-              label: 'Billing with Remix'
-            },
-          }
-        ],
-        reference: [
-          {
-            link: {
-              url: 'https://shopify.dev/docs/apps/billing',
-              label: 'Billing documentation'
-            },
-          }
-        ],
-      })
+    if (serverFiles.length > 0) {
+      const fileContents = await readFile(serverFiles[0]!)
+      if (!fileContents.includes('billing')) {
+        renderWarning({
+          headline: 'Billing configuration not detected',
+          body: [
+            'Billing has not been set up for your app. Your app will not be able to charge merchants for usage in a manner compliant with app store regulations. For more information, see',
+            {
+              link: {
+                url: 'https://shopify.dev/docs/api/shopify-app-remix/v1/apis/billing',
+                label: 'Billing with Remix'
+              },
+            }
+          ],
+          reference: [
+            {
+              link: {
+                url: 'https://shopify.dev/docs/apps/billing',
+                label: 'Billing documentation'
+              },
+            }
+          ],
+        })
+      }
     }
 
     const remixRoutes = JSON.parse(
@@ -88,9 +92,25 @@ export default class Lint extends Command {
         {cwd: remixApp.directory}
       ),
     )
-    const remixPaths = traversedRemixRoutes(remixRoutes).map((path: string) => new RegExp(`^/?${path.replace(/\/*$/, '.*')}$`))
+    const remixPaths = traversedRemixRoutes(remixRoutes).map((path: string) => new RegExp(`^/?${path.replace(/\/\*$/, '.*')}$`))
+
     if (isCurrentAppSchema(app.configuration)) {
-      const appConfig = decodeToml(await readFile(joinPath(app.directory, 'shopify.app.toml'))) as {auth?: {redirect_urls?: string[]}}
+      const appConfig = decodeToml(await readFile(joinPath(app.directory, 'shopify.app.toml'))) as {
+        application_url: string
+        auth?: {redirect_urls?: string[]}
+      }
+
+      const appHomePath = new URL(appConfig.application_url).pathname
+      const appHomeRemixRoute = remixPaths.find((path: RegExp) => path.test(appHomePath))
+      if (!appHomeRemixRoute) {
+        renderWarning({
+          headline: 'Application URL does not match any routes',
+          body: [
+            'The application URL you have configured does not match any of the routes in your app. This means that when a merchant installs your app, they will see an error page.',
+          ],
+        })
+      }
+
       const oauthCallbackUrls = appConfig.auth?.redirect_urls?.map((url) => new URL(url).pathname)
       if (oauthCallbackUrls) {
         if (!oauthCallbackUrls.some((url) => remixPaths.some((path) => path.test(url)))) {
