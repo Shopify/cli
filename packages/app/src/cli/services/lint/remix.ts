@@ -18,12 +18,15 @@ function flattenedRemixRoutes(routes: RemixRoute[]): RemixRoute[] {
   }, [])
 }
 
-async function usesLocalStorage(remixApp: Web): Promise<boolean> {
-  const target = joinPath(remixApp.directory, '*/**.{js,ts}')
-  const sourceFiles = await glob(target, {ignore: ['**.d.ts', '**.test.ts']})
-  for await (const file of sourceFiles) {
+async function sourceFilePaths(remixApp: Web): Promise<string[]> {
+  const target = joinPath(remixApp.directory, '*/**.{js,jsx,ts,tsx}')
+  return glob(target, {ignore: ['**.d.ts', '**.test.ts']})
+}
+
+async function searchInFiles(filePaths: string[], predicate: (fileContents: string) => boolean): Promise<boolean> {
+  for await (const file of filePaths) {
     const fileContents = await readFile(file)
-    if (fileContents.includes('localStorage')) {
+    if (predicate(fileContents)) {
       return true
     }
   }
@@ -32,7 +35,7 @@ async function usesLocalStorage(remixApp: Web): Promise<boolean> {
 
 export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void> {
   const serverPath = joinPath(remixApp.directory, 'app/shopify.server.{js,ts}')
-  let serverFiles = await glob(serverPath, {ignore: ['**.d.ts', '**.test.ts']})
+  const serverFiles = await glob(serverPath, {ignore: ['**.d.ts', '**.test.ts']})
   if (serverFiles.length > 0) {
     const fileContents = await readFile(serverFiles[0]!)
     if (!fileContents.includes('billing')) {
@@ -128,7 +131,34 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
   }
 
   if (appConfig.embedded === true) {
-    if (await usesLocalStorage(remixApp)) {
+    const filePaths = await sourceFilePaths(remixApp)
+
+    const usesLocalStorage = await searchInFiles(filePaths, (content: string) => content.includes('localStorage'))
+    const usesSessionTokens = await searchInFiles(filePaths, (content: string) => content.includes('getSessionToken'))
+
+    if (!usesSessionTokens) {
+      renderWarning({
+        headline: 'Use of session tokens not detected',
+        body: [
+          'Embedded apps must use session tokens. For more information, see requirements for',
+          {
+            link: {
+              url: 'https://shopify.dev/docs/apps/store/requirements#a-security',
+              label: 'Security and merchant risk',
+            },
+          },
+        ],
+        reference: [
+          {
+            link: {
+              url: 'https://shopify.dev/docs/apps/auth/session-tokens/getting-started',
+              label: 'Getting started with session token authentication',
+            },
+          },
+        ],
+      })
+    }
+    if (usesLocalStorage) {
       renderWarning({
         headline: 'Use of local storage detected',
         body: [
