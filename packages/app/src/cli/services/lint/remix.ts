@@ -20,8 +20,8 @@ function flattenedRemixRoutes(routes: RemixRoute[]): RemixRoute[] {
 
 async function usesLocalStorage(remixApp: Web): Promise<boolean> {
   const target = joinPath(remixApp.directory, '*/**.{js,ts}')
-  const serverFiles = await glob(target, {ignore: ['**.d.ts', '**.test.ts']})
-  for await (const file of serverFiles) {
+  const sourceFiles = await glob(target, {ignore: ['**.d.ts', '**.test.ts']})
+  for await (const file of sourceFiles) {
     const fileContents = await readFile(file)
     if (fileContents.includes('localStorage')) {
       return true
