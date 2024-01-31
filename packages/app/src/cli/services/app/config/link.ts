@@ -103,7 +103,6 @@ async function loadAppOrEmptyApp(
   remoteBetas?: BetaFlag[],
   remoteApp?: OrganizationApp,
 ): Promise<AppInterface> {
-  const emptyApp = new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas)
   try {
     const app = await loadApp({
       specifications,
@@ -112,12 +111,12 @@ async function loadAppOrEmptyApp(
       configName: options.baseConfigName,
       remoteBetas,
     })
-    if (app.configuration.client_id === undefined) return emptyApp
-    if (remoteApp?.apiKey === app.configuration.client_id?.toString()) return app
+    const configuration = app.configuration
+    if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
     return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return emptyApp
+    return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas)
   }
 }
 
