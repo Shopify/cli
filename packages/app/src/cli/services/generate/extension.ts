@@ -78,7 +78,7 @@ export async function generateExtensionTemplate(
       const extensionFlavorValue = options.extensionChoices[index]?.flavor
       const extensionFlavor = spec.supportedFlavors.find((flavor) => flavor.value === extensionFlavorValue)
       const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
-      const url = options.cloneUrl || spec.url
+      const url = 'https://github.com/Shopify/cli'
       const initOptions: ExtensionInitOptions = {
         directory,
         url,

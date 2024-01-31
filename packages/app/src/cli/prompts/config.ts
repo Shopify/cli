@@ -29,9 +29,9 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
   const namePromptOptions = buildTextPromptOptions(defaultName)
   let configName = slugify(await renderTextPrompt(namePromptOptions))
 
-  while (await fileExists(joinPath(directory, `shopify.app.${configName}.toml`))) {
+  while (await fileExists(joinPath(directory, `shopify.app.${configName}.json`))) {
     const askAgain = await renderConfirmationPrompt({
-      message: `Configuration file shopify.app.${configName}.toml already exists. Do you want to choose a different configuration name?`,
+      message: `Configuration file shopify.app.${configName}.json already exists. Do you want to choose a different configuration name?`,
       confirmationMessage: "Yes, I'll choose a different name",
       cancellationMessage: 'No, overwrite my existing configuration file',
     })
@@ -47,9 +47,9 @@ export async function selectConfigName(directory: string, defaultName = ''): Pro
 }
 
 export async function selectConfigFile(directory: string): Promise<Result<string, string>> {
-  const files = (await glob(joinPath(directory, 'shopify.app*.toml'))).map((path) => basename(path))
+  const files = (await glob(joinPath(directory, 'shopify.app*.json'))).map((path) => basename(path))
 
-  if (files.length === 0) return err('Could not find any shopify.app.toml file in the directory.')
+  if (files.length === 0) return err('Could not find any shopify.app.json file in the directory.')
   if (files.length === 1) return ok(files[0]!)
 
   const chosen = await renderSelectPrompt({

@@ -30,7 +30,7 @@ export async function ensureLocalExtensionFlavorExists(extensionFlavor: Extensio
   })
 
   if (!templateDirectory) {
-    throw new AbortError(`\nThe extension is not available for ${extensionFlavor?.value}`)
+    throw new AbortError(`\nThe extension is not available for ${extensionFlavor?.value} ${templatePath}`)
   }
 
   return templateDirectory

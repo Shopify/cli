@@ -254,7 +254,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       if (await fileExists(joinPath(this.directory, 'locales'))) {
         additionalPaths.push(joinPath(this.directory, 'locales', '**.json'))
       }
-      additionalPaths.push(joinPath(this.directory, '**.toml'))
+      additionalPaths.push(joinPath(this.directory, '**.json'))
       return additionalPaths
     }
   }

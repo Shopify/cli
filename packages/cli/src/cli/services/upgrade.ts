@@ -48,7 +48,7 @@ export async function upgrade(
 }
 
 async function getProjectDir(directory: string): Promise<string | undefined> {
-  const configFiles = ['shopify.app{,.*}.toml', 'hydrogen.config.js', 'hydrogen.config.ts']
+  const configFiles = ['shopify.app{,.*}.json', 'hydrogen.config.js', 'hydrogen.config.ts']
   const existsConfigFile = async (directory: string) => {
     const configPaths = await glob(configFiles.map((file) => joinPath(directory, file)))
     return configPaths.length > 0 ? configPaths[0] : undefined

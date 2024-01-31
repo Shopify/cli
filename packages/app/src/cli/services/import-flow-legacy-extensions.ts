@@ -44,7 +44,7 @@ export async function importFlowExtensions(options: ImportFlowOptions) {
   const importPromises = extensionsToMigrate.map(async (ext) => {
     const directory = await ensureExtensionDirectoryExists({app: options.app, name: ext.title})
     const tomlObject = buildTomlObject(ext)
-    const path = joinPath(directory, 'shopify.extension.toml')
+    const path = joinPath(directory, 'shopify.extension.json')
     await writeFile(path, tomlObject)
     extensionUuids[ext.title] = ext.uuid
     return {extension: ext, directory: joinPath('extensions', basename(directory))}

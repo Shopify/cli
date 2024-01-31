@@ -791,7 +791,7 @@ export async function getAppContext({
   const firstTimeSetup = previousCachedInfo === undefined
   const usingConfigAndResetting = previousCachedInfo?.configFile && reset
   const usingConfigWithNoTomls =
-    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
+    previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.json'))).length === 0
 
   if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
     await link({directory, commandConfig, baseConfigName: previousCachedInfo?.configFile}, false)

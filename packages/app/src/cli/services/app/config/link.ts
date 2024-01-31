@@ -170,7 +170,7 @@ async function loadConfigurationFileName(
   }
 
   const configName = await selectConfigName(localApp.directory || options.directory, remoteApp.title)
-  return `shopify.app.${configName}.toml`
+  return `shopify.app.${configName}.json`
 }
 
 export function mergeAppConfiguration(

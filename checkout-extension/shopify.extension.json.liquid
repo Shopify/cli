@@ -1,0 +1,19 @@
+{
+  "api_version": "2024-01",
+  "extensions": [
+    {
+      "type": "ui_extension",
+      "name": "{{ name }}",
+      "handle": "{{ handle }}",
+      "targeting": [
+        {
+          "module": "./src/Checkout.{{ srcFileExtension }}",
+          "target": "purchase.checkout.block.render"
+        }
+      ],
+      "capabilities": {
+        "api_access": true
+      }
+    }
+  ]
+}
