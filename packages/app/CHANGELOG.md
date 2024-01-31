@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.55.1
+
+### Patch Changes
+
+- 292c68035: Scopes not deleted from the toml when running dev the first time
+  - @shopify/cli-kit@3.55.1
+  - @shopify/plugin-cloudflare@3.55.1
+
 ## 3.55.0
 
 ### Minor Changes

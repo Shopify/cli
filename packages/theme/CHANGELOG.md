@@ -1,8 +1,15 @@
 # @shopify/theme
 
+## 3.55.1
+
+### Patch Changes
+
+- @shopify/cli-kit@3.55.1
+
 ## 3.55.0
 
 ### Minor Changes
+
 - Theme Check 2.0: https://shopify.dev/docs/themes/tools/theme-check
 - 1f4bc949e: Bring the new `shopify theme pull` implementation behind the `--beta` flag and use the legacy version by default
   - @shopify/cli-kit@3.55.0
