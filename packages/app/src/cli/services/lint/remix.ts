@@ -132,9 +132,11 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
 
   if (appConfig.embedded === true) {
     const filePaths = await sourceFilePaths(remixApp)
-
-    const usesLocalStorage = await searchInFiles(filePaths, (content: string) => content.includes('localStorage'))
     const usesSessionTokens = await searchInFiles(filePaths, (content: string) => content.includes('getSessionToken'))
+    const usesLocalStorage = await searchInFiles(filePaths, (content: string) => content.includes('localStorage'))
+    const usesAppBridge = await searchInFiles(filePaths, (content: string) =>
+      /cdn\.shopify\.com.*app-bridge\.js/.test(content),
+    )
 
     if (!usesSessionTokens) {
       renderWarning({
@@ -158,6 +160,7 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
         ],
       })
     }
+
     if (usesLocalStorage) {
       renderWarning({
         headline: 'Use of local storage detected',
@@ -175,6 +178,29 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
             link: {
               url: 'https://shopify.dev/docs/apps/store/requirements',
               label: 'Requirements for apps in the Shopify App Store',
+            },
+          },
+        ],
+      })
+    }
+
+    if (!usesAppBridge) {
+      renderWarning({
+        headline: 'Shopify App Bridge not detected',
+        body: [
+          'Your embedded app must use Shopify App Bridge. For more information, see',
+          {
+            link: {
+              url: 'https://shopify.dev/docs/apps/store/requirements#a-embedding-into-the-shopify-admin',
+              label: 'Embedding into the Shopify admin',
+            },
+          },
+        ],
+        reference: [
+          {
+            link: {
+              url: 'https://shopify.dev/docs/api/app-bridge-library',
+              label: 'App Bridge',
             },
           },
         ],
