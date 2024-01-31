@@ -19,8 +19,8 @@ function flattenedRemixRoutes(routes: RemixRoute[]): RemixRoute[] {
 }
 
 async function sourceFilePaths(remixApp: Web): Promise<string[]> {
-  const target = joinPath(remixApp.directory, '*/**.{js,jsx,ts,tsx}')
-  return glob(target, {ignore: ['**.d.ts', '**.test.ts']})
+  const target = joinPath(remixApp.directory, '**/*.{js,jsx,ts,tsx}')
+  return glob(target, {ignore: ['**.d.ts', '**.test.ts', '**/node_modules/**']})
 }
 
 async function searchInFiles(filePaths: string[], predicate: (fileContents: string) => boolean): Promise<boolean> {
