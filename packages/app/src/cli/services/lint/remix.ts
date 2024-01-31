@@ -1,9 +1,11 @@
 import {AppInterface, Web, isCurrentAppSchema} from '../../models/app/app.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {runESLint} from './eslint.js'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {captureOutput} from '@shopify/cli-kit/node/system'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
+import {fileURLToPath} from 'url'
 
 interface RemixRoute {
   path: string
@@ -98,9 +100,26 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
           'The application URL you have configured does not match any of the routes in your app. This means that when a merchant installs your app, they will see an error page.',
         ],
       })
-    } else {
-      // We have a match, but we need to check if it uses OAuth
-      console.log(appHomeRemixRoute)
+    }
+
+    const customRulesPath = joinPath(dirname(fileURLToPath(import.meta.url)), '../../../../assets/eslint-rules/remix')
+    const customRuleNames = (await glob(joinPath(customRulesPath, '*.js'))).map((path) =>
+      path.split('/').pop()!.replace(/\.js$/, '')
+    )
+    const {text: eslintErrorsText, json: eslintErrorsJson} = await runESLint({
+      files: [joinPath(remixApp.directory, 'app/**/*.{js,ts,jsx,tsx}')],
+      rulePaths: [customRulesPath],
+      rules: Object.fromEntries(customRuleNames.map((ruleName) => [ruleName, 'warn'])),
+    })
+    if (eslintErrorsJson.length > 0) {
+      renderWarning({
+        headline: 'Warnings from code analysis',
+        body: [
+          'The following ESLint warnings were detected in your app.',
+          'They indicate potential failures in your app’s compliance with Shopify’s requirements.\n',
+          await eslintErrorsText,
+        ],
+      })
     }
 
     const oauthCallbackPaths = appConfig.auth?.redirect_urls?.map((url) => new URL(url).pathname)
