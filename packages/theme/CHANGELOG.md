@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.55.0
+
+### Patch Changes
+
+- 1f4bc949e: Bring the new `shopify theme pull` implementation behind the `--beta` flag and use the legacy version by default
+  - @shopify/cli-kit@3.55.0
+
 ## 3.54.0
 
 ### Minor Changes
