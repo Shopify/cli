@@ -950,7 +950,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'branding',
-        config: JSON.stringify({name: 'my app'}),
+        config: JSON.stringify({name: 'my app', app_handle: 'handle'}),
         specification: {
           identifier: 'branding',
           name: 'Branding',

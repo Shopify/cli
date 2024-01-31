@@ -170,8 +170,9 @@ function resolveRemoteConfigExtensionIdentifiersBreakdown(
     (field) => !remoteDiffModifications.includes(field) && versionedLocalFieldNames.includes(field),
   )
   // List of versioned field that exists remotely but not locally
+  // `handle` property won't be temporary shown in the list of removed properties
   const deletedVersionedLocalFieldNames = remoteDiffModifications.filter(
-    (field) => !localDiffModifications.includes(field),
+    (field) => !localDiffModifications.includes(field) && field !== 'handle',
   )
 
   return {
