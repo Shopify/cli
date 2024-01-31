@@ -17,15 +17,11 @@ interface RemixRoute {
   children?: RemixRoute[]
 }
 
-function traversedRemixRoutes(routes: RemixRoute[]): string[] {
-  return routes.reduce((paths: string[], route: RemixRoute) => {
-    if (typeof route.path === 'string') {
-      paths.push(route.path)
-    }
-    if (route.children) {
-      paths.push(...traversedRemixRoutes(route.children))
-    }
-    return paths
+function flattenedRemixRoutes(routes: RemixRoute[]): RemixRoute[] {
+  return routes.reduce((flatRoutes: RemixRoute[], route: RemixRoute) => {
+    if (typeof route.path === 'string') flatRoutes.push(route)
+    flatRoutes.push(...flattenedRemixRoutes(route.children ?? []))
+    return flatRoutes
   }, [])
 }
 
@@ -79,20 +75,21 @@ export default class Lint extends Command {
       }
     }
 
-    const remixRoutes = JSON.parse(
-      await captureOutput(
-        app.packageManager,
-        [
-          'exec',
-          'remix',
-          'routes',
-          app.packageManager === 'npm' ? '--' : '',
-          '--json',
-        ],
-        {cwd: remixApp.directory}
+    const remixRoutes = flattenedRemixRoutes(
+      JSON.parse(
+        await captureOutput(
+          app.packageManager,
+          [
+            'exec',
+            'remix',
+            'routes',
+            app.packageManager === 'npm' ? '--' : '',
+            '--json',
+          ],
+          {cwd: remixApp.directory}
+        ),
       ),
     )
-    const remixPaths = traversedRemixRoutes(remixRoutes).map((path: string) => new RegExp(`^/?${path.replace(/\/\*$/, '.*')}$`))
 
     if (isCurrentAppSchema(app.configuration)) {
       const appConfig = decodeToml(await readFile(joinPath(app.directory, 'shopify.app.toml'))) as {
@@ -100,8 +97,12 @@ export default class Lint extends Command {
         auth?: {redirect_urls?: string[]}
       }
 
+      function pathMatches(routePath: string, concretePath: string): boolean {
+        return new RegExp(`^/?${routePath.replace(/\/\*$/, '.*')}$`).test(concretePath)
+      }
+
       const appHomePath = new URL(appConfig.application_url).pathname
-      const appHomeRemixRoute = remixPaths.find((path: RegExp) => path.test(appHomePath))
+      const appHomeRemixRoute = remixRoutes.find(({path}) => pathMatches(path, appHomePath))
       if (!appHomeRemixRoute) {
         renderWarning({
           headline: 'Application URL does not match any routes',
@@ -109,11 +110,14 @@ export default class Lint extends Command {
             'The application URL you have configured does not match any of the routes in your app. This means that when a merchant installs your app, they will see an error page.',
           ],
         })
+      } else {
+        // We have a match, but we need to check if it uses OAuth
+        console.log(appHomeRemixRoute)
       }
 
-      const oauthCallbackUrls = appConfig.auth?.redirect_urls?.map((url) => new URL(url).pathname)
-      if (oauthCallbackUrls) {
-        if (!oauthCallbackUrls.some((url) => remixPaths.some((path) => path.test(url)))) {
+      const oauthCallbackPaths = appConfig.auth?.redirect_urls?.map((url) => new URL(url).pathname)
+      if (oauthCallbackPaths) {
+        if (!oauthCallbackPaths.some((url) => remixRoutes.some(({path}) => pathMatches(path, url)))) {
           renderWarning({
             headline: 'OAuth callback URLs not handled',
             body: [
