@@ -14,6 +14,7 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
   packageJSON.dependencies = packageJSON.dependencies || {}
   packageJSON.dependencies['@shopify/cli'] = CLI_KIT_VERSION
   packageJSON.dependencies['@shopify/app'] = CLI_KIT_VERSION
+  packageJSON.dependencies['@shopify/eslint-plugin-remix-app'] = CLI_KIT_VERSION
 
   if (local) {
     const cliPath = await packagePath('cli')
@@ -21,11 +22,14 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
     const cliKitPath = await packagePath('cli-kit')
     const pluginCloudflarePath = await packagePath('plugin-cloudflare')
     const didYouMeanPath = await packagePath('plugin-did-you-mean')
+    const pluginEslintRemixPath = await packagePath('eslint-plugin-remix-app')
 
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
     // eslint-disable-next-line require-atomic-updates
     packageJSON.dependencies['@shopify/app'] = appPath
+    // eslint-disable-next-line require-atomic-updates
+    packageJSON.dependencies['@shopify/eslint-plugin-remix-app'] = pluginEslintRemixPath
 
     const dependencyOverrides = {
       '@shopify/cli': cliPath,
@@ -33,6 +37,7 @@ export async function updateCLIDependencies({packageJSON, local}: UpdateCLIDepen
       '@shopify/cli-kit': cliKitPath,
       '@shopify/plugin-did-you-mean': didYouMeanPath,
       '@shopify/plugin-cloudflare': pluginCloudflarePath,
+      '@shopify/eslint-plugin-remix-app': pluginEslintRemixPath,
     }
 
     packageJSON.overrides = packageJSON.overrides

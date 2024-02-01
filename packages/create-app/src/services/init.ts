@@ -21,6 +21,7 @@ import {
   inTemporaryDirectory,
   mkdir,
   moveFile,
+  readFile,
   writeFile,
 } from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -125,6 +126,16 @@ async function init(options: InitOptions) {
         title: 'Installing dependencies',
         task: async () => {
           await getDeepInstallNPMTasks({from: templateScaffoldDir, packageManager})
+        },
+      },
+      {
+        title: 'Updating eslintrc',
+        task: async () => {
+          if (options.local) {
+            const eslintrc = joinPath(templateScaffoldDir, '.eslintrc.cjs')
+            const fileContents = await readFile(eslintrc)
+            await writeFile(eslintrc, fileContents.replace(/    "prettier",/, '    "prettier",    "plugin:@shopify/remix-app/recommended",'))
+          }
         },
       },
       {

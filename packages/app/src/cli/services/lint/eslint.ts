@@ -2,15 +2,15 @@ import {ESLint} from 'eslint'
 
 interface RunESLintOptions {
   files: string[]
-  rulePaths: string[]
-  rules: Record<string, 'off' | 'warn' | 'error'>
+  plugins: string[]
 }
 
-export async function runESLint({files, rulePaths, rules}: RunESLintOptions) {
+export async function runESLint({files, plugins}: RunESLintOptions) {
   const eslint = new ESLint({
     useEslintrc: false,
     baseConfig: {},
     overrideConfig: {
+      extends: plugins,
       parser: '@typescript-eslint/parser',
       parserOptions: {
         requireConfigFile: false,
@@ -20,17 +20,8 @@ export async function runESLint({files, rulePaths, rules}: RunESLintOptions) {
           jsx: true,
         },
         warnOnUnsupportedTypeScriptVersion: false,
-        // babelOptions: {
-          // presets: [
-            // ["@babel/preset-env", { "modules": false }],
-            // "@babel/preset-react",
-            // "@babel/preset-typescript",
-          // ],
-        // },
       },
-      rules,
     },
-    rulePaths,
   })
 
   const results = await eslint.lintFiles(files);

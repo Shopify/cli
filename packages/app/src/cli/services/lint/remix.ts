@@ -102,26 +102,48 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
       })
     }
 
-    const customRulesPath = joinPath(dirname(fileURLToPath(import.meta.url)), '../../../../assets/eslint-rules/remix')
-    let customRuleNames = (await glob(joinPath(customRulesPath, '*.js'))).map((path) =>
-      path.split('/').pop()!.replace(/\.js$/, ''),
-    )
-    if (appConfig.embedded !== true) {
-      customRuleNames = customRuleNames.filter((rule) => !rule.startsWith('embedded_'))
+    let lintResults = ''
+    let lintError = ''
+    let lintExitCode = 0
+    try {
+      lintResults = await captureOutput(
+        app.packageManager,
+        [
+          'run',
+          '--silent',
+          'lint',
+          app.packageManager === 'npm' ? '--' : '',
+          '--plugin',
+          '@shopify/remix-app',
+        ],
+        {cwd: remixApp.directory}
+      )
+    } catch(error: any) {
+      const {exitCode, stdout, stderr} = (error as {exitCode: number; stdout: string; stderr: string})
+      lintExitCode = exitCode
+      if (lintExitCode === 1) {
+        lintResults = stdout
+      } else {
+        lintError = stderr
+      }
     }
-
-    const {text: eslintErrorsText, json: eslintErrorsJson} = await runESLint({
-      files: [joinPath(remixApp.directory, 'app/**/*.{js,ts,jsx,tsx}')],
-      rulePaths: [customRulesPath],
-      rules: Object.fromEntries(customRuleNames.map((ruleName) => [ruleName, 'warn'])),
-    })
-    if (eslintErrorsJson.length > 0) {
+    if (![0, 1].includes(lintExitCode)) {
+      renderWarning({
+        headline: 'Code analysis failed',
+        body: [
+          'ESLint failed to analyze your app.',
+          'Correct the error to locate potential failures in your app’s compliance with Shopify’s requirements.\n\n',
+          'The error was:\n\n',
+          lintError.trim(),
+        ],
+      })
+    } else if (lintResults.trim().length > 0) {
       renderWarning({
         headline: 'Warnings from code analysis',
         body: [
-          'The following ESLint warnings were detected in your app.',
-          'They indicate potential failures in your app’s compliance with Shopify’s requirements.\n',
-          await eslintErrorsText,
+          'ESLint warnings were detected in your app.',
+          'They may indicate potential failures in your app’s compliance with Shopify’s requirements.\n\n',
+          lintResults.trim(),
         ],
       })
     }
