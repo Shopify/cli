@@ -27,7 +27,6 @@ const spec = createExtensionSpecification({
   deployConfig: async (config, extensionPath) => {
     return {
       template_handle: config.handle,
-      handle: config.handle,
       name: config.name,
       description: config.description,
       categories: config.template.categories,
