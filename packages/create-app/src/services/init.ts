@@ -134,7 +134,7 @@ async function init(options: InitOptions) {
           if (options.local) {
             const eslintrc = joinPath(templateScaffoldDir, '.eslintrc.cjs')
             const fileContents = await readFile(eslintrc)
-            await writeFile(eslintrc, fileContents.replace(/    "prettier",/, '    "prettier",    "plugin:@shopify/remix-app/recommended",'))
+            await writeFile(eslintrc, fileContents.replace(/    "prettier",/, '    "prettier",    \n"plugin:@shopify/remix-app/recommended",'))
           }
         },
       },
