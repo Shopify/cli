@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.55.2
+
+### Patch Changes
+
+- 999b60ff7: Load env identifiers for the matching logic
+  - @shopify/cli-kit@3.55.2
+  - @shopify/plugin-cloudflare@3.55.2
+
 ## 3.55.1
 
 ### Patch Changes
