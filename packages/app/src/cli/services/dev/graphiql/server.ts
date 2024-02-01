@@ -149,6 +149,7 @@ export function setupGraphiQLServer({
         {
           url: localhostUrl,
           defaultQueries: [{query: defaultQuery}],
+          query: req.query.query,
         },
       ),
     )
