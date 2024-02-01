@@ -402,16 +402,14 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     force: options.force,
   })
 
-  let identifiers: Identifiers = envIdentifiers as Identifiers
-
-  identifiers = await ensureDeploymentIdsPresence({
+  const identifiers = await ensureDeploymentIdsPresence({
     app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
     force: options.force,
     release: !options.noRelease,
     token,
-    envIdentifiers,
+    envIdentifiers: getAppIdentifiers({app}),
     partnersApp,
   })
 
