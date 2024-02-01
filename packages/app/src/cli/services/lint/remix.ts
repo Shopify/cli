@@ -156,9 +156,12 @@ export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void>
   if (appConfig.embedded === true) {
     const filePaths = await sourceFilePaths(remixApp)
     const usesSessionTokens = await searchInFiles(filePaths, (content: string) => content.includes('getSessionToken'))
-    const usesAppBridge = await searchInFiles(filePaths, (content: string) =>
-      /cdn\.shopify\.com.*app-bridge\.js/.test(content),
+    const usesShopifyAppRemixPackage = await searchInFiles(filePaths, (content: string) =>
+      content.includes('@shopify/shopify-app-remix'),
     )
+    const usesAppBridge =
+      usesShopifyAppRemixPackage ||
+      (await searchInFiles(filePaths, (content: string) => /cdn\.shopify\.com.*app-bridge\.js/.test(content)))
 
     if (!usesSessionTokens) {
       renderWarning({
