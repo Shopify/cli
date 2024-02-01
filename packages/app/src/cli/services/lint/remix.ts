@@ -34,34 +34,6 @@ async function searchInFiles(filePaths: string[], predicate: (fileContents: stri
 }
 
 export async function lintRemix(app: AppInterface, remixApp: Web): Promise<void> {
-  const serverPath = joinPath(remixApp.directory, 'app/shopify.server.{js,ts}')
-  const serverFiles = await glob(serverPath, {ignore: ['**.d.ts', '**.test.ts']})
-  if (serverFiles.length > 0) {
-    const fileContents = await readFile(serverFiles[0]!)
-    if (!fileContents.includes('billing')) {
-      renderWarning({
-        headline: 'Billing configuration not detected',
-        body: [
-          'Billing has not been set up for your app. Your app will not be able to charge merchants for usage in a manner compliant with app store regulations. For more information, see',
-          {
-            link: {
-              url: 'https://shopify.dev/docs/api/shopify-app-remix/v1/apis/billing',
-              label: 'Billing with Remix'
-            },
-          }
-        ],
-        reference: [
-          {
-            link: {
-              url: 'https://shopify.dev/docs/apps/billing',
-              label: 'Billing documentation'
-            },
-          }
-        ],
-      })
-    }
-  }
-
   const remixRoutes = flattenedRemixRoutes(
     JSON.parse(
       await captureOutput(
