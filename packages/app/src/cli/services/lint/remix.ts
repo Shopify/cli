@@ -1,11 +1,9 @@
 import {AppInterface, Web, isCurrentAppSchema} from '../../models/app/app.js'
-import {runESLint} from './eslint.js'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {glob, readFile} from '@shopify/cli-kit/node/fs'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {captureOutput} from '@shopify/cli-kit/node/system'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {fileURLToPath} from 'url'
 
 interface RemixRoute {
   path: string
