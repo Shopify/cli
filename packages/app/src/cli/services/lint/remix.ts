@@ -158,10 +158,12 @@ async function execLinter(app: AppInterface, remixApp: Web) {
 
 async function execEmbeddedAppChecks(remixApp: Web): Promise<void> {
   const filePaths = await sourceFilePaths(remixApp)
-  const usesSessionTokens = await searchInFiles(filePaths, (content: string) => content.includes('getSessionToken'))
-  const usesShopifyAppRemixPackage = await searchInFiles(filePaths, (content: string) =>
-    content.includes('@shopify/shopify-app-remix'),
-  )
+
+  const [usesSessionTokens, usesShopifyAppRemixPackage] = await Promise.all([
+    searchInFiles(filePaths, (content: string) => content.includes('getSessionToken')),
+    searchInFiles(filePaths, (content: string) => content.includes('@shopify/shopify-app-remix'),),
+  ])
+
   const usesAppBridge =
   usesShopifyAppRemixPackage ||
   (await searchInFiles(filePaths, (content: string) => /cdn\.shopify\.com.*app-bridge\.js/.test(content)))
