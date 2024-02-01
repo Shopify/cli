@@ -120,7 +120,6 @@ describe('redeemablePaymentsAppExtensionDeployConfig', () => {
       test_mode_available: config.test_mode_available,
       redeemable_type: config.redeemable_type,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
-      target: config.targeting[0]!.target,
       default_buyer_label: config.buyer_label,
       buyer_label_to_locale: config.buyer_label_translations,
     })

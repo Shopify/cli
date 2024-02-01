@@ -66,11 +66,9 @@ describe('PaymentsAppExtension', () => {
       // When
       const result = await extension.deployConfig({apiKey, token})
       const extensionConfiguration = extension.configuration as OffsitePaymentsAppExtensionConfigType
-      const configTargeting = extensionConfiguration.targeting[0]!
 
       // Then
       expect(result).toEqual({
-        target: configTargeting.target,
         api_version: extensionConfiguration.api_version,
         start_payment_session_url: extensionConfiguration.payment_session_url,
         start_refund_session_url: extensionConfiguration.refund_session_url,
