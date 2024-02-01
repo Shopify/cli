@@ -1,6 +1,7 @@
 # Commands
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
+* [`shopify app check-urls`](#shopify-app-check-urls)
 * [`shopify app config link`](#shopify-app-config-link)
 * [`shopify app config push`](#shopify-app-config-push)
 * [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
@@ -75,6 +76,26 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.54.0/dist/cli/commands/app/build.js)_
+
+## `shopify app check-urls`
+
+Check the URLs in your app and ensure they are not on localhost.
+
+```
+USAGE
+  $ shopify app check-urls [-c <value>] [--no-color] [--path <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>  The name of the app configuration.
+      --no-color        Disable color output.
+      --path=<value>    The path to your app directory.
+      --verbose         Increase the verbosity of the logs.
+
+DESCRIPTION
+  Check the URLs in your app and ensure they are not on localhost.
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.54.0/dist/cli/commands/app/check-urls.js)_
 
 ## `shopify app config link`
 
