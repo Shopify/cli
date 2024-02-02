@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.55.3
+
+### Patch Changes
+
+- 69b9cf985: Fix the error message that started occurring since Ruby 3.3.0
+  - @shopify/cli-kit@3.55.3
+
 ## 3.55.2
 
 ### Patch Changes
