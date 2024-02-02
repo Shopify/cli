@@ -147,7 +147,6 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
       test_mode_available: config.test_mode_available,
-      target: config.targeting[0]!.target,
       supports_3ds: config.supports_3ds,
       supports_deferred_payments: config.supports_deferred_payments,
       supports_installments: config.supports_installments,

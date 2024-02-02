@@ -29,7 +29,6 @@ export async function offsitePaymentsAppExtensionDeployConfig(
   config: OffsitePaymentsAppExtensionConfigType,
 ): Promise<{[key: string]: unknown} | undefined> {
   return {
-    target: config.targeting[0]!.target,
     api_version: config.api_version,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
