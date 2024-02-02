@@ -50,7 +50,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
+      body: ['The theme', "'my theme'", {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -67,7 +67,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
+      body: ['The theme', "'my theme'", {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -90,8 +90,8 @@ describe('deleteThemes', () => {
         {
           list: {
             items: [
-              ['my theme', {subdued: '(#1)'}],
-              ['another theme', {subdued: '(#2)'}],
+              ["'my theme'", {subdued: '(#1)'}],
+              ["'another theme'", {subdued: '(#2)'}],
             ],
           },
         },
@@ -118,8 +118,8 @@ describe('deleteThemes', () => {
         {
           list: {
             items: [
-              ['my theme', {subdued: '(#1)'}],
-              ['another theme', {subdued: '(#2)'}],
+              ["'my theme'", {subdued: '(#1)'}],
+              ["'another theme'", {subdued: '(#2)'}],
             ],
           },
         },
