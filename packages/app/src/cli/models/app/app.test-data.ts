@@ -201,6 +201,27 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
   return extension
 }
 
+export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'Payment Extension Name',
+    type: 'payments_extension' as const,
+    targeting: [{target: 'payments.offsite.render'}],
+    metafields: [],
+  }
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
+
+  return extension
+}
+
 export async function testWebhookExtensions(emptyConfig = false): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)

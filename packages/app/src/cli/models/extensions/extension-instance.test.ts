@@ -4,6 +4,7 @@ import {
   testFunctionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
+  testPaymentExtensions,
   testUIExtension,
   testWebPixelExtension,
   testWebhookExtensions,
@@ -214,6 +215,29 @@ describe('bundleConfig', async () => {
     expect(got).toEqual(
       expect.objectContaining({
         uuid: 'theme-uuid',
+        context: '',
+      }),
+    )
+  })
+
+  test('returns the target in context for a payments app', async () => {
+    const extensionInstance = await testPaymentExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {'payment-extension-name': 'payment-uuid'},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {},
+      },
+      token: 'token',
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        uuid: 'payment-uuid',
+        context: 'payments.offsite.render',
       }),
     )
   })
