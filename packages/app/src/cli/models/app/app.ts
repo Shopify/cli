@@ -158,6 +158,8 @@ export interface AppConfigurationInterface {
 
 export interface AppInterface extends AppConfigurationInterface {
   name: string
+  id?: string
+  orgId?: string
   idEnvironmentVariableName: string
   packageManager: PackageManager
   nodeDependencies: {[key: string]: string}

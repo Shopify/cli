@@ -8,6 +8,7 @@ export interface CachedAppInfo {
   appId?: string
   title?: string
   orgId?: string
+  id?: string
   storeFqdn?: string
   updateURLs?: boolean
   previousAppId?: string

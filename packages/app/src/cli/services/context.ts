@@ -812,6 +812,7 @@ export async function getAppContext({
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
+      id: remoteApp.id,
       storeFqdn: configuration.build?.dev_store_url,
       updateURLs: configuration.build?.automatically_update_urls_on_dev,
     }

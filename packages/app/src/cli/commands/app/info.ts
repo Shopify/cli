@@ -4,6 +4,8 @@ import {Format, info} from '../../services/info.js'
 import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {fetchAppDetailsFromApiKey} from '../../services/dev/fetch.js'
+import {fetchPartnersSession} from '../../services/context/partner-account-info.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -36,6 +38,14 @@ export default class AppInfo extends Command {
       configName: flags.config,
       mode: 'report',
     })
+
+    const partnersSession = await fetchPartnersSession()
+    const token = partnersSession.token
+    const remoteApp = await fetchAppDetailsFromApiKey(app.dotenv!.variables.SHOPIFY_API_KEY!, token)
+
+    app.id = remoteApp?.id
+    app.orgId = remoteApp?.organizationId
+
     outputInfo(
       await info(app, {
         format: (flags.json ? 'json' : 'text') as Format,
