@@ -18,9 +18,19 @@ import {
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
+import {
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+  removeFile,
+  glob,
+  readFile,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {decodeToml} from '@shopify/cli-kit/node/toml'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppInterface
@@ -116,6 +126,11 @@ async function themeExtensionInit({directory, url, type, name, extensionFlavor}:
   return inTemporaryDirectory(async (tmpDir) => {
     const templateDirectory = await downloadOrFindTemplateDirectory(url, extensionFlavor, tmpDir)
     await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type})
+
+    // convert the toml file to JSON
+    await moveFile(joinPath(directory, 'shopify.extension.toml'), joinPath(directory, 'shopify.extension.json'))
+    const configObject = decodeToml(await readFile(joinPath(directory, 'shopify.extension.json')))
+    await writeFile(joinPath(directory, 'shopify.extension.json'), JSON.stringify(configObject, null, 2))
   })
 }
 
@@ -139,6 +154,11 @@ async function functionExtensionInit({directory, url, app, name, extensionFlavor
         const srcFileExtension = getSrcFileExtension(extensionFlavor?.value || 'rust')
         await changeIndexFileExtension(directory, srcFileExtension, '!(*.graphql)')
       }
+
+      // convert the toml file to JSON
+      await moveFile(joinPath(directory, 'shopify.extension.toml'), joinPath(directory, 'shopify.extension.json'))
+      const configObject = decodeToml(await readFile(joinPath(directory, 'shopify.extension.json')))
+      await writeFile(joinPath(directory, 'shopify.extension.json'), JSON.stringify(configObject, null, 2))
     },
   })
 
@@ -196,6 +216,11 @@ async function uiExtensionInit({directory, url, app, name, extensionFlavor}: Ext
           await changeIndexFileExtension(directory, srcFileExtension)
           await removeUnwantedTemplateFilesPerFlavor(directory, extensionFlavor!.value)
         }
+
+        // convert the toml file to JSON
+        await moveFile(joinPath(directory, 'shopify.extension.toml'), joinPath(directory, 'shopify.extension.json'))
+        const configObject = decodeToml(await readFile(joinPath(directory, 'shopify.extension.json')))
+        await writeFile(joinPath(directory, 'shopify.extension.json'), JSON.stringify(configObject, null, 2))
       },
     },
     {
