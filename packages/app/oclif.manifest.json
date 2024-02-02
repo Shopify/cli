@@ -379,6 +379,12 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "preview-json": {
+          "allowNo": false,
+          "env": "SHOPIFY_FLAG_PREVIEW_JSON",
+          "name": "preview-json",
+          "type": "boolean"
+        },
         "reset": {
           "allowNo": false,
           "description": "Reset all your settings.",

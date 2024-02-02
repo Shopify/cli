@@ -148,7 +148,7 @@ Deploy your Shopify app.
 ```
 USAGE
   $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-color] [--no-release]
-    [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
+    [--path <value>] [--preview-json] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              The name of the app configuration.
@@ -159,6 +159,7 @@ FLAGS
       --no-color                    Disable color output.
       --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
       --path=<value>                The path to your app directory.
+  --preview-json
       --reset                       Reset all your settings.
       --source-control-url=<value>  URL associated with the new app version.
       --verbose                     Increase the verbosity of the logs.

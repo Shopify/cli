@@ -41,6 +41,8 @@ interface DeployOptions {
 
   /** The config from the Oclif command */
   commandConfig: Config
+
+  previewJson: boolean
 }
 
 interface TasksContext {
@@ -49,7 +51,11 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
-  // eslint-disable-next-line prefer-const
+  if (options.previewJson) {
+    await ensureDeployContext(options)
+    return
+  }
+
   let {app, identifiers, partnersApp, token, release, betas: remoteAppBetaFlags} = await ensureDeployContext(options)
   const apiKey = identifiers.app
 

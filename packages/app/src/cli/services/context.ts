@@ -18,6 +18,10 @@ import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {BetaFlag, fetchAppRemoteBetaFlags} from './app/select-app.js'
+import {
+  configExtensionsIdentifiersBreakdown,
+  extensionsIdentifiersDeployBreakdown,
+} from './context/breakdown-extensions.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -50,7 +54,7 @@ import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {Config} from '@oclif/core'
@@ -359,6 +363,7 @@ export interface DeployContextOptions {
   noRelease: boolean
   commitReference?: string
   commandConfig: Config
+  previewJson: boolean
 }
 
 /**
@@ -398,10 +403,48 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     partnersApp,
     reset: options.reset,
     force: options.force,
+    previewJson: options.previewJson,
   })
 
   let identifiers: Identifiers = envIdentifiers as Identifiers
 
+  if (options.previewJson) {
+    const options2 = {
+      app,
+      appId: partnersApp.apiKey,
+      appName: partnersApp.title,
+      force: options.force,
+      release: !options.noRelease,
+      token,
+      envIdentifiers,
+      partnersApp,
+    }
+    const {extensionIdentifiersBreakdown, extensionsToConfirm, remoteExtensionsRegistrations} =
+      await extensionsIdentifiersDeployBreakdown(options2)
+
+    const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
+      token: options2.token,
+      apiKey: options2.appId,
+      localApp: options2.app,
+      release: options2.release,
+    })
+
+    const changeSummary = {
+      extensions: {
+        toCreate: extensionIdentifiersBreakdown.toCreate.map((extension) => extension.title) ?? [],
+        toRemove: extensionIdentifiersBreakdown.onlyRemote.map((extension) => extension.title) ?? [],
+      },
+      config: {
+        toCreate: configExtensionIdentifiersBreakdown?.newFieldNames ?? [],
+        toRemove: configExtensionIdentifiersBreakdown?.deletedFieldNames ?? [],
+        toUpdate: configExtensionIdentifiersBreakdown?.existingUpdatedFieldNames ?? [],
+      },
+    }
+
+    outputInfo(JSON.stringify(changeSummary, null, 2))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return null as any
+  }
   identifiers = await ensureDeploymentIdsPresence({
     app,
     appId: partnersApp.apiKey,
@@ -508,25 +551,29 @@ async function ensureIncludeConfigOnDeploy({
   partnersApp,
   reset,
   force,
+  previewJson,
 }: {
   org: Organization
   app: AppInterface
   partnersApp: OrganizationApp
   reset: boolean
   force: boolean
+  previewJson?: boolean
 }) {
   let previousIncludeConfigOnDeploy = app.includeConfigOnDeploy
   if (reset) previousIncludeConfigOnDeploy = undefined
   if (force) previousIncludeConfigOnDeploy = previousIncludeConfigOnDeploy ?? false
 
-  renderCurrentlyUsedConfigInfo({
-    org: org.businessName,
-    appName: partnersApp.title,
-    appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
-    resetMessage: resetHelpMessage,
-    includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
-  })
+  if (!previewJson) {
+    renderCurrentlyUsedConfigInfo({
+      org: org.businessName,
+      appName: partnersApp.title,
+      appDotEnv: app.dotenv?.path,
+      configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+      resetMessage: resetHelpMessage,
+      includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
+    })
+  }
 
   if (!app.useVersionedAppConfig || force || previousIncludeConfigOnDeploy !== undefined) return
   await promptIncludeConfigOnDeploy({

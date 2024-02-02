@@ -65,6 +65,10 @@ export default class Deploy extends Command {
       description: 'URL associated with the new app version.',
       env: 'SHOPIFY_FLAG_SOURCE_CONTROL_URL',
     }),
+    'preview-json': Flags.boolean({
+      default: false,
+      env: 'SHOPIFY_FLAG_PREVIEW_JSON',
+    }),
   }
 
   async run(): Promise<void> {
@@ -109,6 +113,7 @@ export default class Deploy extends Command {
       version: flags.version,
       commitReference: flags['source-control-url'],
       commandConfig: this.config,
+      previewJson: flags['preview-json'],
     })
   }
 }
