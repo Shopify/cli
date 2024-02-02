@@ -13,10 +13,10 @@ module.exports = {
     return {
       Identifier: function (node) {
         if (node.name === 'paypal') {
-          context.report(node, 'Paypal: Shopify apps can only use the Shopify Billing API.')
+          context.report({node: node, message: 'Paypal: Shopify apps can only use the Shopify Billing API.'})
         }
         if (node.name === 'Stripe') {
-          context.report(node, 'Stripe: Shopify apps can only use the Shopify Billing API.')
+          context.report({node: node, message: 'Stripe: Shopify apps can only use the Shopify Billing API.'})
         }
       },
       MemberExpression(node) {
@@ -28,7 +28,7 @@ module.exports = {
             node.property.name === 'payments')
 
         if (isSquarePayments) {
-          context.report(node, 'Square: Shopify apps can only use the Shopify Billing API.')
+          context.report({node: node, message: 'Square: Shopify apps can only use the Shopify Billing API.'})
         }
       },
     }
