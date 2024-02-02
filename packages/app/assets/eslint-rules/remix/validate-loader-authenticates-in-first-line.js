@@ -37,7 +37,6 @@ module.exports = {
             const firstLineIsLogin = firstLine?.includes('login');
 
             if (!includesThrowRedirect && !firstLineIsAuthenticate && !firstLineIsLogin) {
-              console.log({functionText});
               context.report({
                 node: declaration,
                 message: 'The first line of the exported function `loader` should be `await authenticate.admin(request)` or should log in, unless the loader redirects',
