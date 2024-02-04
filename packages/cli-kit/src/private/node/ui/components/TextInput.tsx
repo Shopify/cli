@@ -26,7 +26,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   color = noColor ? undefined : 'cyan',
   password = false,
   focus = true,
-}) => {
+}: TextInputProps) => {
   const [cursorOffset, setCursorOffset] = useState((originalValue || '').length)
 
   // if the updated value is shorter than the last one we need to reset the cursor
