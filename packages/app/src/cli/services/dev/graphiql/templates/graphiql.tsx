@@ -251,6 +251,9 @@ export function graphiqlTemplate({
               url: '{{url}}/graphiql/graphql.json?key=${key ?? ''}&api_version=' + apiVersion,
             }),
             defaultEditorToolsVisibility: true,
+            {% if query %}
+            query: '{{query}}',
+            {% endif %}
             defaultTabs: [
               {query: "${graphiqlIntroMessage
                 .replace(/"/g, '\\"')
