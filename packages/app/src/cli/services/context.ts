@@ -535,7 +535,7 @@ async function ensureIncludeConfigOnDeploy({
 }
 
 async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
-  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt()
+  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
   localConfiguration.build = {
     ...localConfiguration.build,
@@ -547,9 +547,9 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
 
-function includeConfigOnDeployPrompt(): Promise<boolean> {
+function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
   return renderConfirmationPrompt({
-    message: 'Include app configuration on `deploy`?',
+    message: `Include \`${basename(configPath)}\` configuration on \`deploy\`?`,
     confirmationMessage: 'Yes, always (Recommended)',
     cancellationMessage: 'No, never',
   })
