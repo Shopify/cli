@@ -64,7 +64,7 @@ describe('updateExtensionDraft()', () => {
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config:
@@ -102,7 +102,7 @@ describe('updateExtensionDraft()', () => {
       context: 'payments.offsite.render',
       handle: mockExtension.handle,
       registrationId,
-      config: '{"config":"{}"}',
+      config: '{}',
     })
 
     // Check if outputDebug is called with success message
@@ -146,7 +146,7 @@ describe('updateExtensionDraft()', () => {
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',

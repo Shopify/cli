@@ -310,16 +310,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return targets[0]?.target
   }
 
+  get contextValue() {
+    let context = this.singleTarget ?? ''
+    if (this.isFlow) context = this.configuration.handle ?? ''
+    return context
+  }
+
   async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
     const configValue = await this.deployConfig({apiKey, token})
     if (!configValue) return undefined
 
-    let context = this.singleTarget ?? ''
-    if (this.isFlow) context = this.configuration.handle ?? ''
-
     const result = {
       config: JSON.stringify(configValue),
-      context,
+      context: this.contextValue,
       handle: this.handle,
     }
 

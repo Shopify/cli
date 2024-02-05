@@ -6,7 +6,6 @@ import {
 import {loadConfigurationFile, parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
-import {Identifiers} from '../../models/app/identifiers.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -39,20 +38,16 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const identifiers = {
-    extensions: {},
-    extensionsNonUuidManaged: {},
-  } as Identifiers
-  const {handle, context, ...remainingConfigs} = (await extension.bundleConfig({identifiers, token, apiKey})) || {}
+  const config = await extension.deployConfig({apiKey, token})
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...remainingConfigs,
+      ...config,
       serialized_script: encodedFile,
     }),
     handle: extension.handle,
-    context,
+    context: extension.contextValue,
     registrationId,
   }
   const mutation = ExtensionUpdateDraftMutation
