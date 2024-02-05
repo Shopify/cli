@@ -39,7 +39,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       expect(result).toBe(true)
     })
 
-    test('and no force without any modifications either extension or config should not display sections', async () => {
+    test('and no force without any modifications either extension or config should display empty sections', async () => {
       // Given
       const extensionIdentifiersBreakdown = buildEmptyExtensionsBreakdownInfo()
       const configExtensionIdentifiersBreakdown = buildEmptyConfigExtensionsBreakdownInfo()
@@ -67,7 +67,18 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
           appTitle,
-          infoTable: [],
+          infoTable: [
+            {
+              header: 'Configuration:',
+              items: [],
+              emptyItemsText: 'No changes',
+            },
+            {
+              header: 'Extensions:',
+              items: [],
+              emptyItemsText: 'None',
+            },
+          ],
           dangerPrompt: false,
         }),
       )
