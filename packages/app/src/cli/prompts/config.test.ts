@@ -1,4 +1,4 @@
-import {confirmPushChanges, refineDelimitedString, selectConfigFile, selectConfigName, validate} from './config.js'
+import {confirmPushChanges, selectConfigFile, selectConfigName, validate} from './config.js'
 import {PushOptions} from '../services/app/config/push.js'
 import {
   testOrganizationApp,
@@ -388,51 +388,5 @@ api_version = "unstable"
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
       expect(result).toBeFalsy()
     })
-  })
-})
-
-describe('refineDelimitedString', () => {
-  test('remove empty items', () => {
-    // Given
-    const scopes = 'read_products, write_products,,'
-
-    // When
-    const result = refineDelimitedString(scopes)
-
-    // Then
-    expect(result).toEqual('read_products,write_products')
-  })
-
-  test('sort the list', () => {
-    // Given
-    const scopes = 'write_products,read_products'
-
-    // When
-    const result = refineDelimitedString(scopes)
-
-    // Then
-    expect(result).toEqual('read_products,write_products')
-  })
-
-  test('trim white spaces', () => {
-    // Given
-    const scopes = 'write_products,  read_products'
-
-    // When
-    const result = refineDelimitedString(scopes)
-
-    // Then
-    expect(result).toEqual('read_products,write_products')
-  })
-
-  test('remove duplicated', () => {
-    // Given
-    const scopes = 'write_products,read_products,write_products'
-
-    // When
-    const result = refineDelimitedString(scopes)
-
-    // Then
-    expect(result).toEqual('read_products,write_products')
   })
 })
