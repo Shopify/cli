@@ -38,7 +38,7 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const config = await extension.deployConfig({apiKey, token})
+  const config = (await extension.deployConfig({apiKey, token})) || {}
 
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
