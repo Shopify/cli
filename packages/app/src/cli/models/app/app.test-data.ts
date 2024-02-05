@@ -139,6 +139,7 @@ export async function testUIExtension(
         customer_privacy: false,
       },
     },
+    targeting: [{target: 'target1'}, {target: 'target2'}],
   }
   const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
@@ -281,6 +282,27 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
+
+  return extension
+}
+
+export async function testFlowActionExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'flow action',
+    type: 'flow_action' as const,
+    metafields: [],
+    runtime_context: 'strict',
+  }
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'flow_action')!
 
   const extension = new ExtensionInstance({
     configuration,
