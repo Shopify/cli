@@ -1,5 +1,11 @@
 #!/usr/bin/env ruby
 
+module Warning
+  def self.warn(string)
+    super if ENV["DEBUG"]
+  end
+end
+
 module Kernel
   # make an alias of the original require
   alias_method :original_require, :require
