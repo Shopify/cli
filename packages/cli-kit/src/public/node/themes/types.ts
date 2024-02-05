@@ -77,3 +77,30 @@ export interface ThemeAsset extends Checksum {
    */
   value?: string
 }
+
+/**
+ * Represents a single result returned within the response of a bulk upload operation.
+ * Each result includes the unique identifier for the file being uploaded,
+ * the status of the upload operation, any errors that occurred, and the asset that was uploaded.
+ */
+export interface BulkUploadResult {
+  /**
+   * The unique identifier for the file being uploaded.
+   */
+  key: string
+
+  /**
+   * Indicates whether the upload operation for this file was successful.
+   */
+  success: boolean
+
+  /**
+   * An array of error messages that were generated during the upload operation for this file.
+   */
+  errors?: string[]
+
+  /**
+   * The asset that was uploaded as part of the upload operation for this file.
+   */
+  asset: ThemeAsset
+}
