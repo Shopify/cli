@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.55.4
+
+### Patch Changes
+
+- f89b73038: Show deprecation logs only on `--verbose` mode
+  - @shopify/cli-kit@3.55.4
+
 ## 3.55.3
 
 ### Patch Changes
