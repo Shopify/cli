@@ -54,7 +54,8 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
       remoteApp,
       localApp,
     )
-    configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions)
+    const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
+    configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions, replaceLocalArrayStrategy)
   }
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
