@@ -1,3 +1,4 @@
+import {refineDelimitedString} from '../../../prompts/config.js'
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -15,7 +16,10 @@ const AppAccessSchema = zod.object({
     .optional(),
   access_scopes: zod
     .object({
-      scopes: zod.string().optional(),
+      scopes: zod
+        .string()
+        .transform((scopes) => refineDelimitedString(scopes))
+        .optional(),
       use_legacy_install_flow: zod.boolean().optional(),
     })
     .optional(),
