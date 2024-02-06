@@ -1,7 +1,7 @@
 import {WebhooksConfig, NormalizedWebhookSubscription} from '../types/app_config_webhook.js'
 import {deepMergeObjects, getPathValue} from '@shopify/cli-kit/common/object'
 
-export function transformWebhookConfig(content: object) {
+export function transformFromWebhookConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
@@ -9,10 +9,9 @@ export function transformWebhookConfig(content: object) {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const {api_version, subscriptions = []} = webhooks
 
-  // eslint-disable-next-line no-warning-comments
-  // TODO: pass along compliance_topics once we're ready to store them in its own module
+  // Compliance topics are handled from app_config_privacy_compliance_webhooks.ts
   for (const {uri, topics, compliance_topics: _, ...optionalFields} of subscriptions) {
-    webhookSubscriptions.push(topics.map((topic) => ({uri, topic, ...optionalFields})))
+    if (topics) webhookSubscriptions.push(topics.map((topic) => ({uri, topic, ...optionalFields})))
   }
 
   return webhookSubscriptions.length > 0 ? {subscriptions: webhookSubscriptions.flat(), api_version} : {api_version}
@@ -31,6 +30,7 @@ export function transformToWebhookConfig(content: object) {
   for (const {uri, topic, sub_topic, ...optionalFields} of serverWebhooks) {
     const currSubscription = webhooksSubscriptions.find((sub) => sub.uri === uri && sub.sub_topic === sub_topic)
     if (currSubscription) {
+      currSubscription.topics ??= []
       currSubscription.topics.push(topic)
     } else {
       webhooksSubscriptions.push({
