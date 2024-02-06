@@ -36,14 +36,14 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     }
   }
 
-  const newApp = new App(
-    app.name ?? 'App',
-    app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
-    app.directory ?? '/tmp/project',
-    app.packageManager ?? 'yarn',
-    app.configuration ?? getConfig(),
-    app.nodeDependencies ?? {},
-    app.webs ?? [
+  const newApp = new App({
+    name: app.name ?? 'App',
+    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
+    directory: app.directory ?? '/tmp/project',
+    packageManager: app.packageManager ?? 'yarn',
+    configuration: app.configuration ?? getConfig(),
+    nodeDependencies: app.nodeDependencies ?? {},
+    webs: app.webs ?? [
       {
         directory: '',
         configuration: {
@@ -52,13 +52,14 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
         },
       },
     ],
-    app.allExtensions ?? [],
-    app.usesWorkspaces ?? false,
-    app.dotenv,
-    app.errors,
-    app.specifications,
-    app.configSchema,
-  )
+    modules: app.allExtensions ?? [],
+    usesWorkspaces: app.usesWorkspaces ?? false,
+    dotenv: app.dotenv,
+    errors: app.errors,
+    specifications: app.specifications,
+    configSchema: app.configSchema,
+  })
+
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
   }

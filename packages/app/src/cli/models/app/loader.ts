@@ -218,44 +218,38 @@ class AppLoader {
       configName: this.configName,
       specifications: this.specifications,
     })
-    const {
-      directory: appDirectory,
-      configuration,
-      configurationLoadResultMetadata,
-      configSchema,
-    } = await configurationLoader.loaded()
+    const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
-    const dotenv = await loadDotEnv(appDirectory, configuration.path)
+    const dotenv = await loadDotEnv(directory, configuration.path)
 
-    const allExtensions = await this.loadExtensions(appDirectory, configuration)
+    const extensions = await this.loadExtensions(directory, configuration)
 
-    const packageJSONPath = joinPath(appDirectory, 'package.json')
-    const name = await loadAppName(appDirectory)
+    const packageJSONPath = joinPath(directory, 'package.json')
+    const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const packageManager = await getPackageManager(appDirectory)
+    const packageManager = await getPackageManager(directory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
-      appDirectory,
+      directory,
       configuration.web_directories,
     )
-    const usesWorkspaces = await appUsesWorkspaces(appDirectory)
+    const usesWorkspaces = await appUsesWorkspaces(directory)
 
-    const appClass = new App(
+    const appClass = new App({
       name,
-      'SHOPIFY_API_KEY',
-      appDirectory,
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
+      directory,
       packageManager,
       configuration,
       nodeDependencies,
       webs,
-      allExtensions,
+      modules: extensions,
       usesWorkspaces,
       dotenv,
-      undefined,
-      this.specifications,
+      specifications: this.specifications,
       configSchema,
-      this.remoteBetas,
-    )
+      remoteBetaFlags: this.remoteBetas,
+    })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
