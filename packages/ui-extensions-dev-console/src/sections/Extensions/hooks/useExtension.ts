@@ -6,6 +6,8 @@ export function useExtension(uuid: string) {
   const extensions = extensionServer.state.extensions
   const extension = extensions.find((extension) => extension.uuid === uuid)
 
+  console.log('EXTENSION', extension)
+
   return useMemo(
     () => ({
       extension,
@@ -28,6 +30,14 @@ export function useExtension(uuid: string) {
       focus: () => extensionServer.client.emit('focus', [{uuid}]),
       unfocus: () => extensionServer.client.emit('unfocus'),
       navigate: (url: string) => extensionServer.client.emit('navigate', {url}),
+      sayBlah: (isBlah: boolean) => {
+        extensionServer.client.persist('update', {
+          extensions: extensions.map((extension) => ({
+            uuid: extension.uuid,
+            development: {blah: extension.uuid === uuid ? isBlah : extension.development.blah},
+          })),
+        })
+      },
     }),
     [JSON.stringify(extensions)],
   )

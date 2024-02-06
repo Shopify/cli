@@ -35,7 +35,8 @@ export function ExtensionRow({uuid}: Props) {
     fallback: en,
   })
 
-  const {focus, unfocus, extension, show, hide} = useExtension(uuid)
+  const ex = useExtension(uuid)
+  const {focus, unfocus, extension, show, hide} = ex
 
   if (!extension) {
     return null
@@ -47,7 +48,7 @@ export function ExtensionRow({uuid}: Props) {
         <span className={styles.Title}>{extension.handle}</span>
       </td>
       <td>
-        <PreviewLinks extension={extension} />
+        <PreviewLinks extension={ex} />
       </td>
       <td>
         {showMobileQrCode(extension) && (

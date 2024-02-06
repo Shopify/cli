@@ -1,7 +1,7 @@
 import * as styles from './PreviewLink.module.scss'
 import en from './translations/en.json'
 import {useNavigate} from '../../hooks/useNavigate.js'
-import React from 'react'
+import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ClipboardIcon} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
@@ -12,13 +12,15 @@ interface Props {
   rootUrl: string
   resourceUrl?: string
   title: string
+  extension?: any
 }
 
-export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
+export function PreviewLink({rootUrl, resourceUrl, title, extension}: Props) {
   const [i18n] = useI18n({
     id: 'PreviewLink',
     fallback: en,
   })
+  const [blah, setBlah] = useState(false)
 
   const navigate = useNavigate()
 
@@ -41,21 +43,39 @@ export function PreviewLink({rootUrl, resourceUrl, title}: Props) {
   }
 
   return (
-    <span className={styles.PreviewLink}>
-      <a
-        href={rootUrl}
-        target={isEmbedded ? '_top' : '_blank'}
-        aria-label={i18n.translate('linkLabel', {title})}
-        onClick={handleOpenRoot}
-      >
-        {title}
-      </a>
-      <IconButton
-        type="button"
-        onClick={() => handleCopyPreviewLink()}
-        source={ClipboardIcon}
-        accessibilityLabel={i18n.translate('iconLabel', {title})}
-      />
-    </span>
+    <>
+      {extension?.sayBlah ? (
+        <span>
+          <label htmlFor={title}>BLAH </label>
+          <input
+            id={title}
+            type="checkbox"
+            onChange={() => {
+              const nextBlah = !blah
+              setBlah(nextBlah)
+              if (extension?.sayBlah) {
+                extension.sayBlah(nextBlah)
+              }
+            }}
+          />
+        </span>
+      ) : null}
+      <span className={styles.PreviewLink}>
+        <a
+          href={rootUrl}
+          target={isEmbedded ? '_top' : '_blank'}
+          aria-label={i18n.translate('linkLabel', {title})}
+          onClick={handleOpenRoot}
+        >
+          {title}
+        </a>
+        <IconButton
+          type="button"
+          onClick={() => handleCopyPreviewLink()}
+          source={ClipboardIcon}
+          accessibilityLabel={i18n.translate('iconLabel', {title})}
+        />
+      </span>
+    </>
   )
 }

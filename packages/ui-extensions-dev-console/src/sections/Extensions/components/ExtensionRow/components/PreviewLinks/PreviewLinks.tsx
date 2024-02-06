@@ -16,12 +16,12 @@ export function PreviewLinks({extension}: Props) {
     fallback: en,
   })
 
-  if (extension.surface === 'point_of_sale') {
+  if (extension.extension.surface === 'point_of_sale') {
     return <NotApplicable />
   }
 
-  if (extension.type === 'ui_extension') {
-    const hasMultiple = extension.extensionPoints && extension.extensionPoints.length > 1
+  if (extension.extension.type === 'ui_extension') {
+    const hasMultiple = extension.extension.extensionPoints && extension.extension.extensionPoints.length > 1
     const titleMarkup = hasMultiple ? (
       <span className={styles.PreviewLinksTitle}>{i18n.translate('previewLinksTitle')}:</span>
     ) : null
@@ -30,14 +30,22 @@ export function PreviewLinks({extension}: Props) {
       <>
         {titleMarkup}
         <span className={classNames(hasMultiple && styles.PreviewLinks)}>
-          {extension.extensionPoints?.map((extensionPoint) => {
+          {extension.extension.extensionPoints?.map((extensionPoint) => {
             if (typeof extensionPoint === 'string') {
               return null
             }
 
             const {root, target, resource} = extensionPoint
 
-            return <PreviewLink rootUrl={root.url} title={target} key={target} resourceUrl={resource.url} />
+            return (
+              <PreviewLink
+                extension={extension}
+                rootUrl={root.url}
+                title={target}
+                key={target}
+                resourceUrl={resource.url}
+              />
+            )
           })}
         </span>
       </>
@@ -46,6 +54,7 @@ export function PreviewLinks({extension}: Props) {
 
   return (
     <PreviewLink
+      extension={extension}
       rootUrl={extension.development.root.url}
       resourceUrl={extension.development.resource.url}
       title={extension.type.replaceAll('_', ' ')}
