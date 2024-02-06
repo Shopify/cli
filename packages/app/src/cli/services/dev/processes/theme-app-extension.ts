@@ -5,7 +5,12 @@ import {themeExtensionArgs} from '../theme-extension-args.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedPartners, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {
+  AdminSession,
+  ensureAuthenticatedAdmin,
+  ensureAuthenticatedPartners,
+  ensureAuthenticatedStorefront,
+} from '@shopify/cli-kit/node/session'
 
 // Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
 const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000

@@ -92,7 +92,10 @@ export async function ensureAuthenticatedAdmin(
   )}:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {forceRefresh, ...options})
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {
+    forceRefresh,
+    ...options,
+  })
   if (!tokens.admin) {
     throw new BugError('No admin token found after ensuring authenticated')
   }
