@@ -15,7 +15,6 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
-  | 'app_config'
 
 export interface TransformationConfig {
   [key: string]: string
@@ -25,6 +24,8 @@ export interface CustomTransformationConfig {
   forward?: (obj: object) => object
   reverse?: (obj: object) => object
 }
+
+export type ExtensionExperience = 'extension' | 'configuration'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -38,6 +39,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   partnersWebIdentifier: string
   surface: string
   registrationLimit: number
+  experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
@@ -113,6 +115,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     transform: spec.transform,
     reverseTransform: spec.reverseTransform,
+    experience: spec.experience ?? 'extension',
   }
   return {...defaults, ...spec}
 }
@@ -137,11 +140,10 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
     // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
-    appModuleFeatures: appModuleFeatures().includes('app_config')
-      ? appModuleFeatures
-      : () => appModuleFeatures().concat('app_config'),
+    appModuleFeatures,
     transform: resolveAppConfigTransform(spec.transformConfig),
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    experience: 'configuration',
   })
 }
 

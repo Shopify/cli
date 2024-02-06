@@ -311,7 +311,7 @@ export function remoteAppConfigurationExtensionContent(
   specifications: ExtensionSpecification[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
-  const configSpecifications = specifications.filter((spec) => spec.appModuleFeatures().includes('app_config'))
+  const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
   configRegistrations.forEach((extension) => {
     const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
     if (!configSpec) return

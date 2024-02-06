@@ -638,8 +638,8 @@ export const testPartnersServiceSession: PartnersSession = {
 }
 
 export async function buildVersionedAppSchema() {
-  const configSpecifications = (await loadFSExtensionsSpecifications()).filter((spec) =>
-    spec.appModuleFeatures().includes('app_config'),
+  const configSpecifications = (await loadFSExtensionsSpecifications()).filter(
+    (spec) => spec.experience === 'configuration',
   )
   return {
     schema: getAppVersionedSchema(configSpecifications),

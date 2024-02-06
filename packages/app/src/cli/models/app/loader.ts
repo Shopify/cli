@@ -431,7 +431,7 @@ class AppLoader {
 
   async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     return this.specifications
-      .filter((specification) => specification.appModuleFeatures().includes('app_config'))
+      .filter((specification) => specification.experience === 'configuration')
       .map(async (specification) => {
         const specConfiguration = await parseConfigurationObject(
           specification.schema,
