@@ -125,14 +125,3 @@ export function buildDiffConfigContent(
     updatedContent: encodeToml(updated),
   }
 }
-
-export function refineDelimitedString(delimitedString?: string, delimiter = ',') {
-  if (!delimitedString) return
-
-  const items = delimitedString.split(delimiter).map((value) => value.trim())
-  const nonEmptyItems = items.filter((value) => value !== '')
-  const sortedItems = nonEmptyItems.sort()
-  const uniqueSortedItems = [...new Set(sortedItems)]
-
-  return uniqueSortedItems.join(delimiter)
-}
