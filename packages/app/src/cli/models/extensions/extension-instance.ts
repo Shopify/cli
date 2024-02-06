@@ -87,7 +87,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isAppConfigExtension() {
-    return this.features.includes('app_config')
+    return this.specification.experience === 'configuration'
   }
 
   get isFlow() {
@@ -119,9 +119,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.handle = this.specification.appModuleFeatures().includes('app_config')
-      ? slugify(this.specification.identifier)
-      : this.configuration.handle ?? slugify(this.configuration.name ?? '')
+    this.handle =
+      this.specification.experience === 'configuration'
+        ? slugify(this.specification.identifier)
+        : this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory

@@ -41,7 +41,7 @@ export const AppSchema = zod.object({
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
-  const isConfigSpecification = (spec: ExtensionSpecification) => spec.appModuleFeatures().includes('app_config')
+  const isConfigSpecification = (spec: ExtensionSpecification) => spec.experience === 'configuration'
   const schema = specs
     .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
