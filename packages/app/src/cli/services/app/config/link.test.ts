@@ -566,6 +566,87 @@ embedded = false
     })
   })
 
+  test('fetches the privacy compliance webhooks from the configuration module', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+      }
+      vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+        app: {
+          extensionRegistrations: [],
+          configurationRegistrations: [
+            {
+              type: 'PRIVACY_COMPLIANCE_WEBHOOKS',
+              id: '123',
+              uuid: '123',
+              title: 'Privacy compliance webhooks',
+              activeVersion: {
+                config: JSON.stringify({
+                  shop_redact_url: null,
+                  customers_redact_url: 'https://example.com/customers',
+                  customers_data_request_url: 'https://example.com/customers',
+                }),
+              },
+            },
+          ],
+          dashboardManagedExtensionRegistrations: [],
+        },
+      })
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "https://example.com/customers"
+  compliance_topics = [ "customers/redact", "customers/data_request" ]
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: 'shopify.app.toml is now linked to "app1" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
+        nextSteps: [
+          [`Make updates to shopify.app.toml in your local project`],
+          ['To upload your config, run', {command: 'npm run shopify app deploy'}],
+        ],
+        reference: [
+          {
+            link: {
+              label: 'App configuration',
+              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
+            },
+          },
+        ],
+      })
+    })
+  })
+
   test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -616,28 +697,28 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "12345"
-name = "my app"
-application_url = "https://myapp.com"
-embedded = true
+  client_id = "12345"
+  name = "my app"
+  application_url = "https://myapp.com"
+  embedded = true
 
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+  [access_scopes]
+  # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+  scopes = "write_products"
 
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
+  [auth]
+  redirect_urls = [ "https://example.com/callback1" ]
 
-[webhooks]
-api_version = "2023-07"
+  [webhooks]
+  api_version = "2023-07"
 
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "https://my-app.com/webhooks"
+    [[webhooks.subscriptions]]
+    topics = [ "products/create" ]
+    uri = "https://my-app.com/webhooks"
 
-[pos]
-embedded = true
-`
+  [pos]
+  embedded = true
+  `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
