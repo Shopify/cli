@@ -58,7 +58,7 @@ async function deployConfirmationPrompt({
   let confirmationResponse = true
 
   const infoTable = []
-  if (configContentPrompt && (extensionsInfoTable || configContentPrompt.configInfoTable.items.length > 0)) {
+  if (configContentPrompt) {
     infoTable.push(
       configContentPrompt.configInfoTable.items.length === 0
         ? {...configContentPrompt.configInfoTable, emptyItemsText: 'No changes', items: []}
@@ -66,12 +66,15 @@ async function deployConfirmationPrompt({
     )
   }
   const isDangerous = appTitle !== undefined && hasDeletedExtensions
-  if (extensionsInfoTable)
+  if (extensionsInfoTable) {
     infoTable.push(
       isDangerous
         ? {...extensionsInfoTable, helperText: 'Removing extensions can permanentely delete app user data'}
         : extensionsInfoTable,
     )
+  } else {
+    infoTable.push({header: 'Extensions:', emptyItemsText: 'None', items: []})
+  }
 
   const question = `${release ? 'Release' : 'Create'} a new version${appTitle ? ` of ${appTitle}` : ''}?`
   if (isDangerous) {
