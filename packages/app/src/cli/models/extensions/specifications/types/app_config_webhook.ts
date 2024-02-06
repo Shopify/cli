@@ -1,5 +1,5 @@
 export interface WebhookSubscription {
-  topics: string[]
+  topics?: string[]
   uri: string
   sub_topic?: string
   include_fields?: string[]

@@ -17,9 +17,27 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
 
   if (!subscriptions.length) return
 
+  if (
+    webhookConfig.privacy_compliance &&
+    webhookConfig.subscriptions?.some((subscription) => subscription.compliance_topics)
+  ) {
+    return {
+      code: zod.ZodIssueCode.custom,
+      message: `The privacy_compliance section can't be used if there are subscriptions including compliance_topics`,
+    }
+  }
+
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  for (const [i, {uri, topics, compliance_topics = [], sub_topic = ''}] of subscriptions.entries()) {
+  for (const [i, {uri, topics = [], compliance_topics = [], sub_topic = ''}] of subscriptions.entries()) {
     const path = ['subscriptions', i]
+
+    if (!topics.length && !compliance_topics.length) {
+      return {
+        code: zod.ZodIssueCode.custom,
+        message: `Either topics or compliance_topics must be added to the webhook subscription`,
+        path,
+      }
+    }
 
     for (const [j, topic] of topics.entries()) {
       const key = `${topic}::${sub_topic}::${uri}`

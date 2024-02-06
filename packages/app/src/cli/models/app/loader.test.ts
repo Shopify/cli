@@ -2792,6 +2792,48 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
+  test('throws an error if we have privacy_compliance section and subscriptions with compliance_topics', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      privacy_compliance: {
+        customer_data_request_url: 'https://example.com',
+      },
+      subscriptions: [
+        {
+          compliance_topics: ['customers/data_request'],
+          uri: 'https://example.com',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: `The privacy_compliance section can't be used if there are subscriptions including compliance_topics`,
+      path: ['webhooks'],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+  })
+
+  test('throws an error if neither topics nor compliance_topics are added', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          uri: 'https://example.com',
+        },
+      ],
+    }
+    const errorObj = {
+      code: zod.ZodIssueCode.custom,
+      message: 'Either topics or compliance_topics must be added to the webhook subscription',
+      path: ['webhooks', 'subscriptions', 0],
+    }
+
+    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+  })
+
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
     const expectedFormatted = outputContent`App configuration is not valid\nValidation errors in tmp:\n\n${parseHumanReadableError(
