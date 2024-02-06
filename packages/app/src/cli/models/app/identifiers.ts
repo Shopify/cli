@@ -99,7 +99,7 @@ export function getAppIdentifiers(
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
   }
-  app.allExtensions.forEach(processExtension)
+  app.modules.forEach(processExtension)
 
   return {
     app: envVariables[app.idEnvironmentVariableName],

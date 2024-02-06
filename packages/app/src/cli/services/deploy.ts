@@ -66,7 +66,7 @@ export async function deploy(options: DeployOptions) {
 
   await inTemporaryDirectory(async (tmpDir) => {
     try {
-      const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
+      const bundle = app.modules.some((ext) => ext.features.includes('bundling'))
       let bundlePath: string | undefined
 
       if (bundle) {
@@ -94,7 +94,7 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const appModules = await Promise.all(
-              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
+              app.modules.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
@@ -110,7 +110,7 @@ export async function deploy(options: DeployOptions) {
             })
 
             if (!useThemebundling()) {
-              const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
+              const themeExtensions = app.modules.filter((ext) => ext.isThemeExtension)
               await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
             }
 

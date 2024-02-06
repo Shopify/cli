@@ -98,7 +98,7 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
-      allExtensions: localApp.allExtensions,
+      allExtensions: localApp.modules,
       storeFqdn,
       storeId,
       apiKey,
@@ -119,7 +119,7 @@ export async function setupDevProcesses({
       proxyUrl: network.proxyUrl,
     }),
     await setupPreviewThemeAppExtensionsProcess({
-      allExtensions: localApp.allExtensions,
+      allExtensions: localApp.modules,
       storeFqdn,
       apiKey,
       token,

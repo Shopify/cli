@@ -1107,7 +1107,7 @@ describe('ensureDeployContext', () => {
     }
 
     const appWithExtensions = testApp({
-      allExtensions: [await testAppConfigExtensions()],
+      modules: [await testAppConfigExtensions()],
     })
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -1125,7 +1125,7 @@ describe('ensureDeployContext', () => {
     expect(got.partnersApp.appType).toEqual(APP2.appType)
     expect(got.identifiers).toEqual(identifiers)
     expect(got.release).toEqual(true)
-    expect(got.app.allExtensions).toEqual(appWithExtensions.allExtensions)
+    expect(got.app.modules).toEqual(appWithExtensions.modules)
 
     expect(metadata.getAllPublicMetadata()).toMatchObject({api_key: APP2.apiKey, partner_id: 1})
   })

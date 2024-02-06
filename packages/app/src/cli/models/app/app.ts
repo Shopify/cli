@@ -164,7 +164,7 @@ export interface AppInterface extends AppConfigurationInterface {
   webs: Web[]
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
-  allExtensions: ExtensionInstance[]
+  modules: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
@@ -191,7 +191,7 @@ export class App implements AppInterface {
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
   private remoteBetaFlags: BetaFlag[]
-  private realExtensions: ExtensionInstance[]
+  private allModules: ExtensionInstance[]
 
   // eslint-disable-next-line max-params
   constructor(
@@ -218,7 +218,7 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.realExtensions = extensions
+    this.allModules = extensions
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
@@ -226,14 +226,14 @@ export class App implements AppInterface {
     this.remoteBetaFlags = remoteBetaFlags ?? []
   }
 
-  get allExtensions() {
-    return this.realExtensions.filter(
+  get modules() {
+    return this.allModules.filter(
       (ext) => !ext.isAppConfigExtension || (this.useVersionedAppConfig && this.includeConfigOnDeploy),
     )
   }
 
   get draftableExtensions() {
-    return this.realExtensions.filter(
+    return this.allModules.filter(
       (ext) => ext.isDraftable() && (!ext.isAppConfigExtension || this.useVersionedAppConfig),
     )
   }
@@ -244,32 +244,32 @@ export class App implements AppInterface {
   }
 
   async preDeployValidation() {
-    const functionExtensionsWithUiHandle = this.allExtensions.filter(
+    const functionExtensionsWithUiHandle = this.modules.filter(
       (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
     ) as ExtensionInstance<FunctionConfigType>[]
 
     if (functionExtensionsWithUiHandle.length > 0) {
-      const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
+      const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.modules)
       if (errors) {
         throw new AbortError('Invalid function configuration', errors.join('\n'))
       }
     }
 
-    await Promise.all([this.allExtensions.map((ext) => ext.preDeployValidation())])
+    await Promise.all([this.modules.map((ext) => ext.preDeployValidation())])
   }
 
   hasExtensions(): boolean {
-    return this.allExtensions.length > 0
+    return this.modules.length > 0
   }
 
   extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
-    return this.allExtensions.filter(
+    return this.modules.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
   }
 
   updateExtensionUUIDS(uuids: {[key: string]: string}) {
-    this.allExtensions.forEach((extension) => {
+    this.modules.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
   }

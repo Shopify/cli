@@ -222,7 +222,7 @@ const LOCAL_APP = async (
     name: 'my-app',
     directory: '/app',
     configuration,
-    allExtensions: [...uiExtensions, await testAppConfigExtensions()],
+    modules: [...uiExtensions, await testAppConfigExtensions()],
     specifications: versionSchema.configSpecifications,
     configSchema: versionSchema.schema,
   })

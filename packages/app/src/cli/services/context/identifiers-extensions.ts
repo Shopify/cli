@@ -25,7 +25,7 @@ export async function ensureExtensionsIds(
 ) {
   let remoteExtensions = initialRemoteExtensions
   const validIdentifiers = options.envIdentifiers.extensions ?? {}
-  const localExtensions = options.app.allExtensions.filter((ext) => ext.isUuidManaged())
+  const localExtensions = options.app.modules.filter((ext) => ext.isUuidManaged())
 
   const uiExtensionsToMigrate = getUIExtensionsToMigrate(localExtensions, remoteExtensions, validIdentifiers)
   const flowExtensionsToMigrate = getFlowExtensionsToMigrate(localExtensions, dashboardOnlyExtensions, validIdentifiers)
@@ -125,7 +125,7 @@ async function ensureNonUuidManagedExtensionsIds(
   appId: string,
   includeDraftExtensions = false,
 ) {
-  let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
+  let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.modules
 
   localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []

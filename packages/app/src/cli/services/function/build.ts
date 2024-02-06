@@ -176,7 +176,7 @@ export async function runJavy(
 }
 
 export async function installJavy(app: AppInterface) {
-  const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
+  const javyRequired = app.modules.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
     await exec('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
   }

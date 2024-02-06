@@ -54,7 +54,7 @@ beforeEach(() => {
 describe('deploy', () => {
   test('passes release to uploadExtensionsBundle()', async () => {
     // Given
-    const app = testApp({allExtensions: []})
+    const app = testApp({modules: []})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -140,7 +140,7 @@ describe('deploy', () => {
   })
 
   test('deploys the app with no extensions', async () => {
-    const app = testApp({allExtensions: []})
+    const app = testApp({modules: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
 
     // When
@@ -171,7 +171,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 UI extension', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testApp({modules: [uiExtension]})
 
     // When
     await testDeployBundle({app})
@@ -192,7 +192,7 @@ describe('deploy', () => {
   test('uploads the extension bundle with 1 theme extension', async () => {
     // Given
     const themeExtension = await testThemeExtensions()
-    const app = testApp({allExtensions: [themeExtension]})
+    const app = testApp({modules: [themeExtension]})
 
     // When
     await testDeployBundle({app})
@@ -222,7 +222,7 @@ describe('deploy', () => {
     const functionExtension = await testFunctionExtension()
     vi.spyOn(functionExtension, 'preDeployValidation').mockImplementation(async () => {})
 
-    const app = testApp({allExtensions: [functionExtension]})
+    const app = testApp({modules: [functionExtension]})
     const moduleId = 'module-id'
     const mockedFunctionConfiguration = {
       title: functionExtension.configuration.name,
@@ -269,7 +269,7 @@ describe('deploy', () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
     const themeExtension = await testThemeExtensions()
-    const app = testApp({allExtensions: [uiExtension, themeExtension]})
+    const app = testApp({modules: [uiExtension, themeExtension]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
@@ -301,7 +301,7 @@ describe('deploy', () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const localApp = {
-      allExtensions: [extensionNonUuidManaged],
+      modules: [extensionNonUuidManaged],
       configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
     }
     const app = testApp(localApp)
@@ -334,7 +334,7 @@ describe('deploy', () => {
   test('doesnt push the configuration extension if include config on deploy is disabled and the beta flag is enabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
-    const app = testApp({allExtensions: [extensionNonUuidManaged]})
+    const app = testApp({modules: [extensionNonUuidManaged]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
@@ -357,7 +357,7 @@ describe('deploy', () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const localApp = {
-      allExtensions: [extensionNonUuidManaged],
+      modules: [extensionNonUuidManaged],
       configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
     }
     const app = testApp(localApp)
@@ -382,7 +382,7 @@ describe('deploy', () => {
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testApp({modules: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -420,7 +420,7 @@ describe('deploy', () => {
   test('shows a specific success message when there is an error with the release', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testApp({modules: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -460,7 +460,7 @@ describe('deploy', () => {
   test('shows a specific success message when deploying --no-release', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
-    const app = testApp({allExtensions: [uiExtension]})
+    const app = testApp({modules: [uiExtension]})
     vi.mocked(renderTextPrompt).mockResolvedValue('Deployed from CLI')
 
     // When
@@ -529,11 +529,11 @@ async function testDeployBundle({
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  for (const extension of app.allExtensions.filter((ext) => ext.isUuidManaged())) {
+  for (const extension of app.modules.filter((ext) => ext.isUuidManaged())) {
     extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
   const extensionsNonUuidPayload: {[key: string]: string} = {}
-  for (const extension of app.allExtensions.filter((ext) => !ext.isUuidManaged())) {
+  for (const extension of app.modules.filter((ext) => !ext.isUuidManaged())) {
     extensionsNonUuidPayload[extension.localIdentifier] = extension.localIdentifier
   }
   const identifiers = {

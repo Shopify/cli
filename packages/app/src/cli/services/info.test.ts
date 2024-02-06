@@ -274,7 +274,7 @@ describe('info', () => {
         directory: tmp,
         app: {
           errors,
-          allExtensions: [uiExtension1, uiExtension2],
+          modules: [uiExtension1, uiExtension2],
         },
       })
       const organization = {
@@ -334,7 +334,7 @@ describe('info', () => {
       const app = mockApp({
         directory: tmp,
         app: {
-          allExtensions: [uiExtension1, configExtension],
+          modules: [uiExtension1, configExtension],
         },
       })
       const organization = {
@@ -387,7 +387,7 @@ describe('info', () => {
       const app = mockApp({
         directory: tmp,
         app: {
-          allExtensions: [uiExtension1, configExtension],
+          modules: [uiExtension1, configExtension],
         },
       })
       const organization = {
@@ -420,7 +420,7 @@ describe('info', () => {
       // Then
       expect(result).toBeInstanceOf(TokenizedString)
       const resultObject = JSON.parse((result as TokenizedString).value) as AppInterface
-      const extensionsIdentifiers = resultObject.allExtensions.map((extension) => extension.localIdentifier)
+      const extensionsIdentifiers = resultObject.modules.map((extension) => extension.localIdentifier)
       expect(extensionsIdentifiers).toContain('handle-for-extension-1')
       expect(extensionsIdentifiers).not.toContain('point_of_sale')
     })

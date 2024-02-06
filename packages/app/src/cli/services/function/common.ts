@@ -32,7 +32,7 @@ export async function inFunctionContext({
   const specifications = await loadLocalExtensionsSpecifications(commandConfig)
   const app: AppInterface = await loadApp({specifications, directory: path, configName})
 
-  const allFunctions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
+  const allFunctions = app.modules.filter((ext) => ext.isFunctionExtension)
   const ourFunction = allFunctions.find((fun) => fun.directory === path) as ExtensionInstance<FunctionConfigType>
   if (ourFunction) {
     return callback(app, ourFunction)

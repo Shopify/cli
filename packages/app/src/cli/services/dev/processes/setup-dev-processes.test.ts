@@ -100,7 +100,7 @@ describe('setup-dev-processes', () => {
             },
           },
         ],
-        allExtensions: [previewable, draftable, theme],
+        modules: [previewable, draftable, theme],
       },
     })
 

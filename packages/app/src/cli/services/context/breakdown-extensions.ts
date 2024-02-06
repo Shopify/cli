@@ -94,7 +94,7 @@ export async function configExtensionsIdentifiersBreakdown({
   versionAppModules?: AppModuleVersion[]
   release?: boolean
 }) {
-  if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
+  if (localApp.modules.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
   const activeAppVersion = await fetchActiveAppVersion({token, apiKey})

@@ -12,7 +12,7 @@ describe('updateAppIdentifiers', () => {
       const uiExtension = await testUIExtension()
       const app = testApp({
         directory: tmpDir,
-        allExtensions: [uiExtension],
+        modules: [uiExtension],
       })
 
       // When
@@ -43,7 +43,7 @@ describe('updateAppIdentifiers', () => {
       const app = testAppWithConfig({
         app: {
           directory: tmpDir,
-          allExtensions: [uiExtension],
+          modules: [uiExtension],
         },
         config: {
           path: joinPath(tmpDir, 'shopify.app.staging.toml'),
@@ -77,7 +77,7 @@ describe('updateAppIdentifiers', () => {
       const uiExtension = await testUIExtension()
       const app = testApp({
         directory: tmpDir,
-        allExtensions: [uiExtension],
+        modules: [uiExtension],
       })
 
       // When
@@ -120,7 +120,7 @@ describe('getAppIdentifiers', () => {
           path: joinPath(tmpDir, '.env'),
           variables: {SHOPIFY_API_KEY: 'FOO', SHOPIFY_TEST_UI_EXTENSION_ID: 'BAR'},
         },
-        allExtensions: [uiExtension],
+        modules: [uiExtension],
       })
 
       // When
@@ -143,7 +143,7 @@ describe('getAppIdentifiers', () => {
       })
       const app = testApp({
         directory: tmpDir,
-        allExtensions: [uiExtension],
+        modules: [uiExtension],
       })
 
       // When

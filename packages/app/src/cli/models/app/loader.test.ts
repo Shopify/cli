@@ -543,9 +543,9 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('my-extension')
+    expect(app.modules[0]!.configuration.name).toBe('my_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.modules[0]!.localIdentifier).toBe('my-extension')
   })
 
   test('loads the app when it has a extension with a valid configuration using a supported extension type', async () => {
@@ -569,9 +569,9 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('my-extension')
+    expect(app.modules[0]!.configuration.name).toBe('my_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.modules[0]!.localIdentifier).toBe('my-extension')
   })
 
   test('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
@@ -598,9 +598,9 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
-    expect(app.allExtensions[0]!.localIdentifier).toBe('custom-extension')
+    expect(app.modules[0]!.configuration.name).toBe('custom_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
+    expect(app.modules[0]!.localIdentifier).toBe('custom-extension')
   })
 
   test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
@@ -621,8 +621,8 @@ wrong = "property"
 
     // Then
     expect(app.name).toBe('my_app')
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
+    expect(app.modules[0]!.configuration.name).toBe('my_extension')
+    expect(app.modules[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_ID')
   })
 
   test('loads the app with several extensions that have valid configurations', async () => {
@@ -653,10 +653,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    expect(app.modules).toHaveLength(2)
+    const extensions = app.modules.sort((extA, extB) => (extA.configuration.name < extB.configuration.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1]!.configuration.name).toBe('my_extension_2')
@@ -701,10 +699,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    expect(app.modules).toHaveLength(2)
+    const extensions = app.modules.sort((extA, extB) => (extA.configuration.name < extB.configuration.name ? -1 : 1))
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
@@ -833,7 +829,7 @@ wrong = "property"
 
     // When
     const app = await loadApp({directory: tmpDir, specifications})
-    const myFunction = app.allExtensions[0]!
+    const myFunction = app.modules[0]!
 
     // Then
     expect(myFunction.configuration.name).toBe('my-function')
@@ -871,8 +867,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -934,8 +930,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1007,8 +1003,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1086,8 +1082,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1157,8 +1153,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1263,8 +1259,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1368,8 +1364,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1418,8 +1414,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1460,8 +1456,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1519,8 +1515,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1601,8 +1597,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1665,8 +1661,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1702,8 +1698,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications, remoteBetas: [BetaFlag.VersionedAppConfig]})
 
     // Then
-    expect(app.allExtensions).toHaveLength(5)
-    const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
+    expect(app.modules).toHaveLength(5)
+    const extensionsConfig = app.modules.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       expect.objectContaining({
         name: 'for-testing',
@@ -1765,10 +1761,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const functions = app.allExtensions.sort((extA, extB) =>
-      extA.configuration.name < extB.configuration.name ? -1 : 1,
-    )
+    expect(app.modules).toHaveLength(2)
+    const functions = app.modules.sort((extA, extB) => (extA.configuration.name < extB.configuration.name ? -1 : 1))
     expect(functions[0]!.configuration.name).toBe('my-function-1')
     expect(functions[1]!.configuration.name).toBe('my-function-2')
     expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
@@ -1798,7 +1792,7 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    expect(app.modules[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
   })
 
   test(`defaults the function wasm path if not configured`, async () => {
@@ -1821,7 +1815,7 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
+    expect(app.modules[0]!.outputPath).toMatch(/.+dist\/index.wasm$/)
   })
 
   test(`updates metadata after loading`, async () => {

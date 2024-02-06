@@ -84,7 +84,7 @@ const LOCAL_APP = (
       extension_directories: ['extensions/*'],
       ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),
     },
-    allExtensions: [...uiExtensions, ...functionExtensions, ...configExtensions],
+    modules: [...uiExtensions, ...functionExtensions, ...configExtensions],
   })
 }
 

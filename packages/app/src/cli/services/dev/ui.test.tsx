@@ -262,7 +262,7 @@ async function mockApp(newConfig = false): Promise<AppInterface> {
       name: 'my-super-customer-accounts-app',
       directory: '/',
       nodeDependencies,
-      allExtensions: [functionExtension, themeExtension, uiExtension],
+      modules: [functionExtension, themeExtension, uiExtension],
     },
     newConfig ? 'current' : 'legacy',
   )

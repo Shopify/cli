@@ -221,14 +221,14 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
       })
       const allExtensions: ExtensionInstance[] = [validFunctionWithUiExtension]
       const app = await testApp({
-        allExtensions,
+        modules: allExtensions,
       })
 
       // When
       const expectedErrors = [
         "[test function extension] - Local app must contain a ui_extension with handle 'test-ui-extension'",
       ]
-      const result = validateFunctionExtensionsWithUiHandle([validFunctionWithUiExtension], app.allExtensions)
+      const result = validateFunctionExtensionsWithUiHandle([validFunctionWithUiExtension], app.modules)
 
       // Then
       expect(result).toStrictEqual(expectedErrors)
@@ -251,14 +251,14 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
 
       const allExtensions: ExtensionInstance[] = [functionWithUiHandle, functionWithMatchingHandle]
       const app = await testApp({
-        allExtensions,
+        modules: allExtensions,
       })
 
       // When
       const expectedErrors = [
         "[test function extension] - Local app must contain a ui_extension with handle 'product_discounts-test'",
       ]
-      const result = validateFunctionExtensionsWithUiHandle([functionWithUiHandle], app.allExtensions)
+      const result = validateFunctionExtensionsWithUiHandle([functionWithUiHandle], app.modules)
 
       // Then
       expect(result).toStrictEqual(expectedErrors)
@@ -272,11 +272,11 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
       })
       const allExtensions: ExtensionInstance[] = [validUiExtension, validFunctionWithUiExtension]
       const app = await testApp({
-        allExtensions,
+        modules: allExtensions,
       })
 
       // When
-      const result = validateFunctionExtensionsWithUiHandle([validFunctionWithUiExtension], app.allExtensions)
+      const result = validateFunctionExtensionsWithUiHandle([validFunctionWithUiExtension], app.modules)
 
       // Then
       expect(result).toBeUndefined()

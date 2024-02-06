@@ -577,7 +577,7 @@ async function mockApp(
     localApp.configuration as CurrentAppConfiguration,
     versionSchema.configSpecifications,
   )
-  localApp = testApp({...app, allExtensions: extensions}, schemaType)
+  localApp = testApp({...app, modules: extensions}, schemaType)
   localApp.configSchema = versionSchema.schema
   localApp.specifications = versionSchema.configSpecifications
   return localApp

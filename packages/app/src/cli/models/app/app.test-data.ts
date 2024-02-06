@@ -52,7 +52,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
         },
       },
     ],
-    app.allExtensions ?? [],
+    app.modules ?? [],
     app.usesWorkspaces ?? false,
     app.dotenv,
     app.errors,

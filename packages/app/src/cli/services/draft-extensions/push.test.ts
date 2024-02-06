@@ -66,7 +66,7 @@ describe('draftExtensionsPush', () => {
   test("do nothing if the app doesn't include any extension", async () => {
     // Given
     const app = testApp({
-      allExtensions: [],
+      modules: [],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
@@ -86,7 +86,7 @@ describe('draftExtensionsPush', () => {
   test('do nothing if the app includes only app config extensions', async () => {
     // Given
     const app = testApp({
-      allExtensions: [await testAppConfigExtensions()],
+      modules: [await testAppConfigExtensions()],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
@@ -106,7 +106,7 @@ describe('draftExtensionsPush', () => {
   test('build and deploy draft content with ui extension', async () => {
     // Given
     const app = testApp({
-      allExtensions: [validUiExtension],
+      modules: [validUiExtension],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
@@ -128,7 +128,7 @@ describe('draftExtensionsPush', () => {
   test('install javy, build and deploy draft content with a js function extension', async () => {
     // Given
     const app = testApp({
-      allExtensions: [validFunctionExtension],
+      modules: [validFunctionExtension],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
@@ -151,7 +151,7 @@ describe('draftExtensionsPush', () => {
   test('enabled develop preview if the flag is used', async () => {
     // Given
     const app = testApp({
-      allExtensions: [],
+      modules: [],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,

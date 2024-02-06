@@ -15,7 +15,7 @@ export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExten
   await installJavy(app)
 
   await renderConcurrent({
-    processes: app.allExtensions
+    processes: app.modules
       .filter((ext) => !ext.specification.appModuleFeatures().includes('app_config'))
       .map((extension) => {
         return {

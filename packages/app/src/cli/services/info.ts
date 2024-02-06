@@ -45,7 +45,7 @@ export async function infoApp(app: AppInterface, options: InfoOptions): Promise<
   if (options.format === 'json') {
     const appWithSupportedExtensions = {
       ...app,
-      allExtensions: app.allExtensions.filter((ext) => ext.isReturnedAsInfo()),
+      modules: app.modules.filter((ext) => ext.isReturnedAsInfo()),
     }
     return outputContent`${JSON.stringify(appWithSupportedExtensions, null, 2)}`
   } else {
@@ -146,7 +146,7 @@ class AppInfo {
       })
     }
 
-    const supportedExtensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
+    const supportedExtensions = this.app.modules.filter((ext) => ext.isReturnedAsInfo())
     augmentWithExtensions(supportedExtensions, this.extensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {

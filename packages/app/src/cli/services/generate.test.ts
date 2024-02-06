@@ -173,7 +173,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
     app: {
       directory: appRoot,
       extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
-      allExtensions: existingExtensions,
+      modules: existingExtensions,
     },
     config: {path: joinPath(appRoot, 'shopify.app.toml')},
   })
