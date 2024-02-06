@@ -177,6 +177,23 @@ export interface AppInterface extends AppConfigurationInterface {
   preDeployValidation: () => Promise<void>
 }
 
+interface AppConstructor {
+  name: string
+  idEnvironmentVariableName: string
+  directory: string
+  packageManager: PackageManager
+  configuration: AppConfiguration
+  nodeDependencies: {[key: string]: string}
+  webs: Web[]
+  modules: ExtensionInstance[]
+  usesWorkspaces: boolean
+  dotenv?: DotEnvFile
+  errors?: AppErrors
+  specifications?: ExtensionSpecification[]
+  configSchema?: zod.ZodTypeAny
+  remoteBetaFlags?: BetaFlag[]
+}
+
 export class App implements AppInterface {
   name: string
   idEnvironmentVariableName: string
@@ -193,23 +210,22 @@ export class App implements AppInterface {
   private remoteBetaFlags: BetaFlag[]
   private realExtensions: ExtensionInstance[]
 
-  // eslint-disable-next-line max-params
-  constructor(
-    name: string,
-    idEnvironmentVariableName: string,
-    directory: string,
-    packageManager: PackageManager,
-    configuration: AppConfiguration,
-    nodeDependencies: {[key: string]: string},
-    webs: Web[],
-    extensions: ExtensionInstance[],
-    usesWorkspaces: boolean,
-    dotenv?: DotEnvFile,
-    errors?: AppErrors,
-    specifications?: ExtensionSpecification[],
-    configSchema?: zod.ZodTypeAny,
-    remoteBetaFlags?: BetaFlag[],
-  ) {
+  constructor({
+    name,
+    idEnvironmentVariableName,
+    directory,
+    packageManager,
+    configuration,
+    nodeDependencies,
+    webs,
+    modules,
+    usesWorkspaces,
+    dotenv,
+    errors,
+    specifications,
+    configSchema,
+    remoteBetaFlags,
+  }: AppConstructor) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
@@ -218,7 +234,7 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.realExtensions = extensions
+    this.realExtensions = modules
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
@@ -377,22 +393,20 @@ export class EmptyApp extends App {
       ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
       : {scopes: '', path: ''}
     const configSchema = getAppVersionedSchema(specifications ?? [])
-    super(
-      '',
-      '',
-      '',
-      'npm',
+    super({
+      name: '',
+      idEnvironmentVariableName: '',
+      directory: '',
+      packageManager: 'npm',
       configuration,
-      {},
-      [],
-      [],
-      false,
-      undefined,
-      undefined,
+      nodeDependencies: {},
+      webs: [],
+      modules: [],
+      usesWorkspaces: false,
       specifications,
       configSchema,
-      betas,
-    )
+      remoteBetaFlags: betas ?? [],
+    })
   }
 }
 
