@@ -139,6 +139,7 @@ export async function testUIExtension(
         customer_privacy: false,
       },
     },
+    targeting: [{target: 'target1'}, {target: 'target2'}],
   }
   const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
@@ -195,6 +196,27 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
     configuration,
     configurationPath: 'shopify.app.toml',
     directory: './',
+    specification,
+  })
+
+  return extension
+}
+
+export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'Payment Extension Name',
+    type: 'payments_extension' as const,
+    targeting: [{target: 'payments.offsite.render'}],
+    metafields: [],
+  }
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
     specification,
   })
 
@@ -260,6 +282,27 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
 
   const allSpecs = await loadFSExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
+
+  return extension
+}
+
+export async function testFlowActionExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'flow action',
+    type: 'flow_action' as const,
+    metafields: [],
+    runtime_context: 'strict',
+  }
+
+  const allSpecs = await loadFSExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'flow_action')!
 
   const extension = new ExtensionInstance({
     configuration,

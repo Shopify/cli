@@ -1,6 +1,6 @@
 import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
 import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
-import {testUIExtension} from '../../models/app/app.test-data.js'
+import {testPaymentExtensions, testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -64,7 +64,7 @@ describe('updateExtensionDraft()', () => {
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config:
@@ -77,6 +77,39 @@ describe('updateExtensionDraft()', () => {
         stdout,
       )
     })
+  })
+
+  test('updates draft successfully with context for extension with target', async () => {
+    const mockExtension = await testPaymentExtensions()
+
+    vi.mocked(partnersRequest).mockResolvedValue({
+      extensionUpdateDraft: {
+        userErrors: [],
+      },
+    })
+
+    await updateExtensionDraft({
+      extension: mockExtension,
+      token,
+      apiKey,
+      registrationId,
+      stdout,
+      stderr,
+    })
+
+    expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+      apiKey,
+      context: 'payments.offsite.render',
+      handle: mockExtension.handle,
+      registrationId,
+      config: '{}',
+    })
+
+    // Check if outputDebug is called with success message
+    expect(outputInfo).toHaveBeenCalledWith(
+      `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
+      stdout,
+    )
   })
 
   test('updates draft successfully when extension doesnt support esbuild', async () => {
@@ -113,7 +146,7 @@ describe('updateExtensionDraft()', () => {
 
       expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',

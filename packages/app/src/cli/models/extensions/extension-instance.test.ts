@@ -4,9 +4,11 @@ import {
   testFunctionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
+  testPaymentExtensions,
   testUIExtension,
   testWebPixelExtension,
   testWebhookExtensions,
+  testFlowActionExtension,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -214,6 +216,29 @@ describe('bundleConfig', async () => {
     expect(got).toEqual(
       expect.objectContaining({
         uuid: 'theme-uuid',
+        context: '',
+      }),
+    )
+  })
+
+  test('returns the target in context for a payments app', async () => {
+    const extensionInstance = await testPaymentExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {'payment-extension-name': 'payment-uuid'},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {},
+      },
+      token: 'token',
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        uuid: 'payment-uuid',
+        context: 'payments.offsite.render',
       }),
     )
   })
@@ -258,6 +283,50 @@ describe('bundleConfig', async () => {
         config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}]}',
       }),
     )
+  })
+})
+
+describe('contextValue', async () => {
+  test('returns the target value in context for a payments extension', async () => {
+    const extensionInstance = await testPaymentExtensions()
+
+    const got = extensionInstance.contextValue
+
+    expect(got).toEqual('payments.offsite.render')
+  })
+
+  test('returns an empty string for an extension without targets', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = extensionInstance.contextValue
+
+    expect(got).toEqual('')
+  })
+
+  test('returns an empty string for an extension with multiple targets', async () => {
+    const extensionInstance = await testUIExtension()
+
+    const got = extensionInstance.contextValue
+
+    expect(got).toEqual('')
+  })
+})
+
+describe('isFlow', async () => {
+  test('returns true for a flow extension', async () => {
+    const extensionInstance = await testFlowActionExtension()
+
+    const got = extensionInstance.isFlow
+
+    expect(got).toBe(true)
+  })
+
+  test('returns false for a non-flow extension', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = extensionInstance.isFlow
+
+    expect(got).toBe(false)
   })
 })
 

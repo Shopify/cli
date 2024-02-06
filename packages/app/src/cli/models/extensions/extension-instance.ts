@@ -17,6 +17,7 @@ import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 /**
  * Class that represents an instance of a local extension
@@ -87,6 +88,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isAppConfigExtension() {
     return this.features.includes('app_config')
+  }
+
+  get isFlow() {
+    return this.specification.identifier.includes('flow')
   }
 
   get features(): ExtensionFeature[] {
@@ -299,16 +304,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
+  get singleTarget() {
+    const targets = (getPathValue(this.configuration, 'targeting') as {target: string}[]) ?? []
+    if (targets.length !== 1) return undefined
+    return targets[0]?.target
+  }
+
+  get contextValue() {
+    let context = this.singleTarget ?? ''
+    if (this.isFlow) context = this.configuration.handle ?? ''
+    return context
+  }
+
   async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
     const configValue = await this.deployConfig({apiKey, token})
     if (!configValue) return undefined
 
-    const {handle, ...remainingConfigs} = configValue
-    const contextValue = (handle as string) || ''
-
     const result = {
-      config: JSON.stringify(remainingConfigs),
-      context: contextValue,
+      config: JSON.stringify(configValue),
+      context: this.contextValue,
       handle: this.handle,
     }
 
