@@ -201,7 +201,6 @@ export async function ensureDevContext(
   const specifications = await fetchSpecifications({
     token,
     apiKey: selectedApp.apiKey,
-    config: options.commandConfig,
   })
   const betas = await fetchAppRemoteBetaFlags(selectedApp.apiKey, token)
 
@@ -383,7 +382,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const specifications = await fetchSpecifications({
     token,
     apiKey: partnersApp.apiKey,
-    config: options.commandConfig,
   })
   const app: AppInterface = await loadApp({
     specifications,
@@ -455,7 +453,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
 
-  const specifications = await loadLocalExtensionsSpecifications(draftExtensionsPushOptions.commandConfig)
+  const specifications = await loadLocalExtensionsSpecifications()
 
   const app: AppInterface = await loadApp({
     specifications,

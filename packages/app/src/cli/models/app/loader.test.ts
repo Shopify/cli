@@ -9,7 +9,7 @@ import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
@@ -59,7 +59,7 @@ automatically_update_urls_on_dev = true
 `
 
   beforeAll(async () => {
-    specifications = await loadFSExtensionsSpecifications()
+    specifications = await loadLocalExtensionsSpecifications()
   })
 
   beforeEach(async () => {

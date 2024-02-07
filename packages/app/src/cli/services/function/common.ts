@@ -29,7 +29,7 @@ export async function inFunctionContext({
   configName?: string
   callback: (app: AppInterface, ourFunction: ExtensionInstance<FunctionConfigType>) => Promise<void>
 }) {
-  const specifications = await loadLocalExtensionsSpecifications(commandConfig)
+  const specifications = await loadLocalExtensionsSpecifications()
   const app: AppInterface = await loadApp({specifications, directory: path, configName})
 
   const allFunctions = app.allExtensions.filter((ext) => ext.isFunctionExtension)

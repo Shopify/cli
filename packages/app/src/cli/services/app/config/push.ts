@@ -123,7 +123,6 @@ export async function pushConfig(options: PushOptions) {
   const specifications = await fetchSpecifications({
     token,
     apiKey: options.configuration.client_id,
-    config: options.commandConfig,
   })
   const localApp = await loadApp({
     directory: dirname(options.configuration.path),

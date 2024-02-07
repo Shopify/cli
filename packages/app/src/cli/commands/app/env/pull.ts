@@ -24,7 +24,7 @@ export default class EnvPull extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvPull)
-    const specifications = await loadLocalExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({
       specifications,
       directory: flags.path,
