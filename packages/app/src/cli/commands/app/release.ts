@@ -4,7 +4,7 @@ import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
-import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -58,7 +58,7 @@ export default class Release extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const specifications = await loadFSExtensionsSpecifications()
+    const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
     const requiredNonTTYFlags = ['force']

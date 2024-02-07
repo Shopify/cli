@@ -45,7 +45,7 @@ import {
   DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
-import {loadFSExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -453,7 +453,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
 
-  const specifications = await loadFSExtensionsSpecifications()
+  const specifications = await loadLocalExtensionsSpecifications()
 
   const app: AppInterface = await loadApp({
     specifications,

@@ -11,7 +11,7 @@ import {fetchOrgFromId} from '../../dev/fetch.js'
 import {Organization} from '../../../models/organization.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import * as loader from '../../../models/app/loader.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
@@ -41,7 +41,7 @@ describe('pushConfig', () => {
     vi.mocked(confirmPushChanges).mockResolvedValue(true)
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
     vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-    vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
+    vi.mocked(fetchSpecifications).mockResolvedValue(await loadLocalExtensionsSpecifications())
   })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {

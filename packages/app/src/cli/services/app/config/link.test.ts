@@ -13,7 +13,7 @@ import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../d
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -51,7 +51,7 @@ beforeEach(async () => {
       dashboardManagedExtensionRegistrations: [],
     },
   })
-  vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
+  vi.mocked(fetchSpecifications).mockResolvedValue(await loadLocalExtensionsSpecifications())
   vi.mocked(fetchAppRemoteBetaFlags).mockResolvedValue([BetaFlag.VersionedAppConfig])
 })
 

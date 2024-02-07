@@ -3,7 +3,7 @@ import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
@@ -145,7 +145,7 @@ export async function testUIExtension(
   const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
@@ -168,7 +168,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
     metafields: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
   const extension = new ExtensionInstance({
@@ -190,7 +190,7 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
         },
       } as unknown as BaseConfigType)
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
 
   const extension = new ExtensionInstance({
@@ -211,7 +211,7 @@ export async function testPaymentExtensions(directory = './my-extension'): Promi
     metafields: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
   const extension = new ExtensionInstance({
@@ -238,7 +238,7 @@ export async function testWebhookExtensions(emptyConfig = false): Promise<Extens
         },
       } as unknown as BaseConfigType)
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
 
   const extension = new ExtensionInstance({
@@ -260,7 +260,7 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
     settings: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
   const parsed = specification.schema.parse(configuration)
   const extension = new ExtensionInstance({
@@ -281,7 +281,7 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     runtime_context: 'strict',
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
 
   const extension = new ExtensionInstance({
@@ -302,7 +302,7 @@ export async function testFlowActionExtension(directory = './my-extension'): Pro
     runtime_context: 'strict',
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'flow_action')!
 
   const extension = new ExtensionInstance({
@@ -341,7 +341,7 @@ export async function testFunctionExtension(
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
 
   const extension = new ExtensionInstance({
@@ -365,7 +365,7 @@ export async function testPaymentsAppExtension(
   const directory = opts.dir ?? '/tmp/project/extensions/my-payments-app-extension'
   const configuration = opts.config
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
   const extension = new ExtensionInstance({
@@ -639,7 +639,7 @@ export const testPartnersServiceSession: PartnersSession = {
 }
 
 export async function buildVersionedAppSchema() {
-  const configSpecifications = (await loadFSExtensionsSpecifications()).filter(
+  const configSpecifications = (await loadLocalExtensionsSpecifications()).filter(
     (spec) => spec.experience === 'configuration',
   )
   return {

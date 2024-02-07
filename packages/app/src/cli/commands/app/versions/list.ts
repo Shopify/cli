@@ -1,7 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import Command from '../../../utilities/app-command.js'
 import versionList from '../../../services/versions-list.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
@@ -44,7 +44,7 @@ export default class VersionsList extends Command {
       await showApiKeyDeprecationWarning()
     }
     const apiKey = flags['client-id'] || flags['api-key']
-    const specifications = await loadFSExtensionsSpecifications()
+    const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
     await versionList({

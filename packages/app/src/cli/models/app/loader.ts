@@ -19,7 +19,7 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {BetaFlag} from '../../services/app/select-app.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
@@ -553,7 +553,7 @@ class AppConfigurationLoader {
   }
 
   async loaded() {
-    const specifications = this.specifications ?? (await loadFSExtensionsSpecifications())
+    const specifications = this.specifications ?? (await loadLocalExtensionsSpecifications())
     const appDirectory = await this.getAppDirectory()
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile

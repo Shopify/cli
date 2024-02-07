@@ -1,7 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {loadApp} from '../../../models/app/loader.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import Command from '../../../utilities/app-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -17,7 +17,7 @@ export default class EnvShow extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(EnvShow)
-    const specifications = await loadFSExtensionsSpecifications()
+    const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({
       specifications,
       directory: flags.path,

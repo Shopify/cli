@@ -1,8 +1,8 @@
-import {loadFSExtensionsSpecifications} from './load-specifications.js'
+import {loadLocalExtensionsSpecifications} from './load-specifications.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
 
-// If the AppSchema is not instanced, the dynamic loading of loadFSExtensionsSpecifications is not working
+// If the AppSchema is not instanced, the dynamic loading of loadLocalExtensionsSpecifications is not working
 beforeAll(() => {
   const schema = AppSchema
 })
@@ -10,7 +10,7 @@ beforeAll(() => {
 describe('allUISpecifications', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadFSExtensionsSpecifications()
+    const got = await loadLocalExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)
@@ -20,7 +20,7 @@ describe('allUISpecifications', () => {
 describe('allLocalSpecs', () => {
   test('loads the specifications successfully', async () => {
     // When
-    const got = await loadFSExtensionsSpecifications()
+    const got = await loadLocalExtensionsSpecifications()
 
     // Then
     expect(got.length).not.toEqual(0)

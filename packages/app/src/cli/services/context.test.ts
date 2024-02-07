@@ -176,7 +176,7 @@ vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/select-app.js')
 
 beforeAll(async () => {
-  vi.mocked(fetchSpecifications).mockResolvedValue(await loadSpecifications.loadFSExtensionsSpecifications())
+  vi.mocked(fetchSpecifications).mockResolvedValue(await loadSpecifications.loadLocalExtensionsSpecifications())
 })
 
 beforeEach(async () => {

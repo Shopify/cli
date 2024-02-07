@@ -20,7 +20,7 @@ import {PartnersSession, fetchPartnersSession} from '../../context/partner-accou
 import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -112,10 +112,10 @@ async function loadAppOrEmptyApp(
     })
     const configuration = app.configuration
     if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
-    return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
+    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadFSExtensionsSpecifications(), remoteBetas)
+    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas)
   }
 }
 
