@@ -1473,7 +1473,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       extensionsNonUuidManaged: {},
     }
 
-    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.spyOn(loadSpecifications, 'loadFSExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(getAppIdentifiers).mockReturnValueOnce({app: APP2.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -1501,7 +1501,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       extensionIds: {},
       extensionsNonUuidManaged: {},
     }
-    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.spyOn(loadSpecifications, 'loadFSExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(getCachedAppInfo).mockReturnValue(CACHED1)
@@ -1530,7 +1530,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       extensionIds: {},
       extensionsNonUuidManaged: {},
     }
-    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.spyOn(loadSpecifications, 'loadFSExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -1558,7 +1558,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       extensionIds: {},
       extensionsNonUuidManaged: {},
     }
-    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.spyOn(loadSpecifications, 'loadFSExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(APP2)
@@ -1583,7 +1583,7 @@ describe('ensureDraftExtensionsPushContext', () => {
   test("throws an app not found error if the app with the Client ID doesn't exist", async () => {
     // Given
     const app = testApp()
-    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.spyOn(loadSpecifications, 'loadFSExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP1.apiKey})
     vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValueOnce(undefined)
@@ -1604,7 +1604,7 @@ describe('ensureDraftExtensionsPushContext', () => {
       extensionsNonUuidManaged: {},
     }
 
-    vi.spyOn(loadSpecifications, 'loadLocalExtensionsSpecifications').mockResolvedValue([])
+    vi.spyOn(loadSpecifications, 'loadFSExtensionsSpecifications').mockResolvedValue([])
     vi.mocked(loadApp).mockResolvedValue(app)
     // There is a cached app but it will be ignored
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})

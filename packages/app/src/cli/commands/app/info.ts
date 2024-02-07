@@ -3,7 +3,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {Format, info} from '../../services/info.js'
 import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -29,7 +29,7 @@ export default class AppInfo extends Command {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(AppInfo)
-    const specifications = await loadLocalExtensionsSpecifications(this.config)
+    const specifications = await loadFSExtensionsSpecifications()
     const app: AppInterface = await loadApp({
       specifications,
       directory: flags.path,

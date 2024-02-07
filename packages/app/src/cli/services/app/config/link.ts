@@ -83,7 +83,6 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
   const specifications = await fetchSpecifications({
     token,
     apiKey: remoteApp.apiKey,
-    config: options.commandConfig,
   })
 
   const betas = await fetchAppRemoteBetaFlags(remoteApp.apiKey, token)
