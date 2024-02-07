@@ -18,7 +18,6 @@ import {
 import {ExtensionTemplate, TemplateType} from '../models/app/template.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {Config} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -29,7 +28,6 @@ import {groupBy} from '@shopify/cli-kit/common/collection'
 export interface GenerateOptions {
   directory: string
   reset: boolean
-  commandConfig: Config
   apiKey?: string
   template?: string
   flavor?: string

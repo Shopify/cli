@@ -22,7 +22,6 @@ import {ExtensionSpecification} from '../../../models/extensions/specification.j
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
-import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -30,7 +29,6 @@ import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export interface LinkOptions {
-  commandConfig: Config
   directory: string
   apiKey?: string
   configName?: string

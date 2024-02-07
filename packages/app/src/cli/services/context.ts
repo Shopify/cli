@@ -53,7 +53,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {getOrganization} from '@shopify/cli-kit/node/environment'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
-import {Config} from '@oclif/core'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
@@ -69,7 +68,6 @@ export interface DevContextOptions {
   apiKey?: string
   storeFqdn?: string
   reset: boolean
-  commandConfig: Config
 }
 
 interface DevContextOutput {
@@ -96,7 +94,6 @@ export async function ensureGenerateContext(options: {
   directory: string
   reset: boolean
   partnersSession: PartnersSession
-  commandConfig: Config
   configName?: string
 }): Promise<string> {
   if (options.apiKey) {
@@ -291,7 +288,6 @@ export interface ReleaseContextOptions {
   apiKey?: string
   reset: boolean
   force: boolean
-  commandConfig: Config
 }
 
 interface ReleaseContextOutput {
@@ -359,7 +355,6 @@ export interface DeployContextOptions {
   force: boolean
   noRelease: boolean
   commitReference?: string
-  commandConfig: Config
 }
 
 /**
@@ -444,7 +439,6 @@ export interface DraftExtensionsPushOptions {
   directory: string
   apiKey?: string
   reset: boolean
-  commandConfig: Config
   config?: string
   enableDeveloperPreview: boolean
 }
@@ -590,7 +584,6 @@ interface VersionListContextOptions {
   app: AppInterface
   apiKey?: string
   reset: false
-  commandConfig: Config
 }
 
 interface VersionsListContextOutput {
@@ -647,7 +640,6 @@ export async function fetchAppAndIdentifiers(
     app: AppInterface
     reset: boolean
     apiKey?: string
-    commandConfig: Config
   },
   partnersSession: PartnersSession,
   reuseFromDev = true,
@@ -662,7 +654,7 @@ export async function fetchAppAndIdentifiers(
     envIdentifiers = {app: undefined, extensions: {}}
     reuseDevCache = false
     if (isCurrentAppSchema(app.configuration)) {
-      const configuration = await link({directory: app.directory, commandConfig: options.commandConfig})
+      const configuration = await link({directory: app.directory})
       app.configuration = configuration
     }
   }
@@ -770,14 +762,12 @@ export async function getAppContext({
   directory,
   partnersSession,
   configName,
-  commandConfig,
   promptLinkingApp = true,
 }: {
   reset: boolean
   directory: string
   partnersSession: PartnersSession
   configName?: string
-  commandConfig?: Config
   promptLinkingApp?: boolean
 }): Promise<AppContext> {
   const previousCachedInfo = getCachedAppInfo(directory)
@@ -789,8 +779,8 @@ export async function getAppContext({
   const usingConfigWithNoTomls =
     previousCachedInfo?.configFile && (await glob(joinPath(directory, 'shopify.app*.toml'))).length === 0
 
-  if (promptLinkingApp && commandConfig && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
-    await link({directory, commandConfig, baseConfigName: previousCachedInfo?.configFile}, false)
+  if (promptLinkingApp && (firstTimeSetup || usingConfigAndResetting || usingConfigWithNoTomls)) {
+    await link({directory, baseConfigName: previousCachedInfo?.configFile}, false)
   }
 
   let cachedInfo = getCachedAppInfo(directory)

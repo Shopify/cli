@@ -109,7 +109,6 @@ const STORE2: OrganizationStore = {
 const INPUT: DevContextOptions = {
   directory: 'app_directory',
   reset: false,
-  commandConfig: COMMAND_CONFIG,
 }
 
 const INPUT_WITH_DATA: DevContextOptions = {
@@ -117,7 +116,6 @@ const INPUT_WITH_DATA: DevContextOptions = {
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'domain1',
-  commandConfig: COMMAND_CONFIG,
 }
 
 const BAD_INPUT_WITH_DATA: DevContextOptions = {
@@ -125,7 +123,6 @@ const BAD_INPUT_WITH_DATA: DevContextOptions = {
   reset: false,
   apiKey: 'key1',
   storeFqdn: 'invalid_store_domain',
-  commandConfig: COMMAND_CONFIG,
 }
 
 const FETCH_RESPONSE = {
@@ -146,7 +143,6 @@ const options = (app: AppInterface, reset = false, force = false): DeployContext
     reset,
     force,
     noRelease: false,
-    commandConfig: COMMAND_CONFIG,
   }
 }
 
@@ -154,7 +150,6 @@ const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptio
   return {
     directory: app.directory,
     reset: false,
-    commandConfig: COMMAND_CONFIG,
     enableDeveloperPreview: false,
   }
 }
@@ -417,7 +412,6 @@ describe('ensureDevContext', async () => {
         {
           directory: 'app_directory',
           reset: false,
-          commandConfig: COMMAND_CONFIG,
         },
         testPartnersUserSession,
       )
@@ -487,7 +481,6 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          commandConfig: COMMAND_CONFIG,
           apiKey: APP2.apiKey,
         },
         testPartnersUserSession,
@@ -545,7 +538,6 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          commandConfig: COMMAND_CONFIG,
         },
         testPartnersUserSession,
       )
@@ -585,7 +577,6 @@ dev_store_url = "domain1"
         {
           directory: 'app_directory',
           reset: false,
-          commandConfig: COMMAND_CONFIG,
         },
         testPartnersUserSession,
       )
@@ -643,7 +634,6 @@ api_version = "2023-04"
         {
           directory: 'app_directory',
           reset: false,
-          commandConfig: COMMAND_CONFIG,
         },
         testPartnersUserSession,
       )
@@ -1647,7 +1637,6 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
-      commandConfig: COMMAND_CONFIG,
     })
 
     // Then
@@ -1741,7 +1730,6 @@ describe('ensureVersionsListContext', () => {
       app,
       apiKey: 'key1',
       reset: false,
-      commandConfig: COMMAND_CONFIG,
     })
 
     // Then

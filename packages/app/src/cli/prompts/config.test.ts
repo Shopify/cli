@@ -16,7 +16,6 @@ import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@s
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {err, ok} from '@shopify/cli-kit/node/result'
 import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {Config} from '@oclif/core'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -184,7 +183,6 @@ describe('confirmPushChanges', () => {
     const options: PushOptions = {
       configuration: testAppWithConfig().configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
     const app = testOrganizationApp() as App
 
@@ -218,7 +216,6 @@ describe('confirmPushChanges', () => {
       const options: PushOptions = {
         configuration,
         force: false,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
 
       // When
@@ -267,7 +264,6 @@ api_version = "unstable"
       const options: PushOptions = {
         configuration,
         force: false,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -308,7 +304,6 @@ api_version = "unstable"
       const options: PushOptions = {
         configuration,
         force: false,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       // When
       const result = await confirmPushChanges(options.force, configuration, app)
@@ -349,7 +344,6 @@ api_version = "unstable"
       const options: PushOptions = {
         configuration,
         force: false,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
 
       // When
@@ -377,7 +371,6 @@ api_version = "unstable"
           build: {automatically_update_urls_on_dev: true, dev_store_url: 'shop1.myshopify.com'},
         },
         force: false,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 

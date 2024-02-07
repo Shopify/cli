@@ -21,7 +21,6 @@ export default class ConfigLink extends Command {
     const {flags} = await this.parse(ConfigLink)
 
     const options: LinkOptions = {
-      commandConfig: this.config,
       directory: flags.path,
       apiKey: flags['client-id'],
     }

@@ -154,6 +154,7 @@ async function testRelease(
   },
 ) {
   // Given
+  const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
   vi.mocked(ensureReleaseContext).mockResolvedValue({
     app,
     token: 'api-token',
@@ -168,7 +169,7 @@ async function testRelease(
     reset: false,
     force: Boolean(options?.force),
     version,
-    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+    commandConfig,
   })
 }
 

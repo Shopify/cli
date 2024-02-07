@@ -17,7 +17,6 @@ import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-sp
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -62,7 +61,7 @@ describe('link', () => {
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+
           configName: 'Default value',
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
@@ -82,7 +81,6 @@ describe('link', () => {
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockRejectedValue('App not found')
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
@@ -141,7 +139,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         const localApp = {
           configuration: {
@@ -226,7 +223,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         const localApp = {
           configuration: {
@@ -292,7 +288,6 @@ embedded = false
         writeFileSync(filePath, initialContent)
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -351,7 +346,6 @@ embedded = false
         writeFileSync(filePath, initialContent)
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -391,7 +385,7 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+
           apiKey: 'api-key',
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
@@ -417,7 +411,7 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+
           apiKey: '1234-5678',
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
@@ -438,7 +432,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         const localApp = {
           configuration: {
@@ -475,7 +468,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -514,7 +506,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
@@ -556,7 +547,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockRejectedValue('App not found')
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
@@ -618,7 +608,6 @@ embedded = false
         // Given
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         const localApp = {
           configuration: {
@@ -748,7 +737,6 @@ embedded = true
         writeFileSync(filePath, initialContent)
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
@@ -795,7 +783,6 @@ embedded = false
         writeFileSync(filePath, initialContent)
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, undefined, []))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -832,7 +819,6 @@ embedded = false
         writeFileSync(filePath, initialContent)
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, undefined, []))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -875,7 +861,6 @@ embedded = false
         writeFileSync(filePath, initialContent)
         const options: LinkOptions = {
           directory: tmp,
-          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, undefined, []))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())

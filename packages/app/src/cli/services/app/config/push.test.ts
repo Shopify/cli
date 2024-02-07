@@ -19,7 +19,6 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {describe, vi, test, expect, beforeEach} from 'vitest'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {Config} from '@oclif/core'
 import {relativizePath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -49,7 +48,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -107,7 +105,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -159,7 +156,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -213,7 +209,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -264,7 +259,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -311,7 +305,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({app: null})
@@ -330,7 +323,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -357,7 +349,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -381,7 +372,6 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -443,7 +433,6 @@ app_preferences > url: this url is blocked 6`)
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
     vi.mocked(partnersRequest).mockResolvedValue({
@@ -492,7 +481,6 @@ app_preferences > url: this url is blocked 6`)
     const options: PushOptions = {
       configuration: app.configuration,
       force: false,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
     vi.mocked(confirmPushChanges).mockReset()
     vi.mocked(confirmPushChanges).mockResolvedValue(false)
@@ -542,7 +530,6 @@ app_preferences > url: this url is blocked 6`)
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
     vi.spyOn(loader, 'loadApp').mockResolvedValue(app)
 

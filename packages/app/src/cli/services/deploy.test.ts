@@ -529,6 +529,7 @@ async function testDeployBundle({
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
+  const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
   for (const extension of app.allExtensions.filter((ext) => ext.isUuidManaged())) {
     extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
@@ -572,11 +573,11 @@ async function testDeployBundle({
   await deploy({
     app,
     reset: false,
+    commandConfig,
     force: Boolean(options?.force),
     noRelease: Boolean(options?.noRelease),
     message: options?.message,
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
-    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   })
 }
