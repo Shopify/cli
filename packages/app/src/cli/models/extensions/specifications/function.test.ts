@@ -97,8 +97,12 @@ describe('functionConfiguration', () => {
   test('returns a snake_case object with only required fields', async () => {
     await inTemporaryDirectory(async (_tmpDir) => {
       // Given
-      extension.configuration.input = undefined
-      extension.configuration.ui = undefined
+      const newConfig = {
+        ...extension.configuration,
+        input: undefined,
+        ui: undefined,
+      }
+      extension.configuration = newConfig
 
       // When
       const got = await extension.deployConfig({apiKey, token})
@@ -127,10 +131,14 @@ describe('functionConfiguration', () => {
       extension.directory = tmpDir
       const inputQuery = 'query { f }'
       const inputQueryFileName = 'target1.graphql'
-      extension.configuration.targeting = [
-        {target: 'some.api.target1', input_query: inputQueryFileName},
-        {target: 'some.api.target2', export: 'run_target2'},
-      ]
+      const newConfig = {
+        ...config,
+        targeting: [
+          {target: 'some.api.target1', input_query: inputQueryFileName},
+          {target: 'some.api.target2', export: 'run_target2'},
+        ],
+      }
+      extension.configuration = newConfig
       await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
 
       // When
@@ -146,7 +154,11 @@ describe('functionConfiguration', () => {
 
   test('aborts when an target input query file is missing', async () => {
     // Given
-    extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
+    const newConfig = {
+      ...extension.configuration,
+      targeting: [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}],
+    }
+    extension.configuration = newConfig
 
     // When & Then
     await expect(() => extension.deployConfig({apiKey, token})).rejects.toThrowError(AbortError)
@@ -206,8 +218,12 @@ describe('functionConfiguration', () => {
     test('returns a snake_case object with only required fields', async () => {
       await inTemporaryDirectory(async (_tmpDir) => {
         // Given
-        extension.configuration.input = undefined
-        extension.configuration.ui = undefined
+        const newConfig = {
+          ...extension.configuration,
+          input: undefined,
+          ui: undefined,
+        }
+        extension.configuration = newConfig
 
         // When
         const got = await extension.deployConfig({apiKey, token})
@@ -264,8 +280,12 @@ describe('functionConfiguration', () => {
   test("parses ui.handle when it's an empty string", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
+      const newConfigUi = {
+        ...extension.configuration.ui,
+        handle: '',
+      }
       extension.directory = tmpDir
-      extension.configuration.ui!.handle = ''
+      extension.configuration.ui = newConfigUi
 
       // When
       const got = (await extension.deployConfig({
@@ -282,7 +302,11 @@ describe('functionConfiguration', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       extension.directory = tmpDir
-      extension.configuration.ui = undefined
+      const newConfig = {
+        ...extension.configuration,
+        ui: undefined,
+      }
+      extension.configuration = newConfig
 
       // When
       const got = (await extension.deployConfig({
