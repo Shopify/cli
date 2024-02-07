@@ -40,6 +40,13 @@ export async function fetchThemeAsset(id: number, key: Key, session: AdminSessio
   return buildThemeAsset(response.json.asset)
 }
 
+export async function deleteThemeAsset(id: number, key: Key, session: AdminSession): Promise<string | undefined> {
+  const response = await request('DELETE', `/themes/${id}/assets`, session, undefined, {
+    'asset[key]': key,
+  })
+  return response.json.message
+}
+
 export async function bulkUploadThemeAssets(
   id: number,
   assets: AssetParams[],

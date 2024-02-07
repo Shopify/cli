@@ -9,6 +9,7 @@ import {
   fetchChecksums,
   bulkUploadThemeAssets,
   AssetParams,
+  deleteThemeAsset,
 } from './api.js'
 import {test, vi, expect, describe} from 'vitest'
 import {restRequest} from '@shopify/cli-kit/node/api/admin'
@@ -228,6 +229,47 @@ describe('publishTheme', () => {
     expect(theme!.id).toEqual(id)
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
+  })
+})
+
+describe('deleteThemeAsset', () => {
+  test('deletes a theme asset', async () => {
+    // Given
+    const id = 123
+    const key = 'snippets/product-variant-picker.liquid'
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {message: 'snippets/product-variant-picker.liquid was succesfully deleted'},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const output = await deleteThemeAsset(id, key, session)
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
+    expect(output).not.toBeNull()
+    expect(output).toEqual('snippets/product-variant-picker.liquid was succesfully deleted')
+  })
+
+  test('returns empty object when attemping to delete an nonexistent asset', async () => {
+    // Given
+    const id = 123
+    const key = 'snippets/product-variant-picker.liquid'
+
+    vi.mocked(restRequest).mockResolvedValue({
+      json: {},
+      status: 200,
+      headers: {},
+    })
+
+    // When
+    const output = await deleteThemeAsset(id, key, session)
+
+    // Then
+    expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
+    expect(output).toBeUndefined()
   })
 })
 
