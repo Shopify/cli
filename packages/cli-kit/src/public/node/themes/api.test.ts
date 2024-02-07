@@ -249,8 +249,7 @@ describe('deleteThemeAsset', () => {
 
     // Then
     expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
-    expect(output).not.toBeNull()
-    expect(output).toEqual('snippets/product-variant-picker.liquid was succesfully deleted')
+    expect(output).toBe(true)
   })
 
   test('returns empty object when attemping to delete an nonexistent asset', async () => {
@@ -269,7 +268,7 @@ describe('deleteThemeAsset', () => {
 
     // Then
     expect(restRequest).toHaveBeenCalledWith('DELETE', `/themes/${id}/assets`, session, undefined, {'asset[key]': key})
-    expect(output).toBeUndefined()
+    expect(output).toBe(false)
   })
 })
 
