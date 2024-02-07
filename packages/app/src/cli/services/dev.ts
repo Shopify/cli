@@ -141,7 +141,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
+    localApp.configuration.access_scopes?.scopes !== remoteApp.requestedAccessScopes?.join(',')
   ) {
     const pushCommandDeprecated = isPushCommandDeprecated(remoteApp.disabledBetas)
     const commandToUseForPush = pushCommandDeprecated ? 'shopify app deploy' : 'shopify app config push'

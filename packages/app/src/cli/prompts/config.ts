@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import {AppSchema, CurrentAppConfiguration, getAppScopes, getAppScopesArray} from '../models/app/app.js'
+import {AppSchema, CurrentAppConfiguration} from '../models/app/app.js'
 import {mergeAppConfiguration} from '../services/app/config/link.js'
 import {OrganizationApp} from '../models/organization.js'
 import {App} from '../api/graphql/get_config.js'
@@ -16,7 +16,7 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {deepCompare, deepDifference, setPathValue} from '@shopify/cli-kit/common/object'
+import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -110,10 +110,6 @@ export function buildDiffConfigContent(
   schema: zod.ZodTypeAny = AppSchema,
   renderNoChanges = true,
 ) {
-  if (getAppScopes(localConfig) !== '') {
-    setPathValue(localConfig, 'access_scopes.scopes', getAppScopesArray(localConfig).join(','))
-  }
-
   const [updated, baseline] = deepDifference(
     {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
     {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},

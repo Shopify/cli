@@ -210,7 +210,7 @@ describe('confirmPushChanges', () => {
       )
 
       configuration.name = 'app2'
-      configuration.access_scopes = {scopes: 'read_themes, read_customers'}
+      configuration.access_scopes = {scopes: 'read_themes,read_customers'}
       configuration.webhooks = {
         api_version: 'unstable',
       }

@@ -376,3 +376,22 @@ export function joinWithAnd(items: string[]): string {
 export function pascalize(str: string): string {
   return pascalCase(str)
 }
+
+/**
+ * Given a string that represents a list of delimited tokens, it returns the normalized string representing the same
+ * list, without empty elements, sorted, and with no duplicates.
+ *
+ * @param delimitedString - String to normalize.
+ * @param delimiter - Delimiter used to split the string into tokens.
+ * @returns String with the normalized list of tokens.
+ */
+export function normalizeDelimitedString(delimitedString?: string, delimiter = ','): string | undefined {
+  if (!delimitedString) return
+
+  const items = delimitedString.split(delimiter).map((value) => value.trim())
+  const nonEmptyItems = items.filter((value) => value !== '')
+  const sortedItems = nonEmptyItems.sort()
+  const uniqueSortedItems = [...new Set(sortedItems)]
+
+  return uniqueSortedItems.join(delimiter)
+}
