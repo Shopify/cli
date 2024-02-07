@@ -7,7 +7,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CreditCardPaymentsAppExtensionConfigType = zod.infer<typeof CreditCardPaymentsAppExtensionSchema>
 
-const CERTIFICATE_REGEX = /^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$/
+const CERTIFICATE_REGEX = /^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$|^$/
 
 export const CREDIT_CARD_TARGET = 'payments.credit-card.render'
 
@@ -21,6 +21,7 @@ export const CreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
   .extend({
     targeting: zod.array(zod.object({target: zod.literal(CREDIT_CARD_TARGET)})).length(1),
     verification_session_url: zod.string().url().optional(),
+    ui_extension_handle: zod.string().optional(),
     encryption_certificate: zod.object({
       fingerprint: zod.string(),
       certificate: zod.string().regex(CERTIFICATE_REGEX),
@@ -63,5 +64,6 @@ export async function creditCardPaymentsAppExtensionDeployConfig(
     start_verification_session_url: config.verification_session_url,
     encryption_certificate: config.encryption_certificate,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
+    ui_extension_handle: config.ui_extension_handle,
   }
 }

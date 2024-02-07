@@ -18,7 +18,8 @@ const config: RedeemablePaymentsAppExtensionConfigType = {
   supported_countries: ['CA'],
   supported_payment_methods: ['PAYMENT_METHOD'],
   test_mode_available: true,
-  redeemable_type: 'gift_card',
+  redeemable_type: 'gift-card',
+  ui_extension_handle: 'sample-ui-extension',
   targeting: [{target: 'payments.redeemable.render'}],
   api_version: '2022-07',
   description: 'my payments app extension',
@@ -72,9 +73,9 @@ describe('RedeemablePaymentsAppExtensionSchema', () => {
         {
           received: 'invalid type',
           code: zod.ZodIssueCode.invalid_literal,
-          expected: 'gift_card',
+          expected: 'gift-card',
           path: ['redeemable_type'],
-          message: 'Invalid literal value, expected "gift_card"',
+          message: 'Invalid literal value, expected "gift-card"',
         },
       ]),
     )
@@ -122,6 +123,7 @@ describe('redeemablePaymentsAppExtensionDeployConfig', () => {
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       default_buyer_label: config.buyer_label,
       buyer_label_to_locale: config.buyer_label_translations,
+      ui_extension_handle: config.ui_extension_handle,
     })
   })
 })

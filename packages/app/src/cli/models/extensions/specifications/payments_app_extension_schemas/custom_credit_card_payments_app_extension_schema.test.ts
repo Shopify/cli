@@ -28,6 +28,7 @@ const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   api_version: '2022-07',
   checkout_payment_method_fields: [],
   checkout_hosted_fields: ['fields'],
+  ui_extension_handle: 'sample-ui-extension',
   description: 'Custom credit card extension',
   metafields: [],
   input: {
@@ -90,6 +91,7 @@ describe('customCreditCardPaymentsAppExtensionDeployConfig', () => {
       multiple_capture: config.multiple_capture,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       checkout_hosted_fields: config.checkout_hosted_fields,
+      ui_extension_handle: config.ui_extension_handle,
     })
   })
 })

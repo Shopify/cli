@@ -26,6 +26,7 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   api_version: '2022-07',
   description: 'my payments app extension',
   metafields: [],
+  ui_extension_handle: 'sample-ui-extension',
   encryption_certificate: {
     fingerprint: 'fingerprint',
     certificate: '-----BEGIN CERTIFICATE-----\nSample certificate\n-----END CERTIFICATE-----',
@@ -151,6 +152,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       supports_deferred_payments: config.supports_deferred_payments,
       supports_installments: config.supports_installments,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
+      ui_extension_handle: config.ui_extension_handle,
     })
   })
 })
