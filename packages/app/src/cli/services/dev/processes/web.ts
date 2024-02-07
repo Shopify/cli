@@ -119,7 +119,6 @@ export async function launchWebProcess(
   }: LaunchWebOptions,
 ) {
   const hmrServerPort = hmrServerOptions?.port
-  const [cmd, ...args] = devCommand.split(' ')
 
   const env = {
     SHOPIFY_API_KEY: apiKey,
@@ -141,16 +140,22 @@ export async function launchWebProcess(
     REMIX_DEV_ORIGIN: hostname,
   }
 
-  await exec(cmd!, args, {
-    cwd: directory,
-    stdout,
-    stderr,
-    signal: abortSignal,
-    env: {
-      ...env,
-      PORT: `${port}`,
-      // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
-      SERVER_PORT: `${port}`,
-    },
-  })
+  // Support for multiple sequential commands: `echo "hello" && echo "world"`
+  const devCommands = devCommand.split('&&').map((cmd) => cmd.trim()) ?? []
+  for (const command of devCommands) {
+    const [cmd, ...args] = command.split(' ')
+    // eslint-disable-next-line no-await-in-loop
+    await exec(cmd!, args, {
+      cwd: directory,
+      stdout,
+      stderr,
+      signal: abortSignal,
+      env: {
+        ...env,
+        PORT: `${port}`,
+        // Note: These are Laravel variables for backwards compatibility with 2.0 templates.
+        SERVER_PORT: `${port}`,
+      },
+    })
+  }
 }
