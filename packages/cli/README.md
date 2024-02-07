@@ -63,12 +63,14 @@ USAGE
     [--skip-dependencies-installation] [--verbose]
 
 FLAGS
-  -c, --config=<value>                  The name of the app configuration.
-      --client-id=<value>               Application's Client ID that will be exposed at build time.
-      --no-color                        Disable color output.
-      --path=<value>                    The path to your app directory.
+  -c, --config=<value>                  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --client-id=<value>               Application's Client ID that will be exposed at build time. (Env:
+                                        SHOPIFY_FLAG_CLIENT_ID)
+      --no-color                        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>                    The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
       --skip-dependencies-installation  Skips the installation of dependencies. Deprecated, use workspaces instead.
-      --verbose                         Increase the verbosity of the logs.
+                                        (Env: SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION)
+      --verbose                         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Build the app.
@@ -85,11 +87,11 @@ USAGE
   $ shopify app config link [--client-id <value>] [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID of your app.
-      --no-color           Disable color output.
-      --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --client-id=<value>  The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Fetch your app configuration from the Partner Dashboard.
@@ -106,11 +108,11 @@ USAGE
   $ shopify app config push [-c <value>] [-f] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  -f, --force           Push configuration without asking for confirmation.
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
+  -c, --config=<value>  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+  -f, --force           Push configuration without asking for confirmation. (Env: SHOPIFY_FLAG_FORCE)
+      --no-color        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>    The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Push your app configuration to the Partner Dashboard.
@@ -130,10 +132,10 @@ ARGUMENTS
   CONFIG  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
 
 FLAGS
-  --no-color      Disable color output.
-  --path=<value>  The path to your app directory.
-  --reset         Reset current configuration.
-  --verbose       Increase the verbosity of the logs.
+  --no-color      Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>  The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --reset         Reset current configuration. (Env: SHOPIFY_FLAG_RESET)
+      --verbose       Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Activate an app configuration.
@@ -151,19 +153,21 @@ USAGE
     [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
-  -c, --config=<value>              The name of the app configuration.
-  -f, --force                       Deploy without asking for confirmation.
-      --client-id=<value>           The Client ID of your app.
+  -c, --config=<value>              The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+  -f, --force                       Deploy without asking for confirmation. (Env: SHOPIFY_FLAG_FORCE)
+      --client-id=<value>           The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
       --message=<value>             Optional message that will be associated with this version. This is for internal use
-                                    only and won't be available externally.
-      --no-color                    Disable color output.
+                                    only and won't be available externally. (Env: SHOPIFY_FLAG_MESSAGE)
+      --no-color                    Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
       --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
-      --path=<value>                The path to your app directory.
-      --reset                       Reset all your settings.
-      --source-control-url=<value>  URL associated with the new app version.
-      --verbose                     Increase the verbosity of the logs.
+                                    (Env: SHOPIFY_FLAG_NO_RELEASE)
+      --path=<value>                The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --reset                       Reset all your settings. (Env: SHOPIFY_FLAG_RESET)
+      --source-control-url=<value>  URL associated with the new app version. (Env: SHOPIFY_FLAG_SOURCE_CONTROL_URL)
+      --verbose                     Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
       --version=<value>             Optional version tag that will be associated with this app version. If not provided,
-                                    an auto-generated identifier will be generated for this app version.
+                                    an auto-generated identifier will be generated for this app version. (Env:
+                                    SHOPIFY_FLAG_VERSION)
 
 DESCRIPTION
   Deploy your Shopify app.
@@ -183,25 +187,31 @@ USAGE
     [--verbose]
 
 FLAGS
-  -c, --config=<value>                    The name of the app configuration.
+  -c, --config=<value>                    The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
   -s, --store=<value>                     Store URL. Must be an existing development or Shopify Plus sandbox store.
-  -t, --theme=<value>                     Theme ID or name of the theme app extension host theme.
+                                          (Env: SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>                     Theme ID or name of the theme app extension host theme. (Env:
+                                          SHOPIFY_FLAG_THEME)
       --checkout-cart-url=<value>         Resource URL for checkout UI extension. Format:
-                                          "/cart/{productVariantID}:{productQuantity}"
-      --client-id=<value>                 The Client ID of your app.
-      --no-color                          Disable color output.
-      --no-update                         Skips the Partners Dashboard URL update step.
+                                          "/cart/{productVariantID}:{productQuantity}" (Env:
+                                          SHOPIFY_FLAG_CHECKOUT_CART_URL)
+      --client-id=<value>                 The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color                          Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --no-update                         Skips the Partners Dashboard URL update step. (Env: SHOPIFY_FLAG_NO_UPDATE)
       --notify=<value>                    The file path or URL. The file path is to a file that you want updated on
                                           idle. The URL path is where you want a webhook posted to report on file
-                                          changes.
-      --path=<value>                      The path to your app directory.
-      --reset                             Reset all your settings.
+                                          changes. (Env: SHOPIFY_FLAG_NOTIFY)
+      --path=<value>                      The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --reset                             Reset all your settings. (Env: SHOPIFY_FLAG_RESET)
       --skip-dependencies-installation    Skips the installation of dependencies. Deprecated, use workspaces instead.
+                                          (Env: SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION)
       --subscription-product-url=<value>  Resource URL for subscription UI extension. Format: "/products/{productId}"
-      --theme-app-extension-port=<value>  Local port of the theme app extension development server.
+                                          (Env: SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL)
+      --theme-app-extension-port=<value>  Local port of the theme app extension development server. (Env:
+                                          SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT)
       --tunnel-url=<value>                Use a custom tunnel, it must be running before executing dev. Format:
-                                          "https://my-tunnel-url:port".
-      --verbose                           Increase the verbosity of the logs.
+                                          "https://my-tunnel-url:port". (Env: SHOPIFY_FLAG_TUNNEL_URL)
+      --verbose                           Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Run the app.
@@ -218,11 +228,11 @@ USAGE
   $ shopify app env pull [-c <value>] [--env-file <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>    The name of the app configuration.
-      --env-file=<value>  Specify an environment file to update if the update flag is set
-      --no-color          Disable color output.
-      --path=<value>      The path to your app directory.
-      --verbose           Increase the verbosity of the logs.
+  -c, --config=<value>    The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --env-file=<value>  Specify an environment file to update if the update flag is set (Env: SHOPIFY_FLAG_ENV_FILE)
+      --no-color          Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>      The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose           Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Pull app and extensions environment variables.
@@ -239,10 +249,10 @@ USAGE
   $ shopify app env show [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
+  -c, --config=<value>  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --no-color        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>    The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Display app and extensions environment variables.
@@ -259,10 +269,10 @@ USAGE
   $ shopify app function build [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+  -c, --config=<value>  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --no-color        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>    The path to your function directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Compile a function to wasm.
@@ -279,13 +289,14 @@ USAGE
   $ shopify app function run [-c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  -e, --export=<value>  [default: _start] Name of the wasm export to invoke.
-  -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used.
-  -j, --json            Log the run result as a JSON object.
-      --no-color        Disable color output.
-      --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+  -c, --config=<value>  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+  -e, --export=<value>  [default: _start] Name of the wasm export to invoke. (Env: SHOPIFY_FLAG_EXPORT)
+  -i, --input=<value>   The input JSON to pass to the function. If omitted, standard input is used. (Env:
+                        SHOPIFY_FLAG_INPUT)
+  -j, --json            Log the run result as a JSON object. (Env: SHOPIFY_FLAG_JSON)
+      --no-color        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>    The path to your function directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Run a function locally for testing.
@@ -302,12 +313,12 @@ USAGE
   $ shopify app function schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID to fetch the schema with.
-      --no-color           Disable color output.
-      --path=<value>       The path to your function directory.
-      --stdout             Output the schema to stdout instead of writing to a file.
-      --verbose            Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --client-id=<value>  The Client ID to fetch the schema with. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your function directory. (Env: SHOPIFY_FLAG_PATH)
+      --stdout             Output the schema to stdout instead of writing to a file. (Env: SHOPIFY_FLAG_STDOUT)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -324,10 +335,10 @@ USAGE
   $ shopify app function typegen [-c <value>] [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --no-color        Disable color output.
-      --path=<value>    The path to your function directory.
-      --verbose         Increase the verbosity of the logs.
+  -c, --config=<value>  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --no-color        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>    The path to your function directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Generate GraphQL types for a JavaScript function.
@@ -346,17 +357,17 @@ USAGE
     <value>] [-t <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-  -n, --name=<value>       name of your Extension
-  -t, --template=<value>   Extension template
-  -t, --type=<value>       Deprecated. Please use --template
-      --client-id=<value>  The Client ID of your app.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+  -n, --name=<value>       name of your Extension (Env: SHOPIFY_FLAG_NAME)
+  -t, --template=<value>   Extension template (Env: SHOPIFY_FLAG_EXTENSION_TEMPLATE)
+  -t, --type=<value>       Deprecated. Please use --template (Env: SHOPIFY_FLAG_EXTENSION_TYPE)
+      --client-id=<value>  The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
       --flavor=<option>    Choose a starting template for your extension, where applicable
-                           <options: vanilla-js|react|typescript|typescript-react|wasm|rust>
-      --no-color           Disable color output.
-      --path=<value>       The path to your app directory.
-      --reset              Reset all your settings.
-      --verbose            Increase the verbosity of the logs.
+                           <options: vanilla-js|react|typescript|typescript-react|wasm|rust> (Env: SHOPIFY_FLAG_FLAVOR)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --reset              Reset all your settings. (Env: SHOPIFY_FLAG_RESET)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Scaffold an Extension.
@@ -376,12 +387,12 @@ USAGE
   $ shopify app generate schema [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--stdout] [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID to fetch the schema with.
-      --no-color           Disable color output.
-      --path=<value>       The path to your function directory.
-      --stdout             Output the schema to stdout instead of writing to a file.
-      --verbose            Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --client-id=<value>  The Client ID to fetch the schema with. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your function directory. (Env: SHOPIFY_FLAG_PATH)
+      --stdout             Output the schema to stdout instead of writing to a file. (Env: SHOPIFY_FLAG_STDOUT)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Fetch the latest GraphQL schema for a function.
@@ -399,11 +410,11 @@ USAGE
   [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID of your app.
-      --no-color           Disable color output.
-      --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --client-id=<value>  The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Import dashboard-managed flow extensions into your app.
@@ -420,12 +431,13 @@ USAGE
   $ shopify app info [-c <value>] [--json] [--no-color] [--path <value>] [--verbose] [--web-env]
 
 FLAGS
-  -c, --config=<value>  The name of the app configuration.
-      --json            format output as JSON
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
-      --web-env         Outputs environment variables necessary for running and deploying web/.
+  -c, --config=<value>  The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --json            format output as JSON (Env: SHOPIFY_FLAG_JSON)
+      --no-color        Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>    The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose         Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
+      --web-env         Outputs environment variables necessary for running and deploying web/. (Env:
+                        SHOPIFY_FLAG_OUTPUT_WEB_ENV)
 
 DESCRIPTION
   Print basic information about your app and extensions.
@@ -443,14 +455,14 @@ USAGE
     [--reset] [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-  -f, --force              Release without asking for confirmation.
-      --client-id=<value>  The Client ID of your app.
-      --no-color           Disable color output.
-      --path=<value>       The path to your app directory.
-      --reset              Reset all your settings.
-      --verbose            Increase the verbosity of the logs.
-      --version=<value>    (required) The name of the app version to release.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+  -f, --force              Release without asking for confirmation. (Env: SHOPIFY_FLAG_FORCE)
+      --client-id=<value>  The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --reset              Reset all your settings. (Env: SHOPIFY_FLAG_RESET)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
+      --version=<value>    (required) The name of the app version to release. (Env: SHOPIFY_FLAG_VERSION)
 
 DESCRIPTION
   Release an app version.
@@ -468,14 +480,14 @@ USAGE
     [--redirect-urls <value>] [--verbose]
 
 FLAGS
-  -c, --config=<value>         The name of the app configuration.
-      --app-url=<value>        URL through which merchants will access your app.
-      --client-id=<value>      The Client ID of your app.
-      --no-color               Disable color output.
-      --path=<value>           The path to your app directory.
+  -c, --config=<value>         The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --app-url=<value>        URL through which merchants will access your app. (Env: SHOPIFY_FLAG_APP_URL)
+      --client-id=<value>      The Client ID of your app. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --no-color               Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>           The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
       --redirect-urls=<value>  Comma separated list of allowed URLs where merchants are redirected after the app is
-                               installed
-      --verbose                Increase the verbosity of the logs.
+                               installed (Env: SHOPIFY_FLAG_REDIRECT_URLS)
+      --verbose                Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Update your app and redirect URLs in the Partners Dashboard.
@@ -493,12 +505,12 @@ USAGE
     [--verbose]
 
 FLAGS
-  -c, --config=<value>     The name of the app configuration.
-      --client-id=<value>  The Client ID to fetch versions for.
-      --json               Output the versions list as JSON.
-      --no-color           Disable color output.
-      --path=<value>       The path to your app directory.
-      --verbose            Increase the verbosity of the logs.
+  -c, --config=<value>     The name of the app configuration. (Env: SHOPIFY_FLAG_APP_CONFIG)
+      --client-id=<value>  The Client ID to fetch versions for. (Env: SHOPIFY_FLAG_CLIENT_ID)
+      --json               Output the versions list as JSON. (Env: SHOPIFY_FLAG_JSON)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your app directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   List deployed versions of your app.
@@ -861,20 +873,21 @@ FLAGS
   -C, --config=<value>       Use the config provided, overriding .theme-check.yml if present
                              Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
                              theme-check:recommended, theme-check:all
-                             For backwards compatibility, :theme_app_extension is also supported
-  -a, --auto-correct         Automatically fix offenses
-  -e, --environment=<value>  The environment to apply to the current command.
+                             For backwards compatibility, :theme_app_extension is also supported  (Env:
+                             SHOPIFY_FLAG_CONFIG)
+  -a, --auto-correct         Automatically fix offenses (Env: SHOPIFY_FLAG_AUTO_CORRECT)
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
   -o, --output=<option>      [default: text] The output format to use
-                             <options: text|json>
-  -v, --version              Print Theme Check version
+                             <options: text|json> (Env: SHOPIFY_FLAG_OUTPUT)
+  -v, --version              Print Theme Check version (Env: SHOPIFY_FLAG_VERSION)
       --fail-level=<option>  [default: error] Minimum severity for exit with error code
-                             <options: crash|error|suggestion|style|warning|info>
-      --init                 Generate a .theme-check.yml file
-      --list                 List enabled checks
-      --no-color             Disable color output.
-      --path=<value>         The path to your theme directory.
-      --print                Output active config to STDOUT
-      --verbose              Increase the verbosity of the logs.
+                             <options: crash|error|suggestion|style|warning|info> (Env: SHOPIFY_FLAG_FAIL_LEVEL)
+      --init                 Generate a .theme-check.yml file (Env: SHOPIFY_FLAG_INIT)
+      --list                 List enabled checks (Env: SHOPIFY_FLAG_LIST)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>         The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
+      --print                Output active config to STDOUT (Env: SHOPIFY_FLAG_PRINT)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Validate the theme.
@@ -892,14 +905,15 @@ USAGE
     <value>] [--verbose]
 
 FLAGS
-  -e, --environment=<value>  The environment to apply to the current command.
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --port=<value>         [default: 9293] Local port to serve authentication service.
-      --url=<value>          [default: /] The url to be used as context
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --port=<value>         [default: 9293] Local port to serve authentication service. (Env: SHOPIFY_FLAG_PORT)
+      --url=<value>          [default: /] The url to be used as context (Env: SHOPIFY_FLAG_URL)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Shopify Liquid REPL (read-eval-print loop) tool
@@ -917,16 +931,17 @@ USAGE
     [--verbose]
 
 FLAGS
-  -a, --show-all             Include others development themes in theme list.
-  -d, --development          Delete your development theme.
-  -e, --environment=<value>  The environment to apply to the current command.
-  -f, --force                Skip confirmation.
+  -a, --show-all             Include others development themes in theme list. (Env: SHOPIFY_FLAG_SHOW_ALL)
+  -d, --development          Delete your development theme. (Env: SHOPIFY_FLAG_DEVELOPMENT)
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
+  -f, --force                Skip confirmation. (Env: SHOPIFY_FLAG_FORCE)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>...     Theme ID or name of the remote theme.
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>...     Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Delete remote themes from the connected store. This command can't be undone.
@@ -946,61 +961,61 @@ USAGE
 
 FLAGS
   -e, --environment=<value>
-      The environment to apply to the current command.
+      The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
 
   -n, --nodelete
-      Runs the dev command without deleting local files.
+      Runs the dev command without deleting local files. (Env: SHOPIFY_FLAG_NODELETE)
 
   -o, --only=<value>...
-      Hot reload only files that match the specified pattern.
+      Hot reload only files that match the specified pattern. (Env: SHOPIFY_FLAG_ONLY)
 
   -s, --store=<value>
       Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL (johns-apparel.myshopify.com,
-      https://johns-apparel.myshopify.com).
+      https://johns-apparel.myshopify.com). (Env: SHOPIFY_FLAG_STORE)
 
   -t, --theme=<value>
-      Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
 
   -x, --ignore=<value>...
-      Skip hot reloading any files that match the specified pattern.
+      Skip hot reloading any files that match the specified pattern. (Env: SHOPIFY_FLAG_IGNORE)
 
   --host=<value>
-      Set which network interface the web server listens on. The default value is 127.0.0.1.
+      Set which network interface the web server listens on. The default value is 127.0.0.1. (Env: SHOPIFY_FLAG_HOST)
 
   --live-reload=<option>
       [default: hot-reload] The live reload mode switches the server behavior when a file is modified:
       - hot-reload Hot reloads local changes to CSS and sections (default)
       - full-page  Always refreshes the entire page
       - off        Deactivate live reload
-      <options: hot-reload|full-page|off>
+      <options: hot-reload|full-page|off> (Env: SHOPIFY_FLAG_LIVE_RELOAD)
 
   --no-color
-      Disable color output.
+      Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
 
   --notify=<value>
       The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a
-      webhook posted to report on file changes.
+      webhook posted to report on file changes. (Env: SHOPIFY_FLAG_NOTIFY)
 
   --open
-      Automatically launch the theme preview in your default web browser.
+      Automatically launch the theme preview in your default web browser. (Env: SHOPIFY_FLAG_OPEN)
 
   --password=<value>
-      Password generated from the Theme Access app.
+      Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
 
   --path=<value>
-      The path to your theme directory.
+      The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
 
   --poll
-      Force polling to detect file changes.
+      Force polling to detect file changes. (Env: SHOPIFY_FLAG_POLL)
 
   --port=<value>
-      Local port to serve theme preview from.
+      Local port to serve theme preview from. (Env: SHOPIFY_FLAG_PORT)
 
   --theme-editor-sync
-      Synchronize Theme Editor updates in the local theme files.
+      Synchronize Theme Editor updates in the local theme files. (Env: SHOPIFY_FLAG_THEME_EDITOR_SYNC)
 
   --verbose
-      Increase the verbosity of the logs.
+      Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to
@@ -1018,8 +1033,8 @@ USAGE
   $ shopify theme info [--no-color] [--verbose]
 
 FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  --no-color  Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --verbose   Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Print basic information about your theme environment.
@@ -1039,12 +1054,13 @@ ARGUMENTS
   NAME  Name of the new theme
 
 FLAGS
-  -l, --latest             Downloads the latest release of the `clone-url`
+  -l, --latest             Downloads the latest release of the `clone-url` (Env: SHOPIFY_FLAG_LATEST)
   -u, --clone-url=<value>  [default: https://github.com/Shopify/dawn.git] The Git URL to clone from. Defaults to
-                           Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git
-      --no-color           Disable color output.
-      --path=<value>       The path to your theme directory.
-      --verbose            Increase the verbosity of the logs.
+                           Shopify's example theme, Dawn: https://github.com/Shopify/dawn.git (Env:
+                           SHOPIFY_FLAG_CLONE_URL)
+      --no-color           Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>       The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose            Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Clones a Git repository to use as a starting point for building a new theme.
@@ -1061,8 +1077,8 @@ USAGE
   $ shopify theme language-server [--no-color] [--verbose]
 
 FLAGS
-  --no-color  Disable color output.
-  --verbose   Increase the verbosity of the logs.
+  --no-color  Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --verbose   Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Start a Language Server Protocol server.
@@ -1080,17 +1096,18 @@ USAGE
     [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
-  -e, --environment=<value>  The environment to apply to the current command.
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-      --id=<value>           Only list theme with the given ID.
-      --json                 Output the theme list as JSON.
-      --name=<value>         Only list themes that contain the given name.
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+      --id=<value>           Only list theme with the given ID. (Env: SHOPIFY_FLAG_ID)
+      --json                 Output the theme list as JSON. (Env: SHOPIFY_FLAG_JSON)
+      --name=<value>         Only list themes that contain the given name. (Env: SHOPIFY_FLAG_NAME)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
       --role=<option>        Only list themes with the given role.
-                             <options: live|unpublished|development>
-      --verbose              Increase the verbosity of the logs.
+                             <options: live|unpublished|development> (Env: SHOPIFY_FLAG_ROLE)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Lists your remote themes.
@@ -1108,16 +1125,17 @@ USAGE
     [--verbose]
 
 FLAGS
-  -E, --editor               Open the theme editor for the specified theme in the browser.
-  -d, --development          Open your development theme.
-  -e, --environment=<value>  The environment to apply to the current command.
-  -l, --live                 Open your live (published) theme.
+  -E, --editor               Open the theme editor for the specified theme in the browser. (Env: SHOPIFY_FLAG_EDITOR)
+  -d, --development          Open your development theme. (Env: SHOPIFY_FLAG_DEVELOPMENT)
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
+  -l, --live                 Open your live (published) theme. (Env: SHOPIFY_FLAG_LIVE)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>        Theme ID or name of the remote theme.
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>        Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Opens the preview of your remote theme.
@@ -1134,9 +1152,9 @@ USAGE
   $ shopify theme package [--no-color] [--path <value>] [--verbose]
 
 FLAGS
-  --no-color      Disable color output.
-  --path=<value>  The path to your theme directory.
-  --verbose       Increase the verbosity of the logs.
+  --no-color      Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --path=<value>  The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose       Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Package your theme into a .zip file, ready to upload to the Online Store.
@@ -1153,14 +1171,15 @@ USAGE
   $ shopify theme publish [-e <value>] [-f] [--no-color] [--password <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
-  -e, --environment=<value>  The environment to apply to the current command.
-  -f, --force                Skip confirmation.
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
+  -f, --force                Skip confirmation. (Env: SHOPIFY_FLAG_FORCE)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>        Theme ID or name of the remote theme.
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>        Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Set a remote theme as the live theme.
@@ -1178,19 +1197,20 @@ USAGE
     [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
-  -d, --development          Pull theme files from your remote development theme.
-  -e, --environment=<value>  The environment to apply to the current command.
-  -l, --live                 Pull theme files from your remote live theme.
-  -n, --nodelete             Runs the pull command without deleting local files.
-  -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
+  -d, --development          Pull theme files from your remote development theme. (Env: SHOPIFY_FLAG_DEVELOPMENT)
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
+  -l, --live                 Pull theme files from your remote live theme. (Env: SHOPIFY_FLAG_LIVE)
+  -n, --nodelete             Runs the pull command without deleting local files. (Env: SHOPIFY_FLAG_NODELETE)
+  -o, --only=<value>...      Download only the specified files (Multiple flags allowed). (Env: SHOPIFY_FLAG_ONLY)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>        Theme ID or name of the remote theme.
-  -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>        Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
+  -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed). (Env: SHOPIFY_FLAG_IGNORE)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --path=<value>         The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Download your remote theme files locally.
@@ -1208,23 +1228,24 @@ USAGE
     <value>] [--path <value>] [-p] [-s <value>] [-t <value>] [-u] [--verbose]
 
 FLAGS
-  -a, --allow-live           Allow push to a live theme.
-  -d, --development          Push theme files from your remote development theme.
-  -e, --environment=<value>  The environment to apply to the current command.
-  -j, --json                 Output JSON instead of a UI.
-  -l, --live                 Push theme files from your remote live theme.
-  -n, --nodelete             Runs the push command without deleting local files.
-  -o, --only=<value>...      Download only the specified files (Multiple flags allowed).
-  -p, --publish              Publish as the live theme after uploading.
+  -a, --allow-live           Allow push to a live theme. (Env: SHOPIFY_FLAG_ALLOW_LIVE)
+  -d, --development          Push theme files from your remote development theme. (Env: SHOPIFY_FLAG_DEVELOPMENT)
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
+  -j, --json                 Output JSON instead of a UI. (Env: SHOPIFY_FLAG_JSON)
+  -l, --live                 Push theme files from your remote live theme. (Env: SHOPIFY_FLAG_LIVE)
+  -n, --nodelete             Runs the push command without deleting local files. (Env: SHOPIFY_FLAG_NODELETE)
+  -o, --only=<value>...      Download only the specified files (Multiple flags allowed). (Env: SHOPIFY_FLAG_ONLY)
+  -p, --publish              Publish as the live theme after uploading. (Env: SHOPIFY_FLAG_PUBLISH)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>        Theme ID or name of the remote theme.
-  -u, --unpublished          Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>        Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
+  -u, --unpublished          Create a new unpublished theme and push to it. (Env: SHOPIFY_FLAG_UNPUBLISHED)
+  -x, --ignore=<value>...    Skip downloading the specified files (Multiple flags allowed). (Env: SHOPIFY_FLAG_IGNORE)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --path=<value>         The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
@@ -1242,16 +1263,17 @@ USAGE
     <value>] [--verbose]
 
 FLAGS
-  -d, --development          Rename your development theme.
-  -e, --environment=<value>  The environment to apply to the current command.
-  -l, --live                 Rename your remote live theme.
-  -n, --name=<value>         (required) The new name for the theme.
+  -d, --development          Rename your development theme. (Env: SHOPIFY_FLAG_DEVELOPMENT)
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
+  -l, --live                 Rename your remote live theme. (Env: SHOPIFY_FLAG_LIVE)
+  -n, --name=<value>         (required) The new name for the theme. (Env: SHOPIFY_FLAG_NEW_NAME)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-  -t, --theme=<value>        Theme ID or name of the remote theme.
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+  -t, --theme=<value>        Theme ID or name of the remote theme. (Env: SHOPIFY_FLAG_THEME_ID)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Renames an existing theme.
@@ -1268,13 +1290,14 @@ USAGE
   $ shopify theme share [-e <value>] [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
-  -e, --environment=<value>  The environment to apply to the current command.
+  -e, --environment=<value>  The environment to apply to the current command. (Env: SHOPIFY_FLAG_ENVIRONMENT)
   -s, --store=<value>        Store URL. It can be the store prefix (johns-apparel) or the full myshopify.com URL
-                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com).
-      --no-color             Disable color output.
-      --password=<value>     Password generated from the Theme Access app.
-      --path=<value>         The path to your theme directory.
-      --verbose              Increase the verbosity of the logs.
+                             (johns-apparel.myshopify.com, https://johns-apparel.myshopify.com). (Env:
+                             SHOPIFY_FLAG_STORE)
+      --no-color             Disable color output. (Env: SHOPIFY_FLAG_NO_COLOR)
+      --password=<value>     Password generated from the Theme Access app. (Env: SHOPIFY_CLI_THEME_TOKEN)
+      --path=<value>         The path to your theme directory. (Env: SHOPIFY_FLAG_PATH)
+      --verbose              Increase the verbosity of the logs. (Env: SHOPIFY_FLAG_VERBOSE)
 
 DESCRIPTION
   Creates a shareable, unpublished, and new theme on your theme library with a randomized name. Works like an alias to
@@ -1292,7 +1315,7 @@ USAGE
   $ shopify upgrade [--path <value>]
 
 FLAGS
-  --path=<value>  [default: .] The path to your project directory.
+  --path=<value>  [default: .] The path to your project directory. (Env: SHOPIFY_FLAG_PATH)
 
 DESCRIPTION
   Upgrade the Shopify CLI.
@@ -1330,28 +1353,29 @@ FLAGS
       · For remote HTTP testing, use a URL that starts with https://
       · For local HTTP testing, use http://localhost:{port}/{url-path}
       · For Google Pub/Sub, use pubsub://{project-id}:{topic-id}
-      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:
+      · For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events: (Env:
+      SHOPIFY_FLAG_ADDRESS)
 
   --api-version=<value>
-      The API Version of the webhook topic.
+      The API Version of the webhook topic. (Env: SHOPIFY_FLAG_API_VERSION)
 
   --client-secret=<value>
       Your app's client secret. This secret allows us to return the X-Shopify-Hmac-SHA256 header that lets you validate
-      the origin of the response that you receive.
+      the origin of the response that you receive. (Env: SHOPIFY_FLAG_CLIENT_SECRET)
 
   --delivery-method=<option>
       Method chosen to deliver the topic payload. If not passed, it's inferred from the address.
-      <options: http|google-pub-sub|event-bridge>
+      <options: http|google-pub-sub|event-bridge> (Env: SHOPIFY_FLAG_DELIVERY_METHOD)
 
   --help
       This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using
-      flags.
+      flags. (Env: SHOPIFY_FLAG_HELP)
 
   --shared-secret=<value>
-      Deprecated. Please use client-secret.
+      Deprecated. Please use client-secret. (Env: SHOPIFY_FLAG_SHARED_SECRET)
 
   --topic=<value>
-      The requested webhook topic.
+      The requested webhook topic. (Env: SHOPIFY_FLAG_TOPIC)
 
 DESCRIPTION
   Trigger delivery of a sample webhook topic payload to a designated address.
