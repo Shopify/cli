@@ -23,6 +23,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {OutputMessage} from '@shopify/cli-kit/node/output'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
+import {Config} from '@oclif/core'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const LegacyPushAppSchema = zod.object({
@@ -87,6 +88,7 @@ export const DeprecatedPushMessage =
 export interface PushOptions {
   configuration: AppConfiguration
   force: boolean
+  commandConfig: Config
 }
 
 const FIELD_NAMES: {[key: string]: string} = {
