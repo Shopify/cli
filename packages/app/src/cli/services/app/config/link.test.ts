@@ -784,6 +784,61 @@ embedded = false
         expect(content).toEqual(expectedContent)
       })
     })
+
+    test('replace arrays content with the remote one', async () => {
+      await inTemporaryDirectory(async (tmp) => {
+        // Given
+        const options: LinkOptions = {
+          directory: tmp,
+          commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+        }
+        vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+        vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+        vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+          app: {
+            extensionRegistrations: [],
+            configurationRegistrations: [
+              {
+                type: 'app_access',
+                id: '321',
+                uuid: '321',
+                title: 'app_access',
+                activeVersion: {
+                  config: JSON.stringify({redirect_url_allowlist: ['https://example.com/remote']}),
+                },
+              },
+            ],
+            dashboardManagedExtensionRegistrations: [],
+          },
+        })
+        // When
+        await link(options)
+
+        // Then
+        const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+        const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/remote" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+        expect(content).toEqual(expectedContent)
+      })
+    })
   })
   describe('when version app configuration beta is disabled', () => {
     test('success banner message will include config push command', async () => {
