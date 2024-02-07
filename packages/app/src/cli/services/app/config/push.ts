@@ -87,6 +87,7 @@ export const DeprecatedPushMessage =
 
 export interface PushOptions {
   configuration: AppConfiguration
+  configurationPath: string
   force: boolean
   commandConfig: Config
 }
@@ -119,14 +120,14 @@ export async function pushConfig(options: PushOptions) {
   // Load local complete configuration
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
-  const configFileName = isCurrentAppSchema(options.configuration) ? basename(options.configuration.path) : undefined
+  const configFileName = isCurrentAppSchema(options.configuration) ? basename(options.configurationPath) : undefined
   const specifications = await fetchSpecifications({
     token,
     apiKey: options.configuration.client_id,
     config: options.commandConfig,
   })
   const localApp = await loadApp({
-    directory: dirname(options.configuration.path),
+    directory: dirname(options.configurationPath),
     specifications,
     configName: configFileName,
   })

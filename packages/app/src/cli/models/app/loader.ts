@@ -92,7 +92,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
     throw new AbortError(errorMessage)
   },
   decode: (input: string) => object = decodeToml,
-): Promise<zod.TypeOf<TSchema> & {path: string}> {
+): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = await loadConfigurationFile(filepath, abortOrReport, decode)
@@ -107,7 +107,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema> & {path: string}> {
+): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -120,7 +120,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
       parseResult.error.issues,
     )
   }
-  return {...parseResult.data, path: filepath}
+  return parseResult.data
 }
 
 export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
@@ -218,12 +218,13 @@ class AppLoader {
       configName: this.configName,
       specifications: this.specifications,
     })
-    const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+    const {directory, configuration, configurationPath, configurationLoadResultMetadata, configSchema} =
+      await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
-    const dotenv = await loadDotEnv(directory, configuration.path)
+    const dotenv = await loadDotEnv(directory, configurationPath)
 
-    const extensions = await this.loadExtensions(directory, configuration)
+    const extensions = await this.loadExtensions(directory, configuration, configurationPath)
 
     const packageJSONPath = joinPath(directory, 'package.json')
     const name = await loadAppName(directory)
@@ -241,6 +242,7 @@ class AppLoader {
       directory,
       packageManager,
       configuration,
+      configurationPath,
       nodeDependencies,
       webs,
       modules: extensions,
@@ -342,12 +344,16 @@ class AppLoader {
     return extensionInstance
   }
 
-  async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+  async loadExtensions(
+    appDirectory: string,
+    appConfiguration: AppConfiguration,
+    appConfigurationPath: string,
+  ): Promise<ExtensionInstance[]> {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
     const configExtensionPromises = isCurrentAppSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
+      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration, appConfigurationPath)
       : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
@@ -423,24 +429,28 @@ class AppLoader {
     })
   }
 
-  async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
+  async createConfigExtensionInstances(
+    directory: string,
+    appConfiguration: CurrentAppConfiguration,
+    appConfigurationPath: string,
+  ) {
     return this.specifications
       .filter((specification) => specification.appModuleFeatures().includes('app_config'))
       .map(async (specification) => {
         const specConfiguration = await parseConfigurationObject(
           specification.schema,
-          appConfiguration.path,
+          appConfigurationPath,
           appConfiguration,
           this.abortOrReport.bind(this),
         )
 
-        const {path, ...specConfigurationWithoutPath} = specConfiguration
+        const specConfigurationWithoutPath = specConfiguration
         if (Object.keys(specConfigurationWithoutPath).length === 0) return
 
         return this.createExtensionInstance(
           specification.identifier,
           specConfiguration,
-          appConfiguration.path,
+          appConfigurationPath,
           directory,
         ).then((extensionInstance) =>
           this.validateConfigurationExtensionInstance(appConfiguration.client_id, extensionInstance),
@@ -606,7 +616,13 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
+    return {
+      directory: appDirectory,
+      configuration,
+      configurationPath,
+      configurationLoadResultMetadata,
+      configSchema: appVersionedSchema,
+    }
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

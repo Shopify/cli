@@ -57,7 +57,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions)
   }
 
-  await writeAppConfigurationFile(configuration, localApp.configSchema)
+  await writeAppConfigurationFile(configuration, localApp.configurationPath, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {

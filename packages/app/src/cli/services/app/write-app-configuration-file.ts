@@ -5,7 +5,11 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 // toml does not support comments and there aren't currently any good/maintained libs for this,
 // so for now, we manually add comments
-export async function writeAppConfigurationFile(configuration: AppConfiguration, schema: zod.ZodTypeAny = AppSchema) {
+export async function writeAppConfigurationFile(
+  configuration: AppConfiguration,
+  configurationPath: string,
+  schema: zod.ZodTypeAny = AppSchema,
+) {
   const initialComment = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration\n`
   const scopesComment = `\n# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes`
 
@@ -23,7 +27,7 @@ export async function writeAppConfigurationFile(configuration: AppConfiguration,
 
   const file = fileSplit.join('')
 
-  writeFileSync(configuration.path, file)
+  writeFileSync(configurationPath, file)
 }
 
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {

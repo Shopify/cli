@@ -42,6 +42,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     directory: app.directory ?? '/tmp/project',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
+    configurationPath: app.configurationPath ?? '',
     nodeDependencies: app.nodeDependencies ?? {},
     webs: app.webs ?? [
       {

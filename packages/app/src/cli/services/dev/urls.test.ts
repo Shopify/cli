@@ -99,7 +99,7 @@ describe('updateURLs', () => {
     // Then
     expect(writeAppConfigurationFile).toHaveBeenCalledWith(
       {
-        path: appWithConfig.configuration.path,
+        path: appWithConfig.configurationPath,
         access_scopes: {
           scopes: 'read_products',
         },
@@ -192,7 +192,7 @@ describe('updateURLs', () => {
     // Then
     expect(writeAppConfigurationFile).toHaveBeenCalledWith(
       {
-        path: appWithConfig.configuration.path,
+        path: appWithConfig.configurationPath,
         access_scopes: {
           scopes: 'read_products',
         },

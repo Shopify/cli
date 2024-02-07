@@ -266,7 +266,7 @@ async function mockApp(newConfig = false): Promise<AppInterface> {
     },
     newConfig ? 'current' : 'legacy',
   )
-  result.configuration.path = configurationPath
+  result.configurationPath = configurationPath
 
   return result
 }

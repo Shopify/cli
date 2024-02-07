@@ -55,8 +55,7 @@ export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
  * @param item - the item to validate
  */
 export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
-  const {path, ...rest} = item
-  return isType(LegacyAppSchema, rest)
+  return isType(LegacyAppSchema, item)
 }
 
 /**
@@ -64,8 +63,7 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  * @param item - the item to validate
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  const {path, ...rest} = item
-  return isType(AppSchema.nonstrict(), rest)
+  return isType(AppSchema.nonstrict(), item)
 }
 
 /**
@@ -137,9 +135,9 @@ export const WebConfigurationSchema = zod.union([
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & SpecsAppConfiguration
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
+export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & SpecsAppConfiguration
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema>
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
 export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
@@ -153,6 +151,7 @@ export interface Web {
 export interface AppConfigurationInterface {
   directory: string
   configuration: AppConfiguration
+  configurationPath: string
   configSchema: zod.ZodTypeAny
 }
 
@@ -183,6 +182,7 @@ interface AppConstructor {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
+  configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   modules: ExtensionInstance[]
@@ -200,6 +200,7 @@ export class App implements AppInterface {
   directory: string
   packageManager: PackageManager
   configuration: AppConfiguration
+  configurationPath: string
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -216,6 +217,7 @@ export class App implements AppInterface {
     directory,
     packageManager,
     configuration,
+    configurationPath,
     nodeDependencies,
     webs,
     modules,
@@ -231,6 +233,7 @@ export class App implements AppInterface {
     this.directory = directory
     this.packageManager = packageManager
     this.configuration = this.configurationTyped(configuration)
+    this.configurationPath = configurationPath
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
@@ -399,6 +402,7 @@ export class EmptyApp extends App {
       directory: '',
       packageManager: 'npm',
       configuration,
+      configurationPath: '',
       nodeDependencies: {},
       webs: [],
       modules: [],

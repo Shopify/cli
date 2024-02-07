@@ -161,7 +161,7 @@ export async function ensureDevContext(
   partnersSession: PartnersSession,
 ): Promise<DevContextOutput> {
   const token = partnersSession.token
-  const {configuration, cachedInfo, remoteApp} = await getAppContext({
+  const {configuration, configurationPath, cachedInfo, remoteApp} = await getAppContext({
     ...options,
     partnersSession,
     promptLinkingApp: !options.apiKey,
@@ -208,7 +208,7 @@ export async function ensureDevContext(
   const localApp = await loadApp({
     directory: options.directory,
     specifications,
-    configName: getAppConfigurationShorthand(configuration.path),
+    configName: getAppConfigurationShorthand(configurationPath),
     remoteBetas: betas,
   })
 
@@ -224,7 +224,7 @@ export async function ensureDevContext(
       },
     }
     localApp.configuration = newConfiguration
-    await writeAppConfigurationFile(newConfiguration, localApp.configSchema)
+    await writeAppConfigurationFile(newConfiguration, configurationPath, localApp.configSchema)
   } else if (!cachedInfo || rightApp) {
     setCachedAppInfo({
       appId: selectedApp.apiKey,
@@ -388,7 +388,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,
-    configName: getAppConfigurationShorthand(options.app.configuration.path),
+    configName: getAppConfigurationShorthand(options.app.configurationPath),
     remoteBetas: betas,
   })
 
@@ -522,7 +522,7 @@ async function ensureIncludeConfigOnDeploy({
     org: org.businessName,
     appName: partnersApp.title,
     appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configurationPath) : undefined,
     resetMessage: resetHelpMessage,
     includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
   })
@@ -535,14 +535,14 @@ async function ensureIncludeConfigOnDeploy({
 }
 
 async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
-  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
+  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configurationPath)
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
   localConfiguration.build = {
     ...localConfiguration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
 
-  await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
+  await writeAppConfigurationFile(localConfiguration, options.localApp.configurationPath, options.localApp.configSchema)
 
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
 }
@@ -756,6 +756,7 @@ async function fetchDevDataFromOptions(
 
 export interface AppContext {
   configuration: AppConfiguration
+  configurationPath: string
   cachedInfo?: CachedAppInfo
   remoteApp?: OrganizationApp
 }
@@ -797,7 +798,7 @@ export async function getAppContext({
 
   let cachedInfo = getCachedAppInfo(directory)
 
-  const {configuration} = await loadAppConfiguration({
+  const {configuration, configurationPath} = await loadAppConfiguration({
     directory,
     configName,
   })
@@ -808,7 +809,7 @@ export async function getAppContext({
     cachedInfo = {
       ...cachedInfo,
       directory,
-      configFile: basename(configuration.path),
+      configFile: basename(configurationPath),
       orgId: remoteApp.organizationId,
       appId: remoteApp.apiKey,
       title: remoteApp.title,
@@ -821,6 +822,7 @@ export async function getAppContext({
 
   return {
     configuration,
+    configurationPath,
     cachedInfo,
     remoteApp,
   }

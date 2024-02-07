@@ -534,10 +534,8 @@ describe('setupExtensionWatcher', () => {
   })
   test('dont deploy the configuration extension when the values are the same', async () => {
     // Given
-    const newConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType & {path: string}
-    const previousConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType & {
-      path: string
-    }
+    const newConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType
+    const previousConfig = {pos: {embeded: true}, path: 'shopify.app.toml'} as unknown as BaseConfigType
     vi.mocked(reloadExtensionConfig).mockResolvedValue({newConfig, previousConfig})
     const watchOptions = await mockWatcherConfigurationOptions()
     const buildSpy = vi.spyOn(watchOptions.extension, 'build')

@@ -42,12 +42,12 @@ describe('pushConfig', () => {
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
     vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
-  })
 
   test('successfully calls the update mutation when push is run and a file is present', async () => {
     const app = await mockApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
+      configurationPath: app.configurationPath,
       force: true,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
@@ -107,6 +107,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -159,6 +160,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -213,6 +215,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -264,6 +267,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -311,6 +315,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -330,6 +335,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -357,6 +363,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -381,6 +388,7 @@ describe('pushConfig', () => {
     const options: PushOptions = {
       configuration: app.configuration,
       force: true,
+      configurationPath: app.configurationPath,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
 
@@ -442,6 +450,7 @@ app_preferences > url: this url is blocked 6`)
 
     const options: PushOptions = {
       configuration: app.configuration,
+      configurationPath: app.configurationPath,
       force: true,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
@@ -491,6 +500,7 @@ app_preferences > url: this url is blocked 6`)
     const app = await mockApp({}, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
+      configurationPath: app.configurationPath,
       force: false,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
@@ -541,6 +551,7 @@ app_preferences > url: this url is blocked 6`)
     const app = await mockApp(localApp, 'current')
     const options: PushOptions = {
       configuration: app.configuration,
+      configurationPath: app.configurationPath,
       force: true,
       commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
     }
@@ -592,7 +603,7 @@ async function createConfigExtensionInstances(
     // eslint-disable-next-line no-await-in-loop
     const specConfiguration = await loader.parseConfigurationObject(
       specification.schema,
-      appConfiguration.path,
+      DEFAULT_CONFIG.path,
       appConfiguration,
       vi.fn(),
     )
@@ -602,8 +613,8 @@ async function createConfigExtensionInstances(
     extensionInstances.push(
       new ExtensionInstance({
         configuration: specConfiguration,
-        configurationPath: appConfiguration.path,
-        directory: relativizePath(appConfiguration.path),
+        configurationPath: '',
+        directory: relativizePath(DEFAULT_CONFIG.path),
         specification,
       }),
     )
