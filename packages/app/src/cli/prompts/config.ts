@@ -1,8 +1,5 @@
 /* eslint-disable no-await-in-loop */
 import {AppSchema, CurrentAppConfiguration} from '../models/app/app.js'
-import {mergeAppConfiguration} from '../services/app/config/link.js'
-import {OrganizationApp} from '../models/organization.js'
-import {App} from '../api/graphql/get_config.js'
 import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
 import {
   RenderTextPromptOptions,
@@ -76,32 +73,6 @@ export function validate(value: string): string | undefined {
   if (result.length === 0) return `The file name can't be empty.`
   // Max filename size for Windows/Mac including the prefix/postfix
   if (result.length > 238) return 'The file name is too long.'
-}
-
-export async function confirmPushChanges(
-  force: boolean,
-  configuration: CurrentAppConfiguration,
-  app: App,
-  schema: zod.ZodTypeAny = AppSchema,
-) {
-  if (force) return true
-
-  const useVersionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
-  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp, useVersionedAppConfig)
-
-  const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)
-  if (!gitDiff) return false
-
-  return renderConfirmationPrompt({
-    message: ['Make the following changes to your remote configuration?'],
-    gitDiff: {
-      baselineContent: gitDiff.baselineContent,
-      updatedContent: gitDiff.updatedContent,
-    },
-    defaultValue: true,
-    confirmationMessage: 'Yes, confirm changes',
-    cancellationMessage: 'No, cancel',
-  })
 }
 
 export function buildDiffConfigContent(
