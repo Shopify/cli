@@ -253,7 +253,7 @@ another = "setting"
       // Then
       expect(mockExtension.configuration).toEqual(parsedConfig)
       expect(result.newConfig).toEqual(parsedConfig)
-      expect(result.previousConfig).toEqual({...configuration, path: configPath})
+      expect(result.previousConfig).toEqual(configuration)
     })
   })
 })

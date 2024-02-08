@@ -37,7 +37,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   localIdentifier: string
   idEnvironmentVariableName: string
   directory: string
-  configuration: TConfiguration & {path: string}
+  configuration: TConfiguration
+  configurationPath: string
   outputPath: string
   handle: string
   specification: ExtensionSpecification
@@ -102,11 +103,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `${this.handle}.js`
   }
 
-  get configurationContent() {
-    const {path, ...configuration} = this.configuration
-    return configuration
-  }
-
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -114,7 +110,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
-    this.configuration = {...options.configuration, path: options.configurationPath}
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
@@ -178,16 +175,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transform?.(this.configurationContent) as
-      | {[key: string]: unknown}
-      | undefined
+    const transformedConfig = this.specification.transform?.(this.configuration) as {[key: string]: unknown} | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
     return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }
 
   validate() {
     if (!this.specification.validate) return Promise.resolve(ok(undefined))
-    return this.specification.validate(this.configuration, this.directory)
+    return this.specification.validate(this.configuration, this.configurationPath, this.directory)
   }
 
   preDeployValidation(): Promise<void> {
@@ -254,7 +249,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async watchConfigurationPaths() {
     if (this.isAppConfigExtension) {
-      return [this.configuration.path]
+      return [this.configurationPath]
     } else {
       const additionalPaths = []
       if (await fileExists(joinPath(this.directory, 'locales'))) {

@@ -52,7 +52,7 @@ describe('functionConfiguration', () => {
 
     extension = await testFunctionExtension({
       dir: '/function',
-      config,
+      config: {...config},
     })
   })
 

@@ -142,7 +142,7 @@ export async function testUIExtension(
     },
     targeting: [{target: 'target1'}, {target: 'target2'}],
   }
-  const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
+  const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
   const allSpecs = await loadLocalExtensionsSpecifications()
