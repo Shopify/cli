@@ -85,8 +85,8 @@ export async function shouldRunCommand(result: string, userCommand: string) {
 const hook: Hook.CommandNotFound = async function (opts) {
   const result = findAlternativeCommand(opts)
   const userCommand = sanitizeCmd(opts.id)
-
-  if (!result) {
+  const useForceFlag = opts.argv && (opts.argv.includes('-f') || opts.argv.includes('--force'))
+  if (useForceFlag || !result) {
     renderFatalError(new AbortError(`Command '${userCommand}' not found.`))
     return
   }
