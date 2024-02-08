@@ -4,11 +4,10 @@ import {fetchActiveAppVersion, fetchAppExtensionRegistrations} from '../dev/fetc
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
-import {remoteAppConfigurationExtensionContent} from '../app/config/link.js'
 import {buildDiffConfigContent} from '../../prompts/config.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {ActiveAppVersionQuerySchema, AppModuleVersion} from '../../api/graphql/app_active_version.js'
+import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -97,28 +96,7 @@ export async function configExtensionsIdentifiersBreakdown({
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
-  const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
-  const appModuleVersionsConfig =
-    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
-      (module) => module.specification?.experience === 'configuration',
-    ) || []
-
-  return resolveRemoteConfigExtensionIdentifiersBreakdown(
-    appModuleVersionsConfig.map(mapAppModuleToExtensionRegistration),
-    localApp,
-    versionAppModules ? versionAppModules.map(mapAppModuleToExtensionRegistration) : undefined,
-  )
-}
-
-function mapAppModuleToExtensionRegistration(appModule: AppModuleVersion): ExtensionRegistration {
-  return {
-    id: appModule.registrationId,
-    uuid: appModule.registrationUuid,
-    title: appModule.registrationTitle,
-    type: appModule.specification?.identifier ?? '',
-    draftVersion: appModule.config ? {config: appModule.config} : undefined,
-    activeVersion: appModule.config ? {config: appModule.config} : undefined,
-  }
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(token, apiKey, localApp, versionAppModules)
 }
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
@@ -130,14 +108,15 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
   }
 }
 
-function resolveRemoteConfigExtensionIdentifiersBreakdown(
-  extensionRegistrations: ExtensionRegistration[],
+async function resolveRemoteConfigExtensionIdentifiersBreakdown(
+  token: string,
+  apiKey: string,
   app: AppInterface,
-  versionExtensionRegistrations?: ExtensionRegistration[],
-): ConfigExtensionIdentifiersBreakdown {
-  const remoteConfig = remoteAppConfigurationExtensionContent(extensionRegistrations, app.specifications ?? [])
-  const baselineConfig = versionExtensionRegistrations
-    ? remoteAppConfigurationExtensionContent(versionExtensionRegistrations, app.specifications ?? [])
+  versionAppModules?: AppModuleVersion[],
+) {
+  const remoteConfig = await fetchAppRemoteConfiguration(apiKey, token, app.specifications ?? [])
+  const baselineConfig = versionAppModules
+    ? remoteAppConfigurationExtensionContent(versionAppModules, app.specifications ?? [])
     : app.configuration
   const diffConfigContent = buildDiffConfigContent(
     baselineConfig as CurrentAppConfiguration,

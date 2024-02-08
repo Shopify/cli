@@ -639,11 +639,13 @@ export const testPartnersServiceSession: PartnersSession = {
 }
 
 export async function buildVersionedAppSchema() {
-  const configSpecifications = (await loadLocalExtensionsSpecifications()).filter(
-    (spec) => spec.experience === 'configuration',
-  )
+  const configSpecifications = await configurationSpecifications()
   return {
     schema: getAppVersionedSchema(configSpecifications),
     configSpecifications,
   }
+}
+
+export async function configurationSpecifications() {
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
 }

@@ -12,16 +12,15 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {PartnersSession, fetchPartnersSession} from '../../context/partner-account-info.js'
-import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {BetaFlag, fetchAppRemoteBetaFlags} from '../select-app.js'
+import {BetaFlag, fetchAppRemoteBetaFlags, fetchAppRemoteConfiguration} from '../select-app.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -44,10 +43,10 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   await logMetadataForLoadedContext(remoteApp)
 
   let configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
-  const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
+  const remoteAppConfigurationFromExtensions = await fetchAppRemoteConfiguration(
+    remoteApp.apiKey,
     token,
-    remoteApp,
-    localApp,
+    localApp.specifications ?? [],
   )
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
   configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions, replaceLocalArrayStrategy)
@@ -129,21 +128,6 @@ async function loadRemoteApp(
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)
   }
   return app
-}
-
-async function loadRemoteAppConfigurationFromExtensions(
-  token: string,
-  remoteApp: OrganizationApp,
-  localApp: AppInterface,
-) {
-  const remoteExtensionRegistrations = await fetchAppExtensionRegistrations({
-    token,
-    apiKey: remoteApp.apiKey,
-  })
-  return remoteAppConfigurationExtensionContent(
-    remoteExtensionRegistrations.app.configurationRegistrations,
-    localApp.specifications ?? [],
-  )
 }
 
 async function loadConfigurationFileName(
@@ -293,27 +277,6 @@ function addBrandingConfig(remoteApp: OrganizationApp) {
   return {
     name: remoteApp.title,
   }
-}
-
-export function remoteAppConfigurationExtensionContent(
-  configRegistrations: ExtensionRegistration[],
-  specifications: ExtensionSpecification[],
-) {
-  let remoteAppConfig: {[key: string]: unknown} = {}
-  const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
-  configRegistrations.forEach((extension) => {
-    const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
-    if (!configSpec) return
-    const configExtensionString = extension.activeVersion?.config
-    if (!configExtensionString) return
-    const configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
-
-    remoteAppConfig = deepMergeObjects(
-      remoteAppConfig,
-      configSpec.reverseTransform?.(configExtension) ?? configExtension,
-    )
-  })
-  return {...remoteAppConfig}
 }
 
 function renderSuccessMessage(configFileName: string, remoteApp: OrganizationApp, localApp: AppInterface) {
