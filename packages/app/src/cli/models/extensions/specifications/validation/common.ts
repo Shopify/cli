@@ -15,8 +15,13 @@ export const ensureHttpsOnlyUrl = validateUrl(zod.string(), {
   message: 'Only https urls are allowed',
 }).refine((url) => !url.endsWith('/'), {message: 'URL can’t end with a forward slash'})
 
-export const UriValidation = zod.union([
-  zod.string().regex(httpsRegex),
-  zod.string().regex(pubSubRegex),
-  zod.string().regex(arnRegex),
-])
+export const UriValidation = zod.string().refine(
+  (uri) => {
+    if (uri.startsWith('/')) return true
+
+    return httpsRegex.test(uri) || pubSubRegex.test(uri) || arnRegex.test(uri)
+  },
+  {
+    message: 'Must be a valid https, pubsub, or ARN URI',
+  },
+)

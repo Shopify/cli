@@ -10,6 +10,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
+import {AppConfiguration} from '../app/app.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -42,6 +43,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   outputPath: string
   handle: string
   specification: ExtensionSpecification
+  fullAppConfiguration?: AppConfiguration
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -109,6 +111,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     entryPath?: string
     directory: string
     specification: ExtensionSpecification
+    fullAppConfig?: AppConfiguration
   }) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
@@ -123,6 +126,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
+    this.fullAppConfiguration = options.fullAppConfig
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', `${this.outputFileName}`)
@@ -175,7 +179,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async commonDeployConfig(apiKey: string): Promise<{[key: string]: unknown} | undefined> {
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
-    const transformedConfig = this.specification.transform?.(this.configuration) as {[key: string]: unknown} | undefined
+    const transformedConfig = this.specification.transform?.(this.configuration, this.fullAppConfiguration) as
+      | {[key: string]: unknown}
+      | undefined
     const resultDeployConfig = deployConfig ?? transformedConfig ?? undefined
     return resultDeployConfig && Object.keys(resultDeployConfig).length > 0 ? resultDeployConfig : undefined
   }

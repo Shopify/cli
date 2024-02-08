@@ -2350,9 +2350,8 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      code: zod.ZodIssueCode.custom,
+      message: 'Must be a valid https, pubsub, or ARN URI',
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2378,9 +2377,8 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      code: zod.ZodIssueCode.custom,
+      message: 'Must be a valid https, pubsub, or ARN URI',
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
@@ -2426,6 +2424,22 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
+  test('accepts a relative path uri', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2021-07',
+      subscriptions: [
+        {
+          uri: '/webhooks',
+          topics: ['products/create'],
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
   test('accepts combination of uris', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
@@ -2440,6 +2454,10 @@ describe('WebhooksSchema', () => {
         },
         {
           uri: 'pubsub://my-project-123:my-topic',
+          topics: ['products/create', 'products/update'],
+        },
+        {
+          uri: '/webhooks',
           topics: ['products/create', 'products/update'],
         },
       ],
@@ -2531,9 +2549,8 @@ describe('WebhooksSchema', () => {
       ],
     }
     const errorObj = {
-      validation: 'regex' as zod.ZodInvalidStringIssue['validation'],
-      code: zod.ZodIssueCode.invalid_string,
-      message: 'Invalid',
+      code: zod.ZodIssueCode.custom,
+      message: 'Must be a valid https, pubsub, or ARN URI',
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 

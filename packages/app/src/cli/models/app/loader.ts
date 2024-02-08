@@ -191,6 +191,7 @@ class AppLoader {
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
   private remoteBetas: BetaFlag[]
+  private fullAppConfiguration?: AppConfiguration
 
   constructor({directory, configName, mode, specifications, remoteBetas}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
@@ -220,6 +221,7 @@ class AppLoader {
       specifications: this.specifications,
     })
     const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
+    this.fullAppConfiguration = configuration
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
     const dotenv = await loadDotEnv(directory, configuration.path)
@@ -334,6 +336,7 @@ class AppLoader {
       entryPath,
       directory,
       specification,
+      fullAppConfig: this.fullAppConfiguration,
     })
 
     const validateResult = await extensionInstance.validate()

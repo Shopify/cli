@@ -21,7 +21,7 @@ export interface TransformationConfig {
 }
 
 export interface CustomTransformationConfig {
-  forward?: (obj: object) => object
+  forward?: (obj: object, fullAppConfiguration?: object) => object
   reverse?: (obj: object) => object
 }
 
@@ -55,8 +55,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  transform?: (content: object) => object
-  reverseTransform?: (content: object) => object
+  transform?: (content: object, fullAppConfiguration?: object) => object
+  reverseTransform?: (content: object, fullAppConfiguration?: object) => object
 }
 
 /**

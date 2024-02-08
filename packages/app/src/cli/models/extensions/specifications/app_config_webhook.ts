@@ -25,7 +25,7 @@ const WebhooksSchema = zod.object({
   subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
-export const WebhooksSchemaWithDeclarative = WebhooksSchema.superRefine(webhookValidator)
+const WebhooksSchemaWithDeclarative = WebhooksSchema.superRefine(webhookValidator)
 
 export const WebhookSchema = zod.object({
   webhooks: WebhooksSchemaWithDeclarative,
@@ -34,8 +34,8 @@ export const WebhookSchema = zod.object({
 export const WebhooksSpecIdentifier = 'webhooks'
 
 const WebhookTransformConfig: CustomTransformationConfig = {
-  forward: (content: object) => transformWebhookConfig(content),
-  reverse: (content: object) => transformToWebhookConfig(content),
+  forward: transformWebhookConfig,
+  reverse: transformToWebhookConfig,
 }
 
 const spec = createConfigExtensionSpecification({

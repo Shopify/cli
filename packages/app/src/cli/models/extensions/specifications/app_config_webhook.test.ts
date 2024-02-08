@@ -126,6 +126,39 @@ describe('webhooks', () => {
         api_version: '2021-01',
       })
     })
+    test('when a relative URI is used, it inherits the application_url', () => {
+      // Given
+      const object = {
+        webhooks: {
+          api_version: '2021-01',
+          subscriptions: [
+            {
+              topics: ['products/update', 'products/delete'],
+              uri: '/products',
+            },
+          ],
+        },
+      }
+      const webhookSpec = spec
+
+      // When
+      const result = webhookSpec.transform!(object, {application_url: 'https://my-app-url.com'})
+
+      // Then
+      expect(result).toEqual({
+        api_version: '2021-01',
+        subscriptions: [
+          {
+            topic: 'products/update',
+            uri: 'https://my-app-url.com/products',
+          },
+          {
+            topic: 'products/delete',
+            uri: 'https://my-app-url.com/products',
+          },
+        ],
+      })
+    })
   })
   describe('reverseTransform', () => {
     test('should return the reversed transformed object', () => {
@@ -243,6 +276,63 @@ describe('webhooks', () => {
       expect(result).toMatchObject({
         webhooks: {
           api_version: '2021-01',
+        },
+      })
+    })
+    test('when subscriptions share the application_url base, simplify with a relative path', () => {
+      // Given
+      const object = {
+        api_version: '2021-01',
+        subscriptions: [
+          {
+            topic: 'products/update',
+            uri: 'https://my-app-url.com/products',
+          },
+          {
+            topic: 'products/delete',
+            uri: 'https://my-app-url.com/products',
+          },
+          {
+            topic: 'orders/update',
+            uri: 'https://my-app-url.com/orders',
+          },
+          {
+            topic: 'customers/create',
+            uri: 'https://customers-url.com',
+          },
+          {
+            topic: 'customers/delete',
+            uri: 'pubsub://absolute-feat-test:pub-sub-topic',
+          },
+        ],
+      }
+      const webhookSpec = spec
+
+      // When
+      const result = webhookSpec.reverseTransform!(object, {application_url: 'https://my-app-url.com'})
+
+      // Then
+      expect(result).toMatchObject({
+        webhooks: {
+          api_version: '2021-01',
+          subscriptions: [
+            {
+              topics: ['products/update', 'products/delete'],
+              uri: '/products',
+            },
+            {
+              topics: ['orders/update'],
+              uri: '/orders',
+            },
+            {
+              topics: ['customers/create'],
+              uri: 'https://customers-url.com',
+            },
+            {
+              topics: ['customers/delete'],
+              uri: 'pubsub://absolute-feat-test:pub-sub-topic',
+            },
+          ],
         },
       })
     })
