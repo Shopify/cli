@@ -33,6 +33,7 @@ export interface LocalSource {
   graphQLType: string
   type: string
   handle: string
+  contextValue: string
 }
 
 export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPresenceOptions) {
