@@ -3,7 +3,7 @@ import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {AppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {GetConfigQuerySchema, GetConfig} from '../../../api/graphql/get_config.js'
+import {FindAppQuery, FindAppQuerySchema} from '../../../api/graphql/find_app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -97,7 +97,7 @@ async function getConfigFileName(directory: string, configName?: string): Promis
 async function logMetadata(configuration: AppConfiguration) {
   const token = await ensureAuthenticatedPartners()
   const queryVariables = {apiKey: configuration.client_id}
-  const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
+  const queryResult: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, queryVariables)
 
   if (queryResult.app) {
     const {app} = queryResult

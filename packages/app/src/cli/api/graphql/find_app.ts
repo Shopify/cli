@@ -30,6 +30,7 @@ export const FindAppQuery = gql`
         url
       }
       developmentStorePreviewEnabled
+      disabledBetas
     }
   }
 `
@@ -63,5 +64,6 @@ export interface FindAppQuerySchema {
       url: string
     }
     developmentStorePreviewEnabled: boolean
+    disabledBetas: string[]
   }
 }
