@@ -16,16 +16,12 @@ export async function selectApp(): Promise<OrganizationApp> {
   return fullSelectedApp!
 }
 
-export enum BetaFlag {
-  VersionedAppConfig,
-}
+export enum BetaFlag {}
 
-const FlagMap: {[key: string]: BetaFlag} = {
-  versioned_app_config: BetaFlag.VersionedAppConfig,
-}
+const FlagMap: {[key: string]: BetaFlag} = {}
 
 export async function fetchAppRemoteBetaFlags(apiKey: string, token: string) {
-  const defaultActiveBetas: BetaFlag[] = [BetaFlag.VersionedAppConfig]
+  const defaultActiveBetas: BetaFlag[] = []
   const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, {apiKey})
   if (queryResult.app) {
     const {app} = queryResult

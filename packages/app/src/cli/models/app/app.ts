@@ -168,7 +168,6 @@ export interface AppInterface extends AppConfigurationInterface {
   draftableExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
-  useVersionedAppConfig: boolean
   includeConfigOnDeploy: boolean | undefined
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
@@ -243,15 +242,11 @@ export class App implements AppInterface {
   }
 
   get allExtensions() {
-    return this.realExtensions.filter(
-      (ext) => !ext.isAppConfigExtension || (this.useVersionedAppConfig && this.includeConfigOnDeploy),
-    )
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension || this.includeConfigOnDeploy)
   }
 
   get draftableExtensions() {
-    return this.realExtensions.filter(
-      (ext) => ext.isDraftable() && (!ext.isAppConfigExtension || this.useVersionedAppConfig),
-    )
+    return this.realExtensions.filter((ext) => ext.isDraftable())
   }
 
   async updateDependencies() {
@@ -288,10 +283,6 @@ export class App implements AppInterface {
     this.allExtensions.forEach((extension) => {
       extension.devUUID = uuids[extension.localIdentifier] ?? extension.devUUID
     })
-  }
-
-  get useVersionedAppConfig() {
-    return this.remoteBetaFlags.includes(BetaFlag.VersionedAppConfig)
   }
 
   get includeConfigOnDeploy() {
