@@ -10,7 +10,7 @@ const webhooksActiveAppModule: AppModuleVersion = {
   registrationId: 'C_A',
   registrationUuid: 'UUID_C_A',
   registrationTitle: 'Registration title',
-  type: 'webhooks',
+  type: 'Module:Webhooks',
   config: JSON.stringify({api_version: '2023-04'}),
   specification: {
     identifier: 'webhooks',
@@ -25,7 +25,7 @@ const homeActiveAppModule: AppModuleVersion = {
   registrationId: 'C_B',
   registrationUuid: 'UUID_C_B',
   registrationTitle: 'Registration title',
-  type: 'app_home',
+  type: 'Module:AppHome',
   config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
   specification: {
     identifier: 'app_home',
@@ -40,7 +40,7 @@ const brandingActiveAppModule: AppModuleVersion = {
   registrationId: 'C_C',
   registrationUuid: 'UUID_C_C',
   registrationTitle: 'Registration title',
-  type: 'branding',
+  type: 'Module:Branding',
   config: JSON.stringify({name: 'name'}),
   specification: {
     identifier: 'branding',
@@ -83,7 +83,7 @@ describe('fetchAppRemoteConfiguration', () => {
       registrationId: 'C_B',
       registrationUuid: 'UUID_C_B',
       registrationTitle: 'Registration title',
-      type: 'privacy_compliance_webhooks',
+      type: 'Module:Privacy',
       config: JSON.stringify({
         customers_redact_url: 'https://myapp.com/redact',
         customers_data_request_url: 'https://myapp.com/data_request',
