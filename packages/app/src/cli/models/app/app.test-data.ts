@@ -258,6 +258,12 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
     type: 'web_pixel' as const,
     metafields: [],
     runtime_context: 'strict',
+    customer_privacy: {
+      analytics: false,
+      marketing: true,
+      preferences: false,
+      sale_of_data: 'enabled',
+    },
     settings: [],
   }
 
@@ -280,6 +286,12 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     type: 'tax_calculation' as const,
     metafields: [],
     runtime_context: 'strict',
+    customer_privacy: {
+      analytics: false,
+      marketing: true,
+      preferences: false,
+      sale_of_data: 'enabled',
+    },
   }
 
   const allSpecs = await loadLocalExtensionsSpecifications()
