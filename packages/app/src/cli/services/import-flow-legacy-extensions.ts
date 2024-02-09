@@ -6,7 +6,6 @@ import {fetchPartnersSession} from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {Config} from '@oclif/core'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
@@ -14,7 +13,6 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 
 interface ImportFlowOptions {
   app: AppInterface
-  commandConfig: Config
   apiKey?: string
 }
 

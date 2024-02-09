@@ -71,7 +71,6 @@ export default class Release extends Command {
       reset: flags.reset,
       force: flags.force,
       version: flags.version,
-      commandConfig: this.config,
     })
   }
 }

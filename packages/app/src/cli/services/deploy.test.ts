@@ -19,7 +19,6 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {Config} from '@oclif/core'
 
 const versionTag = 'unique-version-tag'
 
@@ -546,6 +545,5 @@ async function testDeployBundle({
     message: options?.message,
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
-    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   })
 }

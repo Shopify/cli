@@ -14,7 +14,6 @@ import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -45,7 +44,6 @@ beforeEach(() => {
 const defaultOptions: FrontendURLOptions = {
   noTunnel: false,
   tunnelUrl: undefined,
-  commandConfig: new Config({root: ''}),
   tunnelClient: {
     getTunnelStatus: () => ({status: 'starting'}),
     stopTunnel: () => {},

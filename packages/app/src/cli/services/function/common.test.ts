@@ -4,7 +4,6 @@ import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -28,7 +27,6 @@ describe('ensure we are within a function context', () => {
 
     // When
     await inFunctionContext({
-      commandConfig: new Config({root: ''}),
       path: joinPath(app.directory, 'extensions/my-function'),
       callback: async (_app, _fun) => {
         ranCallback = true
@@ -47,7 +45,6 @@ describe('ensure we are within a function context', () => {
     // When
     await expect(
       inFunctionContext({
-        commandConfig: new Config({root: ''}),
         path: 'random/dir',
         callback: async (_app, _fun) => {
           ranCallback = true

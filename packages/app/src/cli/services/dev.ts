@@ -103,7 +103,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     token,
     {
       noTunnel: commandOptions.noTunnel,
-      commandConfig: commandOptions.commandConfig,
       tunnelUrl: commandOptions.tunnelUrl,
     },
     tunnelClient,
@@ -219,7 +218,7 @@ async function setupNetworkingOptions(
   graphiqlPort: number,
   apiKey: string,
   token: string,
-  frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl' | 'commandConfig'>,
+  frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl'>,
   tunnelClient?: TunnelClient,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
