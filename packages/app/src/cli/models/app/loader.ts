@@ -99,7 +99,8 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   if (!configurationObject) return fallbackOutput
 
-  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  const configuration = await parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  return {...configuration, path: filepath}
 }
 
 export async function parseConfigurationObject<TSchema extends zod.ZodType>(
@@ -107,7 +108,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema> & {path: string}> {
+): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -120,7 +121,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
       parseResult.error.issues,
     )
   }
-  return {...parseResult.data, path: filepath}
+  return parseResult.data
 }
 
 export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
@@ -434,8 +435,7 @@ class AppLoader {
           this.abortOrReport.bind(this),
         )
 
-        const {path, ...specConfigurationWithoutPath} = specConfiguration
-        if (Object.keys(specConfigurationWithoutPath).length === 0) return
+        if (Object.keys(specConfiguration).length === 0) return
 
         return this.createExtensionInstance(
           specification.identifier,
