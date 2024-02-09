@@ -11,12 +11,12 @@ import {
   testFunctionExtension,
   testOrganizationApp,
   testUIExtension,
+  testPaymentsAppExtension,
 } from '../../models/app/app.test-data.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
-import {BetaFlag} from '../app/select-app.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -27,6 +27,7 @@ const REGISTRATION_A = {
   id: 'A',
   title: 'A',
   type: 'CHECKOUT_POST_PURCHASE',
+  contextValue: '',
 }
 
 const REGISTRATION_A_2 = {
@@ -34,6 +35,7 @@ const REGISTRATION_A_2 = {
   id: 'A_2',
   title: 'A_2',
   type: 'CHECKOUT_POST_PURCHASE',
+  contextValue: '',
 }
 
 const REGISTRATION_A_3 = {
@@ -41,6 +43,7 @@ const REGISTRATION_A_3 = {
   id: 'A_3',
   title: 'A_3',
   type: 'CHECKOUT_POST_PURCHASE',
+  contextValue: '',
 }
 
 const REGISTRATION_B = {
@@ -48,13 +51,7 @@ const REGISTRATION_B = {
   id: 'B',
   title: 'B',
   type: 'SUBSCRIPTION_MANAGEMENT',
-}
-
-const DASHBOARD_REGISTRATION_A = {
-  uuid: 'UUID_DASHBOARD_A',
-  id: 'DASHBOARD_A',
-  title: 'DASHBOARD_A',
-  type: 'APP_LINK',
+  contextValue: '',
 }
 
 const FUNCTION_REGISTRATION_A = {
@@ -62,12 +59,22 @@ const FUNCTION_REGISTRATION_A = {
   id: 'FUNCTION_A',
   title: 'FUNCTION_A',
   type: 'FUNCTION',
+  contextValue: '',
+}
+
+const PAYMENTS_REGISTRATION_A = {
+  uuid: 'PAYMENTS_A_UUID',
+  id: 'PAYMENTS_A',
+  title: 'PAYMENTS_A',
+  type: 'PAYMENTS',
+  contextValue: 'payments.offsite.render',
 }
 
 let EXTENSION_A: ExtensionInstance
 let EXTENSION_A_2: ExtensionInstance
 let EXTENSION_B: ExtensionInstance
 let FUNCTION_A: ExtensionInstance
+let PAYMENTS_A: ExtensionInstance
 
 const LOCAL_APP = (
   uiExtensions: ExtensionInstance[],
@@ -96,7 +103,7 @@ const options = (
   release = true,
   includeDeployConfig = false,
   configExtensions: ExtensionInstance[] = [],
-  betas = [BetaFlag.VersionedAppConfig],
+  betas = [],
 ): EnsureDeploymentIdsPresenceOptions => {
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
@@ -203,6 +210,26 @@ beforeAll(async () => {
       metafields: [],
       configuration_ui: false,
       api_version: '2022-07',
+    },
+  })
+
+  PAYMENTS_A = await testPaymentsAppExtension({
+    dir: '/payments',
+    config: {
+      name: 'Payments Extension',
+      type: 'payments_extension',
+      description: 'Payments App Extension',
+      metafields: [],
+      api_version: '2022-07',
+      payment_session_url: 'https://example.com/payment',
+      supported_countries: ['US'],
+      supported_payment_methods: ['VISA'],
+      test_mode_available: true,
+      merchant_label: 'Merchant Label',
+      supports_installments: false,
+      supports_deferred_payments: false,
+      supports_3ds: false,
+      targeting: [{target: 'payments.offsite.render'}],
     },
   })
 })
@@ -818,6 +845,34 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
       extensions: {},
       extensionIds: {'point-of-sale': 'C_A'},
       extensionsNonUuidManaged: {'point-of-sale': 'UUID_C_A'},
+    })
+  })
+  test('when the include config on deploy flag is disabled but draft extensions should be used configuration extensions are created with context', async () => {
+    // Given
+    const extensionsToCreate: LocalSource[] = [PAYMENTS_A]
+    const validMatches = {}
+    vi.mocked(createExtension).mockResolvedValueOnce(PAYMENTS_REGISTRATION_A)
+
+    // When
+    const ensureExtensionsIdsOptions = options([], [], {}, testOrganizationApp(), true, false, [PAYMENTS_A])
+    ensureExtensionsIdsOptions.includeDraftExtensions = true
+    const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
+      extensionsToCreate,
+      validMatches,
+    })
+
+    // Then
+    expect(createExtension).toBeCalledWith(
+      'appId',
+      PAYMENTS_A.graphQLType,
+      PAYMENTS_A.handle,
+      'token',
+      'payments.offsite.render',
+    )
+    expect(got).toEqual({
+      extensions: {'payments-extension': 'PAYMENTS_A_UUID'},
+      extensionIds: {'payments-extension': 'PAYMENTS_A'},
+      extensionsNonUuidManaged: {},
     })
   })
 })

@@ -1,6 +1,5 @@
  app build                         @shopify/app                 
  app config link                   @shopify/app                 
- app config push                   @shopify/app                 
  app config use                    @shopify/app                 
  app deploy                        @shopify/app                 
  app dev                           @shopify/app                 
@@ -15,7 +14,6 @@
  app import-flow-legacy-extensions @shopify/app                 
  app info                          @shopify/app                 
  app release                       @shopify/app                 
- app update-url                    @shopify/app                 
  app versions list                 @shopify/app                 
  auth logout                       @shopify/cli                 
  commands                          @oclif/plugin-commands       

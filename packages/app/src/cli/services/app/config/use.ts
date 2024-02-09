@@ -1,9 +1,9 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {AppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {GetConfigQuerySchema, GetConfig} from '../../../api/graphql/get_config.js'
+import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -12,7 +12,6 @@ import {Result, err, ok} from '@shopify/cli-kit/node/result'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {formatPackageManagerCommand, outputDebug} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface UseOptions {
   directory: string
@@ -94,14 +93,10 @@ async function getConfigFileName(directory: string, configName?: string): Promis
   return selectConfigFile(directory)
 }
 
-async function logMetadata(configuration: AppConfiguration) {
+async function logMetadata(configuration: CurrentAppConfiguration) {
   const token = await ensureAuthenticatedPartners()
-  const queryVariables = {apiKey: configuration.client_id}
-  const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, queryVariables)
-
-  if (queryResult.app) {
-    const {app} = queryResult
-
+  const app = await fetchAppDetailsFromApiKey(configuration.client_id, token)
+  if (app) {
     await logMetadataForLoadedContext(app)
   } else {
     outputDebug("Couldn't find app for analytics. Make sure you have a valid client ID.")

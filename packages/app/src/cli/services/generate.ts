@@ -42,7 +42,7 @@ async function generate(options: GenerateOptions) {
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
   const apiKey = await ensureGenerateContext({...options, partnersSession})
-  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
+  const specifications = await fetchSpecifications({token, apiKey})
   const app: AppInterface = await loadApp({
     directory: options.directory,
     configName: options.configName,

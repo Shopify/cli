@@ -191,7 +191,7 @@ class AppInfo {
     const config = extension.configuration
     const details = [
       [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configuration.path)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
@@ -201,11 +201,11 @@ class AppInfo {
   }
 
   invalidExtensionSubSection(extension: ExtensionInstance): string {
-    const error = this.app.errors?.getError(extension.configuration.path)
+    const error = this.app.errors?.getError(extension.configurationPath)
     if (!error) return ''
     const details = [
       [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configuration.path)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     const formattedError = this.formattedError(error)
     return `\n${linesToColumns(details)}\n${formattedError}`

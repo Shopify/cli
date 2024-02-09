@@ -250,25 +250,25 @@ describe('info', () => {
       // Given
       const uiExtension1 = await testUIExtension({
         configuration: {
-          path: 'extension/path/1',
           name: 'Extension 1',
           handle: 'handle-for-extension-1',
           type: 'ui_extension',
           metafields: [],
         },
+        configurationPath: 'extension/path/1',
       })
       const uiExtension2 = await testUIExtension({
         configuration: {
-          path: 'extension/path/2',
           name: 'Extension 2',
           type: 'checkout_ui_extension',
           metafields: [],
         },
+        configurationPath: 'extension/path/2',
       })
 
       const errors = new AppErrors()
-      errors.addError(uiExtension1.configuration.path, 'Mock error with ui_extension')
-      errors.addError(uiExtension2.configuration.path, 'Mock error with checkout_ui_extension')
+      errors.addError(uiExtension1.configurationPath, 'Mock error with ui_extension')
+      errors.addError(uiExtension2.configurationPath, 'Mock error with checkout_ui_extension')
 
       const app = mockApp({
         directory: tmp,

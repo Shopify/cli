@@ -3,7 +3,17 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {HostThemeManager} from '../../../utilities/host-theme-manager.js'
 import {themeExtensionArgs} from '../theme-extension-args.js'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
-import {AdminSession, ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {useEmbeddedThemeCLI} from '@shopify/cli-kit/node/context/local'
+import {outputDebug} from '@shopify/cli-kit/node/output'
+import {
+  AdminSession,
+  ensureAuthenticatedAdmin,
+  ensureAuthenticatedPartners,
+  ensureAuthenticatedStorefront,
+} from '@shopify/cli-kit/node/session'
+
+// Tokens may be invalidated after as little as 4 minutes, better to be safe and refresh every 3 minutes
+const PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS = 3 * 60 * 1000
 
 export interface PreviewThemeAppExtensionsOptions {
   adminSession: AdminSession
@@ -18,13 +28,32 @@ export interface PreviewThemeAppExtensionsProcess extends BaseProcess<PreviewThe
 
 export const runThemeAppExtensionsServer: DevProcessFunction<PreviewThemeAppExtensionsOptions> = async (
   {stdout, stderr, abortSignal},
-  {adminSession, themeExtensionServerArgs: args, storefrontToken, token},
+  {adminSession, themeExtensionServerArgs: args, storefrontToken},
 ) => {
+  const refreshSequence = (attempt = 0) => {
+    outputDebug(`Refreshing partners token (attempt ${attempt})...`, stdout)
+    refreshToken()
+      .then(() => {
+        outputDebug('Refreshed partners token successfully', stdout)
+      })
+      .catch((error) => {
+        outputDebug(`Failed to refresh partners token: ${error}`, stderr)
+        if (attempt < 3) {
+          // Retry after 30 seconds. Sometimes we see random ECONNREFUSED errors
+          // so let's let the network sort itself out and retry.
+          setTimeout(() => refreshSequence(attempt + 1), 30 * 1000)
+        } else {
+          throw error
+        }
+      })
+  }
+  setInterval(refreshSequence, PARTNERS_TOKEN_REFRESH_TIMEOUT_IN_MS)
+
+  await refreshToken()
   await execCLI2(['extension', 'serve', ...args], {
     store: adminSession.storeFqdn,
     adminToken: adminSession.token,
     storefrontToken,
-    token,
     stdout,
     stderr,
     signal: abortSignal,
@@ -82,5 +111,12 @@ export async function setupPreviewThemeAppExtensionsProcess({
       storefrontToken,
       token,
     },
+  }
+}
+
+async function refreshToken() {
+  const newToken = await ensureAuthenticatedPartners([], process.env, {noPrompt: true})
+  if (useEmbeddedThemeCLI()) {
+    await execCLI2(['theme', 'token', '--partners', newToken])
   }
 }

@@ -19,8 +19,8 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {BetaFlag} from '../../services/app/select-app.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {BetaFlag} from '../../services/dev/fetch.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -218,44 +218,38 @@ class AppLoader {
       configName: this.configName,
       specifications: this.specifications,
     })
-    const {
-      directory: appDirectory,
-      configuration,
-      configurationLoadResultMetadata,
-      configSchema,
-    } = await configurationLoader.loaded()
+    const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
-    const dotenv = await loadDotEnv(appDirectory, configuration.path)
+    const dotenv = await loadDotEnv(directory, configuration.path)
 
-    const allExtensions = await this.loadExtensions(appDirectory, configuration)
+    const extensions = await this.loadExtensions(directory, configuration)
 
-    const packageJSONPath = joinPath(appDirectory, 'package.json')
-    const name = await loadAppName(appDirectory)
+    const packageJSONPath = joinPath(directory, 'package.json')
+    const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const packageManager = await getPackageManager(appDirectory)
+    const packageManager = await getPackageManager(directory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
-      appDirectory,
+      directory,
       configuration.web_directories,
     )
-    const usesWorkspaces = await appUsesWorkspaces(appDirectory)
+    const usesWorkspaces = await appUsesWorkspaces(directory)
 
-    const appClass = new App(
+    const appClass = new App({
       name,
-      'SHOPIFY_API_KEY',
-      appDirectory,
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
+      directory,
       packageManager,
       configuration,
       nodeDependencies,
       webs,
-      allExtensions,
+      modules: extensions,
       usesWorkspaces,
       dotenv,
-      undefined,
-      this.specifications,
+      specifications: this.specifications,
       configSchema,
-      this.remoteBetas,
-    )
+      remoteBetaFlags: this.remoteBetas,
+    })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
@@ -370,7 +364,7 @@ class AppLoader {
         this.abortOrReport(
           outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
           undefined,
-          extension.configuration.path,
+          extension.configurationPath,
         )
       } else if (extension.handle) {
         handles.add(extension.handle)
@@ -431,7 +425,7 @@ class AppLoader {
 
   async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     return this.specifications
-      .filter((specification) => specification.appModuleFeatures().includes('app_config'))
+      .filter((specification) => specification.experience === 'configuration')
       .map(async (specification) => {
         const specConfiguration = await parseConfigurationObject(
           specification.schema,
@@ -559,7 +553,7 @@ class AppConfigurationLoader {
   }
 
   async loaded() {
-    const specifications = this.specifications ?? (await loadFSExtensionsSpecifications())
+    const specifications = this.specifications ?? (await loadLocalExtensionsSpecifications())
     const appDirectory = await this.getAppDirectory()
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile

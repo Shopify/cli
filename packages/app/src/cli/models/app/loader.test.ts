@@ -9,13 +9,12 @@ import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhookSchema} from '../extensions/specifications/app_config_webhook.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {BetaFlag} from '../../services/app/select-app.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -59,7 +58,7 @@ automatically_update_urls_on_dev = true
 `
 
   beforeAll(async () => {
-    specifications = await loadFSExtensionsSpecifications()
+    specifications = await loadLocalExtensionsSpecifications()
   })
 
   beforeEach(async () => {
@@ -1547,6 +1546,83 @@ wrong = "property"
     }
   })
 
+  test('loads the app with a Web Pixel extension that has a full valid configuration with privacy settings', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "web_pixel_extension"
+      name = "pixel"
+      runtime_context = "strict"
+
+      [customer_privacy]
+      analytics = false
+      preferences = false
+      marketing = true
+      sale_of_data = "enabled"
+
+      [settings]
+      type = "object"
+
+      [settings.fields.first]
+      name = "first"
+      description = "description"
+      type = "single_line_text_field"
+      validations = [{ choices = ["a", "b", "c"] }]
+
+      [settings.fields.second]
+      name = "second"
+      description = "description"
+      type = "single_line_text_field"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'pixel',
+    })
+    await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'web_pixel_extension',
+        name: 'pixel',
+        runtime_context: 'strict',
+        customer_privacy: {
+          analytics: false,
+          marketing: true,
+          preferences: false,
+          sale_of_data: 'enabled',
+        },
+        settings: {
+          type: 'object',
+          fields: {
+            first: {
+              description: 'description',
+              name: 'first',
+              type: 'single_line_text_field',
+              validations: [
+                {
+                  choices: ['a', 'b', 'c'],
+                },
+              ],
+            },
+            second: {
+              description: 'description',
+              name: 'second',
+              type: 'single_line_text_field',
+            },
+          },
+        },
+      })
+    }
+  })
+
   test('loads the app with a Legacy Checkout UI extension that has a full valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -1695,7 +1771,7 @@ wrong = "property"
     await writeConfig(linkedAppConfigurationWithPosConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications, remoteBetas: [BetaFlag.VersionedAppConfig]})
+    const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
     expect(app.modules).toHaveLength(5)

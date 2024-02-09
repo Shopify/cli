@@ -1,7 +1,6 @@
 import {fetchSpecifications} from './fetch-extension-specifications.js'
 import {testRemoteSpecifications} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -12,7 +11,7 @@ describe('fetchExtensionSpecifications', () => {
     vi.mocked(partnersRequest).mockResolvedValue({extensionSpecifications: testRemoteSpecifications})
 
     // When
-    const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey', config: new Config({root: ''})})
+    const got = await fetchSpecifications({token: 'token', apiKey: 'apiKey'})
 
     // Then
     expect(got).toEqual(

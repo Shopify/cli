@@ -21,7 +21,6 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
-import {BetaFlag} from '../app/select-app.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
@@ -214,7 +213,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
 const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
   configuration: AppConfiguration = APP_CONFIGURATION,
-  betas = [BetaFlag.VersionedAppConfig],
+  betas = [],
 ): Promise<AppInterface> => {
   const versionSchema = await buildVersionedAppSchema()
 
@@ -1289,53 +1288,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     })
   })
   describe('deploy not including the configuration app modules', () => {
-    test('when the beta is not enabled the configuration breakdown info is not returned', async () => {
-      // Given
-      const configToReleaseAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const configActiveAppModule: AppModuleVersion = {
-        registrationId: 'C_A',
-        registrationUuid: 'UUID_C_A',
-        registrationTitle: 'Registration title',
-        type: 'app_home',
-        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
-        specification: {
-          identifier: 'app_home',
-          name: 'App Ui',
-          experience: 'configuration',
-          options: {
-            managementExperience: 'cli',
-          },
-        },
-      }
-      const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
-      vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
-
-      // When
-      const result = await configExtensionsIdentifiersBreakdown({
-        token: 'token',
-        apiKey: 'apiKey',
-        localApp: await LOCAL_APP([], APP_CONFIGURATION, []),
-        versionAppModules: [configToReleaseAppModule],
-        release: true,
-      })
-
-      // Then
-      expect(result).toBeUndefined()
-    })
     test('when the include_config_on_deploy is not true the configuration breakdown info is not returned', async () => {
       // Given
       const configuration = {

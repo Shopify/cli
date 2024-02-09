@@ -1,10 +1,10 @@
-import {GetConfig, GetConfigQuerySchema} from '../../api/graphql/get_config.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {fetchPartnersSession} from '../context/partner-account-info.js'
-import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../dev/fetch.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, fetchActiveAppVersion} from '../dev/fetch.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
+import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
   const partnersSession = await fetchPartnersSession()
@@ -16,23 +16,33 @@ export async function selectApp(): Promise<OrganizationApp> {
   return fullSelectedApp!
 }
 
-export enum BetaFlag {
-  VersionedAppConfig,
+export async function fetchAppRemoteConfiguration(
+  apiKey: string,
+  token: string,
+  specifications: ExtensionSpecification[],
+) {
+  const activeAppVersion = await fetchActiveAppVersion({token, apiKey})
+  const appModuleVersionsConfig =
+    activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
+      (module) => module.specification?.experience === 'configuration',
+    ) || []
+  return remoteAppConfigurationExtensionContent(appModuleVersionsConfig, specifications)
 }
 
-const FlagMap: {[key: string]: BetaFlag} = {
-  versioned_app_config: BetaFlag.VersionedAppConfig,
-}
+export function remoteAppConfigurationExtensionContent(
+  configRegistrations: AppModuleVersion[],
+  specifications: ExtensionSpecification[],
+) {
+  let remoteAppConfig: {[key: string]: unknown} = {}
+  const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
+  configRegistrations.forEach((module) => {
+    const configSpec = configSpecifications.find((spec) => spec.identifier === module.type.toLowerCase())
+    if (!configSpec) return
+    const configString = module.config
+    if (!configString) return
+    const config = configString ? JSON.parse(configString) : {}
 
-export async function fetchAppRemoteBetaFlags(apiKey: string, token: string) {
-  const defaultActiveBetas: BetaFlag[] = [BetaFlag.VersionedAppConfig]
-  const queryResult: GetConfigQuerySchema = await partnersRequest(GetConfig, token, {apiKey})
-  if (queryResult.app) {
-    const {app} = queryResult
-    const remoteDisabledFlags = app.disabledBetas.map((flag) => FlagMap[flag])
-    return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
-  } else {
-    outputDebug("Couldn't find app for beta flags. Make sure you have a valid client ID.")
-    return []
-  }
+    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config) ?? config)
+  })
+  return {...remoteAppConfig}
 }

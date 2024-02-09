@@ -1,5 +1,6 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppAccessSchema = zod.object({
@@ -15,7 +16,10 @@ const AppAccessSchema = zod.object({
     .optional(),
   access_scopes: zod
     .object({
-      scopes: zod.string().optional(),
+      scopes: zod
+        .string()
+        .transform((scopes) => normalizeDelimitedString(scopes))
+        .optional(),
       use_legacy_install_flow: zod.boolean().optional(),
     })
     .optional(),

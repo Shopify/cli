@@ -3,7 +3,7 @@ import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_sc
 import {testPaymentsAppExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
-import {loadFSExtensionsSpecifications} from '../load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -91,7 +91,7 @@ describe('PaymentsAppExtension', () => {
 
   test('returns error if there is no target', async () => {
     // Given
-    const allSpecs = await loadFSExtensionsSpecifications()
+    const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
     // When/Then

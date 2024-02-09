@@ -17,7 +17,6 @@ import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {fetchAppRemoteBetaFlags} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -201,15 +200,13 @@ export async function ensureDevContext(
   const specifications = await fetchSpecifications({
     token,
     apiKey: selectedApp.apiKey,
-    config: options.commandConfig,
   })
-  const betas = await fetchAppRemoteBetaFlags(selectedApp.apiKey, token)
 
   const localApp = await loadApp({
     directory: options.directory,
     specifications,
     configName: getAppConfigurationShorthand(configuration.path),
-    remoteBetas: betas,
+    remoteBetas: selectedApp.betas,
   })
 
   // We only update the cache or config if the current app is the right one
@@ -377,19 +374,17 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
-  const betas = await fetchAppRemoteBetaFlags(partnersApp.apiKey, token)
+  const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
 
   const specifications = await fetchSpecifications({
     token,
     apiKey: partnersApp.apiKey,
-    config: options.commandConfig,
   })
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,
     configName: getAppConfigurationShorthand(options.app.configuration.path),
-    remoteBetas: betas,
+    remoteBetas: partnersApp.betas,
   })
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
@@ -455,7 +450,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
 
-  const specifications = await loadLocalExtensionsSpecifications(draftExtensionsPushOptions.commandConfig)
+  const specifications = await loadLocalExtensionsSpecifications()
 
   const app: AppInterface = await loadApp({
     specifications,
@@ -524,10 +519,10 @@ async function ensureIncludeConfigOnDeploy({
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
-    includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
+    includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
 
-  if (!app.useVersionedAppConfig || force || previousIncludeConfigOnDeploy !== undefined) return
+  if (force || previousIncludeConfigOnDeploy !== undefined) return
   await promptIncludeConfigOnDeploy({
     appDirectory: app.directory,
     localApp: app,
