@@ -24,7 +24,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   redirectUrlWhitelist: string[]
   requestedAccessScopes?: string[]
   developmentStorePreviewEnabled?: boolean
-  betas?: BetaFlag[]
+  betas: BetaFlag[]
 }
 
 export interface OrganizationStore {
