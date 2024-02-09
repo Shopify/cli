@@ -2339,26 +2339,6 @@ describe('parseConfigurationObject', () => {
 })
 
 describe('WebhooksSchema', () => {
-  test('throws an error if uri is not an https uri', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          uri: 'http://example.com',
-          topics: ['products/create'],
-        },
-      ],
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'Must be a valid https, pubsub, or ARN URI',
-      path: ['webhooks', 'subscriptions', 0, 'uri'],
-    }
-
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
-
   test('removes trailing slashes on uri', async () => {
     const webhookConfig: WebhooksConfig = {
       api_version: '2021-07',
@@ -2371,20 +2351,23 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  test('throws an error if uri is not a valid https URL, pubsub URI, or Eventbridge ARN', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'Must be a valid https, pubsub, or ARN URI',
-      path: ['webhooks', 'subscriptions', 0, 'uri'],
-    }
+  test.each(['my::URI-thing::Shopify::123', 'no-leading-slash', 'http://not-using-https.com', 'https://broken-url'])(
+    'throws an error for invalid URI %s',
+    async () => {
+      const webhookConfig: WebhooksConfig = {
+        api_version: '2021-07',
+        subscriptions: [{uri: 'my::URI-thing::Shopify::123', topics: ['products/create']}],
+      }
+      const errorObj = {
+        code: zod.ZodIssueCode.custom,
+        message: 'Must be a valid https, pubsub, or ARN URI',
+        path: ['webhooks', 'subscriptions', 0, 'uri'],
+      }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
-  })
+      const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
+      expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
+    },
+  )
 
   test('accepts an https uri', async () => {
     const webhookConfig: WebhooksConfig = {
@@ -2536,26 +2519,6 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).not.toHaveBeenCalled()
     webhookConfig.subscriptions![0]!.uri = 'https://example.com'
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
-  })
-
-  test('throws an error if uri is not an https uri', async () => {
-    const webhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          topics: ['products/create'],
-          uri: 'http://example.com',
-        },
-      ],
-    }
-    const errorObj = {
-      code: zod.ZodIssueCode.custom,
-      message: 'Must be a valid https, pubsub, or ARN URI',
-      path: ['webhooks', 'subscriptions', 0, 'uri'],
-    }
-
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('accepts a pub sub config with both project and topic', async () => {
