@@ -93,7 +93,7 @@ export default class Deploy extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const app: AppInterface = await loadApp({directory: flags.path, configName: flags.config})
+    const app: AppInterface = await loadApp({directory: flags.path, configName: flags.config, mode: 'report'})
 
     const requiredNonTTYFlags = ['force']
     if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
