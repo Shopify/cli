@@ -4,6 +4,8 @@ import {fetchPartnersSession} from '../context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, fetchActiveAppVersion} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
+import {buildSpecsAppConfiguration} from '../../models/app/app.js'
+import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
@@ -26,7 +28,9 @@ export async function fetchAppRemoteConfiguration(
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification?.experience === 'configuration',
     ) || []
-  return remoteAppConfigurationExtensionContent(appModuleVersionsConfig, specifications)
+  return buildSpecsAppConfiguration(
+    remoteAppConfigurationExtensionContent(appModuleVersionsConfig, specifications),
+  ) as SpecsAppConfiguration
 }
 
 export function remoteAppConfigurationExtensionContent(
