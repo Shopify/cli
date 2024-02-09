@@ -116,6 +116,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     applicationUrl: 'https://example.com',
     redirectUrlWhitelist: ['https://example.com/callback1'],
     disabledBetas: [],
+    betas: [],
   }
   return {...defaultApp, ...app}
 }
@@ -639,11 +640,13 @@ export const testPartnersServiceSession: PartnersSession = {
 }
 
 export async function buildVersionedAppSchema() {
-  const configSpecifications = (await loadLocalExtensionsSpecifications()).filter(
-    (spec) => spec.experience === 'configuration',
-  )
+  const configSpecifications = await configurationSpecifications()
   return {
     schema: getAppVersionedSchema(configSpecifications),
     configSpecifications,
   }
+}
+
+export async function configurationSpecifications() {
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
 }
