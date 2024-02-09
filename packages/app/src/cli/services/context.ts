@@ -45,7 +45,7 @@ import {
   DevelopmentStorePreviewUpdateQuery,
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
-import {loadFSExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -371,7 +371,7 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
+  const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
   const betas = await fetchAppRemoteBetaFlags(partnersApp.apiKey, token)
 
   const specifications = await fetchSpecifications({
@@ -447,7 +447,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
 
-  const specifications = await loadFSExtensionsSpecifications()
+  const specifications = await loadLocalExtensionsSpecifications()
 
   const app: AppInterface = await loadApp({
     specifications,
@@ -516,10 +516,10 @@ async function ensureIncludeConfigOnDeploy({
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
-    includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
+    includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
 
-  if (!app.useVersionedAppConfig || force || previousIncludeConfigOnDeploy !== undefined) return
+  if (force || previousIncludeConfigOnDeploy !== undefined) return
   await promptIncludeConfigOnDeploy({
     appDirectory: app.directory,
     localApp: app,

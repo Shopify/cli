@@ -1,8 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import {AppSchema, CurrentAppConfiguration, getAppScopes, getAppScopesArray} from '../models/app/app.js'
-import {mergeAppConfiguration} from '../services/app/config/link.js'
-import {OrganizationApp} from '../models/organization.js'
-import {App} from '../api/graphql/get_config.js'
+import {AppSchema, CurrentAppConfiguration} from '../models/app/app.js'
 import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
 import {
   RenderTextPromptOptions,
@@ -16,7 +13,7 @@ import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {deepCompare, deepDifference, setPathValue} from '@shopify/cli-kit/common/object'
+import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -78,42 +75,12 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(
-  force: boolean,
-  configuration: CurrentAppConfiguration,
-  app: App,
-  schema: zod.ZodTypeAny = AppSchema,
-) {
-  if (force) return true
-
-  const useVersionedAppConfig = !app.disabledBetas.includes('versioned_app_config')
-  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp, useVersionedAppConfig)
-
-  const gitDiff = buildDiffConfigContent(configuration, remoteConfiguration, schema)
-  if (!gitDiff) return false
-
-  return renderConfirmationPrompt({
-    message: ['Make the following changes to your remote configuration?'],
-    gitDiff: {
-      baselineContent: gitDiff.baselineContent,
-      updatedContent: gitDiff.updatedContent,
-    },
-    defaultValue: true,
-    confirmationMessage: 'Yes, confirm changes',
-    cancellationMessage: 'No, cancel',
-  })
-}
-
 export function buildDiffConfigContent(
   localConfig: CurrentAppConfiguration,
   remoteConfig: unknown,
   schema: zod.ZodTypeAny = AppSchema,
   renderNoChanges = true,
 ) {
-  if (getAppScopes(localConfig) !== '') {
-    setPathValue(localConfig, 'access_scopes.scopes', getAppScopesArray(localConfig).join(','))
-  }
-
   const [updated, baseline] = deepDifference(
     {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
     {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},

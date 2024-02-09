@@ -19,7 +19,6 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchPartnersSession} from './context/partner-account-info.js'
-import {isPushCommandDeprecated} from './app/config/push.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -140,15 +139,12 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
+    localApp.configuration.access_scopes?.scopes !== remoteApp.requestedAccessScopes?.join(',')
   ) {
-    const pushCommandDeprecated = isPushCommandDeprecated(remoteApp.disabledBetas)
-    const commandToUseForPush = pushCommandDeprecated ? 'shopify app deploy' : 'shopify app config push'
-
     const nextSteps = [
       [
         'Run',
-        {command: formatPackageManagerCommand(localApp.packageManager, commandToUseForPush)},
+        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
         'to push your scopes to the Partner Dashboard',
       ],
     ]

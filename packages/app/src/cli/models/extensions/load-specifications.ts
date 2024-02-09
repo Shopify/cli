@@ -25,7 +25,7 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
 /**
  * Load all specifications ONLY from the local file system
  */
-export async function loadFSExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
+export async function loadLocalExtensionsSpecifications(): Promise<ExtensionSpecification[]> {
   const sortConfigModules = (specA: ExtensionSpecification, specB: ExtensionSpecification) =>
     SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specA.identifier) -
     SORTED_CONFIGURATION_SPEC_IDENTIFIERS.indexOf(specB.identifier)
