@@ -294,61 +294,66 @@ export class App implements AppInterface {
     if (isLegacyAppSchema(configuration)) return configuration
     return {
       ...configuration,
-      ...this.homeConfiguration(configuration),
-      ...this.appProxyConfiguration(configuration),
-      ...this.posConfiguration(configuration),
-      ...this.webhooksConfiguration(configuration),
-      ...this.accessConfiguration(configuration),
+      ...buildSpecsAppConfiguration(configuration),
     } as CurrentAppConfiguration & SpecsAppConfiguration
   }
+}
 
-  private appProxyConfiguration(configuration: AppConfiguration) {
-    if (!getPathValue(configuration, 'app_proxy')) return
-    return {
-      app_proxy: {
-        url: getPathValue<string>(configuration, 'app_proxy.url')!,
-        prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
-        subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
-      },
-    }
+export function buildSpecsAppConfiguration(content: object) {
+  return {
+    ...homeConfiguration(content),
+    ...appProxyConfiguration(content),
+    ...posConfiguration(content),
+    ...webhooksConfiguration(content),
+    ...accessConfiguration(content),
   }
+}
 
-  private homeConfiguration(configuration: AppConfiguration) {
-    const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
-    return {
-      application_url: getPathValue<string>(configuration, 'application_url')!,
-      embedded: getPathValue<boolean>(configuration, 'embedded')!,
-      ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
-    }
+function appProxyConfiguration(configuration: object) {
+  if (!getPathValue(configuration, 'app_proxy')) return
+  return {
+    app_proxy: {
+      url: getPathValue<string>(configuration, 'app_proxy.url')!,
+      prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
+      subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
+    },
   }
+}
 
-  private posConfiguration(configuration: AppConfiguration) {
-    const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
-    return embedded === undefined
-      ? undefined
-      : {
-          pos: {
-            embedded,
-          },
-        }
+function homeConfiguration(configuration: object) {
+  const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
+  return {
+    name: getPathValue<string>(configuration, 'name')!,
+    application_url: getPathValue<string>(configuration, 'application_url')!,
+    embedded: getPathValue<boolean>(configuration, 'embedded')!,
+    ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
   }
+}
 
-  private webhooksConfiguration(configuration: AppConfiguration) {
-    return {
-      webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
-    }
+function posConfiguration(configuration: object) {
+  const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
+  return embedded === undefined
+    ? undefined
+    : {
+        pos: {
+          embedded,
+        },
+      }
+}
+
+function webhooksConfiguration(configuration: object) {
+  return {
+    webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
   }
+}
 
-  private accessConfiguration(configuration: AppConfiguration) {
-    const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
-    const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
-    const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
-    return {
-      ...(scopes || useLegacyInstallFlow
-        ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}}
-        : {}),
-      ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
-    }
+function accessConfiguration(configuration: object) {
+  const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
+  const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
+  const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
+  return {
+    ...(scopes || useLegacyInstallFlow ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}} : {}),
+    ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
   }
 }
 

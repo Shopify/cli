@@ -2,9 +2,7 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
-  CurrentAppConfiguration,
   EmptyApp,
-  getAppScopes,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
@@ -40,20 +38,20 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   await logMetadataForLoadedContext(remoteApp)
 
-  let configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
-  const remoteAppConfigurationFromExtensions = await fetchAppRemoteConfiguration(
+  let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  const remoteAppConfiguration = await fetchAppRemoteConfiguration(
     remoteApp.apiKey,
     token,
     localApp.specifications ?? [],
   )
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-  configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions, replaceLocalArrayStrategy)
+  configuration = deepMergeObjects(configuration, remoteAppConfiguration, replaceLocalArrayStrategy)
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
-    renderSuccessMessage(configFileName, remoteApp, localApp)
+    renderSuccessMessage(configFileName, remoteAppConfiguration.name, localApp)
   }
 
   return configuration
@@ -147,101 +145,11 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-export function mergeAppConfiguration(
-  appConfiguration: AppConfiguration,
-  remoteApp: OrganizationApp,
-): CurrentAppConfiguration {
-  return {
-    ...addLocalAppConfig(appConfiguration, remoteApp),
-    ...addBrandingConfig(remoteApp),
-    ...addPosConfig(remoteApp),
-    ...addRemoteAppWebhooksConfig(remoteApp),
-    ...addRemoteAppAccessConfig(appConfiguration, remoteApp),
-    ...addRemoteAppProxyConfig(remoteApp),
-    ...addRemoteAppHomeConfig(remoteApp),
-  }
-}
-
-function addRemoteAppHomeConfig(remoteApp: OrganizationApp) {
-  const homeConfig = {
-    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
-    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
-  }
-  return remoteApp.preferencesUrl
-    ? {
-        ...homeConfig,
-        app_preferences: {
-          url: remoteApp.preferencesUrl,
-        },
-      }
-    : {...homeConfig}
-}
-
-function addRemoteAppProxyConfig(remoteApp: OrganizationApp) {
-  return remoteApp.appProxy?.url
-    ? {
-        app_proxy: {
-          url: remoteApp.appProxy.url,
-          subpath: remoteApp.appProxy.subPath,
-          prefix: remoteApp.appProxy.subPathPrefix,
-        },
-      }
-    : {}
-}
-
-function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
-  const hasAnyPrivacyWebhook =
-    remoteApp.gdprWebhooks?.customerDataRequestUrl ||
-    remoteApp.gdprWebhooks?.customerDeletionUrl ||
-    remoteApp.gdprWebhooks?.shopDeletionUrl
-
-  const privacyComplianceContent = {
-    privacy_compliance: {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
-    },
-  }
-
-  return {
-    webhooks: {
-      api_version: remoteApp.webhookApiVersion || '2023-07',
-      ...(hasAnyPrivacyWebhook ? privacyComplianceContent : {}),
-    },
-  }
-}
-
-function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
-  let accessScopesContent = {}
-  // if we have upstream scopes, use them
-  if (remoteApp.requestedAccessScopes) {
-    accessScopesContent = {
-      scopes: remoteApp.requestedAccessScopes.join(','),
-    }
-    // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
-  } else if (getAppScopes(appConfiguration) === '') {
-    accessScopesContent = {
-      use_legacy_install_flow: true,
-    }
-    // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
-  } else {
-    accessScopesContent = {
-      scopes: getAppScopes(appConfiguration),
-      use_legacy_install_flow: true,
-    }
-  }
-  return {
-    auth: {
-      redirect_urls: remoteApp.redirectUrlWhitelist,
-    },
-    access_scopes: accessScopesContent,
-  }
-}
-
-function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
+function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp, configFilePath: string) {
   let localAppConfig = {
     ...appConfiguration,
     client_id: remoteApp.apiKey,
+    path: configFilePath,
   }
   if (isCurrentAppSchema(localAppConfig)) {
     delete localAppConfig.auth
@@ -261,23 +169,9 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
   return localAppConfig
 }
 
-function addPosConfig(remoteApp: OrganizationApp) {
-  return {
-    pos: {
-      embedded: remoteApp.posEmbedded || false,
-    },
-  }
-}
-
-function addBrandingConfig(remoteApp: OrganizationApp) {
-  return {
-    name: remoteApp.title,
-  }
-}
-
-function renderSuccessMessage(configFileName: string, remoteApp: OrganizationApp, localApp: AppInterface) {
+function renderSuccessMessage(configFileName: string, appName: string, localApp: AppInterface) {
   renderSuccess({
-    headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+    headline: `${configFileName} is now linked to "${appName}" on Shopify`,
     body: `Using ${configFileName} as your default config.`,
     nextSteps: [
       [`Make updates to ${configFileName} in your local project`],

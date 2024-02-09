@@ -4,6 +4,8 @@ import {fetchPartnersSession} from '../context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps, fetchActiveAppVersion} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
+import {buildSpecsAppConfiguration} from '../../models/app/app.js'
+import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
@@ -26,7 +28,8 @@ export async function fetchAppRemoteConfiguration(
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification?.experience === 'configuration',
     ) || []
-  return remoteAppConfigurationExtensionContent(appModuleVersionsConfig, specifications)
+  const remoteAppConfiguration = remoteAppConfigurationExtensionContent(appModuleVersionsConfig, specifications)
+  return buildSpecsAppConfiguration(remoteAppConfiguration) as SpecsAppConfiguration
 }
 
 export function remoteAppConfigurationExtensionContent(
@@ -36,7 +39,9 @@ export function remoteAppConfigurationExtensionContent(
   let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
   configRegistrations.forEach((module) => {
-    const configSpec = configSpecifications.find((spec) => spec.identifier === module.type.toLowerCase())
+    const configSpec = configSpecifications.find(
+      (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),
+    )
     if (!configSpec) return
     const configString = module.config
     if (!configString) return
