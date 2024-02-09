@@ -1585,8 +1585,8 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    expect(app.modules).toHaveLength(1)
+    const extension = app.modules[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({

@@ -354,14 +354,14 @@ export class App implements AppInterface {
 
 export function validateFunctionExtensionsWithUiHandle(
   functionExtensionsWithUiHandle: ExtensionInstance<FunctionConfigType>[],
-  allExtensions: ExtensionInstance[],
+  modules: ExtensionInstance[],
 ): string[] | undefined {
   const errors: string[] = []
 
   functionExtensionsWithUiHandle.forEach((extension) => {
     const uiHandle = extension.configuration.ui!.handle!
 
-    const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
+    const matchingExtension = findExtensionByHandle(modules, uiHandle)
     if (!matchingExtension) {
       errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
     } else if (matchingExtension.configuration.type !== 'ui_extension') {
@@ -374,8 +374,8 @@ export function validateFunctionExtensionsWithUiHandle(
   return errors.length > 0 ? errors : undefined
 }
 
-function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
-  return allExtensions.find((ext) => ext.handle === handle)
+function findExtensionByHandle(modules: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
+  return modules.find((ext) => ext.handle === handle)
 }
 
 export class EmptyApp extends App {
