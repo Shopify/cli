@@ -15,7 +15,7 @@ import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
-import {fetchAppRemoteBetaFlags, fetchAppRemoteConfiguration} from '../select-app.js'
+import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -46,7 +46,6 @@ beforeEach(async () => {
   vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({})
   vi.mocked(fetchSpecifications).mockResolvedValue(await loadLocalExtensionsSpecifications())
-  vi.mocked(fetchAppRemoteBetaFlags).mockResolvedValue([])
 })
 
 describe('link', () => {

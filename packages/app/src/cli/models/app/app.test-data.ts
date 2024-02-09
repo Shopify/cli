@@ -116,6 +116,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     applicationUrl: 'https://example.com',
     redirectUrlWhitelist: ['https://example.com/callback1'],
     disabledBetas: [],
+    betas: [],
   }
   return {...defaultApp, ...app}
 }

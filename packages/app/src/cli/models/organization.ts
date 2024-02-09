@@ -1,3 +1,5 @@
+import {BetaFlag} from '../services/dev/fetch.js'
+
 export interface Organization {
   id: string
   businessName: string
@@ -36,7 +38,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
     url: string
   }
   developmentStorePreviewEnabled?: boolean
-  disabledBetas?: string[]
+  betas?: BetaFlag[]
 }
 
 export interface OrganizationStore {
