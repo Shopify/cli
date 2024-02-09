@@ -8,7 +8,6 @@ import {AppRelease, AppReleaseSchema, AppReleaseVariables} from '../api/graphql/
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
-import {Config} from '@oclif/core'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 interface ReleaseOptions {
@@ -26,9 +25,6 @@ interface ReleaseOptions {
 
   /** App version tag */
   version: string
-
-  /** Config from the Oclif command */
-  commandConfig: Config
 }
 
 export async function release(options: ReleaseOptions) {

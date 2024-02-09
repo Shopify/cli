@@ -13,7 +13,6 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {Config} from '@oclif/core'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
@@ -154,7 +153,6 @@ async function testRelease(
   },
 ) {
   // Given
-  const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
   vi.mocked(ensureReleaseContext).mockResolvedValue({
     app,
     token: 'api-token',
@@ -169,7 +167,6 @@ async function testRelease(
     reset: false,
     force: Boolean(options?.force),
     version,
-    commandConfig,
   })
 }
 

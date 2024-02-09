@@ -26,6 +26,6 @@ export default class AppImportFlowExtension extends Command {
     const specifications = await loadFSExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
 
-    await importFlowExtensions({app, commandConfig: this.config, apiKey: flags['client-id']})
+    await importFlowExtensions({app, apiKey: flags['client-id']})
   }
 }
