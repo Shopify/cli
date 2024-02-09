@@ -81,6 +81,24 @@
       {
         "type": "node",
         "request": "launch",
+        "name": "shopify app dev / open preview",
+        "cwd": "${workspaceFolder}",
+        "console": "integratedTerminal",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": ["shopify", "app", "dev", "--path=${input:appDir}"],
+        "env": {
+          "DEBUG": "\"*\""
+        },
+        "skipFiles": ["<node_internals>/**"],
+        "serverReadyAction": {
+          "pattern": "Preview URL: (https:\/\/\\w+\\.myshopify\\.com\/admin\/oauth\/redirect_from_cli\\?client_id=[a-f0-9]+)",
+          "uriFormat": "%s",
+          "action": "openExternally"
+        }
+      },
+      {
+        "type": "node",
+        "request": "launch",
         "name": "shopify app generate extension",
         "console" : "integratedTerminal",
         "runtimeExecutable": "pnpm",
