@@ -15,12 +15,12 @@
     ]
   },
   "devDependencies": {
-    "@actions/core": "^1.10.0",
+    "@actions/core": "^1.10.1",
     "execa": "^7.2.0",
-    "fast-glob": "^3.3.1",
+    "fast-glob": "^3.3.2",
     "git-diff": "^2.0.6",
-    "pathe": "^1.1.1",
-    "simple-git": "3.19.1",
+    "pathe": "^1.1.2",
+    "simple-git": "3.22.0",
     "tempy": "3.0.0"
   }
 }
