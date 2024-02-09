@@ -108,7 +108,6 @@ export default class Deploy extends Command {
       message: flags.message,
       version: flags.version,
       commitReference: flags['source-control-url'],
-      commandConfig: this.config,
     })
   }
 }

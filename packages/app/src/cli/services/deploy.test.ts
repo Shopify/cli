@@ -20,7 +20,6 @@ import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {Config} from '@oclif/core'
 import {setPathValue} from '@shopify/cli-kit/common/object'
 
 const versionTag = 'unique-version-tag'
@@ -529,7 +528,6 @@ async function testDeployBundle({
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
-  const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
   for (const extension of app.allExtensions.filter((ext) => ext.isUuidManaged())) {
     extensionsPayload[extension.localIdentifier] = extension.localIdentifier
   }
@@ -573,7 +571,6 @@ async function testDeployBundle({
   await deploy({
     app,
     reset: false,
-    commandConfig,
     force: Boolean(options?.force),
     noRelease: Boolean(options?.noRelease),
     message: options?.message,
