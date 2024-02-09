@@ -12,7 +12,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {BetaFlag, fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
@@ -20,7 +20,7 @@ import {PartnersSession, fetchPartnersSession} from '../../context/partner-accou
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {BetaFlag, fetchAppRemoteBetaFlags, fetchAppRemoteConfiguration} from '../select-app.js'
+import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {Config} from '@oclif/core'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -78,9 +78,7 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
     token,
     apiKey: remoteApp.apiKey,
   })
-
-  const betas = await fetchAppRemoteBetaFlags(remoteApp.apiKey, token)
-  const localApp = await loadAppOrEmptyApp(options, specifications, betas, remoteApp)
+  const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
