@@ -1,10 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {
-  AppConfigurationInterface,
-  AppInterface,
-  CurrentAppConfiguration,
-  isCurrentAppSchema,
-} from '../../models/app/app.js'
+import {AppConfigurationInterface, AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
 import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
@@ -194,7 +189,7 @@ export async function updateURLs(
     throw new AbortError(errors)
   }
 
-  if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
+  if (localApp && localApp.configuration.client_id === apiKey) {
     let localConfiguration: CurrentAppConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
@@ -258,7 +253,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
       options.currentURLs.redirectUrlWhitelist,
     )
 
-    if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
+    if (options.localApp) {
       const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,

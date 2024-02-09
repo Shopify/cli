@@ -1,7 +1,6 @@
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
@@ -25,8 +24,8 @@ export const LegacyAppSchema = zod
   })
   .strict()
 
-export const AppSchema = zod.object({
-  client_id: zod.string(),
+export const AppSchema = LegacyAppSchema.extend({
+  client_id: zod.string().default(''),
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -37,8 +36,6 @@ export const AppSchema = zod.object({
   extension_directories: zod.array(zod.string()).optional(),
   web_directories: zod.array(zod.string()).optional(),
 })
-
-export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
   const isConfigSpecification = (spec: ExtensionSpecification) => spec.experience === 'configuration'
@@ -51,49 +48,25 @@ export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
 }
 
 /**
- * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
- * @param item - the item to validate
- */
-export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
-  const {path, ...rest} = item
-  return isType(LegacyAppSchema, rest)
-}
-
-/**
- * Check whether a shopify.app.toml schema is valid against the current schema definition.
- * @param item - the item to validate
- */
-export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  const {path, ...rest} = item
-  return isType(AppSchema.nonstrict(), rest)
-}
-
-/**
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopes(config: AppConfiguration): string {
-  if (isLegacyAppSchema(config)) {
-    return config.scopes
-  } else if (isCurrentAppSchema(config)) {
-    return config.access_scopes?.scopes ?? ''
-  }
-  return ''
+export function getAppScopes(config: CurrentAppConfiguration): string {
+  return config.access_scopes?.scopes ?? config.scopes ?? ''
 }
 
 /**
  * Get scopes as an array from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopesArray(config: AppConfiguration) {
+export function getAppScopesArray(config: CurrentAppConfiguration) {
   const scopes = getAppScopes(config)
   return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
 }
 
-export function usesLegacyScopesBehavior(config: AppConfiguration) {
-  if (isLegacyAppSchema(config)) return true
-  if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
-  return false
+export function usesLegacyScopesBehavior(config: CurrentAppConfiguration) {
+  if (config.scopes) return true
+  return config.access_scopes?.use_legacy_install_flow ?? false
 }
 
 export function appIsLaunchable(app: AppInterface) {
@@ -137,7 +110,7 @@ export const WebConfigurationSchema = zod.union([
 ])
 export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
 
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
+export type AppConfiguration = zod.infer<typeof AppSchema> & {path: string}
 export type CurrentAppConfiguration = zod.infer<typeof AppSchema> & {path: string} & SpecsAppConfiguration
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
@@ -152,7 +125,7 @@ export interface Web {
 
 export interface AppConfigurationInterface {
   directory: string
-  configuration: AppConfiguration
+  configuration: CurrentAppConfiguration
   configSchema: zod.ZodTypeAny
 }
 
@@ -198,7 +171,7 @@ export class App implements AppInterface {
   idEnvironmentVariableName: string
   directory: string
   packageManager: PackageManager
-  configuration: AppConfiguration
+  configuration: CurrentAppConfiguration
   nodeDependencies: {[key: string]: string}
   webs: Web[]
   usesWorkspaces: boolean
@@ -286,12 +259,10 @@ export class App implements AppInterface {
   }
 
   get includeConfigOnDeploy() {
-    if (isLegacyAppSchema(this.configuration)) return false
-    return this.configuration.build?.include_config_on_deploy
+    return this.configuration.build?.include_config_on_deploy ?? false
   }
 
   private configurationTyped(configuration: AppConfiguration) {
-    if (isLegacyAppSchema(configuration)) return configuration
     return {
       ...configuration,
       ...this.homeConfiguration(configuration),
@@ -389,7 +360,7 @@ export class EmptyApp extends App {
       idEnvironmentVariableName: '',
       directory: '',
       packageManager: 'npm',
-      configuration,
+      configuration: configuration as unknown as CurrentAppConfiguration,
       nodeDependencies: {},
       webs: [],
       modules: [],

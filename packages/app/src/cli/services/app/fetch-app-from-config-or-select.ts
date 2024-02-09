@@ -1,5 +1,5 @@
 import {selectApp} from './select-app.js'
-import {AppConfigurationInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppConfigurationInterface} from '../../models/app/app.js'
 import {fetchAppDetailsFromApiKey} from '../dev/fetch.js'
 import {InvalidApiKeyErrorMessage} from '../context.js'
 import {OrganizationApp} from '../../models/organization.js'
@@ -8,7 +8,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function fetchAppFromConfigOrSelect(app: AppConfigurationInterface): Promise<OrganizationApp> {
   let organizationApp
-  if (isCurrentAppSchema(app.configuration)) {
+  if (app.configuration.client_id.length) {
     const token = await ensureAuthenticatedPartners()
     const apiKey = app.configuration.client_id
     organizationApp = await fetchAppDetailsFromApiKey(apiKey, token)

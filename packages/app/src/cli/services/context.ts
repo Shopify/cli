@@ -18,14 +18,7 @@ import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
-import {
-  AppConfiguration,
-  AppInterface,
-  isCurrentAppSchema,
-  appIsLaunchable,
-  getAppScopesArray,
-  CurrentAppConfiguration,
-} from '../models/app/app.js'
+import {AppInterface, appIsLaunchable, getAppScopesArray, CurrentAppConfiguration} from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -211,7 +204,7 @@ export async function ensureDevContext(
 
   // We only update the cache or config if the current app is the right one
   const rightApp = selectedApp.apiKey === cachedInfo?.appId
-  if (isCurrentAppSchema(configuration) && rightApp) {
+  if (rightApp) {
     if (cachedInfo) cachedInfo.storeFqdn = selectedStore?.shopDomain
     const newConfiguration = {
       ...configuration,
@@ -517,7 +510,7 @@ async function ensureIncludeConfigOnDeploy({
     org: org.businessName,
     appName: partnersApp.title,
     appDotEnv: app.dotenv?.path,
-    configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
+    configFile: basename(app.configuration.path),
     resetMessage: resetHelpMessage,
     includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
@@ -531,7 +524,7 @@ async function ensureIncludeConfigOnDeploy({
 
 async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
   const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
-  const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
+  const localConfiguration = options.localApp.configuration
   localConfiguration.build = {
     ...localConfiguration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
@@ -658,13 +651,11 @@ export async function fetchAppAndIdentifiers(
   if (options.reset) {
     envIdentifiers = {app: undefined, extensions: {}}
     reuseDevCache = false
-    if (isCurrentAppSchema(app.configuration)) {
-      const configuration = await link({directory: app.directory, commandConfig: options.commandConfig})
-      app.configuration = configuration
-    }
+    const configuration = await link({directory: app.directory, commandConfig: options.commandConfig})
+    app.configuration = configuration
   }
 
-  if (isCurrentAppSchema(app.configuration)) {
+  if (app.configuration.client_id.length) {
     const apiKey = options.apiKey ?? app.configuration.client_id
     partnersApp = await appFromId(apiKey, token)
   } else if (options.apiKey) {
@@ -750,7 +741,7 @@ async function fetchDevDataFromOptions(
 }
 
 export interface AppContext {
-  configuration: AppConfiguration
+  configuration: CurrentAppConfiguration
   cachedInfo?: CachedAppInfo
   remoteApp?: OrganizationApp
 }
@@ -797,22 +788,19 @@ export async function getAppContext({
     configName,
   })
 
-  let remoteApp
-  if (isCurrentAppSchema(configuration)) {
-    remoteApp = await appFromId(configuration.client_id, partnersSession.token)
-    cachedInfo = {
-      ...cachedInfo,
-      directory,
-      configFile: basename(configuration.path),
-      orgId: remoteApp.organizationId,
-      appId: remoteApp.apiKey,
-      title: remoteApp.title,
-      storeFqdn: configuration.build?.dev_store_url,
-      updateURLs: configuration.build?.automatically_update_urls_on_dev,
-    }
-
-    await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
+  const remoteApp = await appFromId(configuration.client_id, partnersSession.token)
+  cachedInfo = {
+    ...cachedInfo,
+    directory,
+    configFile: basename(configuration.path),
+    orgId: remoteApp.organizationId,
+    appId: remoteApp.apiKey,
+    title: remoteApp.title,
+    storeFqdn: configuration.build?.dev_store_url,
+    updateURLs: configuration.build?.automatically_update_urls_on_dev,
   }
+
+  await logMetadataForLoadedContext({organizationId: remoteApp.organizationId, apiKey: remoteApp.apiKey})
 
   return {
     configuration,

@@ -6,11 +6,8 @@ import {
   WebType,
   getAppScopesArray,
   AppConfigurationInterface,
-  LegacyAppSchema,
-  AppConfiguration,
   CurrentAppConfiguration,
   getAppVersionedSchema,
-  isCurrentAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -342,14 +339,11 @@ class AppLoader {
     return extensionInstance
   }
 
-  async loadExtensions(appDirectory: string, appConfiguration: AppConfiguration): Promise<ExtensionInstance[]> {
+  async loadExtensions(appDirectory: string, appConfiguration: CurrentAppConfiguration): Promise<ExtensionInstance[]> {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
-    const configExtensionPromises = isCurrentAppSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
-      : []
-
+    const configExtensionPromises = await this.createConfigExtensionInstances(appDirectory, appConfiguration)
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
 
@@ -574,7 +568,7 @@ class AppConfigurationLoader {
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
     const appVersionedSchema = getAppVersionedSchema(specifications)
-    const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
+    const appSchema = appVersionedSchema
     const parseStrictSchemaEnabled = specifications.length > 0
     const configuration = await parseConfigurationFile(
       parseStrictSchemaEnabled ? deepStrict(appSchema) : appSchema,
@@ -587,23 +581,21 @@ class AppConfigurationLoader {
       allClientIdsByConfigName,
     }
 
-    if (isCurrentAppSchema(configuration)) {
-      let gitTracked = false
-      try {
-        gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch {
-        // leave as false
-      }
+    let gitTracked = false
+    try {
+      gitTracked = !(await checkIfIgnoredInGitRepository(appDirectory, [configurationPath]))[0]
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // leave as false
+    }
 
-      configurationLoadResultMetadata = {
-        ...configurationLoadResultMetadata,
-        usesLinkedConfig: true,
-        name: configurationFileName,
-        gitTracked,
-        source: configSource,
-        usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
-      }
+    configurationLoadResultMetadata = {
+      ...configurationLoadResultMetadata,
+      usesLinkedConfig: true,
+      name: configurationFileName,
+      gitTracked,
+      source: configSource,
+      usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
     }
 
     return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}

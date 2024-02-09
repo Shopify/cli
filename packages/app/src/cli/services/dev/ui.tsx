@@ -1,6 +1,6 @@
 import {PartnersURLs} from './urls.js'
 import {Dev, DevProps} from './ui/components/Dev.js'
-import {AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {getAppConfigurationShorthand} from '../../models/app/loader.js'
 import React from 'react'
@@ -29,36 +29,20 @@ export async function outputUpdateURLsResult(
       ],
     })
   } else if (!updated) {
-    if (isCurrentAppSchema(localApp.configuration)) {
-      const fileName = basename(localApp.configuration.path)
-      const configName = getAppConfigurationShorthand(fileName)
-      const pushCommandArgs = configName ? [`--config=${configName}`] : []
+    const fileName = basename(localApp.configuration.path)
+    const configName = getAppConfigurationShorthand(fileName)
+    const pushCommandArgs = configName ? [`--config=${configName}`] : []
 
-      renderInfo({
-        body: [
-          `To update URLs manually, add the following URLs to ${fileName} under auth > redirect_urls and run\n`,
-          {
-            command: formatPackageManagerCommand(
-              localApp.packageManager,
-              `shopify app config push`,
-              ...pushCommandArgs,
-            ),
-          },
-          '\n\n',
-          {list: {items: urls.redirectUrlWhitelist}},
-        ],
-      })
-    } else {
-      renderInfo({
-        body: [
-          'To make URL updates manually, you can add the following URLs as redirects in your',
-          dashboardURL,
-          {char: ':'},
-          '\n\n',
-          {list: {items: urls.redirectUrlWhitelist}},
-        ],
-      })
-    }
+    renderInfo({
+      body: [
+        `To update URLs manually, add the following URLs to ${fileName} under auth > redirect_urls and run\n`,
+        {
+          command: formatPackageManagerCommand(localApp.packageManager, `shopify app deploy`, ...pushCommandArgs),
+        },
+        '\n\n',
+        {list: {items: urls.redirectUrlWhitelist}},
+      ],
+    })
   }
 }
 

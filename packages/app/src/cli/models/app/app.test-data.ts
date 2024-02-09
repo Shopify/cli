@@ -1,4 +1,4 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
+import {App, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
@@ -28,9 +28,9 @@ export const DEFAULT_CONFIG = {
 }
 
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
-  const getConfig = () => {
+  const getConfig = (): CurrentAppConfiguration => {
     if (schemaType === 'legacy') {
-      return {scopes: '', extension_directories: [], path: ''}
+      return {scopes: '', extension_directories: [], path: ''} as unknown as CurrentAppConfiguration
     } else {
       return DEFAULT_CONFIG as CurrentAppConfiguration
     }
@@ -75,13 +75,13 @@ interface TestAppWithConfigOptions {
 }
 
 export function testAppWithLegacyConfig({app = {}, config = {}}: TestAppWithConfigOptions): AppInterface {
-  const configuration: AppConfiguration = {
+  const configuration = {
     path: '',
     scopes: '',
     name: 'name',
     extension_directories: [],
     ...config,
-  }
+  } as unknown as CurrentAppConfiguration
   return testApp({...app, configuration})
 }
 

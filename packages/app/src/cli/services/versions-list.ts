@@ -1,7 +1,7 @@
 import {ensureVersionsListContext, renderCurrentlyUsedConfigInfo} from './context.js'
 import {fetchOrgFromId} from './dev/fetch.js'
 import {AppVersionsQuery, AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
-import {AppInterface, isCurrentAppSchema} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import colors from '@shopify/cli-kit/node/colors'
 import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit/node/output'
@@ -105,7 +105,7 @@ export default async function versionList(options: VersionListOptions) {
   renderCurrentlyUsedConfigInfo({
     org,
     appName: title,
-    configFile: isCurrentAppSchema(options.app.configuration) ? basename(options.app.configuration.path) : undefined,
+    configFile: basename(options.app.configuration.path),
   })
 
   if (appVersions.length === 0) {

@@ -101,7 +101,7 @@ export async function configExtensionsIdentifiersBreakdown({
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
   return {
-    existingFieldNames: filterNonVersionedAppFields(app.configuration),
+    existingFieldNames: filterNonVersionedAppFields(app.configuration as unknown as {[key: string]: unknown}),
     existingUpdatedFieldNames: [] as string[],
     newFieldNames: [] as string[],
     deletedFieldNames: [] as string[],
@@ -127,7 +127,7 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
   // (versioned fields)
-  const versionedLocalFieldNames = filterNonVersionedAppFields(baselineConfig)
+  const versionedLocalFieldNames = filterNonVersionedAppFields(baselineConfig as unknown as {[key: string]: unknown})
   // List of remote fields that have different values to the local ones or are not present in the local config
   const remoteDiffModifications = diffConfigContent
     ? getFieldsFromDiffConfigContent(diffConfigContent.baselineContent)

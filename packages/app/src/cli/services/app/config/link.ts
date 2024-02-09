@@ -1,13 +1,5 @@
 import {saveCurrentConfig} from './use.js'
-import {
-  AppConfiguration,
-  AppInterface,
-  CurrentAppConfiguration,
-  EmptyApp,
-  getAppScopes,
-  isCurrentAppSchema,
-  isLegacyAppSchema,
-} from '../../../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration, EmptyApp, getAppScopes} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
@@ -36,7 +28,7 @@ export interface LinkOptions {
   baseConfigName?: string
 }
 
-export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
+export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<CurrentAppConfiguration> {
   const {token, remoteApp, directory} = await selectRemoteApp(options)
   const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp, directory)
 
@@ -103,7 +95,7 @@ async function loadAppOrEmptyApp(
       remoteBetas,
     })
     const configuration = app.configuration
-    if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
+    if (remoteApp?.apiKey === configuration.client_id) return app
     return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
@@ -141,7 +133,7 @@ async function loadConfigurationFileName(
     return getAppConfigurationFileName(options.configName)
   }
 
-  if (isLegacyAppSchema(localApp.configuration)) {
+  if (localApp.configuration.client_id.length === 0) {
     return configurationFileNames.app
   }
 
@@ -150,7 +142,7 @@ async function loadConfigurationFileName(
 }
 
 export function mergeAppConfiguration(
-  appConfiguration: AppConfiguration,
+  appConfiguration: CurrentAppConfiguration,
   remoteApp: OrganizationApp,
 ): CurrentAppConfiguration {
   return {
@@ -213,7 +205,7 @@ function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
   }
 }
 
-function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
+function addRemoteAppAccessConfig(appConfiguration: CurrentAppConfiguration, remoteApp: OrganizationApp) {
   let accessScopesContent = {}
   // if we have upstream scopes, use them
   if (remoteApp.requestedAccessScopes) {
@@ -240,26 +232,25 @@ function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp:
   }
 }
 
-function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
+function addLocalAppConfig(appConfiguration: CurrentAppConfiguration, remoteApp: OrganizationApp) {
   let localAppConfig = {
     ...appConfiguration,
     client_id: remoteApp.apiKey,
   }
-  if (isCurrentAppSchema(localAppConfig)) {
-    delete localAppConfig.auth
-    const build = {
-      ...(remoteApp.newApp ? {include_config_on_deploy: true} : {}),
-      ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
-    }
-    if (isEmpty(build)) {
-      delete localAppConfig.build
-    } else {
-      localAppConfig = {
-        ...localAppConfig,
-        build,
-      }
+  delete localAppConfig.auth
+  const build = {
+    ...(remoteApp.newApp ? {include_config_on_deploy: true} : {}),
+    ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
+  }
+  if (isEmpty(build)) {
+    delete localAppConfig.build
+  } else {
+    localAppConfig = {
+      ...localAppConfig,
+      build,
     }
   }
+
   return localAppConfig
 }
 
