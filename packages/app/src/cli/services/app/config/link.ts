@@ -43,26 +43,20 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   await logMetadataForLoadedContext(remoteApp)
 
-  let configuration = mergeAppConfiguration(
-    {...localApp.configuration, path: configFilePath},
+  let configuration = mergeAppConfiguration({...localApp.configuration, path: configFilePath}, remoteApp)
+  const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
+    token,
     remoteApp,
-    localApp.useVersionedAppConfig,
+    localApp,
   )
-  if (localApp.useVersionedAppConfig) {
-    const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
-      token,
-      remoteApp,
-      localApp,
-    )
-    const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
-    configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions, replaceLocalArrayStrategy)
-  }
+  const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
+  configuration = deepMergeObjects(configuration, remoteAppConfigurationFromExtensions, replaceLocalArrayStrategy)
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
-    renderSuccessMessage(configFileName, remoteApp, localApp, localApp.useVersionedAppConfig)
+    renderSuccessMessage(configFileName, remoteApp, localApp)
   }
 
   return configuration
@@ -176,10 +170,9 @@ async function loadConfigurationFileName(
 export function mergeAppConfiguration(
   appConfiguration: AppConfiguration,
   remoteApp: OrganizationApp,
-  useVersionedAppConfig: boolean,
 ): CurrentAppConfiguration {
   return {
-    ...addLocalAppConfig(appConfiguration, remoteApp, useVersionedAppConfig),
+    ...addLocalAppConfig(appConfiguration, remoteApp),
     ...addBrandingConfig(remoteApp),
     ...addPosConfig(remoteApp),
     ...addRemoteAppWebhooksConfig(remoteApp),
@@ -265,11 +258,7 @@ function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp:
   }
 }
 
-function addLocalAppConfig(
-  appConfiguration: AppConfiguration,
-  remoteApp: OrganizationApp,
-  useVersionedAppConfig: boolean,
-) {
+function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
   let localAppConfig = {
     ...appConfiguration,
     client_id: remoteApp.apiKey,
@@ -277,7 +266,7 @@ function addLocalAppConfig(
   if (isCurrentAppSchema(localAppConfig)) {
     delete localAppConfig.auth
     const build = {
-      ...(useVersionedAppConfig && remoteApp.newApp ? {include_config_on_deploy: true} : {}),
+      ...(remoteApp.newApp ? {include_config_on_deploy: true} : {}),
       ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
     }
     if (isEmpty(build)) {
@@ -327,12 +316,7 @@ export function remoteAppConfigurationExtensionContent(
   return {...remoteAppConfig}
 }
 
-function renderSuccessMessage(
-  configFileName: string,
-  remoteApp: OrganizationApp,
-  localApp: AppInterface,
-  useVersionedAppConfig: boolean,
-) {
+function renderSuccessMessage(configFileName: string, remoteApp: OrganizationApp, localApp: AppInterface) {
   renderSuccess({
     headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
     body: `Using ${configFileName} as your default config.`,
@@ -341,10 +325,7 @@ function renderSuccessMessage(
       [
         'To upload your config, run',
         {
-          command: formatPackageManagerCommand(
-            localApp.packageManager,
-            `shopify app ${useVersionedAppConfig ? 'deploy' : 'config push'}`,
-          ),
+          command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy'),
         },
       ],
     ],

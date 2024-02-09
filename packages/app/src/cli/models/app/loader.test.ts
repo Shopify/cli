@@ -15,7 +15,6 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhookSchema} from '../extensions/specifications/app_config_webhook.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {BetaFlag} from '../../services/app/select-app.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
 import {
   installNodeModules,
@@ -1699,7 +1698,7 @@ wrong = "property"
     await writeConfig(linkedAppConfigurationWithPosConfiguration)
 
     // When
-    const app = await loadApp({directory: tmpDir, specifications, remoteBetas: [BetaFlag.VersionedAppConfig]})
+    const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
     expect(app.allExtensions).toHaveLength(5)

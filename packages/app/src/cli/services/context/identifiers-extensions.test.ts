@@ -17,7 +17,6 @@ import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/m
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
-import {BetaFlag} from '../app/select-app.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -104,7 +103,7 @@ const options = (
   release = true,
   includeDeployConfig = false,
   configExtensions: ExtensionInstance[] = [],
-  betas = [BetaFlag.VersionedAppConfig],
+  betas = [],
 ): EnsureDeploymentIdsPresenceOptions => {
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),

@@ -376,7 +376,7 @@ export interface DeployContextOptions {
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
   const partnersSession = await fetchPartnersSession()
   const token = partnersSession.token
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
+  const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
   const betas = await fetchAppRemoteBetaFlags(partnersApp.apiKey, token)
 
   const specifications = await fetchSpecifications({
@@ -522,10 +522,10 @@ async function ensureIncludeConfigOnDeploy({
     appDotEnv: app.dotenv?.path,
     configFile: isCurrentAppSchema(app.configuration) ? basename(app.configuration.path) : undefined,
     resetMessage: resetHelpMessage,
-    includeConfigOnDeploy: app.useVersionedAppConfig ? previousIncludeConfigOnDeploy : undefined,
+    includeConfigOnDeploy: previousIncludeConfigOnDeploy,
   })
 
-  if (!app.useVersionedAppConfig || force || previousIncludeConfigOnDeploy !== undefined) return
+  if (force || previousIncludeConfigOnDeploy !== undefined) return
   await promptIncludeConfigOnDeploy({
     appDirectory: app.directory,
     localApp: app,
