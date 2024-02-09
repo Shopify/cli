@@ -59,7 +59,6 @@ describe('versions-list', () => {
     await versionList({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
 
@@ -67,7 +66,6 @@ describe('versions-list', () => {
     expect(ensureVersionsListContext).toHaveBeenCalledWith({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
   })
@@ -75,7 +73,6 @@ describe('versions-list', () => {
   test('show a message when there are no app versions', async () => {
     // Given
     const app = await testApp({})
-    const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
     const outputMock = mockAndCaptureOutput()
     vi.mocked(partnersRequest).mockResolvedValueOnce(emptyResult)
 
@@ -83,7 +80,6 @@ describe('versions-list', () => {
     await versionList({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
 
@@ -95,13 +91,11 @@ describe('versions-list', () => {
     // Given
     const app = await testApp({})
     vi.mocked(partnersRequest).mockResolvedValueOnce(emptyResult)
-    const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
     // When
     await versionList({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
 
@@ -117,13 +111,11 @@ describe('versions-list', () => {
     // Given
     const app = await testApp({})
     vi.mocked(partnersRequest).mockResolvedValueOnce({app: null})
-    const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
     // When
     const output = versionList({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
 
@@ -134,7 +126,6 @@ describe('versions-list', () => {
   test('render table when there are app versions', async () => {
     // Given
     const app = await testApp({})
-    const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
     const mockOutput = mockAndCaptureOutput()
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       app: {
@@ -177,7 +168,6 @@ describe('versions-list', () => {
       app,
       apiKey: 'apiKey',
       reset: false,
-      commandConfig,
       json: false,
     })
 
@@ -195,7 +185,6 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
   test('render json when there are app versions', async () => {
     // Given
     const app = await testApp({})
-    const commandConfig = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
 
     const mockOutput = mockAndCaptureOutput()
     vi.mocked(partnersRequest).mockResolvedValueOnce({
@@ -231,7 +220,6 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
       app,
       apiKey: 'apiKey',
       reset: false,
-      commandConfig,
       json: true,
     })
 

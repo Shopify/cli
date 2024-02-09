@@ -51,7 +51,6 @@ export default class VersionsList extends Command {
       app,
       apiKey,
       reset: false,
-      commandConfig: this.config,
       json: flags.json,
     })
   }

@@ -36,7 +36,6 @@ export interface PartnersURLs {
 export interface FrontendURLOptions {
   noTunnel: boolean
   tunnelUrl?: string
-  commandConfig: Config
   tunnelClient: TunnelClient | undefined
 }
 
