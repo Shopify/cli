@@ -9,13 +9,13 @@ import {
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
-import {fetchAppRemoteBetaFlags} from '../select-app.js'
+import {fetchAppRemoteBetaFlags, fetchAppRemoteConfiguration} from '../select-app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -44,13 +44,7 @@ vi.mock('../select-app.js')
 
 beforeEach(async () => {
   vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {
-      extensionRegistrations: [],
-      configurationRegistrations: [],
-      dashboardManagedExtensionRegistrations: [],
-    },
-  })
+  vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({})
   vi.mocked(fetchSpecifications).mockResolvedValue(await loadLocalExtensionsSpecifications())
   vi.mocked(fetchAppRemoteBetaFlags).mockResolvedValue([])
 })
@@ -646,49 +640,13 @@ embedded = false
           }),
         )
         vi.mocked(selectConfigName).mockResolvedValue('staging')
-        vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-          app: {
-            extensionRegistrations: [
-              {
-                type: 'THEME_APP_EXTENSION',
-                id: '123',
-                uuid: '123',
-                title: 'mock-theme',
-                activeVersion: {
-                  config: JSON.stringify({name: 'my-theme-app', type: 'theme_app_extension'}),
-                },
-              },
-            ],
-            configurationRegistrations: [
-              {
-                type: 'point_of_sale',
-                id: '321',
-                uuid: '321',
-                title: 'point_of_sale',
-                activeVersion: {
-                  config: JSON.stringify({embedded: true}),
-                },
-              },
-              {
-                type: 'webhooks',
-                id: '543',
-                uuid: '543',
-                title: 'webhooks',
-                activeVersion: {
-                  config: JSON.stringify({
-                    subscriptions: [
-                      {
-                        topic: 'products/create',
-                        uri: 'https://my-app.com/webhooks',
-                      },
-                    ],
-                  }),
-                },
-              },
-            ],
-            dashboardManagedExtensionRegistrations: [],
+        const remoteConfiguration = {
+          pos: {embedded: true},
+          webhooks: {
+            subscriptions: [{topics: ['products/create'], uri: 'https://my-app.com/webhooks'}],
           },
-        })
+        }
+        vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
         // When
         await link(options)
@@ -794,23 +752,13 @@ embedded = false
         }
         vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
         vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
-        vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-          app: {
-            extensionRegistrations: [],
-            configurationRegistrations: [
-              {
-                type: 'app_access',
-                id: '321',
-                uuid: '321',
-                title: 'app_access',
-                activeVersion: {
-                  config: JSON.stringify({redirect_url_allowlist: ['https://example.com/remote']}),
-                },
-              },
-            ],
-            dashboardManagedExtensionRegistrations: [],
+        const remoteConfiguration = {
+          auth: {
+            redirect_urls: ['https://example.com/remote'],
           },
-        })
+        }
+        vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
+
         // When
         await link(options)
 
