@@ -2,7 +2,6 @@
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
 * [`shopify app config link`](#shopify-app-config-link)
-* [`shopify app config push`](#shopify-app-config-push)
 * [`shopify app config use [CONFIG]`](#shopify-app-config-use-config)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
@@ -17,7 +16,6 @@
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app release`](#shopify-app-release)
-* [`shopify app update-url`](#shopify-app-update-url)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
 * [`shopify commands`](#shopify-commands)
@@ -96,27 +94,6 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.55.0/dist/cli/commands/app/config/link.js)_
-
-## `shopify app config push`
-
-Push your app configuration to the Partner Dashboard.
-
-```
-USAGE
-  $ shopify app config push [-c <value>] [-f] [--no-color] [--path <value>] [--verbose]
-
-FLAGS
-  -c, --config=<value>  The name of the app configuration.
-  -f, --force           Push configuration without asking for confirmation.
-      --no-color        Disable color output.
-      --path=<value>    The path to your app directory.
-      --verbose         Increase the verbosity of the logs.
-
-DESCRIPTION
-  Push your app configuration to the Partner Dashboard.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.55.0/dist/cli/commands/app/config/push.js)_
 
 ## `shopify app config use [CONFIG]`
 
@@ -457,31 +434,6 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.55.0/dist/cli/commands/app/release.js)_
-
-## `shopify app update-url`
-
-Update your app and redirect URLs in the Partners Dashboard.
-
-```
-USAGE
-  $ shopify app update-url [--app-url <value>] [--client-id <value> | -c <value>] [--no-color] [--path <value>]
-    [--redirect-urls <value>] [--verbose]
-
-FLAGS
-  -c, --config=<value>         The name of the app configuration.
-      --app-url=<value>        URL through which merchants will access your app.
-      --client-id=<value>      The Client ID of your app.
-      --no-color               Disable color output.
-      --path=<value>           The path to your app directory.
-      --redirect-urls=<value>  Comma separated list of allowed URLs where merchants are redirected after the app is
-                               installed
-      --verbose                Increase the verbosity of the logs.
-
-DESCRIPTION
-  Update your app and redirect URLs in the Partners Dashboard.
-```
-
-_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.55.0/dist/cli/commands/app/update-url.js)_
 
 ## `shopify app versions list [FILE]`
 
