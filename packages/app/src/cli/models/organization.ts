@@ -1,3 +1,4 @@
+import {SpecsAppConfiguration} from './extensions/specifications/types/app_config.js'
 import {BetaFlag} from '../services/dev/fetch.js'
 
 export interface Organization {
@@ -22,8 +23,8 @@ export type OrganizationApp = MinimalOrganizationApp & {
   grantedScopes: string[]
   applicationUrl: string
   redirectUrlWhitelist: string[]
-  requestedAccessScopes?: string[]
   developmentStorePreviewEnabled?: boolean
+  configuration?: SpecsAppConfiguration
   betas: BetaFlag[]
 }
 

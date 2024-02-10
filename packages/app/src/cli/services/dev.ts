@@ -139,7 +139,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    localApp.configuration.access_scopes?.scopes !== remoteApp.requestedAccessScopes?.join(',')
+    localApp.configuration.access_scopes?.scopes !== remoteApp.configuration?.access_scopes?.scopes
   ) {
     const nextSteps = [
       [
@@ -156,7 +156,11 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
-        scopesMessage(remoteApp.requestedAccessScopes || []),
+        scopesMessage(
+          remoteApp.configuration?.access_scopes?.scopes
+            ? remoteApp.configuration?.access_scopes?.scopes.split(',')
+            : [],
+        ),
       ],
       nextSteps,
     })
