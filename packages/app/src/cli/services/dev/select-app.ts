@@ -1,6 +1,6 @@
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
-import {fetchAppDetailsFromApiKey, OrganizationAppsResponse} from '../dev/fetch.js'
+import {fetchAppDetailsFromApiKey, filterDisabledBetas, OrganizationAppsResponse} from '../dev/fetch.js'
 import {CreateAppQuery, CreateAppQuerySchema} from '../../api/graphql/create_app.js'
 import {getCachedCommandInfo, setCachedCommandInfo} from '../local-storage.js'
 import {PartnersSession} from '../context/partner-account-info.js'
@@ -105,8 +105,6 @@ export async function createApp(
     throw new AbortError(errors)
   }
 
-  const createdApp: OrganizationApp = result.appCreate.app
-  createdApp.organizationId = org.id
-  createdApp.newApp = true
-  return createdApp
+  const betas = filterDisabledBetas(result.appCreate.app.disabledBetas)
+  return {...result.appCreate.app, organizationId: org.id, newApp: true, betas}
 }

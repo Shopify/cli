@@ -55,7 +55,7 @@ export function remoteAppConfigurationExtensionContent(
     if (!configString) return
     const config = configString ? JSON.parse(configString) : {}
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, betas) ?? config)
+    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {betas}) ?? config)
   })
   return {...remoteAppConfig}
 }

@@ -165,11 +165,15 @@ export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): 
   })
   const app = res.app
   if (app) {
-    const defaultActiveBetas: BetaFlag[] = []
-    const remoteDisabledFlags = app.disabledBetas.map((flag) => FlagMap[flag])
-    const betas = defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
+    const betas = filterDisabledBetas(app.disabledBetas)
     return {...app, betas}
   }
+}
+
+export function filterDisabledBetas(disabledBetas: string[] = []): BetaFlag[] {
+  const defaultActiveBetas: BetaFlag[] = []
+  const remoteDisabledFlags = disabledBetas.map((flag) => FlagMap[flag])
+  return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
 }
 
 export async function fetchAppPreviewMode(apiKey: string, token: string): Promise<boolean | undefined> {

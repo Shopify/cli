@@ -32,6 +32,7 @@ export const CreateAppQuery = gql`
         applicationUrl
         redirectUrlWhitelist
         requestedAccessScopes
+        disabledBetas
       }
       userErrors {
         field
@@ -65,6 +66,7 @@ export interface CreateAppQuerySchema {
       applicationUrl: string
       redirectUrlWhitelist: string[]
       requestedAccessScopes?: string[]
+      disabledBetas: string[]
     }
     userErrors: {
       field: string[]

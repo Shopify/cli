@@ -57,7 +57,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   transform?: (content: object) => object
-  reverseTransform?: (content: object, betas: BetaFlag[]) => object
+  reverseTransform?: (content: object, options?: {betas?: BetaFlag[]}) => object
 }
 
 /**
