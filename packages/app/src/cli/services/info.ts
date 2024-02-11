@@ -128,7 +128,8 @@ class AppInfo {
   async appComponentsSection(): Promise<[string, string]> {
     const title = 'Directory Components'
 
-    let body = this.webComponentsSection()
+    const webComponentsSection = this.webComponentsSection()
+    const body = webComponentsSection ? [webComponentsSection] : []
 
     function augmentWithExtensions<TExtension extends Configurable>(
       extensions: TExtension[],
@@ -138,10 +139,11 @@ class AppInfo {
       types.forEach((extensionType: string) => {
         const relevantExtensions = extensions.filter((extension: TExtension) => extension.type === extensionType)
         if (relevantExtensions[0]) {
-          body += `\n\n${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
+          let section = `${outputContent`${outputToken.subheading(relevantExtensions[0].externalType)}`.value}`
           relevantExtensions.forEach((extension: TExtension) => {
-            body += `${outputFormatter(extension)}`
+            section += `${outputFormatter(extension)}`
           })
+          body.push(section)
         }
       })
     }
@@ -150,15 +152,19 @@ class AppInfo {
     augmentWithExtensions(supportedExtensions, this.extensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {
-      body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
+      let section = `${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
       supportedExtensions.forEach((extension) => {
-        body += `${this.invalidExtensionSubSection(extension)}`
+        section += `${this.invalidExtensionSubSection(extension)}`
       })
     }
-    return [title, body]
+    return [title, body.join('\n\n')]
   }
 
   webComponentsSection(): string {
+    if (!this.app.webs[0]) {
+      return ''
+    }
+
     const errors: OutputMessage[] = []
     const subtitle = [outputContent`${outputToken.subheading('web')}`.value]
     const toplevel = ['📂 web', '']
