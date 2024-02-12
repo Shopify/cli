@@ -44,6 +44,7 @@ describe('versions-list', () => {
         grantedScopes: [],
         applicationUrl: 'https://example.com',
         redirectUrlWhitelist: ['https://example.com/callback1'],
+        betas: [],
       },
     })
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
