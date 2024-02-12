@@ -1,5 +1,18 @@
 # @shopify/cli
 
+## 3.56.0
+
+### Minor Changes
+
+- 390729c33: `app config push` and `app update-url` commands dropped
+
+### Patch Changes
+
+- 8e95f18a2: Load betas inside the remote app entity
+- Updated dependencies [1220290ec]
+  - @shopify/cli-kit@3.56.0
+  - @shopify/plugin-did-you-mean@3.56.0
+
 ## 3.55.0
 
 ### Patch Changes
