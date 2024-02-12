@@ -42,8 +42,6 @@ describe('versions-list', () => {
         organizationId: ORG1.id,
         apiSecretKeys: [],
         grantedScopes: [],
-        applicationUrl: 'https://example.com',
-        redirectUrlWhitelist: ['https://example.com/callback1'],
         betas: [],
       },
     })

@@ -22,8 +22,6 @@ const organizationApp: OrganizationApp = {
   organizationId: 'organizationId',
   apiSecretKeys: [],
   grantedScopes: [],
-  applicationUrl: 'applicationUrl',
-  redirectUrlWhitelist: [],
   betas: [],
 }
 

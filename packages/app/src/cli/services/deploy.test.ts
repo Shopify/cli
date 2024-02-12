@@ -60,8 +60,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],
@@ -91,8 +89,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],
@@ -120,8 +116,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],
@@ -149,8 +143,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],
@@ -365,8 +357,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],
@@ -404,8 +394,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id2',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],
@@ -445,8 +433,6 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
         betas: [],

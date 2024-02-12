@@ -113,8 +113,6 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',
     grantedScopes: [],
-    applicationUrl: 'https://example.com',
-    redirectUrlWhitelist: ['https://example.com/callback1'],
     disabledBetas: [],
     betas: [],
   }

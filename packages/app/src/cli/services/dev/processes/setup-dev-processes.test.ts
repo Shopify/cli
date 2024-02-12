@@ -111,8 +111,6 @@ describe('setup-dev-processes', () => {
       title: 'App',
       organizationId: '5678',
       grantedScopes: [],
-      applicationUrl: 'https://example.com/application',
-      redirectUrlWhitelist: [],
       betas: [],
     }
 
