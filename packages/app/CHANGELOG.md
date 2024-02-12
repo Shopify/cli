@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.56.1
+
+### Patch Changes
+
+- a62002a61: Remove Default Examples for Customer Privacy Settings
+  - @shopify/cli-kit@3.56.1
+  - @shopify/plugin-cloudflare@3.56.1
+
 ## 3.56.0
 
 ### Minor Changes
