@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.56.0
+
+### Minor Changes
+
+- 1220290ec: Add placeholder tab completion to text prompts
+
 ## 3.55.0
 
 ## 3.54.0
