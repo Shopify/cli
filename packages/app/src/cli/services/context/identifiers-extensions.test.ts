@@ -103,7 +103,7 @@ const options = (
   release = true,
   includeDeployConfig = false,
   configExtensions: ExtensionInstance[] = [],
-  betas = [],
+  flags = [],
 ): EnsureDeploymentIdsPresenceOptions => {
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
@@ -115,7 +115,7 @@ const options = (
     remoteApp,
     release,
   }
-  setPathValue(localApp.app, 'remoteBetaFlags', betas)
+  setPathValue(localApp.app, 'remoteFlags', flags)
   return localApp
 }
 

@@ -64,7 +64,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: false,
@@ -94,7 +94,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         message: 'Deployed from CLI with flag',
@@ -122,7 +122,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         version: '1.1.0',
@@ -150,7 +150,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       developerPlatformClient,
     })
@@ -366,7 +366,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: false,
@@ -404,7 +404,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: false,
@@ -444,7 +444,7 @@ describe('deploy', () => {
         organizationId: 'org-id',
         title: 'app-title',
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
       options: {
         noRelease: true,

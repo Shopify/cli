@@ -20,7 +20,7 @@ import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {BetaFlag} from '../../services/dev/fetch.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -168,7 +168,7 @@ interface AppLoaderConstructorArgs {
   mode?: AppLoaderMode
   configName?: string
   specifications?: ExtensionSpecification[]
-  remoteBetas?: BetaFlag[]
+  remoteFlags?: Flag[]
 }
 
 /**
@@ -200,14 +200,14 @@ class AppLoader {
   private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
-  private remoteBetas: BetaFlag[]
+  private remoteFlags: Flag[]
 
-  constructor({directory, configName, mode, specifications, remoteBetas}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specifications, remoteFlags}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications ?? []
     this.configName = configName
-    this.remoteBetas = remoteBetas ?? []
+    this.remoteFlags = remoteFlags ?? []
   }
 
   findSpecificationForType(type: string) {
@@ -259,7 +259,7 @@ class AppLoader {
       dotenv,
       specifications: this.specifications,
       configSchema,
-      remoteBetaFlags: this.remoteBetas,
+      remoteFlags: this.remoteFlags,
     })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
@@ -525,7 +525,7 @@ interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
   specifications?: ExtensionSpecification[]
-  remoteBetas?: BetaFlag[]
+  remoteFlags?: Flag[]
 }
 
 type LinkedConfigurationSource =
@@ -553,13 +553,13 @@ class AppConfigurationLoader {
   private directory: string
   private configName?: string
   private specifications?: ExtensionSpecification[]
-  private remoteBetas: BetaFlag[]
+  private remoteFlags: Flag[]
 
-  constructor({directory, configName, specifications, remoteBetas}: AppConfigurationLoaderConstructorArgs) {
+  constructor({directory, configName, specifications, remoteFlags}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
     this.configName = configName
     this.specifications = specifications
-    this.remoteBetas = remoteBetas ?? []
+    this.remoteFlags = remoteFlags ?? []
   }
 
   async loaded() {

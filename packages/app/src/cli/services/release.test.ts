@@ -27,7 +27,7 @@ const APP = {
   applicationUrl: 'https://example.com',
   redirectUrlWhitelist: [],
   apiSecretKeys: [],
-  betas: [],
+  flags: [],
 }
 
 beforeEach(() => {

@@ -22,7 +22,7 @@ describe('env show', () => {
     const app = mockApp()
     const organization = {
       id: '123',
-      betas: {},
+      flags: {},
       businessName: 'test',
       website: '',
       apps: {nodes: []},

@@ -121,9 +121,13 @@ export async function fetchOrgAndApps(
   return {organization: parsedOrg, apps: {...org.apps, nodes: appsWithOrg}, stores: []}
 }
 
-export enum BetaFlag {}
+export enum Flag {
+  DeclarativeWebhooks,
+}
 
-const FlagMap: {[key: string]: BetaFlag} = {}
+const FlagMap: {[key: string]: Flag} = {
+  '5b25141b': Flag.DeclarativeWebhooks,
+}
 
 export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
   const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
@@ -131,15 +135,15 @@ export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): 
   })
   const app = res.app
   if (app) {
-    const betas = filterDisabledBetas(app.disabledBetas)
-    return {...app, betas}
+    const flags = filterDisabledFlags(app.disabledFlags)
+    return {...app, flags}
   }
 }
 
-export function filterDisabledBetas(disabledBetas: string[] = []): BetaFlag[] {
-  const defaultActiveBetas: BetaFlag[] = []
-  const remoteDisabledFlags = disabledBetas.map((flag) => FlagMap[flag])
-  return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
+export function filterDisabledFlags(disabledFlags: string[] = []): Flag[] {
+  const defaultActiveFlags: Flag[] = [Flag.DeclarativeWebhooks]
+  const remoteDisabledFlags = disabledFlags.map((flag) => FlagMap[flag])
+  return defaultActiveFlags.filter((flag) => !remoteDisabledFlags.includes(flag))
 }
 
 export async function fetchAppPreviewMode(

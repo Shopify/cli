@@ -1,5 +1,5 @@
 import {SpecsAppConfiguration} from './extensions/specifications/types/app_config.js'
-import {BetaFlag} from '../services/dev/fetch.js'
+import {Flag} from '../services/dev/fetch.js'
 
 export interface Organization {
   id: string
@@ -23,7 +23,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   grantedScopes: string[]
   developmentStorePreviewEnabled?: boolean
   configuration?: SpecsAppConfiguration
-  betas: BetaFlag[]
+  flags: Flag[]
 }
 
 export interface OrganizationStore {

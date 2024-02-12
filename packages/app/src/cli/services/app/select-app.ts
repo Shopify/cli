@@ -1,6 +1,6 @@
 import {MinimalOrganizationApp, OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {BetaFlag, fetchOrganizations} from '../dev/fetch.js'
+import {Flag, fetchOrganizations} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {
@@ -24,7 +24,7 @@ export async function fetchAppRemoteConfiguration(
   remoteApp: MinimalOrganizationApp,
   developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
-  betas: BetaFlag[],
+  flags: Flag[],
 ) {
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
   const appModuleVersionsConfig =
@@ -32,14 +32,14 @@ export async function fetchAppRemoteConfiguration(
   return remoteAppConfigurationExtensionContent(
     appModuleVersionsConfig,
     specifications,
-    betas,
+    flags,
   ) as unknown as SpecsAppConfiguration
 }
 
 export function remoteAppConfigurationExtensionContent(
   configRegistrations: AppModuleVersion[],
   specifications: ExtensionSpecification[],
-  betas: BetaFlag[],
+  flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
@@ -51,7 +51,7 @@ export function remoteAppConfigurationExtensionContent(
     const config = module.config
     if (!config) return
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {betas}) ?? config)
+    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {flags}) ?? config)
   })
   return {...remoteAppConfig}
 }
