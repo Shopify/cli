@@ -21,7 +21,7 @@ const organizationApp: OrganizationApp = {
   organizationId: 'organizationId',
   apiSecretKeys: [],
   grantedScopes: [],
-  betas: [],
+  flags: [],
 }
 
 const flowExtensionA: ExtensionRegistration = {

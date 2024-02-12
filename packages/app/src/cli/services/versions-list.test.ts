@@ -37,7 +37,7 @@ describe('versions-list', () => {
         organizationId: ORG1.id,
         apiSecretKeys: [],
         grantedScopes: [],
-        betas: [],
+        flags: [],
       },
     })
     // vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)

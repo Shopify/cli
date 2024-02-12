@@ -62,7 +62,7 @@ describe('findOrganizationApp', () => {
   const org = {
     id: '1',
     businessName: 'org1',
-    betas: {},
+    flags: {},
     website: 'http://example.org',
   }
   const anApp = {id: '1', title: anAppName, apiKey: anApiKey, organizationId: org.id}

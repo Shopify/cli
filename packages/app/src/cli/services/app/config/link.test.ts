@@ -880,7 +880,7 @@ embedded = false
 async function mockApp(
   directory: string,
   app?: Partial<AppInterface>,
-  betas = [],
+  flags = [],
   schemaType: 'current' | 'legacy' = 'legacy',
 ) {
   const versionSchema = await buildVersionedAppSchema()
@@ -889,7 +889,7 @@ async function mockApp(
   localApp.configSchema = versionSchema.schema
   localApp.specifications = versionSchema.configSpecifications
   localApp.directory = directory
-  setPathValue(localApp, 'remoteBetaFlags', betas)
+  setPathValue(localApp, 'remoteFlags', flags)
   return localApp
 }
 

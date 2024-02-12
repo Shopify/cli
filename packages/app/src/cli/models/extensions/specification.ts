@@ -2,7 +2,7 @@ import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
-import {BetaFlag} from '../../services/dev/fetch.js'
+import {Flag} from '../../services/dev/fetch.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -22,8 +22,8 @@ export interface TransformationConfig {
 }
 
 export interface CustomTransformationConfig {
-  forward?: (obj: object) => object
-  reverse?: (obj: object) => object
+  forward?: (obj: object, options?: {flags?: Flag[]}) => object
+  reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
 export type ExtensionExperience = 'extension' | 'configuration'
@@ -57,7 +57,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   transform?: (content: object) => object
-  reverseTransform?: (content: object, options?: {betas?: BetaFlag[]}) => object
+  reverseTransform?: (content: object, options?: {flags?: Flag[]}) => object
 }
 
 /**
