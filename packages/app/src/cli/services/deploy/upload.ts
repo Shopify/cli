@@ -158,6 +158,7 @@ export async function uploadExtensionsBundle(
   }
 
   const mutation = AppDeploy
+  console.log(variables)
   const result: AppDeploySchema = await handlePartnersErrors(() => partnersRequest(mutation, options.token, variables))
 
   if (result.appDeploy?.userErrors?.length > 0) {

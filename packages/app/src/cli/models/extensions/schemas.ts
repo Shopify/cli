@@ -47,6 +47,12 @@ export const FieldSchema = zod.object({
   validations: zod.array(zod.any()).optional(),
 })
 
+export const ExtensionCollectionSchema = zod.object({
+  name: zod.string().max(30),
+  handle: zod.string(),
+  type: zod.string(),
+})
+
 export const SettingsSchema = zod.object({
   fields: zod.array(FieldSchema).optional(),
 })
@@ -81,6 +87,7 @@ export const UnifiedSchema = zod.object({
   description: zod.string().optional(),
   extensions: zod.array(zod.any()),
   settings: SettingsSchema.optional(),
+  extension_collection: ExtensionCollectionSchema.optional(),
 })
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>

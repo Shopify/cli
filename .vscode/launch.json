@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
       {
         "type": "node",
         "request": "launch",
@@ -69,9 +68,12 @@
           "app",
           "dev",
           "--no-update",
-          "--path=${input:appDir}",
+          "--path=/Users/oluwatimiowoturo/src/github.com/Shopify/customer-accounts-ui-extension-dev",
         ],
         "env": {
+          "SHOPIFY_CLI_VERSIONED_APP_CONFIG": "1",
+          "SHOPIFY_SERVICE_ENV": "spin",
+          "SPIN_INSTANCE": "ps",
           "DEBUG": "\"*\"",
         },
         "skipFiles": [

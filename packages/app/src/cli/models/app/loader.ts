@@ -44,6 +44,12 @@ const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
+export interface ExtensionCollection {
+  name: string
+  handle: string
+  extensions: string[]
+}
+
 type AbortOrReport = <T>(
   errorMessage: OutputMessage,
   fallback: T,
@@ -226,6 +232,8 @@ class AppLoader {
 
     const extensions = await this.loadExtensions(directory, configuration)
 
+    // console.log(extensions)
+
     const packageJSONPath = joinPath(directory, 'package.json')
     const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
@@ -235,6 +243,10 @@ class AppLoader {
       configuration.web_directories,
     )
     const usesWorkspaces = await appUsesWorkspaces(directory)
+
+    // console.log(this.extensionCollections)
+    // console.log(extensions)
+    // console.log(this.specifications)
 
     const appClass = new App({
       name,
@@ -352,6 +364,7 @@ class AppLoader {
       : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
+    // console.log(extensions[0])
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
 
     // Validate that all extensions have a unique handle.
@@ -391,6 +404,13 @@ class AppLoader {
         // If the extension is an array, it's a unified toml file.
         // Parse all extensions by merging each extension config with the global unified configuration.
         const configuration = await this.parseConfigurationFile(UnifiedSchema, configurationPath)
+        const collection = {
+          ...configuration.extension_collection,
+          extensions: [],
+        } as ExtensionCollection
+        configuration.extensions.forEach((extension) => {
+          collection.extensions.push(extension.handle as string)
+        })
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
           const {extensions, ...restConfig} = mergedConfig
@@ -408,7 +428,17 @@ class AppLoader {
           }
           return this.createExtensionInstance(mergedConfig.type, restConfig, configurationPath, directory)
         })
-        return Promise.all(extensionsInstancesPromises)
+        const normalExtensions = await Promise.all(extensionsInstancesPromises)
+        if (configuration.extension_collection) {
+          const collectionExt = await this.createExtensionInstance(
+            'extension_collection',
+            collection,
+            configurationPath,
+            directory,
+          )
+          normalExtensions.push(collectionExt)
+        }
+        return normalExtensions
       } else if (type) {
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
