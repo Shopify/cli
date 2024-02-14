@@ -45,6 +45,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -93,6 +94,7 @@ export async function ensureGenerateContext(options: {
   directory: string
   reset: boolean
   partnersSession: PartnersSession
+  developerPlatformClient: DeveloperPlatformClient
   configName?: string
 }): Promise<string> {
   if (options.apiKey) {
@@ -154,12 +156,13 @@ export async function ensureGenerateContext(options: {
  */
 export async function ensureDevContext(
   options: DevContextOptions,
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<DevContextOutput> {
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
   const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,
-    partnersSession,
+    developerPlatformClient,
     promptLinkingApp: !options.apiKey,
   })
 
@@ -757,13 +760,13 @@ export interface AppContext {
 export async function getAppContext({
   reset,
   directory,
-  partnersSession,
+  developerPlatformClient,
   configName,
   promptLinkingApp = true,
 }: {
   reset: boolean
   directory: string
-  partnersSession: PartnersSession
+  developerPlatformClient: DeveloperPlatformClient
   configName?: string
   promptLinkingApp?: boolean
 }): Promise<AppContext> {
@@ -789,7 +792,7 @@ export async function getAppContext({
 
   let remoteApp
   if (isCurrentAppSchema(configuration)) {
-    remoteApp = await appFromId(configuration.client_id, partnersSession.token)
+    remoteApp = await developerPlatformClient.appFromId(configuration.client_id)
     cachedInfo = {
       ...cachedInfo,
       directory,

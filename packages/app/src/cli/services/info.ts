@@ -1,6 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
-import {fetchPartnersSession, isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -78,9 +79,10 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const partnersSession = await fetchPartnersSession()
+    const developerPlatformClient = selectDeveloperPlatformClient()
+    const partnersSession = await developerPlatformClient.session()
     const {cachedInfo} = await getAppContext({
-      partnersSession,
+      developerPlatformClient,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,

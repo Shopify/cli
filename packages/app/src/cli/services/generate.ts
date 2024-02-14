@@ -1,7 +1,7 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadApp} from '../models/app/loader.js'
 import generateExtensionPrompts, {
@@ -37,9 +37,10 @@ export interface GenerateOptions {
 }
 
 async function generate(options: GenerateOptions) {
-  const partnersSession = await fetchPartnersSession()
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
-  const apiKey = await ensureGenerateContext({...options, partnersSession})
+  const apiKey = await ensureGenerateContext({...options, developerPlatformClient, partnersSession})
   const specifications = await fetchSpecifications({token, apiKey})
   const app: AppInterface = await loadApp({
     directory: options.directory,
