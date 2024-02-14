@@ -646,6 +646,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   return {
     session: () => Promise.resolve(testPartnersUserSession),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
+    accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     ...stubs,
   }
 }

@@ -19,6 +19,10 @@ export class PartnersClient {
     return (await this.session()).token
   }
 
+  async accountInfo(): Promise<PartnersSession['accountInfo']> {
+    return (await this.session()).accountInfo
+  }
+
   async appFromId(appId: string): Promise<OrganizationApp> {
     const app = await fetchAppDetailsFromApiKey(appId, await this.token())
     if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)

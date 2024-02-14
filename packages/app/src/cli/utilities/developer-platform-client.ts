@@ -8,5 +8,6 @@ export function selectDeveloperPlatformClient(): DeveloperPlatformClient {
 
 export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
+  accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (appId: string) => Promise<OrganizationApp>
 }

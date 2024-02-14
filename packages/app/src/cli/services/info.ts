@@ -80,7 +80,6 @@ class AppInfo {
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
     const developerPlatformClient = selectDeveloperPlatformClient()
-    const partnersSession = await developerPlatformClient.session()
     const {cachedInfo} = await getAppContext({
       developerPlatformClient,
       directory: this.app.directory,
@@ -103,10 +102,11 @@ class AppInfo {
     }
 
     let partnersAccountInfo = ['Partners account', 'unknown']
-    if (isServiceAccount(partnersSession.accountInfo)) {
-      partnersAccountInfo = ['Service account', partnersSession.accountInfo.orgName]
-    } else if (isUserAccount(partnersSession.accountInfo)) {
-      partnersAccountInfo = ['Partners account', partnersSession.accountInfo.email]
+    const retrievedAccountInfo = await developerPlatformClient.accountInfo()
+    if (isServiceAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
+    } else if (isUserAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Partners account', retrievedAccountInfo.email]
     }
 
     const lines = [
