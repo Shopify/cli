@@ -159,7 +159,7 @@ const DEVELOPER_PLATFORM_CLIENT: DeveloperPlatformClient = testDeveloperPlatform
       if (clientId === app.apiKey) return app
     }
     throw new Error(`Unexpected client id: ${clientId}`)
-  }
+  },
 })
 
 vi.mock('./local-storage.js')
@@ -778,10 +778,13 @@ api_version = "2023-04"
     vi.mocked(fetchStoreByDomain).mockResolvedValue({organization: ORG1, store: STORE1})
 
     // When
-    const got = await ensureDevContext({
-      ...INPUT_WITH_DATA,
-      apiKey: 'key2',
-    }, DEVELOPER_PLATFORM_CLIENT)
+    const got = await ensureDevContext(
+      {
+        ...INPUT_WITH_DATA,
+        apiKey: 'key2',
+      },
+      DEVELOPER_PLATFORM_CLIENT,
+    )
 
     // Then
     expect(got).toEqual({
