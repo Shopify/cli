@@ -1,11 +1,12 @@
 import {InfoOptions, info} from './info.js'
-import {fetchAppDetailsFromApiKey, fetchOrgAndApps, fetchOrganizations} from './dev/fetch.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {fetchAppFromConfigOrSelect} from './app/fetch-app-from-config-or-select.js'
 import * as accountInfo from './context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {OrganizationApp} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
+  testDeveloperPlatformClient,
   testPartnersUserSession,
   testApp,
   testOrganizationApp,
@@ -20,14 +21,58 @@ import {TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('./local-storage.js')
-vi.mock('./dev/fetch.js')
 vi.mock('./app/fetch-app-from-config-or-select.js')
 vi.mock('../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
+const APP = testOrganizationApp()
+const APP1 = testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'})
+
+const ORG1 = {
+  id: '123',
+  betas: {},
+  businessName: 'test',
+  website: '',
+  apps: {nodes: []},
+}
+
+const developerPlatformClient = testDeveloperPlatformClient({
+  async appFromId(clientId: string): Promise<OrganizationApp> {
+    switch (clientId) {
+      case '123':
+        return APP1
+      case APP.apiKey:
+        return APP
+      default:
+        throw new Error(`App not found for client ID ${clientId}`)
+    }
+  },
+
+  async organizations() {
+    return [ORG1]
+  },
+
+  async appsForOrg(organizationId: string, _term?: string) {
+    switch (organizationId) {
+      case '123':
+        return {
+          apps: [APP, APP1].map((org) => ({
+            id: org.id,
+            title: org.title,
+            apiKey: org.apiKey,
+          })),
+          hasMorePages: false,
+        }
+      default:
+        throw new Error(`Organization not found for ID ${organizationId}`)
+    }
+  },
+})
+
 const infoOptions: InfoOptions = {
   format: 'text',
   webEnv: false,
+  developerPlatformClient,
 }
 
 beforeEach(() => {
@@ -54,7 +99,7 @@ describe('info', () => {
       // Given
       const testConfig = `
       name = "my app"
-      client_id = "12345"
+      client_id = "123"
       application_url = "https://example.com/lala"
       embedded = true
 
@@ -65,14 +110,11 @@ describe('info', () => {
       redirect_urls = [ "https://example.com/api/auth" ]
       `
       vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(
-        testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'}),
-      )
 
       const configuration: CurrentAppConfiguration = {
         path: joinPath(tmp, 'shopify.app.toml'),
         name: 'my app',
-        client_id: '12345',
+        client_id: '123',
         application_url: 'https://example.com/lala',
         embedded: true,
         webhooks: {api_version: '2023-07'},
@@ -164,30 +206,9 @@ describe('info', () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const app = mockApp({directory: tmp})
-      const organization = {
-        id: '123',
-        betas: {},
-        businessName: 'test',
-        website: '',
-        apps: {nodes: []},
-      }
-      const organizationApp = testOrganizationApp({
-        id: '123',
-        title: 'Test app',
-        appType: 'custom',
-      })
 
-      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-      vi.mocked(fetchOrgAndApps).mockResolvedValue({
-        organization,
-        stores: [],
-        apps: {
-          nodes: [organizationApp],
-          pageInfo: {hasNextPage: false},
-        },
-      })
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
       const result = await info(app, {...infoOptions, webEnv: true})
@@ -207,29 +228,8 @@ describe('info', () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const app = mockApp({directory: tmp})
-      const organization = {
-        id: '123',
-        betas: {},
-        businessName: 'test',
-        website: '',
-        apps: {nodes: []},
-      }
-      const organizationApp = testOrganizationApp({
-        id: '123',
-        title: 'Test app',
-        appType: 'custom',
-      })
-      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-      vi.mocked(fetchOrgAndApps).mockResolvedValue({
-        organization,
-        stores: [],
-        apps: {
-          nodes: [organizationApp],
-          pageInfo: {hasNextPage: false},
-        },
-      })
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP)
 
       // When
       const result = await info(app, {...infoOptions, format: 'json', webEnv: true})
@@ -277,29 +277,8 @@ describe('info', () => {
           allExtensions: [uiExtension1, uiExtension2],
         },
       })
-      const organization = {
-        id: '123',
-        betas: {},
-        businessName: 'test',
-        website: '',
-        apps: {nodes: []},
-      }
-      const organizationApp = testOrganizationApp({
-        id: '123',
-        title: 'Test app',
-        appType: 'custom',
-      })
-      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-      vi.mocked(fetchOrgAndApps).mockResolvedValue({
-        organization,
-        stores: [],
-        apps: {
-          nodes: [organizationApp],
-          pageInfo: {hasNextPage: false},
-        },
-      })
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
       const result = await info(app, infoOptions)
@@ -337,29 +316,8 @@ describe('info', () => {
           allExtensions: [uiExtension1, configExtension],
         },
       })
-      const organization = {
-        id: '123',
-        betas: {},
-        businessName: 'test',
-        website: '',
-        apps: {nodes: []},
-      }
-      const organizationApp = testOrganizationApp({
-        id: '123',
-        title: 'Test app',
-        appType: 'custom',
-      })
-      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-      vi.mocked(fetchOrgAndApps).mockResolvedValue({
-        organization,
-        stores: [],
-        apps: {
-          nodes: [organizationApp],
-          pageInfo: {hasNextPage: false},
-        },
-      })
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
       const result = await info(app, infoOptions)
@@ -390,29 +348,8 @@ describe('info', () => {
           allExtensions: [uiExtension1, configExtension],
         },
       })
-      const organization = {
-        id: '123',
-        betas: {},
-        businessName: 'test',
-        website: '',
-        apps: {nodes: []},
-      }
-      const organizationApp = testOrganizationApp({
-        id: '123',
-        title: 'Test app',
-        appType: 'custom',
-      })
-      vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-      vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
-      vi.mocked(fetchOrgAndApps).mockResolvedValue({
-        organization,
-        stores: [],
-        apps: {
-          nodes: [organizationApp],
-          pageInfo: {hasNextPage: false},
-        },
-      })
-      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(organizationApp)
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+      vi.mocked(fetchAppFromConfigOrSelect).mockResolvedValue(APP1)
 
       // When
       const result = await info(app, {format: 'json', webEnv: false})

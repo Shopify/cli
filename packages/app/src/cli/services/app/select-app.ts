@@ -1,27 +1,21 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {selectOrganizationPrompt, selectAppPrompt} from '../../prompts/dev.js'
-import {fetchPartnersSession} from '../context/partner-account-info.js'
-import {
-  fetchAppDetailsFromApiKey,
-  fetchOrganizations,
-  fetchOrgAndApps,
-  fetchActiveAppVersion,
-  BetaFlag,
-} from '../dev/fetch.js'
+import {fetchActiveAppVersion, BetaFlag} from '../dev/fetch.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {buildSpecsAppConfiguration} from '../../models/app/app.js'
 import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
+import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export async function selectApp(): Promise<OrganizationApp> {
-  const partnersSession = await fetchPartnersSession()
-  const orgs = await fetchOrganizations(partnersSession)
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const orgs = await developerPlatformClient.organizations()
   const org = await selectOrganizationPrompt(orgs)
-  const {apps} = await fetchOrgAndApps(org.id, partnersSession)
-  const selectedAppApiKey = await selectAppPrompt(apps, org.id, partnersSession)
-  const fullSelectedApp = await fetchAppDetailsFromApiKey(selectedAppApiKey, partnersSession.token)
-  return fullSelectedApp!
+  const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
+  const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
+  const fullSelectedApp = await developerPlatformClient.appFromId(selectedAppApiKey)
+  return fullSelectedApp
 }
 
 export async function fetchAppRemoteConfiguration(

@@ -1,7 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
 import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
-import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -24,6 +24,7 @@ export interface InfoOptions {
   configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
+  developerPlatformClient?: DeveloperPlatformClient
 }
 interface Configurable {
   type: string
@@ -79,7 +80,7 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const developerPlatformClient = selectDeveloperPlatformClient()
+    const developerPlatformClient = this.options.developerPlatformClient ?? selectDeveloperPlatformClient()
     const {cachedInfo} = await getAppContext({
       developerPlatformClient,
       directory: this.app.directory,

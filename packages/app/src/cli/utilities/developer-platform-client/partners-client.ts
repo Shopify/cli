@@ -1,11 +1,12 @@
+import {DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {fetchAppDetailsFromApiKey} from '../../../cli/services/dev/fetch.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../../../cli/services/dev/fetch.js'
+import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
-export class PartnersClient {
+export class PartnersClient implements DeveloperPlatformClient {
   private _session: PartnersSession | undefined
 
   async session(): Promise<PartnersSession> {
@@ -27,5 +28,17 @@ export class PartnersClient {
     const app = await fetchAppDetailsFromApiKey(appId, await this.token())
     if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
     return app
+  }
+
+  async organizations(): Promise<Organization[]> {
+    return fetchOrganizations(await this.session())
+  }
+
+  async appsForOrg(organizationId: string, term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {
+    const result = await fetchOrgAndApps(organizationId, await this.session(), term)
+    return {
+      apps: result.apps.nodes,
+      hasMorePages: result.apps.pageInfo.hasNextPage,
+    }
   }
 }
