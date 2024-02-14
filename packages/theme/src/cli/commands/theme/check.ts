@@ -86,8 +86,10 @@ export default class Check extends ThemeCommand {
     const {flags} = await this.parse(Check)
 
     // Its not clear to typescript that path will always be defined
-
     const path = flags.path
+    // To support backwards compatibility for legacy configs
+    const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
+    const config = isLegacyConfig ? LegacyIdentifiers.get(flags.config!.slice(1)) : flags.config
 
     if (flags.init) {
       await initConfig(path)
@@ -114,22 +116,19 @@ export default class Check extends ThemeCommand {
     }
 
     if (flags.print) {
-      await outputActiveConfig(flags.config, path)
+      await outputActiveConfig(path, config)
 
       // --print should not trigger full theme check operation
       return
     }
 
     if (flags.list) {
-      await outputActiveChecks(flags.config, path)
+      await outputActiveChecks(path, config)
 
       // --list should not trigger full theme check operation
       return
     }
 
-    // To support backwards compatibility for legacy configs
-    const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
-    const config = isLegacyConfig ? LegacyIdentifiers.get(flags.config!.slice(1)) : flags.config
     const {offenses, theme} = await themeCheckRun(path, config)
 
     const offensesByFile = sortOffenses(offenses)
