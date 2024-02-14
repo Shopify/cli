@@ -169,7 +169,7 @@ export async function ensureDevContext(
 
   const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(partnersSession))
 
-  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, token)
+  let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
   const organization = await fetchOrgFromId(orgId, partnersSession)
 
   if (!selectedApp || !selectedStore) {
@@ -709,13 +709,16 @@ async function fetchOrgsAppsAndStores(orgId: string, partnersSession: PartnersSe
 async function fetchDevDataFromOptions(
   options: DevContextOptions,
   orgId: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
+  const partnersSession = await developerPlatformClient.session()
+  const token = partnersSession.token
+
   const [selectedApp, orgWithStore] = await Promise.all([
     (async () => {
       let selectedApp: OrganizationApp | undefined
       if (options.apiKey) {
-        selectedApp = await fetchAppDetailsFromApiKey(options.apiKey, token)
+        selectedApp = await developerPlatformClient.appFromId(options.apiKey)
         if (!selectedApp) {
           const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
           throw new AbortError(errorMessage.message, errorMessage.tryMessage)

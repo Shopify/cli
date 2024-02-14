@@ -12,6 +12,7 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -639,6 +640,14 @@ export const testPartnersUserSession: PartnersSession = {
     type: 'UserAccount',
     email: 'partner@shopify.com',
   },
+}
+
+export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
+  return {
+    session: () => Promise.resolve(testPartnersUserSession),
+    appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
+    ...stubs,
+  }
 }
 
 export const testPartnersServiceSession: PartnersSession = {
