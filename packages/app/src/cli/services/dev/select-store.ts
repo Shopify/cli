@@ -104,7 +104,9 @@ export async function convertToTestStoreIfNeeded(
   token: string,
 ): Promise<void> {
   /**
-   * Is not possible to convert stores to dev ones in spin environmets. Should be created directly as development.
+   * It's not possible to convert stores to dev ones in spin environments. Should be created directly as development.
+   * Against production (!isSpinEnvironment()), this allows you to reference other shops in a TOML file even if some of
+   * the dev experience isn't completely supported.
    */
   if (firstPartyDev()) return
   if (!store.transferDisabled && !store.convertableToPartnerTest) {
