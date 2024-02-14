@@ -156,11 +156,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
-        scopesMessage(
-          remoteApp.configuration?.access_scopes?.scopes
-            ? remoteApp.configuration?.access_scopes?.scopes.split(',')
-            : [],
-        ),
+        scopesMessage(remoteApp.configuration?.access_scopes?.scopes?.split(',') || []),
       ],
       nextSteps,
     })
