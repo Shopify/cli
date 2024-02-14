@@ -4,14 +4,8 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 export const ExtensionCollectionIdentifier = 'extension_collection'
 
-export const ExtensionCollection = zod.object({
-  extensions: zod.array(zod.string()),
-  name: zod.string(),
-  handle: zod.string(),
-})
-
 const ExtensionCollectionSchema = BaseSchema.extend({
-  extension_collection: ExtensionCollection.optional(),
+  extensions: zod.array(zod.string()),
 })
 
 export interface ExtensionCollection {
@@ -31,9 +25,9 @@ const spec = createExtensionSpecification({
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, directory) => {
     return {
-      handle: config.extension_collection?.handle,
-      name: config.extension_collection?.name,
-      extensions: config.extension_collection?.extensions,
+      handle: config.handle,
+      name: config.name,
+      extensions: config.extensions,
     }
   },
 })

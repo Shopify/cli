@@ -430,6 +430,7 @@ class AppLoader {
         })
         const normalExtensions = await Promise.all(extensionsInstancesPromises)
         if (configuration.extension_collection) {
+          console.log(collection)
           const collectionExt = await this.createExtensionInstance(
             'extension_collection',
             collection,
