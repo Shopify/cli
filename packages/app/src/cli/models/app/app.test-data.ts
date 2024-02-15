@@ -17,7 +17,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
-  client_id: '12345',
+  client_id: 'api-key',
   name: 'my app',
   webhooks: {
     api_version: '2023-04',
