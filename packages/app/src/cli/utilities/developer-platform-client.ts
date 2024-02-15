@@ -11,9 +11,11 @@ export function selectDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 export interface DeveloperPlatformClient {
+  platformTitle: string
   session: () => Promise<PartnersSession>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (appId: string) => Promise<OrganizationApp>
   organizations: () => Promise<Organization[]>
+  selectOrg: () => Promise<Organization>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
 }

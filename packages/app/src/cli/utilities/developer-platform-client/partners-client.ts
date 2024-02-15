@@ -2,11 +2,14 @@ import {DeveloperPlatformClient, Paginateable} from '../developer-platform-clien
 import {fetchPartnersSession, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {fetchAppDetailsFromApiKey, fetchOrganizations, fetchOrgAndApps} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
+import {selectOrganizationPrompt} from '../../prompts/dev.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
 export class PartnersClient implements DeveloperPlatformClient {
+  public platformTitle = 'Partners'
+
   private _session: PartnersSession | undefined
 
   async session(): Promise<PartnersSession> {
@@ -32,6 +35,11 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async organizations(): Promise<Organization[]> {
     return fetchOrganizations(await this.session())
+  }
+
+  async selectOrg(): Promise<Organization> {
+    const organizations = await this.organizations()
+    return selectOrganizationPrompt(organizations)
   }
 
   async appsForOrg(organizationId: string, term?: string): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {

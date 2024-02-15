@@ -5,13 +5,16 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utiliti
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
-export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
+export async function selectOrganizationPrompt(
+  organizations: Organization[],
+  developerPlatformClient = selectDeveloperPlatformClient(),
+): Promise<Organization> {
   if (organizations.length === 1) {
     return organizations[0]!
   }
   const orgList = organizations.map((org) => ({label: org.businessName, value: org.id}))
   const id = await renderAutocompletePrompt({
-    message: 'Which Partners organization is this work for?',
+    message: `Which ${developerPlatformClient.platformTitle} organization is this work for?`,
     choices: orgList,
   })
   return organizations.find((org) => org.id === id)!
