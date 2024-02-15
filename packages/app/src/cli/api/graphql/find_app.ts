@@ -12,8 +12,6 @@ export const FindAppQuery = gql`
       }
       appType
       grantedScopes
-      applicationUrl
-      redirectUrlWhitelist
       developmentStorePreviewEnabled
       disabledBetas
     }
@@ -31,8 +29,6 @@ export interface FindAppQuerySchema {
     }[]
     appType: string
     grantedScopes: string[]
-    applicationUrl: string
-    redirectUrlWhitelist: string[]
     developmentStorePreviewEnabled: boolean
     disabledBetas: string[]
   }

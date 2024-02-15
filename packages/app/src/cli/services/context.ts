@@ -423,8 +423,6 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       appType: partnersApp.appType,
       organizationId: partnersApp.organizationId,
       grantedScopes: partnersApp.grantedScopes,
-      applicationUrl: partnersApp.applicationUrl,
-      redirectUrlWhitelist: partnersApp.redirectUrlWhitelist,
       betas: partnersApp.betas,
     },
     identifiers,

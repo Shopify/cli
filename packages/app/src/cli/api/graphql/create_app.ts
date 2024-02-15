@@ -29,8 +29,6 @@ export const CreateAppQuery = gql`
         }
         appType
         grantedScopes
-        applicationUrl
-        redirectUrlWhitelist
         disabledBetas
       }
       userErrors {
@@ -62,8 +60,6 @@ export interface CreateAppQuerySchema {
       }[]
       appType: string
       grantedScopes: string[]
-      applicationUrl: string
-      redirectUrlWhitelist: string[]
       disabledBetas: string[]
     }
     userErrors: {
