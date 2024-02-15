@@ -19,6 +19,9 @@ export class PartnersClient implements DeveloperPlatformClient {
   private _session: PartnersSession | undefined
 
   async session(): Promise<PartnersSession> {
+    if (isUnitTest()) {
+      throw new Error('PartnersClient.session() should not be called in a unit test')
+    }
     if (!this._session) {
       this._session = await fetchPartnersSession()
     }
