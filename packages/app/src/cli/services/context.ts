@@ -17,6 +17,7 @@ import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
+import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
   AppConfiguration,
@@ -198,6 +199,11 @@ export async function ensureDevContext(
     token,
     apiKey: selectedApp.apiKey,
   })
+
+  selectedApp = {
+    ...selectedApp,
+    configuration: await fetchAppRemoteConfiguration(selectedApp.apiKey, token, specifications, selectedApp.betas),
+  }
 
   const localApp = await loadApp({
     directory: options.directory,
