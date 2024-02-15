@@ -9,7 +9,8 @@ export const RedeemablePaymentsAppExtensionSchema = BasePaymentsAppExtensionSche
   targeting: zod.array(zod.object({target: zod.literal(REDEEMABLE_TARGET)})).length(1),
   api_version: zod.string(),
   balance_url: zod.string().url(),
-  redeemable_type: zod.literal('gift_card'),
+  redeemable_type: zod.literal('gift-card'),
+  ui_extension_handle: zod.string().optional(),
   checkout_payment_method_fields: zod.array(zod.string()).optional(),
 })
 
@@ -31,5 +32,6 @@ export async function redeemablePaymentsAppExtensionDeployConfig(
     redeemable_type: config.redeemable_type,
     balance_url: config.balance_url,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
+    ui_extension_handle: config.ui_extension_handle,
   }
 }

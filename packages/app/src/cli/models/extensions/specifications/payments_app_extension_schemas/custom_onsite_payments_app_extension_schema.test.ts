@@ -29,6 +29,7 @@ const config: CustomOnsitePaymentsAppExtensionConfigType = {
   checkout_payment_method_fields: [],
   modal_payment_method_fields: [],
   description: 'Custom onsite extension',
+  ui_extension_handle: 'sample-ui-extension',
   metafields: [],
   input: {
     metafield_identifiers: {
@@ -115,6 +116,7 @@ describe('customOnsitePaymentsAppExtensionDeployConfig', () => {
       buyer_label_to_locale: config.buyer_label_translations,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       modal_payment_method_fields: config.modal_payment_method_fields,
+      ui_extension_handle: config.ui_extension_handle,
     })
   })
 })
