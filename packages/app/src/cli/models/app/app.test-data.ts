@@ -657,6 +657,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve([testOrganization()]),
+    orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     selectOrg: () => Promise.resolve(testOrganization()),
     ...stubs,

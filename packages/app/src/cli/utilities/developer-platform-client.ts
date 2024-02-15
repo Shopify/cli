@@ -17,5 +17,6 @@ export interface DeveloperPlatformClient {
   appFromId: (appId: string) => Promise<OrganizationApp>
   organizations: () => Promise<Organization[]>
   selectOrg: () => Promise<Organization>
+  orgFromId: (orgId: string) => Promise<Organization>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>
 }
