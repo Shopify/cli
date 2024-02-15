@@ -64,6 +64,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
@@ -94,6 +95,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         message: 'Deployed from CLI with flag',
@@ -122,6 +124,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         version: '1.1.0',
@@ -150,6 +153,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
     })
 
@@ -365,6 +369,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
@@ -403,6 +408,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
@@ -443,6 +449,7 @@ describe('deploy', () => {
         redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: true,

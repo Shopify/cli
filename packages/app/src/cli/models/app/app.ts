@@ -169,6 +169,7 @@ export interface AppInterface extends AppConfigurationInterface {
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
   includeConfigOnDeploy: boolean | undefined
+  remoteBetaFlags: BetaFlag[]
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
@@ -206,7 +207,7 @@ export class App implements AppInterface {
   errors?: AppErrors
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
-  private remoteBetaFlags: BetaFlag[]
+  remoteBetaFlags: BetaFlag[]
   private realExtensions: ExtensionInstance[]
 
   constructor({

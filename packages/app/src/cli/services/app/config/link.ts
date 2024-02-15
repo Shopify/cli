@@ -43,6 +43,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     remoteApp.apiKey,
     token,
     localApp.specifications ?? [],
+    localApp.remoteBetaFlags,
   )
   const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
   configuration = deepMergeObjects(configuration, remoteAppConfiguration, replaceLocalArrayStrategy)

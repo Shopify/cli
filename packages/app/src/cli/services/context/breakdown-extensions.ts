@@ -114,9 +114,9 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
-  const remoteConfig = await fetchAppRemoteConfiguration(apiKey, token, app.specifications ?? [])
+  const remoteConfig = await fetchAppRemoteConfiguration(apiKey, token, app.specifications ?? [], app.remoteBetaFlags)
   const baselineConfig = versionAppModules
-    ? remoteAppConfigurationExtensionContent(versionAppModules, app.specifications ?? [])
+    ? remoteAppConfigurationExtensionContent(versionAppModules, app.specifications ?? [], app.remoteBetaFlags)
     : app.configuration
   const diffConfigContent = buildDiffConfigContent(
     baselineConfig as CurrentAppConfiguration,

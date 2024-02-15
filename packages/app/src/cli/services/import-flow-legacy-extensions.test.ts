@@ -24,6 +24,7 @@ const organizationApp: OrganizationApp = {
   grantedScopes: [],
   applicationUrl: 'applicationUrl',
   redirectUrlWhitelist: [],
+  betas: [],
 }
 
 const flowExtensionA: ExtensionRegistration = {

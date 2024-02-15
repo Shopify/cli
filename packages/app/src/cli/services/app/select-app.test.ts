@@ -65,7 +65,7 @@ describe('fetchAppRemoteConfiguration', () => {
     vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
     // When
-    const result = await fetchAppRemoteConfiguration('token', 'apiKey', await configurationSpecifications())
+    const result = await fetchAppRemoteConfiguration('token', 'apiKey', await configurationSpecifications(), [])
 
     // Then
     expect(result).toEqual({
@@ -102,7 +102,7 @@ describe('fetchAppRemoteConfiguration', () => {
     vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
 
     // When
-    const result = await fetchAppRemoteConfiguration('token', 'apiKey', await configurationSpecifications())
+    const result = await fetchAppRemoteConfiguration('token', 'apiKey', await configurationSpecifications(), [])
 
     // Then
     expect(result).toEqual({

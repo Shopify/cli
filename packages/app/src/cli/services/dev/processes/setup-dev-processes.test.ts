@@ -113,6 +113,7 @@ describe('setup-dev-processes', () => {
       grantedScopes: [],
       applicationUrl: 'https://example.com/application',
       redirectUrlWhitelist: [],
+      betas: [],
     }
 
     const graphiqlKey = 'somekey'
