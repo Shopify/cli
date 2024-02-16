@@ -26,20 +26,8 @@ export function transformToWebhookConfig(content: object) {
 
   const webhooksSubscriptions: WebhooksConfig['subscriptions'] = []
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  for (const {uri, topic, sub_topic, ...optionalFields} of serverWebhooks) {
-    const currSubscription = webhooksSubscriptions.find((sub) => sub.uri === uri && sub.sub_topic === sub_topic)
-    if (currSubscription) {
-      currSubscription.topics ??= []
-      currSubscription.topics.push(topic)
-    } else {
-      webhooksSubscriptions.push({
-        topics: [topic],
-        uri,
-        ...(sub_topic ? {sub_topic} : {}),
-        ...optionalFields,
-      })
-    }
+  for (const {topic, ...otherFields} of serverWebhooks) {
+    webhooksSubscriptions.push({topics: [topic], ...otherFields})
   }
 
   const webhooksSubscriptionsObject = webhooksSubscriptions.length > 0 ? {subscriptions: webhooksSubscriptions} : {}

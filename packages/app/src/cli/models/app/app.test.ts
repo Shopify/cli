@@ -1,6 +1,7 @@
 import {
   CurrentAppConfiguration,
   LegacyAppConfiguration,
+  buildSpecsAppConfiguration,
   getAppScopes,
   getAppScopesArray,
   getUIExtensionRendererVersion,
@@ -14,8 +15,6 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-
-const DEFAULT_APP = testApp()
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   path: '',
@@ -281,6 +280,54 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
       // Then
       expect(result).toBeUndefined()
     })
+  })
+})
+
+describe('buildSpecsAppConfiguration', () => {
+  test('simplifies the webhook subscriptions', () => {
+    // Given
+    const appConfig = {
+      webhooks: {
+        api_version: '2024-01',
+        subscriptions: [
+          {
+            topics: ['products/create'],
+            uri: 'https://example.com/webhooks',
+          },
+          {
+            compliance_topics: ['customers/redact'],
+            uri: 'https://example.com/webhooks',
+          },
+          {
+            compliance_topics: ['customers/data_request'],
+            uri: 'https://example.com/webhooks',
+          },
+          {
+            topics: ['metaobjects/create'],
+            sub_topic: 'subtopic',
+            uri: 'https://example.com/webhooks',
+          },
+        ],
+      },
+    }
+    const expected = {
+      webhooks: {
+        api_version: '2024-01',
+        subscriptions: [
+          {
+            topics: ['products/create'],
+            compliance_topics: ['customers/redact', 'customers/data_request'],
+            uri: 'https://example.com/webhooks',
+          },
+          {
+            topics: ['metaobjects/create'],
+            sub_topic: 'subtopic',
+            uri: 'https://example.com/webhooks',
+          },
+        ],
+      },
+    }
+    expect(buildSpecsAppConfiguration(appConfig)).toEqual(expected)
   })
 })
 

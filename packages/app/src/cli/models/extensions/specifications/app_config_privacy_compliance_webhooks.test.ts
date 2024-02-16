@@ -114,31 +114,6 @@ describe('privacy_compliance_webhooks', () => {
       })
     })
 
-    test('it simplifies the result by grouping topics with the same URI', () => {
-      // Given
-      const object = {
-        customers_redact_url: 'https://example.com/webhooks',
-        customers_data_request_url: 'https://example.com/webhooks',
-        shop_redact_url: 'https://example.com/webhooks',
-      }
-      const privacyComplianceSpec = spec
-
-      // When
-      const result = privacyComplianceSpec.reverseTransform!(object, {flags: [Flag.DeclarativeWebhooks]})
-
-      // Then
-      expect(result).toMatchObject({
-        webhooks: {
-          subscriptions: [
-            {
-              compliance_topics: ['customers/redact', 'customers/data_request', 'shop/redact'],
-              uri: 'https://example.com/webhooks',
-            },
-          ],
-        },
-      })
-    })
-
     test('should return only the properties that are not empty', () => {
       // Given
       const object = {

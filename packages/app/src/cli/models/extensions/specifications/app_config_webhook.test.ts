@@ -135,17 +135,7 @@ describe('webhooks', () => {
         subscriptions: [
           {
             metafield_namespaces: ['id', 'size'],
-            topic: 'orders/delete',
-            uri: 'https://example.com/webhooks/orders',
-          },
-          {
-            metafield_namespaces: ['id', 'size'],
             topic: 'orders/create',
-            uri: 'https://example.com/webhooks/orders',
-          },
-          {
-            metafield_namespaces: ['id', 'size'],
-            topic: 'orders/edited',
             uri: 'https://example.com/webhooks/orders',
           },
           {
@@ -158,30 +148,10 @@ describe('webhooks', () => {
             uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
           },
           {
-            sub_topic: 'type:metaobject_two',
-            topic: 'metaobjects/create',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/update',
-            uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-          },
-          {
             include_fields: ['variants', 'title'],
             metafield_namespaces: ['size'],
             topic: 'orders/create',
             uri: 'https://valid-url',
-          },
-          {
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/create',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          },
-          {
-            sub_topic: 'type:metaobject_one',
-            topic: 'metaobjects/delete',
-            uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
           },
         ],
       }
@@ -197,7 +167,7 @@ describe('webhooks', () => {
           subscriptions: [
             {
               metafield_namespaces: ['id', 'size'],
-              topics: ['orders/delete', 'orders/create', 'orders/edited'],
+              topics: ['orders/create'],
               uri: 'https://example.com/webhooks/orders',
             },
             {
@@ -206,11 +176,6 @@ describe('webhooks', () => {
             },
             {
               sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create', 'metaobjects/update'],
-              uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
-            },
-            {
-              sub_topic: 'type:metaobject_two',
               topics: ['metaobjects/create'],
               uri: 'pubsub://absolute-feat-test:pub-sub-topic2',
             },
@@ -219,11 +184,6 @@ describe('webhooks', () => {
               metafield_namespaces: ['size'],
               topics: ['orders/create'],
               uri: 'https://valid-url',
-            },
-            {
-              sub_topic: 'type:metaobject_one',
-              topics: ['metaobjects/create', 'metaobjects/delete'],
-              uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
             },
           ],
         },
