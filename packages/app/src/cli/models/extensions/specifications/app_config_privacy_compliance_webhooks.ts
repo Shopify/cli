@@ -49,7 +49,7 @@ function transformFromPrivacyComplianceWebhooksModule(content: object, options?:
     }
 
     if (webhooks.length === 0) return {}
-    return {webhooks: {subscriptions: simplifySubscriptions(webhooks), privacy_compliance: undefined}}
+    return {webhooks: {subscriptions: webhooks, privacy_compliance: undefined}}
   }
 
   if (customersRedactUrl || customersDataRequestUrl || shopRedactUrl) {
@@ -80,16 +80,4 @@ function getCustomersDataRequestUri(webhooks: WebhooksConfig) {
 
 function getShopDeletionUri(webhooks: WebhooksConfig) {
   return getComplianceUri(webhooks, 'shop/redact') || webhooks?.privacy_compliance?.shop_deletion_url
-}
-
-function simplifySubscriptions(subscriptions: WebhookSubscription[]): WebhookSubscription[] {
-  return subscriptions.reduce((accumulator, subscription) => {
-    const existingSubscription = accumulator.find((sub) => sub.uri === subscription.uri)
-    if (existingSubscription) {
-      existingSubscription.compliance_topics!.push(subscription.compliance_topics![0]!)
-    } else {
-      accumulator.push(subscription)
-    }
-    return accumulator
-  }, [] as WebhookSubscription[])
 }
