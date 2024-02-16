@@ -29,7 +29,7 @@ const APP1 = testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'})
 
 const ORG1 = {
   id: '123',
-  betas: {},
+  flags: {},
   businessName: 'test',
   website: '',
   apps: {nodes: []},

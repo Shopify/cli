@@ -33,6 +33,16 @@ export function getArrayContainsDuplicates<T>(array: T[]): boolean {
 }
 
 /**
+ * Removes duplicated items from an array.
+ *
+ * @param array - The array to inspect.
+ * @returns Returns the new duplicate free array.
+ */
+export function uniq<T>(array: T[]): T[] {
+  return Array.from(new Set(array))
+}
+
+/**
  * This method is like `_.uniq` except that it accepts `iteratee` which is
  * invoked for each element in `array` to generate the criterion by which
  * uniqueness is computed. The iteratee is invoked with one argument: (value).

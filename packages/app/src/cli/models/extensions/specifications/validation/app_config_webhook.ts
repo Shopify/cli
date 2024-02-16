@@ -1,4 +1,5 @@
 import {zod} from '@shopify/cli-kit/node/schema'
+import {uniq} from '@shopify/cli-kit/common/array'
 import type {WebhooksConfig} from '../types/app_config_webhook.js'
 
 export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
@@ -13,7 +14,6 @@ export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {
 function validateSubscriptions(webhookConfig: WebhooksConfig) {
   const {subscriptions = []} = webhookConfig
   const uniqueSubscriptionSet = new Set()
-  const uniqueComplianceSubscriptionSet = new Set()
 
   if (!subscriptions.length) return
 
@@ -24,6 +24,16 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
     return {
       code: zod.ZodIssueCode.custom,
       message: `The privacy_compliance section can't be used if there are subscriptions including compliance_topics`,
+    }
+  }
+
+  const ComplianceTopics = subscriptions.flatMap((subscription) => subscription.compliance_topics).filter(Boolean)
+  if (uniq(ComplianceTopics).length !== ComplianceTopics.length) {
+    return {
+      code: zod.ZodIssueCode.custom,
+      message: 'You can’t have duplicate subscriptions with the same compliance topic',
+      fatal: true,
+      path: ['subscriptions'],
     }
   }
 
@@ -52,21 +62,6 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
       }
 
       uniqueSubscriptionSet.add(key)
-    }
-
-    for (const [j, complianceTopic] of compliance_topics.entries()) {
-      const key = `${complianceTopic}::${uri}`
-
-      if (uniqueComplianceSubscriptionSet.has(key)) {
-        return {
-          code: zod.ZodIssueCode.custom,
-          message: 'You can’t have duplicate privacy compliance subscriptions with the exact same `uri`',
-          fatal: true,
-          path: [...path, 'compliance_topics', j, complianceTopic],
-        }
-      }
-
-      uniqueComplianceSubscriptionSet.add(key)
     }
   }
 }

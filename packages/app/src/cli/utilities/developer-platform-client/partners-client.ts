@@ -6,7 +6,7 @@ import {
 } from '../../api/graphql/all_dev_stores_by_org.js'
 import {ActiveAppVersion, DeveloperPlatformClient, Paginateable} from '../developer-platform-client.js'
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
+import {fetchAppDetailsFromApiKey, fetchOrgAndApps, filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuery,
@@ -263,8 +263,8 @@ export class PartnersClient implements DeveloperPlatformClient {
       throw new AbortError(errors)
     }
 
-    const betas = filterDisabledBetas(result.appCreate.app.disabledBetas)
-    return {...result.appCreate.app, organizationId: org.id, newApp: true, betas}
+    const flags = filterDisabledFlags(result.appCreate.app.disabledFlags)
+    return {...result.appCreate.app, organizationId: org.id, newApp: true, flags}
   }
 
   async devStoresForOrg(orgId: string): Promise<OrganizationStore[]> {
