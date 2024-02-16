@@ -569,13 +569,7 @@ embedded = false
   test('fetches the privacy compliance webhooks from the configuration module', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const options: LinkOptions = {
-        directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-      }
-      vi.mocked(loadApp).mockRejectedValue('App not found')
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
-      vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
+      const remoteExtensionRegistrations = {
         app: {
           extensionRegistrations: [],
           configurationRegistrations: [
@@ -595,7 +589,22 @@ embedded = false
           ],
           dashboardManagedExtensionRegistrations: [],
         },
-      })
+      }
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient: testDeveloperPlatformClient({
+          appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        }),
+      }
+
+      vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        access_scopes: {scopes: 'read_products,write_orders'},
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
       // When
       await link(options)
@@ -611,7 +620,7 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
+scopes = "read_products,write_orders"
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
