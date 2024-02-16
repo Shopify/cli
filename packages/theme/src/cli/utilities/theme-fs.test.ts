@@ -34,14 +34,14 @@ describe('theme-fs', () => {
         files: new Map([
           fsEntry({checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'}),
           fsEntry({checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'}),
+          fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
+          fsEntry({checksum: '3f6b44e95dbcf0214a0a82627a37cd53', key: 'config/settings_schema.json'}),
           fsEntry({checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'}),
           fsEntry({checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'}),
           fsEntry({checksum: '94d575574a070397f297a2e9bb32ce7d', key: 'locales/en.default.json'}),
-          fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
-          fsEntry({checksum: '3f6b44e95dbcf0214a0a82627a37cd53', key: 'config/settings_schema.json'}),
-          fsEntry({checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'}),
           fsEntry({checksum: '3e8fecc3fb5e886f082e12357beb5d56', key: 'sections/announcement-bar.liquid'}),
           fsEntry({checksum: 'aa0c697b712b22753f73c84ba8a2e35a', key: 'snippets/language-localization.liquid'}),
+          fsEntry({checksum: 'f14a0bd594f4fee47b13fc09543098ff', key: 'templates/404.json'}),
         ]),
         root,
       })
@@ -70,7 +70,7 @@ describe('theme-fs', () => {
 
       // When
       const content = await readThemeFile(root, key)
-      const contentJson = JSON.parse(content ?? '')
+      const contentJson = JSON.parse(content?.toString() || '')
 
       // Then
       expect(contentJson).toEqual({
@@ -94,6 +94,19 @@ describe('theme-fs', () => {
 
       // Then
       expect(content).toBeUndefined()
+    })
+
+    test('returns Buffer for image files', async () => {
+      // Given
+      const root = 'src/cli/utilities/fixtures'
+      const key = 'assets/sparkle.gif'
+
+      // When
+      const content = await readThemeFile(root, key)
+
+      // Then
+      expect(content).toBeDefined()
+      expect(Buffer.isBuffer(content)).toBe(true)
     })
   })
 

@@ -7,6 +7,8 @@ export async function checksum(root: string, path: string) {
 
   if (!content) return ''
 
+  if (Buffer.isBuffer(content)) return md5(content)
+
   if (isTextFile(path)) content = content.replace(/\r\n/g, '\n')
 
   if (isJson(path)) {
@@ -49,8 +51,8 @@ export function normalizeJson(jsonStr: string) {
   return formattedStr
 }
 
-function md5(content: string) {
-  const buffer = Buffer.from(content)
+function md5(content: string | Buffer) {
+  const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content)
 
   return fileHash(buffer)
 }

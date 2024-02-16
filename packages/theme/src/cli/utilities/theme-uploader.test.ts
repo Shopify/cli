@@ -5,6 +5,7 @@ import {bulkUploadThemeAssets, deleteThemeAsset} from '@shopify/cli-kit/node/the
 import {BulkUploadResult, Checksum, Key, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -18,6 +19,9 @@ vi.mock('./theme-fs.js', async (realImport) => {
 
 beforeEach(() => {
   vi.mocked(readThemeFile).mockImplementation(async (_root, path) => {
+    if (lookupMimeType(path).startsWith('image')) {
+      return Buffer.from('123', 'utf-8')
+    }
     return path
   })
   vi.mocked(bulkUploadThemeAssets).mockImplementation(
@@ -158,19 +162,18 @@ describe('theme-uploader', () => {
     const themeFileSystem = {
       root: 'tmp',
       files: new Map([
-        ['assets/liquid.liquid', {key: 'assets/liquid.liquid', checksum: '1', value: 'liquid'}],
-        ['templates/index.liquid', {key: 'templates/index.liquid', checksum: '4', value: 'index'}],
-        ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2', value: 'settings_data'}],
-        ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
-        ['sections/header-group.json', {key: 'sections/header-group.json', checksum: '5', value: 'header-group'}],
-        ['templates/product.json', {key: 'templates/product.json', checksum: '6', value: 'product'}],
-        ['assets/image.png', {key: 'assets/image.png', checksum: '7', value: 'image'}],
+        ['assets/liquid.liquid', {key: 'assets/liquid.liquid', checksum: '1'}],
+        ['templates/index.liquid', {key: 'templates/index.liquid', checksum: '4'}],
+        ['config/settings_data.json', {key: 'config/settings_data.json', checksum: '2'}],
+        ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3'}],
+        ['sections/header-group.json', {key: 'sections/header-group.json', checksum: '5'}],
+        ['templates/product.json', {key: 'templates/product.json', checksum: '6'}],
+        ['assets/image.png', {key: 'assets/image.png', checksum: '7'}],
       ]),
     } as ThemeFileSystem
-    const options = {path: 'tmp'}
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, options)
+    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(4)
@@ -178,10 +181,12 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
+          attachment: undefined,
           key: 'assets/liquid.liquid',
           value: 'assets/liquid.liquid',
         },
         {
+          attachment: undefined,
           key: 'templates/index.liquid',
           value: 'templates/index.liquid',
         },
@@ -206,8 +211,9 @@ describe('theme-uploader', () => {
       remoteTheme.id,
       [
         {
+          attachment: Buffer.from('123', 'utf-8').toString('base64'),
           key: 'assets/image.png',
-          value: 'assets/image.png',
+          value: undefined,
         },
       ],
       adminSession,
@@ -261,12 +267,11 @@ describe('theme-uploader', () => {
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
       ]),
     } as ThemeFileSystem
-    const options = {path: 'tmp'}
 
     vi.mocked(fileSize).mockResolvedValue(MAX_BATCH_BYTESIZE)
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, options)
+    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
@@ -301,7 +306,6 @@ describe('theme-uploader', () => {
         ['assets/newer.liquid', {checksum: '3'}],
       ]),
     } as ThemeFileSystem
-    const options = {path: 'tmp'}
 
     vi.mocked(bulkUploadThemeAssets)
       .mockResolvedValueOnce([
@@ -328,7 +332,7 @@ describe('theme-uploader', () => {
       ])
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, options)
+    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(MAX_UPLOAD_RETRY_COUNT + 1)
@@ -360,31 +364,25 @@ describe('theme-uploader', () => {
     )
   })
 
-  // should base64 encode gifs
-  test('should include gifs as a base64 encoded attachment', async () => {
+  // should include image data as base64 encoded attachment
+  test('should include image data as base64 encoded attachment', async () => {
     // Given
     const remoteChecksums: Checksum[] = []
     const themeFileSystem = {
       root: 'tmp',
-      files: new Map([['assets/new.gif', {checksum: '1'}]]),
+      files: new Map([['assets/image.png', {key: 'assets/image.png', checksum: '1'}]]),
     } as ThemeFileSystem
-    const options = {path: 'tmp'}
-    vi.mocked(readThemeFile).mockImplementation(async (_root, _path): Promise<Buffer> => {
-      return Buffer.from('adsf')
-    })
 
     // When
-    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, options)
+    await uploadTheme(remoteTheme, adminSession, remoteChecksums, themeFileSystem, uploadOptions)
 
     // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(1)
     expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
       remoteTheme.id,
       [
         {
-          key: 'assets/new.gif',
-          attachment: Buffer.from('adsf').toString('base64'),
-          value: undefined,
+          attachment: Buffer.from('123', 'utf-8').toString('base64'),
+          key: 'assets/image.png',
         },
       ],
       adminSession,

@@ -255,7 +255,7 @@ async function readThemeFilesFromDisk(filesToUpload: string[], themeFileSystem: 
 
       const fileData = await readThemeFile(themeFileSystem.root, file)
       if (Buffer.isBuffer(fileData)) {
-        themeAsset.attachment = Buffer.from(fileData).toString('base64')
+        themeAsset.attachment = fileData.toString('base64')
       } else {
         themeAsset.value = fileData
       }
