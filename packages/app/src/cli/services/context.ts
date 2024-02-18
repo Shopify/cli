@@ -3,7 +3,6 @@ import {
   fetchAllDevStores,
   fetchAppDetailsFromApiKey,
   fetchOrgAndApps,
-  fetchOrganizations,
   fetchOrgFromId,
   fetchStoreByDomain,
   FetchResponse,
@@ -15,7 +14,7 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
-import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
+import {PartnersSession} from './context/partner-account-info.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
@@ -46,7 +45,7 @@ import {
   DevelopmentStorePreviewUpdateSchema,
 } from '../api/graphql/development_preview.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
-import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -124,7 +123,7 @@ export async function ensureGenerateContext(options: {
     })
     return app.apiKey
   } else {
-    const orgId = cachedInfo?.orgId || (await selectOrg(options.partnersSession))
+    const orgId = cachedInfo?.orgId || (await selectOrg(options.developerPlatformClient))
     const {organization, apps} = await fetchOrgAndApps(orgId, options.partnersSession)
     const localAppName = await loadAppName(options.directory)
     const selectedApp = await selectOrCreateApp(localAppName, apps, organization, options.partnersSession)
@@ -321,15 +320,15 @@ interface DeployContextOutput {
  */
 async function fetchDevAppAndPrompt(
   app: AppInterface,
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient
 ): Promise<OrganizationApp | undefined> {
   const devAppId = getCachedAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
-  const partnersResponse = await fetchAppDetailsFromApiKey(devAppId, partnersSession.token)
+  const partnersResponse = await developerPlatformClient.appFromId(devAppId)
   if (!partnersResponse) return undefined
 
-  const org = await fetchOrgFromId(partnersResponse.organizationId, partnersSession)
+  const org = await developerPlatformClient.orgFromId(partnersResponse.organizationId)
 
   showDevValues(org.businessName ?? 'unknown', partnersResponse.title)
   const reuse = await reuseDevConfigPrompt()
@@ -376,9 +375,10 @@ export interface DeployContextOptions {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
-  const partnersSession = await fetchPartnersSession()
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
-  const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
+  const [partnersApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
   const specifications = await fetchSpecifications({
     token,
@@ -449,7 +449,8 @@ export interface DraftExtensionsPushOptions {
 }
 
 export async function ensureDraftExtensionsPushContext(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
-  const partnersSession = await fetchPartnersSession()
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
 
   const specifications = await loadLocalExtensionsSpecifications()
@@ -460,7 +461,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     configName: draftExtensionsPushOptions.config,
   })
 
-  const [partnersApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, partnersSession)
+  const [partnersApp] = await fetchAppAndIdentifiers({...draftExtensionsPushOptions, app}, developerPlatformClient)
 
   const org = await fetchOrgFromId(partnersApp.organizationId, partnersSession)
 
@@ -565,8 +566,9 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
  * @returns The selected org, app and dev store
  */
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
-  const partnersSession = await fetchPartnersSession()
-  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, partnersSession)
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
+  const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient)
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
   // eslint-disable-next-line no-param-reassign
@@ -610,8 +612,9 @@ interface VersionsListContextOutput {
 export async function ensureVersionsListContext(
   options: VersionListContextOptions,
 ): Promise<VersionsListContextOutput> {
-  const partnersSession = await fetchPartnersSession()
-  const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
+  const [partnersApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
   await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
   return {
@@ -622,10 +625,11 @@ export async function ensureVersionsListContext(
 
 export async function fetchOrCreateOrganizationApp(
   app: AppInterface,
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   directory?: string,
 ): Promise<OrganizationApp> {
-  const orgId = await selectOrg(partnersSession)
+  const orgId = await selectOrg(developerPlatformClient)
+  const partnersSession = await developerPlatformClient.session()
   const {organization, apps} = await fetchOrgsAppsAndStores(orgId, partnersSession)
   const isLaunchable = appIsLaunchable(app)
   const scopesArray = getAppScopesArray(app.configuration)
@@ -646,10 +650,9 @@ export async function fetchAppAndIdentifiers(
     reset: boolean
     apiKey?: string
   },
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   reuseFromDev = true,
 ): Promise<[OrganizationApp, Partial<UuidOnlyIdentifiers>]> {
-  const token = partnersSession.token
   const app = options.app
   let reuseDevCache = reuseFromDev
   let envIdentifiers = getAppIdentifiers({app})
@@ -666,17 +669,17 @@ export async function fetchAppAndIdentifiers(
 
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = options.apiKey ?? app.configuration.client_id
-    partnersApp = await appFromId(apiKey, token)
+    partnersApp = await developerPlatformClient.appFromId(apiKey)
   } else if (options.apiKey) {
-    partnersApp = await appFromId(options.apiKey, token)
+    partnersApp = await developerPlatformClient.appFromId(options.apiKey)
   } else if (envIdentifiers.app) {
-    partnersApp = await appFromId(envIdentifiers.app, token)
+    partnersApp = await developerPlatformClient.appFromId(envIdentifiers.app)
   } else if (reuseDevCache) {
-    partnersApp = await fetchDevAppAndPrompt(app, partnersSession)
+    partnersApp = await fetchDevAppAndPrompt(app, developerPlatformClient)
   }
 
   if (!partnersApp) {
-    partnersApp = await fetchOrCreateOrganizationApp(app, partnersSession)
+    partnersApp = await fetchOrCreateOrganizationApp(app, developerPlatformClient)
   }
 
   await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
@@ -827,8 +830,8 @@ export async function getAppContext({
  * @param token - Token to access partners API
  * @returns The selected organization ID
  */
-async function selectOrg(partnersSession: PartnersSession): Promise<string> {
-  const orgs = await fetchOrganizations(partnersSession)
+async function selectOrg(developerPlatformClient: DeveloperPlatformClient): Promise<string> {
+  const orgs = await developerPlatformClient.organizations()
   const org = await selectOrganizationPrompt(orgs)
   return org.id
 }
