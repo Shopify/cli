@@ -5,18 +5,20 @@ import {
   testApp,
   testOrganizationApp,
   buildVersionedAppSchema,
+  testDeveloperPlatformClient,
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
+import {appNamePrompt} from '../../../prompts/dev.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -35,11 +37,11 @@ vi.mock('../../../models/app/loader.js', async () => {
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context/partner-account-info.js')
-vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../generate/fetch-extension-specifications.js')
 vi.mock('../select-app.js')
+vi.mock('../../../prompts/dev.js')
 
 const DEFAULT_REMOTE_CONFIGURATION = {
   name: 'app1',
@@ -50,6 +52,8 @@ const DEFAULT_REMOTE_CONFIGURATION = {
   pos: {embedded: false},
   access_scopes: {use_legacy_install_flow: true},
 }
+
+const developerPlatformClient = testDeveloperPlatformClient()
 
 beforeEach(async () => {
   vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
@@ -64,6 +68,7 @@ describe('link', () => {
       const options: LinkOptions = {
         directory: tmp,
         configName: 'Default value',
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -82,9 +87,11 @@ describe('link', () => {
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
-      vi.mocked(loadApp).mockRejectedValue('App not found')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
+      vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(appNamePrompt).mockResolvedValue('my-app')
 
       // When
       await link(options)
@@ -140,6 +147,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -228,6 +236,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -297,6 +306,7 @@ embedded = false
       writeFileSync(filePath, initialContent)
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -355,6 +365,7 @@ embedded = false
       writeFileSync(filePath, initialContent)
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -392,20 +403,20 @@ embedded = false
   test('fetches the app directly when an api key is provided', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
+      const developerPlatformClient = testDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
         apiKey: 'api-key',
+        developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(mockRemoteApp())
-      vi.mocked(selectConfigName).mockResolvedValue('staging')
+      const originalAppFromId = developerPlatformClient.appFromId
+      const appFromIdSpy = vi.spyOn(developerPlatformClient, 'appFromId').mockImplementation(originalAppFromId)
 
       // When
       await link(options)
 
       // Then
-      expect(fetchAppDetailsFromApiKey).toHaveBeenCalledWith('api-key', 'token')
+      expect(appFromIdSpy).toHaveBeenCalledWith('api-key')
     })
   })
 
@@ -420,17 +431,21 @@ embedded = false
       const options: LinkOptions = {
         directory: tmp,
         apiKey: '1234-5678',
+        developerPlatformClient: {
+          ...developerPlatformClient,
+          async appFromId() {
+            throw new AbortError(`Couldn't find the app with Client ID app1`)
+          },
+        },
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(undefined)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       const result = link(options)
 
       // Then
-      await expect(result).rejects.toThrow(/Invalid Client ID/)
+      await expect(result).rejects.toThrow(/Couldn't find the app with Client ID/)
     })
   })
 
@@ -439,6 +454,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -472,6 +488,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -510,6 +527,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
@@ -553,6 +571,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       const localApp = {
         configuration: {
@@ -648,6 +667,7 @@ embedded = true
       writeFileSync(filePath, initialContent)
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
@@ -689,6 +709,7 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
