@@ -11,6 +11,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
 import {relativizePath} from '@shopify/cli-kit/node/path'
+import {errorsToString as zodErrorsToString, zod} from '@shopify/cli-kit/node/schema'
 import {Writable} from 'stream'
 
 interface UpdateExtensionDraftOptions {
@@ -37,16 +38,16 @@ export async function updateExtensionDraft({
     encodedFile = Buffer.from(content).toString('base64')
   }
 
-  const configValue = (await extension.deployConfig({apiKey, token})) || {}
-  const {handle, ...remainingConfigs} = configValue
+  const config = (await extension.deployConfig({apiKey, token})) || {}
+
   const extensionInput: ExtensionUpdateDraftInput = {
     apiKey,
     config: JSON.stringify({
-      ...remainingConfigs,
+      ...config,
       serialized_script: encodedFile,
     }),
     handle: extension.handle,
-    context: handle as string,
+    context: extension.contextValue,
     registrationId,
   }
   const mutation = ExtensionUpdateDraftMutation
@@ -56,7 +57,8 @@ export async function updateExtensionDraft({
     const errors = mutationResult.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
     stderr.write(`Error while updating drafts: ${errors}`)
   } else {
-    outputInfo(`Draft updated successfully for extension: ${extension.localIdentifier}`, stdout)
+    const draftUpdateSuccesMessage = extension.draftMessages.successMessage
+    if (draftUpdateSuccesMessage) outputInfo(draftUpdateSuccesMessage, stdout)
   }
 }
 
@@ -65,25 +67,31 @@ interface UpdateExtensionConfigOptions {
   stdout: Writable
 }
 
-export async function reloadExtensionConfig({extension, stdout}: UpdateExtensionConfigOptions) {
-  const abort = (errorMessage: OutputMessage) => {
-    stdout.write(errorMessage)
-    throw new AbortError(errorMessage)
+export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOptions) {
+  const abort = (
+    errorMessage: OutputMessage,
+    _fallbackOutput?: unknown,
+    _path?: string,
+    rawErrors?: zod.ZodIssueBase[],
+  ) => {
+    let message = typeof errorMessage === 'string' ? errorMessage : errorMessage.value
+    if (rawErrors) message = zodErrorsToString(rawErrors)
+    throw new AbortError(message)
   }
 
-  let configObject = await loadConfigurationFile(extension.configuration.path)
+  let configObject = await loadConfigurationFile(extension.configurationPath)
   const {extensions} = ExtensionsArraySchema.parse(configObject)
 
   if (extensions) {
     // If the config has an array, find our extension using the handle.
-    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configuration.path, abort)
+    const configuration = await parseConfigurationFile(UnifiedSchema, extension.configurationPath, abort)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const extensionConfig = configuration.extensions.find((config: any) => config.handle === extension.handle)
     if (!extensionConfig) {
       abort(
         `ERROR: Invalid handle
   - Expected handle: "${extension.handle}"
-  - Configuration file path: ${relativizePath(extension.configuration.path)}.
+  - Configuration file path: ${relativizePath(extension.configurationPath)}.
   - Handles are immutable, you can't change them once they are set.`,
       )
     }
@@ -93,11 +101,16 @@ export async function reloadExtensionConfig({extension, stdout}: UpdateExtension
 
   const newConfig = await parseConfigurationObject(
     extension.specification.schema,
-    extension.configuration.path,
+    extension.configurationPath,
     configObject,
     abort,
   )
 
-  // eslint-disable-next-line require-atomic-updates
+  const previousConfig = extension.configuration
   extension.configuration = newConfig
+
+  return {
+    previousConfig,
+    newConfig,
+  }
 }

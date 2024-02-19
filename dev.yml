@@ -3,6 +3,7 @@ name: shopify-cli-next
 up:
   - node:
       version: v18.16.1
+      package_mananager: pnpm
       packages: []
   - ruby:
       version: 3.1.2
@@ -10,7 +11,6 @@ up:
       gemfile: packages/cli-kit/assets/cli-ruby/Gemfile
   - packages:
     - jq
-    - pnpm
   - custom:
       name: 'Install PNPM dependencies'
       # we flip these two conditions to always run `pnpm install`

@@ -1,4 +1,4 @@
-import {deepStrict} from './schema.js'
+import {deepStrict, errorsToString} from './schema.js'
 import {describe, expect, test} from 'vitest'
 import {z} from 'zod'
 
@@ -36,5 +36,32 @@ describe('deepStrict', () => {
 
     // Then
     expect(result.success).toBeTruthy()
+  })
+})
+
+describe('errorsToString', () => {
+  test('returns the message formatted correctly', async () => {
+    // Given
+    const zodErrors = [
+      {
+        path: ['root_property'],
+        message: 'root property error',
+      },
+      {
+        path: ['section', 'property'],
+        message: 'section property error',
+      },
+      {
+        path: ['section', 'property_unkonwn'],
+      },
+    ]
+
+    // When
+    const result = errorsToString(zodErrors)
+
+    // Then
+    expect(result).toEqual(
+      'root_property: root property error\nsection.property: section property error\nsection.property_unkonwn: Unknow error',
+    )
   })
 })

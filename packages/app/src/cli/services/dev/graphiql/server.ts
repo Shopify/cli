@@ -133,6 +133,8 @@ export function setupGraphiQLServer({
 
     const apiVersion = apiVersions.sort().reverse()[0]!
 
+    const query = req.query.query ? decodeURIComponent(req.query.query as string).replace(/\n/g, '\\n') : undefined
+
     res.send(
       await renderLiquidTemplate(
         graphiqlTemplate({
@@ -146,6 +148,7 @@ export function setupGraphiQLServer({
         {
           url: localhostUrl,
           defaultQueries: [{query: defaultQuery}],
+          query,
         },
       ),
     )

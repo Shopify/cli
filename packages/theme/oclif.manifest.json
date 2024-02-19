@@ -5,19 +5,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "auto-correct",
-        "category",
-        "config",
-        "exclude-category",
-        "update-docs",
-        "fail-level",
-        "init",
-        "list",
-        "output",
-        "print",
-        "version"
-      ],
       "description": "Validate the theme.",
       "flags": {
         "auto-correct": {
@@ -29,16 +16,6 @@
           "required": false,
           "type": "boolean"
         },
-        "category": {
-          "char": "c",
-          "description": "Only run this category of checks\nRuns checks matching all categories when specified more than once",
-          "env": "SHOPIFY_FLAG_CATEGORY",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "category",
-          "required": false,
-          "type": "option"
-        },
         "config": {
           "char": "C",
           "description": "Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported ",
@@ -49,14 +26,6 @@
           "required": false,
           "type": "option"
         },
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
-          "env": "SHOPIFY_FLAG_DEV_PREVIEW",
-          "name": "dev-preview",
-          "required": false,
-          "type": "boolean"
-        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",
@@ -64,16 +33,6 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "environment",
-          "type": "option"
-        },
-        "exclude-category": {
-          "char": "x",
-          "description": "Exclude this category of checks\nExcludes checks matching any category when specified more than once",
-          "env": "SHOPIFY_FLAG_EXCLUDE_CATEGORY",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "exclude-category",
-          "required": false,
           "type": "option"
         },
         "fail-level": {
@@ -147,14 +106,6 @@
           "description": "Output active config to STDOUT",
           "env": "SHOPIFY_FLAG_PRINT",
           "name": "print",
-          "required": false,
-          "type": "boolean"
-        },
-        "update-docs": {
-          "allowNo": false,
-          "description": "Update Theme Check docs (objects, filters, and tags)",
-          "env": "SHOPIFY_FLAG_UPDATE_DOCS",
-          "name": "update-docs",
           "required": false,
           "type": "boolean"
         },
@@ -751,14 +702,6 @@
       },
       "description": "Start a Language Server Protocol server.",
       "flags": {
-        "dev-preview": {
-          "allowNo": false,
-          "description": "Use the dev preview version of theme check\nApplies the typescript implementation of theme check to the theme",
-          "env": "SHOPIFY_FLAG_DEV_PREVIEW",
-          "name": "dev-preview",
-          "required": false,
-          "type": "boolean"
-        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1147,6 +1090,14 @@
       ],
       "description": "Download your remote theme files locally.",
       "flags": {
+        "beta": {
+          "allowNo": false,
+          "description": "Performs the pull command by relying on the new download implementation.",
+          "env": "SHOPIFY_FLAG_BETA",
+          "hidden": true,
+          "name": "beta",
+          "type": "boolean"
+        },
         "development": {
           "allowNo": false,
           "char": "d",
@@ -1868,5 +1819,5 @@
       "strict": true
     }
   },
-  "version": "3.53.0"
+  "version": "3.56.0"
 }

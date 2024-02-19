@@ -22,6 +22,6 @@ export async function renameTheme(adminSession: AdminSession, options: RenameOpt
   })
   await updateTheme(theme.id, {name: options.newName}, adminSession)
   renderSuccess({
-    body: ['The theme', ...themeComponent(theme), 'was renamed to', options.newName],
+    body: ['The theme', ...themeComponent(theme), 'was renamed to', `'${options.newName}'`],
   })
 }

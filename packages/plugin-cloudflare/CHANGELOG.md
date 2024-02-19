@@ -1,5 +1,34 @@
 # @shopify/plugin-cloudflare
 
+## 3.56.0
+
+### Patch Changes
+
+- Updated dependencies [1220290ec]
+  - @shopify/cli-kit@3.56.0
+
+## 3.55.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.55.0
+
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- a9e847717: Fix postinstall when the binary already exists but fails
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+  - @shopify/cli-kit@3.54.0
+
 ## 3.53.0
 
 ### Minor Changes

@@ -1,4 +1,12 @@
-import {formatDate, getRandomName, joinWithAnd, linesToColumns, pluralize, tryParseInt} from './string.js'
+import {
+  formatDate,
+  getRandomName,
+  joinWithAnd,
+  linesToColumns,
+  normalizeDelimitedString,
+  pluralize,
+  tryParseInt,
+} from './string.js'
 import {describe, expect, test} from 'vitest'
 
 describe('getRandomName', () => {
@@ -130,5 +138,51 @@ describe('joinWithAnd', () => {
 
     // Then
     expect(str).toBe('"one", "two" and "three"')
+  })
+})
+
+describe('normalizeDelimitedString', () => {
+  test('remove empty items', () => {
+    // Given
+    const scopes = 'read_products, write_products,,'
+
+    // When
+    const result = normalizeDelimitedString(scopes)
+
+    // Then
+    expect(result).toEqual('read_products,write_products')
+  })
+
+  test('sort the list', () => {
+    // Given
+    const scopes = 'write_products,read_products'
+
+    // When
+    const result = normalizeDelimitedString(scopes)
+
+    // Then
+    expect(result).toEqual('read_products,write_products')
+  })
+
+  test('trim white spaces', () => {
+    // Given
+    const scopes = 'write_products,  read_products'
+
+    // When
+    const result = normalizeDelimitedString(scopes)
+
+    // Then
+    expect(result).toEqual('read_products,write_products')
+  })
+
+  test('remove duplicated', () => {
+    // Given
+    const scopes = 'write_products,read_products,write_products'
+
+    // When
+    const result = normalizeDelimitedString(scopes)
+
+    // Then
+    expect(result).toEqual('read_products,write_products')
   })
 })

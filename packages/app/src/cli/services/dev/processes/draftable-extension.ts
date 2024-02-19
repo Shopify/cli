@@ -74,7 +74,7 @@ export async function setupDraftableExtensionsProcess({
   remoteApp: PartnersAppForIdentifierMatching
 }): Promise<DraftableExtensionProcess | undefined> {
   // it would be good if this process didn't require the full local & remote app instances
-  const draftableExtensions = localApp.allExtensions.filter((ext) => ext.isDraftable())
+  const draftableExtensions = localApp.draftableExtensions
   if (draftableExtensions.length === 0) {
     return
   }
@@ -89,6 +89,7 @@ export async function setupDraftableExtensionsProcess({
     release: true,
     token,
     envIdentifiers: prodEnvIdentifiers,
+    includeDraftExtensions: true,
   })
 
   // Update the local app with the remote extension UUIDs.

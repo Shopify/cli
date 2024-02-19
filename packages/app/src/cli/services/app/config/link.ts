@@ -2,9 +2,7 @@ import {saveCurrentConfig} from './use.js'
 import {
   AppConfiguration,
   AppInterface,
-  CurrentAppConfiguration,
   EmptyApp,
-  getAppScopes,
   isCurrentAppSchema,
   isLegacyAppSchema,
 } from '../../../models/app/app.js'
@@ -12,25 +10,22 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
+import {BetaFlag, fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {PartnersSession, fetchPartnersSession} from '../../context/partner-account-info.js'
-import {ExtensionRegistration} from '../../../api/graphql/all_app_extension_registrations.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {Config} from '@oclif/core'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export interface LinkOptions {
-  commandConfig: Config
   directory: string
   apiKey?: string
   configName?: string
@@ -43,22 +38,21 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
 
   await logMetadataForLoadedContext(remoteApp)
 
-  const remoteAppConfigurationFromApiClient = mergeAppConfiguration(
-    {...localApp.configuration, path: configFilePath},
-    remoteApp,
-  )
-  const remoteAppConfigurationFromExtensions = await loadRemoteAppConfigurationFromExtensions(
+  let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  const remoteAppConfiguration = await fetchAppRemoteConfiguration(
+    remoteApp.apiKey,
     token,
-    remoteApp,
-    localApp,
+    localApp.specifications ?? [],
+    localApp.remoteBetaFlags,
   )
-  const configuration = deepMergeObjects(remoteAppConfigurationFromApiClient, remoteAppConfigurationFromExtensions)
+  const replaceLocalArrayStrategy = (_destinationArray: unknown[], sourceArray: unknown[]) => sourceArray
+  configuration = deepMergeObjects(configuration, remoteAppConfiguration, replaceLocalArrayStrategy)
 
   await writeAppConfigurationFile(configuration, localApp.configSchema)
   await saveCurrentConfig({configFileName, directory})
 
   if (shouldRenderSuccess) {
-    renderSuccessMessage(configFileName, remoteApp, localApp, !isEmpty(remoteAppConfigurationFromExtensions))
+    renderSuccessMessage(configFileName, remoteAppConfiguration.name, localApp)
   }
 
   return configuration
@@ -80,10 +74,8 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
   const specifications = await fetchSpecifications({
     token,
     apiKey: remoteApp.apiKey,
-    config: options.commandConfig,
   })
-
-  const localApp = await loadAppOrEmptyApp(options, specifications)
+  const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
   return {
@@ -96,6 +88,8 @@ async function loadLocalApp(options: LinkOptions, token: string, remoteApp: Orga
 async function loadAppOrEmptyApp(
   options: LinkOptions,
   specifications?: ExtensionSpecification[],
+  remoteBetas?: BetaFlag[],
+  remoteApp?: OrganizationApp,
 ): Promise<AppInterface> {
   try {
     const app = await loadApp({
@@ -103,11 +97,14 @@ async function loadAppOrEmptyApp(
       directory: options.directory,
       mode: 'report',
       configName: options.baseConfigName,
+      remoteBetas,
     })
-    return app
+    const configuration = app.configuration
+    if (!isCurrentAppSchema(configuration) || remoteApp?.apiKey === configuration.client_id) return app
+    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas, remoteApp?.apiKey)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return new EmptyApp(await loadFSExtensionsSpecifications())
+    return new EmptyApp(await loadLocalExtensionsSpecifications(), remoteBetas)
   }
 }
 
@@ -128,21 +125,6 @@ async function loadRemoteApp(
   return app
 }
 
-async function loadRemoteAppConfigurationFromExtensions(
-  token: string,
-  remoteApp: OrganizationApp,
-  localApp: AppInterface,
-) {
-  const remoteExtensionRegistrations = await fetchAppExtensionRegistrations({
-    token,
-    apiKey: remoteApp.apiKey,
-  })
-  return remoteAppConfigurationExtensionContent(
-    remoteExtensionRegistrations.app.configurationRegistrations,
-    localApp.specifications ?? [],
-  )
-}
-
 async function loadConfigurationFileName(
   remoteApp: OrganizationApp,
   options: LinkOptions,
@@ -156,7 +138,7 @@ async function loadConfigurationFileName(
     return getAppConfigurationFileName(options.configName)
   }
 
-  if (!localApp.configuration || (localApp && isLegacyAppSchema(localApp.configuration))) {
+  if (isLegacyAppSchema(localApp.configuration)) {
     return configurationFileNames.app
   }
 
@@ -164,106 +146,16 @@ async function loadConfigurationFileName(
   return `shopify.app.${configName}.toml`
 }
 
-export function mergeAppConfiguration(
-  appConfiguration: AppConfiguration,
-  remoteApp: OrganizationApp,
-): CurrentAppConfiguration {
-  return {
-    ...addLocalAppConfig(appConfiguration, remoteApp),
-    ...addBrandingConfig(remoteApp),
-    ...addPosConfig(remoteApp),
-    ...addRemoteAppWebhooksConfig(remoteApp),
-    ...addRemoteAppAccessConfig(appConfiguration, remoteApp),
-    ...addRemoteAppProxyConfig(remoteApp),
-    ...addRemoteAppHomeConfig(remoteApp),
-  }
-}
-
-function addRemoteAppHomeConfig(remoteApp: OrganizationApp) {
-  const homeConfig = {
-    application_url: remoteApp.applicationUrl.replace(/\/$/, ''),
-    embedded: remoteApp.embedded === undefined ? true : remoteApp.embedded,
-  }
-  return remoteApp.preferencesUrl
-    ? {
-        ...homeConfig,
-        app_preferences: {
-          url: remoteApp.preferencesUrl,
-        },
-      }
-    : {...homeConfig}
-}
-
-function addRemoteAppProxyConfig(remoteApp: OrganizationApp) {
-  return remoteApp.appProxy?.url
-    ? {
-        app_proxy: {
-          url: remoteApp.appProxy.url,
-          subpath: remoteApp.appProxy.subPath,
-          prefix: remoteApp.appProxy.subPathPrefix,
-        },
-      }
-    : {}
-}
-
-function addRemoteAppWebhooksConfig(remoteApp: OrganizationApp) {
-  const hasAnyPrivacyWebhook =
-    remoteApp.gdprWebhooks?.customerDataRequestUrl ||
-    remoteApp.gdprWebhooks?.customerDeletionUrl ||
-    remoteApp.gdprWebhooks?.shopDeletionUrl
-
-  const privacyComplianceContent = {
-    privacy_compliance: {
-      customer_data_request_url: remoteApp.gdprWebhooks?.customerDataRequestUrl,
-      customer_deletion_url: remoteApp.gdprWebhooks?.customerDeletionUrl,
-      shop_deletion_url: remoteApp.gdprWebhooks?.shopDeletionUrl,
-    },
-  }
-
-  return {
-    webhooks: {
-      api_version: remoteApp.webhookApiVersion || '2023-07',
-      ...(hasAnyPrivacyWebhook ? privacyComplianceContent : {}),
-    },
-  }
-}
-
-function addRemoteAppAccessConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
-  let accessScopesContent = {}
-  // if we have upstream scopes, use them
-  if (remoteApp.requestedAccessScopes) {
-    accessScopesContent = {
-      scopes: remoteApp.requestedAccessScopes.join(','),
-    }
-    // if we can't find scopes or have to fall back, omit setting a scope and set legacy to true
-  } else if (getAppScopes(appConfiguration) === '') {
-    accessScopesContent = {
-      use_legacy_install_flow: true,
-    }
-    // if we have scopes locally and not upstream, preserve them but don't push them upstream (legacy is true)
-  } else {
-    accessScopesContent = {
-      scopes: getAppScopes(appConfiguration),
-      use_legacy_install_flow: true,
-    }
-  }
-  return {
-    auth: {
-      redirect_urls: remoteApp.redirectUrlWhitelist,
-    },
-    access_scopes: accessScopesContent,
-  }
-}
-
-function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp) {
+function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: OrganizationApp, configFilePath: string) {
   let localAppConfig = {
     ...appConfiguration,
     client_id: remoteApp.apiKey,
+    path: configFilePath,
   }
   if (isCurrentAppSchema(localAppConfig)) {
     delete localAppConfig.auth
     const build = {
-      ...(useVersionedAppConfig() ? {include_config_on_deploy: true} : {}),
+      ...(remoteApp.newApp ? {include_config_on_deploy: true} : {}),
       ...(appConfiguration.client_id === remoteApp.apiKey ? localAppConfig.build : {}),
     }
     if (isEmpty(build)) {
@@ -278,56 +170,16 @@ function addLocalAppConfig(appConfiguration: AppConfiguration, remoteApp: Organi
   return localAppConfig
 }
 
-function addPosConfig(remoteApp: OrganizationApp) {
-  return {
-    pos: {
-      embedded: remoteApp.posEmbedded || false,
-    },
-  }
-}
-
-function addBrandingConfig(remoteApp: OrganizationApp) {
-  return {
-    name: remoteApp.title,
-  }
-}
-
-export function remoteAppConfigurationExtensionContent(
-  configRegistrations: ExtensionRegistration[],
-  specifications: ExtensionSpecification[],
-) {
-  let remoteAppConfig: {[key: string]: unknown} = {}
-  const configSpecifications = specifications.filter((spec) => spec.appModuleFeatures().includes('app_config'))
-  configRegistrations.forEach((extension) => {
-    const configSpec = configSpecifications.find((spec) => spec.identifier === extension.type.toLowerCase())
-    if (!configSpec) return
-    const configExtensionString = extension.activeVersion?.config
-    if (!configExtensionString) return
-    const configExtension = configExtensionString ? JSON.parse(configExtensionString) : {}
-
-    remoteAppConfig = {...remoteAppConfig, ...(configSpec.reverseTransform?.(configExtension) ?? configExtension)}
-  })
-  return {...remoteAppConfig}
-}
-
-function renderSuccessMessage(
-  configFileName: string,
-  remoteApp: OrganizationApp,
-  localApp: AppInterface,
-  useVersionedAppConfig: boolean,
-) {
+function renderSuccessMessage(configFileName: string, appName: string, localApp: AppInterface) {
   renderSuccess({
-    headline: `${configFileName} is now linked to "${remoteApp.title}" on Shopify`,
+    headline: `${configFileName} is now linked to "${appName}" on Shopify`,
     body: `Using ${configFileName} as your default config.`,
     nextSteps: [
       [`Make updates to ${configFileName} in your local project`],
       [
         'To upload your config, run',
         {
-          command: formatPackageManagerCommand(
-            localApp.packageManager,
-            `shopify app ${useVersionedAppConfig ? 'deploy' : 'config push'}`,
-          ),
+          command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy'),
         },
       ],
     ],

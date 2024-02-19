@@ -1,46 +1,45 @@
-import {BaseSchema} from '../../schemas.js'
+import {BasePaymentsAppExtensionSchema, ConfirmationSchema} from './base_payments_app_extension_schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
   typeof CustomCreditCardPaymentsAppExtensionSchema
 >
 
-const MAX_LABEL_SIZE = 50
+const CERTIFICATE_REGEX = /^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$|^$/
 
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
-export const CustomCreditCardPaymentsAppExtensionSchema = BaseSchema.extend({
-  targeting: zod.array(zod.object({target: zod.literal(CUSTOM_CREDIT_CARD_TARGET)})).length(1),
-  api_version: zod.string(),
-  payment_session_url: zod.string().url(),
-  refund_session_url: zod.string().url(),
-  capture_session_url: zod.string().url(),
-  void_session_url: zod.string().url(),
-  confirmation_callback_url: zod.string().url().optional(),
-  merchant_label: zod.string().max(MAX_LABEL_SIZE),
-  supports_3ds: zod.boolean(),
-  supported_countries: zod.array(zod.string()),
-  supported_payment_methods: zod.array(zod.string()),
-  test_mode_available: zod.boolean(),
-  multiple_capture: zod.boolean(),
-  encryption_certificate: zod.object({}),
-  checkout_payment_method_fields: zod.array(zod.object({})).optional(),
-  checkout_hosted_fields: zod.array(zod.string()).optional(),
-  input: zod
-    .object({
-      metafield_identifiers: zod
-        .object({
-          namespace: zod.string(),
+
+export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(ConfirmationSchema)
+  .required({
+    refund_session_url: true,
+    capture_session_url: true,
+    void_session_url: true,
+  })
+  .extend({
+    targeting: zod.array(zod.object({target: zod.literal(CUSTOM_CREDIT_CARD_TARGET)})).length(1),
+    api_version: zod.string(),
+    multiple_capture: zod.boolean(),
+    checkout_hosted_fields: zod.array(zod.string()).optional(),
+    ui_extension_handle: zod.string().optional(),
+    encryption_certificate: zod.object({
+      fingerprint: zod.string(),
+      certificate: zod.string().regex(CERTIFICATE_REGEX),
+    }),
+    checkout_payment_method_fields: zod
+      .array(
+        zod.object({
+          type: zod.union([zod.literal('string'), zod.literal('number'), zod.literal('boolean')]),
+          required: zod.boolean(),
           key: zod.string(),
-        })
-        .optional(),
-    })
-    .optional(),
-})
+        }),
+      )
+      .optional(),
+  })
+
 export async function customCreditCardPaymentsAppExtensionDeployConfig(
   config: CustomCreditCardPaymentsAppExtensionConfigType,
 ): Promise<{[key: string]: unknown} | undefined> {
   return {
-    target: config.targeting[0]!.target,
     api_version: config.api_version,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
@@ -56,5 +55,6 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     checkout_hosted_fields: config.checkout_hosted_fields,
+    ui_extension_handle: config.ui_extension_handle,
   }
 }

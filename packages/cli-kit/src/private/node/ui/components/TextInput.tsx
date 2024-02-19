@@ -26,7 +26,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   color = noColor ? undefined : 'cyan',
   password = false,
   focus = true,
-}) => {
+}: TextInputProps) => {
   const [cursorOffset, setCursorOffset] = useState((originalValue || '').length)
 
   // if the updated value is shorter than the last one we need to reset the cursor
@@ -52,12 +52,9 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   const cursorChar = figures.square
   const defaultCursor = <Text backgroundColor={color}>{cursorChar}</Text>
 
-  const renderedPlaceholder =
-    defaultValue.length > 0
-      ? renderPlaceholder(defaultValue)
-      : placeholder.length > 0
-      ? renderPlaceholder(placeholder)
-      : defaultCursor
+  const placeholderText = defaultValue.length > 0 ? defaultValue : placeholder.length > 0 ? placeholder : ''
+
+  const renderedPlaceholder = placeholderText.length > 0 ? renderPlaceholder(placeholderText) : defaultCursor
 
   // render cursor
   renderedValue = value
@@ -82,15 +79,14 @@ const TextInput: FunctionComponent<TextInputProps> = ({
 
   useInput(
     (input, key) => {
-      if (
-        key.upArrow ||
-        key.downArrow ||
-        (key.ctrl && input === 'c') ||
-        key.tab ||
-        (key.shift && key.tab) ||
-        key.return
-      ) {
+      if (key.upArrow || key.downArrow || (key.ctrl && input === 'c') || (key.shift && key.tab) || key.return) {
         return
+      } else if (key.tab) {
+        if (originalValue.length === 0 && placeholderText) {
+          onChange(placeholderText)
+          setCursorOffset(placeholderText.length)
+          return
+        }
       }
 
       let nextCursorOffset = cursorOffset

@@ -7,7 +7,7 @@
     "graph": "nx graph",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "shopify:run": "node packages/cli/bin/dev.js",
-    "create-app": "nx build create-app && node packages/create-app/bin/dev.js --package-manager npm",
+    "create-app": "nx build create-app && cross-env SHOPIFY_FLAG_PACKAGE_MANAGER=npm node packages/create-app/bin/dev.js",
     "clean": "nx run-many --target=clean --all --skip-nx-cache && nx reset",
     "docs:generate": "nx run-many --target=docs:generate --all --skip-nx-cache",
     "lint": "nx run-many --target=lint --all --skip-nx-cache",

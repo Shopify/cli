@@ -9,7 +9,7 @@ import {LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
@@ -50,12 +50,15 @@ embedded = true
 [webhooks]
 api_version = "2023-07"
 
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+
 [build]
 automatically_update_urls_on_dev = true
 `
 
   beforeAll(async () => {
-    specifications = await loadFSExtensionsSpecifications()
+    specifications = await loadLocalExtensionsSpecifications()
   })
 
   beforeEach(async () => {
@@ -68,7 +71,10 @@ automatically_update_urls_on_dev = true
     }
   })
 
-  const writeConfig = async (appConfiguration: string, packageJson?: PackageJson) => {
+  const writeConfig = async (
+    appConfiguration: string,
+    packageJson?: PackageJson,
+  ): Promise<{webDirectory: string; appConfigurationPath: string}> => {
     const appConfigurationPath = joinPath(tmpDir, configurationFileNames.app)
     const packageJsonPath = joinPath(tmpDir, 'package.json')
     const webDirectory = joinPath(tmpDir, blocks.web.directoryName)
@@ -1544,6 +1550,83 @@ wrong = "property"
     }
   })
 
+  test('loads the app with a Web Pixel extension that has a full valid configuration with privacy settings', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      type = "web_pixel_extension"
+      name = "pixel"
+      runtime_context = "strict"
+
+      [customer_privacy]
+      analytics = false
+      preferences = false
+      marketing = true
+      sale_of_data = "enabled"
+
+      [settings]
+      type = "object"
+
+      [settings.fields.first]
+      name = "first"
+      description = "description"
+      type = "single_line_text_field"
+      validations = [{ choices = ["a", "b", "c"] }]
+
+      [settings.fields.second]
+      name = "second"
+      description = "description"
+      type = "single_line_text_field"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'pixel',
+    })
+    await writeFile(joinPath(blockPath('pixel'), 'index.js'), '')
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    const extension = app.allExtensions[0]
+    expect(extension).not.toBeUndefined()
+    if (extension) {
+      expect(extension.configuration).toMatchObject({
+        type: 'web_pixel_extension',
+        name: 'pixel',
+        runtime_context: 'strict',
+        customer_privacy: {
+          analytics: false,
+          marketing: true,
+          preferences: false,
+          sale_of_data: 'enabled',
+        },
+        settings: {
+          type: 'object',
+          fields: {
+            first: {
+              description: 'description',
+              name: 'first',
+              type: 'single_line_text_field',
+              validations: [
+                {
+                  choices: ['a', 'b', 'c'],
+                },
+              ],
+            },
+            second: {
+              description: 'description',
+              name: 'second',
+              type: 'single_line_text_field',
+            },
+          },
+        },
+      })
+    }
+  })
+
   test('loads the app with a Legacy Checkout UI extension that has a full valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -1677,8 +1760,14 @@ wrong = "property"
     application_url = "https://example.com/lala"
     embedded = true
 
+    [build]
+    include_config_on_deploy = true
+
     [webhooks]
     api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
 
     [pos]
     embedded = true
@@ -1689,11 +1778,16 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications})
 
     // Then
-    expect(app.allExtensions).toHaveLength(4)
+    expect(app.allExtensions).toHaveLength(5)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       expect.objectContaining({
         name: 'for-testing',
+      }),
+      expect.objectContaining({
+        auth: {
+          redirect_urls: ['https://example.com/api/auth'],
+        },
       }),
       expect.objectContaining({
         webhooks: {
@@ -1851,6 +1945,156 @@ wrong = "property"
     expect(use).not.toHaveBeenCalled()
   })
 
+  test('loads the app when access.admin.direct_api_mode = "online"', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    direct_api_mode = "online"
+    `
+    await writeConfig(config)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.name).toBe('my_app')
+  })
+
+  test('loads the app when access.admin.direct_api_mode = "offline"', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    direct_api_mode = "offline"
+    `
+    await writeConfig(config)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.name).toBe('my_app')
+  })
+
+  test('throws an error when access.admin.direct_api_mode is invalid', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    direct_api_mode = "foo"
+    `
+    await writeConfig(config)
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+  })
+
+  test('loads the app when access.admin.embedded_app_direct_api_access = true', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    embedded_app_direct_api_access = true
+    `
+    await writeConfig(config)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.name).toBe('my_app')
+  })
+
+  test('loads the app when access.admin.embedded_app_direct_api_access = false', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    embedded_app_direct_api_access = false
+    `
+    await writeConfig(config)
+
+    // When
+    const app = await loadApp({directory: tmpDir, specifications})
+
+    // Then
+    expect(app.name).toBe('my_app')
+  })
+
+  test('throws an error when access.admin.embedded_app_direct_api_access is invalid', async () => {
+    // Given
+    const config = `
+    name = "my_app"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [access.admin]
+    embedded_app_direct_api_access = "foo"
+    `
+    await writeConfig(config)
+
+    // When
+    await expect(loadApp({directory: tmpDir, specifications})).rejects.toThrow()
+  })
+
   const runningOnWindows = platformAndArch().platform === 'windows'
 
   test.skipIf(runningOnWindows)(
@@ -2002,6 +2246,13 @@ describe('parseConfigurationObject', () => {
     const errorObject = [
       {
         code: 'invalid_type',
+        expected: 'object',
+        received: 'undefined',
+        path: ['auth'],
+        message: 'Required',
+      },
+      {
+        code: 'invalid_type',
         expected: 'boolean',
         received: 'undefined',
         path: ['embedded'],
@@ -2015,7 +2266,7 @@ describe('parseConfigurationObject', () => {
     const {path, ...toParse} = configurationObject
     await parseConfigurationObject(schema, 'tmp', toParse, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', errorObject)
   })
 
   test('throws an error if fields are missing in a legacy schema TOML file', async () => {
@@ -2036,7 +2287,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
     await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', errorObject)
   })
 
   test('throws an error if fields are missing in a frontend config web TOML file', async () => {
@@ -2083,7 +2334,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', expect.anything())
   })
 })
 
@@ -2106,7 +2357,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('removes trailing slashes on uri', async () => {
@@ -2134,7 +2385,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('accepts an https uri', async () => {
@@ -2215,7 +2466,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('throws an error if we have duplicate subscriptions in different topics array', async () => {
@@ -2234,7 +2485,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('allows unique topics in both same topic array and different subscriptions', async () => {
@@ -2287,7 +2538,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('accepts a pub sub config with both project and topic', async () => {
@@ -2328,7 +2579,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('throws an error if we have duplicate pub sub subscriptions', async () => {
@@ -2353,7 +2604,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('throws an error if we have duplicate arn subscriptions', async () => {
@@ -2378,7 +2629,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('does not allow identical topic and uri and sub_topic in different subscriptions', async () => {
@@ -2405,7 +2656,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('allows identical topic and uri if sub_topic is different', async () => {
@@ -2456,7 +2707,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('does not allow identical compliance_topics in same subscription (will get by zod enum validation)', async () => {
@@ -2479,7 +2730,7 @@ describe('WebhooksSchema', () => {
     }
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp', [errorObj])
   })
 
   test('allows same compliance_topics if uri is different', async () => {

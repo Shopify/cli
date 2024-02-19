@@ -6,7 +6,6 @@ import {testPartnersUserSession, testApp} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi} from 'vitest'
-import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -23,8 +22,7 @@ const organizationApp: OrganizationApp = {
   organizationId: 'organizationId',
   apiSecretKeys: [],
   grantedScopes: [],
-  applicationUrl: 'applicationUrl',
-  redirectUrlWhitelist: [],
+  betas: [],
 }
 
 const flowExtensionA: ExtensionRegistration = {
@@ -50,7 +48,6 @@ const flowExtensionB: ExtensionRegistration = {
 describe('import-flow-legacy-extensions', () => {
   test('importing an extension creates a folder and toml file', async () => {
     // Given
-    const commandConfig = new Config({root: '/tmp'})
     vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
@@ -60,7 +57,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, commandConfig})
+      await importFlowExtensions({app})
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -78,7 +75,6 @@ describe('import-flow-legacy-extensions', () => {
 
   test('selecting All imports all extensions', async () => {
     // Given
-    const commandConfig = new Config({root: '/tmp'})
     vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([flowExtensionA, flowExtensionB])
@@ -88,7 +84,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, commandConfig})
+      await importFlowExtensions({app})
 
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
@@ -106,7 +102,6 @@ describe('import-flow-legacy-extensions', () => {
 
   test('Show message if there are not extensions to migrate', async () => {
     // Given
-    const commandConfig = new Config({root: '/tmp'})
     vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
     vi.mocked(fetchAppAndIdentifiers).mockResolvedValue([organizationApp, {}])
     vi.mocked(getActiveDashboardExtensions).mockResolvedValue([])
@@ -115,7 +110,7 @@ describe('import-flow-legacy-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testApp({directory: tmpDir})
 
-      await importFlowExtensions({app, commandConfig})
+      await importFlowExtensions({app})
 
       // Then
       expect(renderSelectPrompt).not.toHaveBeenCalled()

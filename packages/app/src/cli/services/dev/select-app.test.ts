@@ -66,7 +66,7 @@ describe('createApp', () => {
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
-      org: 2,
+      org: 1,
       title: 'app-name',
       appUrl: 'https://example.com',
       redir: ['https://example.com/api/auth'],
@@ -75,10 +75,10 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, localApp.name, 'token', {scopesArray: ['write_products'], isLaunchable: true})
-    expect(got).toEqual(APP1)
+    const got = await createApp(ORG1, localApp.name, 'token', {scopesArray: ['write_products'], isLaunchable: true})
 
     // Then
+    expect(got).toEqual({...APP1, newApp: true})
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
@@ -87,7 +87,7 @@ describe('createApp', () => {
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
-      org: 2,
+      org: 1,
       title: 'app-name',
       appUrl: 'https://shopify.dev/apps/default-app-home',
       redir: ['https://shopify.dev/apps/default-app-home/api/auth'],
@@ -96,10 +96,10 @@ describe('createApp', () => {
     }
 
     // When
-    const got = await createApp(ORG2, LOCAL_APP.name, 'token', {isLaunchable: false})
+    const got = await createApp(ORG1, LOCAL_APP.name, 'token', {isLaunchable: false})
 
     // Then
-    expect(got).toEqual(APP1)
+    expect(got).toEqual({...APP1, newApp: true})
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })
 
@@ -151,7 +151,7 @@ describe('selectOrCreateApp', () => {
     const got = await selectOrCreateApp(LOCAL_APP.name, APP_LIST, ORG1, testPartnersUserSession)
 
     // Then
-    expect(got).toEqual(APP1)
+    expect(got).toEqual({...APP1, newApp: true})
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
     expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables)
   })

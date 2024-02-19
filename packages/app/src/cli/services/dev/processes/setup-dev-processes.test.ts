@@ -81,6 +81,9 @@ describe('setup-dev-processes', () => {
         redirectUrlWhitelist: ['https://example.com/redirect'],
       },
     }
+    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
+    const draftable = await testTaxCalculationExtension()
+    const theme = await testThemeExtensions()
     const localApp = testAppWithConfig({
       config: {},
       app: {
@@ -97,17 +100,9 @@ describe('setup-dev-processes', () => {
             },
           },
         ],
+        allExtensions: [previewable, draftable, theme],
       },
     })
-
-    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
-    localApp.allExtensions.push(previewable)
-
-    const draftable = await testTaxCalculationExtension()
-    localApp.allExtensions.push(draftable)
-
-    const theme = await testThemeExtensions()
-    localApp.allExtensions.push(theme)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -116,8 +111,7 @@ describe('setup-dev-processes', () => {
       title: 'App',
       organizationId: '5678',
       grantedScopes: [],
-      applicationUrl: 'https://example.com/application',
-      redirectUrlWhitelist: [],
+      betas: [],
     }
 
     const graphiqlKey = 'somekey'

@@ -10,13 +10,19 @@ import {
 import {RemoteSource} from './identifiers.js'
 import {fetchActiveAppVersion, fetchAppExtensionRegistrations} from '../dev/fetch.js'
 import {AppConfiguration, AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
-import {buildVersionedAppSchema, testApp, testUIExtension} from '../../models/app/app.test-data.js'
+import {
+  buildVersionedAppSchema,
+  testApp,
+  testAppConfigExtensions,
+  testUIExtension,
+} from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
 import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_diff.js'
 import {versionDiffByVersion} from '../release/version-diff.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
@@ -199,22 +205,29 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
   },
   application_url: 'https://myapp.com',
   embedded: true,
+  build: {
+    include_config_on_deploy: true,
+  },
 }
 
 const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
   configuration: AppConfiguration = APP_CONFIGURATION,
+  betas = [],
 ): Promise<AppInterface> => {
   const versionSchema = await buildVersionedAppSchema()
 
-  return testApp({
+  const localApp = testApp({
     name: 'my-app',
     directory: '/app',
     configuration,
-    allExtensions: [...uiExtensions],
+    allExtensions: [...uiExtensions, await testAppConfigExtensions()],
     specifications: versionSchema.configSpecifications,
     configSchema: versionSchema.schema,
   })
+
+  setPathValue(localApp, 'remoteBetaFlags', betas)
+  return localApp
 }
 
 const options = async (
@@ -637,6 +650,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         build: {
           automatically_update_urls_on_dev: false,
           dev_store_url: 'https://my-dev-store.com',
+          include_config_on_deploy: true,
         },
         webhooks: {
           api_version: '2023-04',
@@ -671,6 +685,9 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         embedded: true,
         webhooks: {
           api_version: '2023-04',
+        },
+        build: {
+          include_config_on_deploy: true,
         },
       }
       const configActiveAppModule: AppModuleVersion = {
@@ -759,6 +776,9 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         embedded: true,
         webhooks: {
           api_version: '2023-04',
+        },
+        build: {
+          include_config_on_deploy: true,
         },
       }
       const configActiveAppModule: AppModuleVersion = {
@@ -850,6 +870,9 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         webhooks: {
           api_version: '2023-04',
         },
+        build: {
+          include_config_on_deploy: true,
+        },
       }
       const configActiveAppModule: AppModuleVersion = {
         registrationId: 'C_A',
@@ -902,6 +925,9 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         webhooks: {
           api_version: '2023-04',
         },
+        build: {
+          include_config_on_deploy: true,
+        },
       }
       const configActiveAppModule: AppModuleVersion = {
         registrationId: 'C_A',
@@ -923,7 +949,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         registrationUuid: 'UUID_C_B',
         registrationTitle: 'Registration title',
         type: 'branding',
-        config: JSON.stringify({name: 'my app'}),
+        config: JSON.stringify({name: 'my app', app_handle: 'handle'}),
         specification: {
           identifier: 'branding',
           name: 'Branding',
@@ -1259,6 +1285,71 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         newFieldNames: [],
         deletedFieldNames: ['pos'],
       })
+    })
+  })
+  describe('deploy not including the configuration app modules', () => {
+    test('when the include_config_on_deploy is not true the configuration breakdown info is not returned', async () => {
+      // Given
+      const configuration = {
+        path: 'shopify.app.development.toml',
+        name: 'my app',
+        client_id: '12345',
+        application_url: 'https://myapp.com',
+        embedded: true,
+        pos: {
+          embedded: false,
+        },
+        build: {
+          include_config_on_deploy: false,
+        },
+        webhooks: {
+          api_version: '2023-04',
+        },
+      }
+      const configToReleaseAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'app_home',
+        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        specification: {
+          identifier: 'app_home',
+          name: 'App Ui',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const configActiveAppModule: AppModuleVersion = {
+        registrationId: 'C_A',
+        registrationUuid: 'UUID_C_A',
+        registrationTitle: 'Registration title',
+        type: 'app_home',
+        config: JSON.stringify({app_url: 'https://myapp.com', embedded: true}),
+        specification: {
+          identifier: 'app_home',
+          name: 'App Ui',
+          experience: 'configuration',
+          options: {
+            managementExperience: 'cli',
+          },
+        },
+      }
+      const activeVersion = {app: {activeAppVersion: {appModuleVersions: [configActiveAppModule, MODULE_DASHBOARD_A]}}}
+      vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        token: 'token',
+        apiKey: 'apiKey',
+        localApp: await LOCAL_APP([], configuration),
+        versionAppModules: [configToReleaseAppModule],
+        release: true,
+      })
+
+      // Then
+      expect(result).toBeUndefined()
     })
   })
 })

@@ -25,15 +25,15 @@ export function transformToWebhookConfig(content: object) {
   const serverWebhooks = getPathValue(content, 'subscriptions') as NormalizedWebhookSubscription[]
   if (!serverWebhooks) return webhooks
 
-  const webhooksSubscriptionsConfig: WebhooksConfig['subscriptions'] = []
+  const webhooksSubscriptions: WebhooksConfig['subscriptions'] = []
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   for (const {uri, topic, sub_topic, ...optionalFields} of serverWebhooks) {
-    const currSubscription = webhooksSubscriptionsConfig.find((sub) => sub.uri === uri && sub.sub_topic === sub_topic)
+    const currSubscription = webhooksSubscriptions.find((sub) => sub.uri === uri && sub.sub_topic === sub_topic)
     if (currSubscription) {
       currSubscription.topics.push(topic)
     } else {
-      webhooksSubscriptionsConfig.push({
+      webhooksSubscriptions.push({
         topics: [topic],
         uri,
         ...(sub_topic ? {sub_topic} : {}),
@@ -42,5 +42,6 @@ export function transformToWebhookConfig(content: object) {
     }
   }
 
-  return deepMergeObjects(webhooks, {webhooks: {subscriptions: webhooksSubscriptionsConfig}})
+  const webhooksSubscriptionsObject = webhooksSubscriptions.length > 0 ? {subscriptions: webhooksSubscriptions} : {}
+  return deepMergeObjects(webhooks, {webhooks: webhooksSubscriptionsObject})
 }

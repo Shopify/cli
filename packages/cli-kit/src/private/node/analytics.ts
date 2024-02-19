@@ -39,6 +39,7 @@ export async function startAnalytics({
     cmd_all_alias_used: commandContent.alias,
     cmd_all_topic: commandContent.topic,
     cmd_all_plugin: commandClass?.plugin?.name,
+    cmd_all_force: flagIncluded('force', commandClass) ? args.includes('--force') : undefined,
   }))
 }
 
@@ -86,4 +87,11 @@ export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
 function getPluginNames(config: Interfaces.Config) {
   const pluginNames = [...config.plugins.keys()]
   return pluginNames.sort().filter((plugin) => !plugin.startsWith('@oclif/'))
+}
+
+function flagIncluded(flag: string, commandClass?: Command.Class | typeof BaseCommand) {
+  if (!commandClass) return false
+
+  const commandFlags = commandClass.flags ?? {}
+  return Object.keys(commandFlags).includes(flag)
 }

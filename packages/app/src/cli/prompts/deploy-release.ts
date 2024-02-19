@@ -22,11 +22,10 @@ export interface DeployConfirmationPromptOptions {
     extensionsInfoTable?: InfoTableSection
     hasDeletedExtensions: boolean
   }
-  configContentPrompt: {
+  configContentPrompt?: {
     configInfoTable: InfoTableSection
   }
   release: boolean
-  showConfig: boolean
 }
 
 export async function deployOrReleaseConfirmationPrompt({
@@ -35,8 +34,8 @@ export async function deployOrReleaseConfirmationPrompt({
   configExtensionIdentifiersBreakdown,
   appTitle,
   release,
-  showConfig = true,
 }: DeployOrReleaseConfirmationPromptOptions) {
+  await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
   if (force) return true
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
@@ -46,35 +45,36 @@ export async function deployOrReleaseConfirmationPrompt({
     extensionsContentPrompt,
     configContentPrompt,
     release,
-    showConfig,
   })
 }
 
 async function deployConfirmationPrompt({
   appTitle,
   extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
-  configContentPrompt: {configInfoTable},
+  configContentPrompt,
   release,
-  showConfig,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
 
   const infoTable = []
-  if ((extensionsInfoTable || configInfoTable.items.length > 0) && showConfig) {
+  if (configContentPrompt) {
     infoTable.push(
-      configInfoTable.items.length === 0
-        ? {...configInfoTable, emptyItemsText: 'No changes', items: []}
-        : configInfoTable,
+      configContentPrompt.configInfoTable.items.length === 0
+        ? {...configContentPrompt.configInfoTable, emptyItemsText: 'No changes', items: []}
+        : configContentPrompt.configInfoTable,
     )
   }
   const isDangerous = appTitle !== undefined && hasDeletedExtensions
-  if (extensionsInfoTable)
+  if (extensionsInfoTable) {
     infoTable.push(
       isDangerous
         ? {...extensionsInfoTable, helperText: 'Removing extensions can permanentely delete app user data'}
         : extensionsInfoTable,
     )
+  } else {
+    infoTable.push({header: 'Extensions:', emptyItemsText: 'None', items: []})
+  }
 
   const question = `${release ? 'Release' : 'Create'} a new version${appTitle ? ` of ${appTitle}` : ''}?`
   if (isDangerous) {
@@ -96,7 +96,7 @@ async function deployConfirmationPrompt({
 
   await metadata.addPublicMetadata(() => ({
     cmd_deploy_confirm_cancelled: !confirmationResponse,
-    cmd_deploy_confirm_time_to_complete_ms: timeBeforeConfirmationMs,
+    cmd_deploy_confirm_time_to_complete_ms: timeToConfirmOrCancelMs,
   }))
 
   return confirmationResponse
@@ -116,7 +116,7 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
   let extensionsInfoTable
   const section = {
     new: toCreateBreakdown.map((extension) => mapExtensionToInfoTableItem(extension, 'new, ')),
-    updated: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
+    unchanged: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
     removed: onlyRemote.map((extension) => mapExtensionToInfoTableItem(extension, 'removed, ')),
   }
   const extensionsInfo = buildDeployReleaseInfoTableSection(section)
@@ -142,17 +142,14 @@ async function buildConfigContentPrompt(
   release: boolean,
   configContentBreakdown?: ConfigExtensionIdentifiersBreakdown,
 ) {
-  if (!configContentBreakdown)
-    return {
-      configInfoTable: {header: 'Configuration: ', items: []},
-      deletedInfoTable: undefined,
-    }
+  if (!configContentBreakdown) return
 
   const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} = configContentBreakdown
 
   const section = {
     new: newFieldNames,
-    updated: [...existingUpdatedFieldNames, ...existingFieldNames],
+    updated: existingUpdatedFieldNames,
+    unchanged: existingFieldNames,
     removed: deletedFieldNames,
   }
   const configurationInfo = buildDeployReleaseInfoTableSection(section)
@@ -164,4 +161,27 @@ async function buildConfigContentPrompt(
   }
 
   return {configInfoTable}
+}
+
+export function buildConfigurationBreakdownMetadata(
+  configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown,
+) {
+  if (!configExtensionIdentifiersBreakdown) return {cmd_deploy_include_config_used: false}
+
+  const {existingFieldNames, existingUpdatedFieldNames, newFieldNames, deletedFieldNames} =
+    configExtensionIdentifiersBreakdown
+  const currentConfiguration = [...existingUpdatedFieldNames, ...newFieldNames, ...existingFieldNames]
+  return {
+    cmd_deploy_include_config_used: true,
+    ...(currentConfiguration.length > 0
+      ? {cmd_deploy_config_modules_breakdown: JSON.stringify(currentConfiguration.sort())}
+      : {}),
+    ...(existingUpdatedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_updated: JSON.stringify(existingUpdatedFieldNames.sort())}
+      : {}),
+    ...(newFieldNames.length > 0 ? {cmd_deploy_config_modules_added: JSON.stringify(newFieldNames.sort())} : {}),
+    ...(deletedFieldNames.length > 0
+      ? {cmd_deploy_config_modules_deleted: JSON.stringify(deletedFieldNames.sort())}
+      : {}),
+  }
 }

@@ -8,7 +8,6 @@ import {outputContent, outputInfo, outputToken, unstyled} from '@shopify/cli-kit
 import {formatDate} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
-import {Config} from '@oclif/core'
 import {renderTable} from '@shopify/cli-kit/node/ui'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -86,7 +85,6 @@ interface VersionListOptions {
   app: AppInterface
   apiKey?: string
   reset: false
-  commandConfig: Config
   json: boolean
 }
 

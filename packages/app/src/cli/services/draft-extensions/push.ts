@@ -16,7 +16,7 @@ export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExten
 
   await renderConcurrent({
     processes: app.allExtensions
-      .filter((ext) => !ext.specification.appModuleFeatures().includes('app_config'))
+      .filter((ext) => ext.specification.experience !== 'configuration')
       .map((extension) => {
         return {
           prefix: extension.localIdentifier,

@@ -24,6 +24,7 @@ import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import {ports} from '../constants.js'
 import metadata from '../metadata.js'
+import {SpecsAppConfiguration} from '../models/extensions/specifications/types/app_config.js'
 import {Config} from '@oclif/core'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -99,14 +100,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   const {webs, ...network} = await setupNetworkingOptions(
     localApp.webs,
     graphiqlPort,
-    apiKey,
-    token,
     {
       noTunnel: commandOptions.noTunnel,
-      commandConfig: commandOptions.commandConfig,
       tunnelUrl: commandOptions.tunnelUrl,
     },
     tunnelClient,
+    remoteApp.configuration,
   )
   localApp.webs = webs
 
@@ -140,12 +139,12 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
   if (
     isCurrentAppSchema(localApp.configuration) &&
     !localApp.configuration.access_scopes?.use_legacy_install_flow &&
-    getAppScopesArray(localApp.configuration).sort().join(',') !== remoteApp.requestedAccessScopes?.sort().join(',')
+    localApp.configuration.access_scopes?.scopes !== remoteApp.configuration?.access_scopes?.scopes
   ) {
     const nextSteps = [
       [
         'Run',
-        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app config push')},
+        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
         'to push your scopes to the Partner Dashboard',
       ],
     ]
@@ -157,7 +156,7 @@ async function actionsBeforeSettingUpDevProcesses({localApp, remoteApp}: DevConf
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
-        scopesMessage(remoteApp.requestedAccessScopes || []),
+        scopesMessage(remoteApp.configuration?.access_scopes?.scopes?.split(',') || []),
       ],
       nextSteps,
     })
@@ -207,6 +206,8 @@ async function handleUpdatingOfPartnerUrls(
         localApp,
         apiKey,
       })
+      // When running dev app urls are pushed directly to API Client config instead of creating a new app version
+      // so current app version and API Client config will have diferent url values.
       if (shouldUpdateURLs) await updateURLs(newURLs, apiKey, token, localApp)
       await outputUpdateURLsResult(shouldUpdateURLs, newURLs, remoteApp, localApp)
     }
@@ -217,10 +218,9 @@ async function handleUpdatingOfPartnerUrls(
 async function setupNetworkingOptions(
   webs: Web[],
   graphiqlPort: number,
-  apiKey: string,
-  token: string,
-  frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl' | 'commandConfig'>,
+  frontEndOptions: Pick<FrontendURLOptions, 'noTunnel' | 'tunnelUrl'>,
   tunnelClient?: TunnelClient,
+  remoteAppConfig?: SpecsAppConfiguration,
 ) {
   const {backendConfig, frontendConfig} = frontAndBackendConfig(webs)
 
@@ -234,7 +234,7 @@ async function setupNetworkingOptions(
       tunnelClient,
     }),
     getBackendPort() || backendConfig?.configuration.port || getAvailableTCPPort(),
-    getURLs(apiKey, token),
+    getURLs(remoteAppConfig),
   ])
   const proxyUrl = usingLocalhost ? `${frontendUrl}:${proxyPort}` : frontendUrl
 

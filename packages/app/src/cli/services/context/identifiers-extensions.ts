@@ -6,7 +6,7 @@ import {createExtension} from '../dev/create-extension.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {getFlowExtensionsToMigrate, migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
-import {AppInterface, includeConfigOnDeploy} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -94,6 +94,7 @@ export async function deployConfirmed(
     configurationRegistrations,
     options.app,
     options.appId,
+    options.includeDraftExtensions,
   )
 
   const validMatchesById: {[key: string]: string} = {}
@@ -122,10 +123,11 @@ async function ensureNonUuidManagedExtensionsIds(
   remoteConfigurationRegistrations: RemoteSource[],
   app: AppInterface,
   appId: string,
+  includeDraftExtensions = false,
 ) {
-  if (!includeConfigOnDeploy(app.configuration)) return {extensionsNonUuidManaged: {}, extensionsIdsNonUuidManaged: {}}
+  let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
 
-  const localExtensionRegistrations = app.allExtensions.filter((ext) => !ext.isUuidManaged())
+  localExtensionRegistrations = localExtensionRegistrations.filter((ext) => !ext.isUuidManaged())
   const extensionsToCreate: LocalSource[] = []
   const validMatches: {[key: string]: string} = {}
   const validMatchesById: {[key: string]: string} = {}
@@ -154,7 +156,13 @@ async function createExtensions(extensions: LocalSource[], appId: string, output
   for (const extension of extensions) {
     // Create one at a time to avoid API rate limiting issues.
     // eslint-disable-next-line no-await-in-loop
-    const registration = await createExtension(appId, extension.graphQLType, extension.handle, token)
+    const registration = await createExtension(
+      appId,
+      extension.graphQLType,
+      extension.handle,
+      token,
+      extension.contextValue,
+    )
     if (output) outputCompleted(`Created extension ${extension.handle}.`)
     result[extension.localIdentifier] = registration
   }

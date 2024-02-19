@@ -51,7 +51,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({directory: '/', reset: false, commandConfig: mockConfig})
+    await generate({directory: '/', reset: false})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -73,7 +73,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({directory: '/', reset: false, commandConfig: mockConfig})
+    await generate({directory: '/', reset: false})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -95,7 +95,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({directory: '/', reset: false, commandConfig: mockConfig})
+    await generate({directory: '/', reset: false})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -117,7 +117,7 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('unknown_type')
 
     // When
-    const got = generate({directory: '/', reset: false, commandConfig: mockConfig, template: 'unknown_type'})
+    const got = generate({directory: '/', reset: false, template: 'unknown_type'})
 
     // Then
     await expect(got).rejects.toThrow(/Unknown extension type: unknown_type/)
@@ -129,7 +129,7 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('theme_app_extension', [themeExtension])
 
     // When
-    const got = generate({directory: '/', reset: false, commandConfig: mockConfig, template: 'theme_app_extension'})
+    const got = generate({directory: '/', reset: false, template: 'theme_app_extension'})
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -141,7 +141,7 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('product_discounts', [discountsFunction])
 
     // When
-    const got = generate({directory: '/', reset: false, commandConfig: mockConfig, template: 'product_discounts'})
+    const got = generate({directory: '/', reset: false, template: 'product_discounts'})
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -155,7 +155,6 @@ describe('generate', () => {
     const got = generate({
       directory: '/',
       reset: false,
-      commandConfig: mockConfig,
       template: 'subscription_ui',
       flavor: 'unknown',
     })

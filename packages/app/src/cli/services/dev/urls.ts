@@ -6,9 +6,9 @@ import {
   isCurrentAppSchema,
 } from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
-import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
+import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -36,7 +36,6 @@ export interface PartnersURLs {
 export interface FrontendURLOptions {
   noTunnel: boolean
   tunnelUrl?: string
-  commandConfig: Config
   tunnelClient: TunnelClient | undefined
 }
 
@@ -219,20 +218,16 @@ export async function updateURLs(
   }
 }
 
-export async function getURLs(apiKey: string, token: string): Promise<PartnersURLs> {
-  const variables: GetURLsQueryVariables = {apiKey}
-  const query = GetURLsQuery
-  const response: GetURLsQuerySchema = await partnersRequest(query, token, variables)
-  const appProxy = response.app.appProxy
+export async function getURLs(remoteAppConfig?: SpecsAppConfiguration): Promise<PartnersURLs> {
   const result: PartnersURLs = {
-    applicationUrl: response.app.applicationUrl,
-    redirectUrlWhitelist: response.app.redirectUrlWhitelist,
+    applicationUrl: remoteAppConfig?.application_url ?? '',
+    redirectUrlWhitelist: remoteAppConfig?.auth?.redirect_urls ?? [],
   }
-  if (appProxy) {
+  if (remoteAppConfig?.app_proxy) {
     result.appProxy = {
-      proxyUrl: appProxy.url,
-      proxySubPath: appProxy.subPath,
-      proxySubPathPrefix: appProxy.subPathPrefix,
+      proxyUrl: remoteAppConfig?.app_proxy.url,
+      proxySubPath: remoteAppConfig?.app_proxy.subpath,
+      proxySubPathPrefix: remoteAppConfig?.app_proxy.prefix,
     }
   }
   return result

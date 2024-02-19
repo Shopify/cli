@@ -1,6 +1,6 @@
-import {Checksum, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {BulkUploadResult, Checksum, Theme, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
-interface RemoteThemeJson {
+interface RemoteThemeResponse {
   id: number
   name: string
   role: string
@@ -8,14 +8,20 @@ interface RemoteThemeJson {
   processing?: boolean
 }
 
-interface RemoteAssetJson {
+interface RemoteAssetResponse {
   key: string
   checksum: string
   attachment: string
   value: string
 }
 
-export function buildTheme(themeJson?: RemoteThemeJson): Theme | undefined {
+interface RemoteBulkUploadResponse {
+  body: {asset: RemoteAssetResponse}
+  code: number
+  errors?: string[]
+}
+
+export function buildTheme(themeJson?: RemoteThemeResponse): Theme | undefined {
   if (!themeJson) return
 
   themeJson.processing ??= false
@@ -32,16 +38,27 @@ export function buildTheme(themeJson?: RemoteThemeJson): Theme | undefined {
   }
 }
 
-export function buildChecksum(assetJson?: RemoteAssetJson): Checksum | undefined {
-  if (!assetJson) return
+export function buildChecksum(asset?: RemoteAssetResponse): Checksum | undefined {
+  if (!asset) return
 
-  const {key, checksum} = assetJson
+  const {key, checksum} = asset
   return {key, checksum}
 }
 
-export function buildThemeAsset(assetJson?: RemoteAssetJson): ThemeAsset | undefined {
-  if (!assetJson) return
+export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undefined {
+  if (!asset) return
 
-  const {key, checksum, attachment, value} = assetJson
+  const {key, checksum, attachment, value} = asset
   return {key, checksum, attachment, value}
+}
+
+export function buildBulkUploadResults(bulkUpload?: RemoteBulkUploadResponse): BulkUploadResult | undefined {
+  if (!bulkUpload) return
+
+  return {
+    key: bulkUpload.body.asset.key,
+    success: bulkUpload.code === 200,
+    errors: bulkUpload.errors || [],
+    asset: bulkUpload.body.asset || {},
+  }
 }

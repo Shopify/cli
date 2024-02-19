@@ -29,6 +29,7 @@ const config: CustomOnsitePaymentsAppExtensionConfigType = {
   checkout_payment_method_fields: [],
   modal_payment_method_fields: [],
   description: 'Custom onsite extension',
+  ui_extension_handle: 'sample-ui-extension',
   metafields: [],
   input: {
     metafield_identifiers: {
@@ -95,7 +96,6 @@ describe('customOnsitePaymentsAppExtensionDeployConfig', () => {
 
     // Then
     expect(result).toMatchObject({
-      target: config.targeting[0]!.target,
       api_version: config.api_version,
       start_payment_session_url: config.payment_session_url,
       start_refund_session_url: config.refund_session_url,
@@ -116,6 +116,7 @@ describe('customOnsitePaymentsAppExtensionDeployConfig', () => {
       buyer_label_to_locale: config.buyer_label_translations,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       modal_payment_method_fields: config.modal_payment_method_fields,
+      ui_extension_handle: config.ui_extension_handle,
     })
   })
 })

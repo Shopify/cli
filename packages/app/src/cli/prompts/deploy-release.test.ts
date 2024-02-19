@@ -1,4 +1,4 @@
-import {deployOrReleaseConfirmationPrompt} from './deploy-release.js'
+import {buildConfigurationBreakdownMetadata, deployOrReleaseConfirmationPrompt} from './deploy-release.js'
 import metadata from '../metadata.js'
 import {
   ConfigExtensionIdentifiersBreakdown,
@@ -30,12 +30,16 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       })
 
       // Then
-      expect(metadataSpyOn).not.toHaveBeenCalled()
+      verifyMetada({
+        metadataSpyOn,
+        confirmed: result,
+        configExtensionIdentifiersBreakdown: configExtensionIdentifiersBreakdown!,
+      })
       expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
 
-    test('and no force without any modifications either extension or config should not display sections', async () => {
+    test('and no force without any modifications either extension or config should display empty sections', async () => {
       // Given
       const extensionIdentifiersBreakdown = buildEmptyExtensionsBreakdownInfo()
       const configExtensionIdentifiersBreakdown = buildEmptyConfigExtensionsBreakdownInfo()
@@ -58,11 +62,23 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
           appTitle,
-          infoTable: [],
+          infoTable: [
+            {
+              header: 'Configuration:',
+              items: [],
+              emptyItemsText: 'No changes',
+            },
+            {
+              header: 'Extensions:',
+              items: [],
+              emptyItemsText: 'None',
+            },
+          ],
           dangerPrompt: false,
         }),
       )
@@ -91,6 +107,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -100,7 +117,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -144,6 +161,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -153,7 +171,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -201,6 +219,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -210,7 +229,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -231,9 +250,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       expect(result).toBe(true)
     })
 
-    test('and no force with modified and deleted configuration but versioned app not enabled then the config information should not be displayed', async () => {
+    test('and the configuration extension breakdown is undefined then the config information should not be displayed', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
+      breakdownInfo.configExtensionIdentifiersBreakdown = undefined
 
       const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
@@ -252,6 +272,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -297,6 +318,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown,
       })
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -348,6 +370,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         metadataSpyOn,
         extensionIdentifiersBreakdown: breakdownInfo.extensionIdentifiersBreakdown,
         confirmed: result,
+        configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
       expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
         renderConfirmationPromptContent({
@@ -357,7 +380,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Configuration:',
               items: [
                 {bullet: '+', item: ['new field name1', {subdued: '(new)'}], color: 'green'},
-                'updating field name1',
+                {item: ['updating field name1', {subdued: '(updated)'}], color: '#FF8800'},
                 'existing field name1',
                 {bullet: '-', item: ['deleted field name1', {subdued: '(removed)'}], color: 'red'},
               ],
@@ -450,19 +473,28 @@ function verifyMetada({
   metadataSpyOn,
   extensionIdentifiersBreakdown,
   confirmed,
+  configExtensionIdentifiersBreakdown,
 }: {
   metadataSpyOn: SpyInstance
-  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  extensionIdentifiersBreakdown?: ExtensionIdentifiersBreakdown
   confirmed: boolean
+  configExtensionIdentifiersBreakdown: ConfigExtensionIdentifiersBreakdown
 }) {
+  const configurationBreakdownMetadata = buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown)
+
   expect(metadataSpyOn).toHaveBeenNthCalledWith(1, expect.any(Function))
-  expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({
+  expect(metadataSpyOn.mock.calls[0]![0]()).toEqual(configurationBreakdownMetadata)
+
+  if (!extensionIdentifiersBreakdown) return
+
+  expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
+  expect(metadataSpyOn.mock.calls[1]![0]()).toEqual({
     cmd_deploy_confirm_new_registrations: extensionIdentifiersBreakdown.toCreate.length,
     cmd_deploy_confirm_updated_registrations: extensionIdentifiersBreakdown.toUpdate.length,
     cmd_deploy_confirm_removed_registrations: extensionIdentifiersBreakdown.onlyRemote.length,
   })
-  expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
-  expect(metadataSpyOn.mock.calls[1]![0]()).toEqual(
+  expect(metadataSpyOn).toHaveBeenNthCalledWith(3, expect.any(Function))
+  expect(metadataSpyOn.mock.calls[2]![0]()).toEqual(
     expect.objectContaining({
       cmd_deploy_confirm_cancelled: !confirmed,
     }),

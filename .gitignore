@@ -162,5 +162,5 @@ testing.d.ts
 testing.js
 testing.mjs
 
-# Nx
+# NX
 .nx/cache

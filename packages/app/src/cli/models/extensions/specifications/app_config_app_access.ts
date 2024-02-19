@@ -1,24 +1,31 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppAccessSchema = zod.object({
   access: zod
     .object({
-      direct_api_offline_access: zod.boolean().optional(),
+      admin: zod
+        .object({
+          direct_api_mode: zod.union([zod.literal('online'), zod.literal('offline')]).optional(),
+          embedded_app_direct_api_access: zod.boolean().optional(),
+        })
+        .optional(),
     })
     .optional(),
   access_scopes: zod
     .object({
-      scopes: zod.string().optional(),
+      scopes: zod
+        .string()
+        .transform((scopes) => normalizeDelimitedString(scopes))
+        .optional(),
       use_legacy_install_flow: zod.boolean().optional(),
     })
     .optional(),
-  auth: zod
-    .object({
-      redirect_urls: zod.array(validateUrl(zod.string())),
-    })
-    .optional(),
+  auth: zod.object({
+    redirect_urls: zod.array(validateUrl(zod.string())),
+  }),
 })
 
 export const AppAccessSpecIdentifier = 'app_access'

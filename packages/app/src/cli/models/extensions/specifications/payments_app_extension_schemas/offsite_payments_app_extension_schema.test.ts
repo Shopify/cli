@@ -139,7 +139,6 @@ describe('offsitePaymentsAppExtensionDeployConfig', () => {
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
       test_mode_available: config.test_mode_available,
-      target: config.targeting[0]!.target,
       default_buyer_label: config.buyer_label,
       buyer_label_to_locale: config.buyer_label_translations,
       supports_oversell_protection: config.supports_oversell_protection,

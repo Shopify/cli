@@ -16,10 +16,9 @@ import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {Config} from '@oclif/core'
 
 const versionTag = 'unique-version-tag'
 
@@ -61,10 +60,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
@@ -91,10 +89,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         message: 'Deployed from CLI with flag',
@@ -119,10 +116,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         version: '1.1.0',
@@ -147,10 +143,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
     })
 
@@ -295,7 +290,7 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('pushes the configuration extension if include config on deploy and the beta flag are enabled', async () => {
+  test('pushes the configuration extension if include config on deploy ', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const localApp = {
@@ -306,7 +301,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+    await testDeployBundle({app, released: false, commitReference})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -328,40 +323,14 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('doesnt push the configuration extension if include config on deploy is disabled and the beta flag is enabled', async () => {
+  test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const app = testApp({allExtensions: [extensionNonUuidManaged]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
-
-    // Then
-    expect(uploadExtensionsBundle).toHaveBeenCalledWith({
-      apiKey: 'app-id',
-      appModules: [],
-      token: 'api-token',
-      extensionIds: {},
-      release: true,
-      commitReference,
-    })
-    expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
-    expect(updateAppIdentifiers).toHaveBeenCalledOnce()
-  })
-
-  test('doesnt push the configuration extension if include config on deploy is enabled and the beta flag is disabled', async () => {
-    // Given
-    const extensionNonUuidManaged = await testAppConfigExtensions()
-    const localApp = {
-      allExtensions: [extensionNonUuidManaged],
-      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
-    }
-    const app = testApp(localApp)
-    const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
-
-    // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: false})
+    await testDeployBundle({app, released: false, commitReference})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -388,10 +357,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
@@ -426,10 +394,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id2',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
@@ -466,10 +433,9 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: true,
@@ -511,7 +477,6 @@ interface TestDeployBundleInput {
   }
   released?: boolean
   commitReference?: string
-  versionedAppConfig?: boolean
   appToDeploy?: AppInterface
 }
 
@@ -521,7 +486,6 @@ async function testDeployBundle({
   options,
   released = true,
   commitReference,
-  versionedAppConfig = false,
   appToDeploy,
 }: TestDeployBundleInput) {
   // Given
@@ -565,7 +529,6 @@ async function testDeployBundle({
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
-  vi.mocked(useVersionedAppConfig).mockReturnValue(versionedAppConfig)
 
   await deploy({
     app,
@@ -575,6 +538,5 @@ async function testDeployBundle({
     message: options?.message,
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
-    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   })
 }

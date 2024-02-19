@@ -74,7 +74,7 @@ describe('open', () => {
     expect(renderInfo).toBeCalledWith({
       body: [
         'Preview information for theme',
-        'my theme',
+        "'my theme'",
         {subdued: '(#1)'},
         '\n\n',
         {

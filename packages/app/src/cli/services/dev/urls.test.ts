@@ -1,6 +1,5 @@
 import {
   updateURLs,
-  getURLs,
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generatePartnersURLs,
@@ -10,11 +9,9 @@ import {
 } from './urls.js'
 import {DEFAULT_CONFIG, testApp, testAppWithConfig} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
-import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -45,7 +42,6 @@ beforeEach(() => {
 const defaultOptions: FrontendURLOptions = {
   noTunnel: false,
   tunnelUrl: undefined,
-  commandConfig: new Config({root: ''}),
   tunnelClient: {
     getTunnelStatus: () => ({status: 'starting'}),
     stopTunnel: () => {},
@@ -218,22 +214,6 @@ describe('updateURLs', () => {
       },
       appWithConfig.configSchema,
     )
-  })
-})
-
-describe('getURLs', () => {
-  test('sends a request to get the URLs', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {applicationUrl: 'https://example.com', redirectUrlWhitelist: []},
-    })
-    const expectedVariables = {apiKey: 'apiKey'}
-
-    // When
-    await getURLs('apiKey', 'token')
-
-    // Then
-    expect(partnersRequest).toHaveBeenCalledWith(GetURLsQuery, 'token', expectedVariables)
   })
 })
 

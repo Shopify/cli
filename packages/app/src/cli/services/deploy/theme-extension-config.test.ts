@@ -1,5 +1,5 @@
 import {themeExtensionConfig} from './theme-extension-config.js'
-import {loadFSExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -9,7 +9,7 @@ describe('themeExtensionConfig', () => {
   test('builds a base64 encoded payload containing all theme files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const allSpecs = await loadFSExtensionsSpecifications()
+      const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
       const themeExtension = new ExtensionInstance({
         configuration: {
@@ -39,7 +39,7 @@ describe('themeExtensionConfig', () => {
   test('excludes system files', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const allSpecs = await loadFSExtensionsSpecifications()
+      const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
       const themeExtension = new ExtensionInstance({
         configuration: {

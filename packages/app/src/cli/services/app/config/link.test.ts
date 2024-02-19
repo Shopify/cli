@@ -9,21 +9,19 @@ import {
 import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
-import {fetchAppDetailsFromApiKey, fetchAppExtensionRegistrations} from '../../dev/fetch.js'
+import {fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
-import {loadFSExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
+import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {Config} from '@oclif/core'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
-
-const REMOTE_APP = testOrganizationApp()
+import {setPathValue} from '@shopify/cli-kit/common/object'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
@@ -41,19 +39,22 @@ vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../generate/fetch-extension-specifications.js')
-vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('../select-app.js')
+
+const DEFAULT_REMOTE_CONFIGURATION = {
+  name: 'app1',
+  application_url: 'https://example.com',
+  embedded: true,
+  auth: {redirect_urls: ['https://example.com/callback1']},
+  webhooks: {api_version: '2023-07'},
+  pos: {embedded: false},
+  access_scopes: {use_legacy_install_flow: true},
+}
 
 beforeEach(async () => {
   vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {
-      extensionRegistrations: [],
-      configurationRegistrations: [],
-      dashboardManagedExtensionRegistrations: [],
-    },
-  })
-  vi.mocked(fetchSpecifications).mockResolvedValue(await loadFSExtensionsSpecifications())
-  vi.mocked(useVersionedAppConfig).mockResolvedValue(true)
+  vi.mocked(fetchSpecifications).mockResolvedValue(await loadLocalExtensionsSpecifications())
+  vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
 })
 
 describe('link', () => {
@@ -62,11 +63,10 @@ describe('link', () => {
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         configName: 'Default value',
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
 
       // When
       await link(options)
@@ -82,10 +82,9 @@ describe('link', () => {
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(loadApp).mockRejectedValue('App not found')
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
 
       // When
       await link(options)
@@ -94,7 +93,7 @@ describe('link', () => {
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "api-key"
+client_id = "12345"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -122,7 +121,7 @@ embedded = false
         body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
-          ['To upload your config, run', {command: 'npm run shopify app config push'}],
+          ['To upload your config, run', {command: 'npm run shopify app deploy'}],
         ],
         reference: [
           {
@@ -141,7 +140,6 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       const localApp = {
         configuration: {
@@ -159,16 +157,20 @@ embedded = false
           },
         } as CurrentAppConfiguration,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp))
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
-          applicationUrl: 'https://myapp.com',
-          title: 'my app',
-          requestedAccessScopes: ['write_products'],
         }),
       )
       vi.mocked(selectConfigName).mockResolvedValue('staging')
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        name: 'my app',
+        application_url: 'https://myapp.com',
+        access_scopes: {scopes: 'write_products'},
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
       // When
       await link(options)
@@ -207,7 +209,7 @@ embedded = false
         body: 'Using shopify.app.staging.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.staging.toml in your local project`],
-          ['To upload your config, run', {command: 'yarn shopify app config push'}],
+          ['To upload your config, run', {command: 'yarn shopify app deploy'}],
         ],
         reference: [
           {
@@ -220,16 +222,16 @@ embedded = false
       })
     })
   })
-  test('build section is removed if the client_id in the local configuration is different from the remote one', async () => {
+
+  test('the local configuration is discarded if the client_id is different from the remote one', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       const localApp = {
         configuration: {
-          path: 'shopify.app.staging.toml',
+          path: 'shopify.app.toml',
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
@@ -242,15 +244,19 @@ embedded = false
           },
         } as CurrentAppConfiguration,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp))
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: 'different-api-key',
-          applicationUrl: 'https://myapp.com',
-          title: 'my app',
-          requestedAccessScopes: ['write_products'],
         }),
       )
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        name: 'my app',
+        application_url: 'https://myapp.com',
+        access_scopes: {scopes: 'write_products'},
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
@@ -264,9 +270,6 @@ client_id = "different-api-key"
 name = "my app"
 application_url = "https://myapp.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -294,10 +297,9 @@ embedded = false
       writeFileSync(filePath, initialContent)
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
 
       // When
       await link(options)
@@ -306,13 +308,10 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "api-key"
+client_id = "12345"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -333,7 +332,7 @@ embedded = false
         body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
           [`Make updates to shopify.app.toml in your local project`],
-          ['To upload your config, run', {command: 'yarn shopify app config push'}],
+          ['To upload your config, run', {command: 'yarn shopify app deploy'}],
         ],
         reference: [
           {
@@ -356,10 +355,9 @@ embedded = false
       writeFileSync(filePath, initialContent)
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
 
       // When
       await link(options, false)
@@ -368,13 +366,10 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "api-key"
+client_id = "12345"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -399,12 +394,11 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         apiKey: 'api-key',
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchAppDetailsFromApiKey).mockResolvedValue(mockRemoteApp())
       vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
@@ -425,7 +419,6 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
         apiKey: '1234-5678',
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
@@ -446,7 +439,6 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       const localApp = {
         configuration: {
@@ -463,9 +455,6 @@ embedded = false
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
-          applicationUrl: 'https://myapp.com',
-          title: 'my app',
-          requestedAccessScopes: ['write_products'],
         }),
       )
       vi.mocked(getCachedCommandInfo).mockReturnValue({askConfigName: false, selectedToml: 'shopify.app.foo.toml'})
@@ -483,10 +472,9 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(REMOTE_APP)
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
 
       // When
       await link(options)
@@ -495,13 +483,10 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "api-key"
+client_id = "12345"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -525,13 +510,14 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
-        ...REMOTE_APP,
-        requestedAccessScopes: ['read_products', 'write_orders'],
-      })
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        access_scopes: {scopes: 'read_products,write_orders'},
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
       // When
       await link(options)
@@ -540,13 +526,10 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "api-key"
+client_id = "12345"
 name = "app1"
 application_url = "https://example.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -565,77 +548,11 @@ embedded = false
     })
   })
 
-  test('unset privacy compliance urls are undefined', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      const options: LinkOptions = {
-        directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-      }
-      vi.mocked(loadApp).mockRejectedValue('App not found')
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
-        ...REMOTE_APP,
-        gdprWebhooks: {customerDataRequestUrl: 'https://example.com/customer-data'},
-      })
-
-      // When
-      await link(options)
-
-      // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "api-key"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [webhooks.privacy_compliance]
-  customer_data_request_url = "https://example.com/customer-data"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
-      expect(saveCurrentConfig).toHaveBeenCalledWith({configFileName: 'shopify.app.toml', directory: tmp})
-      expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'shopify.app.toml is now linked to "app1" on Shopify',
-        body: 'Using shopify.app.toml as your default config.',
-        nextSteps: [
-          [`Make updates to shopify.app.toml in your local project`],
-          ['To upload your config, run', {command: 'npm run shopify app config push'}],
-        ],
-        reference: [
-          {
-            link: {
-              label: 'App configuration',
-              url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
-            },
-          },
-        ],
-      })
-    })
-  })
-
   test('the api client configuration is deep merged with the remote app_config extension registrations', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       }
       const localApp = {
         configuration: {
@@ -657,55 +574,21 @@ embedded = false
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
-          applicationUrl: 'https://myapp.com',
-          title: 'my app',
-          requestedAccessScopes: ['write_products'],
         }),
       )
       vi.mocked(selectConfigName).mockResolvedValue('staging')
-      vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-        app: {
-          extensionRegistrations: [
-            {
-              type: 'THEME_APP_EXTENSION',
-              id: '123',
-              uuid: '123',
-              title: 'mock-theme',
-              activeVersion: {
-                config: JSON.stringify({name: 'my-theme-app', type: 'theme_app_extension'}),
-              },
-            },
-          ],
-          configurationRegistrations: [
-            {
-              type: 'point_of_sale',
-              id: '321',
-              uuid: '321',
-              title: 'point_of_sale',
-              activeVersion: {
-                config: JSON.stringify({embedded: true}),
-              },
-            },
-            {
-              type: 'webhooks',
-              id: '543',
-              uuid: '543',
-              title: 'webhooks',
-              activeVersion: {
-                config: JSON.stringify({
-                  subscriptions: [
-                    {
-                      topic: 'products/create',
-                      uri: 'https://my-app.com/webhooks',
-                    },
-                  ],
-                }),
-              },
-            },
-          ],
-          dashboardManagedExtensionRegistrations: [],
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        name: 'my app',
+        application_url: 'https://myapp.com',
+        access_scopes: {scopes: 'write_products'},
+        pos: {embedded: true},
+        webhooks: {
+          api_version: '2023-07',
+          subscriptions: [{topics: ['products/create'], uri: 'https://my-app.com/webhooks'}],
         },
-      })
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
       // When
       await link(options)
@@ -718,9 +601,6 @@ client_id = "12345"
 name = "my app"
 application_url = "https://myapp.com"
 embedded = true
-
-[build]
-include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -758,13 +638,116 @@ embedded = true
       })
     })
   })
+
+  test('when local app doesnt include build section and the remote app is new then include include_config_on_deploy is added', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const initialContent = `scopes = ""
+    `
+      writeFileSync(filePath, initialContent)
+      const options: LinkOptions = {
+        directory: tmp,
+      }
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
+  test('replace arrays content with the remote one', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const options: LinkOptions = {
+        directory: tmp,
+      }
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        auth: {
+          redirect_urls: ['https://example.com/remote'],
+        },
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/remote" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
 })
 
-async function mockApp(directory: string, app?: Partial<AppInterface>) {
+async function mockApp(
+  directory: string,
+  app?: Partial<AppInterface>,
+  betas = [],
+  schemaType: 'current' | 'legacy' = 'legacy',
+) {
   const versionSchema = await buildVersionedAppSchema()
   const localApp = testApp(app)
+  localApp.configuration.client_id = schemaType === 'legacy' ? 12345 : '12345'
   localApp.configSchema = versionSchema.schema
   localApp.specifications = versionSchema.configSpecifications
   localApp.directory = directory
+  setPathValue(localApp, 'remoteBetaFlags', betas)
   return localApp
+}
+
+function mockRemoteApp() {
+  const remoteApp = testOrganizationApp()
+  remoteApp.apiKey = '12345'
+  return remoteApp
 }

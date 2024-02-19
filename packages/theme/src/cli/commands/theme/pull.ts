@@ -60,6 +60,11 @@ export default class Pull extends ThemeCommand {
       description: 'Performs the pull command by relying on the legacy download implementation.',
       env: 'SHOPIFY_FLAG_STABLE',
     }),
+    beta: Flags.boolean({
+      hidden: true,
+      description: 'Performs the pull command by relying on the new download implementation.',
+      env: 'SHOPIFY_FLAG_BETA',
+    }),
   }
 
   static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
@@ -76,7 +81,7 @@ export default class Pull extends ThemeCommand {
       ? developmentThemeManager.find()
       : developmentThemeManager.fetch())
 
-    if (!flags.stable) {
+    if (flags.beta) {
       const {path, nodelete, live, development, only, ignore, force} = flags
 
       const theme = await findOrSelectTheme(adminSession, {

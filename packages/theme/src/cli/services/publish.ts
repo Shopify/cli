@@ -32,8 +32,8 @@ export async function publish(adminSession: AdminSession, themeId: string | unde
 
   if (!options.force) {
     const accept = await renderConfirmationPrompt({
-      message: `Do you want to make ${theme.name} the new live theme on ${adminSession.storeFqdn}?`,
-      confirmationMessage: `Yes, make ${theme.name} the new live theme`,
+      message: `Do you want to make '${theme.name}' the new live theme on ${adminSession.storeFqdn}?`,
+      confirmationMessage: `Yes, make '${theme.name}' the new live theme`,
       cancellationMessage: 'No, cancel publish',
     })
     if (!accept) return

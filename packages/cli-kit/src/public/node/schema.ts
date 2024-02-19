@@ -21,3 +21,20 @@ export function deepStrict(schema: ZodTypeAny): ZodTypeAny {
     return schema
   }
 }
+
+/**
+ * Returns a human-readable string of the list of zod errors.
+ *
+ * @param errors - The list of zod errors.
+ * @returns The human-readable string.
+ */
+export function errorsToString(errors: z.ZodIssueBase[]): string {
+  return errors
+    .map((error) =>
+      error.path
+        .join('.')
+        .concat(': ')
+        .concat(error.message ?? 'Unknow error'),
+    )
+    .join('\n')
+}

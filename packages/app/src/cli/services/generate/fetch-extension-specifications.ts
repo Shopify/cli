@@ -7,13 +7,11 @@ import {
 
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
 export interface FetchSpecificationsOptions {
   token: string
   apiKey: string
-  config: Config
 }
 /**
  * Returns all extension specifications the user has access to.
@@ -30,7 +28,6 @@ export interface FetchSpecificationsOptions {
 export async function fetchSpecifications({
   token,
   apiKey,
-  config,
 }: FetchSpecificationsOptions): Promise<ExtensionSpecification[]> {
   const result: ExtensionSpecificationsQuerySchema = await partnersRequest(ExtensionSpecificationsQuery, token, {
     api_key: apiKey,
@@ -53,7 +50,7 @@ export async function fetchSpecifications({
       return newSpec
     })
 
-  const local = await loadLocalExtensionsSpecifications(config)
+  const local = await loadLocalExtensionsSpecifications()
   const updatedSpecs = mergeLocalAndRemoteSpecs(local, extensionSpecifications)
   return [...updatedSpecs]
 }

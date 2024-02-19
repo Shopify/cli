@@ -6,6 +6,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {BetaFlag} from '../../services/dev/fetch.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -13,7 +14,6 @@ import {fileRealPath, findPathUp} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
 
 export const LegacyAppSchema = zod
   .object({
@@ -41,7 +41,7 @@ export const AppSchema = zod.object({
 export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
 
 export function getAppVersionedSchema(specs: ExtensionSpecification[]) {
-  const isConfigSpecification = (spec: ExtensionSpecification) => spec.appModuleFeatures().includes('app_config')
+  const isConfigSpecification = (spec: ExtensionSpecification) => spec.experience === 'configuration'
   const schema = specs
     .filter(isConfigSpecification)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,11 +101,6 @@ export function appIsLaunchable(app: AppInterface) {
   const backendConfig = app?.webs?.find((web) => isWebType(web, WebType.Backend))
 
   return Boolean(frontendConfig || backendConfig)
-}
-
-export function includeConfigOnDeploy(configuration: AppConfiguration) {
-  if (isLegacyAppSchema(configuration)) return false
-  return configuration.build?.include_config_on_deploy && useVersionedAppConfig()
 }
 
 export function filterNonVersionedAppFields(configuration: {[key: string]: unknown}) {
@@ -170,13 +165,33 @@ export interface AppInterface extends AppConfigurationInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
+  draftableExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   errors?: AppErrors
+  includeConfigOnDeploy: boolean | undefined
+  remoteBetaFlags: BetaFlag[]
   hasExtensions: () => boolean
   updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
+}
+
+interface AppConstructor {
+  name: string
+  idEnvironmentVariableName: string
+  directory: string
+  packageManager: PackageManager
+  configuration: AppConfiguration
+  nodeDependencies: {[key: string]: string}
+  webs: Web[]
+  modules: ExtensionInstance[]
+  usesWorkspaces: boolean
+  dotenv?: DotEnvFile
+  errors?: AppErrors
+  specifications?: ExtensionSpecification[]
+  configSchema?: zod.ZodTypeAny
+  remoteBetaFlags?: BetaFlag[]
 }
 
 export class App implements AppInterface {
@@ -190,26 +205,27 @@ export class App implements AppInterface {
   usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
-  allExtensions: ExtensionInstance[]
   specifications?: ExtensionSpecification[]
   configSchema: zod.ZodTypeAny
+  remoteBetaFlags: BetaFlag[]
+  private realExtensions: ExtensionInstance[]
 
-  // eslint-disable-next-line max-params
-  constructor(
-    name: string,
-    idEnvironmentVariableName: string,
-    directory: string,
-    packageManager: PackageManager,
-    configuration: AppConfiguration,
-    nodeDependencies: {[key: string]: string},
-    webs: Web[],
-    extensions: ExtensionInstance[],
-    usesWorkspaces: boolean,
-    dotenv?: DotEnvFile,
-    errors?: AppErrors,
-    specifications?: ExtensionSpecification[],
-    configSchema?: zod.ZodTypeAny,
-  ) {
+  constructor({
+    name,
+    idEnvironmentVariableName,
+    directory,
+    packageManager,
+    configuration,
+    nodeDependencies,
+    webs,
+    modules,
+    usesWorkspaces,
+    dotenv,
+    errors,
+    specifications,
+    configSchema,
+    remoteBetaFlags,
+  }: AppConstructor) {
     this.name = name
     this.idEnvironmentVariableName = idEnvironmentVariableName
     this.directory = directory
@@ -218,11 +234,20 @@ export class App implements AppInterface {
     this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
-    this.allExtensions = extensions
+    this.realExtensions = modules
     this.errors = errors
     this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
+    this.remoteBetaFlags = remoteBetaFlags ?? []
+  }
+
+  get allExtensions() {
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension || this.includeConfigOnDeploy)
+  }
+
+  get draftableExtensions() {
+    return this.realExtensions.filter((ext) => ext.isDraftable())
   }
 
   async updateDependencies() {
@@ -261,65 +286,75 @@ export class App implements AppInterface {
     })
   }
 
+  get includeConfigOnDeploy() {
+    if (isLegacyAppSchema(this.configuration)) return false
+    return this.configuration.build?.include_config_on_deploy
+  }
+
   private configurationTyped(configuration: AppConfiguration) {
     if (isLegacyAppSchema(configuration)) return configuration
     return {
       ...configuration,
-      ...this.homeConfiguration(configuration),
-      ...this.appProxyConfiguration(configuration),
-      ...this.posConfiguration(configuration),
-      ...this.webhooksConfiguration(configuration),
-      ...this.accessConfiguration(configuration),
+      ...buildSpecsAppConfiguration(configuration),
     } as CurrentAppConfiguration & SpecsAppConfiguration
   }
+}
 
-  private appProxyConfiguration(configuration: AppConfiguration) {
-    if (!getPathValue(configuration, 'app_proxy')) return
-    return {
-      app_proxy: {
-        url: getPathValue<string>(configuration, 'app_proxy.url')!,
-        prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
-        subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
-      },
-    }
+export function buildSpecsAppConfiguration(content: object) {
+  return {
+    ...homeConfiguration(content),
+    ...appProxyConfiguration(content),
+    ...posConfiguration(content),
+    ...webhooksConfiguration(content),
+    ...accessConfiguration(content),
   }
+}
 
-  private homeConfiguration(configuration: AppConfiguration) {
-    const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
-    return {
-      application_url: getPathValue<string>(configuration, 'application_url')!,
-      embedded: getPathValue<boolean>(configuration, 'embedded')!,
-      ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
-    }
+function appProxyConfiguration(configuration: object) {
+  if (!getPathValue(configuration, 'app_proxy')) return
+  return {
+    app_proxy: {
+      url: getPathValue<string>(configuration, 'app_proxy.url')!,
+      prefix: getPathValue<string>(configuration, 'app_proxy.prefix')!,
+      subpath: getPathValue<string>(configuration, 'app_proxy.subpath')!,
+    },
   }
+}
 
-  private posConfiguration(configuration: AppConfiguration) {
-    const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
-    return embedded === undefined
-      ? undefined
-      : {
-          pos: {
-            embedded,
-          },
-        }
+function homeConfiguration(configuration: object) {
+  const appPreferencesUrl = getPathValue<string>(configuration, 'app_preferences.url')
+  return {
+    name: getPathValue<string>(configuration, 'name')!,
+    application_url: getPathValue<string>(configuration, 'application_url')!,
+    embedded: getPathValue<boolean>(configuration, 'embedded')!,
+    ...(appPreferencesUrl ? {app_preferences: {url: appPreferencesUrl}} : {}),
   }
+}
 
-  private webhooksConfiguration(configuration: AppConfiguration) {
-    return {
-      webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
-    }
+function posConfiguration(configuration: object) {
+  const embedded = getPathValue<boolean>(configuration, 'pos.embedded')
+  return embedded === undefined
+    ? undefined
+    : {
+        pos: {
+          embedded,
+        },
+      }
+}
+
+function webhooksConfiguration(configuration: object) {
+  return {
+    webhooks: {...getPathValue<WebhooksConfig>(configuration, 'webhooks')},
   }
+}
 
-  private accessConfiguration(configuration: AppConfiguration) {
-    const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
-    const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
-    const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
-    return {
-      ...(scopes || useLegacyInstallFlow
-        ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}}
-        : {}),
-      ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
-    }
+function accessConfiguration(configuration: object) {
+  const scopes = getPathValue<string>(configuration, 'access_scopes.scopes')
+  const useLegacyInstallFlow = getPathValue<boolean>(configuration, 'access_scopes.use_legacy_install_flow')
+  const redirectUrls = getPathValue<string[]>(configuration, 'auth.redirect_urls')
+  return {
+    ...(scopes || useLegacyInstallFlow ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}} : {}),
+    ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
   }
 }
 
@@ -350,10 +385,25 @@ function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: strin
 }
 
 export class EmptyApp extends App {
-  constructor(specifications?: ExtensionSpecification[]) {
-    const configuration = {scopes: '', extension_directories: [], path: ''}
+  constructor(specifications?: ExtensionSpecification[], betas?: BetaFlag[], clientId?: string) {
+    const configuration = clientId
+      ? {client_id: clientId, access_scopes: {scopes: ''}, path: ''}
+      : {scopes: '', path: ''}
     const configSchema = getAppVersionedSchema(specifications ?? [])
-    super('', '', '', 'npm', configuration, {}, [], [], false, undefined, undefined, specifications, configSchema)
+    super({
+      name: '',
+      idEnvironmentVariableName: '',
+      directory: '',
+      packageManager: 'npm',
+      configuration,
+      nodeDependencies: {},
+      webs: [],
+      modules: [],
+      usesWorkspaces: false,
+      specifications,
+      configSchema,
+      remoteBetaFlags: betas ?? [],
+    })
   }
 }
 

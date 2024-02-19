@@ -1,5 +1,39 @@
 # @shopify/theme
 
+## 3.56.0
+
+### Patch Changes
+
+- dc946c26c: Fix the error message that started occurring since Ruby 3.3.0
+- 0d59df9f1: Show deprecation logs only on `--verbose` mode
+- Updated dependencies [1220290ec]
+  - @shopify/cli-kit@3.56.0
+
+## 3.55.0
+
+### Minor Changes
+
+- Theme Check 2.0: https://shopify.dev/docs/themes/tools/theme-check
+- 1f4bc949e: Bring the new `shopify theme pull` implementation behind the `--beta` flag and use the legacy version by default
+  - @shopify/cli-kit@3.55.0
+
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Refine `shopify theme pull` implementation to no longer require a Ruby setup
+- a9e847717: Introduce `shopify theme rename` command
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+  - @shopify/cli-kit@3.54.0
+
 ## 3.53.0
 
 ### Minor Changes

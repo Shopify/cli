@@ -18,7 +18,6 @@ import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 
 export const RubyCLIVersion = '2.35.0'
-const ThemeCheckVersion = '1.15.0'
 const MinBundlerVersion = '2.3.11'
 const MinRubyVersion = '2.7.5'
 export const MinWdmWindowsVersion = '0.1.0'
@@ -84,73 +83,6 @@ export async function execCLI2(args: string[], options: ExecCLI2Options = {}): P
     // CLI2 will show it's own errors, we don't need to show an additional CLI3 error
     throw new AbortSilentError()
   }
-}
-
-interface ExecThemeCheckCLIOptions {
-  /** A list of directories in which theme-check should run. */
-  directories: string[]
-  /** Arguments to pass to the theme-check CLI. */
-  args?: string[]
-  /** Writable to send standard output content through. */
-  stdout: Writable
-  /** Writable to send standard error content through. */
-  stderr: Writable
-}
-
-/**
- * A function that installs (if needed) and runs the theme-check CLI.
- *
- * @param options - Options to customize the execution of theme-check.
- * @returns A promise that resolves or rejects depending on the result of the underlying theme-check process.
- */
-export async function execThemeCheckCLI(options: ExecThemeCheckCLIOptions): Promise<void[]> {
-  await installThemeCheckCLIDependencies(options.stdout)
-
-  const processes = options.directories.map(async (directory): Promise<void> => {
-    // Check that there are files aside from the extension TOML config file,
-    // otherwise theme-check will return a false failure.
-    const files = await file.glob(joinPath(directory, '/**/*'))
-    const fileCount = files.filter((file) => !file.match(/\.toml$/)).length
-    if (fileCount === 0) return
-
-    const customStderr = new Writable({
-      write(chunk, ...args) {
-        // For some reason, theme-check reports this initial status line to stderr
-        // See https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/diagnostics_engine.rb#L31
-        // which leads to https://github.com/Shopify/theme-check/blob/1092737cfb58a73ca397ffb1371665dc55df2976/lib/theme_check/language_server/io_messenger.rb#L65
-        if (chunk.toString('ascii').match(/^Checking/)) {
-          options.stdout.write(chunk, ...args)
-        } else {
-          options.stderr.write(chunk, ...args)
-        }
-      },
-    })
-    await runBundler(['exec', 'theme-check'].concat([directory, ...(options.args || [])]), {
-      stdout: options.stdout,
-      stderr: customStderr,
-      cwd: themeCheckDirectory(),
-    })
-  })
-  return Promise.all(processes)
-}
-
-/**
- * Validate Ruby Enviroment
- * Install Theme Check CLI and its dependencies
- * Shows a loading message if it's the first time installing dependencies
- * or if we are installing a new version of Theme Check CLI.
- *
- * @param stdout - The Writable stream on which to write the standard output.
- */
-async function installThemeCheckCLIDependencies(stdout: Writable) {
-  const exists = await file.fileExists(themeCheckDirectory())
-
-  if (!exists) stdout.write('Installing theme dependencies...')
-  await validateRubyEnv()
-  await createThemeCheckCLIWorkingDirectory()
-  await createThemeCheckGemfile()
-  await bundleInstallThemeCheck()
-  if (!exists) stdout.write('Installed theme dependencies!')
 }
 
 /**
@@ -256,27 +188,12 @@ async function createShopifyCLIWorkingDirectory(): Promise<void> {
 }
 
 /**
- * It creates the directory where the theme-check CLI will be downloaded along its dependencies.
- */
-async function createThemeCheckCLIWorkingDirectory(): Promise<void> {
-  return file.mkdir(themeCheckDirectory())
-}
-
-/**
  * It creates the Gemfile to install The Ruby CLI and the dependencies.
  */
 async function createShopifyCLIGemfile(): Promise<void> {
   const directory = await shopifyCLIDirectory()
   const gemfileContent = getBaseGemfileContent().concat(getWindowsDependencies())
   await addContentToGemfile(directory, gemfileContent)
-}
-
-/**
- * It creates the Gemfile to install theme-check and its dependencies.
- */
-async function createThemeCheckGemfile(): Promise<void> {
-  const gemPath = joinPath(themeCheckDirectory(), 'Gemfile')
-  await file.writeFile(gemPath, `source 'https://rubygems.org'\ngem 'theme-check', '${ThemeCheckVersion}'`)
 }
 
 /**
@@ -335,13 +252,6 @@ async function bundleInstallShopifyCLI() {
 }
 
 /**
- * It runs bundle install for the CLI-managed copy of theme-check.
- */
-async function bundleInstallThemeCheck() {
-  await shopifyBundleInstall(themeCheckDirectory())
-}
-
-/**
  * It returns the directory where the Ruby CLI is located.
  *
  * @param embedded - True when embebbed codebase of CLI should be used.
@@ -355,15 +265,6 @@ async function shopifyCLIDirectory(embedded = false): Promise<string> {
   const bundledDirectory = joinPath(pathConstants.directories.cache.vendor.path(), 'ruby-cli', RubyCLIVersion)
 
   return embedded ? embeddedDirectory : getEnvironmentVariables().SHOPIFY_CLI_2_0_DIRECTORY ?? bundledDirectory
-}
-
-/**
- * It returns the path to the directory containing the theme-check CLI.
- *
- * @returns The absolute path to the theme-check directory.
- */
-function themeCheckDirectory(): string {
-  return joinPath(pathConstants.directories.cache.vendor.path(), 'theme-check', ThemeCheckVersion)
 }
 
 /**
