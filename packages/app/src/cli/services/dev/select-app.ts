@@ -19,7 +19,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
  */
 export async function selectOrCreateApp(
   localAppName: string,
-  apps: OrganizationAppsResponse,
+  appsResponse: OrganizationAppsResponse,
   org: Organization,
   partnersSession: PartnersSession,
   options?: {
@@ -28,7 +28,9 @@ export async function selectOrCreateApp(
     directory?: string
   },
 ): Promise<OrganizationApp> {
-  let createNewApp = apps.nodes.length === 0
+  const apps = appsResponse.nodes
+  const hasMorePages = appsResponse.pageInfo.hasNextPage
+  let createNewApp = apps.length === 0
   if (!createNewApp) {
     outputInfo(`\nBefore proceeding, your project needs to be associated with an app.\n`)
     createNewApp = await createAsNewAppPrompt()
@@ -36,7 +38,7 @@ export async function selectOrCreateApp(
   if (createNewApp) {
     return createApp(org, localAppName, partnersSession.token, options)
   } else {
-    const selectedAppApiKey = await selectAppPrompt(apps, org.id, partnersSession, {directory: options?.directory})
+    const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {directory: options?.directory})
 
     const data = getCachedCommandInfo()
     const tomls = (data?.tomls as {[key: string]: unknown}) ?? {}

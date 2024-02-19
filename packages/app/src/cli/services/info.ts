@@ -1,6 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
-import {fetchPartnersSession, isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -23,6 +24,7 @@ export interface InfoOptions {
   configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
+  developerPlatformClient?: DeveloperPlatformClient
 }
 interface Configurable {
   type: string
@@ -78,9 +80,9 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const partnersSession = await fetchPartnersSession()
+    const developerPlatformClient = this.options.developerPlatformClient ?? selectDeveloperPlatformClient()
     const {cachedInfo} = await getAppContext({
-      partnersSession,
+      developerPlatformClient,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
@@ -101,10 +103,11 @@ class AppInfo {
     }
 
     let partnersAccountInfo = ['Partners account', 'unknown']
-    if (isServiceAccount(partnersSession.accountInfo)) {
-      partnersAccountInfo = ['Service account', partnersSession.accountInfo.orgName]
-    } else if (isUserAccount(partnersSession.accountInfo)) {
-      partnersAccountInfo = ['Partners account', partnersSession.accountInfo.email]
+    const retrievedAccountInfo = await developerPlatformClient.accountInfo()
+    if (isServiceAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
+    } else if (isUserAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Partners account', retrievedAccountInfo.email]
     }
 
     const lines = [

@@ -130,7 +130,9 @@ describe('selectOrCreateApp', () => {
 
     // Then
     expect(got).toEqual(APP1)
-    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST, ORG1.id, testPartnersUserSession, {directory: undefined})
+    expect(selectAppPrompt).toHaveBeenCalledWith(APP_LIST.nodes, APP_LIST.pageInfo.hasNextPage, ORG1.id, {
+      directory: undefined,
+    })
   })
 
   test('prompts user to create if chooses to create', async () => {

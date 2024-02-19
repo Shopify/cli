@@ -5,13 +5,14 @@ import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {OrganizationApp} from '../organization.js'
+import {Organization, OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -102,6 +103,14 @@ export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
       ...DEFAULT_CONFIG.webhooks,
       ...webhookConfigOverrides,
     },
+  }
+}
+
+export function testOrganization(): Organization {
+  return {
+    id: '1',
+    businessName: 'org1',
+    website: 'https://www.example.com',
   }
 }
 
@@ -639,6 +648,17 @@ export const testPartnersUserSession: PartnersSession = {
     type: 'UserAccount',
     email: 'partner@shopify.com',
   },
+}
+
+export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
+  return {
+    session: () => Promise.resolve(testPartnersUserSession),
+    accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
+    appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
+    organizations: () => Promise.resolve([testOrganization()]),
+    appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
+    ...stubs,
+  }
 }
 
 export const testPartnersServiceSession: PartnersSession = {
