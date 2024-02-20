@@ -44,6 +44,7 @@
   ],
   "scripts": {
     "build": "nx build",
+    "bundle": "nx bundle",
     "clean": "nx clean",
     "docs:generate": "nx docs:generate",
     "docs:open": "nx docs:open",
@@ -154,6 +155,7 @@
     "pathe": "1.1.1",
     "react": "18.2.0",
     "semver": "7.5.4",
+    "shelljs": "^0.8.5",
     "simple-git": "3.19.1",
     "source-map-support": "0.5.21",
     "stacktracey": "2.1.8",
@@ -164,6 +166,7 @@
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",
     "unique-string": "3.0.0",
+    "yoga-wasm-web": "^0.3.3",
     "zod": "3.22.3"
   },
   "devDependencies": {
