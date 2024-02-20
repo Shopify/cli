@@ -90,7 +90,7 @@ export async function ensureGenerateContext(options: {
   configName?: string
 }): Promise<string> {
   if (options.apiKey) {
-    const app = await options.developerPlatformClient.appFromId(options.apiKey)
+    const app = await appFromId(options.apiKey, options.developerPlatformClient)
     if (!app) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -103,7 +103,7 @@ export async function ensureGenerateContext(options: {
 
   if (cachedInfo?.appId && cachedInfo?.orgId) {
     const org = await options.developerPlatformClient.orgFromId(cachedInfo.orgId)
-    const app = remoteApp || (await options.developerPlatformClient.appFromId(cachedInfo.appId))
+    const app = remoteApp || (await appFromId(cachedInfo.appId, options.developerPlatformClient))
     if (!app || !org) {
       const errorMessage = InvalidApiKeyErrorMessage(cachedInfo.appId)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -174,7 +174,7 @@ export async function ensureDevContext(
     // if not, we try to load the app or the dev store from the current config or cache
     // if that's not available, we prompt the user to choose an existing one or create a new one
     const [_selectedApp, _selectedStore] = await Promise.all([
-      selectedApp || remoteApp || (cachedInfo?.appId && developerPlatformClient.appFromId(cachedInfo.appId)),
+      selectedApp || remoteApp || (cachedInfo?.appId && appFromId(cachedInfo.appId, developerPlatformClient)),
       selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, token)),
     ])
 
@@ -252,6 +252,12 @@ export async function ensureDevContext(
 
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
+const appFromId = async (appId: string, developerPlatformClient: DeveloperPlatformClient): Promise<OrganizationApp> => {
+  const app = await developerPlatformClient.appFromId(appId)
+  if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
+  return app
+}
+
 const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): Promise<OrganizationStore> => {
   const result = await fetchStoreByDomain(orgId, token, storeFqdn)
   if (result?.store) {
@@ -318,7 +324,7 @@ async function fetchDevAppAndPrompt(
   const devAppId = getCachedAppInfo(app.directory)?.appId
   if (!devAppId) return undefined
 
-  const partnersResponse = await developerPlatformClient.appFromId(devAppId)
+  const partnersResponse = await appFromId(devAppId, developerPlatformClient)
   if (!partnersResponse) return undefined
 
   const org = await developerPlatformClient.orgFromId(partnersResponse.organizationId)
@@ -664,11 +670,11 @@ export async function fetchAppAndIdentifiers(
 
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = options.apiKey ?? app.configuration.client_id
-    partnersApp = await developerPlatformClient.appFromId(apiKey)
+    partnersApp = await appFromId(apiKey, developerPlatformClient)
   } else if (options.apiKey) {
-    partnersApp = await developerPlatformClient.appFromId(options.apiKey)
+    partnersApp = await appFromId(options.apiKey, developerPlatformClient)
   } else if (envIdentifiers.app) {
-    partnersApp = await developerPlatformClient.appFromId(envIdentifiers.app)
+    partnersApp = await appFromId(envIdentifiers.app, developerPlatformClient)
   } else if (reuseDevCache) {
     partnersApp = await fetchDevAppAndPrompt(app, developerPlatformClient)
   }
@@ -726,7 +732,7 @@ async function fetchDevDataFromOptions(
     (async () => {
       let selectedApp: OrganizationApp | undefined
       if (options.apiKey) {
-        selectedApp = await developerPlatformClient.appFromId(options.apiKey)
+        selectedApp = await appFromId(options.apiKey, developerPlatformClient)
         if (!selectedApp) {
           const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
           throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -808,7 +814,7 @@ export async function getAppContext({
 
   let remoteApp
   if (isCurrentAppSchema(configuration)) {
-    remoteApp = await developerPlatformClient.appFromId(configuration.client_id)
+    remoteApp = await appFromId(configuration.client_id, developerPlatformClient)
     cachedInfo = {
       ...cachedInfo,
       directory,

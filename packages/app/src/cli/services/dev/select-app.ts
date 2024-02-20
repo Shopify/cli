@@ -42,6 +42,6 @@ export async function selectOrCreateApp(
     if (tomls[selectedAppApiKey]) setCachedCommandInfo({selectedToml: tomls[selectedAppApiKey], askConfigName: false})
 
     const fullSelectedApp = await developerPlatformClient.appFromId(selectedAppApiKey)
-    return fullSelectedApp
+    return fullSelectedApp!
   }
 }

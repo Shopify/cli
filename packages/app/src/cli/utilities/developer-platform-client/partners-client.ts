@@ -18,8 +18,6 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 
-const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
-
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
@@ -81,10 +79,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromId(appId: string): Promise<OrganizationApp> {
-    const app = await fetchAppDetailsFromApiKey(appId, await this.token())
-    if (!app) throw new AbortError([`Couldn't find the app with Client ID`, {command: appId}], resetHelpMessage)
-    return app
+  async appFromId(appId: string): Promise<OrganizationApp | undefined> {
+    return fetchAppDetailsFromApiKey(appId, await this.token())
   }
 
   async organizations(): Promise<Organization[]> {

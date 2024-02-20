@@ -19,7 +19,7 @@ export interface CreateAppOptions {
 export interface DeveloperPlatformClient {
   session: () => Promise<PartnersSession>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromId: (appId: string) => Promise<OrganizationApp>
+  appFromId: (appId: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   selectOrg: () => Promise<Organization>
   orgFromId: (orgId: string) => Promise<Organization>
