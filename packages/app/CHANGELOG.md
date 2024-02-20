@@ -1,5 +1,13 @@
 # @shopify/app
 
+## 3.56.2
+
+### Patch Changes
+
+- bc7e502cf: Fix sending empty scopes
+  - @shopify/cli-kit@3.56.2
+  - @shopify/plugin-cloudflare@3.56.2
+
 ## 3.56.1
 
 ### Patch Changes

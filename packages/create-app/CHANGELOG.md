@@ -1,5 +1,11 @@
 # @shopify/create-app
 
+## 3.56.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.56.2
+
 ## 3.56.1
 
 ### Patch Changes
