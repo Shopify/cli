@@ -20,10 +20,10 @@ const AppHomeTransformConfig: TransformationConfig = {
 
 export const AppHomeSpecIdentifier = 'app_home'
 
-const spec = createConfigExtensionSpecification({
+const appHomeSpec = createConfigExtensionSpecification({
   identifier: AppHomeSpecIdentifier,
   schema: AppHomeSchema,
   transformConfig: AppHomeTransformConfig,
 })
 
-export default spec
+export default appHomeSpec

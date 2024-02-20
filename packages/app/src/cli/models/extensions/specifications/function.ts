@@ -60,7 +60,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
     .optional(),
 })
 
-const spec = createExtensionSpecification({
+const functionSpec = createExtensionSpecification({
   identifier: 'function',
   additionalIdentifiers: [
     'order_discounts',
@@ -157,4 +157,4 @@ async function readInputQuery(path: string): Promise<string> {
   }
 }
 
-export default spec
+export default functionSpec

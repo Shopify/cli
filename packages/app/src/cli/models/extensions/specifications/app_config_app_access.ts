@@ -37,10 +37,10 @@ const AppAccessTransformConfig: TransformationConfig = {
   redirect_url_allowlist: 'auth.redirect_urls',
 }
 
-const spec = createConfigExtensionSpecification({
+const appAccessSpec = createConfigExtensionSpecification({
   identifier: AppAccessSpecIdentifier,
   schema: AppAccessSchema,
   transformConfig: AppAccessTransformConfig,
 })
 
-export default spec
+export default appAccessSpec

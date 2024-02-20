@@ -14,7 +14,7 @@ const CheckoutSchema = BaseSchema.extend({
     .optional(),
 })
 
-const spec = createExtensionSpecification({
+const checkoutSpec = createExtensionSpecification({
   identifier: 'checkout_ui_extension',
   dependency,
   schema: CheckoutSchema,
@@ -31,4 +31,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default checkoutSpec

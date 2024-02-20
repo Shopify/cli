@@ -11,9 +11,9 @@ const PosConfigurationSchema = zod.object({
 
 export const PosSpecIdentifier = 'point_of_sale'
 
-const spec = createConfigExtensionSpecification({
+const appPOSSpec = createConfigExtensionSpecification({
   identifier: PosSpecIdentifier,
   schema: PosConfigurationSchema,
 })
 
-export default spec
+export default appPOSSpec
