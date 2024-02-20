@@ -7,7 +7,7 @@ await esBuild({
   platform: 'node',
   format: 'esm',
   inject: ['../../bin/cjs-shims.js'],
-  external: ['react-devtools-core', 'yoga-wasm-web', '@shopify/cli-kit', '@oclif/core', 'react', 'esbuild', 'ink'],
+  external: ['@shopify/cli-kit', '@oclif/core'],
 
   loader: {'.node': 'copy'},
   splitting: true,
