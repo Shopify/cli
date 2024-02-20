@@ -45,11 +45,47 @@ export async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise
 
 export async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
   if (options.format === 'json') {
-    const appWithSupportedExtensions = {
-      ...app,
-      allExtensions: app.allExtensions.filter((ext) => ext.isReturnedAsInfo()),
+    function objectWithoutSchema<T extends {schema?: unknown}>(obj: T): Omit<T, 'schema'> {
+      const {schema, ...rest} = obj
+      return rest
     }
-    return outputContent`${JSON.stringify(appWithSupportedExtensions, null, 2)}`
+
+    function withPurgedSchemas<T extends {specification?: unknown}>(extensions: T[]): T[] {
+      return extensions.map((ext) => {
+        if ('specification' in ext) {
+          const specification = ext.specification!
+          const specificationWithoutSchema = objectWithoutSchema(specification)
+          return {...ext, specification: specificationWithoutSchema}
+        } else {
+          return ext
+        }
+      })
+    }
+    const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
+    let appWithSupportedExtensions = {
+      ...app,
+      allExtensions: extensionsInfo,
+    }
+    if ('realExtensions' in appWithSupportedExtensions) {
+      appWithSupportedExtensions.realExtensions = withPurgedSchemas(appWithSupportedExtensions.realExtensions as ExtensionInstance[])
+    }
+    if ('specifications' in appWithSupportedExtensions) {
+      appWithSupportedExtensions = {
+        ...appWithSupportedExtensions,
+        specifications: appWithSupportedExtensions.specifications?.map((spec) => {
+          // We are choosing to leave appWithSupportedExtensions as close to the original as possible,
+          // instead allowing this one change in the type specifically.
+          //
+          // eslint-disable-next-line no-explicit-any
+          return objectWithoutSchema(spec) as any
+        })
+      }
+    }
+    return outputContent`${JSON.stringify(
+      Object.fromEntries(
+        Object.entries(appWithSupportedExtensions).filter(([key]) => key !== 'configSchema'),
+      )
+    , null, 2)}`
   } else {
     const appInfo = new AppInfo(app, options)
     return appInfo.output()
