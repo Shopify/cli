@@ -11,7 +11,7 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   }
   const orgList = organizations.map((org) => ({label: org.businessName, value: org.id}))
   const id = await renderAutocompletePrompt({
-    message: 'Which Partners organization is this work for?',
+    message: `Which organization is this work for?`,
     choices: orgList,
   })
   return organizations.find((org) => org.id === id)!

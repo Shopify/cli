@@ -5,11 +5,13 @@ import {OrganizationApp} from '../../models/organization.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export async function fetchAppFromConfigOrSelect(app: AppConfigurationInterface): Promise<OrganizationApp> {
+export async function fetchAppFromConfigOrSelect(
+  app: AppConfigurationInterface,
+  developerPlatformClient = selectDeveloperPlatformClient(),
+): Promise<OrganizationApp> {
   let organizationApp
   if (isCurrentAppSchema(app.configuration)) {
     const apiKey = app.configuration.client_id
-    const developerPlatformClient = selectDeveloperPlatformClient()
     organizationApp = await developerPlatformClient.appFromId(apiKey)
     if (!organizationApp) {
       const errorMessage = InvalidApiKeyErrorMessage(apiKey)

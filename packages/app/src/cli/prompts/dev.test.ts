@@ -64,7 +64,7 @@ describe('selectOrganization', () => {
     // Then
     expect(got).toEqual(ORG1)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which Partners organization is this work for?',
+      message: 'Which organization is this work for?',
       choices: [
         {label: 'org1', value: '1'},
         {label: 'org2', value: '2'},

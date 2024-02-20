@@ -17,7 +17,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
-  client_id: '12345',
+  client_id: 'api-key',
   name: 'my app',
   webhooks: {
     api_version: '2023-04',
@@ -656,7 +656,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve([testOrganization()]),
+    orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
+    selectOrg: () => Promise.resolve(testOrganization()),
     ...stubs,
   }
 }

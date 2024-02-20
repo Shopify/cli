@@ -107,7 +107,7 @@ describe('updateURLs', () => {
             'https://example.com/api/auth/callback',
           ],
         },
-        client_id: '12345',
+        client_id: 'api-key',
         embedded: true,
         name: 'my app',
         webhooks: {
@@ -205,7 +205,7 @@ describe('updateURLs', () => {
           subpath: 'subpath',
           prefix: 'prefix',
         },
-        client_id: '12345',
+        client_id: 'api-key',
         embedded: true,
         name: 'my app',
         webhooks: {

@@ -167,10 +167,10 @@ export async function ensureDevContext(
     promptLinkingApp: !options.apiKey,
   })
 
-  const orgId = getOrganization() || cachedInfo?.orgId || (await selectOrg(partnersSession))
+  const orgId = getOrganization() || cachedInfo?.orgId || (await developerPlatformClient.selectOrg()).id
 
   let {app: selectedApp, store: selectedStore} = await fetchDevDataFromOptions(options, orgId, developerPlatformClient)
-  const organization = await fetchOrgFromId(orgId, partnersSession)
+  const organization = await developerPlatformClient.orgFromId(orgId)
 
   if (!selectedApp || !selectedStore) {
     // if we have selected an app or a dev store from a command flag, we keep them
