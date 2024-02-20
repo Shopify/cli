@@ -26,10 +26,11 @@
   ],
   "scripts": {
     "build": "nx build",
+    "bundle": "nx bundle",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
     "test": "nx run app:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
@@ -64,7 +65,8 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "serve-static": "1.15.0",
-    "ws": "8.13.0"
+    "ws": "8.13.0",
+    "yoga-wasm-web": "^0.3.3"
   },
   "devDependencies": {
     "@hyrious/esbuild-plugin-commonjs": "^0.2.4",
