@@ -477,6 +477,9 @@ importers:
       semver:
         specifier: 7.5.4
         version: 7.5.4
+      shelljs:
+        specifier: ^0.8.5
+        version: 0.8.5
       simple-git:
         specifier: 3.19.1
         version: 3.19.1
@@ -507,6 +510,9 @@ importers:
       unique-string:
         specifier: 3.0.0
         version: 3.0.0
+      yoga-wasm-web:
+        specifier: ^0.3.3
+        version: 0.3.3
       zod:
         specifier: 3.22.3
         version: 3.22.3
