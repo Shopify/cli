@@ -652,7 +652,6 @@ export const testPartnersUserSession: PartnersSession = {
 
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
-    platformTitle: 'Partners',
     session: () => Promise.resolve(testPartnersUserSession),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
     appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),

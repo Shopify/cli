@@ -14,8 +14,6 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 const resetHelpMessage = ['You can pass', {command: '--reset'}, 'to your command to reset your app configuration.']
 
 export class PartnersClient implements DeveloperPlatformClient {
-  public platformTitle = 'Partners'
-
   private _session: PartnersSession | undefined
 
   async session(): Promise<PartnersSession> {

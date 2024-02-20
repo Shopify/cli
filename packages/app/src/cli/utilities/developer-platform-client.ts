@@ -11,7 +11,6 @@ export function selectDeveloperPlatformClient(): DeveloperPlatformClient {
 }
 
 export interface DeveloperPlatformClient {
-  platformTitle: string
   session: () => Promise<PartnersSession>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
   appFromId: (appId: string) => Promise<OrganizationApp>
