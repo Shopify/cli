@@ -16,7 +16,6 @@ import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} f
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
 import {PartnersSession, fetchPartnersSession} from './context/partner-account-info.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -198,10 +197,7 @@ export async function ensureDevContext(
     }
   }
 
-  const specifications = await fetchSpecifications({
-    token,
-    apiKey: selectedApp.apiKey,
-  })
+  const specifications = await developerPlatformClient.specifications(selectedApp.apiKey)
 
   selectedApp = {
     ...selectedApp,
@@ -373,17 +369,18 @@ export interface DeployContextOptions {
  * Finally, the info is updated in the env file.
  *
  * @param options - Current dev context options
+ * @param developerPlatformClient - The client to access the platform API
  * @returns The selected org, app and dev store
  */
-export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
-  const partnersSession = await fetchPartnersSession()
+export async function ensureDeployContext(
+  options: DeployContextOptions,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<DeployContextOutput> {
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
   const [partnersApp] = await fetchAppAndIdentifiers(options, partnersSession)
 
-  const specifications = await fetchSpecifications({
-    token,
-    apiKey: partnersApp.apiKey,
-  })
+  const specifications = await developerPlatformClient.specifications(partnersApp.apiKey)
   const app: AppInterface = await loadApp({
     specifications,
     directory: options.app.directory,

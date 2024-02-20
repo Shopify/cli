@@ -937,7 +937,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
-    const got = await ensureDeployContext(options(app))
+    const got = await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -967,7 +967,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
-    const got = await ensureDeployContext(options(app))
+    const got = await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -997,7 +997,7 @@ describe('ensureDeployContext', () => {
       .mockResolvedValue()
 
     // When
-    const got = await ensureDeployContext(options(app))
+    const got = await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -1026,7 +1026,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
-    const got = await ensureDeployContext(options(app))
+    const got = await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith(testPartnersUserSession)
@@ -1057,7 +1057,9 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
 
     // When
-    await expect(ensureDeployContext(options(app))).rejects.toThrow(/Couldn't find the app with Client ID key1/)
+    await expect(ensureDeployContext(options(app), buildDeveloperPlatformClient())).rejects.toThrow(
+      /Couldn't find the app with Client ID key1/,
+    )
   })
 
   test('prompts the user to create or select an app if reset is true', async () => {
@@ -1083,7 +1085,7 @@ describe('ensureDeployContext', () => {
     opts.reset = true
 
     // When
-    const got = await ensureDeployContext(opts)
+    const got = await ensureDeployContext(opts, buildDeveloperPlatformClient())
 
     // Then
     expect(fetchOrganizations).toHaveBeenCalledWith(testPartnersUserSession)
@@ -1126,7 +1128,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(updateAppIdentifiers).mockResolvedValue(appWithExtensions)
 
     // When
-    const got = await ensureDeployContext(options(app))
+    const got = await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(selectOrCreateApp).not.toHaveBeenCalled()
@@ -1160,7 +1162,7 @@ describe('ensureDeployContext', () => {
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     // When
-    await ensureDeployContext(options(app))
+    await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
@@ -1209,7 +1211,7 @@ describe('ensureDeployContext', () => {
       .mockResolvedValue()
 
     // When
-    await ensureDeployContext(options(app))
+    await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(renderConfirmationPrompt).toHaveBeenCalled()
@@ -1255,7 +1257,7 @@ describe('ensureDeployContext', () => {
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     // When
-    await ensureDeployContext(options(app))
+    await ensureDeployContext(options(app), buildDeveloperPlatformClient())
 
     // Then
     expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
@@ -1305,7 +1307,7 @@ describe('ensureDeployContext', () => {
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     // When
-    await ensureDeployContext(options(app, true))
+    await ensureDeployContext(options(app, true), buildDeveloperPlatformClient())
 
     // Then
     expect(metadataSpyOn).toHaveBeenNthCalledWith(2, expect.any(Function))
@@ -1354,7 +1356,7 @@ describe('ensureDeployContext', () => {
       .mockResolvedValue()
 
     // When
-    await ensureDeployContext(options(app, false, true))
+    await ensureDeployContext(options(app, false, true), buildDeveloperPlatformClient())
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
@@ -1397,7 +1399,7 @@ describe('ensureDeployContext', () => {
       .mockResolvedValue()
 
     // When
-    await ensureDeployContext(options(app, false, true))
+    await ensureDeployContext(options(app, false, true), buildDeveloperPlatformClient())
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()

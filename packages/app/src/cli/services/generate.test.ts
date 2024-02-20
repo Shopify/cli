@@ -8,15 +8,16 @@ import {
   testDeveloperPlatformClient,
   testFunctionExtension,
   testLocalExtensionTemplates,
-  testRemoteSpecifications,
   testRemoteExtensionTemplates,
   testThemeExtensions,
   testPartnersUserSession,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {describe, expect, vi, afterEach, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -45,10 +46,13 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-const developerPlatformClient = testDeveloperPlatformClient()
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+  async specifications(_appId: string): Promise<ExtensionSpecification[]> {
+    return loadLocalExtensionsSpecifications()
+  },
+})
 
 describe('generate', () => {
-  const mockConfig = new Config({root: ''})
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
@@ -185,7 +189,6 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteExtensionTemplates})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
