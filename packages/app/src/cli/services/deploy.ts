@@ -5,6 +5,7 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
+import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -45,8 +46,9 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
+  const developerPlatformClient = selectDeveloperPlatformClient()
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token, release} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, token, release} = await ensureDeployContext({...options, developerPlatformClient})
   const apiKey = identifiers.app
 
   outputNewline()

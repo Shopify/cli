@@ -15,7 +15,6 @@ import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
-import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
@@ -34,15 +33,17 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const {token, remoteApp, directory} = await selectRemoteApp(options)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp, directory)
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient}, developerPlatformClient)
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
   let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
+  const partnersSession = await developerPlatformClient.session()
   const remoteAppConfiguration = await fetchAppRemoteConfiguration(
     remoteApp.apiKey,
-    token,
+    partnersSession.token,
     localApp.specifications ?? [],
     localApp.remoteBetaFlags,
   )
@@ -59,24 +60,18 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   return configuration
 }
 
-async function selectRemoteApp(options: LinkOptions) {
+async function selectRemoteApp(options: LinkOptions, developerPlatformClient: DeveloperPlatformClient) {
   const localApp = await loadAppOrEmptyApp(options)
   const directory = localApp?.directory || options.directory
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
   const remoteApp = await loadRemoteApp(localApp, options.apiKey, developerPlatformClient, directory)
   return {
-    token: partnersSession.token,
     remoteApp,
     directory,
   }
 }
 
-async function loadLocalApp(options: LinkOptions, token: string, remoteApp: OrganizationApp, directory: string) {
-  const specifications = await fetchSpecifications({
-    token,
-    apiKey: remoteApp.apiKey,
-  })
+async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
+  const specifications = await options.developerPlatformClient!.specifications(remoteApp.apiKey)
   const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)

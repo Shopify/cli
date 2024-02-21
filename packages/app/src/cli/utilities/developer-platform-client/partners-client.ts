@@ -14,6 +14,8 @@ import {
 } from '../../../cli/services/dev/fetch.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {selectOrganizationPrompt} from '../../prompts/dev.js'
+import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -111,6 +113,10 @@ export class PartnersClient implements DeveloperPlatformClient {
       apps: result.apps.nodes,
       hasMorePages: result.apps.pageInfo.hasNextPage,
     }
+  }
+
+  async specifications(appId: string): Promise<ExtensionSpecification[]> {
+    return fetchSpecifications({token: await this.token(), apiKey: appId})
   }
 
   async createApp(

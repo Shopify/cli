@@ -1,7 +1,6 @@
 import link, {LinkOptions} from './link.js'
 import {saveCurrentConfig} from './use.js'
 import {
-  testPartnersUserSession,
   testApp,
   testOrganizationApp,
   buildVersionedAppSchema,
@@ -11,14 +10,11 @@ import {selectConfigName} from '../../../prompts/config.js'
 import {loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {fetchPartnersSession} from '../../context/partner-account-info.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
-import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
-import {appNamePrompt} from '../../../prompts/dev.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {OrganizationApp} from '../../../models/organization.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -38,10 +34,7 @@ vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')
-vi.mock('../../context/partner-account-info.js')
-vi.mock('../../generate/fetch-extension-specifications.js')
 vi.mock('../select-app.js')
-vi.mock('../../../prompts/dev.js')
 
 const DEFAULT_REMOTE_CONFIGURATION = {
   name: 'app1',
@@ -53,11 +46,18 @@ const DEFAULT_REMOTE_CONFIGURATION = {
   access_scopes: {use_legacy_install_flow: true},
 }
 
-const developerPlatformClient = testDeveloperPlatformClient()
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+  async appFromId(clientId: string): Promise<OrganizationApp | undefined> {
+    switch (clientId) {
+      case 'api-key':
+        return testOrganizationApp()
+      default:
+        return undefined
+    }
+  },
+})
 
 beforeEach(async () => {
-  vi.mocked(fetchPartnersSession).mockResolvedValue(testPartnersUserSession)
-  vi.mocked(fetchSpecifications).mockResolvedValue(await loadLocalExtensionsSpecifications())
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
 })
 
@@ -89,9 +89,8 @@ describe('link', () => {
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
       vi.mocked(loadApp).mockRejectedValue('App not found')
-      vi.mocked(appNamePrompt).mockResolvedValue('my-app')
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({...mockRemoteApp(), newApp: true})
 
       // When
       await link(options)
@@ -400,23 +399,23 @@ embedded = false
     })
   })
 
-  test('fetches the app directly when an api key is provided', async () => {
+  test('fetches the remote app when an api key is provided', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const developerPlatformClient = testDeveloperPlatformClient()
       const options: LinkOptions = {
         directory: tmp,
         apiKey: 'api-key',
         developerPlatformClient,
       }
-      const originalAppFromId = developerPlatformClient.appFromId
-      const appFromIdSpy = vi.spyOn(developerPlatformClient, 'appFromId').mockImplementation(originalAppFromId)
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('staging')
 
       // When
       await link(options)
 
       // Then
-      expect(appFromIdSpy).toHaveBeenCalledWith('api-key')
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      expect(content).toContain('name = "app1"')
     })
   })
 
@@ -430,13 +429,8 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        apiKey: '1234-5678',
-        developerPlatformClient: {
-          ...developerPlatformClient,
-          async appFromId() {
-            throw new AbortError(`Couldn't find the app with Client ID app1`)
-          },
-        },
+        apiKey: 'wrong-api-key',
+        developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(selectConfigName).mockResolvedValue('staging')
@@ -445,7 +439,7 @@ embedded = false
       const result = link(options)
 
       // Then
-      await expect(result).rejects.toThrow(/Couldn't find the app with Client ID/)
+      await expect(result).rejects.toThrow(/Invalid Client ID/)
     })
   })
 
