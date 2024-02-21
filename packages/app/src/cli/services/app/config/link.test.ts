@@ -33,7 +33,6 @@ vi.mock('../../../models/app/loader.js', async () => {
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context/partner-account-info.js')
-vi.mock('../../dev/fetch.js')
 vi.mock('../../context.js')
 vi.mock('../select-app.js')
 
@@ -48,12 +47,12 @@ const DEFAULT_REMOTE_CONFIGURATION = {
 }
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-  async appFromId(clientId: string): Promise<OrganizationApp> {
+  async appFromId(clientId: string): Promise<OrganizationApp | undefined> {
     switch (clientId) {
       case 'api-key':
         return testOrganizationApp()
       default:
-        throw new Error(`Invalid Client ID`)
+        return undefined
     }
   },
 })

@@ -33,14 +33,9 @@ export interface LinkOptions {
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const developerPlatformClient = options.developerPlatformClient || selectDeveloperPlatformClient()
-  const {remoteApp, directory} = await selectRemoteApp(options, developerPlatformClient)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(
-    options,
-    developerPlatformClient,
-    remoteApp,
-    directory,
-  )
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient}, developerPlatformClient)
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
@@ -75,13 +70,8 @@ async function selectRemoteApp(options: LinkOptions, developerPlatformClient: De
   }
 }
 
-async function loadLocalApp(
-  options: LinkOptions,
-  developerPlatformClient: DeveloperPlatformClient,
-  remoteApp: OrganizationApp,
-  directory: string,
-) {
-  const specifications = await developerPlatformClient.specifications(remoteApp.apiKey)
+async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
+  const specifications = await options.developerPlatformClient!.specifications(remoteApp.apiKey)
   const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
