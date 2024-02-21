@@ -95,7 +95,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "github:isaacroldan/oclif-core",
+    "@oclif/core": "3.19.3-dev.0",
     "@oclif/plugin-commands": "2.2.24",
     "@oclif/plugin-help": "5.2.18",
     "@oclif/plugin-plugins": "3.1.8",
