@@ -1,7 +1,16 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 
-const external =['react-devtools-core', 'yoga-wasm-web', '@shopify/cli-kit', 'react', 'esbuild', 'ink', '@shopify/plugin-cloudflare']
+const external =[
+  'react-devtools-core',
+  'yoga-wasm-web',
+  '@shopify/cli-kit',
+  'react',
+  'esbuild',
+  'ink',
+  '@shopify/plugin-cloudflare',
+  '@luckycatfactory/esbuild-graphql-loader'
+]
 
 await esBuild({
   bundle: true,
