@@ -9,7 +9,7 @@ await esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
-  inject: ['../../bin/cjs-shims.js'],
+  inject: ['./bin/custom-cjs-shims.js'],
   external,
   loader: {'.node': 'copy'},
   splitting: true,
