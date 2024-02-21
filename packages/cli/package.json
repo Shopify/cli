@@ -38,10 +38,11 @@
   ],
   "scripts": {
     "build": "nx build",
+    "bundle": "nx bundle",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
     "test": "nx run cli:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
@@ -100,6 +101,7 @@
     "@oclif/plugin-plugins": "3.1.8",
     "@shopify/cli-kit": "3.56.0",
     "@shopify/plugin-did-you-mean": "3.56.0",
+    "shelljs": "^0.8.5",
     "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {

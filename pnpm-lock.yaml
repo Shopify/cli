@@ -299,6 +299,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 3.56.0
         version: link:../plugin-did-you-mean
+      shelljs:
+        specifier: ^0.8.5
+        version: 0.8.5
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
