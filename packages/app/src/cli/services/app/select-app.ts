@@ -15,7 +15,7 @@ export async function selectApp(): Promise<OrganizationApp> {
   const {apps, hasMorePages} = await developerPlatformClient.appsForOrg(org.id)
   const selectedAppApiKey = await selectAppPrompt(apps, hasMorePages, org.id, {developerPlatformClient})
   const fullSelectedApp = await developerPlatformClient.appFromId(selectedAppApiKey)
-  return fullSelectedApp
+  return fullSelectedApp!
 }
 
 export async function fetchAppRemoteConfiguration(
