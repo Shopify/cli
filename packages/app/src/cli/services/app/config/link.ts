@@ -16,8 +16,8 @@ import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
@@ -122,8 +122,7 @@ async function loadRemoteApp(
   directory?: string,
 ): Promise<OrganizationApp> {
   if (!apiKey) {
-    const partnersSession = await developerPlatformClient.session()
-    return fetchOrCreateOrganizationApp(localApp, partnersSession, directory)
+    return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
   }
   const app = await developerPlatformClient.appFromId(apiKey)
   if (!app) {

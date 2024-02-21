@@ -12,7 +12,7 @@ import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -660,6 +660,11 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     selectOrg: () => Promise.resolve(testOrganization()),
     specifications: (_appId: string) => Promise.resolve([]),
+    orgAndApps: (_orgId: string) =>
+      Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
+    createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
+      Promise.resolve(testOrganizationApp()),
+    devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     ...stubs,
   }
 }

@@ -1,5 +1,5 @@
 import {fetchOrCreateOrganizationApp} from './context.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {
@@ -31,8 +31,8 @@ interface GenerateSchemaOptions {
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
   const {extension, app} = options
-  const partnersSession = await fetchPartnersSession()
-  const token = partnersSession.token
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const token = (await developerPlatformClient.session()).token
   const {api_version: version, type, targeting} = extension.configuration
   let apiKey = options.apiKey || getAppIdentifiers({app}).app
   const stdout = options.stdout
@@ -45,7 +45,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
       )
     }
 
-    apiKey = (await fetchOrCreateOrganizationApp(app, partnersSession)).apiKey
+    apiKey = (await fetchOrCreateOrganizationApp(app, developerPlatformClient)).apiKey
   }
 
   const usingTargets = Boolean(targeting?.length)
