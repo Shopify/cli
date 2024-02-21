@@ -137,6 +137,10 @@
       "@oclif/plugin-plugins",
       "@oclif/plugin-commands"
     ],
+    "jitPlugins": {
+      "@shopify/app": "experimental",
+      "@shopify/theme": "experimental"
+    },
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
