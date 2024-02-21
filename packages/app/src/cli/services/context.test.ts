@@ -929,7 +929,7 @@ api_version = "2023-04"
       vi.mocked(loadApp).mockResolvedValue(app)
 
       // When
-      const got = await ensureDevContext({...INPUT}, )
+      const got = await ensureDevContext({...INPUT}, buildDeveloperPlatformClient())
 
       // Then
       expect(link).toBeCalled()
