@@ -1,7 +1,7 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 
-const external = ['@shopify/cli-kit', 'shelljs']
+const external = ['@shopify/cli-kit', 'shelljs', '@oclif/plugin-plugins', '@oclif/plugin-commands', '@oclif/plugin-help']
 
 await esBuild({
   bundle: true,
