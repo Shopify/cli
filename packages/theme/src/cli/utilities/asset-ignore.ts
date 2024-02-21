@@ -1,4 +1,4 @@
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, matchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {Checksum, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
@@ -22,7 +22,7 @@ function filterBy(patterns: string[] | undefined, type: string, invertMatch = fa
   return ({key}: Checksum) => {
     if (!patterns) return true
 
-    const match = patterns.some((pattern) => key.match(pattern))
+    const match = patterns.some((pattern) => matchGlob(key, pattern) || key.match(pattern))
     const shouldIgnore = invertMatch ? !match : match
 
     if (shouldIgnore) {

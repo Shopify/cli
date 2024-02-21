@@ -3,7 +3,16 @@ import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/node/fs', async () => {
+  const originalFs: any = await vi.importActual('@shopify/cli-kit/node/fs')
+  return {
+    ...originalFs,
+    matchGlob: originalFs.matchGlob,
+    readFile: vi.fn(),
+    fileExists: vi.fn(),
+  }
+})
+
 vi.mock('@shopify/cli-kit/node/path')
 
 describe('applyIgnoreFilters', () => {
@@ -43,19 +52,17 @@ describe('applyIgnoreFilters', () => {
     vi.mocked(readFileFn).mockResolvedValue(`
       # assets/basic.css
       assets/complex.css
+      assets/*.png
       sections/*
+      config/*_data.json
+      .*settings_schema.json
     `)
 
     // When
     const actualChecksums = await applyIgnoreFilters(checksums, themeFileSystem)
 
     // Then
-    expect(actualChecksums).toEqual([
-      {key: 'assets/basic.css', checksum: '00000000000000000000000000000000'},
-      {key: 'assets/image.png', checksum: '22222222222222222222222222222222'},
-      {key: 'config/settings_data.json', checksum: '33333333333333333333333333333333'},
-      {key: 'config/settings_schema.json', checksum: '44444444444444444444444444444444'},
-    ])
+    expect(actualChecksums).toEqual([{key: 'assets/basic.css', checksum: '00000000000000000000000000000000'}])
   })
 
   test(`returns the proper checksums ignoring files specified by the 'ignore' option`, async () => {
