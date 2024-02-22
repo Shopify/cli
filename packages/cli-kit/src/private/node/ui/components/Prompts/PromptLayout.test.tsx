@@ -109,8 +109,6 @@ describe('PromptLayout', async () => {
          ┃  some title
          ┃
          ┃  some body
-         ┃
-         ┃  No changes.
 
       first
       second
@@ -176,8 +174,6 @@ describe('PromptLayout', async () => {
          ┃  • item 7
          ┃  • item 8
          ┃  • item 9
-         ┃
-         ┃  No changes.
 
       first
       second
