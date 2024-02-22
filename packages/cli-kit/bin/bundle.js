@@ -5,7 +5,8 @@ const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled
   'yoga-wasm-web', // yoga-wasm-web can't be bundled
   'esbuild', // esbuild can't be bundled
-  'stacktracey'
+  'stacktracey',
+  'react'
 ]
 
 await esBuild({
