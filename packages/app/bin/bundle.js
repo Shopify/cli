@@ -7,7 +7,6 @@ const external =[
   '@shopify/cli-kit',
   'react',
   'esbuild',
-  'ink',
   '@shopify/plugin-cloudflare',
   '@luckycatfactory/esbuild-graphql-loader'
 ]
