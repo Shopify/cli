@@ -165,9 +165,9 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   extra: string[] = [],
 ) {
-  const args = ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
+  const args = ['javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
 
-  return exec('npm', args, {
+  return exec('npx', args, {
     cwd: fun.directory,
     stdout: 'inherit',
     stderr: 'inherit',
@@ -178,7 +178,7 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
-    await exec('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+    await exec('npx', ['javy', '--version'], {cwd: app.directory})
   }
 }
 
@@ -192,16 +192,12 @@ export async function runFunctionRunner(fun: ExtensionInstance<FunctionConfigTyp
   const outputAsJson = options.json ? ['--json'] : []
   const withInput = options.input ? ['--input', options.input] : []
   const exportName = options.export ? ['--export', options.export] : []
-  return exec(
-    'npm',
-    ['exec', '--', 'function-runner', '-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName],
-    {
-      cwd: fun.directory,
-      stdin: 'inherit',
-      stdout: 'inherit',
-      stderr: 'inherit',
-    },
-  )
+  return exec('npx', ['function-runner', '-f', fun.outputPath, ...withInput, ...outputAsJson, ...exportName], {
+    cwd: fun.directory,
+    stdin: 'inherit',
+    stdout: 'inherit',
+    stderr: 'inherit',
+  })
 }
 
 export interface JavyBuilder {
