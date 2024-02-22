@@ -1,3 +1,4 @@
+import {ExtensionCollectionConfig} from './app_config_extension_collection.js'
 import {WebhooksConfig} from './app_config_webhook.js'
 
 export interface SpecsAppConfiguration {
@@ -23,4 +24,5 @@ export interface SpecsAppConfiguration {
   auth?: {
     redirect_urls: string[]
   }
+  extension_collections?: ExtensionCollectionConfig[]
 }
