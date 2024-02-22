@@ -154,7 +154,6 @@
     "pathe": "1.1.1",
     "react": "18.2.0",
     "semver": "7.5.4",
-    "shelljs": "^0.8.5",
     "simple-git": "3.19.1",
     "source-map-support": "0.5.21",
     "stacktracey": "2.1.8",
