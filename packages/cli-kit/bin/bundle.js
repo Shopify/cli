@@ -4,7 +4,6 @@ import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js
 const external = [
   'react-devtools-core',
   'yoga-wasm-web',
-  'shelljs',
   'esbuild',
   'react',
   'stacktracey'
