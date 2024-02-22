@@ -2,9 +2,9 @@ import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 
 const external = [
-  'react-devtools-core',
-  'yoga-wasm-web',
-  'esbuild',
+  'react-devtools-core',  // react-devtools-core can't be bundled
+  'yoga-wasm-web', // yoga-wasm-web can't be bundled
+  'esbuild', // esbuild can't be bundled
   'stacktracey'
 ]
 
