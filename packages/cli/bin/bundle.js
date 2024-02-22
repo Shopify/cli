@@ -5,10 +5,7 @@ const external = [
   '@shopify/cli-kit',
   '@shopify/app',
   '@shopify/theme',
-  'shelljs',
-  '@oclif/plugin-plugins',
-  '@oclif/plugin-commands',
-  '@oclif/plugin-help'
+  'shelljs'
 ]
 
 await esBuild({
