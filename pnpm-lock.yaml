@@ -202,27 +202,15 @@ importers:
       http-proxy:
         specifier: 1.18.1
         version: 1.18.1
-      ink:
-        specifier: 4.4.1
-        version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
       micromatch:
         specifier: 4.0.5
         version: 4.0.5
-      react:
-        specifier: 18.2.0
-        version: 18.2.0
-      react-dom:
-        specifier: 18.2.0
-        version: 18.2.0(react@18.2.0)
       serve-static:
         specifier: 1.15.0
         version: 1.15.0
       ws:
         specifier: 8.13.0
         version: 8.13.0
-      yoga-wasm-web:
-        specifier: ^0.3.3
-        version: 0.3.3
     devDependencies:
       '@hyrious/esbuild-plugin-commonjs':
         specifier: ^0.2.4
@@ -248,12 +236,6 @@ importers:
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
-      '@types/react':
-        specifier: 17.0.2
-        version: 17.0.2
-      '@types/react-dom':
-        specifier: 18.2.0
-        version: 18.2.0
       '@types/serve-static':
         specifier: ^1.15.2
         version: 1.15.5
@@ -290,25 +272,22 @@ importers:
       '@oclif/plugin-plugins':
         specifier: 3.1.8
         version: 3.1.8
+      '@shopify/app':
+        specifier: 3.56.0
+        version: link:../app
       '@shopify/cli-kit':
         specifier: 3.56.0
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
         specifier: 3.56.0
         version: link:../plugin-did-you-mean
-      shelljs:
-        specifier: ^0.8.5
-        version: 0.8.5
+      '@shopify/theme':
+        specifier: 3.56.0
+        version: link:../theme
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
     devDependencies:
-      '@shopify/app':
-        specifier: 3.56.0
-        version: link:../app
-      '@shopify/theme':
-        specifier: 3.56.0
-        version: link:../theme
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
@@ -477,12 +456,12 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
+      react-dom:
+        specifier: 18.2.0
+        version: 18.2.0(react@18.2.0)
       semver:
         specifier: 7.5.4
         version: 7.5.4
-      shelljs:
-        specifier: ^0.8.5
-        version: 0.8.5
       simple-git:
         specifier: 3.19.1
         version: 3.19.1
@@ -544,6 +523,9 @@ importers:
       '@types/react':
         specifier: 17.0.2
         version: 17.0.2
+      '@types/react-dom':
+        specifier: 18.2.0
+        version: 18.2.0
       '@types/semver':
         specifier: ^7.5.2
         version: 7.5.7
