@@ -8,8 +8,8 @@ const external =[
   'react', // Excluded because we can't have two reacts (app and cli-kit  )
   '@shopify/plugin-cloudflare', // Plugins need to be external so that they can be loaded dynamically
   'esbuild', // esbuild can't be bundled
-  'javy-cli' // This needs to be external so that we can invoke it with `npm exec -- javy`
-  '@luckycatfactory/esbuild-graphql-loader', // esbuild plugin, can't be bundled
+  'javy-cli', // This needs to be external so that we can invoke it with `npm exec -- javy`
+  '@luckycatfactory/esbuild-graphql-loader' // esbuild plugin, can't be bundled
 ]
 
 await esBuild({
