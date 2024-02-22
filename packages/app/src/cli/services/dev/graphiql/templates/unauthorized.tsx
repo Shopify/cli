@@ -1,4 +1,5 @@
-import {React, renderToStaticMarkup} from '@shopify/cli-kit/node/react'
+import React from 'react'
+import {renderToStaticMarkup} from 'react-dom/server'
 import {AppProvider, BlockStack, Button, Card, Link, Page, Text} from '@shopify/polaris'
 
 const shopifySvg = (

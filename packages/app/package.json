@@ -59,10 +59,14 @@
     "graphql-request": "5.2.0",
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
+    "ink": "4.4.1",
     "javy-cli": "0.1.8",
     "micromatch": "4.0.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "serve-static": "1.15.0",
-    "ws": "8.13.0"
+    "ws": "8.13.0",
+    "yoga-wasm-web": "^0.3.3"
   },
   "devDependencies": {
     "@hyrious/esbuild-plugin-commonjs": "^0.2.4",
@@ -73,6 +77,8 @@
     "@types/lodash-es": "^4.17.9",
     "@types/micromatch": "^4.0.5",
     "@types/node": "18.19.3",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.0",
     "@types/serve-static": "^1.15.2",
     "@types/ws": "^8.5.5",
     "@vitest/coverage-istanbul": "^0.34.3",
