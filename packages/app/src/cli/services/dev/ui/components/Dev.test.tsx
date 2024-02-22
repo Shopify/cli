@@ -10,7 +10,7 @@ import {
   waitForInputsToBeReady,
 } from '@shopify/cli-kit/node/testing/ui'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
-import {React} from '@shopify/cli-kit/node/react'
+import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'

@@ -202,15 +202,33 @@ importers:
       http-proxy:
         specifier: 1.18.1
         version: 1.18.1
+<<<<<<< HEAD
+=======
+      ink:
+        specifier: 4.4.1
+        version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
+      javy-cli:
+        specifier: 0.1.8
+        version: 0.1.8
+>>>>>>> 46400aa8ee (Revert "Reexport ink and react from cli-kit")
       micromatch:
         specifier: 4.0.5
         version: 4.0.5
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: 18.2.0
+        version: 18.2.0(react@18.2.0)
       serve-static:
         specifier: 1.15.0
         version: 1.15.0
       ws:
         specifier: 8.13.0
         version: 8.13.0
+      yoga-wasm-web:
+        specifier: ^0.3.3
+        version: 0.3.3
     devDependencies:
       '@hyrious/esbuild-plugin-commonjs':
         specifier: ^0.2.4
@@ -236,6 +254,12 @@ importers:
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
+      '@types/react':
+        specifier: 17.0.2
+        version: 17.0.2
+      '@types/react-dom':
+        specifier: 18.2.0
+        version: 18.2.0
       '@types/serve-static':
         specifier: ^1.15.2
         version: 1.15.5
@@ -284,6 +308,9 @@ importers:
       '@shopify/theme':
         specifier: 3.56.0
         version: link:../theme
+      shelljs:
+        specifier: ^0.8.5
+        version: 0.8.5
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
@@ -456,12 +483,12 @@ importers:
       react:
         specifier: 18.2.0
         version: 18.2.0
-      react-dom:
-        specifier: 18.2.0
-        version: 18.2.0(react@18.2.0)
       semver:
         specifier: 7.5.4
         version: 7.5.4
+      shelljs:
+        specifier: ^0.8.5
+        version: 0.8.5
       simple-git:
         specifier: 3.19.1
         version: 3.19.1
@@ -523,9 +550,6 @@ importers:
       '@types/react':
         specifier: 17.0.2
         version: 17.0.2
-      '@types/react-dom':
-        specifier: 18.2.0
-        version: 18.2.0
       '@types/semver':
         specifier: ^7.5.2
         version: 7.5.7
