@@ -7,6 +7,7 @@ import {ExtensionSpecification} from '../extensions/specification.js'
 import {SpecsAppConfiguration} from '../extensions/specifications/types/app_config.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {BetaFlag} from '../../services/dev/fetch.js'
+import {ExtensionCollectionConfig} from '../extensions/specifications/types/app_config_extension_collection.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -307,6 +308,7 @@ export function buildSpecsAppConfiguration(content: object) {
     ...posConfiguration(content),
     ...webhooksConfiguration(content),
     ...accessConfiguration(content),
+    ...extensionCollectionsConfiguration(content),
   }
 }
 
@@ -355,6 +357,12 @@ function accessConfiguration(configuration: object) {
   return {
     ...(scopes || useLegacyInstallFlow ? {access_scopes: {scopes, use_legacy_install_flow: useLegacyInstallFlow}} : {}),
     ...(redirectUrls ? {auth: {redirect_urls: redirectUrls}} : {}),
+  }
+}
+
+function extensionCollectionsConfiguration(configuration: object) {
+  return {
+    extension_collection: getPathValue<ExtensionCollectionConfig[]>(configuration, 'extension_collections'),
   }
 }
 
