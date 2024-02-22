@@ -95,6 +95,8 @@
     ]
   },
   "dependencies": {
+    "@shopify/app": "3.56.0",
+    "@shopify/theme": "3.56.0",
     "@oclif/core": "3.19.5-dev.0",
     "@oclif/plugin-commands": "2.2.24",
     "@oclif/plugin-help": "5.2.18",
@@ -137,10 +139,6 @@
       "@oclif/plugin-plugins",
       "@oclif/plugin-commands"
     ],
-    "jitPlugins": {
-      "@shopify/app": "experimental",
-      "@shopify/theme": "experimental"
-    },
     "scope": "shopify",
     "topicSeparator": " ",
     "topics": {
