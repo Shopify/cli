@@ -293,12 +293,18 @@ importers:
       '@oclif/plugin-plugins':
         specifier: 3.1.8
         version: 3.1.8
+      '@shopify/app':
+        specifier: 3.56.0
+        version: link:../app
       '@shopify/cli-kit':
         specifier: 3.56.0
         version: link:../cli-kit
       '@shopify/plugin-did-you-mean':
         specifier: 3.56.0
         version: link:../plugin-did-you-mean
+      '@shopify/theme':
+        specifier: 3.56.0
+        version: link:../theme
       shelljs:
         specifier: ^0.8.5
         version: 0.8.5
@@ -306,12 +312,6 @@ importers:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
     devDependencies:
-      '@shopify/app':
-        specifier: 3.56.0
-        version: link:../app
-      '@shopify/theme':
-        specifier: 3.56.0
-        version: link:../theme
       '@types/node':
         specifier: 18.19.3
         version: 18.19.3
@@ -429,9 +429,6 @@ importers:
       get-port-please:
         specifier: 3.0.1
         version: 3.0.1
-      git-diff:
-        specifier: 2.0.6
-        version: 2.0.6
       gradient-string:
         specifier: 2.0.2
         version: 2.0.2
@@ -538,9 +535,6 @@ importers:
       '@types/fs-extra':
         specifier: 9.0.13
         version: 9.0.13
-      '@types/git-diff':
-        specifier: ^2.0.3
-        version: 2.0.7
       '@types/gradient-string':
         specifier: ^1.1.2
         version: 1.1.5
@@ -6101,10 +6095,6 @@ packages:
       '@types/node': 18.19.3
     dev: true
 
-  /@types/git-diff@2.0.7:
-    resolution: {integrity: sha512-hipFAUcmf3c+45+Y8+J/xk7gT+0HBuT3O8OTtrnoP6R9gI0r2xESZNdYiA0pj7kQyPCwmkgbnxmfwQ9Ld2lZLQ==}
-    dev: true
-
   /@types/glob@8.1.0:
     resolution: {integrity: sha512-IO+MJPVhoqz+28h1qLAcBEH2+xHMK6MTyHJc7MTnnYb6wsoLR29POVGJ7LycmVXIqyy/4/2ShP5sUwTXuOwb/w==}
     dependencies:
@@ -8381,6 +8371,7 @@ packages:
   /diff@3.5.0:
     resolution: {integrity: sha512-A46qtFgd+g7pDZinpnwiRJtxbC1hpgf0uzP3iG89scHk0AUC7A1TGxf5OiiOUv/JMZR8GOt8hL900hV0bOy5xA==}
     engines: {node: '>=0.3.1'}
+    dev: true
 
   /diff@4.0.2:
     resolution: {integrity: sha512-58lmxKSA4BNyLz+HHMUzlOEpg09FV+ev6ZMe3vJihgdxzgcwZ8VoEEPmALCZG9LmqfVoNMMKpttIYTVG6uDY7A==}
@@ -9735,6 +9726,7 @@ packages:
       loglevel: 1.9.1
       shelljs: 0.8.5
       shelljs.exec: 1.1.8
+    dev: true
 
   /github-slugger@1.5.0:
     resolution: {integrity: sha512-wIh+gKBI9Nshz2o46B0B3f5k/W+WI9ZAv6y5Dn5WJ5SK1t0TnDimB4WE5rmTD05ZAIn8HALCZVmCsvj0w0v0lw==}
@@ -11141,6 +11133,7 @@ packages:
   /loglevel@1.9.1:
     resolution: {integrity: sha512-hP3I3kCrDIMuRwAwHltphhDM1r8i55H33GgqjXbrisuJhF4kRhW1dNuxsRklp4bXl8DSdLaNLuiL4A/LWRfxvg==}
     engines: {node: '>= 0.6.0'}
+    dev: true
 
   /loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -13746,6 +13739,7 @@ packages:
   /shelljs.exec@1.1.8:
     resolution: {integrity: sha512-vFILCw+lzUtiwBAHV8/Ex8JsFjelFMdhONIsgKNLgTzeRckp2AOYRQtHJE/9LhNvdMmE27AGtzWx0+DHpwIwSw==}
     engines: {node: '>= 4.0.0'}
+    dev: true
 
   /shelljs@0.8.5:
     resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
