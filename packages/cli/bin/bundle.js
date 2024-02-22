@@ -2,6 +2,7 @@ import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 
 const external = [
+  '@shopify/cli-kit',
   '@shopify/app', // Plugins need to be external so that they can be loaded dynamically
   '@shopify/theme', // Plugins need to be external so that they can be loaded dynamically
 ]

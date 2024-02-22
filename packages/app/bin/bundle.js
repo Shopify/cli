@@ -4,6 +4,7 @@ import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js
 const external =[
   'react-devtools-core',
   'yoga-wasm-web',
+  '@shopify/cli-kit',
   'react',
   '@luckycatfactory/esbuild-graphql-loader',
   '@shopify/plugin-cloudflare', // Plugins need to be external so that they can be loaded dynamically
