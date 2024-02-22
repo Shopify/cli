@@ -3,8 +3,8 @@ import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js
 
 const external = [
   '@shopify/cli-kit',
-  'node-fetch',
-  'semver'
+  'node-fetch', // Needs to be external because we use it in post-install
+  'semver' // Needs to be external because we use it in post-install
 ]
 
 await esBuild({
