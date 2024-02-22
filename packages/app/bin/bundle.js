@@ -5,10 +5,11 @@ const external =[
   'react-devtools-core',
   'yoga-wasm-web',
   '@shopify/cli-kit',
+  '@luckycatfactory/esbuild-graphql-loader',
   'react',
-  'esbuild',
-  '@shopify/plugin-cloudflare',
-  '@luckycatfactory/esbuild-graphql-loader'
+  '@shopify/plugin-cloudflare', // Plugins need to be external so that they can be loaded dynamically
+  'esbuild', // esbuild can't be bundled
+  'javy-cli' // This needs to be external so that we can invoke it with `npm exec -- javy`
 ]
 
 await esBuild({
