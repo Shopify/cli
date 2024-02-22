@@ -172,16 +172,10 @@ describe('SelectPrompt', async () => {
       {label: 'fourth', value: 'fourth'},
     ]
 
-    const gitDiff = {
-      baselineContent: 'hello\n',
-      updatedContent: 'world\n',
-    }
-
     const renderInstance = render(
       <SelectPrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
-        gitDiff={gitDiff}
         onSubmit={() => {}}
       />,
     )

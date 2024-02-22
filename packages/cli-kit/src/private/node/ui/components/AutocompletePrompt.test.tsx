@@ -234,16 +234,10 @@ describe('AutocompletePrompt', async () => {
       {label: 'fourth', value: 'fourth'},
     ]
 
-    const gitDiff = {
-      baselineContent: 'hello\n',
-      updatedContent: 'world\n',
-    }
-
     const renderInstance = render(
       <AutocompletePrompt
         message="Associate your project with the org Castile Ventures?"
         choices={items}
-        gitDiff={gitDiff}
         onSubmit={() => {}}
         search={() => Promise.resolve({data: []} as SearchResults<string>)}
       />,

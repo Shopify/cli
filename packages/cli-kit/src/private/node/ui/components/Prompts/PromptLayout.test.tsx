@@ -82,11 +82,6 @@ describe('PromptLayout', async () => {
       {label: 'fourth', value: 'fourth'},
     ]
 
-    const gitDiff = {
-      baselineContent: 'hello',
-      updatedContent: 'hello',
-    }
-
     const infoMessage = {
       title: {text: 'some title'},
       body: 'some body',
@@ -97,7 +92,6 @@ describe('PromptLayout', async () => {
         message="Associate your project with the org Castile Ventures?"
         infoTable={[]}
         infoMessage={infoMessage}
-        gitDiff={gitDiff}
         state={PromptState.Idle}
         input={
           <Box flexDirection="column">
@@ -134,11 +128,6 @@ describe('PromptLayout', async () => {
       {label: 'fourth', value: 'fourth'},
     ]
 
-    const gitDiff = {
-      baselineContent: 'hello',
-      updatedContent: 'hello',
-    }
-
     const infoMessage = {
       title: {text: 'some title'},
       body: 'some body',
@@ -155,7 +144,6 @@ describe('PromptLayout', async () => {
         message="Associate your project with the org Castile Ventures?"
         infoTable={infoTable}
         infoMessage={infoMessage}
-        gitDiff={gitDiff}
         state={PromptState.Idle}
         input={
           <Box flexDirection="column">
