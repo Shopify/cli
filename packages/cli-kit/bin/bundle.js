@@ -5,7 +5,7 @@ const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
   'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
   'esbuild', // esbuild can't be bundled
-  'react' // Excluded because we can't have two reacts (app and cli-kit  )
+  'react', // Excluded because we can't have two reacts (app and cli-kit  )
   'stacktracey'
 ]
 
