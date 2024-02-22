@@ -1,7 +1,14 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 
-const external = ['react-devtools-core', 'yoga-wasm-web', 'shelljs', 'esbuild', 'react', 'ink', 'stacktracey']
+const external = [
+  'react-devtools-core',
+  'yoga-wasm-web',
+  'shelljs',
+  'esbuild',
+  'react',
+  'stacktracey'
+]
 
 await esBuild({
   bundle: true,
