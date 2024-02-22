@@ -5,7 +5,6 @@ const external = [
   'react-devtools-core',
   'yoga-wasm-web',
   'esbuild',
-  'react',
   'stacktracey'
 ]
 
