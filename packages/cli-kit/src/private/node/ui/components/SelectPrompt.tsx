@@ -1,6 +1,5 @@
 import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.js'
 import {InfoTableProps} from './Prompts/InfoTable.js'
-import {GitDiffProps} from './Prompts/GitDiff.js'
 import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -13,7 +12,6 @@ export interface SelectPromptProps<T> {
   choices: SelectInputProps<T>['items']
   onSubmit: (value: T) => void
   infoTable?: InfoTableProps['table']
-  gitDiff?: GitDiffProps['gitDiff']
   defaultValue?: T
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
@@ -25,7 +23,6 @@ function SelectPrompt<T>({
   choices,
   infoTable,
   infoMessage,
-  gitDiff,
   onSubmit,
   defaultValue,
   abortSignal,
@@ -60,7 +57,6 @@ function SelectPrompt<T>({
       submittedAnswerLabel={answer?.label}
       infoTable={infoTable}
       infoMessage={infoMessage}
-      gitDiff={gitDiff}
       abortSignal={abortSignal}
       input={<SelectInput defaultValue={defaultValue} items={choices} onSubmit={submitAnswer} />}
     />

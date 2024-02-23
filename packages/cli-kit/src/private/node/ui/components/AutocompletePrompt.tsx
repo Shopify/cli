@@ -2,7 +2,6 @@ import {SelectInput, SelectInputProps, Item as SelectItem} from './SelectInput.j
 import {InfoTableProps} from './Prompts/InfoTable.js'
 import {TextInput} from './TextInput.js'
 import {InfoMessageProps} from './Prompts/InfoMessage.js'
-import {GitDiffProps} from './Prompts/GitDiff.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {debounce} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -26,7 +25,6 @@ export interface AutocompletePromptProps<T> {
   search: (term: string) => Promise<SearchResults<T>>
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
-  gitDiff?: GitDiffProps['gitDiff']
 }
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
@@ -41,7 +39,6 @@ function AutocompletePrompt<T>({
   hasMorePages: initialHasMorePages = false,
   abortSignal,
   infoMessage,
-  gitDiff,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
   const {exit: unmountInk} = useApp()
   const [searchTerm, setSearchTerm] = useState('')
@@ -123,7 +120,6 @@ function AutocompletePrompt<T>({
       state={promptState}
       infoTable={infoTable}
       infoMessage={infoMessage}
-      gitDiff={gitDiff}
       abortSignal={abortSignal}
       header={
         promptState !== PromptState.Submitted && canSearch ? (
