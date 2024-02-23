@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.56.3
+
+### Patch Changes
+
+- 49f71d59a: Fix `shopify theme dev` issue to avoid previewing the live theme instead of the development one
+  - @shopify/cli-kit@3.56.3
+
 ## 3.56.2
 
 ### Patch Changes
