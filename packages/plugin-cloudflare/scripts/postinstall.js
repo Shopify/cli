@@ -6,7 +6,6 @@ import {pipeline} from 'stream'
 import {execSync, execFileSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
-import fetch from 'node-fetch'
 import semver from 'semver'
 
 const CLOUDFLARE_VERSION = '2023.5.1'
