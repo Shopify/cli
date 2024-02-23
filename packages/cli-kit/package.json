@@ -164,7 +164,6 @@
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",
     "unique-string": "3.0.0",
-    "yoga-wasm-web": "^0.3.3",
     "zod": "3.22.3"
   },
   "devDependencies": {
