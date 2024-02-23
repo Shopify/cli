@@ -8,6 +8,7 @@ import {SpecsAppConfiguration} from '../extensions/specifications/types/app_conf
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {BetaFlag} from '../../services/dev/fetch.js'
 import {ExtensionCollectionConfig} from '../extensions/specifications/types/app_config_extension_collection.js'
+import {AppExtensionCollectionType} from '../extensions/specifications/app_config_extension_collections.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
@@ -261,6 +262,17 @@ export class App implements AppInterface {
       (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
     ) as ExtensionInstance<FunctionConfigType>[]
 
+    const extensionCollections = this.allExtensions.filter((ext) => ext.isExtensionCollection)
+    const extensionCollectionsConfiguration = (extensionCollections[0]?.configuration as AppExtensionCollectionType)
+      .extension_collections
+
+    if (extensionCollectionsConfiguration && extensionCollectionsConfiguration.length > 0) {
+      const errors = validateExtensionsHandlesInCollection(extensionCollectionsConfiguration, this.allExtensions)
+      if (errors) {
+        throw new AbortError('Invalid extension collection configuration', errors.join('\n'))
+      }
+    }
+
     if (functionExtensionsWithUiHandle.length > 0) {
       const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
       if (errors) {
@@ -362,7 +374,7 @@ function accessConfiguration(configuration: object) {
 
 function extensionCollectionsConfiguration(configuration: object) {
   return {
-    extension_collection: getPathValue<ExtensionCollectionConfig[]>(configuration, 'extension_collections'),
+    extension_collections: getPathValue<ExtensionCollectionConfig[]>(configuration, 'extension_collections'),
   }
 }
 
@@ -383,6 +395,34 @@ export function validateFunctionExtensionsWithUiHandle(
         `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
       )
     }
+  })
+
+  return errors.length > 0 ? errors : undefined
+}
+
+export function validateExtensionsHandlesInCollection(
+  collections: ExtensionCollectionConfig[],
+  allExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+
+  collections.forEach((collection) => {
+    const handles = collection.extensions
+
+    handles.forEach((handle) => {
+      const matchingExtension = findExtensionByHandle(allExtensions, handle)
+
+      if (!matchingExtension) {
+        errors.push(
+          `[${collection.name}] extension collection - Local app must contain an extension with handle '${handle}'`,
+        )
+      }
+      // else if (matchingExtension.configuration.type !== 'ui_extension') {
+      //   errors.push(
+      //     `[${collection.name}] collection - Local app must contain only an extension of type 'ui_extension' and handle '${handle}'`,
+      //   )
+      // }
+    })
   })
 
   return errors.length > 0 ? errors : undefined

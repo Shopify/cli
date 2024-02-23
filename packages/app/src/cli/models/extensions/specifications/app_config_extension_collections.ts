@@ -2,6 +2,7 @@ import {createConfigExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const AppExtensionCollectionsIdentifier = 'extension_collection'
+export const AppExtensionCollectionsHandle = 'extension-collection'
 
 const AppExtensionCollectionsSchema = zod.object({
   extension_collections: zod
@@ -14,6 +15,8 @@ const AppExtensionCollectionsSchema = zod.object({
     )
     .optional(),
 })
+
+export type AppExtensionCollectionType = zod.infer<typeof AppExtensionCollectionsSchema>
 
 const spec = createConfigExtensionSpecification({
   identifier: AppExtensionCollectionsIdentifier,

@@ -1,6 +1,7 @@
 import {BaseConfigType} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
+import {AppExtensionCollectionsHandle} from './specifications/app_config_extension_collections.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -93,6 +94,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   get isFlow() {
     return this.specification.identifier.includes('flow')
+  }
+
+  get isExtensionCollection() {
+    return this.handle === AppExtensionCollectionsHandle
   }
 
   get features(): ExtensionFeature[] {
