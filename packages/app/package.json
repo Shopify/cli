@@ -58,7 +58,6 @@
     "graphql-request": "5.2.0",
     "h3": "0.7.21",
     "http-proxy": "1.18.1",
-    "javy-cli": "0.1.8",
     "micromatch": "4.0.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",

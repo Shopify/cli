@@ -145,7 +145,7 @@ describe('runJavy', () => {
       [
         'exec',
         '--',
-        'javy',
+        'javy-cli',
         'compile',
         '-d',
         '-o',
@@ -329,7 +329,7 @@ describe('ExportJavyBuilder', () => {
           [
             'exec',
             '--',
-            'javy',
+            'javy-cli',
             'compile',
             '-d',
             '-o',

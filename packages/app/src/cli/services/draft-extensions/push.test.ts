@@ -140,7 +140,7 @@ describe('draftExtensionsPush', () => {
     await draftExtensionsPush(draftExtensionsPushOptions(app))
 
     // Then
-    expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+    expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy-cli', '--version'], {cwd: app.directory})
     expect(updateExtensionDraft).toHaveBeenCalledOnce()
     expect(enableDeveloperPreview).not.toHaveBeenCalled()
   })
