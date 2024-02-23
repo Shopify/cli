@@ -202,15 +202,6 @@ importers:
       http-proxy:
         specifier: 1.18.1
         version: 1.18.1
-<<<<<<< HEAD
-=======
-      ink:
-        specifier: 4.4.1
-        version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
-      javy-cli:
-        specifier: 0.1.8
-        version: 0.1.8
->>>>>>> 46400aa8ee (Revert "Reexport ink and react from cli-kit")
       micromatch:
         specifier: 4.0.5
         version: 4.0.5
@@ -226,9 +217,6 @@ importers:
       ws:
         specifier: 8.13.0
         version: 8.13.0
-      yoga-wasm-web:
-        specifier: ^0.3.3
-        version: 0.3.3
     devDependencies:
       '@types/body-parser':
         specifier: ^1.19.2
@@ -305,6 +293,12 @@ importers:
       '@shopify/theme':
         specifier: 3.56.0
         version: link:../theme
+      stacktracey:
+        specifier: 2.1.8
+        version: 2.1.8
+      yoga-wasm-web:
+        specifier: ^0.3.3
+        version: 0.3.3
       zod-to-json-schema:
         specifier: 3.21.4
         version: 3.21.4(zod@3.22.3)
@@ -510,9 +504,6 @@ importers:
       unique-string:
         specifier: 3.0.0
         version: 3.0.0
-      yoga-wasm-web:
-        specifier: ^0.3.3
-        version: 0.3.3
       zod:
         specifier: 3.22.3
         version: 3.22.3
