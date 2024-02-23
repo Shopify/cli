@@ -1,14 +1,17 @@
 import {PaymentsAppExtensionConfigType} from './payments_app_extension.js'
 import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_schemas/offsite_payments_app_extension_schema.js'
-import {testPaymentsAppExtension} from '../../app/app.test-data.js'
+import {testDeveloperPlatformClient, testPaymentsAppExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 vi.mock('../../../services/deploy/upload.js')
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('PaymentsAppExtension', () => {
   let extension: ExtensionInstance<PaymentsAppExtensionConfigType>
@@ -64,7 +67,7 @@ describe('PaymentsAppExtension', () => {
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const result = await extension.deployConfig({apiKey, token})
+      const result = await extension.deployConfig({apiKey, developerPlatformClient})
       const extensionConfiguration = extension.configuration as OffsitePaymentsAppExtensionConfigType
 
       // Then

@@ -4,11 +4,12 @@ import {
   configExtensionsIdentifiersBreakdown,
   extensionsIdentifiersReleaseBreakdown,
 } from './context/breakdown-extensions.js'
-import {testApp} from '../models/app/app.test-data.js'
+import {testApp, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {AppRelease} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -33,6 +34,8 @@ const APP = {
   apiSecretKeys: [],
   betas: [],
 }
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 beforeEach(() => {
   // this is needed because using importActual to mock the ui module
@@ -81,7 +84,7 @@ describe('release', () => {
     await testRelease(app, 'app-version')
 
     // Then
-    expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'api-token', {
+    expect(partnersRequest).toHaveBeenCalledWith(AppRelease, 'token', {
       apiKey: APP.apiKey,
       appVersionId: 1,
     })
@@ -156,7 +159,7 @@ async function testRelease(
   // Given
   vi.mocked(ensureReleaseContext).mockResolvedValue({
     app,
-    token: 'api-token',
+    developerPlatformClient,
     partnersApp: partnersApp ?? APP,
   })
 

@@ -13,6 +13,7 @@ import {DevOptions} from '../../dev.js'
 import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
@@ -45,7 +46,7 @@ export interface DevConfig {
   remoteApp: Omit<OrganizationApp, 'apiSecretKeys'> & {
     apiSecret?: string | undefined
   }
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   storeFqdn: string
   storeId: string
   commandOptions: DevOptions
@@ -58,7 +59,7 @@ export interface DevConfig {
 export async function setupDevProcesses({
   localApp,
   remoteAppUpdated,
-  token,
+  developerPlatformClient,
   remoteApp,
   storeFqdn,
   storeId,
@@ -75,6 +76,8 @@ export async function setupDevProcesses({
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
+  const partnersSession = await developerPlatformClient.session()
+  const token = partnersSession.token
 
   const processes = [
     ...(await setupWebProcesses({
@@ -115,7 +118,7 @@ export async function setupDevProcesses({
       localApp,
       remoteApp,
       apiKey,
-      token,
+      developerPlatformClient,
       proxyUrl: network.proxyUrl,
     }),
     await setupPreviewThemeAppExtensionsProcess({

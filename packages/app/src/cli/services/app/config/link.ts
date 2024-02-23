@@ -41,10 +41,9 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   await logMetadataForLoadedContext(remoteApp)
 
   let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
-  const partnersSession = await developerPlatformClient.session()
   const remoteAppConfiguration = await fetchAppRemoteConfiguration(
     remoteApp.apiKey,
-    partnersSession.token,
+    developerPlatformClient,
     localApp.specifications ?? [],
     localApp.remoteBetaFlags,
   )

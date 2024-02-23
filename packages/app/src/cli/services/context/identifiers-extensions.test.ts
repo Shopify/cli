@@ -12,11 +12,13 @@ import {
   testOrganizationApp,
   testUIExtension,
   testPaymentsAppExtension,
+  testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {getUIExtensionsToMigrate, migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {createExtension} from '../dev/create-extension.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -107,7 +109,7 @@ const options = (
 ): EnsureDeploymentIdsPresenceOptions => {
   const localApp = {
     app: LOCAL_APP(uiExtensions, functionExtensions, includeDeployConfig, configExtensions),
-    token: 'token',
+    developerPlatformClient,
     appId: 'appId',
     appName: 'appName',
     envIdentifiers: {extensions: identifiers},
@@ -118,6 +120,8 @@ const options = (
   setPathValue(localApp.app, 'remoteBetaFlags', betas)
   return localApp
 }
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./prompts', async () => {
