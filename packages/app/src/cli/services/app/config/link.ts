@@ -34,8 +34,9 @@ export interface LinkOptions {
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const {remoteApp, directory} = await selectRemoteApp({...options, developerPlatformClient}, developerPlatformClient)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, remoteApp, directory)
+  const updatedOptions = {...options, developerPlatformClient}
+  const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
@@ -60,10 +61,10 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   return configuration
 }
 
-async function selectRemoteApp(options: LinkOptions, developerPlatformClient: DeveloperPlatformClient) {
+async function selectRemoteApp(options: LinkOptions) {
   const localApp = await loadAppOrEmptyApp(options)
   const directory = localApp?.directory || options.directory
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, developerPlatformClient, directory)
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.developerPlatformClient!, directory)
   return {
     remoteApp,
     directory,
