@@ -208,9 +208,6 @@ importers:
       ink:
         specifier: 4.4.1
         version: 4.4.1(@types/react@17.0.2)(react@18.2.0)
-      javy-cli:
-        specifier: 0.1.8
-        version: 0.1.8
       micromatch:
         specifier: 4.0.5
         version: 4.0.5
@@ -9689,14 +9686,6 @@ packages:
       chalk: 4.1.2
       filelist: 1.0.4
       minimatch: 3.1.2
-
-  /javy-cli@0.1.8:
-    resolution: {integrity: sha512-6CEmAB9/NtdbUh33u5tww9RTiJ/CqqH7+iPgKb5FprIm9NOwaETVIAuN9gDN3zXZb9ePb/wVQw73icBY9EuFOg==}
-    hasBin: true
-    dependencies:
-      cachedir: 2.3.0
-      node-fetch: 3.3.1
-    dev: false
 
   /jest-diff@26.6.2:
     resolution: {integrity: sha512-6m+9Z3Gv9wN0WFVasqjCL/06+EFCMTqDEUl/b87HYK2rAPTyfz4ZIuSlPhY51PIQRWx5TaxeF1qmXKe9gfN3sA==}
