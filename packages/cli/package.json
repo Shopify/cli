@@ -104,7 +104,8 @@
     "@shopify/cli-kit": "3.56.0",
     "@shopify/plugin-did-you-mean": "3.56.0",
     "zod-to-json-schema": "3.21.4",
-    "yoga-wasm-web": "^0.3.3"
+    "yoga-wasm-web": "^0.3.3",
+    "stacktracey": "2.1.8"
   },
   "devDependencies": {
     "@shopify/app": "3.56.0",
