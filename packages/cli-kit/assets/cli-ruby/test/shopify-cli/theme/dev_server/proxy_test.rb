@@ -33,7 +33,7 @@ module ShopifyCLI
             .with_theme(@theme)
             .with_syncer(@syncer)
 
-          @proxy = Proxy.new(@ctx, @theme, param_builder)
+          @proxy = Proxy.new(@ctx, @theme, param_builder, true)
         end
 
         def test_get_is_proxied_to_online_store
