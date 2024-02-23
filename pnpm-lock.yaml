@@ -687,6 +687,12 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.56.0
         version: link:../cli-kit
+<<<<<<< HEAD
+=======
+      semver:
+        specifier: 7.5.4
+        version: 7.5.4
+>>>>>>> 5b4d8a2bd4 (Remove node-fetch)
     devDependencies:
       vite:
         specifier: 4.4.9
