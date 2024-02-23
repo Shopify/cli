@@ -1,7 +1,12 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
 
-const external = ['@shopify/cli-kit']
+const external = [
+  'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
+  'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
+  'esbuild', // esbuild can't be bundled
+  'stacktracey',
+]
 
 await esBuild({
   bundle: true,
