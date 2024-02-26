@@ -18,7 +18,7 @@ const TaxCalculationsSchema = BaseSchema.extend({
     .optional(),
 })
 
-const taxCalculationSpec = createExtensionSpecification({
+const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   schema: TaxCalculationsSchema,
   appModuleFeatures: (_) => ['bundling'],
@@ -34,4 +34,4 @@ const taxCalculationSpec = createExtensionSpecification({
   },
 })
 
-export default taxCalculationSpec
+export default spec

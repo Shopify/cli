@@ -127,14 +127,10 @@ async function downloadFile(url, to) {
     mkdirSync(path.dirname(to))
   }
   const streamPipeline = util.promisify(pipeline)
-  const [major, minor, patch] = process.versions.node.split('.').map(Number)
-  if (major < 18) {
-    // Fetch API is not available here, and this should only happen on CI anyway as engines is >=18
-    const response = await fetch(url, {redirect: 'follow'})
-    if (!response.ok) throw new Error(`Couldn't download file ${url} (${response.status} ${response.statusText})`)
-    const fileObject = createWriteStream(to)
-    await streamPipeline(response.body, fileObject)
-  }
+  const response = await fetch(url, {redirect: 'follow'})
+  if (!response.ok) throw new Error(`Couldn't download file ${url} (${response.status} ${response.statusText})`)
+  const fileObject = createWriteStream(to)
+  await streamPipeline(response.body, fileObject)
   return to
 }
 
