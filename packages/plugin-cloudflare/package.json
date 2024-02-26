@@ -38,8 +38,7 @@
   },
   "dependencies": {
     "@oclif/core": "3.15.1",
-    "@shopify/cli-kit": "3.56.0",
-    "node-fetch": "3.3.2"
+    "@shopify/cli-kit": "3.56.0"
   },
   "devDependencies": {
     "vite": "^4.4.9",

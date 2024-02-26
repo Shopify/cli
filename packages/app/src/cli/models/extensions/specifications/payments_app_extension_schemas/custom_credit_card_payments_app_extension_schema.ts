@@ -5,8 +5,6 @@ export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
   typeof CustomCreditCardPaymentsAppExtensionSchema
 >
 
-const CERTIFICATE_REGEX = /^-----BEGIN CERTIFICATE-----([\s\S]*)-----END CERTIFICATE-----\s?$|^$/
-
 export const CUSTOM_CREDIT_CARD_TARGET = 'payments.custom-credit-card.render'
 
 export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensionSchema.merge(ConfirmationSchema)
@@ -21,10 +19,7 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
     ui_extension_handle: zod.string().optional(),
-    encryption_certificate: zod.object({
-      fingerprint: zod.string(),
-      certificate: zod.string().regex(CERTIFICATE_REGEX),
-    }),
+    encryption_certificate_fingerprint: zod.string(),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -50,7 +45,7 @@ export async function customCreditCardPaymentsAppExtensionDeployConfig(
     supports_3ds: config.supports_3ds,
     supported_countries: config.supported_countries,
     supported_payment_methods: config.supported_payment_methods,
-    encryption_certificate: config.encryption_certificate,
+    encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     test_mode_available: config.test_mode_available,
     multiple_capture: config.multiple_capture,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
