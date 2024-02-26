@@ -6,7 +6,6 @@ import {pipeline} from 'stream'
 import {execSync, execFileSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
-import fetch from 'node-fetch'
 import semver from 'semver'
 
 const CLOUDFLARE_VERSION = '2023.5.1'
@@ -53,6 +52,10 @@ function getBinPathTarget() {
 }
 
 export default async function install() {
+  const [major, minor, patch] = process.versions.node.split('.').map(Number)
+  // Fetch API is not available for <18. Added this check because our release process uses node 16.
+  if (major < 18) return
+
   const fileName = URL[process.platform]
   if (fileName === undefined) {
     throw new Error(`Unsupported system platform: ${process.platform} or arch: ${process.arch}`)
