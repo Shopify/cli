@@ -41,7 +41,7 @@ const PaymentsAppExtensionSchema = zod.union([
 
 export type PaymentsAppExtensionConfigType = zod.infer<typeof PaymentsAppExtensionSchema>
 
-const spec = createExtensionSpecification({
+const paymentExtensionSpec = createExtensionSpecification({
   identifier: 'payments_extension',
   schema: PaymentsAppExtensionSchema,
   appModuleFeatures: (_) => [],
@@ -66,4 +66,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default paymentExtensionSpec

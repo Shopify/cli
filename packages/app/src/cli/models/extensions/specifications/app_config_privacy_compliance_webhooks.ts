@@ -11,13 +11,13 @@ const PrivacyComplianceWebbhooksTransformConfig: CustomTransformationConfig = {
 export const PrivacyComplianceWebbhooksSpecIdentifier = 'privacy_compliance_webhooks'
 
 // Uses the same schema as the webhooks specs because its content is nested under the same webhooks section
-const spec = createConfigExtensionSpecification({
+const appPrivacyComplienceSpec = createConfigExtensionSpecification({
   identifier: PrivacyComplianceWebbhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: PrivacyComplianceWebbhooksTransformConfig,
 })
 
-export default spec
+export default appPrivacyComplienceSpec
 
 function transformToPrivacyComplianceWebhooksModule(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig

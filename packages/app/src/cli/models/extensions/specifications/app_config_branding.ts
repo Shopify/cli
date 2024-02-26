@@ -17,10 +17,10 @@ const BrandingTransformConfig: TransformationConfig = {
 
 export const BrandingSpecIdentifier = 'branding'
 
-const spec = createConfigExtensionSpecification({
+const appBrandingSpec = createConfigExtensionSpecification({
   identifier: BrandingSpecIdentifier,
   schema: BrandingSchema,
   transformConfig: BrandingTransformConfig,
 })
 
-export default spec
+export default appBrandingSpec

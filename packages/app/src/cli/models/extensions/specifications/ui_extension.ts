@@ -31,7 +31,7 @@ const UIExtensionSchema = BaseSchema.extend({
     return {...config, extension_points: extensionPoints}
   })
 
-const spec = createExtensionSpecification({
+const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
@@ -113,4 +113,4 @@ Please check the module path for ${target}`.value,
   return ok({})
 }
 
-export default spec
+export default uiExtensionSpec
