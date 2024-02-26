@@ -687,9 +687,6 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.56.0
         version: link:../cli-kit
-      semver:
-        specifier: 7.5.4
-        version: 7.5.4
     devDependencies:
       vite:
         specifier: 4.4.9
