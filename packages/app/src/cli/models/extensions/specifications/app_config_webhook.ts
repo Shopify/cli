@@ -38,10 +38,10 @@ const WebhookTransformConfig: CustomTransformationConfig = {
   reverse: (content: object) => transformToWebhookConfig(content),
 }
 
-const spec = createConfigExtensionSpecification({
+const appWebhooksSpec = createConfigExtensionSpecification({
   identifier: WebhooksSpecIdentifier,
   schema: WebhookSchema,
   transformConfig: WebhookTransformConfig,
 })
 
-export default spec
+export default appWebhooksSpec

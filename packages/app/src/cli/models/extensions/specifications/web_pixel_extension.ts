@@ -25,7 +25,7 @@ const WebPixelSchema = BaseSchema.extend({
   settings: zod.any(),
 })
 
-const spec = createExtensionSpecification({
+const webPixelSpec = createExtensionSpecification({
   identifier: 'web_pixel_extension',
   dependency,
   partnersWebIdentifier: 'web_pixel',
@@ -59,4 +59,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default webPixelSpec

@@ -3,7 +3,7 @@ import {createExtensionSpecification} from '../specification.js'
 
 const dependency = '@shopify/post-purchase-ui-extensions'
 
-const spec = createExtensionSpecification({
+const checkoutPostPurchaseSpec = createExtensionSpecification({
   identifier: 'checkout_post_purchase',
   dependency,
   partnersWebIdentifier: 'post_purchase',
@@ -14,4 +14,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default checkoutPostPurchaseSpec

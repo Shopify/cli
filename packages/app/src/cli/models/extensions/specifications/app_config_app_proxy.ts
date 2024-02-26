@@ -14,9 +14,9 @@ const AppProxySchema = zod.object({
 
 export const AppProxySpecIdentifier = 'app_proxy'
 
-const spec: ExtensionSpecification = createConfigExtensionSpecification({
+const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
 })
 
-export default spec
+export default appProxySpec
