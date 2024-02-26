@@ -406,22 +406,23 @@ export function validateExtensionsHandlesInCollection(
 ): string[] | undefined {
   const errors: string[] = []
 
+  let matchedExtensionType: string | undefined
   collections.forEach((collection) => {
     const handles = collection.extensions
 
     handles.forEach((handle) => {
       const matchingExtension = findExtensionByHandle(allExtensions, handle)
+      matchedExtensionType = matchedExtensionType || matchingExtension?.type
 
       if (!matchingExtension) {
         errors.push(
           `[${collection.name}] extension collection - Local app must contain an extension with handle '${handle}'`,
         )
+      } else if (matchingExtension.configuration.type !== matchedExtensionType) {
+        errors.push(
+          `[${collection.name}] extension collection - The collection can't contain an extension of type '${matchedExtensionType}' and type '${matchingExtension.type}'`,
+        )
       }
-      // else if (matchingExtension.configuration.type !== 'ui_extension') {
-      //   errors.push(
-      //     `[${collection.name}] collection - Local app must contain only an extension of type 'ui_extension' and handle '${handle}'`,
-      //   )
-      // }
     })
   })
 
