@@ -8,7 +8,7 @@ import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
 import fetch from 'node-fetch'
 
-const EXPECTED_CLOUDFLARE_VERSION = '2023.5.1'
+const EXPECTED_CLOUDFLARE_VERSION = '2024.2.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${EXPECTED_CLOUDFLARE_VERSION}/`
 
 const LINUX_URL = {
