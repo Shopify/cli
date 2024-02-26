@@ -7,10 +7,9 @@ import {execSync, execFileSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
 import fetch from 'node-fetch'
-import semver from 'semver'
 
-const CLOUDFLARE_VERSION = '2023.5.1'
-const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARE_VERSION}/`
+const EXPECTED_CLOUDFLARE_VERSION = '2023.5.1'
+const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${EXPECTED_CLOUDFLARE_VERSION}/`
 
 const LINUX_URL = {
   arm64: 'cloudflared-linux-arm64',
@@ -53,6 +52,8 @@ function getBinPathTarget() {
 }
 
 export default async function install() {
+  // Don't install cloudflare if the SHOPIFY_CLI_IGNORE_CLOUDFLARED environment variable is set
+  if (process.env.SHOPIFY_CLI_IGNORE_CLOUDFLARED) return
   const fileName = URL[process.platform]
   if (fileName === undefined) {
     throw new Error(`Unsupported system platform: ${process.platform} or arch: ${process.arch}`)
@@ -66,7 +67,7 @@ export default async function install() {
     try {
       const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
       const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
-      const needsUpdate = semver.gt(CLOUDFLARE_VERSION, versionNumber)
+      const needsUpdate = versionIsGreaterThan(EXPECTED_CLOUDFLARE_VERSION, versionNumber)
       if (!needsUpdate) {
         console.log('cloudflared already installed, skipping')
         return
@@ -85,6 +86,20 @@ export default async function install() {
   } else {
     throw new Error(`Unsupported platform: ${process.platform}`)
   }
+}
+
+function versionIsGreaterThan(versionA, versionB) {
+  const [majorA, minorA, patchA] = versionA.split('.').map(Number)
+  const [majorB, minorB, patchB] = versionB.split('.').map(Number)
+
+  // Compare major versions
+  if (majorA !== majorB) return majorA > majorB
+
+  // If major versions are equal, compare minor versions
+  if (minorA !== minorB) return minorA > minorB
+
+  // If minor versions are also equal, compare patch versions
+  return patchA > patchB
 }
 
 async function installLinux(file, binTarget) {

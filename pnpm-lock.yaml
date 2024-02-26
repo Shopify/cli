@@ -690,9 +690,6 @@ importers:
       node-fetch:
         specifier: 3.3.2
         version: 3.3.2
-      semver:
-        specifier: 7.5.4
-        version: 7.5.4
     devDependencies:
       vite:
         specifier: 4.4.9
