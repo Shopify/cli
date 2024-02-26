@@ -18,7 +18,7 @@ import {DeveloperPreviewController} from './dev/ui/components/Dev.js'
 import {DevProcessFunction} from './dev/processes/types.js'
 import {setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
@@ -76,8 +76,10 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   }
 
-  const partnersSession = await fetchPartnersSession()
+  const developerPlatformClient = selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
+
   const {
     storeFqdn,
     storeId,
@@ -85,7 +87,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteAppUpdated,
     updateURLs: cachedUpdateURLs,
     localApp: app,
-  } = await ensureDevContext(commandOptions, partnersSession)
+  } = await ensureDevContext(commandOptions, developerPlatformClient)
 
   const apiKey = remoteApp.apiKey
   let localApp = app

@@ -1,8 +1,7 @@
 import {Organization, MinimalOrganizationApp, OrganizationStore} from '../models/organization.js'
-import {fetchOrgAndApps, OrganizationAppsResponse} from '../services/dev/fetch.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandInfo} from '../services/local-storage.js'
-import {PartnersSession} from '../services/context/partner-account-info.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 
@@ -12,21 +11,23 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
   }
   const orgList = organizations.map((org) => ({label: org.businessName, value: org.id}))
   const id = await renderAutocompletePrompt({
-    message: 'Which Partners organization is this work for?',
+    message: `Which organization is this work for?`,
     choices: orgList,
   })
   return organizations.find((org) => org.id === id)!
 }
 
 export async function selectAppPrompt(
-  apps: OrganizationAppsResponse,
+  apps: MinimalOrganizationApp[],
+  hasMorePages: boolean,
   orgId: string,
-  partnersSession: PartnersSession,
   options?: {
     directory?: string
+    developerPlatformClient?: DeveloperPlatformClient
   },
 ): Promise<string> {
   const tomls = await getTomls(options?.directory)
+  const developerPlatformClient = options?.developerPlatformClient ?? selectDeveloperPlatformClient()
 
   if (tomls) setCachedCommandInfo({tomls})
 
@@ -38,19 +39,19 @@ export async function selectAppPrompt(
     return {label: app.title, value: app.apiKey}
   }
 
-  const appList = apps.nodes.map(toAnswer)
+  const appList = apps.map(toAnswer)
 
   return renderAutocompletePrompt({
     message: 'Which existing app is this for?',
     choices: appList,
-    hasMorePages: apps.pageInfo.hasNextPage,
+    hasMorePages,
     search: async (term) => {
-      const result = await fetchOrgAndApps(orgId, partnersSession, term)
+      const result = await developerPlatformClient.appsForOrg(orgId, term)
 
       return {
-        data: result.apps.nodes.map(toAnswer),
+        data: result.apps.map(toAnswer),
         meta: {
-          hasNextPage: result.apps.pageInfo.hasNextPage,
+          hasNextPage: result.hasMorePages,
         },
       }
     },

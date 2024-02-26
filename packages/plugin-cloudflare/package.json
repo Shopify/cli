@@ -39,8 +39,7 @@
   },
   "dependencies": {
     "@oclif/core": "3.19.5-dev.0",
-    "@shopify/cli-kit": "3.56.0",
-    "semver": "7.5.4"
+    "@shopify/cli-kit": "3.56.0"
   },
   "devDependencies": {
     "vite": "^4.4.9",

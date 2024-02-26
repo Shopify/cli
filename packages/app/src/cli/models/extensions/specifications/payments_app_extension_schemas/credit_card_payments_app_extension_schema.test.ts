@@ -27,10 +27,7 @@ const config: CreditCardPaymentsAppExtensionConfigType = {
   description: 'my payments app extension',
   metafields: [],
   ui_extension_handle: 'sample-ui-extension',
-  encryption_certificate: {
-    fingerprint: 'fingerprint',
-    certificate: '-----BEGIN CERTIFICATE-----\nSample certificate\n-----END CERTIFICATE-----',
-  },
+  encryption_certificate_fingerprint: 'fingerprint',
   checkout_payment_method_fields: [{type: 'string', required: false, key: 'sample_key'}],
   input: {
     metafield_identifiers: {
@@ -88,28 +85,6 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
     )
   })
 
-  test('returns an error if encryption_certificate has invalid format', async () => {
-    // When/Then
-    expect(() =>
-      CreditCardPaymentsAppExtensionSchema.parse({
-        ...config,
-        encryption_certificate: {
-          fingerprint: 'fingerprint',
-          certificate: 'invalid certificate',
-        },
-      }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          validation: 'regex',
-          code: zod.ZodIssueCode.invalid_string,
-          message: 'Invalid',
-          path: ['encryption_certificate', 'certificate'],
-        },
-      ]),
-    )
-  })
-
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
     // When/Then
     expect(() =>
@@ -153,6 +128,7 @@ describe('creditCardPaymentsAppExtensionDeployConfig', () => {
       supports_installments: config.supports_installments,
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       ui_extension_handle: config.ui_extension_handle,
+      encryption_certificate_fingerprint: config.encryption_certificate_fingerprint,
     })
   })
 })

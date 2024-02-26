@@ -18,7 +18,7 @@ const AppAccessSchema = zod.object({
     .object({
       scopes: zod
         .string()
-        .transform((scopes) => normalizeDelimitedString(scopes))
+        .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
         .optional(),
       use_legacy_install_flow: zod.boolean().optional(),
     })

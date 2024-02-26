@@ -48,7 +48,7 @@ describe('writeAppConfigurationFile', () => {
       const content = await readFile(filePath)
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "12345"
+client_id = "api-key"
 name = "my app"
 application_url = "https://myapp.com"
 embedded = true

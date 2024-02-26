@@ -5,17 +5,19 @@ import {fetchPartnersSession} from './context/partner-account-info.js'
 import {loadApp} from '../models/app/loader.js'
 import {
   testAppWithConfig,
+  testDeveloperPlatformClient,
   testFunctionExtension,
   testLocalExtensionTemplates,
-  testRemoteSpecifications,
   testRemoteExtensionTemplates,
   testThemeExtensions,
   testPartnersUserSession,
 } from '../models/app/app.test-data.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
+import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {describe, expect, vi, afterEach, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -44,14 +46,19 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+  async specifications(_appId: string): Promise<ExtensionSpecification[]> {
+    return loadLocalExtensionsSpecifications()
+  },
+})
+
 describe('generate', () => {
-  const mockConfig = new Config({root: ''})
   test('displays a confirmation message with instructions to run dev', async () => {
     // Given
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({directory: '/', reset: false})
+    await generate({directory: '/', reset: false, developerPlatformClient})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -73,7 +80,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({directory: '/', reset: false})
+    await generate({directory: '/', reset: false, developerPlatformClient})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -95,7 +102,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({directory: '/', reset: false})
+    await generate({directory: '/', reset: false, developerPlatformClient})
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -117,7 +124,7 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('unknown_type')
 
     // When
-    const got = generate({directory: '/', reset: false, template: 'unknown_type'})
+    const got = generate({directory: '/', reset: false, template: 'unknown_type', developerPlatformClient})
 
     // Then
     await expect(got).rejects.toThrow(/Unknown extension type: unknown_type/)
@@ -129,7 +136,7 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('theme_app_extension', [themeExtension])
 
     // When
-    const got = generate({directory: '/', reset: false, template: 'theme_app_extension'})
+    const got = generate({directory: '/', reset: false, template: 'theme_app_extension', developerPlatformClient})
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -141,7 +148,7 @@ describe('generate', () => {
     await mockSuccessfulCommandExecution('product_discounts', [discountsFunction])
 
     // When
-    const got = generate({directory: '/', reset: false, template: 'product_discounts'})
+    const got = generate({directory: '/', reset: false, template: 'product_discounts', developerPlatformClient})
 
     // Then
     await expect(got).rejects.toThrow(/Invalid extension type/)
@@ -157,6 +164,7 @@ describe('generate', () => {
       reset: false,
       template: 'subscription_ui',
       flavor: 'unknown',
+      developerPlatformClient,
     })
 
     // Then
@@ -181,7 +189,6 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
   const extensionTemplate = allExtensionTemplates.find((spec) => spec.identifier === identifier)!
 
   vi.mocked(loadApp).mockResolvedValue(app)
-  vi.mocked(partnersRequest).mockResolvedValueOnce({extensionSpecifications: testRemoteSpecifications})
   vi.mocked(partnersRequest).mockResolvedValueOnce({templateSpecifications: testRemoteExtensionTemplates})
   vi.mocked(ensureGenerateContext).mockResolvedValue('api-key')
   vi.mocked(generateExtensionPrompts).mockResolvedValue({
