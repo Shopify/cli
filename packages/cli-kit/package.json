@@ -54,7 +54,7 @@
     "lint:fix": "nx lint:fix",
     "lint:js:fix": "nx lint:js:fix",
     "lint:ruby:fix": "nx lint:ruby:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx test",
     "test:ruby": "nx test:ruby",
     "test:js": "nx test:js",
