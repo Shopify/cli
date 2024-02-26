@@ -7,6 +7,7 @@ const external = [
   'stacktracey',
   '@shopify/app', // Plugins need to be external so that they can be loaded dynamically
   '@shopify/theme', // Plugins need to be external so that they can be loaded dynamically
+  '@shopify/plugin-did-you-mean' // Plugins need to be external so that they can be loaded dynamically
 ]
 
 await esBuild({
