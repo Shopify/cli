@@ -160,6 +160,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.56.0
         version: link:../cli-kit
+      '@shopify/create-app':
+        specifier: 3.56.0
+        version: link:../create-app
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1

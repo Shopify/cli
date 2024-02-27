@@ -95,7 +95,8 @@
         "commands",
         "init.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Create a new app project"
     }
   },
   "version": "3.56.0"

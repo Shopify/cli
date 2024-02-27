@@ -15,6 +15,7 @@
 * [`shopify app generate schema`](#shopify-app-generate-schema)
 * [`shopify app import-flow-legacy-extensions`](#shopify-app-import-flow-legacy-extensions)
 * [`shopify app info`](#shopify-app-info)
+* [`shopify app init`](#shopify-app-init)
 * [`shopify app release`](#shopify-app-release)
 * [`shopify app versions list [FILE]`](#shopify-app-versions-list-file)
 * [`shopify auth logout`](#shopify-auth-logout)
@@ -409,6 +410,33 @@ DESCRIPTION
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/info.js)_
+
+## `shopify app init`
+
+Create a new app project
+
+```
+USAGE
+  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [-d npm|yarn|pnpm|bun] [-p <value>]
+    [--template <value>] [--verbose]
+
+FLAGS
+  -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
+  -n, --name=<value>
+  -p, --path=<value>              [default: .]
+      --flavor=<value>            Which flavor of the given template to use.
+      --no-color                  Disable color output.
+      --template=<value>          The app template. Accepts one of the following:
+                                  - <remix|none>
+                                  - Any GitHub repo with optional branch and subpath, e.g.,
+                                  https://github.com/Shopify/<repository>/[subpath]#[branch]
+      --verbose                   Increase the verbosity of the logs.
+
+ALIASES
+  $ shopify create-app
+```
+
+_See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/init.js)_
 
 ## `shopify app release`
 
