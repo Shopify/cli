@@ -1,24 +1,26 @@
 import {ensureReleaseContext} from './context.js'
 import {release} from './release.js'
-import {versionDiffByVersion} from './release/version-diff.js'
+import {
+  configExtensionsIdentifiersBreakdown,
+  extensionsIdentifiersReleaseBreakdown,
+} from './context/breakdown-extensions.js'
 import {testApp} from '../models/app/app.test-data.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
-import {confirmReleasePrompt} from '../prompts/release.js'
 import {AppRelease} from '../api/graphql/app_release.js'
+import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {Config} from '@oclif/core'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('../prompts/release.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('../api/graphql/app_release.js')
-vi.mock('./release/version-diff.js')
+vi.mock('./context/breakdown-extensions.js')
+vi.mock('../prompts/deploy-release.js')
 
 const APP = {
   id: 'app-id',
@@ -29,6 +31,7 @@ const APP = {
   applicationUrl: 'https://example.com',
   redirectUrlWhitelist: [],
   apiSecretKeys: [],
+  betas: [],
 }
 
 beforeEach(() => {
@@ -49,7 +52,7 @@ describe('release', () => {
   test("doesn't trigger mutations if the user doesn't confirm", async () => {
     // Given
     const app = testApp()
-    vi.mocked(confirmReleasePrompt).mockRejectedValue(new AbortSilentError())
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(false)
 
     // When/Then
     await expect(testRelease(app, 'app-version')).rejects.toThrow(AbortSilentError)
@@ -58,7 +61,7 @@ describe('release', () => {
   test('triggers mutations if the user confirms', async () => {
     // Given
     const app = testApp()
-    vi.mocked(confirmReleasePrompt).mockResolvedValue()
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
@@ -99,7 +102,7 @@ describe('release', () => {
   test('shows a custom error message with link and message if errors are returned', async () => {
     // Given
     const app = testApp()
-    vi.mocked(confirmReleasePrompt).mockResolvedValue()
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
       for (const task of tasks) {
         // eslint-disable-next-line no-await-in-loop
@@ -157,16 +160,41 @@ async function testRelease(
     partnersApp: partnersApp ?? APP,
   })
 
-  vi.mocked(versionDiffByVersion).mockResolvedValue({
-    versionsDiff: {added: [], removed: [], updated: []},
-    versionDetails: {id: 1, uuid: 'uuid', location: 'https://example.com', versionTag: '1.0.0', message: 'message'},
-  })
+  vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())
+  vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue(buildConfigExtensionsBreakdown())
 
   await release({
     app,
     reset: false,
     force: Boolean(options?.force),
     version,
-    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
   })
+}
+
+function buildExtensionsBreakdown() {
+  return {
+    extensionIdentifiersBreakdown: {
+      onlyRemote: [],
+      toCreate: [],
+      toUpdate: [],
+      fromDashboard: [],
+    },
+    versionDetails: {
+      id: 1,
+      uuid: 'uuid',
+      location: 'https://example.com',
+      versionTag: '1.0.0',
+      message: 'message',
+      appModuleVersions: [],
+    },
+  }
+}
+
+function buildConfigExtensionsBreakdown() {
+  return {
+    existingFieldNames: [],
+    existingUpdatedFieldNames: [],
+    newFieldNames: [],
+    deletedFieldNames: [],
+  }
 }

@@ -47,7 +47,6 @@ const flowActionSpecification = createExtensionSpecification({
   deployConfig: async (config, extensionPath) => {
     return {
       title: config.name,
-      handle: config.handle,
       description: config.description,
       url: config.runtime_url,
       fields: serializeFields('flow_action', config.settings?.fields),

@@ -1,7 +1,7 @@
 import * as styles from './Layout.module.scss'
 import en from './translations/en.json'
 import React from 'react'
-import {ToolsMajor} from '@shopify/polaris-icons'
+import {WrenchIcon} from '@shopify/polaris-icons'
 import {useI18n} from '@shopify/react-i18n'
 
 interface Props {
@@ -19,7 +19,7 @@ export function Layout({children}: Props) {
       <div className={styles.DevTool}>
         <header className={styles.Header}>
           <section className={styles.HeaderContent}>
-            <ToolsMajor />
+            <WrenchIcon />
             <h1>&nbsp;{i18n.translate('title')}</h1>
           </section>
         </header>

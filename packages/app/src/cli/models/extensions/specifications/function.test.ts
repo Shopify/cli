@@ -6,6 +6,7 @@ import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-ki
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 vi.mock('../../../services/deploy/upload.js')
 
@@ -51,7 +52,7 @@ describe('functionConfiguration', () => {
 
     extension = await testFunctionExtension({
       dir: '/function',
-      config,
+      config: {...config},
     })
   })
 
@@ -136,7 +137,7 @@ describe('functionConfiguration', () => {
       const got = await extension.deployConfig({apiKey, token})
 
       // Then
-      expect(got!.targets).toEqual([
+      expect(getPathValue(got!, 'targets')).toEqual([
         {handle: 'some.api.target1', input_query: inputQuery},
         {handle: 'some.api.target2', export: 'run_target2'},
       ])
@@ -256,7 +257,7 @@ describe('functionConfiguration', () => {
         },
       }
 
-      expect(got!.localization).toEqual(expectedLocalization)
+      expect(getPathValue(got!, 'localization')).toEqual(expectedLocalization)
     })
   })
 

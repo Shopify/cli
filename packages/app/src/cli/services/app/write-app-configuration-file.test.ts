@@ -1,11 +1,13 @@
 import {writeAppConfigurationFile} from './write-app-configuration-file.js'
-import {DEFAULT_CONFIG} from '../../models/app/app.test-data.js'
+import {DEFAULT_CONFIG, buildVersionedAppSchema} from '../../models/app/app.test-data.js'
+import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
 const FULL_CONFIGURATION = {
   build: {
+    include_config_on_deploy: true,
     automatically_update_urls_on_dev: true,
     dev_store_url: 'example.myshopify.com',
   },
@@ -37,18 +39,24 @@ describe('writeAppConfigurationFile', () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.toml')
+      const {schema} = await buildVersionedAppSchema()
 
       // When
-      const got = await writeAppConfigurationFile({...FULL_CONFIGURATION, path: filePath})
+      await writeAppConfigurationFile({...FULL_CONFIGURATION, path: filePath}, schema)
 
       // Then
       const content = await readFile(filePath)
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
+client_id = "api-key"
 name = "my app"
-client_id = "12345"
 application_url = "https://myapp.com"
 embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "example.myshopify.com"
+include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
@@ -78,10 +86,6 @@ embedded = false
 
 [app_preferences]
 url = "https://example.com/prefs"
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "example.myshopify.com"
 `
       expect(content).toEqual(expectedContent)
     })
@@ -91,19 +95,23 @@ dev_store_url = "example.myshopify.com"
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const filePath = joinPath(tmp, 'shopify.app.toml')
+      const {schema} = await buildVersionedAppSchema()
 
       // When
-      const got = await writeAppConfigurationFile({
-        ...FULL_CONFIGURATION,
-        path: filePath,
-        build: undefined,
-        app_preferences: undefined,
-        pos: undefined,
-        webhooks: {
-          api_version: '2023-04',
-          privacy_compliance: {},
-        },
-      })
+      await writeAppConfigurationFile(
+        {
+          ...FULL_CONFIGURATION,
+          path: filePath,
+          build: undefined,
+          app_preferences: undefined,
+          pos: undefined,
+          webhooks: {
+            api_version: '2023-04',
+            privacy_compliance: {},
+          },
+        } as CurrentAppConfiguration,
+        schema,
+      )
 
       // Then
       const content = await readFile(filePath)

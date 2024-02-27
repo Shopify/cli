@@ -1,9 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import {PushOptions} from '../services/app/config/push.js'
-import {AppSchema, CurrentAppConfiguration, getAppScopesArray} from '../models/app/app.js'
-import {mergeAppConfiguration} from '../services/app/config/link.js'
-import {OrganizationApp} from '../models/organization.js'
-import {App} from '../api/graphql/get_config.js'
+import {AppSchema, CurrentAppConfiguration} from '../models/app/app.js'
 import {rewriteConfiguration} from '../services/app/write-app-configuration-file.js'
 import {
   RenderTextPromptOptions,
@@ -19,6 +15,12 @@ import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import colors from '@shopify/cli-kit/node/colors'
+import {zod} from '@shopify/cli-kit/node/schema'
+
+export interface DiffContent {
+  baselineContent: string
+  updatedContent: string
+}
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<string> {
   const namePromptOptions = buildTextPromptOptions(defaultName)
@@ -73,36 +75,24 @@ export function validate(value: string): string | undefined {
   if (result.length > 238) return 'The file name is too long.'
 }
 
-export async function confirmPushChanges(options: PushOptions, app: App) {
-  if (options.force) return true
-
-  const configuration = options.configuration as CurrentAppConfiguration
-  const remoteConfiguration = mergeAppConfiguration(configuration, app as OrganizationApp)
-
-  if (configuration.access_scopes?.scopes)
-    configuration.access_scopes.scopes = getAppScopesArray(configuration).join(',')
-
+export function buildDiffConfigContent(
+  localConfig: CurrentAppConfiguration,
+  remoteConfig: unknown,
+  schema: zod.ZodTypeAny = AppSchema,
+  renderNoChanges = true,
+) {
   const [updated, baseline] = deepDifference(
-    {...(rewriteConfiguration(AppSchema, configuration) as object), build: undefined},
-    {...(rewriteConfiguration(AppSchema, remoteConfiguration) as object), build: undefined},
+    {...(rewriteConfiguration(schema, localConfig) as object), build: undefined},
+    {...(rewriteConfiguration(schema, remoteConfig) as object), build: undefined},
   )
 
   if (deepCompare(updated, baseline)) {
-    renderInfo({headline: 'No changes to update.'})
-    return false
+    if (renderNoChanges) renderInfo({headline: 'No changes to update.'})
+    return undefined
   }
 
-  const baselineContent = encodeToml(baseline)
-  const updatedContent = encodeToml(updated)
-
-  return renderConfirmationPrompt({
-    message: ['Make the following changes to your remote configuration?'],
-    gitDiff: {
-      baselineContent,
-      updatedContent,
-    },
-    defaultValue: true,
-    confirmationMessage: 'Yes, confirm changes',
-    cancellationMessage: 'No, cancel',
-  })
+  return {
+    baselineContent: encodeToml(baseline),
+    updatedContent: encodeToml(updated),
+  }
 }

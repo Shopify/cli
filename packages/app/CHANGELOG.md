@@ -1,5 +1,85 @@
 # @shopify/app
 
+## 3.56.0
+
+### Minor Changes
+
+- 390729c33: `app config push` and `app update-url` commands dropped
+
+### Patch Changes
+
+- 36f900124: Remover versiond app config beta
+- ea4983751: Remove api client configuration from the link command
+- c3c9fbc12: Link command uses current version app configuration modules instead extensions registrations
+- a73bfbde1: Remove GetConfig query
+- e7ba7f4cd: Refine scope parsing format
+- 78fb46806: Add support for "query" query param in graphiql
+- f3210b895: Link overwrites redirect urls
+- 6732bca77: Display empty sections inside the deploy release prompt
+- Updated dependencies [1220290ec]
+  - @shopify/cli-kit@3.56.0
+  - @shopify/plugin-cloudflare@3.56.0
+
+## 3.55.0
+
+### Minor Changes
+
+- c5faed951: - Deploy command will push the configuration to the server
+  - Added the new flag `update_config_on_deploy` to the toml to opt-in/opt-out deploying the configuration with the deploy command
+  - Deploy and release prompts will display the differences between the local and the remote app configuration
+  - Deploy and release prompts will display if the dashboard managed extensions are new or deleted for the new version
+  - Added support to configure the `Direct API offline access` in the `toml`
+  - Configuration will be pushed automatically to the draft version when you run the `dev` command
+
+### Patch Changes
+
+- @shopify/cli-kit@3.55.0
+- @shopify/plugin-cloudflare@3.55.0
+
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- a9e847717: Update @shopify/polaris and @shopify/polaris-icons to latest version
+- a9e847717: Refresh token when updating extension draft
+- a9e847717: Update app and store links from GraphiQL when dev is restarted
+- da15e40c2: Remove internal versioned app config beta flag
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+  - @shopify/plugin-cloudflare@3.54.0
+  - @shopify/cli-kit@3.54.0
+
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0d60cf64b: Emit semicolons in generated WIT for Functions
+- 1b81646ff: Serve GraphiQL on localhost
+- 0896e62b1: Versioned app config support
+- 3cb5c5900: Enable GraphiQL for everyone by default
+
+### Patch Changes
+
+- a53985314: Eliminate status flicker when reconnecting to dev
+- cc3ada0a2: Raise an error properly and prompt reauthentication when authentication expires
+- e76f79ac6: Restyle GraphiQL top bar yet again for better icons, alignment, and arrangement
+- 121cc9f93: Add a custom user agent for GraphiQL
+- Updated dependencies [1d6fe3475]
+- Updated dependencies [cc3ada0a2]
+- Updated dependencies [0896e62b1]
+- Updated dependencies [72b1daaee]
+  - @shopify/plugin-cloudflare@3.53.0
+  - @shopify/cli-kit@3.53.0
+
 ## 3.52.0
 
 ### Minor Changes

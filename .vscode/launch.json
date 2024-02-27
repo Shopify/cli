@@ -4,6 +4,27 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app {command}",
+        "cwd": "${workspaceFolder}",
+        "console" : "integratedTerminal",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "${input:command}",
+          "--path=${input:appDir}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+        },
+        "skipFiles": [
+          "<node_internals>/**",
+        ],
+      },
       {
         "type": "node",
         "request": "launch",
@@ -21,6 +42,7 @@
         "request": "launch",
         "name": "shopify app build",
         "cwd": "${workspaceFolder}",
+        "console" : "integratedTerminal",
         "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "shopify",
@@ -40,6 +62,7 @@
         "request": "launch",
         "name": "shopify app dev",
         "cwd": "${workspaceFolder}",
+        "console" : "integratedTerminal",
         "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "shopify",
@@ -59,6 +82,7 @@
         "type": "node",
         "request": "launch",
         "name": "shopify app generate extension",
+        "console" : "integratedTerminal",
         "runtimeExecutable": "pnpm",
         "runtimeArgs": [
           "run",
@@ -118,6 +142,7 @@
           "tax_calculation",
           "fulfillment_constraints",
           "local_pickup_delivery_option_generator",
+          "pickup_point_delivery_option_generator",
         ],
         "default": "checkout_ui_extension",
     },

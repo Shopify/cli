@@ -1,5 +1,8 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {fetchAppFromConfigOrSelect} from '../fetch-app-from-config-or-select.js'
+
+import {logMetadataForLoadedContext} from '../../context.js'
+
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {diffLines} from 'diff'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -15,6 +18,8 @@ export async function pullEnv(app: AppInterface, {envFile}: PullEnvOptions): Pro
 
 export async function updateEnvFile(app: AppInterface, envFile: PullEnvOptions['envFile']): Promise<OutputMessage> {
   const orgApp = await fetchAppFromConfigOrSelect(app)
+
+  await logMetadataForLoadedContext(orgApp)
 
   const updatedValues = {
     SHOPIFY_API_KEY: orgApp.apiKey,

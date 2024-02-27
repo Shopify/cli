@@ -20,14 +20,13 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   }),
 })
 
-const spec = createExtensionSpecification({
+const flowTemplateSpec = createExtensionSpecification({
   identifier: 'flow_template',
   schema: FlowTemplateExtensionSchema,
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, extensionPath) => {
     return {
       template_handle: config.handle,
-      handle: config.handle,
       name: config.name,
       description: config.description,
       categories: config.template.categories,
@@ -50,4 +49,4 @@ async function loadWorkflow(path: string, workflowPath: string) {
   return fs.readFileSync(flowFilePath, 'base64')
 }
 
-export default spec
+export default flowTemplateSpec

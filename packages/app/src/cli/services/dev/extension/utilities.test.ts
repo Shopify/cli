@@ -37,6 +37,6 @@ describe('getExtensionPointTargetSurface()', () => {
   })
 
   test('returns "point_of_sale" for a POS UI extension', async () => {
-    expect(getExtensionPointTargetSurface('retail.home.tile.render')).toBe('point_of_sale')
+    expect(getExtensionPointTargetSurface('pos.home.tile.render')).toBe('point_of_sale')
   })
 })

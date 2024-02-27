@@ -74,6 +74,15 @@ module Theme
         end
       end
 
+      def test_can_specify_nodelete
+        ShopifyCLI::Theme::DevServer.expects(:start)
+          .with(@ctx, @root, host: Theme::Command::Serve::DEFAULT_HTTP_HOST, nodelete: true)
+
+        run_serve_command([@root]) do |command|
+          command.options.flags[:nodelete] = true
+        end
+      end
+
       def test_valid_authentication_method_when_storefront_renderer_from_cli3_in_env_is_present
         ShopifyCLI::Environment.stubs(:storefront_renderer_auth_token).returns("CLI3 SFR Token")
         ShopifyCLI::DB.stubs(:get).with(:shopify_exchange_token).returns("password")

@@ -2,9 +2,9 @@ import {appFlags} from '../../flags.js'
 import {AppInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import Command from '../../utilities/app-command.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {release} from '../../services/release.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
+import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -33,6 +33,12 @@ export default class Release extends Command {
       env: 'SHOPIFY_FLAG_RESET',
       default: false,
     }),
+    force: Flags.boolean({
+      hidden: false,
+      description: 'Release without asking for confirmation.',
+      env: 'SHOPIFY_FLAG_FORCE',
+      char: 'f',
+    }),
     version: Flags.string({
       hidden: false,
       description: 'The name of the app version to release.',
@@ -52,15 +58,19 @@ export default class Release extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const specifications = await loadLocalExtensionsSpecifications(this.config)
+    const specifications = await loadLocalExtensionsSpecifications()
     const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+
+    const requiredNonTTYFlags = ['force']
+    if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
+
     await release({
       app,
       apiKey,
       reset: flags.reset,
       force: flags.force,
       version: flags.version,
-      commandConfig: this.config,
     })
   }
 }

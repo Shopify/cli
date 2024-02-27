@@ -83,3 +83,42 @@ export function deepDifference(one: object, two: object): [object, object] {
   const changes2 = differenceWith(toPairs(two), toPairs(one), deepCompare)
   return [fromPairs(changes), fromPairs(changes2)]
 }
+
+/**
+ * Gets the value at path of object. If the resolved value is undefined, the defaultValue is returned in its place.
+ *
+ * @param object - The object to query.
+ * @param path - The path of the property to get.
+ * @returns - Returns the resolved value.
+ */
+export function getPathValue<T = object>(object: object, path: string): T | undefined {
+  const get = require('lodash/get.js')
+
+  return get(object, path) === undefined ? undefined : (get(object, path) as T)
+}
+
+/**
+ * Sets the value at path of object. If a portion of path doesn't exist, it's create.
+ *
+ * @param object - The object to modify.
+ * @param path - The path of the property to set.
+ * @param value - The value to set.
+ * @returns - Returns object.
+ */
+export function setPathValue(object: object, path: string, value?: unknown): object {
+  const set = require('lodash/set.js')
+
+  return set(object, path, value)
+}
+
+/**
+ * Checks if value is an empty object, collection, map, or set.
+ *
+ * @param object - The value to check.
+ * @returns - Returns true if value is empty, else false.
+ */
+export function isEmpty(object: object): boolean {
+  const isEmpty = require('lodash/isEmpty.js')
+
+  return isEmpty(object)
+}

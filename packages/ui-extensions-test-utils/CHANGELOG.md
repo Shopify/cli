@@ -1,5 +1,12 @@
 # @shopify/ui-extensions-test-utils
 
+## 3.26.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+
 ## 3.25.0
 
 ## 3.24.1

@@ -31,7 +31,7 @@ const UIExtensionSchema = BaseSchema.extend({
     return {...config, extension_points: extensionPoints}
   })
 
-const spec = createExtensionSpecification({
+const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
@@ -43,8 +43,8 @@ const spec = createExtensionSpecification({
       }) !== undefined
     return needsCart ? [...basic, 'cart_url'] : basic
   },
-  validate: async (config, directory) => {
-    return validateUIExtensionPointConfig(directory, config.extension_points, config.path)
+  validate: async (config, path, directory) => {
+    return validateUIExtensionPointConfig(directory, config.extension_points, path)
   },
   deployConfig: async (config, directory) => {
     return {
@@ -113,4 +113,4 @@ Please check the module path for ${target}`.value,
   return ok({})
 }
 
-export default spec
+export default uiExtensionSpec

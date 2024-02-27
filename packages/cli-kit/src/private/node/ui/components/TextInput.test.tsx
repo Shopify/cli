@@ -12,6 +12,7 @@ import {describe, test, expect, vi} from 'vitest'
 const ARROW_LEFT = '\u001B[D'
 const ARROW_RIGHT = '\u001B[C'
 const DELETE = '\u007F'
+const TAB = '\u0009'
 
 describe('TextInput', () => {
   test('default state', () => {
@@ -202,5 +203,19 @@ describe('TextInput', () => {
     const renderInstance = render(<TextInput onChange={() => {}} value="ABC" password />)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m***[46m█[49m[39m"')
+  })
+
+  test('tab completes with placeholder content', async () => {
+    const StatefulTextInput = () => {
+      const [value, setValue] = useState('')
+      const placeholder = 'Hello'
+
+      return <TextInput value={value} onChange={setValue} placeholder={placeholder} />
+    }
+    const renderInstance = render(<StatefulTextInput />)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWaitForChange(renderInstance, TAB)
+    expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
   })
 })

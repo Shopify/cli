@@ -33,7 +33,7 @@ module ShopifyCLI
             .with_theme(@theme)
             .with_syncer(@syncer)
 
-          @proxy = Proxy.new(@ctx, @theme, param_builder)
+          @proxy = Proxy.new(@ctx, @theme, param_builder, true)
         end
 
         def test_get_is_proxied_to_online_store
@@ -540,6 +540,52 @@ module ShopifyCLI
           error = assert_raises(KeyError) { @proxy.send(:bearer_token) }
 
           assert_equal("storefront_renderer_production_exchange_token missing", error.message)
+        end
+
+        def test_modifies_set_cookie_headers
+          stub_request(:post, "https://dev-theme-server-store.myshopify.com/password?_fd=0&pb=0")
+            .with(
+              body: {
+                "form_type" => "storefront_password",
+                "password" => "notapassword",
+              },
+            )
+            .to_return(status: 302, headers: {
+              "set-cookie" => "storefront_digest=123abc; path=/; secure; HttpOnly; SameSite=None",
+            })
+          stub_session_id_request
+
+          response = request.post("/password", params: {
+            "form_type" => "storefront_password",
+            "password" => "notapassword",
+          })
+          assert_equal("storefront_digest=123abc; path=/; secure: false; HttpOnly; SameSite=None",
+            response.headers["set-cookie"])
+        end
+
+        def test_does_not_modify_set_cookie_headers_on_chrome
+          stub_request(:post, "https://dev-theme-server-store.myshopify.com/password?_fd=0&pb=0")
+            .with(
+              body: {
+                "form_type" => "storefront_password",
+                "password" => "notapassword",
+              },
+            )
+            .to_return(status: 302, headers: {
+              "set-cookie" => "storefront_digest=123abc; path=/; secure; HttpOnly; SameSite=None",
+            })
+          stub_session_id_request
+
+          response = request.post("/password", {
+            params: {
+              "form_type" => "storefront_password",
+              "password" => "notapassword",
+            },
+            "HTTP_USER_AGENT" => "Mozilla/1 (Macintosh) AppleWebKit/1 (KHTML, like Gecko) Chrome/1 Safari/1",
+          })
+
+          assert_equal("storefront_digest=123abc; path=/; secure; HttpOnly; SameSite=None",
+            response.headers["set-cookie"])
         end
 
         private

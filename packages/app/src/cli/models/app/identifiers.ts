@@ -22,9 +22,14 @@ export interface Identifiers {
    * The extensions' numeric identifiers (expressed as a string).
    */
   extensionIds: IdentifiersExtensions
+
+  /**
+   * The extensions' unique identifiers which uuid is not managed.
+   */
+  extensionsNonUuidManaged: IdentifiersExtensions
 }
 
-export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds'>
+export type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
 type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface

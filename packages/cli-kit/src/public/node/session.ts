@@ -14,7 +14,7 @@ export interface AdminSession {
   storeFqdn: string
 }
 
-interface EnsureAuthenticatedPartnersOptions {
+interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
 }
 
@@ -31,7 +31,7 @@ interface EnsureAuthenticatedPartnersOptions {
 export async function ensureAuthenticatedPartners(
   scopes: string[] = [],
   env = process.env,
-  options: EnsureAuthenticatedPartnersOptions = {},
+  options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
@@ -78,19 +78,24 @@ ${outputToken.json(scopes)}
  * @param store - Store fqdn to request auth for.
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @param options - Optional extra options to use.
  * @returns The access token for the Admin API.
  */
 export async function ensureAuthenticatedAdmin(
   store: string,
   scopes: string[] = [],
   forceRefresh = false,
+  options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<AdminSession> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${outputToken.raw(
     store,
   )}:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {forceRefresh})
+  const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {
+    forceRefresh,
+    ...options,
+  })
   if (!tokens.admin) {
     throw new BugError('No admin token found after ensuring authenticated')
   }

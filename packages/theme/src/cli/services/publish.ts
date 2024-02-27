@@ -1,8 +1,8 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
-import {publishTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {themePreviewUrl} from '@shopify/cli-kit/node/themes/theme-urls'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {publishTheme} from '@shopify/cli-kit/node/themes/api'
+import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
@@ -32,8 +32,8 @@ export async function publish(adminSession: AdminSession, themeId: string | unde
 
   if (!options.force) {
     const accept = await renderConfirmationPrompt({
-      message: `Do you want to make ${theme.name} the new live theme on ${adminSession.storeFqdn}?`,
-      confirmationMessage: `Yes, make ${theme.name} the new live theme`,
+      message: `Do you want to make '${theme.name}' the new live theme on ${adminSession.storeFqdn}?`,
+      confirmationMessage: `Yes, make '${theme.name}' the new live theme`,
       cancellationMessage: 'No, cancel publish',
     })
     if (!accept) return

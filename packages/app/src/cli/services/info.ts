@@ -1,6 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {getAppContext} from './context.js'
-import {fetchPartnersSession, isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
@@ -23,6 +24,7 @@ export interface InfoOptions {
   configName?: string
   /** When true the command outputs the env. variables necessary to deploy and run web/ */
   webEnv: boolean
+  developerPlatformClient?: DeveloperPlatformClient
 }
 interface Configurable {
   type: string
@@ -43,7 +45,11 @@ export async function infoWeb(app: AppInterface, {format}: InfoOptions): Promise
 
 export async function infoApp(app: AppInterface, options: InfoOptions): Promise<OutputMessage> {
   if (options.format === 'json') {
-    return outputContent`${JSON.stringify(app, null, 2)}`
+    const appWithSupportedExtensions = {
+      ...app,
+      allExtensions: app.allExtensions.filter((ext) => ext.isReturnedAsInfo()),
+    }
+    return outputContent`${JSON.stringify(appWithSupportedExtensions, null, 2)}`
   } else {
     const appInfo = new AppInfo(app, options)
     return appInfo.output()
@@ -74,9 +80,9 @@ class AppInfo {
 
   async devConfigsSection(): Promise<[string, string]> {
     const title = `Current app configuration`
-    const partnersSession = await fetchPartnersSession()
+    const developerPlatformClient = this.options.developerPlatformClient ?? selectDeveloperPlatformClient()
     const {cachedInfo} = await getAppContext({
-      partnersSession,
+      developerPlatformClient,
       directory: this.app.directory,
       reset: false,
       configName: this.options.configName,
@@ -97,10 +103,11 @@ class AppInfo {
     }
 
     let partnersAccountInfo = ['Partners account', 'unknown']
-    if (isServiceAccount(partnersSession.accountInfo)) {
-      partnersAccountInfo = ['Service account', partnersSession.accountInfo.orgName]
-    } else if (isUserAccount(partnersSession.accountInfo)) {
-      partnersAccountInfo = ['Partners account', partnersSession.accountInfo.email]
+    const retrievedAccountInfo = await developerPlatformClient.accountInfo()
+    if (isServiceAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Service account', retrievedAccountInfo.orgName]
+    } else if (isUserAccount(retrievedAccountInfo)) {
+      partnersAccountInfo = ['Partners account', retrievedAccountInfo.email]
     }
 
     const lines = [
@@ -142,11 +149,12 @@ class AppInfo {
       })
     }
 
-    augmentWithExtensions(this.app.allExtensions, this.extensionSubSection.bind(this))
+    const supportedExtensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
+    augmentWithExtensions(supportedExtensions, this.extensionSubSection.bind(this))
 
     if (this.app.errors?.isEmpty() === false) {
       body += `\n\n${outputContent`${outputToken.subheading('Extensions with errors')}`.value}`
-      this.app.allExtensions.forEach((extension) => {
+      supportedExtensions.forEach((extension) => {
         body += `${this.invalidExtensionSubSection(extension)}`
       })
     }
@@ -186,7 +194,7 @@ class AppInfo {
     const config = extension.configuration
     const details = [
       [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configuration.path)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     if (config && config.metafields?.length) {
       details.push(['     metafields', `${config.metafields.length}`])
@@ -196,11 +204,11 @@ class AppInfo {
   }
 
   invalidExtensionSubSection(extension: ExtensionInstance): string {
-    const error = this.app.errors?.getError(extension.configuration.path)
+    const error = this.app.errors?.getError(extension.configurationPath)
     if (!error) return ''
     const details = [
       [`📂 ${extension.handle}`, relativePath(this.app.directory, extension.directory)],
-      ['     config file', relativePath(extension.directory, extension.configuration.path)],
+      ['     config file', relativePath(extension.directory, extension.configurationPath)],
     ]
     const formattedError = this.formattedError(error)
     return `\n${linesToColumns(details)}\n${formattedError}`

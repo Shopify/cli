@@ -2,12 +2,10 @@ import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionDevOptions} from '../extension.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
-import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
+import * as appModel from '../../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-
-vi.mock('../../../models/app/app.js')
 
 describe('getUIExtensionPayload', () => {
   test('returns the right payload', async () => {
@@ -18,7 +16,7 @@ describe('getUIExtensionPayload', () => {
       const signal: any = vi.fn()
       const stdout: any = vi.fn()
       const stderr: any = vi.fn()
-      vi.mocked(getUIExtensionRendererVersion).mockResolvedValue({
+      vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
         name: 'extension-renderer',
         version: '1.2.3',
       })
@@ -36,7 +34,7 @@ describe('getUIExtensionPayload', () => {
             block_progress: false,
             collect_buyer_consent: {
               sms_marketing: false,
-              write_privacy_consent: false,
+              customer_privacy: false,
             },
           },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
@@ -161,7 +159,7 @@ describe('getUIExtensionPayload', () => {
             api_access: false,
             collect_buyer_consent: {
               sms_marketing: false,
-              write_privacy_consent: false,
+              customer_privacy: false,
             },
           },
           extension_points: [
@@ -247,7 +245,7 @@ describe('getUIExtensionPayload', () => {
             api_access: false,
             collect_buyer_consent: {
               sms_marketing: false,
-              write_privacy_consent: false,
+              customer_privacy: false,
             },
           },
           extension_points: [

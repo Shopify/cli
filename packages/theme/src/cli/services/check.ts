@@ -286,13 +286,12 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
   await autofix(sourceCodes, offenses, saveToDiskFixApplicator)
 }
 
-export async function outputActiveConfig(configPath?: string, themeRoot?: string) {
+export async function outputActiveConfig(themeRoot: string, configPath?: string) {
   const {ignore, settings, root} = await loadConfig(configPath, themeRoot)
 
   const config = {
-    // loadConfig has no clear idea of where to extend the config from.
-    // We can default to recommended to be safe.
-    extends: 'theme-check:recommended',
+    // loadConfig flattens all configs, it doesn't extend anything
+    extends: [],
 
     // Depending on how the configs were merged during loadConfig, there may be
     // duplicate patterns to ignore. We can clean them before outputting.
@@ -306,7 +305,7 @@ export async function outputActiveConfig(configPath?: string, themeRoot?: string
   outputInfo(YAML.stringify(config))
 }
 
-export async function outputActiveChecks(configPath?: string, root?: string) {
+export async function outputActiveChecks(root: string, configPath?: string) {
   const {settings, ignore, checks} = await loadConfig(configPath, root)
   // Depending on how the configs were merged during loadConfig, there may be
   // duplicate patterns to ignore. We can clean them before outputting.

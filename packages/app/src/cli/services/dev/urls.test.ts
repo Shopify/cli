@@ -1,6 +1,5 @@
 import {
   updateURLs,
-  getURLs,
   shouldOrPromptUpdateURLs,
   generateFrontendURL,
   generatePartnersURLs,
@@ -10,11 +9,9 @@ import {
 } from './urls.js'
 import {DEFAULT_CONFIG, testApp, testAppWithConfig} from '../../models/app/app.test-data.js'
 import {UpdateURLsQuery} from '../../api/graphql/update_urls.js'
-import {GetURLsQuery} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
@@ -45,7 +42,6 @@ beforeEach(() => {
 const defaultOptions: FrontendURLOptions = {
   noTunnel: false,
   tunnelUrl: undefined,
-  commandConfig: new Config({root: ''}),
   tunnelClient: {
     getTunnelStatus: () => ({status: 'starting'}),
     stopTunnel: () => {},
@@ -97,26 +93,29 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, 'token', appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith({
-      path: appWithConfig.configuration.path,
-      access_scopes: {
-        scopes: 'read_products',
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(
+      {
+        path: appWithConfig.configuration.path,
+        access_scopes: {
+          scopes: 'read_products',
+        },
+        application_url: 'https://example.com',
+        auth: {
+          redirect_urls: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
+        },
+        client_id: 'api-key',
+        embedded: true,
+        name: 'my app',
+        webhooks: {
+          api_version: '2023-04',
+        },
       },
-      application_url: 'https://example.com',
-      auth: {
-        redirect_urls: [
-          'https://example.com/auth/callback',
-          'https://example.com/auth/shopify/callback',
-          'https://example.com/api/auth/callback',
-        ],
-      },
-      client_id: '12345',
-      embedded: true,
-      name: 'my app',
-      webhooks: {
-        api_version: '2023-04',
-      },
-    })
+      appWithConfig.configSchema,
+    )
   })
 
   test('throws an error if requests has a user error', async () => {
@@ -187,47 +186,34 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, 'token', appWithConfig)
 
     // Then
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith({
-      path: appWithConfig.configuration.path,
-      access_scopes: {
-        scopes: 'read_products',
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(
+      {
+        path: appWithConfig.configuration.path,
+        access_scopes: {
+          scopes: 'read_products',
+        },
+        application_url: 'https://example.com',
+        auth: {
+          redirect_urls: [
+            'https://example.com/auth/callback',
+            'https://example.com/auth/shopify/callback',
+            'https://example.com/api/auth/callback',
+          ],
+        },
+        app_proxy: {
+          url: 'https://example.com',
+          subpath: 'subpath',
+          prefix: 'prefix',
+        },
+        client_id: 'api-key',
+        embedded: true,
+        name: 'my app',
+        webhooks: {
+          api_version: '2023-04',
+        },
       },
-      application_url: 'https://example.com',
-      auth: {
-        redirect_urls: [
-          'https://example.com/auth/callback',
-          'https://example.com/auth/shopify/callback',
-          'https://example.com/api/auth/callback',
-        ],
-      },
-      app_proxy: {
-        url: 'https://example.com',
-        subpath: 'subpath',
-        prefix: 'prefix',
-      },
-      client_id: '12345',
-      embedded: true,
-      name: 'my app',
-      webhooks: {
-        api_version: '2023-04',
-      },
-    })
-  })
-})
-
-describe('getURLs', () => {
-  test('sends a request to get the URLs', async () => {
-    // Given
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      app: {applicationUrl: 'https://example.com', redirectUrlWhitelist: []},
-    })
-    const expectedVariables = {apiKey: 'apiKey'}
-
-    // When
-    await getURLs('apiKey', 'token')
-
-    // Then
-    expect(partnersRequest).toHaveBeenCalledWith(GetURLsQuery, 'token', expectedVariables)
+      appWithConfig.configSchema,
+    )
   })
 })
 
@@ -372,7 +358,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration)
+    expect(writeAppConfigurationFile).toHaveBeenCalledWith(localApp.configuration, localApp.configSchema)
   })
 })
 
@@ -597,7 +583,11 @@ describe('generatePartnersURLs', () => {
   test('Returns app proxy section when receiving proxy fields', () => {
     const applicationUrl = 'http://my-base-url'
 
-    const got = generatePartnersURLs(applicationUrl, [], {url: applicationUrl, subpath: 'subpath', prefix: 'prefix'})
+    const got = generatePartnersURLs(applicationUrl, [], {
+      url: applicationUrl,
+      subpath: 'subpath',
+      prefix: 'prefix',
+    })
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -618,7 +608,11 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const proxyUrl = 'http://old-base-url/subpath'
 
-    const got = generatePartnersURLs(applicationUrl, [], {url: proxyUrl, subpath: 'subpath', prefix: 'prefix'})
+    const got = generatePartnersURLs(applicationUrl, [], {
+      url: proxyUrl,
+      subpath: 'subpath',
+      prefix: 'prefix',
+    })
 
     expect(got).toMatchObject({
       applicationUrl,

@@ -14,7 +14,6 @@ import {getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js
 import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {PartnersURLs} from '../urls.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export interface ProxyServerProcess extends BaseProcess<{port: number; rules: {[key: string]: string}}> {
@@ -75,8 +74,7 @@ export async function setupDevProcesses({
   const apiKey = remoteApp.apiKey
   const apiSecret = (remoteApp.apiSecret as string) ?? ''
   const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  const shouldRenderGraphiQL =
-    isUnitTest() || (await isShopify()) || isTruthy(process.env[environmentVariableNames.enableGraphiQLExplorer])
+  const shouldRenderGraphiQL = !isTruthy(process.env[environmentVariableNames.disableGraphiQLExplorer])
 
   const processes = [
     ...(await setupWebProcesses({

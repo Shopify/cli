@@ -7,10 +7,10 @@ import {
   testUIExtension,
   testPartnersUserSession,
   testFunctionExtension,
+  testAppConfigExtensions,
 } from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
 import {describe, expect, test, vi} from 'vitest'
-import {Config} from '@oclif/core'
 import {exec} from '@shopify/cli-kit/node/system'
 
 vi.mock('../context.js')
@@ -18,13 +18,10 @@ vi.mock('../build/extension.js')
 vi.mock('../dev/update-extension.js')
 vi.mock('@shopify/cli-kit/node/system')
 
-const COMMAND_CONFIG = {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config
-
 const draftExtensionsPushOptions = (app: AppInterface): DraftExtensionsPushOptions => {
   return {
     directory: app.directory,
     reset: false,
-    commandConfig: COMMAND_CONFIG,
     enableDeveloperPreview: false,
   }
 }
@@ -59,6 +56,7 @@ const remoteApp = {
   applicationUrl: 'https://example.com',
   redirectUrlWhitelist: [],
   apiSecretKeys: [],
+  betas: [],
 }
 
 describe('draftExtensionsPush', () => {
@@ -66,6 +64,26 @@ describe('draftExtensionsPush', () => {
     // Given
     const app = testApp({
       allExtensions: [],
+    })
+    vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
+      app,
+      partnersSession: testPartnersUserSession,
+      remoteExtensionIds,
+      remoteApp,
+    })
+
+    // When
+    await draftExtensionsPush(draftExtensionsPushOptions(app))
+
+    // Then
+    expect(updateExtensionDraft).not.toHaveBeenCalledOnce()
+    expect(enableDeveloperPreview).not.toHaveBeenCalled()
+  })
+
+  test('do nothing if the app includes only app config extensions', async () => {
+    // Given
+    const app = testApp({
+      allExtensions: [await testAppConfigExtensions()],
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
@@ -122,7 +140,7 @@ describe('draftExtensionsPush', () => {
     await draftExtensionsPush(draftExtensionsPushOptions(app))
 
     // Then
-    expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+    expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy-cli', '--version'], {cwd: app.directory})
     expect(updateExtensionDraft).toHaveBeenCalledOnce()
     expect(enableDeveloperPreview).not.toHaveBeenCalled()
   })

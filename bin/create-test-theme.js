@@ -123,7 +123,7 @@ program
     )
 
     log(`Checking your theme...`)
-    await shopifyExec(["theme", "check"])
+    await shopifyExec(["theme", "check", "--fail-level", "crash"])
 
     log(`Packaging your theme...`)
     await shopifyExec(["theme", "package"])

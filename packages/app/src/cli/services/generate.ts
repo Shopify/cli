@@ -1,7 +1,6 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadApp} from '../models/app/loader.js'
 import generateExtensionPrompts, {
@@ -18,7 +17,6 @@ import {
 import {ExtensionTemplate, TemplateType} from '../models/app/template.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {Config} from '@oclif/core'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -29,20 +27,21 @@ import {groupBy} from '@shopify/cli-kit/common/collection'
 export interface GenerateOptions {
   directory: string
   reset: boolean
-  commandConfig: Config
   apiKey?: string
   template?: string
   flavor?: string
   name?: string
   cloneUrl?: string
   configName?: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 async function generate(options: GenerateOptions) {
-  const partnersSession = await fetchPartnersSession()
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
-  const apiKey = await ensureGenerateContext({...options, partnersSession})
-  const specifications = await fetchSpecifications({token, apiKey, config: options.commandConfig})
+  const apiKey = await ensureGenerateContext({...options, developerPlatformClient, partnersSession})
+  const specifications = await developerPlatformClient.specifications(apiKey)
   const app: AppInterface = await loadApp({
     directory: options.directory,
     configName: options.configName,
