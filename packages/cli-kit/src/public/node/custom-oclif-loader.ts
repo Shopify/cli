@@ -1,12 +1,14 @@
 import {joinPath, cwd} from './path.js'
 import {fileExistsSync} from './fs.js'
-import {Command, Config} from '@oclif/core'
+import {Command, Config, PluginLoader} from '@oclif/core'
 import {minimatch} from 'minimatch'
 import glob from 'fast-glob'
 import yargs from 'yargs'
 import {Options} from '@oclif/core/lib/interfaces/plugin.js'
 import fs from 'fs'
 import util from 'util'
+
+export class ShopifyPluginLoader extends PluginLoader {}
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
@@ -22,6 +24,11 @@ export class ShopifyConfig extends Config {
     }
   }
 
+  async load(): Promise<void> {
+    await super.load()
+    await this.loadCorePlugins()
+  }
+
   async loadCorePlugins(): Promise<void> {
     // Find potential plugins based on sniffing the `--path` argument
     const matches: [string, string[]][] = []
@@ -34,13 +41,14 @@ export class ShopifyConfig extends Config {
     const thisPath = cwd()
     matches.push(...(await listDependencies(thisPath, '@shopify/*')))
 
+    // console.log(matches)
     // Load as usual
-    await super.loadCorePlugins()
+    // await super.loadCorePlugins()
 
-    // Load gathered potential plugins
+    // // Load gathered potential plugins
     for (const [root, names] of matches) {
       // eslint-disable-next-line no-await-in-loop
-      await this.loadPlugins(root, 'custom', names)
+      await this.loadCustomPlugins(root, names)
     }
   }
 

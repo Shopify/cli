@@ -94,10 +94,10 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.15.1",
-    "@oclif/plugin-commands": "2.2.24",
-    "@oclif/plugin-help": "5.2.18",
-    "@oclif/plugin-plugins": "3.1.8",
+    "@oclif/core": "link:/Users/isaac/Projects/oclif-core",
+    "@oclif/plugin-commands": "3.1.6",
+    "@oclif/plugin-help": "6.0.14",
+    "@oclif/plugin-plugins": "4.2.5",
     "@shopify/cli-kit": "3.56.0",
     "@shopify/plugin-did-you-mean": "3.56.0",
     "@shopify/app": "3.56.0",
@@ -130,7 +130,6 @@
       "@shopify/app",
       "@shopify/theme",
       "@shopify/plugin-did-you-mean",
-      "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
       "@oclif/plugin-commands"

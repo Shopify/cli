@@ -105,7 +105,7 @@
   "dependencies": {
     "@bugsnag/js": "7.21.0",
     "@iarna/toml": "2.2.5",
-    "@oclif/core": "3.15.1",
+    "@oclif/core": "link:/Users/isaac/Projects/oclif-core",
     "@opentelemetry/api": "1.6.0",
     "@opentelemetry/core": "1.17.1",
     "@opentelemetry/exporter-metrics-otlp-http": "0.43.0",
@@ -166,8 +166,8 @@
     "terminal-link": "3.0.0",
     "ts-error": "1.0.6",
     "unique-string": "3.0.0",
-    "zod": "3.22.3",
-    "yargs": "^17.7.2"
+    "yargs": "^17.7.2",
+    "zod": "3.22.3"
   },
   "devDependencies": {
     "@types/commondir": "^1.0.0",
@@ -179,8 +179,8 @@
     "@types/node": "18.19.3",
     "@types/react": "18.2.0",
     "@types/semver": "^7.5.2",
-    "@vitest/coverage-istanbul": "^0.34.3",
     "@types/yargs": "^17.0.24",
+    "@vitest/coverage-istanbul": "^0.34.3",
     "node-stream-zip": "^1.15.0",
     "ts-morph": "^17.0.1",
     "typedoc": "^0.25.7",
