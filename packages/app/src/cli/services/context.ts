@@ -196,6 +196,7 @@ export async function ensureDevContext(
     ...selectedApp,
     configuration: await fetchAppRemoteConfiguration(
       selectedApp.apiKey,
+      organization.id,
       developerPlatformClient,
       specifications,
       selectedApp.betas,
@@ -395,6 +396,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
+    orgId: org.id,
     force,
     release: !noRelease,
     developerPlatformClient,
@@ -468,6 +470,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     partnersApp,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
+    orgId: org.id,
     force: true,
     release: true,
     developerPlatformClient,

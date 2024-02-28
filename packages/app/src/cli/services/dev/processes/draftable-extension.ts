@@ -14,6 +14,7 @@ export interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
+  orgId: string
   remoteExtensionIds: {[key: string]: string}
   proxyUrl: string
   localApp: AppInterface
@@ -68,6 +69,7 @@ export async function setupDraftableExtensionsProcess({
   apiKey,
   developerPlatformClient,
   remoteApp,
+  orgId,
   ...options
 }: Omit<DraftableExtensionOptions, 'remoteExtensionIds' | 'extensions'> & {
   remoteApp: PartnersAppForIdentifierMatching
@@ -84,6 +86,7 @@ export async function setupDraftableExtensionsProcess({
     partnersApp: remoteApp,
     appId: apiKey,
     appName: remoteApp.title,
+    orgId,
     force: true,
     release: true,
     developerPlatformClient,
@@ -103,6 +106,7 @@ export async function setupDraftableExtensionsProcess({
     options: {
       localApp,
       apiKey,
+      orgId,
       developerPlatformClient,
       ...options,
       extensions: draftableExtensions,

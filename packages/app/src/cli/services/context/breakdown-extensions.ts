@@ -44,6 +44,7 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
     extensionIdentifiersBreakdown = await resolveRemoteExtensionIdentifiersBreakdown(
       options.developerPlatformClient,
       options.appId,
+      options.orgId,
       extensionsToConfirm.validMatches,
       extensionsToConfirm.extensionsToCreate,
       extensionsToConfirm.dashboardOnlyExtensions,
@@ -80,12 +81,14 @@ export async function extensionsIdentifiersReleaseBreakdown(token: string, apiKe
 export async function configExtensionsIdentifiersBreakdown({
   developerPlatformClient,
   apiKey,
+  orgId,
   localApp,
   versionAppModules,
   release,
 }: {
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
+  orgId: string
   localApp: AppInterface
   versionAppModules?: AppModuleVersion[]
   release?: boolean
@@ -93,7 +96,7 @@ export async function configExtensionsIdentifiersBreakdown({
   if (localApp.allExtensions.filter((extension) => extension.isAppConfigExtension).length === 0) return
   if (!release) return loadLocalConfigExtensionIdentifiersBreakdown(localApp)
 
-  return resolveRemoteConfigExtensionIdentifiersBreakdown(developerPlatformClient, apiKey, localApp, versionAppModules)
+  return resolveRemoteConfigExtensionIdentifiersBreakdown(developerPlatformClient, apiKey, orgId, localApp, versionAppModules)
 }
 
 function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): ConfigExtensionIdentifiersBreakdown {
@@ -108,11 +111,13 @@ function loadLocalConfigExtensionIdentifiersBreakdown(app: AppInterface): Config
 async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
+  orgId: string,
   app: AppInterface,
   versionAppModules?: AppModuleVersion[],
 ) {
   const remoteConfig = await fetchAppRemoteConfiguration(
     apiKey,
+    orgId,
     developerPlatformClient,
     app.specifications ?? [],
     app.remoteBetaFlags,
@@ -242,11 +247,12 @@ function loadLocalExtensionsIdentifiersBreakdown({
 async function resolveRemoteExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
   apiKey: string,
+  orgId: string,
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
 ): Promise<ExtensionIdentifiersBreakdown> {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey, orgId)
 
   const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
     activeAppVersion,

@@ -19,11 +19,12 @@ export async function selectApp(): Promise<OrganizationApp> {
 
 export async function fetchAppRemoteConfiguration(
   apiKey: string,
+  organizationId: string,
   developerPlatformClient: DeveloperPlatformClient,
   specifications: ExtensionSpecification[],
   betas: BetaFlag[],
 ) {
-  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey)
+  const activeAppVersion = await developerPlatformClient.activeAppVersion(apiKey, organizationId)
   const appModuleVersionsConfig =
     activeAppVersion.app.activeAppVersion?.appModuleVersions.filter(
       (module) => module.specification?.experience === 'configuration',
@@ -49,7 +50,7 @@ export function remoteAppConfigurationExtensionContent(
     if (!configSpec) return
     const configString = module.config
     if (!configString) return
-    const config = configString ? JSON.parse(configString) : {}
+    const config = configString ? (typeof configString === 'string' ? JSON.parse(configString) : configString) : {}
 
     remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.reverseTransform?.(config, {betas}) ?? config)
   })

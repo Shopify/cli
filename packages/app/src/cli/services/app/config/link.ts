@@ -43,6 +43,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration = await fetchAppRemoteConfiguration(
     remoteApp.apiKey,
+    remoteApp.organizationId,
     developerPlatformClient,
     localApp.specifications ?? [],
     localApp.remoteBetaFlags,

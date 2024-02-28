@@ -14,6 +14,7 @@ export interface EnsureDeploymentIdsPresenceOptions {
   developerPlatformClient: DeveloperPlatformClient
   appId: string
   appName: string
+  orgId: string
   envIdentifiers: Partial<Identifiers>
   force: boolean
   release: boolean
@@ -44,6 +45,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
     developerPlatformClient: options.developerPlatformClient,
     apiKey: options.appId,
+    orgId: options.orgId,
     localApp: options.app,
     release: options.release,
   })

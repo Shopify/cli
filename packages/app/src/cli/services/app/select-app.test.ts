@@ -71,6 +71,7 @@ describe('fetchAppRemoteConfiguration', () => {
     // When
     const result = await fetchAppRemoteConfiguration(
       'token',
+      'ORG1',
       developerPlatformClient,
       await configurationSpecifications(),
       [],
@@ -115,6 +116,7 @@ describe('fetchAppRemoteConfiguration', () => {
     // When
     const result = await fetchAppRemoteConfiguration(
       'token',
+      'ORG1',
       developerPlatformClient,
       await configurationSpecifications(),
       [],

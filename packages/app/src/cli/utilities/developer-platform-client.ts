@@ -1,4 +1,5 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
+import {ShopifyDevelopersClient} from './developer-platform-client/shopify-developers-client.js'
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {ExtensionSpecification} from '../models/extensions/specification.js'
@@ -15,13 +16,18 @@ import {ConvertDevToTestStoreSchema, ConvertDevToTestStoreVariables} from '../ap
 import {FindStoreByDomainSchema} from '../api/graphql/find_store_by_domain.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 
 export type Paginateable<T> = T & {
   hasMorePages: boolean
 }
 
 export function selectDeveloperPlatformClient(): DeveloperPlatformClient {
-  return new PartnersClient()
+  if (isTruthy(process.env.USE_SHOPIFY_DEVELOPERS_CLIENT)) {
+    return new ShopifyDevelopersClient()
+  } else {
+    return new PartnersClient()
+  }
 }
 
 export interface CreateAppOptions {
@@ -46,7 +52,7 @@ export interface DeveloperPlatformClient {
   storeByDomain: (orgId: string, shopDomain: string) => Promise<FindStoreByDomainSchema>
   appExtensionRegistrations: (appId: string) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (appId: string) => Promise<AppVersionsQuerySchema>
-  activeAppVersion: (appId: string) => Promise<ActiveAppVersionQuerySchema>
+  activeAppVersion: (appId: string, orgId: string) => Promise<ActiveAppVersionQuerySchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
   createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>

@@ -40,6 +40,7 @@ export async function release(options: ReleaseOptions) {
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
     developerPlatformClient,
     apiKey: partnersApp.apiKey,
+    orgId: partnersApp.organizationId,
     localApp: app,
     versionAppModules: versionDetails.appModuleVersions,
     release: true,

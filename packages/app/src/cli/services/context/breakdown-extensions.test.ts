@@ -15,6 +15,7 @@ import {
   testAppConfigExtensions,
   testDeveloperPlatformClient,
   testUIExtension,
+  testOrganization,
 } from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -243,6 +244,7 @@ const options = async (params: {
     developerPlatformClient: params.developerPlatformClient ?? testDeveloperPlatformClient(),
     appId: 'appId',
     appName: 'appName',
+    orgId: 'orgId',
     envIdentifiers: {extensions: params.identifiers ?? {}},
     force: false,
     partnersApp: params.partnersApp ?? undefined,
@@ -677,6 +679,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       // When
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
+        orgId: 'orgId',
         apiKey: 'apiKey',
         localApp: await LOCAL_APP([], configuration),
         release: false,
@@ -772,6 +775,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -865,6 +869,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -925,6 +930,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -1035,6 +1041,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], configuration),
         release: true,
       })
@@ -1090,6 +1097,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1146,6 +1154,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1226,6 +1235,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule, configToReleasePosAppModule],
         release: true,
@@ -1306,6 +1316,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], APP_CONFIGURATION),
         versionAppModules: [configToReleaseAppModule],
         release: true,
@@ -1378,6 +1389,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       const result = await configExtensionsIdentifiersBreakdown({
         developerPlatformClient,
         apiKey: 'apiKey',
+        orgId: 'orgId',
         localApp: await LOCAL_APP([], configuration),
         versionAppModules: [configToReleaseAppModule],
         release: true,
