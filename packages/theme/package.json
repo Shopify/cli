@@ -13,6 +13,12 @@
   },
   "license": "MIT",
   "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "/dist",
     "/oclif.manifest.json"
@@ -60,6 +66,10 @@
   },
   "engine-strict": true,
   "oclif": {
-    "commands": "dist/cli/commands"
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    }
   }
 }

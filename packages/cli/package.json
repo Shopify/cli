@@ -130,7 +130,11 @@
   "engine-strict": true,
   "oclif": {
     "bin": "shopify",
-    "commands": "dist/cli/commands",
+    "commands": {
+      "strategy": "explicit",
+      "target": "./dist/index.js",
+      "identifier": "COMMANDS"
+    },
     "plugins": [
       "@shopify/app",
       "@shopify/theme",
