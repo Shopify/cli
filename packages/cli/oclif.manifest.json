@@ -25,30 +25,6 @@
       ],
       "strict": true
     },
-    "create-app": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "create-app",
-      "isESM": true,
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "cli",
-        "commands",
-        "create-app.js"
-      ],
-      "strict": true
-    },
     "debug:command-flags": {
       "aliases": [
       ],
