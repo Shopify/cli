@@ -6,7 +6,6 @@ const external = [
   'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
   'stacktracey',
   '@shopify/app', // Plugins need to be external so that they can be loaded dynamically
-  '@shopify/theme', // Plugins need to be external so that they can be loaded dynamically
   '@shopify/plugin-did-you-mean' // Plugins need to be external so that they can be loaded dynamically
 ]
 

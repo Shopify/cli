@@ -3,8 +3,7 @@ import VersionCommand from './cli/commands/version.js'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import ThemeCommands from '@shopify/theme'
-// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
-import {Command} from '@oclif/core'
+
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import fs from 'fs'
 
@@ -51,7 +50,8 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
   })
 }
 
-export const COMMANDS: {[key: string]: Command.Class} = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const COMMANDS: any = {
   ...ThemeCommands,
   version: VersionCommand,
 }
