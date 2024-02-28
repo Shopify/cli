@@ -1497,7 +1497,6 @@
     },
     "app:init": {
       "aliases": [
-        "create-app"
       ],
       "args": {
       },

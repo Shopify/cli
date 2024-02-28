@@ -11,8 +11,6 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {URL} from 'url'
 
 export default class Init extends Command {
-  static aliases = ['create-app']
-
   static summary?: string | undefined = 'Create a new app project'
 
   static flags = {
