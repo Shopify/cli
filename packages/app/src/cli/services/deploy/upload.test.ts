@@ -90,10 +90,10 @@ describe('uploadWasmBlob', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+      const result = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      await expect(result).resolves.toStrictEqual({
+      expect(result).toStrictEqual({
         url,
         moduleId,
       })
