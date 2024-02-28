@@ -19,7 +19,7 @@
   "license": "MIT",
   "type": "module",
   "exports": {
-    "./init/*": {
+    "./commands/*": {
       "import": "./dist/commands/*.js",
       "require": "./dist/commands/*.d.ts"
     },
