@@ -531,56 +531,6 @@
       ],
       "strict": true
     },
-    "theme:help-old": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "description": "Show help from Ruby CLI",
-      "flags": {
-        "command": {
-          "description": "The command for which to show CLI2 help.",
-          "env": "SHOPIFY_FLAG_COMMAND",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "command",
-          "type": "option"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the logs.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "theme:help-old",
-      "isESM": true,
-      "pluginAlias": "@shopify/theme",
-      "pluginName": "@shopify/theme",
-      "pluginType": "core",
-      "relativePath": [
-        "dist",
-        "cli",
-        "commands",
-        "theme",
-        "help-old.js"
-      ],
-      "strict": true
-    },
     "theme:info": {
       "aliases": [
       ],

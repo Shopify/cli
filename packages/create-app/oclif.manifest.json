@@ -2,7 +2,6 @@
   "commands": {
     "init": {
       "aliases": [
-        "create-app"
       ],
       "args": {
       },
