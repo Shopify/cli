@@ -1,3 +1,4 @@
+import {startDevServer} from './dev-new.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {currentDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -24,6 +25,7 @@ export interface DevOptions {
   port?: string
   force: boolean
   flagsToPass: string[]
+  beta: boolean
 }
 
 export async function dev(options: DevOptions) {
@@ -51,6 +53,12 @@ export async function dev(options: DevOptions) {
       // eslint-disable-next-line @typescript-eslint/no-floating-promises
       refreshTokens(options.store, options.password)
     }, THEME_REFRESH_TIMEOUT_IN_MS)
+  }
+
+  if (options.beta) {
+    options.port ||= DEFAULT_PORT
+    options.host ||= DEFAULT_HOST
+    return startDevServer(options)
   }
 
   await execCLI2(command, {store: options.store, adminToken, storefrontToken})

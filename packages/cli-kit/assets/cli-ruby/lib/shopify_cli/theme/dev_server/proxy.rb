@@ -241,9 +241,11 @@ module ShopifyCLI
         end
 
         def request(method, path, headers: nil, query: [], form_data: nil, body_stream: nil)
+          puts "1" if method == "response.headers.getSetCookie()"
           uri = URI.join("https://#{shop}", path)
 
           if proxy_via_theme_access_app?(path)
+            puts "2" if method == "HEAD"
             headers = headers ? headers.slice("ACCEPT", "CONTENT-TYPE", "CONTENT-LENGTH", "Cookie") : {}
             headers.merge!({
               "X-Shopify-Access-Token" => Environment.admin_auth_token,
@@ -256,6 +258,9 @@ module ShopifyCLI
 
           @ctx.debug("Proxying #{method} #{uri}")
 
+          puts "headers: #{headers}" if method == "HEAD"
+          puts uri if method == "HEAD"
+
           Net::HTTP.start(uri.host, 443, use_ssl: true) do |http|
             req_class = Net::HTTP.const_get(method.capitalize)
             req = req_class.new(uri)
@@ -264,6 +269,7 @@ module ShopifyCLI
             req.body_stream = body_stream if body_stream
             response = http.request(req)
             @ctx.debug("`-> #{response.code} request_id: #{response["x-request-id"]}")
+            puts response if method == "HEAD"
             response
           end
         end
