@@ -1,19 +1,16 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadWasmBlob} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {
-  FunctionUploadUrlGenerateResponse,
-  getFunctionUploadUrl,
-  partnersRequest,
-} from '@shopify/cli-kit/node/api/partners'
+import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/http')
@@ -83,7 +80,9 @@ describe('uploadWasmBlob', () => {
           },
         },
       }
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 200,
@@ -91,15 +90,13 @@ describe('uploadWasmBlob', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(
-        uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token),
-      ).resolves.toStrictEqual({
+      const result = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      expect(result).toStrictEqual({
         url,
         moduleId,
       })
-
-      // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
     })
   })
 
@@ -109,15 +106,15 @@ describe('uploadWasmBlob', () => {
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
       const uploadURLError = new Error('upload error')
-      vi.mocked(getFunctionUploadUrl).mockRejectedValueOnce(uploadURLError)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.reject(uploadURLError),
+      })
 
       // When
-      await expect(uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token)).rejects.toThrow(
-        uploadURLError,
-      )
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
+      await expect(result).rejects.toThrow(uploadURLError)
     })
   })
 
@@ -138,17 +135,17 @@ describe('uploadWasmBlob', () => {
           },
         },
       }
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
       const uploadError = new Error('error')
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(fetch).mockRejectedValue(uploadError)
 
       // When
-      await expect(uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token)).rejects.toThrow(
-        uploadError,
-      )
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
+      await expect(result).rejects.toThrow(uploadError)
     })
   })
 
@@ -169,7 +166,9 @@ describe('uploadWasmBlob', () => {
           },
         },
       }
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 400,
@@ -182,16 +181,14 @@ describe('uploadWasmBlob', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() =>
-        uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token),
-      ).rejects.toThrowError(
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      await expect(result).rejects.toThrowError(
         new AbortError(
           'The size of the Wasm binary file for Function my-function is too large. It must be less than 200 kb.',
         ),
       )
-
-      // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
     })
   })
 
@@ -212,7 +209,9 @@ describe('uploadWasmBlob', () => {
           },
         },
       }
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 401,
@@ -225,16 +224,14 @@ describe('uploadWasmBlob', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() =>
-        uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token),
-      ).rejects.toThrowError(
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      await expect(result).rejects.toThrowError(
         new AbortError(
           'Something went wrong uploading the Function my-function. The server responded with status 401 and body: error body',
         ),
       )
-
-      // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
     })
   })
 
@@ -255,7 +252,9 @@ describe('uploadWasmBlob', () => {
           },
         },
       }
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 500,
@@ -268,12 +267,12 @@ describe('uploadWasmBlob', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() =>
-        uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token),
-      ).rejects.toThrowError(new AbortError('Something went wrong uploading the Function my-function. Try again.'))
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
+      await expect(result).rejects.toThrowError(
+        new AbortError('Something went wrong uploading the Function my-function. Try again.'),
+      )
     })
   })
 
@@ -294,7 +293,9 @@ describe('uploadWasmBlob', () => {
           },
         },
       }
-      vi.mocked(getFunctionUploadUrl).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 399,
@@ -307,12 +308,12 @@ describe('uploadWasmBlob', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() =>
-        uploadWasmBlob(extension.localIdentifier, extension.outputPath, apiKey, token),
-      ).rejects.toThrowError(new AbortError('Something went wrong uploading the Function my-function. Try again.'))
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(getFunctionUploadUrl).toHaveBeenNthCalledWith(1, token)
+      await expect(result).rejects.toThrowError(
+        new AbortError('Something went wrong uploading the Function my-function. Try again.'),
+      )
     })
   })
 })
@@ -321,36 +322,25 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
-          },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            appVersion: {
-              appModuleVersions: [],
-            },
-            id: '2',
-          },
-        })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      const developerPlatformClient = testDeveloperPlatformClient()
+      const {deploy} = developerPlatformClient
+      const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
+
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
-        token: 'api-token',
+        developerPlatformClient,
         extensionIds: {},
         release: true,
       })
 
       // Then
-      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      expect(deploySpy).toHaveBeenCalledWith({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -369,30 +359,19 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners with a message and a version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
-          },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            appVersion: {
-              appModuleVersions: [],
-            },
-            id: '2',
-          },
-        })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      const developerPlatformClient = testDeveloperPlatformClient()
+      const {deploy} = developerPlatformClient
+      const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
+
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
-        token: 'api-token',
+        developerPlatformClient,
         extensionIds: {},
         release: true,
         message: 'test',
@@ -400,7 +379,7 @@ describe('uploadExtensionsBundle', () => {
       })
 
       // Then
-      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      expect(deploySpy).toHaveBeenCalledWith({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -419,15 +398,9 @@ describe('uploadExtensionsBundle', () => {
   })
 
   test('calls a mutation on partners when there are no extensions', async () => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      appDeploy: {
-        appVersion: {
-          appModuleVersions: [],
-        },
-        id: '2',
-      },
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const {deploy} = developerPlatformClient
+    const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
     const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
@@ -435,93 +408,97 @@ describe('uploadExtensionsBundle', () => {
       apiKey: 'app-id',
       bundlePath: undefined,
       appModules: [],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
     })
 
     // Then
-    expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
+    expect(deploySpy).toHaveBeenCalledWith({
       apiKey: 'app-id',
       skipPublish: false,
       message: undefined,
       versionTag: undefined,
       commitReferences: undefined,
     })
-    expect(partnersRequest).toHaveBeenCalledOnce()
   })
 
   test("throws a specific error based on what is returned from partners when response doesn't include an app version", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
+      const errorResponse: AppDeploySchema = {
+        appDeploy: {
+          appVersion: {
+            uuid: 'uuid',
+            id: 1,
+            versionTag: 'version-tag',
+            location: 'location',
+            message: 'message',
+            appModuleVersions: [],
           },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            userErrors: [
-              {
-                message: 'Missing expected key(s).',
-                field: ['base'],
-                category: 'invalid',
-                details: [
-                  {
-                    extension_id: 123,
-                    extension_title: 'amortizable-marketplace-ext',
-                  },
-                ],
-              },
-              {
-                message: 'is blank',
-                field: ['title'],
-                category: 'invalid',
-                details: [
-                  {
-                    extension_id: 456,
-                    extension_title: 'amortizable-marketplace-ext-2',
-                  },
-                ],
-              },
-              {
-                message: 'Some other error',
-                category: 'unknown',
-                field: ['base'],
-                details: [
-                  {
-                    extension_id: 123,
-                    extension_title: 'amortizable-marketplace-ext',
-                  },
-                ],
-              },
-              {
-                message: 'Something was not found',
-                category: 'not_found',
-                field: ['base'],
-                details: [
-                  {
-                    extension_id: 456,
-                    extension_title: 'amortizable-marketplace-ext-2',
-                  },
-                ],
-              },
-              {
-                message: 'is blank',
-                field: ['title'],
-                category: 'invalid',
-                details: [
-                  {
-                    extension_id: 999,
-                    extension_title: 'admin-link',
-                  },
-                ],
-              },
-            ],
-          },
-        })
+          userErrors: [
+            {
+              message: 'Missing expected key(s).',
+              field: ['base'],
+              category: 'invalid',
+              details: [
+                {
+                  extension_id: 123,
+                  extension_title: 'amortizable-marketplace-ext',
+                },
+              ],
+            },
+            {
+              message: 'is blank',
+              field: ['title'],
+              category: 'invalid',
+              details: [
+                {
+                  extension_id: 456,
+                  extension_title: 'amortizable-marketplace-ext-2',
+                },
+              ],
+            },
+            {
+              message: 'Some other error',
+              category: 'unknown',
+              field: ['base'],
+              details: [
+                {
+                  extension_id: 123,
+                  extension_title: 'amortizable-marketplace-ext',
+                },
+              ],
+            },
+            {
+              message: 'Something was not found',
+              category: 'not_found',
+              field: ['base'],
+              details: [
+                {
+                  extension_id: 456,
+                  extension_title: 'amortizable-marketplace-ext-2',
+                },
+              ],
+            },
+            {
+              message: 'is blank',
+              field: ['title'],
+              category: 'invalid',
+              details: [
+                {
+                  extension_id: 999,
+                  extension_title: 'admin-link',
+                },
+              ],
+            },
+          ],
+        },
+      }
+      const developerPlatformClient = testDeveloperPlatformClient({
+        deploy: (_input: AppDeployVariables) => Promise.resolve(errorResponse),
+      })
+
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       // When
@@ -536,7 +513,7 @@ describe('uploadExtensionsBundle', () => {
             {uuid: '123', config: '{}', context: '', handle: 'handle'},
             {uuid: '456', config: '{}', context: '', handle: 'handle'},
           ],
-          token: 'api-token',
+          developerPlatformClient,
           extensionIds: {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
@@ -594,37 +571,35 @@ describe('uploadExtensionsBundle', () => {
   test('return a deploy error message based on what is returned from partners when response includes an app version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
-          },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            appVersion: {
-              uuid: 'appVersion-uuid',
-              id: 1,
-              versionTag: 'versionTag',
-              appModuleVersions: [
-                {
-                  uuid: 'app-module-uuid',
-                  registrationId: 'registration-uuid',
-                  validationErrors: [],
-                },
-              ],
-            },
-            userErrors: [
+      const errorResponse: AppDeploySchema = {
+        appDeploy: {
+          appVersion: {
+            uuid: 'appVersion-uuid',
+            id: 1,
+            location: 'location',
+            message: 'message',
+            versionTag: 'versionTag',
+            appModuleVersions: [
               {
-                field: [],
-                message: 'No release error message.',
-                category: '',
-                details: [],
+                uuid: 'app-module-uuid',
+                registrationUuid: 'registration-uuid',
+                validationErrors: [],
               },
             ],
           },
-        })
+          userErrors: [
+            {
+              field: [],
+              message: 'No release error message.',
+              category: '',
+              details: [],
+            },
+          ],
+        },
+      }
+      const developerPlatformClient = testDeveloperPlatformClient({
+        deploy: (_input: AppDeployVariables) => Promise.resolve(errorResponse),
+      })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
@@ -637,7 +612,7 @@ describe('uploadExtensionsBundle', () => {
           {uuid: '123', config: '{}', context: '', handle: 'handle'},
           {uuid: '456', config: '{}', context: '', handle: 'handle'},
         ],
-        token: 'api-token',
+        developerPlatformClient,
         extensionIds: {
           'amortizable-marketplace-ext': '123',
           'amortizable-marketplace-ext-2': '456',
@@ -650,6 +625,8 @@ describe('uploadExtensionsBundle', () => {
         validationErrors: [],
         versionTag: 'versionTag',
         deployError: 'No release error message.',
+        location: 'location',
+        message: 'message',
       })
     })
   })

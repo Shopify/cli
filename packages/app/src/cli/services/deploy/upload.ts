@@ -1,23 +1,14 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 import {
-  ExtensionUpdateDraftInput,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateSchema,
-} from '../../api/graphql/update_draft.js'
-import {AppDeploy, AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrl,
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {
-  getFunctionUploadUrl,
-  FunctionUploadUrlGenerateResponse,
-  partnersRequest,
-} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -34,8 +25,8 @@ interface DeployThemeExtensionOptions {
   /** Set of local identifiers */
   identifiers: Identifiers
 
-  /** The token to send authenticated requests to the partners' API  */
-  token: string
+  /** The API client to send authenticated requests  */
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 /**
@@ -46,7 +37,7 @@ export async function uploadThemeExtensions(
   themeExtensions: ExtensionInstance[],
   options: DeployThemeExtensionOptions,
 ): Promise<void> {
-  const {apiKey, identifiers, token} = options
+  const {apiKey, identifiers, developerPlatformClient} = options
   await Promise.all(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
@@ -58,8 +49,7 @@ export async function uploadThemeExtensions(
         registrationId: themeId,
         handle: themeExtension.handle,
       }
-      const mutation = ExtensionUpdateDraftMutation
-      const result: ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
+      const result: ExtensionUpdateSchema = await developerPlatformClient.updateExtension(themeExtensionInput)
       if (result.extensionUpdateDraft?.userErrors?.length > 0) {
         const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
         throw new AbortError(errors)
@@ -75,8 +65,8 @@ interface UploadExtensionsBundleOptions {
   /** The path to the bundle file to be uploaded */
   bundlePath?: string
 
-  /** The token to send authenticated requests to the partners' API  */
-  token: string
+  /** The API client to send authenticated requests  */
+  developerPlatformClient: DeveloperPlatformClient
 
   /** App Modules extra data */
   appModules: AppModuleSettings[]
@@ -129,7 +119,7 @@ export async function uploadExtensionsBundle(
   let deployError
 
   if (options.bundlePath) {
-    signedURL = await getExtensionUploadURL(options.apiKey)
+    signedURL = await getExtensionUploadURL(options.developerPlatformClient, options.apiKey)
 
     const form = formData()
     const buffer = readFileSync(options.bundlePath)
@@ -157,8 +147,7 @@ export async function uploadExtensionsBundle(
     variables.appModules = options.appModules
   }
 
-  const mutation = AppDeploy
-  const result: AppDeploySchema = await handlePartnersErrors(() => partnersRequest(mutation, options.token, variables))
+  const result: AppDeploySchema = await handlePartnersErrors(() => options.developerPlatformClient.deploy(variables))
 
   if (result.appDeploy?.userErrors?.length > 0) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
@@ -361,16 +350,14 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
  * It generates a URL to upload an app bundle.
  * @param apiKey - The application API key
  */
-export async function getExtensionUploadURL(apiKey: string) {
-  const mutation = GenerateSignedUploadUrl
-  const token = await ensureAuthenticatedPartners()
+export async function getExtensionUploadURL(developerPlatformClient: DeveloperPlatformClient, apiKey: string) {
   const variables: GenerateSignedUploadUrlVariables = {
     apiKey,
     bundleFormat: 1,
   }
 
   const result: GenerateSignedUploadUrlSchema = await handlePartnersErrors(() =>
-    partnersRequest(mutation, token, variables),
+    developerPlatformClient.generateSignedUploadUrl(variables),
   )
 
   if (result.appVersionGenerateSignedUploadUrl?.userErrors?.length > 0) {
@@ -384,10 +371,9 @@ export async function getExtensionUploadURL(apiKey: string) {
 export async function uploadWasmBlob(
   extensionIdentifier: string,
   wasmPath: string,
-  apiKey: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<{url: string; moduleId: string}> {
-  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadUrlFromPartners({apiKey, token})
+  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadUrlFromPartners(developerPlatformClient)
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = await readFile(wasmPath, {})
@@ -408,11 +394,6 @@ export async function uploadWasmBlob(
   }
 }
 
-interface GetFunctionExtensionUploadURLOptions {
-  apiKey: string
-  token: string
-}
-
 interface GetFunctionExtensionUploadURLOutput {
   url: string
   moduleId: string
@@ -421,9 +402,11 @@ interface GetFunctionExtensionUploadURLOutput {
 }
 
 async function getFunctionExtensionUploadUrlFromPartners(
-  options: GetFunctionExtensionUploadURLOptions,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res: FunctionUploadUrlGenerateResponse = await handlePartnersErrors(() => getFunctionUploadUrl(options.token))
+  const res: FunctionUploadUrlGenerateResponse = await handlePartnersErrors(() =>
+    developerPlatformClient.functionUploadUrl(),
+  )
   return res.functionUploadUrlGenerate.generatedUrlDetails
 }
 

@@ -7,6 +7,7 @@ import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
   testAppWithConfig,
+  testDeveloperPlatformClient,
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
@@ -14,9 +15,12 @@ import {
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../fetch.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -55,7 +59,6 @@ beforeEach(() => {
 
 describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
-    const token = 'token'
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
@@ -124,7 +127,7 @@ describe('setup-dev-processes', () => {
       remoteAppUpdated,
       storeFqdn,
       storeId,
-      token,
+      developerPlatformClient,
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
@@ -191,7 +194,7 @@ describe('setup-dev-processes', () => {
       options: {
         localApp,
         apiKey: 'api-key',
-        token,
+        developerPlatformClient,
         extensions: expect.arrayContaining([draftable]),
         remoteExtensionIds: {},
         proxyUrl: 'https://example.com/proxy',
@@ -211,7 +214,7 @@ describe('setup-dev-processes', () => {
             ' ',
           ),
         storefrontToken: 'storefront-token',
-        token,
+        token: 'token',
       },
     })
     expect(res.processes[5]).toMatchObject({

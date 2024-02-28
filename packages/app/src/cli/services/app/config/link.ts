@@ -41,10 +41,9 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   await logMetadataForLoadedContext(remoteApp)
 
   let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
-  const partnersSession = await developerPlatformClient.session()
   const remoteAppConfiguration = await fetchAppRemoteConfiguration(
     remoteApp.apiKey,
-    partnersSession.token,
+    developerPlatformClient,
     localApp.specifications ?? [],
     localApp.remoteBetaFlags,
   )
@@ -61,10 +60,10 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   return configuration
 }
 
-async function selectRemoteApp(options: LinkOptions) {
+async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions, 'developerPlatformClient'>>) {
   const localApp = await loadAppOrEmptyApp(options)
   const directory = localApp?.directory || options.directory
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.developerPlatformClient!, directory)
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.developerPlatformClient, directory)
   return {
     remoteApp,
     directory,
