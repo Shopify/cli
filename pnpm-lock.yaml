@@ -272,6 +272,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@luckycatfactory/esbuild-graphql-loader':
+        specifier: 3.8.1
+        version: 3.8.1(esbuild@0.19.8)(graphql-tag@2.12.6)(graphql@16.8.1)
       '@oclif/core':
         specifier: 3.19.5-dev.0
         version: 3.19.5-dev.0
@@ -290,12 +293,18 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.56.0
         version: link:../cli-kit
+      '@shopify/plugin-cloudflare':
+        specifier: 3.56.0
+        version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
         specifier: 3.56.0
         version: link:../plugin-did-you-mean
       '@shopify/theme':
         specifier: 3.56.0
         version: link:../theme
+      esbuild:
+        specifier: 0.19.8
+        version: 0.19.8
       stacktracey:
         specifier: 2.1.8
         version: 2.1.8
