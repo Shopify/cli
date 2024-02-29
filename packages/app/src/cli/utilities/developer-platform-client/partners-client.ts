@@ -182,11 +182,11 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async appExtensionRegistrations(appId: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
-    return this.makeRequest(AllAppExtensionRegistrationsQuery, {id: appId})
+    return this.makeRequest(AllAppExtensionRegistrationsQuery, {apiKey: appId})
   }
 
   async activeAppVersion(appId: string): Promise<ActiveAppVersionQuerySchema> {
-    return this.makeRequest(ActiveAppVersionQuery, {id: appId})
+    return this.makeRequest(ActiveAppVersionQuery, {apiKey: appId})
   }
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
