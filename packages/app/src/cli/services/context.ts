@@ -198,7 +198,12 @@ export async function ensureDevContext(
 
   selectedApp = {
     ...selectedApp,
-    configuration: await fetchAppRemoteConfiguration(selectedApp.apiKey, token, specifications, selectedApp.betas),
+    configuration: await fetchAppRemoteConfiguration(
+      selectedApp.apiKey,
+      developerPlatformClient,
+      specifications,
+      selectedApp.betas,
+    ),
   }
 
   const localApp = await loadApp({
@@ -292,14 +297,13 @@ export interface ReleaseContextOptions {
 }
 
 interface ReleaseContextOutput {
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   app: AppInterface
   partnersApp: OrganizationApp
 }
 
 interface DeployContextOutput {
   app: AppInterface
-  token: string
   partnersApp: Omit<OrganizationApp, 'apiSecretKeys' | 'apiKey'>
   identifiers: Identifiers
   release: boolean
@@ -356,7 +360,7 @@ export interface DeployContextOptions {
   force: boolean
   noRelease: boolean
   commitReference?: string
-  developerPlatformClient?: DeveloperPlatformClient
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 /**
@@ -372,9 +376,7 @@ export interface DeployContextOptions {
  * @returns The selected org, app and dev store
  */
 export async function ensureDeployContext(options: DeployContextOptions): Promise<DeployContextOutput> {
-  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
+  const {reset, force, noRelease, developerPlatformClient} = options
   const [partnersApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
   const specifications = await developerPlatformClient.specifications(partnersApp.apiKey)
@@ -387,21 +389,15 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
 
   const org = await developerPlatformClient.orgFromId(partnersApp.organizationId)
 
-  await ensureIncludeConfigOnDeploy({
-    org,
-    app,
-    partnersApp,
-    reset: options.reset,
-    force: options.force,
-  })
+  await ensureIncludeConfigOnDeploy({org, app, partnersApp, reset, force})
 
   const identifiers = await ensureDeploymentIdsPresence({
     app,
     appId: partnersApp.apiKey,
     appName: partnersApp.title,
-    force: options.force,
-    release: !options.noRelease,
-    token,
+    force,
+    release: !noRelease,
+    developerPlatformClient,
     envIdentifiers: getAppIdentifiers({app}),
     partnersApp,
   })
@@ -412,7 +408,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
     app: await updateAppIdentifiers({app, identifiers, command: 'deploy'}),
   }
 
-  const result = {
+  const result: DeployContextOutput = {
     app: options.app,
     partnersApp: {
       id: partnersApp.id,
@@ -423,8 +419,7 @@ export async function ensureDeployContext(options: DeployContextOptions): Promis
       betas: partnersApp.betas,
     },
     identifiers,
-    token,
-    release: !options.noRelease,
+    release: !noRelease,
   }
 
   await logMetadataForLoadedContext({
@@ -445,8 +440,6 @@ export interface DraftExtensionsPushOptions {
 
 export async function ensureDraftExtensionsPushContext(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
   const developerPlatformClient = draftExtensionsPushOptions.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
 
   const specifications = await loadLocalExtensionsSpecifications()
 
@@ -477,7 +470,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     appName: partnersApp.title,
     force: true,
     release: true,
-    token,
+    developerPlatformClient,
     envIdentifiers: prodEnvIdentifiers,
   })
 
@@ -486,7 +479,7 @@ export async function ensureDraftExtensionsPushContext(draftExtensionsPushOption
     apiKey: partnersApp.apiKey,
   })
 
-  return {app, partnersSession, remoteExtensionIds, remoteApp: partnersApp}
+  return {app, developerPlatformClient, remoteExtensionIds, remoteApp: partnersApp}
 }
 
 interface ShouldOrPromptIncludeConfigDeployOptions {
@@ -562,7 +555,6 @@ function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {
  */
 export async function ensureReleaseContext(options: ReleaseContextOptions): Promise<ReleaseContextOutput> {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
   const [partnersApp, envIdentifiers] = await fetchAppAndIdentifiers(options, developerPlatformClient)
   const identifiers: Identifiers = envIdentifiers as Identifiers
 
@@ -575,7 +567,7 @@ export async function ensureReleaseContext(options: ReleaseContextOptions): Prom
     app: options.app,
     apiKey: partnersApp.apiKey,
     partnersApp,
-    token: partnersSession.token,
+    developerPlatformClient,
   }
 
   await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})

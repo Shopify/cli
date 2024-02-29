@@ -10,6 +10,7 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
@@ -160,16 +161,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return !this.isAppConfigExtension
   }
 
-  async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, token})
+  async deployConfig({
+    apiKey,
+    developerPlatformClient,
+  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient})
     return this.commonDeployConfig(apiKey)
   }
 
   async functionDeployConfig({
     apiKey,
-    token,
+    developerPlatformClient,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
+    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, developerPlatformClient)
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
@@ -312,8 +316,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return context
   }
 
-  async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
-    const configValue = await this.deployConfig({apiKey, token})
+  async bundleConfig({identifiers, developerPlatformClient, apiKey}: ExtensionBundleConfigOptions) {
+    const configValue = await this.deployConfig({apiKey, developerPlatformClient})
     if (!configValue) return undefined
 
     const result = {
@@ -331,11 +335,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
 export interface ExtensionDeployConfigOptions {
   apiKey: string
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   apiKey: string
 }
