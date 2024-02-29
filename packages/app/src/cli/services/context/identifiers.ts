@@ -4,13 +4,14 @@ import {AppInterface} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 export type PartnersAppForIdentifierMatching = MinimalOrganizationApp
 
 export interface EnsureDeploymentIdsPresenceOptions {
   app: AppInterface
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   appId: string
   appName: string
   envIdentifiers: Partial<Identifiers>
@@ -41,7 +42,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     await extensionsIdentifiersDeployBreakdown(options)
 
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
-    token: options.token,
+    developerPlatformClient: options.developerPlatformClient,
     apiKey: options.appId,
     localApp: options.app,
     release: options.release,

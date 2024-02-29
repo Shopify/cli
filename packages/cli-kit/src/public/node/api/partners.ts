@@ -57,12 +57,11 @@ export interface FunctionUploadUrlGenerateResponse {
  * @returns The response of the query.
  */
 export async function getFunctionUploadUrl(token: string): Promise<FunctionUploadUrlGenerateResponse> {
-  const functionUploadUrlGenerateMutation = FunctionUploadUrlGenerateMutation
   const res: FunctionUploadUrlGenerateResponse = await partnersRequest(FunctionUploadUrlGenerateMutation, token)
   return res
 }
 
-const FunctionUploadUrlGenerateMutation = gql`
+export const FunctionUploadUrlGenerateMutation = gql`
   mutation functionUploadUrlGenerateMutation {
     functionUploadUrlGenerate {
       generatedUrlDetails {

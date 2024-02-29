@@ -1011,7 +1011,7 @@ describe('ensureDeployContext', () => {
       .spyOn(writeAppConfigurationFile, 'writeAppConfigurationFile')
       .mockResolvedValue()
     const opts = options(app)
-    const developerPlatformClient = opts.developerPlatformClient!
+    const developerPlatformClient = opts.developerPlatformClient
     const {appFromId} = developerPlatformClient
     const appFromIdSpy = vi.spyOn(developerPlatformClient, 'appFromId').mockImplementation(appFromId)
 
@@ -1123,11 +1123,11 @@ describe('ensureDeployContext', () => {
 
     const opts = options(app)
     opts.reset = true
-    const originalOrganizations = opts.developerPlatformClient!.organizations
+    const originalOrganizations = opts.developerPlatformClient.organizations
     const organizationsSpy = vi
-      .spyOn(opts.developerPlatformClient!, 'organizations')
+      .spyOn(opts.developerPlatformClient, 'organizations')
       .mockImplementation(originalOrganizations)
-    opts.developerPlatformClient!.orgAndApps = async (_orgId: string) => {
+    opts.developerPlatformClient.orgAndApps = async (_orgId: string) => {
       return {
         organization: ORG1,
         apps: [APP1, APP2],
@@ -1674,6 +1674,7 @@ describe('ensureReleaseContext', () => {
     const app = testApp()
     vi.mocked(getAppIdentifiers).mockReturnValue({app: APP2.apiKey})
     vi.mocked(updateAppIdentifiers).mockResolvedValue(app)
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
     const got = await ensureReleaseContext({
@@ -1681,7 +1682,7 @@ describe('ensureReleaseContext', () => {
       apiKey: 'key2',
       reset: false,
       force: false,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient,
     })
 
     // Then
@@ -1695,7 +1696,7 @@ describe('ensureReleaseContext', () => {
 
     expect(got.app).toEqual(app)
     expect(got.partnersApp).toEqual(APP2)
-    expect(got.token).toEqual('token')
+    expect(got.developerPlatformClient).toEqual(developerPlatformClient)
   })
 })
 

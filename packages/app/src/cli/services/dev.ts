@@ -128,7 +128,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     remoteApp,
     remoteAppUpdated,
     localApp,
-    token,
+    developerPlatformClient,
     commandOptions,
     network,
     partnerUrlsUpdated,
@@ -283,7 +283,8 @@ async function launchDevProcesses({
   })
 
   const apiKey = config.remoteApp.apiKey
-  const token = config.token
+  const partnersSession = await config.developerPlatformClient.session()
+  const token = partnersSession.token
   const app = {
     canEnablePreviewMode: await canEnablePreviewMode({
       remoteApp: config.remoteApp,
