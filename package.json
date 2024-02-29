@@ -39,7 +39,7 @@
     "@octokit/rest": "^19.0.13",
     "@shopify/eslint-plugin-cli": "file:packages/eslint-plugin-cli",
     "@shopify/typescript-configs": "^5.1.0",
-    "@types/node": "18.19.18",
+    "@types/node": "18.19.3",
     "@types/rimraf": "^3.0.2",
     "@types/tmp": "^0.2.6",
     "@typescript-eslint/parser": "^5.62.0",
