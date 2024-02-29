@@ -55,6 +55,14 @@ export function applicationId(api: API): string {
         return 'ace6dc89-b526-456d-a942-4b8ef6acda4b'
       }
     }
+    case 'app-management': {
+      const environment = serviceEnvironment()
+      if (environment === Environment.Production) {
+        return '7ee65a63608843c577db8b23c4d7316ea0a01bd2f7594f8a9c06ea668c1b775c'
+      } else {
+        return 'e92482cebb9bfb9fb5a0199cc770fde3de6c8d16b798ee73e36c9d815e070e52'
+      }
+    }
     default:
       throw new BugError(`Application id for API of type: ${api}`)
   }
