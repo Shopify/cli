@@ -154,8 +154,6 @@ export async function ensureDevContext(
   options: DevContextOptions,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<DevContextOutput> {
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
   const {configuration, cachedInfo, remoteApp} = await getAppContext({
     ...options,
     developerPlatformClient,
@@ -173,7 +171,7 @@ export async function ensureDevContext(
     // if that's not available, we prompt the user to choose an existing one or create a new one
     const [_selectedApp, _selectedStore] = await Promise.all([
       selectedApp || remoteApp || (cachedInfo?.appId && appFromId(cachedInfo.appId, developerPlatformClient)),
-      selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, token)),
+      selectedStore || (cachedInfo?.storeFqdn && storeFromFqdn(cachedInfo.storeFqdn, orgId, developerPlatformClient)),
     ])
 
     if (_selectedApp) {
@@ -189,7 +187,7 @@ export async function ensureDevContext(
       selectedStore = _selectedStore
     } else {
       const allStores = await developerPlatformClient.devStoresForOrg(orgId)
-      selectedStore = await selectStore(allStores, organization, token)
+      selectedStore = await selectStore(allStores, organization, developerPlatformClient)
     }
   }
 
@@ -235,7 +233,7 @@ export async function ensureDevContext(
     })
   }
 
-  await showReusedDevValues({
+  showReusedDevValues({
     selectedApp,
     selectedStore,
     cachedInfo,
@@ -258,10 +256,14 @@ const appFromId = async (appId: string, developerPlatformClient: DeveloperPlatfo
   return app
 }
 
-const storeFromFqdn = async (storeFqdn: string, orgId: string, token: string): Promise<OrganizationStore> => {
-  const result = await fetchStoreByDomain(orgId, token, storeFqdn)
+const storeFromFqdn = async (
+  storeFqdn: string,
+  orgId: string,
+  developerPlatformClient: DeveloperPlatformClient,
+): Promise<OrganizationStore> => {
+  const result = await fetchStoreByDomain(orgId, storeFqdn, developerPlatformClient)
   if (result?.store) {
-    await convertToTestStoreIfNeeded(result.store, orgId, token)
+    await convertToTestStoreIfNeeded(result.store, orgId, developerPlatformClient)
     return result.store
   } else {
     throw new AbortError(`Couldn't find the store with domain "${storeFqdn}".`, resetHelpMessage)
@@ -311,7 +313,7 @@ interface DeployContextOutput {
 /**
  * If there is a cached ApiKey used for dev, retrieve that and ask the user if they want to reuse it
  * @param app - The local app object
- * @param token - The token to use to access the Partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns
  * OrganizationApp if a cached value is valid.
  * undefined if there is no cached value or the user doesn't want to use it.
@@ -710,9 +712,6 @@ async function fetchDevDataFromOptions(
   orgId: string,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<{app?: OrganizationApp; store?: OrganizationStore}> {
-  const partnersSession = await developerPlatformClient.session()
-  const token = partnersSession.token
-
   const [selectedApp, orgWithStore] = await Promise.all([
     (async () => {
       let selectedApp: OrganizationApp | undefined
@@ -727,7 +726,7 @@ async function fetchDevDataFromOptions(
     })(),
     (async () => {
       if (options.storeFqdn) {
-        const orgWithStore = await fetchStoreByDomain(orgId, token, options.storeFqdn)
+        const orgWithStore = await fetchStoreByDomain(orgId, options.storeFqdn, developerPlatformClient)
         if (!orgWithStore) throw new AbortError(`Could not find Organization for id ${orgId}.`)
         if (!orgWithStore.store) {
           const partners = await partnersFqdn()
@@ -745,7 +744,7 @@ async function fetchDevDataFromOptions(
 
   if (options.storeFqdn) {
     selectedStore = orgWithStore!.store
-    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, token)
+    await convertToTestStoreIfNeeded(selectedStore, orgWithStore!.organization.id, developerPlatformClient)
   }
 
   return {app: selectedApp, store: selectedStore}
@@ -762,7 +761,7 @@ export interface AppContext {
  *
  * @param reset - Whether to reset the cache or not.
  * @param directory - The directory containing the app.
- * @param token - The partners token.
+ * @param developerPlatformClient - The client to access the platform API
  */
 export async function getAppContext({
   reset,
@@ -823,7 +822,7 @@ export async function getAppContext({
 
 /**
  * Fetch all orgs the user belongs to and show a prompt to select one of them
- * @param token - Token to access partners API
+ * @param developerPlatformClient - The client to access the platform API
  * @returns The selected organization ID
  */
 async function selectOrg(developerPlatformClient: DeveloperPlatformClient): Promise<string> {

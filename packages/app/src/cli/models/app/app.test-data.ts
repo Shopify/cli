@@ -22,6 +22,7 @@ import {
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
+import {ConvertDevToTestStoreVariables} from '../../api/graphql/convert_dev_to_test_store.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -733,6 +734,13 @@ const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
   },
 }
 
+const convertedToTestStoreResponse = {
+  convertDevToTestStore: {
+    convertedToTestStore: true,
+    userErrors: [],
+  },
+}
+
 export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return {
     session: () => Promise.resolve(testPartnersUserSession),
@@ -749,6 +757,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
       Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
+    storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     activeAppVersion: (_appId: string) => Promise.resolve(emptyAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
@@ -757,6 +766,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
+    convertToTestStore: (_input: ConvertDevToTestStoreVariables) => Promise.resolve(convertedToTestStoreResponse),
     ...stubs,
   }
 }

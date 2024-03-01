@@ -870,7 +870,7 @@ describe('ensuredeployConfirmed: handle non existent uuid managed extensions', (
       'appId',
       PAYMENTS_A.graphQLType,
       PAYMENTS_A.handle,
-      'token',
+      developerPlatformClient,
       'payments.offsite.render',
     )
     expect(got).toEqual({

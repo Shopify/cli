@@ -37,6 +37,12 @@ import {
   ExtensionCreateSchema,
   ExtensionCreateVariables,
 } from '../../api/graphql/extension_create.js'
+import {
+  ConvertDevToTestStoreQuery,
+  ConvertDevToTestStoreSchema,
+  ConvertDevToTestStoreVariables,
+} from '../../api/graphql/convert_dev_to_test_store.js'
+import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -212,5 +218,13 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async generateSignedUploadUrl(input: GenerateSignedUploadUrlVariables): Promise<GenerateSignedUploadUrlSchema> {
     return this.makeRequest(GenerateSignedUploadUrl, input)
+  }
+
+  async convertToTestStore(input: ConvertDevToTestStoreVariables): Promise<ConvertDevToTestStoreSchema> {
+    return this.makeRequest(ConvertDevToTestStoreQuery, input)
+  }
+
+  async storeByDomain(orgId: string, shopDomain: string): Promise<FindStoreByDomainSchema> {
+    return this.makeRequest(FindStoreByDomainQuery, {id: orgId, shopDomain})
   }
 }
