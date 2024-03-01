@@ -31,7 +31,7 @@
   },
   "devDependencies": {
     "@apollo/client": "^3.7.17",
-    "@babel/core": "^7.23.5",
+    "@babel/core": "^7.24.0",
     "@bugsnag/source-maps": "^2.3.1",
     "@changesets/cli": "2.26.2",
     "@nrwl/tao": "16.7.4",
