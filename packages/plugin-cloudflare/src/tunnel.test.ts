@@ -5,6 +5,9 @@ import {Writable} from 'stream'
 
 const port = 1234
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('./install-cloudflared.js', () => ({
+  default: () => Promise.resolve(),
+}))
 
 describe('hookStart', () => {
   test('returns a url if cloudflare prints a URL and a connection is established', async () => {
