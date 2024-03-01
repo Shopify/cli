@@ -17,6 +17,8 @@ import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
 
 export {default as DidYouMeanHook} from '@shopify/plugin-did-you-mean'
+export {default as TunnelStartHook} from '@shopify/plugin-cloudflare/hooks/tunnel'
+export {default as TunnelProviderHook} from '@shopify/plugin-cloudflare/hooks/provider'
 
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.

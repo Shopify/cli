@@ -20,6 +20,12 @@
     "/scripts",
     "/oclif.manifest.json"
   ],
+  "exports": {
+    "./hooks/*": {
+      "import": "./dist/*.js",
+      "require": "./dist/*.d.js"
+    }
+  },
   "scripts": {
     "build": "nx build",
     "bundle": "nx bundle",

@@ -5,7 +5,6 @@ const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
   'yoga-wasm-web', // yoga-wasm-web can't be bundled (part of ink)
   'stacktracey',
-  '@shopify/plugin-cloudflare',
   'esbuild',
   '@luckycatfactory/esbuild-graphql-loader',
 ]

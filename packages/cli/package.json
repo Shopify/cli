@@ -46,7 +46,8 @@
     "test": "nx run cli:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
-    "type-check": "nx type-check"
+    "type-check": "nx type-check",
+    "postinstall": "node scripts/postinstall.js"
   },
   "eslintConfig": {
     "extends": [
@@ -184,6 +185,14 @@
       "command_not_found": {
         "target": "./dist/index.js",
         "identifier": "DidYouMeanHook"
+      },
+      "tunnel_start": {
+        "target": "./dist/index.js",
+        "identifier": "TunnelStartHook"
+      },
+      "tunnel_provider": {
+        "target": "./dist/index.js",
+        "identifier": "TunnelProviderHook"
       }
     }
   }
