@@ -1,4 +1,5 @@
 import {TUNNEL_PROVIDER} from './provider.js'
+import install from './install-cloudflared.js'
 import {
   startTunnel,
   TunnelError,
@@ -45,7 +46,13 @@ class TunnelClientInstance implements TunnelClient {
 
   constructor(port: number) {
     this.port = port
-    this.tunnel()
+    install()
+      .then(() => {
+        this.tunnel()
+      })
+      .catch((error) => {
+        this.currentStatus = {status: 'error', message: error.message, tryMessage: whatToTry()}
+      })
   }
 
   getTunnelStatus(): TunnelStatusType {

@@ -1,8 +1,10 @@
 // Install script for cloudflared, derived from https://github.com/JacobLinCool/node-cloudflared
-import * as path from 'path'
+import {basename, dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {fileURLToPath} from 'url'
 import util from 'util'
 import {pipeline} from 'stream'
+// eslint-disable-next-line no-restricted-imports
 import {execSync, execFileSync} from 'child_process'
 import {createHash} from 'node:crypto'
 import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStream, readFileSync} from 'fs'
@@ -10,25 +12,25 @@ import {chmodSync, existsSync, mkdirSync, renameSync, unlinkSync, createWriteStr
 const EXPECTED_CLOUDFLARE_VERSION = '2024.2.1'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${EXPECTED_CLOUDFLARE_VERSION}/`
 
-const LINUX_URL = {
+const LINUX_URL: {[key: string]: string} = {
   arm64: 'cloudflared-linux-arm64',
   arm: 'cloudflared-linux-arm',
   x64: 'cloudflared-linux-amd64',
   ia32: 'cloudflared-linux-386',
 }
 
-const MACOS_URL = {
+const MACOS_URL: {[key: string]: string} = {
   arm64: 'cloudflared-darwin-amd64.tgz',
   x64: 'cloudflared-darwin-amd64.tgz',
 }
 
-const WINDOWS_URL = {
+const WINDOWS_URL: {[key: string]: string} = {
   x64: 'cloudflared-windows-amd64.exe',
   ia32: 'cloudflared-windows-386.exe',
   arm64: 'cloudflared-windows-amd64.exe',
 }
 
-const URL = {
+const URL: {[key: string]: string | undefined} = {
   linux: LINUX_URL[process.arch],
   darwin: MACOS_URL[process.arch],
   win32: WINDOWS_URL[process.arch],
@@ -42,8 +44,8 @@ function getBinPathTarget() {
   if (process.env.SHOPIFY_CLI_CLOUDFLARED_PATH) {
     return process.env.SHOPIFY_CLI_CLOUDFLARED_PATH
   }
-  return path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
+  return joinPath(
+    dirname(fileURLToPath(import.meta.url)),
     '..',
     'bin',
     process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared',
@@ -53,9 +55,6 @@ function getBinPathTarget() {
 export default async function install() {
   // Don't install cloudflare if the SHOPIFY_CLI_IGNORE_CLOUDFLARED environment variable is set
   if (process.env.SHOPIFY_CLI_IGNORE_CLOUDFLARED) return
-  const [major, minor, patch] = process.versions.node.split('.').map(Number)
-  // Fetch API is not available for <18. Added this check because our release process uses node 16.
-  if (major < 18) return
 
   const fileName = URL[process.platform]
   if (fileName === undefined) {
@@ -70,13 +69,14 @@ export default async function install() {
     try {
       const versionArray = execFileSync(binTarget, ['--version'], {encoding: 'utf8'}).split(' ')
       const versionNumber = versionArray.length > 2 ? versionArray[2] : '0.0.0'
-      const needsUpdate = versionIsGreaterThan(EXPECTED_CLOUDFLARE_VERSION, versionNumber)
+      const needsUpdate = versionIsGreaterThan(EXPECTED_CLOUDFLARE_VERSION, versionNumber!)
       if (!needsUpdate) {
-        console.log('cloudflared already installed, skipping')
+        outputDebug('cloudflared already installed, skipping')
         return
       }
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
-      console.log('version check failed, reinstalling')
+      outputDebug('version check failed, reinstalling')
     }
   }
 
@@ -91,54 +91,51 @@ export default async function install() {
   }
 }
 
-function versionIsGreaterThan(versionA, versionB) {
+function versionIsGreaterThan(versionA: string, versionB: string) {
   const [majorA, minorA, patchA] = versionA.split('.').map(Number)
   const [majorB, minorB, patchB] = versionB.split('.').map(Number)
 
   // Compare major versions
-  if (majorA !== majorB) return majorA > majorB
+  if (majorA !== majorB) return (majorA ?? 0) > (majorB ?? 0)
 
   // If major versions are equal, compare minor versions
-  if (minorA !== minorB) return minorA > minorB
+  if (minorA !== minorB) return (minorA ?? 0) > (minorB ?? 0)
 
   // If minor versions are also equal, compare patch versions
-  return patchA > patchB
+  return (patchA ?? 0) > (patchB ?? 0)
 }
 
-async function installLinux(file, binTarget) {
+async function installLinux(file: string, binTarget: string) {
   await downloadFile(file, binTarget)
   chmodSync(binTarget, '755')
 }
 
-async function installWindows(file, binTarget) {
+async function installWindows(file: string, binTarget: string) {
   await downloadFile(file, binTarget)
 }
 
-async function installMacos(file, binTarget) {
+async function installMacos(file: string, binTarget: string) {
   await downloadFile(file, `${binTarget}.tgz`)
-  const filename = path.basename(`${binTarget}.tgz`)
-  execSync(`tar -xzf ${filename}`, {cwd: path.dirname(binTarget)})
+  const filename = basename(`${binTarget}.tgz`)
+  execSync(`tar -xzf ${filename}`, {cwd: dirname(binTarget)})
   unlinkSync(`${binTarget}.tgz`)
-  renameSync(`${path.dirname(binTarget)}/cloudflared`, binTarget)
+  renameSync(`${dirname(binTarget)}/cloudflared`, binTarget)
 }
 
-async function downloadFile(url, to) {
-  if (!existsSync(path.dirname(to))) {
-    mkdirSync(path.dirname(to))
+async function downloadFile(url: string, to: string) {
+  if (!existsSync(dirname(to))) {
+    mkdirSync(dirname(to))
   }
   const streamPipeline = util.promisify(pipeline)
   const response = await fetch(url, {redirect: 'follow'})
-  if (!response.ok) throw new Error(`Couldn't download file ${url} (${response.status} ${response.statusText})`)
+  if (!response.ok || !response.body)
+    throw new Error(`Couldn't download file ${url} (${response.status} ${response.statusText})`)
   const fileObject = createWriteStream(to)
   await streamPipeline(response.body, fileObject)
   return to
 }
 
-function sha256(filePath) {
+function sha256(filePath: string) {
   const fileBuffer = readFileSync(filePath)
   return createHash('sha256').update(fileBuffer).digest('hex')
 }
-
-install().catch((err) => {
-  throw err
-})
