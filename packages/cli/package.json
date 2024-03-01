@@ -32,7 +32,6 @@
   "files": [
     "/assets",
     "/bin/run.cmd",
-    "/scripts",
     "/bin/run.js",
     "/dist",
     "/oclif.manifest.json"
@@ -47,8 +46,7 @@
     "test": "nx run cli:test",
     "test:coverage": "nx test:coverage",
     "test:watch": "nx test:watch",
-    "type-check": "nx type-check",
-    "postinstall": "node scripts/postinstall.js"
+    "type-check": "nx type-check"
   },
   "eslintConfig": {
     "extends": [
