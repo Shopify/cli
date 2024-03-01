@@ -100,7 +100,6 @@
     "@oclif/core": "3.19.5-dev.0",
     "@oclif/plugin-commands": "2.2.24",
     "@oclif/plugin-help": "5.2.18",
-    "@oclif/plugin-plugins": "3.1.8",
     "@shopify/cli-kit": "3.56.0",
     "@shopify/plugin-did-you-mean": "3.56.0",
     "zod-to-json-schema": "3.21.4",
@@ -142,7 +141,6 @@
       "@shopify/theme",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
-      "@oclif/plugin-plugins",
       "@oclif/plugin-commands"
     ],
     "scope": "shopify",
