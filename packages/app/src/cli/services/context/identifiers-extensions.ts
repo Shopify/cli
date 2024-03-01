@@ -95,6 +95,7 @@ export async function deployConfirmed(
     options.app,
     options.appId,
     options.includeDraftExtensions,
+    options.developerPlatformClient,
   )
 
   const validMatchesById: {[key: string]: string} = {}
@@ -124,6 +125,7 @@ async function ensureNonUuidManagedExtensionsIds(
   app: AppInterface,
   appId: string,
   includeDraftExtensions = false,
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
   let localExtensionRegistrations = includeDraftExtensions ? app.draftableExtensions : app.allExtensions
 
@@ -140,7 +142,7 @@ async function ensureNonUuidManagedExtensionsIds(
   })
 
   if (extensionsToCreate.length > 0) {
-    const newIdentifiers = await createExtensions(extensionsToCreate, appId, false)
+    const newIdentifiers = await createExtensions(extensionsToCreate, appId, developerPlatformClient, false)
     for (const [localIdentifier, registration] of Object.entries(newIdentifiers)) {
       validMatches[localIdentifier] = registration.uuid
       validMatchesById[localIdentifier] = registration.id

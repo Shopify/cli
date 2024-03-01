@@ -668,7 +668,21 @@ const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = 
   },
 }
 
-const emptyAppVersion: ActiveAppVersionQuerySchema = {
+const emptyAppVersions = {
+  app: {
+    id: 'app-id',
+    organizationId: 'org-id',
+    title: 'my app',
+    appVersions: {
+      nodes: [],
+      pageInfo: {
+        totalResults: 0,
+      },
+    },
+  },
+}
+
+const emptyActiveAppVersion: ActiveAppVersionQuerySchema = {
   app: {
     activeAppVersion: {
       appModuleVersions: [],
@@ -759,7 +773,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
     storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve({organizations: {nodes: []}}),
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
-    activeAppVersion: (_appId: string) => Promise.resolve(emptyAppVersion),
+    appVersions: (_appId: string) => Promise.resolve(emptyAppVersions),
+    activeAppVersion: (_appId: string) => Promise.resolve(emptyActiveAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
     createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
     updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),

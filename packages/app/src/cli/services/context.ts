@@ -6,7 +6,6 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo, clearCachedAppInfo, getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {writeAppConfigurationFile} from './app/write-app-configuration-file.js'
-import {PartnersSession} from './context/partner-account-info.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {reuseDevConfigPrompt, selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -18,7 +17,7 @@ import {
   CurrentAppConfiguration,
 } from '../models/app/app.js'
 import {Identifiers, UuidOnlyIdentifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
-import {MinimalOrganizationApp, Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
+import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
 import {
   getAppConfigurationFileName,
@@ -38,7 +37,7 @@ import {
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {TokenItem, renderConfirmationPrompt, renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
+import {TokenItem, renderConfirmationPrompt, renderInfo} from '@shopify/cli-kit/node/ui'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -583,7 +582,7 @@ interface VersionListContextOptions {
 }
 
 interface VersionsListContextOutput {
-  partnersSession: PartnersSession
+  developerPlatformClient: DeveloperPlatformClient
   partnersApp: OrganizationApp
 }
 
@@ -602,12 +601,11 @@ export async function ensureVersionsListContext(
   options: VersionListContextOptions,
 ): Promise<VersionsListContextOutput> {
   const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
-  const partnersSession = await developerPlatformClient.session()
   const [partnersApp] = await fetchAppAndIdentifiers(options, developerPlatformClient)
 
   await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
   return {
-    partnersSession,
+    developerPlatformClient,
     partnersApp,
   }
 }
@@ -673,34 +671,6 @@ export async function fetchAppAndIdentifiers(
   await logMetadataForLoadedContext({organizationId: partnersApp.organizationId, apiKey: partnersApp.apiKey})
 
   return [partnersApp, envIdentifiers]
-}
-
-interface OrgAppsAndStores {
-  organization: Organization
-  apps: MinimalOrganizationApp[]
-  hasMorePages: boolean
-  stores: OrganizationStore[]
-}
-
-async function fetchOrgsAppsAndStores(
-  orgId: string,
-  developerPlatformClient: DeveloperPlatformClient,
-): Promise<OrgAppsAndStores> {
-  let data = {} as OrgAppsAndStores
-  const tasks = [
-    {
-      title: 'Fetching organization data',
-      task: async () => {
-        const organizationAndApps = await developerPlatformClient.orgAndApps(orgId)
-        const stores = await developerPlatformClient.devStoresForOrg(orgId)
-        data = {...organizationAndApps, stores}
-        // We need ALL stores so we can validate the selected one.
-        // This is a temporary workaround until we have an endpoint to fetch only 1 store to validate.
-      },
-    },
-  ]
-  await renderTasks(tasks)
-  return data
 }
 
 /**

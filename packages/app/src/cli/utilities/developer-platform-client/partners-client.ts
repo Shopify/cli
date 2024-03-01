@@ -43,6 +43,7 @@ import {
   ConvertDevToTestStoreVariables,
 } from '../../api/graphql/convert_dev_to_test_store.js'
 import {FindStoreByDomainQuery, FindStoreByDomainSchema} from '../../api/graphql/find_store_by_domain.js'
+import {AppVersionsQuery, AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -194,6 +195,10 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async appExtensionRegistrations(appId: string): Promise<AllAppExtensionRegistrationsQuerySchema> {
     return this.makeRequest(AllAppExtensionRegistrationsQuery, {apiKey: appId})
+  }
+
+  async appVersions(appId: string): Promise<AppVersionsQuerySchema> {
+    return this.makeRequest(AppVersionsQuery, {apiKey: appId})
   }
 
   async activeAppVersion(appId: string): Promise<ActiveAppVersionQuerySchema> {

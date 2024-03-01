@@ -1771,19 +1771,20 @@ describe('ensureVersionsListContext', () => {
   test('returns the partners token and app', async () => {
     // Given
     const app = testApp()
+    const developerPlatformClient = buildDeveloperPlatformClient()
 
     // When
     const got = await ensureVersionsListContext({
       app,
       apiKey: APP2.apiKey,
       reset: false,
-      developerPlatformClient: buildDeveloperPlatformClient(),
+      developerPlatformClient,
     })
 
     // Then
     expect(got).toEqual({
       partnersApp: APP2,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
     })
   })
 })
