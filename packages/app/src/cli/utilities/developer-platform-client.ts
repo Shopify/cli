@@ -10,6 +10,7 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../api/graphql/generate_signed_upload_url.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../api/graphql/extension_create.js'
 import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 
 export type Paginateable<T> = T & {
@@ -43,6 +44,7 @@ export interface DeveloperPlatformClient {
   activeAppVersion: (appId: string) => Promise<ActiveAppVersionQuerySchema>
   functionUploadUrl: () => Promise<FunctionUploadUrlGenerateResponse>
   generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) => Promise<GenerateSignedUploadUrlSchema>
+  createExtension: (input: ExtensionCreateVariables) => Promise<ExtensionCreateSchema>
   updateExtension: (input: ExtensionUpdateDraftInput) => Promise<ExtensionUpdateSchema>
   deploy: (input: AppDeployVariables) => Promise<AppDeploySchema>
 }

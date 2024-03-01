@@ -1,5 +1,5 @@
 import {selectOrCreateApp} from './dev/select-app.js'
-import {fetchStoreByDomain, fetchAppExtensionRegistrations} from './dev/fetch.js'
+import {fetchStoreByDomain} from './dev/fetch.js'
 import {convertToTestStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
@@ -84,7 +84,6 @@ export async function ensureGenerateContext(options: {
   apiKey?: string
   directory: string
   reset: boolean
-  partnersSession: PartnersSession
   developerPlatformClient: DeveloperPlatformClient
   configName?: string
 }): Promise<string> {
@@ -337,9 +336,9 @@ async function fetchDevAppAndPrompt(
 export async function ensureThemeExtensionDevContext(
   extension: ExtensionInstance,
   apiKey: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<ExtensionRegistration> {
-  const remoteSpecifications = await fetchAppExtensionRegistrations({token, apiKey})
+  const remoteSpecifications = await developerPlatformClient.appExtensionRegistrations(apiKey)
   const remoteRegistrations = remoteSpecifications.app.extensionRegistrations.filter((extension) => {
     return extension.type === 'THEME_APP_EXTENSION'
   })
@@ -348,7 +347,7 @@ export async function ensureThemeExtensionDevContext(
     return remoteRegistrations[0]!
   }
 
-  const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, token)
+  const registration = await createExtension(apiKey, extension.graphQLType, extension.handle, developerPlatformClient)
 
   return registration
 }

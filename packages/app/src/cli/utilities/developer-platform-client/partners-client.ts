@@ -32,6 +32,11 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
+import {
+  ExtensionCreateQuery,
+  ExtensionCreateSchema,
+  ExtensionCreateVariables,
+} from '../../api/graphql/extension_create.js'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
@@ -191,6 +196,10 @@ export class PartnersClient implements DeveloperPlatformClient {
 
   async functionUploadUrl(): Promise<FunctionUploadUrlGenerateResponse> {
     return this.makeRequest(FunctionUploadUrlGenerateMutation)
+  }
+
+  async createExtension(input: ExtensionCreateVariables): Promise<ExtensionCreateSchema> {
+    return this.makeRequest(ExtensionCreateQuery, input)
   }
 
   async updateExtension(extensionInput: ExtensionUpdateDraftInput): Promise<ExtensionUpdateSchema> {

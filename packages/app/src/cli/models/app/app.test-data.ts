@@ -21,6 +21,7 @@ import {
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
+import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -686,6 +687,24 @@ const functionUploadUrlResponse = {
   },
 }
 
+export const extensionCreateResponse: ExtensionCreateSchema = {
+  extensionCreate: {
+    extensionRegistration: {
+      id: 'extension-id',
+      uuid: 'extension-uuid',
+      title: 'my extension',
+      type: 'other',
+      draftVersion: {
+        config: 'config',
+        registrationId: 'registration-id',
+        lastUserInteractionAt: '2024-01-01',
+        validationErrors: [],
+      },
+    },
+    userErrors: [],
+  },
+}
+
 const extensionUpdateResponse: ExtensionUpdateSchema = {
   extensionUpdateDraft: {
     clientMutationId: 'client-mutation-id',
@@ -733,9 +752,10 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
     activeAppVersion: (_appId: string) => Promise.resolve(emptyAppVersion),
     functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
-    updateExtension: (input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
-    deploy: (input: AppDeployVariables) => Promise.resolve(deployResponse),
-    generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) =>
+    createExtension: (_input: ExtensionCreateVariables) => Promise.resolve(extensionCreateResponse),
+    updateExtension: (_input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
+    deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
+    generateSignedUploadUrl: (_input: GenerateSignedUploadUrlVariables) =>
       Promise.resolve(generateSignedUploadUrlResponse),
     ...stubs,
   }
