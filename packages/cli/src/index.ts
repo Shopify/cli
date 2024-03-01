@@ -10,7 +10,6 @@ import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
-import Index from './cli/commands/plugins/index.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
@@ -76,7 +75,6 @@ export const COMMANDS: any = {
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
-  'plugins:index': Index,
 }
 
 export default runShopifyCLI
