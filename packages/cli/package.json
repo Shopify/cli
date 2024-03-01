@@ -32,6 +32,7 @@
   "files": [
     "/assets",
     "/bin/run.cmd",
+    "/scripts",
     "/bin/run.js",
     "/dist",
     "/oclif.manifest.json"
