@@ -4,19 +4,19 @@ import {CustomTransformationConfig, createConfigExtensionSpecification} from '..
 import {Flag} from '../../../services/dev/fetch.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
 
-const PrivacyComplianceWebbhooksTransformConfig: CustomTransformationConfig = {
+const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
   forward: (content: object, options?: {flags?: Flag[]}) => transformToPrivacyComplianceWebhooksModule(content),
   reverse: (content: object, options?: {flags?: Flag[]}) =>
     transformFromPrivacyComplianceWebhooksModule(content, options),
 }
 
-export const PrivacyComplianceWebbhooksSpecIdentifier = 'privacy_compliance_webhooks'
+export const PrivacyComplianceWebhooksSpecIdentifier = 'privacy_compliance_webhooks'
 
 // Uses the same schema as the webhooks specs because its content is nested under the same webhooks section
 const appPrivacyComplienceSpec = createConfigExtensionSpecification({
-  identifier: PrivacyComplianceWebbhooksSpecIdentifier,
+  identifier: PrivacyComplianceWebhooksSpecIdentifier,
   schema: WebhookSchema,
-  transformConfig: PrivacyComplianceWebbhooksTransformConfig,
+  transformConfig: PrivacyComplianceWebhooksTransformConfig,
 })
 
 export default appPrivacyComplienceSpec

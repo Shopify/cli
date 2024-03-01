@@ -22,7 +22,6 @@ import {
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {DeveloperPlatformClient, Paginateable, ActiveAppVersion} from '../developer-platform-client.js'
 import {PartnersSession} from '../../../cli/services/context/partner-account-info.js'
-import {filterDisabledBetas} from '../../../cli/services/dev/fetch.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -30,6 +29,7 @@ import {
   OrganizationApp,
   OrganizationStore,
 } from '../../models/organization.js'
+import {filterDisabledFlags} from '../../../cli/services/dev/fetch.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {
   GenerateSignedUploadUrlSchema,
@@ -129,7 +129,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       organizationId: appIdentifiers.organizationId,
       apiSecretKeys: [],
       grantedScopes: appAccessModule.config.scopes as string[],
-      betas: [],
+      flags: [],
     }
   }
 
@@ -210,7 +210,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
     }
 
     // Need to figure this out still
-    const betas = filterDisabledBetas([])
+    const flags = filterDisabledFlags([])
     const createdApp = result.appCreate.app
     return {
       ...createdApp,
@@ -220,7 +220,7 @@ export class ShopifyDevelopersClient implements DeveloperPlatformClient {
       grantedScopes: options?.scopesArray ?? [],
       organizationId: org.id,
       newApp: true,
-      betas,
+      flags,
     }
   }
 

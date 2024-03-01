@@ -1,7 +1,6 @@
 import {
   CurrentAppConfiguration,
   LegacyAppConfiguration,
-  buildSpecsAppConfiguration,
   getAppScopes,
   getAppScopesArray,
   getUIExtensionRendererVersion,

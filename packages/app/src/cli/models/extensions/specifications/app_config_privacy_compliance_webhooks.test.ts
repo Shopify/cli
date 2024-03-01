@@ -58,7 +58,7 @@ describe('privacy_compliance_webhooks', () => {
       })
     })
 
-    test('should return an empty object if all porperties are empty', () => {
+    test('should return an empty object if all properties are empty', () => {
       // Given
       const object = {
         webhooks: {

@@ -599,10 +599,17 @@ embedded = false
 
       vi.mocked(loadApp).mockRejectedValue('App not found')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
-
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
-        access_scopes: {scopes: 'read_products,write_orders'},
+        webhooks: {
+          api_version: '2023-07',
+          subscriptions: [
+            {
+              compliance_topics: ['customers/redact', 'customers/data_request'],
+              uri: 'https://example.com/customers',
+            },
+          ],
+        },
       }
       vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
@@ -706,28 +713,28 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-  client_id = "12345"
-  name = "my app"
-  application_url = "https://myapp.com"
-  embedded = true
+client_id = "12345"
+name = "my app"
+application_url = "https://myapp.com"
+embedded = true
 
-  [access_scopes]
-  # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-  scopes = "write_products"
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
 
-  [auth]
-  redirect_urls = [ "https://example.com/callback1" ]
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
 
-  [webhooks]
-  api_version = "2023-07"
+[webhooks]
+api_version = "2023-07"
 
-    [[webhooks.subscriptions]]
-    topics = [ "products/create" ]
-    uri = "https://my-app.com/webhooks"
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://my-app.com/webhooks"
 
-  [pos]
-  embedded = true
-  `
+[pos]
+embedded = true
+`
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
