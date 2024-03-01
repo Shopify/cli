@@ -1,12 +1,23 @@
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import VersionCommand from './cli/commands/version.js'
-import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
-import ThemeCommands from '@shopify/theme'
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
-import AppCommands from '@shopify/app'
 
 // eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
+import Search from './cli/commands/search.js'
+import Upgrade from './cli/commands/upgrade.js'
+import Logout from './cli/commands/auth/logout.js'
+import CommandFlags from './cli/commands/debug/command-flags.js'
+import Catalog from './cli/commands/demo/catalog.js'
+import GenerateFile from './cli/commands/demo/generate-file.js'
+import PrintAIPrompt from './cli/commands/demo/print-ai-prompt.js'
+import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
+import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
+import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
+import Index from './cli/commands/plugins/index.js'
+import AppCommands from '@shopify/app'
+import ThemeCommands from '@shopify/theme'
+import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
 
 // In some cases (for example when we boot the proxy server), when an exception is
@@ -56,7 +67,18 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
 export const COMMANDS: any = {
   ...ThemeCommands,
   ...AppCommands,
+  search: Search,
+  upgrade: Upgrade,
   version: VersionCommand,
+  'auth:logout': Logout,
+  'debug:command-flags': CommandFlags,
+  'demo:catalog': Catalog,
+  'demo:generate-file': GenerateFile,
+  'demo:print-ai-prompt': PrintAIPrompt,
+  'kitchen-sink:async': KitchenSinkAsync,
+  'kitchen-sink:prompts': KitchenSinkPrompts,
+  'kitchen-sink:static': KitchenSinkStatic,
+  'plugins:index': Index,
 }
 
 export default runShopifyCLI
