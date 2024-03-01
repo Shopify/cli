@@ -8,7 +8,6 @@ const external = [
   '@shopify/plugin-cloudflare',
   'esbuild',
   '@luckycatfactory/esbuild-graphql-loader',
-  '@shopify/plugin-did-you-mean' // Plugins need to be external so that they can be loaded dynamically
 ]
 
 await esBuild({

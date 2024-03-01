@@ -1,9 +1,5 @@
-// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
+/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
 import VersionCommand from './cli/commands/version.js'
-// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
-// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
-
-// eslint-disable-next-line @shopify/cli/specific-imports-in-bootstrap-code
 import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
@@ -19,6 +15,8 @@ import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
 import fs from 'fs'
+
+export {default as DidYouMeanHook} from '@shopify/plugin-did-you-mean'
 
 // In some cases (for example when we boot the proxy server), when an exception is
 // thrown, no 'exit' signal is sent to the process. We don't understand this fully.

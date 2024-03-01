@@ -13,6 +13,12 @@
     "/dist",
     "/oclif.manifest.json"
   ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "nx build",
     "bundle": "nx bundle",

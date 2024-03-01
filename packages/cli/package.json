@@ -139,9 +139,7 @@
       "identifier": "COMMANDS"
     },
     "plugins": [
-      "@shopify/app",
       "@shopify/theme",
-      "@shopify/plugin-did-you-mean",
       "@shopify/cli-hydrogen",
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
@@ -184,7 +182,11 @@
     ],
     "hooks": {
       "prerun": "./dist/hooks/prerun.js",
-      "postrun": "./dist/hooks/postrun.js"
+      "postrun": "./dist/hooks/postrun.js",
+      "command_not_found": {
+        "target": "./dist/index.js",
+        "identifier": "DidYouMeanHook"
+      }
     }
   }
 }
