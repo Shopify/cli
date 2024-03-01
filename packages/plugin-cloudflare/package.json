@@ -37,7 +37,7 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "3.19.6",
+    "@oclif/core": "3.20.0",
     "@shopify/cli-kit": "3.56.0"
   },
   "devDependencies": {
