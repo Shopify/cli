@@ -14,7 +14,6 @@ import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {OrganizationApp} from '../../../models/organization.js'
-import {fetchAppExtensionRegistrations} from '../../dev/fetch.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -568,35 +567,22 @@ embedded = false
       // Given
       const options: LinkOptions = {
         directory: tmp,
-        // commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
+        developerPlatformClient,
       }
 
       vi.mocked(loadApp).mockRejectedValue('App not found')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp())
-      vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-        app: {
-          extensionRegistrations: [],
-          configurationRegistrations: [
-            {
-              type: 'PRIVACY_COMPLIANCE_WEBHOOKS',
-              id: '123',
-              uuid: '123',
-              title: 'Privacy compliance webhooks',
-              activeVersion: {
-                config: JSON.stringify({
-                  shop_redact_url: null,
-                  customers_redact_url: 'https://example.com/customers',
-                  customers_data_request_url: 'https://example.com/customers',
-                }),
-              },
-            },
-          ],
-          dashboardManagedExtensionRegistrations: [],
-        },
-      })
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
-        access_scopes: {scopes: 'read_products,write_orders'},
+        webhooks: {
+          api_version: '2023-07',
+          subscriptions: [
+            {
+              compliance_topics: ['customers/redact', 'customers/data_request'],
+              uri: 'https://example.com/customers',
+            },
+          ],
+        },
       }
       vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
 
@@ -700,28 +686,28 @@ embedded = false
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-  client_id = "12345"
-  name = "my app"
-  application_url = "https://myapp.com"
-  embedded = true
+client_id = "12345"
+name = "my app"
+application_url = "https://myapp.com"
+embedded = true
 
-  [access_scopes]
-  # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-  scopes = "write_products"
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
 
-  [auth]
-  redirect_urls = [ "https://example.com/callback1" ]
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
 
-  [webhooks]
-  api_version = "2023-07"
+[webhooks]
+api_version = "2023-07"
 
-    [[webhooks.subscriptions]]
-    topics = [ "products/create" ]
-    uri = "https://my-app.com/webhooks"
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://my-app.com/webhooks"
 
-  [pos]
-  embedded = true
-  `
+[pos]
+embedded = true
+`
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
