@@ -2,10 +2,10 @@ import {fetchAppAndIdentifiers, logMetadataForLoadedContext} from './context.js'
 import {ensureExtensionDirectoryExists} from './extensions/common.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
 import {getActiveDashboardExtensions} from './flow/fetch-flow-dashboard-extensions.js'
-import {fetchPartnersSession} from './context/partner-account-info.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {writeFile} from '@shopify/cli-kit/node/fs'
@@ -14,14 +14,16 @@ import {outputContent} from '@shopify/cli-kit/node/output'
 interface ImportFlowOptions {
   app: AppInterface
   apiKey?: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export async function importFlowExtensions(options: ImportFlowOptions) {
-  const partnersSession = await fetchPartnersSession()
-  const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, partnersSession, false)
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const [partnersApp, _] = await fetchAppAndIdentifiers({...options, reset: false}, developerPlatformClient, false)
 
   await logMetadataForLoadedContext(partnersApp)
 
+  const partnersSession = await developerPlatformClient.session()
   const flowExtensions = await getActiveDashboardExtensions({token: partnersSession.token, apiKey: partnersApp.apiKey})
 
   if (flowExtensions.length === 0) {

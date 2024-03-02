@@ -28,7 +28,9 @@ interface ReleaseOptions {
 }
 
 export async function release(options: ReleaseOptions) {
-  const {token, app, partnersApp} = await ensureReleaseContext(options)
+  const {developerPlatformClient, app, partnersApp} = await ensureReleaseContext(options)
+  const partnerSession = await developerPlatformClient.session()
+  const token = partnerSession.token
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
     token,
@@ -36,7 +38,7 @@ export async function release(options: ReleaseOptions) {
     options.version,
   )
   const configExtensionIdentifiersBreakdown = await configExtensionsIdentifiersBreakdown({
-    token,
+    developerPlatformClient,
     apiKey: partnersApp.apiKey,
     localApp: app,
     versionAppModules: versionDetails.appModuleVersions,

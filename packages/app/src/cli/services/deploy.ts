@@ -5,6 +5,7 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -37,6 +38,9 @@ interface DeployOptions {
 
   /** The git reference url of the app version */
   commitReference?: string
+
+  /** The API client to send authenticated requests  */
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 interface TasksContext {
@@ -45,8 +49,9 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token, release} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, release} = await ensureDeployContext({...options, developerPlatformClient})
   const apiKey = identifiers.app
 
   outputNewline()
@@ -90,7 +95,7 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const appModules = await Promise.all(
-              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
+              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, developerPlatformClient, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
@@ -98,7 +103,7 @@ export async function deploy(options: DeployOptions) {
               bundlePath,
               appModules: getArrayRejectingUndefined(appModules),
               release,
-              token,
+              developerPlatformClient,
               extensionIds: identifiers.extensionIds,
               message: options.message,
               version: options.version,
@@ -107,7 +112,7 @@ export async function deploy(options: DeployOptions) {
 
             if (!useThemebundling()) {
               const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
-              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
+              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
             }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})

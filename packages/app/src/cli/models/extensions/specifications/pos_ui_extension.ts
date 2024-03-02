@@ -5,7 +5,7 @@ import {BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/retail-ui-extensions'
 
-const spec = createExtensionSpecification({
+const posUISpec = createExtensionSpecification({
   identifier: 'pos_ui_extension',
   dependency,
   schema: BaseSchema,
@@ -21,4 +21,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default posUISpec

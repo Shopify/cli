@@ -165,7 +165,7 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   extra: string[] = [],
 ) {
-  const args = ['exec', '--', 'javy', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
+  const args = ['exec', '--', 'javy-cli', 'compile', '-d', '-o', fun.outputPath, 'dist/function.js', ...extra]
 
   return exec('npm', args, {
     cwd: fun.directory,
@@ -178,7 +178,7 @@ export async function runJavy(
 export async function installJavy(app: AppInterface) {
   const javyRequired = app.allExtensions.some((ext) => ext.features.includes('function') && ext.isJavaScript)
   if (javyRequired) {
-    await exec('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+    await exec('npm', ['exec', '--', 'javy-cli', '--version'], {cwd: app.directory})
   }
 }
 

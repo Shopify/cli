@@ -5,11 +5,12 @@ import {buildFunctionExtension, buildUIExtension} from '../build/extension.js'
 import {
   testApp,
   testUIExtension,
-  testPartnersUserSession,
   testFunctionExtension,
   testAppConfigExtensions,
+  testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {AppInterface} from '../../models/app/app.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 
@@ -59,6 +60,8 @@ const remoteApp = {
   betas: [],
 }
 
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+
 describe('draftExtensionsPush', () => {
   test("do nothing if the app doesn't include any extension", async () => {
     // Given
@@ -67,7 +70,7 @@ describe('draftExtensionsPush', () => {
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
       remoteExtensionIds,
       remoteApp,
     })
@@ -87,7 +90,7 @@ describe('draftExtensionsPush', () => {
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
       remoteExtensionIds,
       remoteApp,
     })
@@ -107,7 +110,7 @@ describe('draftExtensionsPush', () => {
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
       remoteExtensionIds,
       remoteApp,
     })
@@ -129,7 +132,7 @@ describe('draftExtensionsPush', () => {
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
       remoteExtensionIds,
       remoteApp,
     })
@@ -140,7 +143,7 @@ describe('draftExtensionsPush', () => {
     await draftExtensionsPush(draftExtensionsPushOptions(app))
 
     // Then
-    expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy', '--version'], {cwd: app.directory})
+    expect(vi.mocked(exec)).toHaveBeenCalledWith('npm', ['exec', '--', 'javy-cli', '--version'], {cwd: app.directory})
     expect(updateExtensionDraft).toHaveBeenCalledOnce()
     expect(enableDeveloperPreview).not.toHaveBeenCalled()
   })
@@ -152,7 +155,7 @@ describe('draftExtensionsPush', () => {
     })
     vi.mocked(ensureDraftExtensionsPushContext).mockResolvedValue({
       app,
-      partnersSession: testPartnersUserSession,
+      developerPlatformClient,
       remoteExtensionIds,
       remoteApp,
     })

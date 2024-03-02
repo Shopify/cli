@@ -8,7 +8,7 @@ import {outputSuccess} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExtensionsPushOptions) {
-  const {app, partnersSession, remoteExtensionIds, remoteApp} = await ensureDraftExtensionsPushContext(
+  const {app, developerPlatformClient, remoteExtensionIds, remoteApp} = await ensureDraftExtensionsPushContext(
     draftExtensionsPushOptions,
   )
 
@@ -28,7 +28,7 @@ export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExten
             }
             await updateExtensionDraft({
               extension,
-              token: partnersSession.token,
+              developerPlatformClient,
               apiKey: remoteApp.apiKey,
               registrationId,
               stdout,
@@ -41,6 +41,7 @@ export async function draftExtensionsPush(draftExtensionsPushOptions: DraftExten
   })
 
   if (draftExtensionsPushOptions.enableDeveloperPreview) {
+    const partnersSession = await developerPlatformClient.session()
     await enableDeveloperPreview({token: partnersSession.token, apiKey: remoteApp.apiKey})
     outputSuccess(`Enabled dev preview`)
   }

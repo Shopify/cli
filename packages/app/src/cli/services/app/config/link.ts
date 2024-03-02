@@ -10,14 +10,13 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {getAppConfigurationFileName, loadApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, logMetadataForLoadedContext} from '../../context.js'
-import {BetaFlag, fetchAppDetailsFromApiKey} from '../../dev/fetch.js'
+import {BetaFlag} from '../../dev/fetch.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
-import {PartnersSession, fetchPartnersSession} from '../../context/partner-account-info.js'
 import {ExtensionSpecification} from '../../../models/extensions/specification.js'
-import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
+import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -30,18 +29,21 @@ export interface LinkOptions {
   apiKey?: string
   configName?: string
   baseConfigName?: string
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<AppConfiguration> {
-  const {token, remoteApp, directory} = await selectRemoteApp(options)
-  const {localApp, configFileName, configFilePath} = await loadLocalApp(options, token, remoteApp, directory)
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
+  const updatedOptions = {...options, developerPlatformClient}
+  const {remoteApp, directory} = await selectRemoteApp(updatedOptions)
+  const {localApp, configFileName, configFilePath} = await loadLocalApp(updatedOptions, remoteApp, directory)
 
   await logMetadataForLoadedContext(remoteApp)
 
   let configuration = addLocalAppConfig(localApp.configuration, remoteApp, configFilePath)
   const remoteAppConfiguration = await fetchAppRemoteConfiguration(
     remoteApp.apiKey,
-    token,
+    developerPlatformClient,
     localApp.specifications ?? [],
     localApp.remoteBetaFlags,
   )
@@ -58,23 +60,18 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   return configuration
 }
 
-async function selectRemoteApp(options: LinkOptions) {
+async function selectRemoteApp(options: LinkOptions & Required<Pick<LinkOptions, 'developerPlatformClient'>>) {
   const localApp = await loadAppOrEmptyApp(options)
   const directory = localApp?.directory || options.directory
-  const partnersSession = await fetchPartnersSession()
-  const remoteApp = await loadRemoteApp(localApp, options.apiKey, partnersSession, directory)
+  const remoteApp = await loadRemoteApp(localApp, options.apiKey, options.developerPlatformClient, directory)
   return {
-    token: partnersSession.token,
     remoteApp,
     directory,
   }
 }
 
-async function loadLocalApp(options: LinkOptions, token: string, remoteApp: OrganizationApp, directory: string) {
-  const specifications = await fetchSpecifications({
-    token,
-    apiKey: remoteApp.apiKey,
-  })
+async function loadLocalApp(options: LinkOptions, remoteApp: OrganizationApp, directory: string) {
+  const specifications = await options.developerPlatformClient!.specifications(remoteApp.apiKey)
   const localApp = await loadAppOrEmptyApp(options, specifications, remoteApp.betas, remoteApp)
   const configFileName = await loadConfigurationFileName(remoteApp, options, localApp)
   const configFilePath = joinPath(directory, configFileName)
@@ -111,13 +108,13 @@ async function loadAppOrEmptyApp(
 async function loadRemoteApp(
   localApp: AppInterface,
   apiKey: string | undefined,
-  partnersSession: PartnersSession,
+  developerPlatformClient: DeveloperPlatformClient,
   directory?: string,
 ): Promise<OrganizationApp> {
   if (!apiKey) {
-    return fetchOrCreateOrganizationApp(localApp, partnersSession, directory)
+    return fetchOrCreateOrganizationApp(localApp, developerPlatformClient, directory)
   }
-  const app = await fetchAppDetailsFromApiKey(apiKey, partnersSession.token)
+  const app = await developerPlatformClient.appFromId(apiKey)
   if (!app) {
     const errorMessage = InvalidApiKeyErrorMessage(apiKey)
     throw new AbortError(errorMessage.message, errorMessage.tryMessage)

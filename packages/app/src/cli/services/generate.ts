@@ -1,6 +1,5 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {ensureGenerateContext} from './context.js'
-import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {selectDeveloperPlatformClient, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface} from '../models/app/app.js'
 import {loadApp} from '../models/app/loader.js'
@@ -42,7 +41,7 @@ async function generate(options: GenerateOptions) {
   const partnersSession = await developerPlatformClient.session()
   const token = partnersSession.token
   const apiKey = await ensureGenerateContext({...options, developerPlatformClient, partnersSession})
-  const specifications = await fetchSpecifications({token, apiKey})
+  const specifications = await developerPlatformClient.specifications(apiKey)
   const app: AppInterface = await loadApp({
     directory: options.directory,
     configName: options.configName,

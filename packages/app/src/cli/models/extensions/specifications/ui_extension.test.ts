@@ -1,11 +1,15 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {describe, expect, test, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/node/result'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {describe, expect, test, vi} from 'vitest'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -228,7 +232,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // When
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
-          token: 'token',
+          developerPlatformClient,
         })
 
         // Then

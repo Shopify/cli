@@ -1,10 +1,12 @@
 import {fetchAppRemoteConfiguration} from './select-app.js'
 import {AppModuleVersion} from '../../api/graphql/app_active_version.js'
-import {fetchActiveAppVersion} from '../dev/fetch.js'
-import {configurationSpecifications} from '../../models/app/app.test-data.js'
+import {configurationSpecifications, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../dev/fetch.js')
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 const webhooksActiveAppModule: AppModuleVersion = {
   registrationId: 'C_A',
@@ -62,10 +64,17 @@ const activeVersion = {
 describe('fetchAppRemoteConfiguration', () => {
   test('when configuration modules are present the remote configuration is returned ', async () => {
     // Given
-    vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+    })
 
     // When
-    const result = await fetchAppRemoteConfiguration('token', 'apiKey', await configurationSpecifications(), [])
+    const result = await fetchAppRemoteConfiguration(
+      'token',
+      developerPlatformClient,
+      await configurationSpecifications(),
+      [],
+    )
 
     // Then
     expect(result).toEqual({
@@ -99,10 +108,17 @@ describe('fetchAppRemoteConfiguration', () => {
       },
     }
     activeVersion.app.activeAppVersion.appModuleVersions.push(complianceActiveAppModule)
-    vi.mocked(fetchActiveAppVersion).mockResolvedValue(activeVersion)
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      activeAppVersion: (_appId: string) => Promise.resolve(activeVersion),
+    })
 
     // When
-    const result = await fetchAppRemoteConfiguration('token', 'apiKey', await configurationSpecifications(), [])
+    const result = await fetchAppRemoteConfiguration(
+      'token',
+      developerPlatformClient,
+      await configurationSpecifications(),
+      [],
+    )
 
     // Then
     expect(result).toEqual({
