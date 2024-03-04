@@ -105,7 +105,7 @@
     "@shopify/plugin-did-you-mean": "3.56.0",
     "@shopify/theme": "3.56.0",
     "esbuild": "0.19.8",
-    "stacktracey": "2.1.8",
+    "stacktracey": "github:isaacroldan/stacktracey",
     "yoga-wasm-web": "^0.3.3",
     "zod-to-json-schema": "3.21.4"
   },
