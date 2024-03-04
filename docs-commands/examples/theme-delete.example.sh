@@ -1,1 +1,0 @@
-shopify theme delete [flags]

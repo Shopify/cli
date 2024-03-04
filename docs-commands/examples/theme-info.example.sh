@@ -1,1 +1,0 @@
-shopify theme info [flags]
