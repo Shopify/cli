@@ -67,7 +67,7 @@ shopify theme push --unpublished --json
 
 ## `shopify app build`
 
-Build the app.
+Build the app, including extensions.
 
 ```
 USAGE
@@ -83,7 +83,7 @@ FLAGS
       --verbose                         Increase the verbosity of the logs.
 
 DESCRIPTION
-  Build the app.
+  Build the app, including extensions.
 
   This command executes the build script specified in the element's TOML file. You can specify a custom script in the
   file. To learn about configuration files in Shopify apps, refer to [App
@@ -116,17 +116,6 @@ DESCRIPTION
 
   Pulls app configuration from the Partner Dashboard and creates or overwrites a configuration file. You can create a
   new app with this command to start with a default configuration file.
-
-  This command presents you with a prompt with the following steps:
-
-  - Which Partner organization is this work for?
-  - This prompt shows only if the account you are logged into has more than one organization.
-  - Create this project as a new app on Shopify?
-  - Choosing yes will create a new app in your Partner Dashboard with the default configuration
-  - Choosing no will prompt you to choose from a list of all the apps in your organization
-  - Configuration file name
-  - Enter the name for this configuration file. The `shopify.app.{config-name}.toml` file will be created. If it already
-  exists, you will be prompted to confirm overwriting.
 
   For more information on the format of the created TOML configuration file, refer to the [App
   configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
@@ -187,14 +176,14 @@ FLAGS
 DESCRIPTION
   Deploy your Shopify app.
 
-  [Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and deploys app extensions.
+  [Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build), then deploys your app configuration and
+  extensions.
 
-  When you run this command, Shopify CLI creates an app version that contains a snapshot of all of your app extensions,
-  including the app extensions that you manage in the Partner Dashboard, and releases the app version to users.
+  This command creates an app version, which is a snapshot of your app configuration and all extensions, including the
+  app extensions that you manage in the Partner Dashboard. This version is then released to users.
 
-  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). When
-  you're ready to deploy your app, you need to deploy these components to your own hosting solution. [Learn more about
-  deploying your web app](https://shopify.dev/docs/apps/deployment/web).
+  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need
+  to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/deploy.js)_
@@ -234,9 +223,9 @@ FLAGS
 DESCRIPTION
   Run the app.
 
-  [Builds the app](/docs/apps/tools/cli/commands#build) and lets you preview it on a [development
-  store](/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partners/dashboard/managi
-  ng-stores/plus-sandbox-store?shpxid=f75d4b9f-3CE2-4156-F28E-0364F1AF6ABB).
+  [Builds the app](https://shopify.dev/docs/apps/tools/cli/commands#build) and lets you preview it on a [development
+  store](https://shopify.dev/docs/apps/tools/development-stores) or [Plus sandbox store](https://help.shopify.com/partne
+  rs/dashboard/managing-stores/plus-sandbox-store?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A).
 
   To preview your app on a development store or Plus sandbox store, Shopify CLI walks you through the following steps.
   If you've run `dev` before, then your settings are saved and some of these steps are skipped. You can reset these
@@ -255,6 +244,9 @@ DESCRIPTION
   you're provided with URLs that you can manually add in the Partner Dashboard so you can preview your app.
 
   - Enabling development store preview for extensions.
+  - Serving [GraphiQL for the Admin
+  API](https://shopify.dev/docs/apps/tools/graphiql-admin-api#use-a-local-graphiql-instance) using your app's
+  credentials and access scopes.
   - Building and serving your app and app extensions.
 
   If you're using the PHP or Ruby app template, then you need to complete the following steps before you can preview
@@ -264,8 +256,10 @@ DESCRIPTION
   - Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
 
   > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have
-  a staff account on the store. Staff accounts are created automatically the first time you access a development store
-  with your Partner staff account through the Partner Dashboard.
+  a [staff
+  account](https://help.shopify.com/manual/your-account/staff-accounts?shpxid=09640797-900B-4D1E-6E65-76A35B54FF4A) on
+  the store. Staff accounts are created automatically the first time you access a development store with your Partner
+  staff account through the Partner Dashboard.
 ```
 
 _See code: [@shopify/app](https://github.com/Shopify/cli/edit/main/packages/app/blob/v3.56.0/dist/cli/commands/app/dev.js)_
@@ -1223,6 +1217,8 @@ FLAGS
 
 DESCRIPTION
   Start a Language Server Protocol server.
+
+  Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/language-server.js)_
@@ -1480,6 +1476,11 @@ FLAGS
 
 DESCRIPTION
   Renames an existing theme.
+
+  Renames a theme in your store.
+
+  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in
+  your store.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/rename.js)_
@@ -1507,8 +1508,7 @@ DESCRIPTION
   Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
 
   This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a8
-  9-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others. Works like an alias
-  to `shopify theme push -u -t=RANDOMIZED_NAME`.
+  9-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.
 ```
 
 _See code: [@shopify/theme](https://github.com/Shopify/cli/edit/main/packages/theme/blob/v3.56.0/dist/cli/commands/theme/share.js)_
@@ -1528,7 +1528,7 @@ DESCRIPTION
   Upgrade your CLI dependency.
 
   If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the
-  [upgrade](/docs/api/shopify-cli#upgrade) documentation.
+  [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.
 ```
 
 _See code: [dist/cli/commands/upgrade.js](https://github.com/Shopify/cli/edit/main/packages/cli/blob/v3.56.0/dist/cli/commands/upgrade.js)_

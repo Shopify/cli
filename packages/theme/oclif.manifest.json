@@ -707,7 +707,7 @@
       ],
       "args": {
       },
-      "description": "Start a Language Server Protocol server.",
+      "description": "Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).",
       "flags": {
         "no-color": {
           "allowNo": false,
@@ -741,7 +741,8 @@
         "theme",
         "language-server.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Start a Language Server Protocol server."
     },
     "theme:list": {
       "aliases": [
@@ -1444,7 +1445,7 @@
       ],
       "args": {
       },
-      "description": "Renames an existing theme.",
+      "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "flags": {
         "development": {
           "allowNo": false,
@@ -1539,7 +1540,8 @@
         "theme",
         "rename.js"
       ],
-      "strict": true
+      "strict": true,
+      "summary": "Renames an existing theme."
     },
     "theme:serve": {
       "aliases": [
@@ -1752,7 +1754,7 @@
       "cli2Flags": [
         "force"
       ],
-      "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others. Works like an alias to `shopify theme push -u -t=RANDOMIZED_NAME`.",
+      "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.",
       "flags": {
         "environment": {
           "char": "e",

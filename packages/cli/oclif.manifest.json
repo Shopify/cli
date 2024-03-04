@@ -356,7 +356,7 @@
       ],
       "args": {
       },
-      "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](/docs/api/shopify-cli#upgrade) documentation.",
+      "description": "If the CLI is installed as a dependency of your app project, this command will upgrade it. Otherwise, refer to the [upgrade](https://shopify.dev/docs/api/shopify-cli#upgrade) documentation.",
       "flags": {
         "path": {
           "default": ".",
