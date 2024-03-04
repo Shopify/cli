@@ -7,11 +7,11 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 
 export default class Share extends ThemeCommand {
+  static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
+
   static description = `Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
 
-  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others. Works like an alias to \`shopify theme push -u -t=RANDOMIZED_NAME\`.`
-
-  static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
+  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes?shpxid=cee12a89-AA22-4AD3-38C8-91C8FC0E1FB0#share-a-theme-preview-with-others) that you can share with others.`
 
   static flags = {
     ...globalFlags,
