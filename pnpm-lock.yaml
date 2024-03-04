@@ -302,9 +302,6 @@ importers:
       esbuild:
         specifier: 0.19.8
         version: 0.19.8
-      stacktracey:
-        specifier: github:isaacroldan/stacktracey
-        version: github.com/isaacroldan/stacktracey/ae958fdc724a9ee4c2cb4d7c55294f8faa1cd7d4
       yoga-wasm-web:
         specifier: ^0.3.3
         version: 0.3.3
@@ -318,6 +315,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^0.34.3
         version: 0.34.6(vitest@0.34.6)
+      esbuild-plugin-replace:
+        specifier: ^1.4.0
+        version: 1.4.0
       vite:
         specifier: 4.4.9
         version: 4.4.9(@types/node@18.19.3)(sass@1.71.1)
@@ -490,8 +490,8 @@ importers:
         specifier: 0.5.21
         version: 0.5.21
       stacktracey:
-        specifier: github:isaacroldan/stacktracey
-        version: github.com/isaacroldan/stacktracey/ae958fdc724a9ee4c2cb4d7c55294f8faa1cd7d4
+        specifier: 2.1.8
+        version: 2.1.8
       strip-ansi:
         specifier: 7.1.0
         version: 7.1.0
@@ -8578,6 +8578,12 @@ packages:
       is-date-object: 1.0.5
       is-symbol: 1.0.4
 
+  /esbuild-plugin-replace@1.4.0:
+    resolution: {integrity: sha512-lP3ZAyzyRa5JXoOd59lJbRKNObtK8pJ/RO7o6vdjwLi71GfbL32NR22ZuS7/cLZkr10/L1lutoLma8E4DLngYg==}
+    dependencies:
+      magic-string: 0.25.9
+    dev: true
+
   /esbuild@0.18.20:
     resolution: {integrity: sha512-ceqxoedUrcayh7Y7ZX6NdbbDzGROiyVBgC4PriJThBKSVPWnnFHZAkfI1lJT8QFkOwH4qOS2SJkS4wvpGl8BpA==}
     engines: {node: '>=12'}
@@ -11131,6 +11137,12 @@ packages:
   /macaddress@0.5.3:
     resolution: {integrity: sha512-vGBKTA+jwM4KgjGZ+S/8/Mkj9rWzePyGY6jManXPGhiWu63RYwW8dKPyk5koP+8qNVhPhHgFa1y/MJ4wrjsNrg==}
     dev: false
+
+  /magic-string@0.25.9:
+    resolution: {integrity: sha512-RmF0AsMzgt25qzqqLc1+MbHmhdx0ojF2Fvs4XnOqz2ZOBXzzkEwc/dJQZCYHAn7v1jbVOjAZfK8msRn4BxO4VQ==}
+    dependencies:
+      sourcemap-codec: 1.4.8
+    dev: true
 
   /magic-string@0.30.7:
     resolution: {integrity: sha512-8vBuFF/I/+OSLRmdf2wwFCJCz+nSn0m6DPvGH1fS/KiQoSaR+sETbov0eIk9KhEKy8CYqIkIAnbohxT/4H0kuA==}
@@ -13776,6 +13788,11 @@ packages:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
 
+  /sourcemap-codec@1.4.8:
+    resolution: {integrity: sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==}
+    deprecated: Please use @jridgewell/sourcemap-codec instead
+    dev: true
+
   /spawndamnit@2.0.0:
     resolution: {integrity: sha512-j4JKEcncSjFlqIwU5L/rp2N5SIPsdxaRsIv678+TZxZ0SRDJTm8JrxJMjE/XuiEZNEir3S8l0Fa3Ke339WI4qA==}
     dependencies:
@@ -13859,6 +13876,13 @@ packages:
 
   /stackframe@1.3.4:
     resolution: {integrity: sha512-oeVtt7eWQS+Na6F//S4kJ2K2VbRlS9D43mAlMyVpVWovy9o+jfgH8O9agzANzaiLjclA0oYzUXEM4PurhSUChw==}
+
+  /stacktracey@2.1.8:
+    resolution: {integrity: sha512-Kpij9riA+UNg7TnphqjH7/CzctQ/owJGNbFkfEeve4Z4uxT5+JapVLFXcsurIfN34gnTWZNJ/f7NMG0E8JDzTw==}
+    dependencies:
+      as-table: 1.0.55
+      get-source: 2.0.12
+    dev: false
 
   /statuses@2.0.1:
     resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
@@ -15579,12 +15603,3 @@ packages:
       - vite
       - vitest
     dev: true
-
-  github.com/isaacroldan/stacktracey/ae958fdc724a9ee4c2cb4d7c55294f8faa1cd7d4:
-    resolution: {tarball: https://codeload.github.com/isaacroldan/stacktracey/tar.gz/ae958fdc724a9ee4c2cb4d7c55294f8faa1cd7d4}
-    name: stacktracey
-    version: 2.1.8
-    dependencies:
-      as-table: 1.0.55
-      get-source: 2.0.12
-    dev: false

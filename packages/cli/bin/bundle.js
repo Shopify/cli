@@ -1,5 +1,6 @@
 import {build as esBuild} from 'esbuild'
 import cleanBundledDependencies from '../../../bin/clean-bundled-dependencies.js'
+import replace from 'esbuild-plugin-replace'
 
 const external = [
   'react-devtools-core',  // react-devtools-core can't be bundled (part of ink)
@@ -18,7 +19,11 @@ await esBuild({
   external,
   loader: {'.node': 'copy'},
   splitting: true,
-  plugins: [],
+  plugins: [
+    replace({
+      'nodeRequire (': 'module.require('
+    })
+  ],
 })
 
 await cleanBundledDependencies(external)
