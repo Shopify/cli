@@ -24,12 +24,12 @@
         "type": "appbuild",
         "typeDefinitions": {
           "appbuild": {
-            "filePath": "src-docs/interfaces/app-build.interface.ts",
+            "filePath": "docs-commands/interfaces/app-build.interface.ts",
             "name": "appbuild",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -37,7 +37,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -45,7 +45,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -53,7 +53,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -61,7 +61,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--skip-dependencies-installation",
                 "value": "\"\"",
@@ -69,7 +69,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -111,12 +111,12 @@
         "type": "appconfiglink",
         "typeDefinitions": {
           "appconfiglink": {
-            "filePath": "src-docs/interfaces/app-config-link.interface.ts",
+            "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
             "name": "appconfiglink",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-config-link.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -124,7 +124,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-link.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -132,7 +132,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-link.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -140,7 +140,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-link.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -148,7 +148,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-link.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -190,12 +190,12 @@
         "type": "appconfigpush",
         "typeDefinitions": {
           "appconfigpush": {
-            "filePath": "src-docs/interfaces/app-config-push.interface.ts",
+            "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
             "name": "appconfigpush",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-config-push.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -203,7 +203,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-push.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -211,7 +211,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-push.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -219,7 +219,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-push.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -227,7 +227,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-push.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
@@ -269,12 +269,12 @@
         "type": "appconfiguse",
         "typeDefinitions": {
           "appconfiguse": {
-            "filePath": "src-docs/interfaces/app-config-use.interface.ts",
+            "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
             "name": "appconfiguse",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-config-use.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -282,7 +282,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-use.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -290,7 +290,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-use.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -298,7 +298,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-config-use.interface.ts",
+                "filePath": "docs-commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
                 "value": "\"\"",
@@ -340,12 +340,12 @@
         "type": "appdeploy",
         "typeDefinitions": {
           "appdeploy": {
-            "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+            "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
             "name": "appdeploy",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -353,7 +353,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -361,7 +361,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -369,7 +369,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -377,7 +377,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -385,7 +385,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
                 "value": "\"\"",
@@ -393,7 +393,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
@@ -401,7 +401,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-release",
                 "value": "\"\"",
@@ -409,7 +409,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--message <value>",
                 "value": "string",
@@ -417,7 +417,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--version <value>",
                 "value": "string",
@@ -425,7 +425,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-deploy.interface.ts",
+                "filePath": "docs-commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--source-control-url <value>",
                 "value": "string",
@@ -467,12 +467,12 @@
         "type": "appdev",
         "typeDefinitions": {
           "appdev": {
-            "filePath": "src-docs/interfaces/app-dev.interface.ts",
+            "filePath": "docs-commands/interfaces/app-dev.interface.ts",
             "name": "appdev",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -480,7 +480,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -488,7 +488,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -496,7 +496,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -504,7 +504,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -512,7 +512,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -520,7 +520,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
                 "value": "\"\"",
@@ -528,7 +528,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--skip-dependencies-installation",
                 "value": "\"\"",
@@ -536,7 +536,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-update",
                 "value": "\"\"",
@@ -544,7 +544,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--subscription-product-url <value>",
                 "value": "string",
@@ -552,7 +552,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--checkout-cart-url <value>",
                 "value": "string",
@@ -560,7 +560,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--tunnel-url <value>",
                 "value": "string",
@@ -568,7 +568,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -576,7 +576,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--theme-app-extension-port <value>",
                 "value": "string",
@@ -584,7 +584,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--notify <value>",
                 "value": "string",
@@ -626,12 +626,12 @@
         "type": "appenvpull",
         "typeDefinitions": {
           "appenvpull": {
-            "filePath": "src-docs/interfaces/app-env-pull.interface.ts",
+            "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
             "name": "appenvpull",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-env-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -639,7 +639,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -647,7 +647,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -655,7 +655,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -663,7 +663,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--env-file <value>",
                 "value": "string",
@@ -705,12 +705,12 @@
         "type": "appenvshow",
         "typeDefinitions": {
           "appenvshow": {
-            "filePath": "src-docs/interfaces/app-env-show.interface.ts",
+            "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
             "name": "appenvshow",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-env-show.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -718,7 +718,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-show.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -726,7 +726,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-show.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -734,7 +734,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-env-show.interface.ts",
+                "filePath": "docs-commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -776,12 +776,12 @@
         "type": "appfunctionbuild",
         "typeDefinitions": {
           "appfunctionbuild": {
-            "filePath": "src-docs/interfaces/app-function-build.interface.ts",
+            "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
             "name": "appfunctionbuild",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-function-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -789,7 +789,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -797,7 +797,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -805,7 +805,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-build.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -847,12 +847,12 @@
         "type": "appfunctionrun",
         "typeDefinitions": {
           "appfunctionrun": {
-            "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+            "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
             "name": "appfunctionrun",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -860,7 +860,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -868,7 +868,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -876,7 +876,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -884,7 +884,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-i, --input <value>",
                 "value": "string",
@@ -892,7 +892,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --export <value>",
                 "value": "string",
@@ -900,7 +900,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-run.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
                 "value": "\"\"",
@@ -942,12 +942,12 @@
         "type": "appfunctionschema",
         "typeDefinitions": {
           "appfunctionschema": {
-            "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+            "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
             "name": "appfunctionschema",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -955,7 +955,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -963,7 +963,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -971,7 +971,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -979,7 +979,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -987,7 +987,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-schema.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--stdout",
                 "value": "\"\"",
@@ -1029,12 +1029,12 @@
         "type": "appfunctiontypegen",
         "typeDefinitions": {
           "appfunctiontypegen": {
-            "filePath": "src-docs/interfaces/app-function-typegen.interface.ts",
+            "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
             "name": "appfunctiontypegen",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-function-typegen.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1042,7 +1042,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-typegen.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1050,7 +1050,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-typegen.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1058,7 +1058,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-function-typegen.interface.ts",
+                "filePath": "docs-commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1100,12 +1100,12 @@
         "type": "appgenerateextension",
         "typeDefinitions": {
           "appgenerateextension": {
-            "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+            "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
             "name": "appgenerateextension",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1113,7 +1113,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1121,7 +1121,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1129,7 +1129,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1137,7 +1137,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --type <value>",
                 "value": "string",
@@ -1145,7 +1145,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --template <value>",
                 "value": "string",
@@ -1153,7 +1153,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --name <value>",
                 "value": "string",
@@ -1161,7 +1161,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--flavor <value>",
                 "value": "string",
@@ -1169,7 +1169,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
                 "value": "\"\"",
@@ -1177,7 +1177,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-generate-extension.interface.ts",
+                "filePath": "docs-commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1219,12 +1219,12 @@
         "type": "appimportflowlegacyextensions",
         "typeDefinitions": {
           "appimportflowlegacyextensions": {
-            "filePath": "src-docs/interfaces/app-import-flow-legacy-extensions.interface.ts",
+            "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
             "name": "appimportflowlegacyextensions",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1232,7 +1232,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1240,7 +1240,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1248,7 +1248,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1256,7 +1256,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-import-flow-legacy-extensions.interface.ts",
+                "filePath": "docs-commands/interfaces/app-import-flow-legacy-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1298,12 +1298,12 @@
         "type": "appinfo",
         "typeDefinitions": {
           "appinfo": {
-            "filePath": "src-docs/interfaces/app-info.interface.ts",
+            "filePath": "docs-commands/interfaces/app-info.interface.ts",
             "name": "appinfo",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-info.interface.ts",
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1311,7 +1311,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-info.interface.ts",
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1319,7 +1319,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-info.interface.ts",
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1327,7 +1327,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-info.interface.ts",
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1335,7 +1335,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-info.interface.ts",
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--json",
                 "value": "\"\"",
@@ -1343,7 +1343,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-info.interface.ts",
+                "filePath": "docs-commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--web-env",
                 "value": "\"\"",
@@ -1385,12 +1385,12 @@
         "type": "apprelease",
         "typeDefinitions": {
           "apprelease": {
-            "filePath": "src-docs/interfaces/app-release.interface.ts",
+            "filePath": "docs-commands/interfaces/app-release.interface.ts",
             "name": "apprelease",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1398,7 +1398,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1406,7 +1406,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1414,7 +1414,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1422,7 +1422,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1430,7 +1430,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
                 "value": "\"\"",
@@ -1438,7 +1438,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
@@ -1446,7 +1446,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-release.interface.ts",
+                "filePath": "docs-commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--version <value>",
                 "value": "string",
@@ -1487,12 +1487,12 @@
         "type": "appupdateurl",
         "typeDefinitions": {
           "appupdateurl": {
-            "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+            "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
             "name": "appupdateurl",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1500,7 +1500,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1508,7 +1508,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1516,7 +1516,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1524,7 +1524,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1532,7 +1532,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--app-url <value>",
                 "value": "string",
@@ -1540,7 +1540,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-update-url.interface.ts",
+                "filePath": "docs-commands/interfaces/app-update-url.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--redirect-urls <value>",
                 "value": "string",
@@ -1582,12 +1582,12 @@
         "type": "appversionslist",
         "typeDefinitions": {
           "appversionslist": {
-            "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+            "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
             "name": "appversionslist",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1595,7 +1595,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1603,7 +1603,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1611,7 +1611,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
@@ -1619,7 +1619,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-id <value>",
                 "value": "string",
@@ -1627,7 +1627,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/app-versions-list.interface.ts",
+                "filePath": "docs-commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--json",
                 "value": "\"\"",
@@ -1784,12 +1784,12 @@
         "type": "themecheck",
         "typeDefinitions": {
           "themecheck": {
-            "filePath": "src-docs/interfaces/theme-check.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-check.interface.ts",
             "name": "themecheck",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1797,7 +1797,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1805,7 +1805,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--dev-preview",
                 "value": "\"\"",
@@ -1813,7 +1813,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -1821,7 +1821,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --auto-correct",
                 "value": "\"\"",
@@ -1829,7 +1829,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-c, --category <value>",
                 "value": "string",
@@ -1837,7 +1837,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-C, --config <value>",
                 "value": "string",
@@ -1845,7 +1845,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --exclude-category <value>",
                 "value": "string",
@@ -1853,7 +1853,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--fail-level <value>",
                 "value": "string",
@@ -1861,7 +1861,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--update-docs",
                 "value": "\"\"",
@@ -1869,7 +1869,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--init",
                 "value": "\"\"",
@@ -1877,7 +1877,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--list",
                 "value": "\"\"",
@@ -1885,7 +1885,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-o, --output <value>",
                 "value": "string",
@@ -1893,7 +1893,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--print",
                 "value": "\"\"",
@@ -1901,7 +1901,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-v, --version",
                 "value": "\"\"",
@@ -1909,7 +1909,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-check.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -1951,12 +1951,12 @@
         "type": "themeconsole",
         "typeDefinitions": {
           "themeconsole": {
-            "filePath": "src-docs/interfaces/theme-console.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-console.interface.ts",
             "name": "themeconsole",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -1964,7 +1964,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -1972,7 +1972,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -1980,7 +1980,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -1988,7 +1988,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -1996,7 +1996,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--url <value>",
                 "value": "string",
@@ -2004,7 +2004,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-console.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--port <value>",
                 "value": "string",
@@ -2046,12 +2046,12 @@
         "type": "themedelete",
         "typeDefinitions": {
           "themedelete": {
-            "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
             "name": "themedelete",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2059,7 +2059,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2067,7 +2067,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -2075,7 +2075,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
@@ -2083,7 +2083,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --show-all",
                 "value": "\"\"",
@@ -2091,7 +2091,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
@@ -2099,7 +2099,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -2107,7 +2107,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -2115,7 +2115,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-delete.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -2157,12 +2157,12 @@
         "type": "themedev",
         "typeDefinitions": {
           "themedev": {
-            "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
             "name": "themedev",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2170,7 +2170,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2178,7 +2178,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -2186,7 +2186,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--host <value>",
                 "value": "string",
@@ -2194,7 +2194,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--live-reload <value>",
                 "value": "string",
@@ -2202,7 +2202,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--poll",
                 "value": "\"\"",
@@ -2210,7 +2210,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--theme-editor-sync",
                 "value": "\"\"",
@@ -2218,7 +2218,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--port <value>",
                 "value": "string",
@@ -2226,7 +2226,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -2234,7 +2234,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -2242,7 +2242,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
                 "value": "\"\"",
@@ -2250,7 +2250,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-o, --only <value>",
                 "value": "string",
@@ -2258,7 +2258,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --ignore <value>",
                 "value": "string",
@@ -2266,7 +2266,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -2274,7 +2274,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -2282,7 +2282,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--notify <value>",
                 "value": "string",
@@ -2290,7 +2290,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-dev.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--open",
                 "value": "\"\"",
@@ -2332,12 +2332,12 @@
         "type": "themeinfo",
         "typeDefinitions": {
           "themeinfo": {
-            "filePath": "src-docs/interfaces/theme-info.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-info.interface.ts",
             "name": "themeinfo",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-info.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2345,7 +2345,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-info.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2387,12 +2387,12 @@
         "type": "themeinit",
         "typeDefinitions": {
           "themeinit": {
-            "filePath": "src-docs/interfaces/theme-init.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-init.interface.ts",
             "name": "themeinit",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-init.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2400,7 +2400,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-init.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2408,7 +2408,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-init.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -2416,7 +2416,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-init.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-u, --clone-url <value>",
                 "value": "string",
@@ -2424,7 +2424,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-init.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --latest",
                 "value": "\"\"",
@@ -2466,12 +2466,12 @@
         "type": "themelanguageserver",
         "typeDefinitions": {
           "themelanguageserver": {
-            "filePath": "src-docs/interfaces/theme-language-server.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
             "name": "themelanguageserver",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-language-server.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2479,7 +2479,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-language-server.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2487,7 +2487,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-language-server.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-language-server.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--dev-preview",
                 "value": "\"\"",
@@ -2529,12 +2529,12 @@
         "type": "themelist",
         "typeDefinitions": {
           "themelist": {
-            "filePath": "src-docs/interfaces/theme-list.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-list.interface.ts",
             "name": "themelist",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2542,7 +2542,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2550,7 +2550,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -2558,7 +2558,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -2566,7 +2566,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--role <value>",
                 "value": "string",
@@ -2574,7 +2574,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--name <value>",
                 "value": "string",
@@ -2582,7 +2582,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--id <value>",
                 "value": "string",
@@ -2590,7 +2590,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--json",
                 "value": "\"\"",
@@ -2598,7 +2598,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-list.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -2640,12 +2640,12 @@
         "type": "themeopen",
         "typeDefinitions": {
           "themeopen": {
-            "filePath": "src-docs/interfaces/theme-open.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-open.interface.ts",
             "name": "themeopen",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2653,7 +2653,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2661,7 +2661,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -2669,7 +2669,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
@@ -2677,7 +2677,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-E, --editor",
                 "value": "\"\"",
@@ -2685,7 +2685,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
                 "value": "\"\"",
@@ -2693,7 +2693,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -2701,7 +2701,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -2709,7 +2709,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-open.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -2751,12 +2751,12 @@
         "type": "themepackage",
         "typeDefinitions": {
           "themepackage": {
-            "filePath": "src-docs/interfaces/theme-package.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-package.interface.ts",
             "name": "themepackage",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-package.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-package.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2764,7 +2764,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-package.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-package.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2772,7 +2772,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-package.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-package.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -2814,12 +2814,12 @@
         "type": "themepublish",
         "typeDefinitions": {
           "themepublish": {
-            "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
             "name": "themepublish",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2827,7 +2827,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2835,7 +2835,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -2843,7 +2843,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
@@ -2851,7 +2851,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -2859,7 +2859,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -2867,7 +2867,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-publish.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -2909,12 +2909,12 @@
         "type": "themepull",
         "typeDefinitions": {
           "themepull": {
-            "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
             "name": "themepull",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -2922,7 +2922,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -2930,7 +2930,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -2938,7 +2938,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -2946,7 +2946,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -2954,7 +2954,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -2962,7 +2962,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -2970,7 +2970,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
@@ -2978,7 +2978,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
                 "value": "\"\"",
@@ -2986,7 +2986,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
                 "value": "\"\"",
@@ -2994,7 +2994,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-o, --only <value>",
                 "value": "string",
@@ -3002,7 +3002,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-pull.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --ignore <value>",
                 "value": "string",
@@ -3044,12 +3044,12 @@
         "type": "themepush",
         "typeDefinitions": {
           "themepush": {
-            "filePath": "src-docs/interfaces/theme-push.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-push.interface.ts",
             "name": "themepush",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -3057,7 +3057,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -3065,7 +3065,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -3073,7 +3073,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -3081,7 +3081,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -3089,7 +3089,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -3097,7 +3097,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-t, --theme <value>",
                 "value": "string",
@@ -3105,7 +3105,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
                 "value": "\"\"",
@@ -3113,7 +3113,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
                 "value": "\"\"",
@@ -3121,7 +3121,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-u, --unpublished",
                 "value": "\"\"",
@@ -3129,7 +3129,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
                 "value": "\"\"",
@@ -3137,7 +3137,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-o, --only <value>",
                 "value": "string",
@@ -3145,7 +3145,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --ignore <value>",
                 "value": "string",
@@ -3153,7 +3153,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
                 "value": "\"\"",
@@ -3161,7 +3161,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --allow-live",
                 "value": "\"\"",
@@ -3169,7 +3169,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-push.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-p, --publish",
                 "value": "\"\"",
@@ -3211,12 +3211,12 @@
         "type": "themeshare",
         "typeDefinitions": {
           "themeshare": {
-            "filePath": "src-docs/interfaces/theme-share.interface.ts",
+            "filePath": "docs-commands/interfaces/theme-share.interface.ts",
             "name": "themeshare",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/theme-share.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
@@ -3224,7 +3224,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-share.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
@@ -3232,7 +3232,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-share.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -3240,7 +3240,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-share.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--password <value>",
                 "value": "string",
@@ -3248,7 +3248,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-share.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-s, --store <value>",
                 "value": "string",
@@ -3256,7 +3256,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/theme-share.interface.ts",
+                "filePath": "docs-commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-e, --environment <value>",
                 "value": "string",
@@ -3298,12 +3298,12 @@
         "type": "upgrade",
         "typeDefinitions": {
           "upgrade": {
-            "filePath": "src-docs/interfaces/upgrade.interface.ts",
+            "filePath": "docs-commands/interfaces/upgrade.interface.ts",
             "name": "upgrade",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/upgrade.interface.ts",
+                "filePath": "docs-commands/interfaces/upgrade.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
@@ -3368,12 +3368,12 @@
         "type": "webhooktrigger",
         "typeDefinitions": {
           "webhooktrigger": {
-            "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+            "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
             "name": "webhooktrigger",
             "description": "",
             "members": [
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--help",
                 "value": "\"\"",
@@ -3381,7 +3381,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--topic <value>",
                 "value": "string",
@@ -3389,7 +3389,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--api-version <value>",
                 "value": "string",
@@ -3397,7 +3397,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--delivery-method <value>",
                 "value": "string",
@@ -3405,7 +3405,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--shared-secret <value>",
                 "value": "string",
@@ -3413,7 +3413,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--client-secret <value>",
                 "value": "string",
@@ -3421,7 +3421,7 @@
                 "isOptional": true
               },
               {
-                "filePath": "src-docs/interfaces/webhook-trigger.interface.ts",
+                "filePath": "docs-commands/interfaces/webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--address <value>",
                 "value": "string",
