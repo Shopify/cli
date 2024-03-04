@@ -14,6 +14,8 @@ import Index from './cli/commands/plugins/index.js'
 import AppCommands from '@shopify/app'
 import ThemeCommands from '@shopify/theme'
 import {runCLI, useLocalCLIIfDetected} from '@shopify/cli-kit/node/cli'
+import HelpCommand from '@oclif/plugin-help/lib/commands/help.js'
+import CommandsCommand from '@oclif/plugin-commands/lib/commands/commands.js'
 import fs from 'fs'
 
 export {default as DidYouMeanHook} from '@shopify/plugin-did-you-mean'
@@ -65,8 +67,10 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const COMMANDS: any = {
-  ...ThemeCommands,
+  help: HelpCommand,
+  commands: CommandsCommand,
   ...AppCommands,
+  ...ThemeCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,

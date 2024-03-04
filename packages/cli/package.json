@@ -95,19 +95,19 @@
     ]
   },
   "dependencies": {
-    "@shopify/app": "3.56.0",
-    "@shopify/theme": "3.56.0",
+    "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "3.19.5-dev.0",
     "@oclif/plugin-commands": "2.2.24",
     "@oclif/plugin-help": "5.2.18",
+    "@shopify/app": "3.56.0",
     "@shopify/cli-kit": "3.56.0",
-    "@shopify/plugin-did-you-mean": "3.56.0",
-    "zod-to-json-schema": "3.21.4",
-    "yoga-wasm-web": "^0.3.3",
-    "stacktracey": "2.1.8",
     "@shopify/plugin-cloudflare": "3.56.0",
+    "@shopify/plugin-did-you-mean": "3.56.0",
+    "@shopify/theme": "3.56.0",
     "esbuild": "0.19.8",
-    "@luckycatfactory/esbuild-graphql-loader": "3.8.1"
+    "stacktracey": "2.1.8",
+    "yoga-wasm-web": "^0.3.3",
+    "zod-to-json-schema": "3.21.4"
   },
   "devDependencies": {
     "@shopify/app": "3.56.0",
