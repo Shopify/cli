@@ -28,11 +28,10 @@
   },
   "scripts": {
     "build": "nx build",
-    "bundle": "nx bundle",
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "cross-env NODE_ENV=production pnpm nx bundle && cp ../../README.md README.md",
+    "prepack": "cross-env NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
     "test": "nx run plugin-cloudflare:test",
     "test:watch": "nx test:watch",
     "type-check": "nx type-check",
