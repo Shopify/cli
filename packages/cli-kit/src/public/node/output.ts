@@ -4,6 +4,7 @@ import {PackageManager} from './node-package-manager.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
 import {isTruthy} from './context/utilities.js'
+import {TokenItem} from './ui.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -19,6 +20,7 @@ import {
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
 import {recordUIEvent} from '../../private/node/demo-recorder.js'
+import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import type {Change} from 'diff'
@@ -330,6 +332,16 @@ export function stringifyMessage(message: OutputMessage): string {
   } else {
     return message
   }
+}
+
+/**
+ * Convert a TokenItem to string.
+ *
+ * @param item - The item to convert to string.
+ * @returns The string representation of the item.
+ */
+export function itemToString(item: TokenItem): string {
+  return tokenItemToString(item)
 }
 
 export interface OutputProcess {

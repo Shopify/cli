@@ -1,11 +1,15 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {loadFSExtensionsSpecifications} from '../load-specifications.js'
-import {describe, expect, test, vi} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/node/result'
+import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
+import {testDeveloperPlatformClient} from '../../app/app.test-data.js'
 import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {describe, expect, test, vi} from 'vitest'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {
@@ -15,7 +19,7 @@ describe('ui_extension', async () => {
 
   async function getTestUIExtension({directory, extensionPoints}: GetUIExtensionProps) {
     const configurationPath = joinPath(directory, 'shopify.extension.toml')
-    const allSpecs = await loadFSExtensionsSpecifications()
+    const allSpecs = await loadLocalExtensionsSpecifications()
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
     const configuration = {
       extension_points: extensionPoints,
@@ -29,7 +33,7 @@ describe('ui_extension', async () => {
         network_access: false,
         api_access: false,
         collect_buyer_consent: {
-          write_privacy_consent: true,
+          customer_privacy: true,
           sms_marketing: false,
         },
       },
@@ -71,7 +75,7 @@ describe('ui_extension', async () => {
     })
 
     test('targeting object is transformed into extension_points. metafields are inherited', async () => {
-      const allSpecs = await loadFSExtensionsSpecifications()
+      const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
         targeting: [
@@ -90,7 +94,7 @@ describe('ui_extension', async () => {
           network_access: false,
           api_access: false,
           collect_buyer_consent: {
-            write_privacy_consent: true,
+            customer_privacy: true,
             sms_marketing: false,
           },
         },
@@ -112,7 +116,7 @@ describe('ui_extension', async () => {
 
     test('returns error if there is no targeting or extension_points', async () => {
       // Given
-      const allSpecs = await loadFSExtensionsSpecifications()
+      const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
         api_version: '2023-01' as const,
@@ -125,7 +129,7 @@ describe('ui_extension', async () => {
           network_access: false,
           api_access: false,
           collect_buyer_consent: {
-            write_privacy_consent: true,
+            customer_privacy: true,
             sms_marketing: false,
           },
         },
@@ -167,7 +171,7 @@ describe('ui_extension', async () => {
           err(`Couldn't find ${notFoundPath}
 Please check the module path for EXTENSION::POINT::A
 
-Please check the configuration in ${uiExtension.configuration.path}`),
+Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
     })
@@ -200,7 +204,7 @@ Please check the configuration in ${uiExtension.configuration.path}`),
           err(`Duplicate targets found: EXTENSION::POINT::A
 Extension point targets must be unique
 
-Please check the configuration in ${uiExtension.configuration.path}`),
+Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
     })
@@ -228,7 +232,7 @@ Please check the configuration in ${uiExtension.configuration.path}`),
         // When
         const deployConfig = await uiExtension.deployConfig({
           apiKey: 'apiKey',
-          token: 'token',
+          developerPlatformClient,
         })
 
         // Then

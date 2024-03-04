@@ -1,12 +1,14 @@
 import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
-import {ExtensionUpdateDraftMutation} from '../../api/graphql/update_draft.js'
-import {testUIExtension} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testPaymentExtensions, testUIExtension} from '../../models/app/app.test-data.js'
 import {parseConfigurationFile, parseConfigurationObject} from '../../models/app/loader.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ExtensionUpdateDraftInput} from '../../api/graphql/update_draft.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/output')
@@ -19,7 +21,6 @@ vi.mock('../../models/app/loader.js', async () => {
   }
 })
 
-const token = 'mock-token'
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
 const handle = 'mock-handle'
@@ -28,6 +29,7 @@ const stderr = {write: vi.fn()} as any
 
 describe('updateExtensionDraft()', () => {
   test('updates draft successfully and outputs debug message', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
         runtime_context: 'strict',
@@ -49,21 +51,25 @@ describe('updateExtensionDraft()', () => {
           userErrors: [],
         },
       })
+      const {updateExtension} = developerPlatformClient
+      const updateExtensionSpy = vi
+        .spyOn(developerPlatformClient, 'updateExtension')
+        .mockImplementation(updateExtension)
 
       await writeFile(mockExtension.outputPath, 'test content')
 
       await updateExtensionDraft({
         extension: mockExtension,
-        token,
+        developerPlatformClient,
         apiKey,
         registrationId,
         stdout,
         stderr,
       })
 
-      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+      expect(updateExtensionSpy).toHaveBeenCalledWith({
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config:
@@ -78,7 +84,38 @@ describe('updateExtensionDraft()', () => {
     })
   })
 
+  test('updates draft successfully with context for extension with target', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const mockExtension = await testPaymentExtensions()
+    const {updateExtension} = developerPlatformClient
+    const updateExtensionSpy = vi.spyOn(developerPlatformClient, 'updateExtension').mockImplementation(updateExtension)
+
+    await updateExtensionDraft({
+      extension: mockExtension,
+      developerPlatformClient,
+      apiKey,
+      registrationId,
+      stdout,
+      stderr,
+    })
+
+    expect(updateExtensionSpy).toHaveBeenCalledWith({
+      apiKey,
+      context: 'payments.offsite.render',
+      handle: mockExtension.handle,
+      registrationId,
+      config: '{}',
+    })
+
+    // Check if outputDebug is called with success message
+    expect(outputInfo).toHaveBeenCalledWith(
+      `Draft updated successfully for extension: ${mockExtension.localIdentifier}`,
+      stdout,
+    )
+  })
+
   test('updates draft successfully when extension doesnt support esbuild', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     await inTemporaryDirectory(async (tmpDir) => {
       const configuration = {
         production_api_base_url: 'url1',
@@ -95,24 +132,23 @@ describe('updateExtensionDraft()', () => {
 
       await mkdir(joinPath(tmpDir, 'dist'))
 
-      vi.mocked(partnersRequest).mockResolvedValue({
-        extensionUpdateDraft: {
-          userErrors: [],
-        },
-      })
+      const {updateExtension} = developerPlatformClient
+      const updateExtensionSpy = vi
+        .spyOn(developerPlatformClient, 'updateExtension')
+        .mockImplementation(updateExtension)
 
       await updateExtensionDraft({
         extension: mockExtension,
-        token,
+        developerPlatformClient,
         apiKey,
         registrationId,
         stdout,
         stderr,
       })
 
-      expect(partnersRequest).toHaveBeenCalledWith(ExtensionUpdateDraftMutation, token, {
+      expect(updateExtensionSpy).toHaveBeenCalledWith({
         apiKey,
-        context: undefined,
+        context: '',
         handle,
         registrationId,
         config: '{"production_api_base_url":"url1","benchmark_api_base_url":"url2"}',
@@ -127,6 +163,18 @@ describe('updateExtensionDraft()', () => {
   })
 
   test('handles user errors with stderr message', async () => {
+    const errorResponse = {
+      extensionUpdateDraft: {
+        clientMutationId: 'client-mutation-id',
+        userErrors: [
+          {field: ['field'], message: 'Error1'},
+          {field: ['field'], message: 'Error2'},
+        ],
+      },
+    }
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+      updateExtension: (_extensionInput: ExtensionUpdateDraftInput) => Promise.resolve(errorResponse),
+    })
     await inTemporaryDirectory(async (tmpDir) => {
       const mockExtension = await testUIExtension({
         devUUID: '1',
@@ -146,7 +194,7 @@ describe('updateExtensionDraft()', () => {
 
       await updateExtensionDraft({
         extension: mockExtension,
-        token,
+        developerPlatformClient,
         apiKey,
         registrationId,
         stdout,
@@ -159,7 +207,10 @@ describe('updateExtensionDraft()', () => {
 })
 
 describe('reloadExtensionConfig()', () => {
-  test('reloads extension config', async () => {
+  const runningOnWindows = platformAndArch().platform === 'windows'
+
+  test.skipIf(runningOnWindows)('reloads extension config', async () => {
+    // Given
     await inTemporaryDirectory(async (tmpDir) => {
       const configurationToml = `name = "test"
 type = "web_pixel_extension"
@@ -178,7 +229,8 @@ another = "setting"
         },
       }
 
-      await writeFile(joinPath(tmpDir, 'shopify.ui.extension.toml'), configurationToml)
+      const configPath = joinPath(tmpDir, 'shopify.ui.extension.toml')
+      await writeFile(configPath, configurationToml)
 
       const configuration = {
         runtime_context: 'strict',
@@ -209,9 +261,13 @@ another = "setting"
 
       await writeFile(mockExtension.outputPath, 'test content')
 
-      await reloadExtensionConfig({extension: mockExtension, stdout})
+      // When
+      const result = await reloadExtensionConfig({extension: mockExtension, stdout})
 
+      // Then
       expect(mockExtension.configuration).toEqual(parsedConfig)
+      expect(result.newConfig).toEqual(parsedConfig)
+      expect(result.previousConfig).toEqual(configuration)
     })
   })
 })

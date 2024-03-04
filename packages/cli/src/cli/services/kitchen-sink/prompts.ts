@@ -176,10 +176,6 @@ ANOTHER_VARIABLE="1706e3c332432rd41343dfcf18fa282125ab"`
 
   await renderConfirmationPrompt({
     message: ['Make the following changes to your', {filePath: '.env'}, 'file?'],
-    gitDiff: {
-      baselineContent,
-      updatedContent,
-    },
     defaultValue: true,
     confirmationMessage: 'Yes, confirm changes',
     cancellationMessage: 'No, make changes later',

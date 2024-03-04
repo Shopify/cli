@@ -10,7 +10,7 @@ const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 type Optional<T> = T | null
 
 // This is the topic name of the main event we log to Monorail, the command tracker
-export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.10' as const
+export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.11' as const
 
 export interface Schemas {
   [MONORAIL_COMMAND_TOPIC]: {
@@ -53,6 +53,7 @@ export interface Schemas {
       cmd_all_topic?: Optional<string>
       cmd_all_verbose?: Optional<boolean>
       cmd_all_exit?: Optional<string>
+      cmd_all_force?: Optional<boolean>
 
       cmd_all_timing_network_ms?: Optional<number>
       cmd_all_timing_prompts_ms?: Optional<number>
@@ -107,6 +108,12 @@ export interface Schemas {
       cmd_deploy_confirm_time_to_complete_ms?: Optional<number>
       cmd_deploy_prompt_upgrade_to_unified_displayed?: Optional<boolean>
       cmd_deploy_prompt_upgrade_to_unified_response?: Optional<string>
+      cmd_deploy_confirm_include_config_used?: Optional<boolean>
+      cmd_deploy_include_config_used?: Optional<boolean>
+      cmd_deploy_config_modules_breakdown?: Optional<string>
+      cmd_deploy_config_modules_updated?: Optional<string>
+      cmd_deploy_config_modules_added?: Optional<string>
+      cmd_deploy_config_modules_deleted?: Optional<string>
 
       // Release related commands
       cmd_release_confirm_cancelled?: Optional<boolean>
@@ -158,6 +165,8 @@ export type MonorailEventSensitive = Schemas[typeof MONORAIL_COMMAND_TOPIC]['sen
 
 type MonorailResult = {type: 'ok'} | {type: 'error'; message: string}
 
+const publishedCommandNames = new Set<string>()
+
 /**
  * Publishes an event to Monorail.
  *
@@ -171,6 +180,15 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
   publicData: TPayload['public'],
   sensitiveData: TPayload['sensitive'],
 ): Promise<MonorailResult> {
+  // If a command has already been logged, never re-log it. This is to prevent duplication caused by unexpected errors.
+  const commandName = publicData.command
+  if (commandName && typeof commandName === 'string') {
+    if (publishedCommandNames.has(commandName)) {
+      return {type: 'ok'}
+    }
+    publishedCommandNames.add(commandName)
+  }
+
   try {
     const currentTime = new Date().getTime()
     const payload = {...publicData, ...sensitiveData}

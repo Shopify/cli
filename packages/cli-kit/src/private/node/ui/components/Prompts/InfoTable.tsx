@@ -1,10 +1,10 @@
-import {List} from '../List.js'
+import {CustomListItem, List} from '../List.js'
 import {capitalize} from '../../../../../public/common/string.js'
-import {InlineToken, TokenItem} from '../TokenizedText.js'
+import {InlineToken, TokenItem, TokenizedText} from '../TokenizedText.js'
 import {Box, Text, TextProps} from 'ink'
 import React, {FunctionComponent} from 'react'
 
-type Items = TokenItem<InlineToken>[]
+type Items = (TokenItem<InlineToken> | CustomListItem)[]
 
 export interface InfoTableSection {
   color?: TextProps['color']
@@ -12,6 +12,7 @@ export interface InfoTableSection {
   bullet?: string
   helperText?: string
   items: Items
+  emptyItemsText?: string
 }
 
 export interface InfoTableProps {
@@ -31,6 +32,7 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
         color: undefined,
         helperText: undefined,
         bullet: undefined,
+        emptyItemsText: undefined,
       }))
 
   const headerColumnWidth = Math.max(
@@ -55,7 +57,13 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
             </Box>
           )}
           <Box flexGrow={1} flexDirection="column" gap={1}>
-            <List margin={false} items={section.items} color={section.color} bullet={section.bullet} />
+            {section.emptyItemsText && section.items.length === 0 ? (
+              <Text color={section.color}>
+                <TokenizedText item={{subdued: section.emptyItemsText}} />
+              </Text>
+            ) : (
+              <List margin={false} items={section.items} color={section.color} bullet={section.bullet} />
+            )}
             {section.helperText ? <Text color={section.color}>{section.helperText}</Text> : null}
           </Box>
         </Box>

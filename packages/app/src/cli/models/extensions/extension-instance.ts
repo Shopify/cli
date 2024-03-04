@@ -10,13 +10,15 @@ import {
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {uploadWasmBlob} from '../../services/deploy/upload.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
-import {touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 /**
  * Class that represents an instance of a local extension
@@ -36,7 +38,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   localIdentifier: string
   idEnvironmentVariableName: string
   directory: string
-  configuration: TConfiguration & {path: string}
+  configuration: TConfiguration
+  configurationPath: string
   outputPath: string
   handle: string
   specification: ExtensionSpecification
@@ -86,7 +89,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isAppConfigExtension() {
-    return this.features.includes('app_config')
+    return this.specification.experience === 'configuration'
+  }
+
+  get isFlow() {
+    return this.specification.identifier.includes('flow')
   }
 
   get features(): ExtensionFeature[] {
@@ -104,14 +111,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     directory: string
     specification: ExtensionSpecification
   }) {
-    this.configuration = {...options.configuration, path: options.configurationPath}
+    this.configuration = options.configuration
+    this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
     this.devUUID = `dev-${randomUUID()}`
-    this.handle = this.specification.appModuleFeatures().includes('app_config')
-      ? slugify(this.specification.identifier)
-      : this.configuration.handle ?? slugify(this.configuration.name ?? '')
+    this.handle =
+      this.specification.experience === 'configuration'
+        ? slugify(this.specification.identifier)
+        : this.configuration.handle ?? slugify(this.configuration.name ?? '')
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
@@ -127,7 +136,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   isDraftable() {
-    return !this.isThemeExtension && !this.isAppConfigExtension
+    return !this.isThemeExtension
+  }
+
+  get draftMessages() {
+    const successMessage =
+      this.isDraftable() && !this.isAppConfigExtension
+        ? `Draft updated successfully for extension: ${this.localIdentifier}`
+        : undefined
+    const errorMessage =
+      this.isDraftable() && !this.isAppConfigExtension ? `Error while deploying updated extension draft` : undefined
+    return {successMessage, errorMessage}
   }
 
   isUuidManaged() {
@@ -142,16 +161,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return !this.isAppConfigExtension
   }
 
-  async deployConfig({apiKey, token}: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, token})
+  async deployConfig({
+    apiKey,
+    developerPlatformClient,
+  }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+    if (this.isFunctionExtension) return this.functionDeployConfig({apiKey, developerPlatformClient})
     return this.commonDeployConfig(apiKey)
   }
 
   async functionDeployConfig({
     apiKey,
-    token,
+    developerPlatformClient,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, apiKey, token)
+    const {moduleId} = await uploadWasmBlob(this.localIdentifier, this.outputPath, developerPlatformClient)
     return this.specification.deployConfig?.(this.configuration, this.directory, apiKey, moduleId)
   }
 
@@ -164,7 +186,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   validate() {
     if (!this.specification.validate) return Promise.resolve(ok(undefined))
-    return this.specification.validate(this.configuration, this.directory)
+    return this.specification.validate(this.configuration, this.configurationPath, this.directory)
   }
 
   preDeployValidation(): Promise<void> {
@@ -206,7 +228,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build.command
   }
 
-  get watchPaths() {
+  get watchBuildPaths() {
     if (this.isFunctionExtension) {
       const config = this.configuration as unknown as FunctionConfigType
       const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
@@ -226,6 +248,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
     } else {
       return []
+    }
+  }
+
+  async watchConfigurationPaths() {
+    if (this.isAppConfigExtension) {
+      return [this.configurationPath]
+    } else {
+      const additionalPaths = []
+      if (await fileExists(joinPath(this.directory, 'locales'))) {
+        additionalPaths.push(joinPath(this.directory, 'locales', '**.json'))
+      }
+      additionalPaths.push(joinPath(this.directory, '**.toml'))
+      return additionalPaths
     }
   }
 
@@ -269,16 +304,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async bundleConfig({identifiers, token, apiKey}: ExtensionBundleConfigOptions) {
-    const configValue = await this.deployConfig({apiKey, token})
+  get singleTarget() {
+    const targets = (getPathValue(this.configuration, 'targeting') as {target: string}[]) ?? []
+    if (targets.length !== 1) return undefined
+    return targets[0]?.target
+  }
+
+  get contextValue() {
+    let context = this.singleTarget ?? ''
+    if (this.isFlow) context = this.configuration.handle ?? ''
+    return context
+  }
+
+  async bundleConfig({identifiers, developerPlatformClient, apiKey}: ExtensionBundleConfigOptions) {
+    const configValue = await this.deployConfig({apiKey, developerPlatformClient})
     if (!configValue) return undefined
 
-    const {handle, ...remainingConfigs} = configValue
-    const contextValue = (handle as string) || ''
-
     const result = {
-      config: JSON.stringify(remainingConfigs),
-      context: contextValue,
+      config: JSON.stringify(configValue),
+      context: this.contextValue,
       handle: this.handle,
     }
 
@@ -291,11 +335,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
 export interface ExtensionDeployConfigOptions {
   apiKey: string
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
-  token: string
+  developerPlatformClient: DeveloperPlatformClient
   apiKey: string
 }

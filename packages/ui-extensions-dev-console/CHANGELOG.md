@@ -1,5 +1,28 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.56.0
+
+## 3.55.0
+
+## 3.54.0
+
+### Patch Changes
+
+- a9e847717: Update @shopify/polaris and @shopify/polaris-icons to latest version
+
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+
+### Patch Changes
+
+- Updated dependencies [1d6fe3475]
+- Updated dependencies [0896e62b1]
+  - @shopify/ui-extensions-server-kit@5.2.0
+
 ## 3.52.0
 
 ## 3.51.0

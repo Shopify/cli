@@ -1,29 +1,26 @@
-import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadFunctionExtensions} from './upload.js'
+import {deploymentErrorsToCustomSections, uploadExtensionsBundle, uploadWasmBlob} from './upload.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {
-  UploadUrlGenerateMutation,
-  UploadUrlGenerateMutationSchema,
-} from '../../api/graphql/functions/upload_url_generate.js'
-import {AppFunctionSetMutation, AppFunctionSetMutationSchema} from '../../api/graphql/functions/app_function_set.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/crypto')
 
-describe('uploadFunctionExtensions', () => {
+describe('uploadWasmBlob', () => {
   let extension: ExtensionInstance<FunctionConfigType>
   let identifiers: Identifiers
+  let apiKey: string
   let token: string
 
   beforeEach(async () => {
@@ -55,7 +52,7 @@ describe('uploadFunctionExtensions', () => {
         metafields: [],
       },
     })
-
+    apiKey = 'api-key'
     token = 'token'
     identifiers = {
       app: 'api=key',
@@ -65,19 +62,59 @@ describe('uploadFunctionExtensions', () => {
     }
   })
 
+  test('returns the url and moduleId successfully', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      extension.outputPath = joinPath(tmpDir, 'index.wasm')
+      await writeFile(extension.outputPath, '')
+      const url = 'url'
+      const moduleId = '1698984f-7848-4b9a-9c07-4c0bce7e68e1'
+      const uploadURLResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
+            url,
+            moduleId,
+            headers: {},
+            maxSize: '256 KB',
+            maxBytes: 200,
+          },
+        },
+      }
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
+
+      const mockedFetch = vi.fn().mockResolvedValueOnce({
+        status: 200,
+      })
+      vi.mocked(fetch).mockImplementation(mockedFetch)
+
+      // When
+      const result = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      expect(result).toStrictEqual({
+        url,
+        moduleId,
+      })
+    })
+  })
+
   test('throws an error if the request to return the url errors', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
       const uploadURLError = new Error('upload error')
-      vi.mocked(functionProxyRequest).mockRejectedValueOnce(uploadURLError)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.reject(uploadURLError),
+      })
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadURLError)
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
+      await expect(result).rejects.toThrow(uploadURLError)
     })
   })
 
@@ -87,68 +124,28 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
             headers: {},
-            maxSize: '200',
+            maxSize: '200 kb',
             url: uploadUrl,
             moduleId: 'module-id',
+            maxBytes: 200,
           },
         },
       }
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
       const uploadError = new Error('error')
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
       vi.mocked(fetch).mockRejectedValue(uploadError)
 
       // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-    })
-  })
-
-  test('prints unsupported api version error if any user errors are returned with version_unsupported_error tag', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [
-              {
-                field: '',
-                message: "Version '2022-07' for 'product_discounts' is unsupported.",
-                tag: 'version_unsupported_error',
-              },
-            ],
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        /Deployment failed due to an outdated API version/,
-      )
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
+      await expect(result).rejects.toThrow(uploadError)
     })
   })
 
@@ -158,17 +155,20 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
             headers: {},
             maxSize: '200 kb',
             url: uploadUrl,
             moduleId: 'module-id',
+            maxBytes: 200,
           },
         },
       }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 400,
@@ -181,14 +181,14 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      await expect(result).rejects.toThrowError(
         new AbortError(
           'The size of the Wasm binary file for Function my-function is too large. It must be less than 200 kb.',
         ),
       )
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -198,17 +198,20 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
             headers: {},
-            maxSize: '200',
+            maxSize: '200 kb',
             url: uploadUrl,
             moduleId: 'module-id',
+            maxBytes: 200,
           },
         },
       }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 401,
@@ -221,14 +224,14 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      await expect(result).rejects.toThrowError(
         new AbortError(
           'Something went wrong uploading the Function my-function. The server responded with status 401 and body: error body',
         ),
       )
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
     })
   })
 
@@ -238,17 +241,20 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
             headers: {},
-            maxSize: '200',
+            maxSize: '200 kb',
             url: uploadUrl,
             moduleId: 'module-id',
+            maxBytes: 200,
           },
         },
       }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 500,
@@ -261,12 +267,12 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        new AbortError('Something went wrong uploading the Function my-function. Try again.'),
-      )
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
 
       // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
+      await expect(result).rejects.toThrowError(
+        new AbortError('Something went wrong uploading the Function my-function. Try again.'),
+      )
     })
   })
 
@@ -276,17 +282,20 @@ describe('uploadFunctionExtensions', () => {
       const uploadUrl = 'test://test.com/moduleId.wasm'
       extension.outputPath = joinPath(tmpDir, 'index.wasm')
       await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
+      const uploadURLResponse: FunctionUploadUrlGenerateResponse = {
+        functionUploadUrlGenerate: {
+          generatedUrlDetails: {
             headers: {},
-            maxSize: '200',
+            maxSize: '200 kb',
             url: uploadUrl,
             moduleId: 'module-id',
+            maxBytes: 200,
           },
         },
       }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        functionUploadUrl: () => Promise.resolve(uploadURLResponse),
+      })
 
       const mockedFetch = vi.fn().mockResolvedValueOnce({
         status: 399,
@@ -299,456 +308,12 @@ describe('uploadFunctionExtensions', () => {
       vi.mocked(fetch).mockImplementation(mockedFetch)
 
       // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
+      const result = uploadWasmBlob(extension.localIdentifier, extension.outputPath, developerPlatformClient)
+
+      // Then
+      await expect(result).rejects.toThrowError(
         new AbortError('Something went wrong uploading the Function my-function. Try again.'),
       )
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-    })
-  })
-
-  test('errors if the compilation request errors', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = 'test://test.com/moduleId.wasm'
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const uploadError = new Error('error')
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockRejectedValue(uploadError)
-
-      // When
-      await expect(uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrow(uploadError)
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-    })
-  })
-
-  test('errors if the update of the function errors', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const updateAppFunctionError = new Error('error')
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockRejectedValueOnce(updateAppFunctionError)
-
-      // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        updateAppFunctionError,
-      )
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: Buffer.from(''),
-        headers: {'Content-Type': 'application/wasm'},
-        method: 'PUT',
-      })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: {
-          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-          createPath: (extension.configuration.ui?.paths ?? {}).create,
-        },
-        inputQueryVariables: {
-          singleJsonMetafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        enableCreationUi: true,
-        moduleUploadUrl: uploadUrl,
-      })
-    })
-  })
-
-  test('throws if the response from updating the app function contains errors', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [
-              {
-                field: 'field',
-                message: 'missing field',
-                tag: 'tag',
-              },
-            ],
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      await expect(() => uploadFunctionExtensions([extension], {token, identifiers})).rejects.toThrowError(
-        /The deployment of functions failed with the following errors:/,
-      )
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: Buffer.from(''),
-        headers: {'Content-Type': 'application/wasm'},
-        method: 'PUT',
-      })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: {
-          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-          createPath: (extension.configuration.ui?.paths ?? {}).create,
-        },
-        inputQueryVariables: {
-          singleJsonMetafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        enableCreationUi: true,
-        moduleUploadUrl: uploadUrl,
-      })
-    })
-  })
-
-  test('creates and uploads the function', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      const createdID = 'ulid'
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [],
-            function: {
-              id: createdID,
-            },
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      const got = await uploadFunctionExtensions([extension], {token, identifiers})
-
-      // Then
-      expect(got.extensions[extension.localIdentifier]).toEqual(createdID)
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: Buffer.from(''),
-        headers: {'Content-Type': 'application/wasm'},
-        method: 'PUT',
-      })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: {
-          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-          createPath: (extension.configuration.ui?.paths ?? {}).create,
-        },
-        inputQueryVariables: {
-          singleJsonMetafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        enableCreationUi: true,
-        moduleUploadUrl: uploadUrl,
-      })
-    })
-  })
-
-  test('appBridge is set to undefined when there is no configuration.ui.paths', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      extension.configuration.ui!.paths = undefined
-
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [],
-            function: {
-              id: 'uuid',
-            },
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      await uploadFunctionExtensions([extension], {token, identifiers})
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: undefined,
-        enableCreationUi: true,
-        inputQueryVariables: {
-          singleJsonMetafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        moduleUploadUrl: uploadUrl,
-      })
-    })
-  })
-
-  test('inputQueryVariables is set to undefined when there is no configuration.inputs', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      extension.configuration.input = undefined
-
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [],
-            function: {
-              id: 'uuid',
-            },
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      await uploadFunctionExtensions([extension], {token, identifiers})
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: {
-          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-          createPath: (extension.configuration.ui?.paths ?? {}).create,
-        },
-        enableCreationUi: true,
-        inputQueryVariables: undefined,
-        moduleUploadUrl: uploadUrl,
-      })
-    })
-  })
-
-  test('enableCreationUi is set to false when configuration.ui.enable_create is false', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      extension.configuration.ui!.enable_create = false
-
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [],
-            function: {
-              id: 'uuid',
-            },
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      await uploadFunctionExtensions([extension], {token, identifiers})
-
-      // Then
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: {
-          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-          createPath: (extension.configuration.ui?.paths ?? {}).create,
-        },
-        inputQueryVariables: {
-          singleJsonMetafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        enableCreationUi: false,
-        moduleUploadUrl: uploadUrl,
-      })
-    })
-  })
-
-  test('UUID identifier detected and ULID Function ID returned', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const existingID = 'uuid-with-hyphens'
-      identifiers.extensions[extension.localIdentifier] = existingID
-      const uploadUrl = `test://test.com/moduleId.wasm`
-      const updatedID = 'ulid'
-      extension.outputPath = joinPath(tmpDir, 'index.wasm')
-      await writeFile(extension.outputPath, '')
-      const uploadURLResponse: UploadUrlGenerateMutationSchema = {
-        data: {
-          uploadUrlGenerate: {
-            headers: {},
-            maxSize: '200',
-            url: uploadUrl,
-            moduleId: 'module-id',
-          },
-        },
-      }
-      const functionSetMutationResponse: AppFunctionSetMutationSchema = {
-        data: {
-          functionSet: {
-            userErrors: [],
-            function: {
-              id: updatedID,
-            },
-          },
-        },
-      }
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(uploadURLResponse)
-      vi.mocked(fetch).mockImplementation(vi.fn().mockResolvedValueOnce({status: 200}))
-      vi.mocked(functionProxyRequest).mockResolvedValueOnce(functionSetMutationResponse)
-
-      // When
-      const got = await uploadFunctionExtensions([extension], {token, identifiers})
-
-      // Then
-      expect(got.extensions[extension.localIdentifier]).toEqual(updatedID)
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(1, identifiers.app, UploadUrlGenerateMutation, token)
-      expect(fetch).toHaveBeenCalledWith(uploadUrl, {
-        body: Buffer.from(''),
-        headers: {'Content-Type': 'application/wasm'},
-        method: 'PUT',
-      })
-      expect(functionProxyRequest).toHaveBeenNthCalledWith(2, identifiers.app, AppFunctionSetMutation, token, {
-        id: undefined,
-        legacyUuid: existingID,
-        title: extension.configuration.name,
-        description: extension.configuration.description,
-        apiType: 'order_discounts',
-        apiVersion: extension.configuration.api_version,
-        appBridge: {
-          detailsPath: (extension.configuration.ui?.paths ?? {}).details,
-          createPath: (extension.configuration.ui?.paths ?? {}).create,
-        },
-        inputQueryVariables: {
-          singleJsonMetafield: {
-            namespace: 'namespace',
-            key: 'key',
-          },
-        },
-        enableCreationUi: true,
-        moduleUploadUrl: uploadUrl,
-      })
     })
   })
 })
@@ -757,36 +322,25 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
-          },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            appVersion: {
-              appModuleVersions: [],
-            },
-            id: '2',
-          },
-        })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      const developerPlatformClient = testDeveloperPlatformClient()
+      const {deploy} = developerPlatformClient
+      const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
+
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
-        token: 'api-token',
+        developerPlatformClient,
         extensionIds: {},
         release: true,
       })
 
       // Then
-      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      expect(deploySpy).toHaveBeenCalledWith({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -805,30 +359,19 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners with a message and a version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
-          },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            appVersion: {
-              appModuleVersions: [],
-            },
-            id: '2',
-          },
-        })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
+      const developerPlatformClient = testDeveloperPlatformClient()
+      const {deploy} = developerPlatformClient
+      const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
+
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
         apiKey: 'app-id',
         bundlePath: joinPath(tmpDir, 'test.zip'),
         appModules: [{uuid: '123', config: '{}', context: '', handle: 'handle'}],
-        token: 'api-token',
+        developerPlatformClient,
         extensionIds: {},
         release: true,
         message: 'test',
@@ -836,7 +379,7 @@ describe('uploadExtensionsBundle', () => {
       })
 
       // Then
-      expect(vi.mocked(partnersRequest).mock.calls[1]![2]!).toEqual({
+      expect(deploySpy).toHaveBeenCalledWith({
         apiKey: 'app-id',
         bundleUrl: 'signed-upload-url',
         appModules: [
@@ -855,15 +398,9 @@ describe('uploadExtensionsBundle', () => {
   })
 
   test('calls a mutation on partners when there are no extensions', async () => {
-    vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-    vi.mocked(partnersRequest).mockResolvedValueOnce({
-      appDeploy: {
-        appVersion: {
-          appModuleVersions: [],
-        },
-        id: '2',
-      },
-    })
+    const developerPlatformClient = testDeveloperPlatformClient()
+    const {deploy} = developerPlatformClient
+    const deploySpy = vi.spyOn(developerPlatformClient, 'deploy').mockImplementation(deploy)
     const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
@@ -871,93 +408,97 @@ describe('uploadExtensionsBundle', () => {
       apiKey: 'app-id',
       bundlePath: undefined,
       appModules: [],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
     })
 
     // Then
-    expect(vi.mocked(partnersRequest).mock.calls[0]![2]!).toEqual({
+    expect(deploySpy).toHaveBeenCalledWith({
       apiKey: 'app-id',
       skipPublish: false,
       message: undefined,
       versionTag: undefined,
       commitReferences: undefined,
     })
-    expect(partnersRequest).toHaveBeenCalledOnce()
   })
 
   test("throws a specific error based on what is returned from partners when response doesn't include an app version", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
+      const errorResponse: AppDeploySchema = {
+        appDeploy: {
+          appVersion: {
+            uuid: 'uuid',
+            id: 1,
+            versionTag: 'version-tag',
+            location: 'location',
+            message: 'message',
+            appModuleVersions: [],
           },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            userErrors: [
-              {
-                message: 'Missing expected key(s).',
-                field: ['base'],
-                category: 'invalid',
-                details: [
-                  {
-                    extension_id: 123,
-                    extension_title: 'amortizable-marketplace-ext',
-                  },
-                ],
-              },
-              {
-                message: 'is blank',
-                field: ['title'],
-                category: 'invalid',
-                details: [
-                  {
-                    extension_id: 456,
-                    extension_title: 'amortizable-marketplace-ext-2',
-                  },
-                ],
-              },
-              {
-                message: 'Some other error',
-                category: 'unknown',
-                field: ['base'],
-                details: [
-                  {
-                    extension_id: 123,
-                    extension_title: 'amortizable-marketplace-ext',
-                  },
-                ],
-              },
-              {
-                message: 'Something was not found',
-                category: 'not_found',
-                field: ['base'],
-                details: [
-                  {
-                    extension_id: 456,
-                    extension_title: 'amortizable-marketplace-ext-2',
-                  },
-                ],
-              },
-              {
-                message: 'is blank',
-                field: ['title'],
-                category: 'invalid',
-                details: [
-                  {
-                    extension_id: 999,
-                    extension_title: 'admin-link',
-                  },
-                ],
-              },
-            ],
-          },
-        })
+          userErrors: [
+            {
+              message: 'Missing expected key(s).',
+              field: ['base'],
+              category: 'invalid',
+              details: [
+                {
+                  extension_id: 123,
+                  extension_title: 'amortizable-marketplace-ext',
+                },
+              ],
+            },
+            {
+              message: 'is blank',
+              field: ['title'],
+              category: 'invalid',
+              details: [
+                {
+                  extension_id: 456,
+                  extension_title: 'amortizable-marketplace-ext-2',
+                },
+              ],
+            },
+            {
+              message: 'Some other error',
+              category: 'unknown',
+              field: ['base'],
+              details: [
+                {
+                  extension_id: 123,
+                  extension_title: 'amortizable-marketplace-ext',
+                },
+              ],
+            },
+            {
+              message: 'Something was not found',
+              category: 'not_found',
+              field: ['base'],
+              details: [
+                {
+                  extension_id: 456,
+                  extension_title: 'amortizable-marketplace-ext-2',
+                },
+              ],
+            },
+            {
+              message: 'is blank',
+              field: ['title'],
+              category: 'invalid',
+              details: [
+                {
+                  extension_id: 999,
+                  extension_title: 'admin-link',
+                },
+              ],
+            },
+          ],
+        },
+      }
+      const developerPlatformClient = testDeveloperPlatformClient({
+        deploy: (_input: AppDeployVariables) => Promise.resolve(errorResponse),
+      })
+
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       // When
@@ -972,7 +513,7 @@ describe('uploadExtensionsBundle', () => {
             {uuid: '123', config: '{}', context: '', handle: 'handle'},
             {uuid: '456', config: '{}', context: '', handle: 'handle'},
           ],
-          token: 'api-token',
+          developerPlatformClient,
           extensionIds: {
             'amortizable-marketplace-ext': '123',
             'amortizable-marketplace-ext-2': '456',
@@ -1030,37 +571,35 @@ describe('uploadExtensionsBundle', () => {
   test('return a deploy error message based on what is returned from partners when response includes an app version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('api-token')
-      vi.mocked(partnersRequest)
-        .mockResolvedValueOnce({
-          appVersionGenerateSignedUploadUrl: {
-            signedUploadUrl: 'signed-upload-url',
-          },
-        })
-        .mockResolvedValueOnce({
-          appDeploy: {
-            appVersion: {
-              uuid: 'appVersion-uuid',
-              id: 1,
-              versionTag: 'versionTag',
-              appModuleVersions: [
-                {
-                  uuid: 'app-module-uuid',
-                  registrationId: 'registration-uuid',
-                  validationErrors: [],
-                },
-              ],
-            },
-            userErrors: [
+      const errorResponse: AppDeploySchema = {
+        appDeploy: {
+          appVersion: {
+            uuid: 'appVersion-uuid',
+            id: 1,
+            location: 'location',
+            message: 'message',
+            versionTag: 'versionTag',
+            appModuleVersions: [
               {
-                field: [],
-                message: 'No release error message.',
-                category: '',
-                details: [],
+                uuid: 'app-module-uuid',
+                registrationUuid: 'registration-uuid',
+                validationErrors: [],
               },
             ],
           },
-        })
+          userErrors: [
+            {
+              field: [],
+              message: 'No release error message.',
+              category: '',
+              details: [],
+            },
+          ],
+        },
+      }
+      const developerPlatformClient = testDeveloperPlatformClient({
+        deploy: (_input: AppDeployVariables) => Promise.resolve(errorResponse),
+      })
       const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
       vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
@@ -1073,7 +612,7 @@ describe('uploadExtensionsBundle', () => {
           {uuid: '123', config: '{}', context: '', handle: 'handle'},
           {uuid: '456', config: '{}', context: '', handle: 'handle'},
         ],
-        token: 'api-token',
+        developerPlatformClient,
         extensionIds: {
           'amortizable-marketplace-ext': '123',
           'amortizable-marketplace-ext-2': '456',
@@ -1086,6 +625,8 @@ describe('uploadExtensionsBundle', () => {
         validationErrors: [],
         versionTag: 'versionTag',
         deployError: 'No release error message.',
+        location: 'location',
+        message: 'message',
       })
     })
   })

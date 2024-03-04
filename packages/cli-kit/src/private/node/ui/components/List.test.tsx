@@ -98,4 +98,24 @@ describe('List', async () => {
         • Item 3"
     `)
   })
+
+  test('renders custom items', async () => {
+    const options = {
+      items: [
+        {bullet: '-', color: 'red', item: 'Custom Item 1'},
+        'Item 1',
+        {bullet: '_', color: 'green', item: 'Custom Item 2'},
+      ],
+      bullet: '*',
+      color: 'gray',
+    }
+
+    const {lastFrame} = render(<List {...options} />)
+
+    expect(lastFrame()!).toMatchInlineSnapshot(`
+      "  [31m-[39m [31mCustom Item 1[39m
+        [90m*[39m [90mItem 1[39m
+        [32m_[39m [32mCustom Item 2[39m"
+    `)
+  })
 })

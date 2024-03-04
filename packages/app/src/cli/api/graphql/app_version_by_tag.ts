@@ -1,3 +1,4 @@
+import {AppModuleVersion} from './app_active_version.js'
 import {gql} from 'graphql-request'
 
 export const AppVersionByTagQuery = gql`
@@ -9,6 +10,17 @@ export const AppVersionByTagQuery = gql`
         versionTag
         location
         message
+        appModuleVersions {
+          config
+          specification {
+            identifier
+            name
+            experience
+            options {
+              managementExperience
+            }
+          }
+        }
       }
     }
   }
@@ -27,6 +39,7 @@ export interface AppVersionByTagSchema {
       versionTag: string
       location: string
       message: string
+      appModuleVersions: AppModuleVersion[]
     }
   }
 }

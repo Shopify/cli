@@ -1,33 +1,18 @@
 import {themeExtensionConfig as generateThemeExtensionConfig} from './theme-extension-config.js'
 import {Identifiers, IdentifiersExtensions} from '../../models/app/identifiers.js'
+import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
 import {
-  UploadUrlGenerateMutation,
-  UploadUrlGenerateMutationSchema,
-} from '../../api/graphql/functions/upload_url_generate.js'
-import {
-  ExtensionUpdateDraftInput,
-  ExtensionUpdateDraftMutation,
-  ExtensionUpdateSchema,
-} from '../../api/graphql/update_draft.js'
-import {AppDeploy, AppDeploySchema, AppDeployVariables, AppModuleSettings} from '../../api/graphql/app_deploy.js'
-import {
-  GenerateSignedUploadUrl,
   GenerateSignedUploadUrlSchema,
   GenerateSignedUploadUrlVariables,
 } from '../../api/graphql/generate_signed_upload_url.js'
-import {
-  AppFunctionSetMutation,
-  AppFunctionSetMutationSchema,
-  AppFunctionSetVariables,
-} from '../../api/graphql/functions/app_function_set.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {functionProxyRequest, partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
-import {fileExists, readFile, readFileSync} from '@shopify/cli-kit/node/fs'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {FunctionUploadUrlGenerateResponse} from '@shopify/cli-kit/node/api/partners'
+import {readFile, readFileSync} from '@shopify/cli-kit/node/fs'
 import {fetch, formData} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand, outputContent} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -40,8 +25,8 @@ interface DeployThemeExtensionOptions {
   /** Set of local identifiers */
   identifiers: Identifiers
 
-  /** The token to send authenticated requests to the partners' API  */
-  token: string
+  /** The API client to send authenticated requests  */
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 /**
@@ -52,7 +37,7 @@ export async function uploadThemeExtensions(
   themeExtensions: ExtensionInstance[],
   options: DeployThemeExtensionOptions,
 ): Promise<void> {
-  const {apiKey, identifiers, token} = options
+  const {apiKey, identifiers, developerPlatformClient} = options
   await Promise.all(
     themeExtensions.map(async (themeExtension) => {
       const themeExtensionConfig = await generateThemeExtensionConfig(themeExtension)
@@ -64,8 +49,7 @@ export async function uploadThemeExtensions(
         registrationId: themeId,
         handle: themeExtension.handle,
       }
-      const mutation = ExtensionUpdateDraftMutation
-      const result: ExtensionUpdateSchema = await partnersRequest(mutation, token, themeExtensionInput)
+      const result: ExtensionUpdateSchema = await developerPlatformClient.updateExtension(themeExtensionInput)
       if (result.extensionUpdateDraft?.userErrors?.length > 0) {
         const errors = result.extensionUpdateDraft.userErrors.map((error) => error.message).join(', ')
         throw new AbortError(errors)
@@ -81,8 +65,8 @@ interface UploadExtensionsBundleOptions {
   /** The path to the bundle file to be uploaded */
   bundlePath?: string
 
-  /** The token to send authenticated requests to the partners' API  */
-  token: string
+  /** The API client to send authenticated requests  */
+  developerPlatformClient: DeveloperPlatformClient
 
   /** App Modules extra data */
   appModules: AppModuleSettings[]
@@ -135,7 +119,7 @@ export async function uploadExtensionsBundle(
   let deployError
 
   if (options.bundlePath) {
-    signedURL = await getExtensionUploadURL(options.apiKey)
+    signedURL = await getExtensionUploadURL(options.developerPlatformClient, options.apiKey)
 
     const form = formData()
     const buffer = readFileSync(options.bundlePath)
@@ -163,8 +147,7 @@ export async function uploadExtensionsBundle(
     variables.appModules = options.appModules
   }
 
-  const mutation = AppDeploy
-  const result: AppDeploySchema = await handlePartnersErrors(() => partnersRequest(mutation, options.token, variables))
+  const result: AppDeploySchema = await handlePartnersErrors(() => options.developerPlatformClient.deploy(variables))
 
   if (result.appDeploy?.userErrors?.length > 0) {
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
@@ -367,16 +350,14 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
  * It generates a URL to upload an app bundle.
  * @param apiKey - The application API key
  */
-export async function getExtensionUploadURL(apiKey: string) {
-  const mutation = GenerateSignedUploadUrl
-  const token = await ensureAuthenticatedPartners()
+export async function getExtensionUploadURL(developerPlatformClient: DeveloperPlatformClient, apiKey: string) {
   const variables: GenerateSignedUploadUrlVariables = {
     apiKey,
     bundleFormat: 1,
   }
 
   const result: GenerateSignedUploadUrlSchema = await handlePartnersErrors(() =>
-    partnersRequest(mutation, token, variables),
+    developerPlatformClient.generateSignedUploadUrl(variables),
   )
 
   if (result.appVersionGenerateSignedUploadUrl?.userErrors?.length > 0) {
@@ -387,139 +368,12 @@ export async function getExtensionUploadURL(apiKey: string) {
   return result.appVersionGenerateSignedUploadUrl.signedUploadUrl
 }
 
-interface UploadFunctionExtensionsOptions {
-  /** The token to send authenticated requests to the partners' API  */
-  token: string
-
-  // Set of local identifiers
-  identifiers: Identifiers
-}
-
-/**
- * This function takes a list of function extensions and uploads them.
- * As part of the upload it creates a function server-side if it does not exist
- * and includes its remote identifier in the returned identifiers instance.
- * If the function already has a local id, that one is used and the upload
- * does an override of the function existing server-side.
- *
- * @param extensions - The list of extensions to upload.
- * @param options - Options to adjust the upload.
- * @returns A promise that resolves with the identifiers.
- */
-export async function uploadFunctionExtensions(
-  extensions: ExtensionInstance<FunctionConfigType>[],
-  options: UploadFunctionExtensionsOptions,
-): Promise<Identifiers> {
-  let identifiers = options.identifiers
-
-  const functionIds: IdentifiersExtensions = {}
-
-  // Functions are uploaded sequentially to avoid reaching the API limit
-  for (const extension of extensions) {
-    // eslint-disable-next-line no-await-in-loop
-    const remoteIdentifier = await uploadFunctionExtension(extension, {
-      apiKey: options.identifiers.app,
-      token: options.token,
-      identifier: identifiers.extensions[extension.localIdentifier],
-    })
-    functionIds[extension.localIdentifier] = remoteIdentifier
-  }
-
-  identifiers = {
-    ...identifiers,
-    extensions: {
-      ...identifiers.extensions,
-      ...functionIds,
-    },
-  }
-
-  return identifiers
-}
-
-interface UploadFunctionExtensionOptions {
-  apiKey: string
-  identifier?: string
-  token: string
-}
-
-async function uploadFunctionExtension(
-  extension: ExtensionInstance<FunctionConfigType>,
-  options: UploadFunctionExtensionOptions,
-): Promise<string> {
-  const {url} = await uploadWasmBlob(extension.localIdentifier, extension.outputPath, options.apiKey, options.token)
-
-  let inputQuery: string | undefined
-  if (await fileExists(extension.inputQueryPath)) {
-    inputQuery = await readFile(extension.inputQueryPath)
-  }
-
-  const query = AppFunctionSetMutation
-  const variables: AppFunctionSetVariables = {
-    // NOTE: This is a shim to support CLI projects that currently use the UUID instead of the ULID
-    ...(options.identifier?.includes('-') ? {legacyUuid: options.identifier} : {id: options.identifier}),
-    title: extension.configuration.name,
-    description: extension.configuration.description ?? '',
-    apiType: extension.configuration.type,
-    apiVersion: extension.configuration.api_version,
-    inputQuery,
-    inputQueryVariables: extension.configuration.input?.variables
-      ? {
-          singleJsonMetafield: extension.configuration.input.variables,
-        }
-      : undefined,
-    appBridge: extension.configuration.ui?.paths
-      ? {
-          detailsPath: extension.configuration.ui.paths.details,
-          createPath: extension.configuration.ui.paths.create,
-        }
-      : undefined,
-    enableCreationUi: extension.configuration.ui?.enable_create ?? true,
-    moduleUploadUrl: url,
-  }
-
-  const res: AppFunctionSetMutationSchema = await functionProxyRequest(options.apiKey, query, options.token, variables)
-  const userErrors = res.data.functionSet.userErrors ?? []
-  if (userErrors.length !== 0) {
-    if (userErrors.find((error) => error.tag === 'version_unsupported_error')) {
-      const errorMessage = outputContent`Deployment failed due to an outdated API version`
-      const tryMessage: TokenItem = {
-        subdued: `Deployment failed because one or more Functions (${variables.apiType}) is targeting an unsupported API version (${variables.apiVersion}).`,
-      }
-      const customSections: AlertCustomSection[] = [
-        {
-          body: {
-            list: {
-              title: 'Reference',
-              items: [
-                {
-                  link: {
-                    label: 'API versioning',
-                    url: 'https://shopify.dev/docs/api/usage/versioning',
-                  },
-                },
-              ],
-            },
-          },
-        },
-      ]
-      throw new AbortError(errorMessage, tryMessage, [], customSections)
-    } else {
-      const errorMessage = outputContent`The deployment of functions failed with the following errors:${outputToken.json(
-        userErrors,
-      )}`
-      throw new AbortError(errorMessage)
-    }
-  }
-  return res.data.functionSet.function?.id as string
-}
-
 export async function uploadWasmBlob(
   extensionIdentifier: string,
   wasmPath: string,
-  apiKey: string,
-  token: string,
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<{url: string; moduleId: string}> {
-  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadURL({apiKey, token})
+  const {url, moduleId, headers, maxSize} = await getFunctionExtensionUploadUrlFromPartners(developerPlatformClient)
   headers['Content-Type'] = 'application/wasm'
 
   const functionContent = await readFile(wasmPath, {})
@@ -540,11 +394,6 @@ export async function uploadWasmBlob(
   }
 }
 
-interface GetFunctionExtensionUploadURLOptions {
-  apiKey: string
-  token: string
-}
-
 interface GetFunctionExtensionUploadURLOutput {
   url: string
   moduleId: string
@@ -552,13 +401,13 @@ interface GetFunctionExtensionUploadURLOutput {
   headers: {[key: string]: string}
 }
 
-async function getFunctionExtensionUploadURL(
-  options: GetFunctionExtensionUploadURLOptions,
+async function getFunctionExtensionUploadUrlFromPartners(
+  developerPlatformClient: DeveloperPlatformClient,
 ): Promise<GetFunctionExtensionUploadURLOutput> {
-  const res: UploadUrlGenerateMutationSchema = await handlePartnersErrors(() =>
-    functionProxyRequest(options.apiKey, UploadUrlGenerateMutation, options.token),
+  const res: FunctionUploadUrlGenerateResponse = await handlePartnersErrors(() =>
+    developerPlatformClient.functionUploadUrl(),
   )
-  return res.data.uploadUrlGenerate
+  return res.functionUploadUrlGenerate.generatedUrlDetails
 }
 
 async function handlePartnersErrors<T>(request: () => Promise<T>): Promise<T> {

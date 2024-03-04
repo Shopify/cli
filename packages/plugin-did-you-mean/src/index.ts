@@ -24,7 +24,9 @@ function relativeScore(commandBigrams: string[], userCommandBigrams: string[]): 
   return result.length
 }
 
-export function findAlternativeCommand(opts: Parameters<Hook.CommandNotFound>[0]): string | undefined {
+export function findAlternativeCommand(
+  opts: Pick<Parameters<Hook.CommandNotFound>[0], 'id' | 'argv' | 'config'>,
+): string | undefined {
   if (opts.id.length < 2) return undefined
   const hiddenCommands = new Set(opts.config.commands.filter((cmd) => cmd.hidden).map((cmd) => cmd.id))
   const availableCommands = Array.from(
@@ -83,8 +85,8 @@ export async function shouldRunCommand(result: string, userCommand: string) {
 const hook: Hook.CommandNotFound = async function (opts) {
   const result = findAlternativeCommand(opts)
   const userCommand = sanitizeCmd(opts.id)
-
-  if (!result) {
+  const useForceFlag = opts.argv && (opts.argv.includes('-f') || opts.argv.includes('--force'))
+  if (useForceFlag || !result) {
     renderFatalError(new AbortError(`Command '${userCommand}' not found.`))
     return
   }

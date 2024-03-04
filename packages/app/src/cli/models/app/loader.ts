@@ -4,13 +4,13 @@ import {
   App,
   AppInterface,
   WebType,
-  isCurrentAppSchema,
   getAppScopesArray,
   AppConfigurationInterface,
-  AppSchema,
   LegacyAppSchema,
   AppConfiguration,
   CurrentAppConfiguration,
+  getAppVersionedSchema,
+  isCurrentAppSchema,
 } from './app.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -19,7 +19,9 @@ import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {BetaFlag} from '../../services/dev/fetch.js'
+import {deepStrict, zod} from '@shopify/cli-kit/node/schema'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -42,7 +44,12 @@ const defaultExtensionDirectory = 'extensions/*'
 
 export type AppLoaderMode = 'strict' | 'report'
 
-type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
+type AbortOrReport = <T>(
+  errorMessage: OutputMessage,
+  fallback: T,
+  configurationPath: string,
+  rawErrors?: zod.ZodIssueBase[],
+) => T
 const noopAbortOrReport: AbortOrReport = (errorMessage, fallback, configurationPath) => fallback
 
 export async function loadConfigurationFile(
@@ -78,20 +85,6 @@ export async function loadConfigurationFile(
   }
 }
 
-const isCurrentSchema = (schema: unknown) => {
-  const currentSchemaOptions: {[key: string]: string} = AppSchema.keyof().Values
-  const legacySchemaOptions: {[key: string]: string} = LegacyAppSchema.keyof().Values
-
-  // prioritize the current schema, assuming if any fields for current schema exist that don't exist in legacy, it's a current schema
-  for (const field in schema as {[key: string]: unknown}) {
-    if (currentSchemaOptions[field] && !legacySchemaOptions[field]) {
-      return true
-    }
-  }
-
-  return false
-}
-
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
@@ -106,7 +99,8 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   if (!configurationObject) return fallbackOutput
 
-  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  const configuration = await parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  return {...configuration, path: filepath}
 }
 
 export async function parseConfigurationObject<TSchema extends zod.ZodType>(
@@ -114,7 +108,7 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
   filepath: string,
   configurationObject: unknown,
   abortOrReport: AbortOrReport,
-): Promise<zod.TypeOf<TSchema> & {path: string}> {
+): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
@@ -124,9 +118,10 @@ export async function parseConfigurationObject<TSchema extends zod.ZodType>(
       outputContent`Fix a schema error in ${outputToken.path(filepath)}:\n${formattedError}`,
       fallbackOutput,
       filepath,
+      parseResult.error.issues,
     )
   }
-  return {...parseResult.data, path: filepath}
+  return parseResult.data
 }
 
 export function findSpecificationForType(specifications: ExtensionSpecification[], type: string) {
@@ -163,6 +158,7 @@ interface AppLoaderConstructorArgs {
   mode?: AppLoaderMode
   configName?: string
   specifications?: ExtensionSpecification[]
+  remoteBetas?: BetaFlag[]
 }
 
 /**
@@ -194,12 +190,14 @@ class AppLoader {
   private configName?: string
   private errors: AppErrors = new AppErrors()
   private specifications: ExtensionSpecification[]
+  private remoteBetas: BetaFlag[]
 
-  constructor({directory, configName, mode, specifications}: AppLoaderConstructorArgs) {
+  constructor({directory, configName, mode, specifications, remoteBetas}: AppLoaderConstructorArgs) {
     this.mode = mode ?? 'strict'
     this.directory = directory
     this.specifications = specifications ?? []
     this.configName = configName
+    this.remoteBetas = remoteBetas ?? []
   }
 
   findSpecificationForType(type: string) {
@@ -219,36 +217,40 @@ class AppLoader {
     const configurationLoader = new AppConfigurationLoader({
       directory: this.directory,
       configName: this.configName,
+      specifications: this.specifications,
     })
-    const {directory: appDirectory, configuration, configurationLoadResultMetadata} = await configurationLoader.loaded()
+    const {directory, configuration, configurationLoadResultMetadata, configSchema} = await configurationLoader.loaded()
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
-    const dotenv = await loadDotEnv(appDirectory, configuration.path)
+    const dotenv = await loadDotEnv(directory, configuration.path)
 
-    const allExtensions = await this.loadExtensions(appDirectory, configuration)
+    const extensions = await this.loadExtensions(directory, configuration)
 
-    const packageJSONPath = joinPath(appDirectory, 'package.json')
-    const name = await loadAppName(appDirectory)
+    const packageJSONPath = joinPath(directory, 'package.json')
+    const name = await loadAppName(directory)
     const nodeDependencies = await getDependencies(packageJSONPath)
-    const packageManager = await getPackageManager(appDirectory)
+    const packageManager = await getPackageManager(directory)
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
-      appDirectory,
+      directory,
       configuration.web_directories,
     )
-    const usesWorkspaces = await appUsesWorkspaces(appDirectory)
+    const usesWorkspaces = await appUsesWorkspaces(directory)
 
-    const appClass = new App(
+    const appClass = new App({
       name,
-      'SHOPIFY_API_KEY',
-      appDirectory,
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
+      directory,
       packageManager,
       configuration,
       nodeDependencies,
       webs,
-      allExtensions,
+      modules: extensions,
       usesWorkspaces,
       dotenv,
-    )
+      specifications: this.specifications,
+      configSchema,
+      remoteBetaFlags: this.remoteBetas,
+    })
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
@@ -345,8 +347,8 @@ class AppLoader {
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
-    const configExtensionPromises = isCurrentSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration as CurrentAppConfiguration)
+    const configExtensionPromises = isCurrentAppSchema(appConfiguration)
+      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
       : []
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
@@ -363,7 +365,7 @@ class AppLoader {
         this.abortOrReport(
           outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
           undefined,
-          extension.configuration.path,
+          extension.configurationPath,
         )
       } else if (extension.handle) {
         handles.add(extension.handle)
@@ -424,7 +426,7 @@ class AppLoader {
 
   async createConfigExtensionInstances(directory: string, appConfiguration: CurrentAppConfiguration) {
     return this.specifications
-      .filter((specification) => specification.appModuleFeatures().includes('app_config'))
+      .filter((specification) => specification.experience === 'configuration')
       .map(async (specification) => {
         const specConfiguration = await parseConfigurationObject(
           specification.schema,
@@ -433,8 +435,7 @@ class AppLoader {
           this.abortOrReport.bind(this),
         )
 
-        const {path, ...specConfigurationWithouPath} = specConfiguration
-        if (Object.keys(specConfigurationWithouPath).length === 0) return
+        if (Object.keys(specConfiguration).length === 0) return
 
         return this.createExtensionInstance(
           specification.identifier,
@@ -513,6 +514,8 @@ export async function loadAppConfiguration(
 interface AppConfigurationLoaderConstructorArgs {
   directory: string
   configName?: string
+  specifications?: ExtensionSpecification[]
+  remoteBetas?: BetaFlag[]
 }
 
 type LinkedConfigurationSource =
@@ -539,13 +542,18 @@ type ConfigurationLoadResultMetadata = {
 class AppConfigurationLoader {
   private directory: string
   private configName?: string
+  private specifications?: ExtensionSpecification[]
+  private remoteBetas: BetaFlag[]
 
-  constructor({directory, configName}: AppConfigurationLoaderConstructorArgs) {
+  constructor({directory, configName, specifications, remoteBetas}: AppConfigurationLoaderConstructorArgs) {
     this.directory = directory
     this.configName = configName
+    this.specifications = specifications
+    this.remoteBetas = remoteBetas ?? []
   }
 
   async loaded() {
+    const specifications = this.specifications ?? (await loadLocalExtensionsSpecifications())
     const appDirectory = await this.getAppDirectory()
     const configSource: LinkedConfigurationSource = this.configName ? 'flag' : 'cached'
     const cachedCurrentConfig = getCachedAppInfo(appDirectory)?.configFile
@@ -565,8 +573,13 @@ class AppConfigurationLoader {
 
     const {configurationPath, configurationFileName} = await this.getConfigurationPath(appDirectory)
     const file = await loadConfigurationFile(configurationPath)
-    const appSchema = isCurrentSchema(file) ? AppSchema : LegacyAppSchema
-    const configuration = await parseConfigurationFile(appSchema, configurationPath)
+    const appVersionedSchema = getAppVersionedSchema(specifications)
+    const appSchema = isCurrentAppSchema(file as AppConfiguration) ? appVersionedSchema : LegacyAppSchema
+    const parseStrictSchemaEnabled = specifications.length > 0
+    const configuration = await parseConfigurationFile(
+      parseStrictSchemaEnabled ? deepStrict(appSchema) : appSchema,
+      configurationPath,
+    )
     const allClientIdsByConfigName = await this.getAllLinkedConfigClientIds(appDirectory)
 
     let configurationLoadResultMetadata: ConfigurationLoadResultMetadata = {
@@ -593,7 +606,7 @@ class AppConfigurationLoader {
       }
     }
 
-    return {directory: appDirectory, configuration, configurationLoadResultMetadata}
+    return {directory: appDirectory, configuration, configurationLoadResultMetadata, configSchema: appVersionedSchema}
   }
 
   // Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to

@@ -8,7 +8,7 @@ import {dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
-const spec = createExtensionSpecification({
+const themeSpec = createExtensionSpecification({
   identifier: 'theme',
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
@@ -26,7 +26,7 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default themeSpec
 
 // Theme extension validation helpers
 interface FilenameValidation {

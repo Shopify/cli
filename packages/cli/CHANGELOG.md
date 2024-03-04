@@ -1,5 +1,59 @@
 # @shopify/cli
 
+## 3.56.0
+
+### Minor Changes
+
+- 390729c33: `app config push` and `app update-url` commands dropped
+
+### Patch Changes
+
+- 8e95f18a2: Load betas inside the remote app entity
+- Updated dependencies [1220290ec]
+  - @shopify/cli-kit@3.56.0
+  - @shopify/plugin-did-you-mean@3.56.0
+
+## 3.55.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.55.0
+- @shopify/plugin-did-you-mean@3.55.0
+
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+
+### Patch Changes
+
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+- Updated dependencies [a9e847717]
+  - @shopify/cli-kit@3.54.0
+  - @shopify/plugin-did-you-mean@3.54.0
+
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+- 72b1daaee: Add new `nodelete` flag to `shopify theme dev` command
+
+### Patch Changes
+
+- 562ae6c3a: Adds new, nested `write_privacy_consent` capability under `collect_buyer_consent`
+- Updated dependencies [1d6fe3475]
+- Updated dependencies [cc3ada0a2]
+- Updated dependencies [0896e62b1]
+- Updated dependencies [72b1daaee]
+  - @shopify/plugin-did-you-mean@3.53.0
+  - @shopify/cli-kit@3.53.0
+
 ## 3.52.0
 
 ### Patch Changes

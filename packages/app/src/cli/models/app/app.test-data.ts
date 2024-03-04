@@ -1,20 +1,31 @@
-import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, WebhookConfig} from './app.js'
+import {App, AppConfiguration, AppInterface, CurrentAppConfiguration, WebType, getAppVersionedSchema} from './app.js'
 import {ExtensionTemplate} from './template.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import themeExtension from '../templates/theme-specifications/theme.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {loadFSExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {OrganizationApp} from '../organization.js'
+import {Organization, OrganizationApp} from '../organization.js'
 import productSubscriptionUIExtension from '../templates/ui-specifications/product_subscription.js'
 import webPixelUIExtension from '../templates/ui-specifications/web_pixel_extension.js'
 import {BaseConfigType} from '../extensions/schemas.js'
 import {PartnersSession} from '../../services/context/partner-account-info.js'
+import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
+import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
+import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ActiveAppVersionQuerySchema} from '../../api/graphql/app_active_version.js'
+import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
+import {ExtensionUpdateDraftInput, ExtensionUpdateSchema} from '../../api/graphql/update_draft.js'
+import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
+import {
+  GenerateSignedUploadUrlSchema,
+  GenerateSignedUploadUrlVariables,
+} from '../../api/graphql/generate_signed_upload_url.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
-  client_id: '12345',
+  client_id: 'api-key',
   name: 'my app',
   webhooks: {
     api_version: '2023-04',
@@ -34,14 +45,14 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     }
   }
 
-  const newApp = new App(
-    app.name ?? 'App',
-    app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
-    app.directory ?? '/tmp/project',
-    app.packageManager ?? 'yarn',
-    app.configuration ?? getConfig(),
-    app.nodeDependencies ?? {},
-    app.webs ?? [
+  const newApp = new App({
+    name: app.name ?? 'App',
+    idEnvironmentVariableName: app.idEnvironmentVariableName ?? 'SHOPIFY_API_KEY',
+    directory: app.directory ?? '/tmp/project',
+    packageManager: app.packageManager ?? 'yarn',
+    configuration: app.configuration ?? getConfig(),
+    nodeDependencies: app.nodeDependencies ?? {},
+    webs: app.webs ?? [
       {
         directory: '',
         configuration: {
@@ -50,11 +61,14 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
         },
       },
     ],
-    app.allExtensions ?? [],
-    app.usesWorkspaces ?? false,
-    app.dotenv,
-    app.errors,
-  )
+    modules: app.allExtensions ?? [],
+    usesWorkspaces: app.usesWorkspaces ?? false,
+    dotenv: app.dotenv,
+    errors: app.errors,
+    specifications: app.specifications,
+    configSchema: app.configSchema,
+  })
+
   if (app.updateDependencies) {
     Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
   }
@@ -90,13 +104,21 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppInterf
   return app
 }
 
-export function getWebhookConfig(webhookConfigOverrides?: WebhookConfig) {
+export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig) {
   return {
     ...DEFAULT_CONFIG,
     webhooks: {
       ...DEFAULT_CONFIG.webhooks,
       ...webhookConfigOverrides,
     },
+  }
+}
+
+export function testOrganization(): Organization {
+  return {
+    id: '1',
+    businessName: 'org1',
+    website: 'https://www.example.com',
   }
 }
 
@@ -108,8 +130,8 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     apiSecretKeys: [{secret: 'api-secret'}],
     organizationId: '1',
     grantedScopes: [],
-    applicationUrl: 'https://example.com',
-    redirectUrlWhitelist: ['https://example.com/callback1'],
+    disabledBetas: [],
+    betas: [],
   }
   return {...defaultApp, ...app}
 }
@@ -131,14 +153,15 @@ export async function testUIExtension(
       api_access: false,
       collect_buyer_consent: {
         sms_marketing: false,
-        write_privacy_consent: false,
+        customer_privacy: false,
       },
     },
+    targeting: [{target: 'target1'}, {target: 'target2'}],
   }
-  const configurationPath = uiExtension?.configuration?.path ?? `${directory}/shopify.ui.extension.toml`
+  const configurationPath = uiExtension?.configurationPath ?? `${directory}/shopify.ui.extension.toml`
   const entryPath = uiExtension?.entrySourceFilePath ?? `${directory}/src/index.js`
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
@@ -161,7 +184,7 @@ export async function testThemeExtensions(directory = './my-extension'): Promise
     metafields: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
 
   const extension = new ExtensionInstance({
@@ -183,13 +206,34 @@ export async function testAppConfigExtensions(emptyConfig = false): Promise<Exte
         },
       } as unknown as BaseConfigType)
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'point_of_sale')!
 
   const extension = new ExtensionInstance({
     configuration,
-    configurationPath: '',
+    configurationPath: 'shopify.app.toml',
     directory: './',
+    specification,
+  })
+
+  return extension
+}
+
+export async function testPaymentExtensions(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'Payment Extension Name',
+    type: 'payments_extension' as const,
+    targeting: [{target: 'payments.offsite.render'}],
+    metafields: [],
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
     specification,
   })
 
@@ -203,15 +247,14 @@ export async function testWebhookExtensions(emptyConfig = false): Promise<Extens
         webhooks: {
           subscriptions: [
             {
-              topic: 'orders/delete',
-              path: '/my-neat-path',
+              topics: ['orders/delete'],
               uri: 'https://my-app.com/webhooks',
             },
           ],
         },
       } as unknown as BaseConfigType)
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'webhooks')!
 
   const extension = new ExtensionInstance({
@@ -230,10 +273,16 @@ export async function testWebPixelExtension(directory = './my-extension'): Promi
     type: 'web_pixel' as const,
     metafields: [],
     runtime_context: 'strict',
+    customer_privacy: {
+      analytics: false,
+      marketing: true,
+      preferences: false,
+      sale_of_data: 'enabled',
+    },
     settings: [],
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'web_pixel_extension')!
   const parsed = specification.schema.parse(configuration)
   const extension = new ExtensionInstance({
@@ -252,10 +301,37 @@ export async function testTaxCalculationExtension(directory = './my-extension'):
     type: 'tax_calculation' as const,
     metafields: [],
     runtime_context: 'strict',
+    customer_privacy: {
+      analytics: false,
+      marketing: true,
+      preferences: false,
+      sale_of_data: 'enabled',
+    },
   }
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'tax_calculation')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    directory,
+    specification,
+  })
+
+  return extension
+}
+
+export async function testFlowActionExtension(directory = './my-extension'): Promise<ExtensionInstance> {
+  const configuration = {
+    name: 'flow action',
+    type: 'flow_action' as const,
+    metafields: [],
+    runtime_context: 'strict',
+  }
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'flow_action')!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -293,8 +369,32 @@ export async function testFunctionExtension(
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()
 
-  const allSpecs = await loadFSExtensionsSpecifications()
+  const allSpecs = await loadLocalExtensionsSpecifications()
   const specification = allSpecs.find((spec) => spec.identifier === 'function')!
+
+  const extension = new ExtensionInstance({
+    configuration,
+    configurationPath: '',
+    entryPath: opts.entryPath,
+    directory,
+    specification,
+  })
+  return extension
+}
+
+interface TestPaymentsAppExtensionOptions {
+  dir?: string
+  config: PaymentsAppExtensionConfigType
+  entryPath?: string
+}
+export async function testPaymentsAppExtension(
+  opts: TestPaymentsAppExtensionOptions,
+): Promise<ExtensionInstance<PaymentsAppExtensionConfigType>> {
+  const directory = opts.dir ?? '/tmp/project/extensions/my-payments-app-extension'
+  const configuration = opts.config
+
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'payments_extension')!
 
   const extension = new ExtensionInstance({
     configuration,
@@ -558,10 +658,105 @@ export const testPartnersUserSession: PartnersSession = {
   },
 }
 
+const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = {
+  app: {
+    extensionRegistrations: [],
+    configurationRegistrations: [],
+    dashboardManagedExtensionRegistrations: [],
+  },
+}
+
+const emptyAppVersion: ActiveAppVersionQuerySchema = {
+  app: {
+    activeAppVersion: {
+      appModuleVersions: [],
+    },
+  },
+}
+
+const functionUploadUrlResponse = {
+  functionUploadUrlGenerate: {
+    generatedUrlDetails: {
+      headers: {},
+      maxSize: '200 kb',
+      url: 'https://example.com/upload-url',
+      moduleId: 'module-id',
+      maxBytes: 200,
+    },
+  },
+}
+
+const extensionUpdateResponse: ExtensionUpdateSchema = {
+  extensionUpdateDraft: {
+    clientMutationId: 'client-mutation-id',
+    userErrors: [],
+  },
+}
+
+const deployResponse: AppDeploySchema = {
+  appDeploy: {
+    appVersion: {
+      uuid: 'uuid',
+      id: 1,
+      versionTag: 'version-tag',
+      location: 'location',
+      message: 'message',
+      appModuleVersions: [],
+    },
+    userErrors: [],
+  },
+}
+
+const generateSignedUploadUrlResponse: GenerateSignedUploadUrlSchema = {
+  appVersionGenerateSignedUploadUrl: {
+    signedUploadUrl: 'signed-upload-url',
+    userErrors: [],
+  },
+}
+
+export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
+  return {
+    session: () => Promise.resolve(testPartnersUserSession),
+    refreshToken: () => Promise.resolve(testPartnersUserSession.token),
+    accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
+    appFromId: (_clientId: string) => Promise.resolve(testOrganizationApp()),
+    organizations: () => Promise.resolve([testOrganization()]),
+    orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
+    appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
+    selectOrg: () => Promise.resolve(testOrganization()),
+    specifications: (_appId: string) => Promise.resolve([]),
+    orgAndApps: (_orgId: string) =>
+      Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
+    createApp: (_organization: Organization, _name: string, _options?: CreateAppOptions) =>
+      Promise.resolve(testOrganizationApp()),
+    devStoresForOrg: (_organizationId: string) => Promise.resolve([]),
+    appExtensionRegistrations: (_appId: string) => Promise.resolve(emptyAppExtensionRegistrations),
+    activeAppVersion: (_appId: string) => Promise.resolve(emptyAppVersion),
+    functionUploadUrl: () => Promise.resolve(functionUploadUrlResponse),
+    updateExtension: (input: ExtensionUpdateDraftInput) => Promise.resolve(extensionUpdateResponse),
+    deploy: (input: AppDeployVariables) => Promise.resolve(deployResponse),
+    generateSignedUploadUrl: (input: GenerateSignedUploadUrlVariables) =>
+      Promise.resolve(generateSignedUploadUrlResponse),
+    ...stubs,
+  }
+}
+
 export const testPartnersServiceSession: PartnersSession = {
   token: 'partnersToken',
   accountInfo: {
     type: 'ServiceAccount',
     orgName: 'organization',
   },
+}
+
+export async function buildVersionedAppSchema() {
+  const configSpecifications = await configurationSpecifications()
+  return {
+    schema: getAppVersionedSchema(configSpecifications),
+    configSpecifications,
+  }
+}
+
+export async function configurationSpecifications() {
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
 }

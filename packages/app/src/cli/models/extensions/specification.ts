@@ -2,6 +2,7 @@ import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
 
+import {BetaFlag} from '../../services/dev/fetch.js'
 import {Result} from '@shopify/cli-kit/node/result'
 import {capitalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -15,7 +16,6 @@ export type ExtensionFeature =
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
-  | 'app_config'
 
 export interface TransformationConfig {
   [key: string]: string
@@ -25,6 +25,8 @@ export interface CustomTransformationConfig {
   forward?: (obj: object) => object
   reverse?: (obj: object) => object
 }
+
+export type ExtensionExperience = 'extension' | 'configuration'
 
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -38,6 +40,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   partnersWebIdentifier: string
   surface: string
   registrationLimit: number
+  experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
   schema: ZodSchemaType<TConfiguration>
@@ -48,13 +51,13 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     apiKey: string,
     moduleId?: string,
   ) => Promise<{[key: string]: unknown} | undefined>
-  validate?: (config: TConfiguration & {path: string}, directory: string) => Promise<Result<unknown, string>>
+  validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   transform?: (content: object) => object
-  reverseTransform?: (content: object) => object
+  reverseTransform?: (content: object, options?: {betas?: BetaFlag[]}) => object
 }
 
 /**
@@ -113,6 +116,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     transform: spec.transform,
     reverseTransform: spec.reverseTransform,
+    experience: spec.experience ?? 'extension',
   }
   return {...defaults, ...spec}
 }
@@ -137,11 +141,10 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
     // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema as unknown as ZodSchemaType<TConfiguration>,
-    appModuleFeatures: appModuleFeatures().includes('app_config')
-      ? appModuleFeatures
-      : () => appModuleFeatures().concat('app_config'),
+    appModuleFeatures,
     transform: resolveAppConfigTransform(spec.transformConfig),
     reverseTransform: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    experience: 'configuration',
   })
 }
 
@@ -175,7 +178,7 @@ function resolveReverseAppConfigTransform<T>(
  * ```json
  * { source: { fieldSourceA: 'valueA' } }
  * ```
- *  and a tranform config content like this:
+ *  and a transform config content like this:
  * ```json
  * { 'target.fieldTargetA': 'source.fieldSourceA'}
  * ```
@@ -229,18 +232,20 @@ function appConfigTransform(
  * @returns A single level object
  */
 function defaultAppConfigTransform(content: {[key: string]: unknown}) {
-  const firstKey = Object.keys(content)[0]
-  return (firstKey ? content[firstKey] : content) as {[key: string]: unknown}
+  return Object.keys(content).reduce((result, key) => {
+    const isObjectNotArray = content[key] !== null && typeof content[key] === 'object' && !Array.isArray(content[key])
+    return {...result, ...(isObjectNotArray ? {...(content[key] as object)} : {[key]: content[key]})}
+  }, {})
 }
 
 /**
- * Nest the content inside the first level object expected by the local schema.
+ * Nest the content inside the first level objects expected by the local schema.
  * ```json
  * {
  *  embedded = true
  * }
  * ```
- * will be flattened to applying the proper schema will return:
+ * will be nested after applying the proper schema:
  * ```json
  * {
  *   pos: {
@@ -254,8 +259,17 @@ function defaultAppConfigTransform(content: {[key: string]: unknown}) {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
-  const configSection: {[key: string]: unknown} = {}
-  const firstLevelObjectName = Object.keys(schema._def.shape())[0]!
-  configSection[firstLevelObjectName] = content
-  return configSection
+  return Object.keys(schema._def.shape()).reduce((result: {[key: string]: unknown}, key: string) => {
+    let innerSchema = schema._def.shape()[key]
+    if (innerSchema instanceof zod.ZodOptional) {
+      innerSchema = innerSchema._def.innerType
+    }
+    if (innerSchema instanceof zod.ZodObject) {
+      result[key] = defaultAppConfigReverseTransform(innerSchema, content)
+    } else {
+      if (content[key] !== undefined) result[key] = content[key]
+      delete content[key]
+    }
+    return result
+  }, {})
 }

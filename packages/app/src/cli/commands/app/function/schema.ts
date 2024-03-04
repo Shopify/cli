@@ -46,7 +46,6 @@ export default class FetchSchema extends Command {
     const apiKey = flags['client-id'] || flags['api-key']
 
     await inFunctionContext({
-      commandConfig: this.config,
       path: flags.path,
       configName: flags.configName,
       callback: async (app, ourFunction) => {

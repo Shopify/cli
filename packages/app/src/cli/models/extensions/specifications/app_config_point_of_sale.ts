@@ -1,11 +1,19 @@
-import {AppSchema} from '../../app/app.js'
 import {createConfigExtensionSpecification} from '../specification.js'
+import {zod} from '@shopify/cli-kit/node/schema'
 
-const PosConfigurationSchema = AppSchema.pick({pos: true}).strip()
+const PosConfigurationSchema = zod.object({
+  pos: zod
+    .object({
+      embedded: zod.boolean(),
+    })
+    .optional(),
+})
 
-const spec = createConfigExtensionSpecification({
-  identifier: 'point_of_sale',
+export const PosSpecIdentifier = 'point_of_sale'
+
+const appPOSSpec = createConfigExtensionSpecification({
+  identifier: PosSpecIdentifier,
   schema: PosConfigurationSchema,
 })
 
-export default spec
+export default appPOSSpec

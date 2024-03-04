@@ -1,8 +1,6 @@
-import {showDeprecationWarnings, REQUIRED_FOLDERS, validThemeDirectory, refreshTokens, dev} from './dev.js'
+import {showDeprecationWarnings, refreshTokens, dev} from './dev.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
 
 vi.mock('@shopify/cli-kit/node/ruby')
@@ -82,28 +80,6 @@ describe('dev', () => {
       store: 'my-store',
       adminToken: 'my-token',
       storefrontToken: 'my-storefront-token',
-    })
-  })
-})
-
-describe('validThemeDirectory', () => {
-  test('should not consider an empty directory to be a valid theme directory', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      await expect(validThemeDirectory(tmpDir)).resolves.toBe(false)
-    })
-  })
-
-  test('should not consider an incomplete theme directory to be a valid theme directory', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      await mkdir(joinPath(tmpDir, REQUIRED_FOLDERS[0]!))
-      await expect(validThemeDirectory(tmpDir)).resolves.toBe(false)
-    })
-  })
-
-  test('should consider a theme directory to be a valid theme directory', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      await Promise.all(REQUIRED_FOLDERS.map((requiredFolder) => mkdir(joinPath(tmpDir, requiredFolder))))
-      await expect(validThemeDirectory(tmpDir)).resolves.toBe(true)
     })
   })
 })

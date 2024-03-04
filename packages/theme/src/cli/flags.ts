@@ -12,6 +12,7 @@ export const themeFlags = {
     env: 'SHOPIFY_FLAG_PATH',
     parse: async (input) => resolvePath(input),
     default: async () => cwd(),
+    noCacheDefault: true,
   }),
   password: Flags.string({
     description: 'Password generated from the Theme Access app.',
@@ -29,14 +30,5 @@ export const themeFlags = {
     char: 'e',
     description: 'The environment to apply to the current command.',
     env: 'SHOPIFY_FLAG_ENVIRONMENT',
-  }),
-}
-
-export const themeDevPreviewFlag = {
-  'dev-preview': Flags.boolean({
-    required: false,
-    description: `Use the dev preview version of theme check
-Applies the typescript implementation of theme check to the theme`,
-    env: 'SHOPIFY_FLAG_DEV_PREVIEW',
   }),
 }

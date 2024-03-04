@@ -23,7 +23,7 @@ describe('check CLI version', () => {
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
         "Current Shopify CLI version: 2.2.2
-        💡 Version 3.0.10 available! Run yarn shopify upgrade"
+        💡 Version 3.0.10 available! Run \`yarn shopify upgrade\`"
       `)
   })
 
@@ -39,7 +39,7 @@ describe('check CLI version', () => {
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
         "Current Shopify CLI version: 2.2.2
-        💡 Version 3.0.10 available! Run pnpm shopify upgrade"
+        💡 Version 3.0.10 available! Run \`pnpm shopify upgrade\`"
       `)
   })
 
@@ -55,7 +55,7 @@ describe('check CLI version', () => {
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
         "Current Shopify CLI version: 2.2.2
-        💡 Version 3.0.10 available! Run npm run shopify upgrade"
+        💡 Version 3.0.10 available! Run \`npm run shopify upgrade\`"
       `)
   })
 

@@ -110,3 +110,15 @@ export function setPathValue(object: object, path: string, value?: unknown): obj
 
   return set(object, path, value)
 }
+
+/**
+ * Checks if value is an empty object, collection, map, or set.
+ *
+ * @param object - The value to check.
+ * @returns - Returns true if value is empty, else false.
+ */
+export function isEmpty(object: object): boolean {
+  const isEmpty = require('lodash/isEmpty.js')
+
+  return isEmpty(object)
+}

@@ -1,5 +1,38 @@
 # @shopify/cli-kit
 
+## 3.56.0
+
+### Minor Changes
+
+- 1220290ec: Add placeholder tab completion to text prompts
+
+## 3.55.0
+
+## 3.54.0
+
+### Minor Changes
+
+- a9e847717: Refine `shopify theme pull` implementation to no longer require a Ruby setup
+- a9e847717: Upgrade oclif to v3 (improved help menus and more)
+- a9e847717: Add `performActionWithRetryAfterRecovery` to codify pattern of optimistic attempt + recovery/retry mechanism
+- a9e847717: Fix password page error for safari
+
+### Patch Changes
+
+- a9e847717: Update @shopify/polaris and @shopify/polaris-icons to latest version
+
+## 3.53.0
+
+### Minor Changes
+
+- 1d6fe3475: Increase minimum Node version to 18
+- 0896e62b1: Versioned app config support
+- 72b1daaee: Add new `nodelete` flag to `shopify theme dev` command
+
+### Patch Changes
+
+- cc3ada0a2: Throw an error correctly if reauthenticating in non-TTY with noPrompt = true
+
 ## 3.52.0
 
 ### Minor Changes

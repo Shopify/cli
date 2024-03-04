@@ -1,17 +1,18 @@
 import {selectApp} from './select-app.js'
 import {AppConfigurationInterface, isCurrentAppSchema} from '../../models/app/app.js'
-import {fetchAppDetailsFromApiKey} from '../dev/fetch.js'
 import {InvalidApiKeyErrorMessage} from '../context.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export async function fetchAppFromConfigOrSelect(app: AppConfigurationInterface): Promise<OrganizationApp> {
+export async function fetchAppFromConfigOrSelect(
+  app: AppConfigurationInterface,
+  developerPlatformClient = selectDeveloperPlatformClient(),
+): Promise<OrganizationApp> {
   let organizationApp
   if (isCurrentAppSchema(app.configuration)) {
-    const token = await ensureAuthenticatedPartners()
     const apiKey = app.configuration.client_id
-    organizationApp = await fetchAppDetailsFromApiKey(apiKey, token)
+    organizationApp = await developerPlatformClient.appFromId(apiKey)
     if (!organizationApp) {
       const errorMessage = InvalidApiKeyErrorMessage(apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)

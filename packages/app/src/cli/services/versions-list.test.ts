@@ -42,8 +42,7 @@ describe('versions-list', () => {
         organizationId: ORG1.id,
         apiSecretKeys: [],
         grantedScopes: [],
-        applicationUrl: 'https://example.com',
-        redirectUrlWhitelist: ['https://example.com/callback1'],
+        betas: [],
       },
     })
     vi.mocked(fetchOrgFromId).mockResolvedValue(ORG1)
@@ -59,7 +58,6 @@ describe('versions-list', () => {
     await versionList({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
 
@@ -67,7 +65,6 @@ describe('versions-list', () => {
     expect(ensureVersionsListContext).toHaveBeenCalledWith({
       app,
       reset: false,
-      commandConfig,
       json: false,
     })
   })
@@ -82,7 +79,6 @@ describe('versions-list', () => {
     await versionList({
       app,
       reset: false,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       json: false,
     })
 
@@ -99,7 +95,6 @@ describe('versions-list', () => {
     await versionList({
       app,
       reset: false,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       json: false,
     })
 
@@ -120,7 +115,6 @@ describe('versions-list', () => {
     const output = versionList({
       app,
       reset: false,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       json: false,
     })
 
@@ -173,7 +167,6 @@ describe('versions-list', () => {
       app,
       apiKey: 'apiKey',
       reset: false,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       json: false,
     })
 
@@ -191,6 +184,7 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
   test('render json when there are app versions', async () => {
     // Given
     const app = await testApp({})
+
     const mockOutput = mockAndCaptureOutput()
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       app: {
@@ -225,7 +219,6 @@ View all 31 app versions in the Partner Dashboard ( https://partners.shopify.com
       app,
       apiKey: 'apiKey',
       reset: false,
-      commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
       json: true,
     })
 

@@ -5,7 +5,7 @@ import {BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/admin-ui-extensions'
 
-const spec = createExtensionSpecification({
+const productSubscriptionSpec = createExtensionSpecification({
   identifier: 'product_subscription',
   dependency,
   graphQLType: 'subscription_management',
@@ -18,4 +18,4 @@ const spec = createExtensionSpecification({
   },
 })
 
-export default spec
+export default productSubscriptionSpec

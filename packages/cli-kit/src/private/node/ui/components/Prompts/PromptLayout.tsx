@@ -1,4 +1,3 @@
-import {GitDiff, GitDiffProps} from './GitDiff.js'
 import {InfoMessage, InfoMessageProps} from './InfoMessage.js'
 import {InfoTable, InfoTableProps} from './InfoTable.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from '../TokenizedText.js'
@@ -17,7 +16,6 @@ export interface PromptLayoutProps {
   infoTable?: InfoTableProps['table']
   abortSignal?: AbortSignal
   infoMessage?: InfoMessageProps['message']
-  gitDiff?: GitDiffProps['gitDiff']
   header?: ReactElement | null
   state: PromptState
   submittedAnswerLabel?: string
@@ -29,7 +27,6 @@ const PromptLayout = ({
   infoTable,
   abortSignal,
   infoMessage,
-  gitDiff,
   header,
   state,
   input,
@@ -102,7 +99,7 @@ const PromptLayout = ({
           {header}
         </Box>
 
-        {(showInfoTable || infoMessage || gitDiff) && state !== PromptState.Submitted ? (
+        {(showInfoTable || infoMessage) && state !== PromptState.Submitted ? (
           <Box
             marginTop={1}
             marginLeft={3}
@@ -117,7 +114,6 @@ const PromptLayout = ({
           >
             {infoMessage ? <InfoMessage message={infoMessage} /> : null}
             {showInfoTable ? <InfoTable table={infoTable} /> : null}
-            {gitDiff ? <GitDiff gitDiff={gitDiff} /> : null}
           </Box>
         ) : null}
       </Box>

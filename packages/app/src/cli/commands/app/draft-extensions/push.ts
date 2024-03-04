@@ -49,13 +49,10 @@ export default class DraftExtensionsPush extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(DraftExtensionsPush)
 
-    const commandConfig = this.config
-
     const pushDraftExtensionsOptions: DraftExtensionsPushOptions = {
       directory: flags.path,
       apiKey: flags['client-id'],
       reset: flags.reset,
-      commandConfig,
       config: flags.config,
       enableDeveloperPreview: flags['enable-dev-preview'],
     }

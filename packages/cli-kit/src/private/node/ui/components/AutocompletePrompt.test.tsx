@@ -12,7 +12,6 @@ import {AbortController} from '../../../../public/node/abort.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {useStdout} from 'ink'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 vi.mock('ink', async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -213,47 +212,6 @@ describe('AutocompletePrompt', async () => {
          ┃  \u001b[1mRemove\u001b[22m
          ┃  • integrated-demand-ext
          ┃  • order-discount
-
-      [36m>[39m  [36mfirst[39m
-         second
-         third
-         fourth
-
-         [2mPress ↑↓ arrows to select, enter to confirm.[22m
-      "
-    `)
-  })
-
-  const runningOnWindows = platformAndArch().platform === 'windows'
-
-  test.skipIf(runningOnWindows)('supports a git diff', async () => {
-    const items = [
-      {label: 'first', value: 'first'},
-      {label: 'second', value: 'second'},
-      {label: 'third', value: 'third'},
-      {label: 'fourth', value: 'fourth'},
-    ]
-
-    const gitDiff = {
-      baselineContent: 'hello\n',
-      updatedContent: 'world\n',
-    }
-
-    const renderInstance = render(
-      <AutocompletePrompt
-        message="Associate your project with the org Castile Ventures?"
-        choices={items}
-        gitDiff={gitDiff}
-        onSubmit={() => {}}
-        search={() => Promise.resolve({data: []} as SearchResults<string>)}
-      />,
-    )
-
-    expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?
-
-         ┃  [31m- hello[m[39m
-         ┃  [32m+ [m[32mworld[m[0m[39m
 
       [36m>[39m  [36mfirst[39m
          second

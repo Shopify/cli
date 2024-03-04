@@ -1,6 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy} from './deploy.js'
-import {uploadWasmBlob, uploadExtensionsBundle, uploadFunctionExtensions} from './deploy/upload.js'
+import {uploadWasmBlob, uploadExtensionsBundle} from './deploy/upload.js'
 import {fetchAppExtensionRegistrations} from './dev/fetch.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {
@@ -10,17 +10,20 @@ import {
   testUIExtension,
   testOrganizationApp,
   testAppConfigExtensions,
+  DEFAULT_CONFIG,
+  testDeveloperPlatformClient,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
+import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {useThemebundling, useVersionedAppConfig} from '@shopify/cli-kit/node/context/local'
+import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {renderInfo, renderSuccess, renderTasks, renderTextPrompt, Task} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {Config} from '@oclif/core'
 
 const versionTag = 'unique-version-tag'
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('../utilities/app/config/webhooks.js', async () => ({
   ...((await vi.importActual('../utilities/app/config/webhooks.js')) as any),
@@ -60,21 +63,21 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
       },
+      developerPlatformClient,
     })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       appModules: [],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
     })
@@ -90,14 +93,14 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         message: 'Deployed from CLI with flag',
       },
+      developerPlatformClient,
     })
 
     // Then
@@ -118,14 +121,14 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         version: '1.1.0',
       },
+      developerPlatformClient,
     })
 
     // Then
@@ -146,18 +149,18 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
+      developerPlatformClient,
     })
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       appModules: [],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
     })
@@ -171,14 +174,14 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [uiExtension]})
 
     // When
-    await testDeployBundle({app})
+    await testDeployBundle({app, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       bundlePath: expect.stringMatching(/bundle.zip$/),
       appModules: [{uuid: uiExtension.localIdentifier, config: '{}', context: '', handle: uiExtension.handle}],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
     })
@@ -192,7 +195,7 @@ describe('deploy', () => {
     const app = testApp({allExtensions: [themeExtension]})
 
     // When
-    await testDeployBundle({app})
+    await testDeployBundle({app, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -206,7 +209,7 @@ describe('deploy', () => {
           handle: themeExtension.handle,
         },
       ],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
     })
@@ -240,6 +243,7 @@ describe('deploy', () => {
         id: 'app-id',
         organizationId: 'org-id',
       }),
+      developerPlatformClient,
     })
 
     // Then
@@ -253,7 +257,7 @@ describe('deploy', () => {
           handle: functionExtension.handle,
         },
       ],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       bundlePath: undefined,
       release: true,
@@ -270,7 +274,7 @@ describe('deploy', () => {
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference})
+    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -285,7 +289,7 @@ describe('deploy', () => {
           handle: themeExtension.handle,
         },
       ],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
       commitReference,
@@ -294,14 +298,18 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('uploads the extension bundle with 1 non uuid managed extension if beta enabled', async () => {
+  test('pushes the configuration extension if include config on deploy ', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
-    const app = testApp({allExtensions: [extensionNonUuidManaged]})
+    const localApp = {
+      allExtensions: [extensionNonUuidManaged],
+      configuration: {...DEFAULT_CONFIG, build: {include_config_on_deploy: true}},
+    }
+    const app = testApp(localApp)
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference, versionedAppConfig: true})
+    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
@@ -314,7 +322,7 @@ describe('deploy', () => {
           handle: extensionNonUuidManaged.handle,
         },
       ],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
       commitReference,
@@ -323,20 +331,20 @@ describe('deploy', () => {
     expect(updateAppIdentifiers).toHaveBeenCalledOnce()
   })
 
-  test('doesnt upload the extension bundle with 1 non uuid managed extension if beta disabled', async () => {
+  test('doesnt push the configuration extension if include config on deploy is disabled', async () => {
     // Given
     const extensionNonUuidManaged = await testAppConfigExtensions()
     const app = testApp({allExtensions: [extensionNonUuidManaged]})
     const commitReference = 'https://github.com/deploytest/repo/commit/d4e5ce7999242b200acde378654d62c14b211bcc'
 
     // When
-    await testDeployBundle({app, released: false, commitReference})
+    await testDeployBundle({app, released: false, commitReference, developerPlatformClient})
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
       apiKey: 'app-id',
       appModules: [],
-      token: 'api-token',
+      developerPlatformClient,
       extensionIds: {},
       release: true,
       commitReference,
@@ -357,15 +365,15 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
       },
       released: true,
+      developerPlatformClient,
     })
 
     // Then
@@ -395,16 +403,16 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id2',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: false,
         message: 'version message',
       },
       released: false,
+      developerPlatformClient,
     })
 
     // Then
@@ -435,15 +443,15 @@ describe('deploy', () => {
       partnersApp: {
         id: 'app-id',
         organizationId: 'org-id',
-        applicationUrl: 'https://my-app.com',
-        redirectUrlWhitelist: ['https://my-app.com/auth'],
         title: 'app-title',
         grantedScopes: [],
+        betas: [],
       },
       options: {
         noRelease: true,
         message: 'version message',
       },
+      developerPlatformClient,
     })
 
     // Then
@@ -480,8 +488,8 @@ interface TestDeployBundleInput {
   }
   released?: boolean
   commitReference?: string
-  versionedAppConfig?: boolean
   appToDeploy?: AppInterface
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 async function testDeployBundle({
@@ -490,8 +498,8 @@ async function testDeployBundle({
   options,
   released = true,
   commitReference,
-  versionedAppConfig = false,
   appToDeploy,
+  developerPlatformClient,
 }: TestDeployBundleInput) {
   // Given
   const extensionsPayload: {[key: string]: string} = {}
@@ -518,12 +526,10 @@ async function testDeployBundle({
         id: 'app-id',
         organizationId: 'org-id',
       }),
-    token: 'api-token',
     release: !options?.noRelease,
   })
 
   vi.mocked(useThemebundling).mockReturnValue(true)
-  vi.mocked(uploadFunctionExtensions).mockResolvedValue(identifiers)
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],
     versionTag,
@@ -535,7 +541,6 @@ async function testDeployBundle({
   vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
     app: {extensionRegistrations: [], configurationRegistrations: [], dashboardManagedExtensionRegistrations: []},
   })
-  vi.mocked(useVersionedAppConfig).mockReturnValue(versionedAppConfig)
 
   await deploy({
     app,
@@ -545,21 +550,6 @@ async function testDeployBundle({
     message: options?.message,
     version: options?.version,
     ...(commitReference ? {commitReference} : {}),
-    commandConfig: {runHook: vi.fn(() => Promise.resolve({successes: []}))} as unknown as Config,
-  })
-}
-
-async function testWebhooks(app: AppInterface) {
-  return testDeployBundle({
-    app,
-    partnersApp: {
-      id: 'app-id',
-      organizationId: 'org-id',
-      applicationUrl: 'https://my-app.com',
-      redirectUrlWhitelist: ['https://my-app.com/auth'],
-      title: 'app-title',
-      grantedScopes: [],
-      betas: {declarativeWebhooks: true},
-    },
+    developerPlatformClient,
   })
 }

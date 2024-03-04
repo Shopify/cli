@@ -3,6 +3,8 @@ import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {showEmbeddedCLIWarning} from '../../utilities/embedded-cli-warning.js'
+import {pull} from '../../services/pull.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {execCLI2} from '@shopify/cli-kit/node/ruby'
@@ -57,6 +59,16 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
+    stable: Flags.boolean({
+      hidden: true,
+      description: 'Performs the pull command by relying on the legacy download implementation.',
+      env: 'SHOPIFY_FLAG_STABLE',
+    }),
+    beta: Flags.boolean({
+      hidden: true,
+      description: 'Performs the pull command by relying on the new download implementation.',
+      env: 'SHOPIFY_FLAG_BETA',
+    }),
   }
 
   static cli2Flags = ['theme', 'development', 'live', 'nodelete', 'only', 'ignore', 'force', 'development-theme-id']
@@ -69,14 +81,33 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
     const developmentThemeManager = new DevelopmentThemeManager(adminSession)
-    const theme = await (flags.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
-    if (theme) {
+    const developmentTheme = await (flags.development
+      ? developmentThemeManager.find()
+      : developmentThemeManager.fetch())
+
+    if (flags.beta) {
+      const {path, nodelete, live, development, only, ignore, force} = flags
+
+      const theme = await findOrSelectTheme(adminSession, {
+        header: 'Select a theme to open',
+        filter: {
+          live,
+          theme: development ? `${developmentTheme?.id}` : flags.theme,
+        },
+      })
+
+      await pull(theme, adminSession, {path, nodelete, only, ignore, force})
+
+      return
+    }
+
+    if (developmentTheme) {
       if (flags.development) {
-        flags.theme = `${theme.id}`
+        flags.theme = `${developmentTheme.id}`
         flags.development = false
       }
       if (useEmbeddedThemeCLI()) {
-        flags['development-theme-id'] = theme.id
+        flags['development-theme-id'] = developmentTheme.id
       }
     }
 

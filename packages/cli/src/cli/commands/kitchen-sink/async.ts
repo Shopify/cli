@@ -8,6 +8,7 @@ import Command from '@shopify/cli-kit/node/base-command'
  */
 export default class KitchenSinkAsync extends Command {
   static description = 'View the UI kit components that process async tasks'
+  static hidden = true
 
   async run(): Promise<void> {
     await asyncTasks()
