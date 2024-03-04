@@ -17,7 +17,6 @@ export default class FunctionTypegen extends Command {
   public async run() {
     const {flags} = await this.parse(FunctionTypegen)
     await inFunctionContext({
-      commandConfig: this.config,
       path: flags.path,
       configName: flags.configName,
       callback: async (app, ourFunction) => {

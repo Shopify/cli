@@ -30,7 +30,7 @@ module ShopifyCLI
       include Singleton
 
       attr_reader :app, :stopped, :ctx, :root, :host, :theme_identifier, :port, :poll, :editor_sync, :stable, :mode,
-        :block, :includes, :ignores, :notify
+        :block, :includes, :ignores, :notify, :nodelete
 
       class << self
         def start(
@@ -48,6 +48,7 @@ module ShopifyCLI
           includes: nil,
           ignores: nil,
           notify: nil,
+          nodelete: false,
           &block
         )
           instance.setup(
@@ -65,6 +66,7 @@ module ShopifyCLI
             includes,
             ignores,
             notify,
+            nodelete,
             &block
           )
           instance.start
@@ -91,6 +93,7 @@ module ShopifyCLI
         includes,
         ignores,
         notify,
+        nodelete,
         &block
       )
         @ctx = ctx
@@ -108,6 +111,7 @@ module ShopifyCLI
         @ignores = ignores
         @notify = notify
         @block = block
+        @nodelete = nodelete
       end
 
       def start
@@ -184,7 +188,7 @@ module ShopifyCLI
         if block
           block.call(syncer)
         else
-          syncer.upload_theme!(delay_low_priority_files: true)
+          syncer.upload_theme!(delay_low_priority_files: true, delete: !nodelete)
         end
 
         ctx.open_browser_url!(address) if @open_browser
@@ -217,7 +221,8 @@ module ShopifyCLI
           theme: theme,
           ignore_filter: ignore_filter,
           syncer: syncer,
-          poll: poll
+          poll: poll,
+          delete: !nodelete
         )
       end
 

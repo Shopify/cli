@@ -1,9 +1,14 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfiguration, AppConfigurationInterface, AppInterface, isCurrentAppSchema} from '../../models/app/app.js'
+import {
+  AppConfigurationInterface,
+  AppInterface,
+  CurrentAppConfiguration,
+  isCurrentAppSchema,
+} from '../../models/app/app.js'
 import {UpdateURLsQuery, UpdateURLsQuerySchema, UpdateURLsQueryVariables} from '../../api/graphql/update_urls.js'
-import {GetURLsQuery, GetURLsQuerySchema, GetURLsQueryVariables} from '../../api/graphql/get_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {writeAppConfigurationFile} from '../app/write-app-configuration-file.js'
+import {SpecsAppConfiguration} from '../../models/extensions/specifications/types/app_config.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -16,16 +21,21 @@ import {terminalSupportsRawMode} from '@shopify/cli-kit/node/system'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
+export interface AppProxy {
+  proxyUrl: string
+  proxySubPath: string
+  proxySubPathPrefix: string
+}
+
 export interface PartnersURLs {
   applicationUrl: string
   redirectUrlWhitelist: string[]
-  appProxy?: {proxyUrl: string; proxySubPath: string; proxySubPathPrefix: string}
+  appProxy?: AppProxy
 }
 
 export interface FrontendURLOptions {
   noTunnel: boolean
   tunnelUrl?: string
-  commandConfig: Config
   tunnelClient: TunnelClient | undefined
 }
 
@@ -126,7 +136,7 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
 export function generatePartnersURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
-  proxyFields?: {url: string; subpath: string; prefix: string},
+  proxyFields?: CurrentAppConfiguration['app_proxy'],
 ): PartnersURLs {
   let redirectUrlWhitelist: string[]
   if (authCallbackPath && authCallbackPath.length > 0) {
@@ -184,41 +194,40 @@ export async function updateURLs(
   }
 
   if (localApp && isCurrentAppSchema(localApp.configuration) && localApp.configuration.client_id === apiKey) {
-    const localConfiguration: AppConfiguration = {
+    let localConfiguration: CurrentAppConfiguration = {
       ...localApp.configuration,
       application_url: urls.applicationUrl,
       auth: {
-        ...localApp.configuration.auth,
+        ...(localApp.configuration.auth ?? {}),
         redirect_urls: urls.redirectUrlWhitelist,
       },
     }
 
     if (urls.appProxy) {
-      localConfiguration.app_proxy = {
-        url: urls.appProxy.proxyUrl,
-        subpath: urls.appProxy.proxySubPath,
-        prefix: urls.appProxy.proxySubPathPrefix,
+      localConfiguration = {
+        ...localConfiguration,
+        app_proxy: {
+          url: urls.appProxy.proxyUrl,
+          subpath: urls.appProxy.proxySubPath,
+          prefix: urls.appProxy.proxySubPathPrefix,
+        },
       }
     }
 
-    await writeAppConfigurationFile(localConfiguration)
+    await writeAppConfigurationFile(localConfiguration, localApp.configSchema)
   }
 }
 
-export async function getURLs(apiKey: string, token: string): Promise<PartnersURLs> {
-  const variables: GetURLsQueryVariables = {apiKey}
-  const query = GetURLsQuery
-  const response: GetURLsQuerySchema = await partnersRequest(query, token, variables)
-  const appProxy = response.app.appProxy
+export async function getURLs(remoteAppConfig?: SpecsAppConfiguration): Promise<PartnersURLs> {
   const result: PartnersURLs = {
-    applicationUrl: response.app.applicationUrl,
-    redirectUrlWhitelist: response.app.redirectUrlWhitelist,
+    applicationUrl: remoteAppConfig?.application_url ?? '',
+    redirectUrlWhitelist: remoteAppConfig?.auth?.redirect_urls ?? [],
   }
-  if (appProxy) {
+  if (remoteAppConfig?.app_proxy) {
     result.appProxy = {
-      proxyUrl: appProxy.url,
-      proxySubPath: appProxy.subPath,
-      proxySubPathPrefix: appProxy.subPathPrefix,
+      proxyUrl: remoteAppConfig?.app_proxy.url,
+      proxySubPath: remoteAppConfig?.app_proxy.subpath,
+      proxySubPathPrefix: remoteAppConfig?.app_proxy.prefix,
     }
   }
   return result
@@ -245,13 +254,13 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     )
 
     if (options.localApp && isCurrentAppSchema(options.localApp.configuration)) {
-      const localConfiguration: AppConfiguration = options.localApp.configuration
+      const localConfiguration = options.localApp.configuration
       localConfiguration.build = {
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
 
-      await writeAppConfigurationFile(localConfiguration)
+      await writeAppConfigurationFile(localConfiguration, options.localApp.configSchema)
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

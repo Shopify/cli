@@ -53,7 +53,7 @@ export async function findApiKey(partnersSession: PartnersSession): Promise<stri
     if (apps.nodes.length === 1 && apps.nodes[0]?.apiKey) {
       apiKey = apps.nodes[0].apiKey
     } else {
-      apiKey = await selectAppPrompt(apps, org.id, partnersSession)
+      apiKey = await selectAppPrompt(apps.nodes, apps.pageInfo.hasNextPage, org.id)
     }
   } else {
     apiKey = appFromDir.apiKey

@@ -2,7 +2,7 @@ import en from './translations/en.json'
 
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {HideMinor, ViewMinor} from '@shopify/polaris-icons'
+import {HideIcon, ViewIcon} from '@shopify/polaris-icons'
 import {Button} from '@/components/Button'
 
 interface Props {
@@ -18,11 +18,11 @@ export function View({show, hide, hidden}: Props) {
   })
 
   return hidden ? (
-    <Button type="button" onClick={show} icon={{source: HideMinor, position: 'left'}}>
+    <Button type="button" onClick={show} icon={{source: HideIcon, position: 'left'}}>
       {i18n.translate('hidden')}
     </Button>
   ) : (
-    <Button type="button" onClick={hide} icon={{source: ViewMinor, position: 'left'}}>
+    <Button type="button" onClick={hide} icon={{source: ViewIcon, position: 'left'}}>
       {i18n.translate('showing')}
     </Button>
   )

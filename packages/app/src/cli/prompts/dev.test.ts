@@ -8,7 +8,7 @@ import {
   updateURLsPrompt,
 } from './dev.js'
 import {Organization, OrganizationStore} from '../models/organization.js'
-import {testPartnersUserSession, testOrganizationApp} from '../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
@@ -64,7 +64,7 @@ describe('selectOrganization', () => {
     // Then
     expect(got).toEqual(ORG1)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
-      message: 'Which Partners organization is this work for?',
+      message: 'Which organization is this work for?',
       choices: [
         {label: 'org1', value: '1'},
         {label: 'org2', value: '2'},
@@ -88,11 +88,11 @@ describe('selectOrganization', () => {
 describe('selectApp', () => {
   test('returns app if user selects one', async () => {
     // Given
-    const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: true}}
+    const apps = [APP1, APP2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
     // When
-    const got = await selectAppPrompt(apps, ORG1.id, testPartnersUserSession)
+    const got = await selectAppPrompt(apps, true, ORG1.id, {developerPlatformClient: testDeveloperPlatformClient()})
 
     // Then
     expect(got).toEqual(APP2.apiKey)
@@ -113,10 +113,13 @@ describe('selectApp', () => {
       [APP2.apiKey]: 'shopify.app.dev.toml',
     })
 
-    const apps = {nodes: [APP1, APP2], pageInfo: {hasNextPage: true}}
+    const apps = [APP1, APP2]
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('key2')
 
-    const got = await selectAppPrompt(apps, ORG1.id, testPartnersUserSession, {directory: '/'})
+    const got = await selectAppPrompt(apps, true, ORG1.id, {
+      directory: '/',
+      developerPlatformClient: testDeveloperPlatformClient(),
+    })
 
     expect(got).toEqual(APP2.apiKey)
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({

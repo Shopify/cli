@@ -3,16 +3,15 @@ import {uploadThemeExtensions, uploadExtensionsBundle, UploadExtensionsBundleOut
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {AppInterface, type NormalizedWebhookSubscriptions} from '../models/app/app.js'
+import {AppInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
-import {fakedWebhookSubscriptionsMutation} from '../utilities/app/config/webhooks.js'
+import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {renderInfo, renderSuccess, renderTasks} from '@shopify/cli-kit/node/ui'
 import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {useThemebundling} from '@shopify/cli-kit/node/context/local'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {Config} from '@oclif/core'
 import type {Task} from '@shopify/cli-kit/node/ui'
 
 interface DeployOptions {
@@ -40,8 +39,8 @@ interface DeployOptions {
   /** The git reference url of the app version */
   commitReference?: string
 
-  /** The config from the Oclif command */
-  commandConfig: Config
+  /** The API client to send authenticated requests  */
+  developerPlatformClient?: DeveloperPlatformClient
 }
 
 interface TasksContext {
@@ -50,8 +49,9 @@ interface TasksContext {
 }
 
 export async function deploy(options: DeployOptions) {
+  const developerPlatformClient = options.developerPlatformClient ?? selectDeveloperPlatformClient()
   // eslint-disable-next-line prefer-const
-  let {app, identifiers, partnersApp, token, release} = await ensureDeployContext(options)
+  let {app, identifiers, partnersApp, release} = await ensureDeployContext({...options, developerPlatformClient})
   const apiKey = identifiers.app
 
   outputNewline()
@@ -95,7 +95,7 @@ export async function deploy(options: DeployOptions) {
           title: uploadTaskTitle,
           task: async () => {
             const appModules = await Promise.all(
-              options.app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, token, apiKey})),
+              app.allExtensions.flatMap((ext) => ext.bundleConfig({identifiers, developerPlatformClient, apiKey})),
             )
 
             uploadExtensionsBundleResult = await uploadExtensionsBundle({
@@ -103,7 +103,7 @@ export async function deploy(options: DeployOptions) {
               bundlePath,
               appModules: getArrayRejectingUndefined(appModules),
               release,
-              token,
+              developerPlatformClient,
               extensionIds: identifiers.extensionIds,
               message: options.message,
               version: options.version,
@@ -111,56 +111,14 @@ export async function deploy(options: DeployOptions) {
             })
 
             if (!useThemebundling()) {
-              const themeExtensions = options.app.allExtensions.filter((ext) => ext.isThemeExtension)
-              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, token})
+              const themeExtensions = app.allExtensions.filter((ext) => ext.isThemeExtension)
+              await uploadThemeExtensions(themeExtensions, {apiKey, identifiers, developerPlatformClient})
             }
 
             app = await updateAppIdentifiers({app, identifiers, command: 'deploy'})
           },
         },
       ]
-
-      if (partnersApp.betas?.declarativeWebhooks) {
-        tasks.push({
-          title: 'Releasing webhooks',
-          task: async () => {
-            if (!('webhooks' in app.configuration)) return
-
-            // normalize webhook config with the top level config
-            const webhookSubscriptions: NormalizedWebhookSubscriptions = []
-            const {topics, subscriptions, endpoint} = app.configuration.webhooks
-
-            if (endpoint && topics?.length) {
-              for (const topic of topics) {
-                webhookSubscriptions.push({
-                  topic,
-                  endpoint,
-                })
-              }
-            }
-
-            if (subscriptions?.length) {
-              for (const {path, endpoint: localEndpoint, ...subscription} of subscriptions) {
-                // we can assume this is valid from earlier validation, and local endpoint will overwrite top level if there is any
-                const subscriptionConfig = {
-                  endpoint: localEndpoint || endpoint,
-                  ...subscription,
-                }
-
-                if (path) {
-                  subscriptionConfig.endpoint = `${subscriptionConfig.endpoint}${path}`
-                }
-
-                webhookSubscriptions.push(subscriptionConfig)
-              }
-            }
-
-            // eslint-disable-next-line no-warning-comments
-            // TODO - make request with webhookSubscriptions
-            fakedWebhookSubscriptionsMutation(webhookSubscriptions)
-          },
-        })
-      }
 
       await renderTasks(tasks)
 

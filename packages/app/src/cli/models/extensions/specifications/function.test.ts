@@ -1,13 +1,17 @@
 import {FunctionConfigType} from './function.js'
-import {testFunctionExtension} from '../../app/app.test-data.js'
+import {testDeveloperPlatformClient, testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import * as upload from '../../../services/deploy/upload.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 vi.mock('../../../services/deploy/upload.js')
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>
@@ -51,7 +55,7 @@ describe('functionConfiguration', () => {
 
     extension = await testFunctionExtension({
       dir: '/function',
-      config,
+      config: {...config},
     })
   })
 
@@ -62,7 +66,7 @@ describe('functionConfiguration', () => {
       await writeFile(extension.inputQueryPath, inputQuery)
 
       // When
-      const got = await extension.deployConfig({apiKey, token})
+      const got = await extension.deployConfig({apiKey, developerPlatformClient})
 
       // Then
       expect(got).toEqual({
@@ -100,7 +104,7 @@ describe('functionConfiguration', () => {
       extension.configuration.ui = undefined
 
       // When
-      const got = await extension.deployConfig({apiKey, token})
+      const got = await extension.deployConfig({apiKey, developerPlatformClient})
 
       // Then
       expect(got).toEqual({
@@ -133,10 +137,10 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(extension.directory, inputQueryFileName), inputQuery)
 
       // When
-      const got = await extension.deployConfig({apiKey, token})
+      const got = await extension.deployConfig({apiKey, developerPlatformClient})
 
       // Then
-      expect(got!.targets).toEqual([
+      expect(getPathValue(got!, 'targets')).toEqual([
         {handle: 'some.api.target1', input_query: inputQuery},
         {handle: 'some.api.target2', export: 'run_target2'},
       ])
@@ -148,7 +152,7 @@ describe('functionConfiguration', () => {
     extension.configuration.targeting = [{target: 'some.api.target1', input_query: 'this-is-not-a-file.graphql'}]
 
     // When & Then
-    await expect(() => extension.deployConfig({apiKey, token})).rejects.toThrowError(AbortError)
+    await expect(() => extension.deployConfig({apiKey, developerPlatformClient})).rejects.toThrowError(AbortError)
   })
 
   describe('with legacy type', async () => {
@@ -171,7 +175,7 @@ describe('functionConfiguration', () => {
         await writeFile(extension.inputQueryPath, inputQuery)
 
         // When
-        const got = await extension.deployConfig({apiKey, token})
+        const got = await extension.deployConfig({apiKey, developerPlatformClient})
 
         // Then
         expect(got).toEqual({
@@ -209,7 +213,7 @@ describe('functionConfiguration', () => {
         extension.configuration.ui = undefined
 
         // When
-        const got = await extension.deployConfig({apiKey, token})
+        const got = await extension.deployConfig({apiKey, developerPlatformClient})
 
         // Then
         expect(got).toEqual({
@@ -246,7 +250,7 @@ describe('functionConfiguration', () => {
       await writeFile(joinPath(localesDir, 'en.default.json'), JSON.stringify(enLocale))
 
       // When
-      const got = await extension.deployConfig({apiKey, token})
+      const got = await extension.deployConfig({apiKey, developerPlatformClient})
 
       // Then
       const expectedLocalization = {
@@ -256,7 +260,7 @@ describe('functionConfiguration', () => {
         },
       }
 
-      expect(got!.localization).toEqual(expectedLocalization)
+      expect(getPathValue(got!, 'localization')).toEqual(expectedLocalization)
     })
   })
 
@@ -269,7 +273,7 @@ describe('functionConfiguration', () => {
       // When
       const got = (await extension.deployConfig({
         apiKey,
-        token,
+        developerPlatformClient,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
       // Then
@@ -286,7 +290,7 @@ describe('functionConfiguration', () => {
       // When
       const got = (await extension.deployConfig({
         apiKey,
-        token,
+        developerPlatformClient,
       })) as unknown as {ui: {ui_extension_handle: string}}
 
       // Then

@@ -99,7 +99,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -311,7 +311,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -375,7 +375,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -431,7 +431,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -527,7 +527,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -546,7 +546,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✖ off
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -596,7 +596,7 @@ describe('Dev', () => {
 
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -651,7 +651,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -686,7 +686,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -706,7 +706,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✖ off
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -755,7 +755,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -805,7 +805,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -838,7 +838,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -879,7 +879,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✖ off
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -914,7 +914,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 
@@ -931,7 +931,7 @@ describe('Dev', () => {
       ────────────────────────────────────────────────────────────────────────────────────────────────────
 
       › Press d │ toggle development store preview: ✔ on
-      › Press g │ open the GraphiQL Explorer in your browser
+      › Press g │ open GraphiQL (Admin API) in your browser
       › Press p │ preview in your browser
       › Press q │ quit
 

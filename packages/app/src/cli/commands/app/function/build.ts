@@ -17,7 +17,6 @@ export default class FunctionBuild extends Command {
   public async run() {
     const {flags} = await this.parse(FunctionBuild)
     await inFunctionContext({
-      commandConfig: this.config,
       path: flags.path,
       configName: flags.config,
       callback: async (app, ourFunction) => {

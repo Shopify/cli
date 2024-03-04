@@ -1,12 +1,12 @@
 import {deleteThemes, renderDeprecatedArgsWarning} from './delete.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
-import {deleteTheme} from '@shopify/cli-kit/node/themes/themes-api'
-import {Theme} from '@shopify/cli-kit/node/themes/models/theme'
+import {deleteTheme} from '@shopify/cli-kit/node/themes/api'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
 import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/themes-api')
+vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/development-theme-manager.js', () => {
   const DevelopmentThemeManager = vi.fn()
@@ -50,7 +50,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
+      body: ['The theme', "'my theme'", {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -67,7 +67,7 @@ describe('deleteThemes', () => {
     // Then
     expect(deleteTheme).toBeCalledWith(theme1.id, session)
     expect(renderSuccess).toBeCalledWith({
-      body: ['The theme', 'my theme', {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
+      body: ['The theme', "'my theme'", {subdued: '(#1)'}, 'was deleted from my-shop.myshopify.com.'],
     })
   })
 
@@ -90,8 +90,8 @@ describe('deleteThemes', () => {
         {
           list: {
             items: [
-              ['my theme', {subdued: '(#1)'}],
-              ['another theme', {subdued: '(#2)'}],
+              ["'my theme'", {subdued: '(#1)'}],
+              ["'another theme'", {subdued: '(#2)'}],
             ],
           },
         },
@@ -118,8 +118,8 @@ describe('deleteThemes', () => {
         {
           list: {
             items: [
-              ['my theme', {subdued: '(#1)'}],
-              ['another theme', {subdued: '(#2)'}],
+              ["'my theme'", {subdued: '(#1)'}],
+              ["'another theme'", {subdued: '(#2)'}],
             ],
           },
         },

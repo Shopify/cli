@@ -1,191 +1,101 @@
-/* eslint-disable @shopify/prefer-module-scope-constants */
-import {ensureDeploymentIdsPresence, RemoteSource} from './identifiers.js'
-import {ensureExtensionsIds} from './identifiers-extensions.js'
-import {fetchAppExtensionRegistrations} from '../dev/fetch.js'
-import {AppInterface} from '../../models/app/app.js'
-import {testApp, testFunctionExtension, testOrganizationApp, testUIExtension} from '../../models/app/app.test-data.js'
-import {OrganizationApp} from '../../models/organization.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
-import {err, ok} from '@shopify/cli-kit/node/result'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {configExtensionsIdentifiersBreakdown, extensionsIdentifiersDeployBreakdown} from './breakdown-extensions.js'
+import {ensureDeploymentIdsPresence} from './identifiers.js'
+import {deployConfirmed} from './identifiers-extensions.js'
+import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
+import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {describe, expect, test, vi} from 'vitest'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
-const REGISTRATION_A: RemoteSource = {
-  uuid: 'UUID_A',
-  id: 'A',
-  title: 'A',
-  type: 'CHECKOUT_POST_PURCHASE',
-}
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
-const REGISTRATION_B = {
-  uuid: 'UUID_B',
-  id: 'B',
-  title: 'B',
-  type: 'SUBSCRIPTION_MANAGEMENT',
-}
+vi.mock('./breakdown-extensions.js')
+vi.mock('../../prompts/deploy-release.js')
+vi.mock('./identifiers-extensions.js')
 
-const LOCAL_APP = (uiExtensions: ExtensionInstance[], functionExtensions: ExtensionInstance[] = []): AppInterface => {
-  return testApp({
-    name: 'my-app',
-    directory: '/app',
-    configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
-    allExtensions: [...uiExtensions, ...functionExtensions],
+describe('ensureDeploymentIdsPresence', () => {
+  test('when the prompt is not confirmed an exception is thrown', async () => {
+    // Given
+    vi.mocked(extensionsIdentifiersDeployBreakdown).mockResolvedValue(buildExtensionsBreakdown())
+    vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue(buildConfigBreakdown())
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(false)
+
+    // When / Then
+    const params = {
+      app: testApp(),
+      developerPlatformClient,
+      appId: 'appId',
+      appName: 'appName',
+      envIdentifiers: {},
+      force: false,
+      release: true,
+    }
+    await expect(ensureDeploymentIdsPresence(params)).rejects.toThrow(AbortSilentError)
   })
-}
 
-const options = (
-  uiExtensions: ExtensionInstance[],
-  identifiers: any = {},
-  partnersApp?: OrganizationApp,
-  release = true,
-) => {
+  test('when the prompt is confirmed post-confirmation actions as run and the result is returned', async () => {
+    // Given
+    vi.mocked(extensionsIdentifiersDeployBreakdown).mockResolvedValue(buildExtensionsBreakdown())
+    vi.mocked(configExtensionsIdentifiersBreakdown).mockResolvedValue(buildConfigBreakdown())
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
+    vi.mocked(deployConfirmed).mockResolvedValue({
+      extensions: {
+        EXTENSION_A: 'UUID_A',
+      },
+      extensionIds: {EXTENSION_A: 'A'},
+      extensionsNonUuidManaged: {},
+    })
+
+    // When
+    const params = {
+      app: testApp(),
+      developerPlatformClient,
+      appId: 'appId',
+      appName: 'appName',
+      envIdentifiers: {},
+      force: false,
+      release: true,
+    }
+    const result = await ensureDeploymentIdsPresence(params)
+
+    // Then
+    expect(result).toEqual({
+      app: params.appId,
+      extensions: {
+        EXTENSION_A: 'UUID_A',
+      },
+      extensionIds: {EXTENSION_A: 'A'},
+      extensionsNonUuidManaged: {},
+    })
+  })
+})
+
+function buildExtensionsBreakdown() {
   return {
-    app: LOCAL_APP(uiExtensions),
-    token: 'token',
-    appId: 'appId',
-    appName: 'appName',
-    envIdentifiers: {extensions: identifiers},
-    force: false,
-    partnersApp,
-    release,
+    extensionIdentifiersBreakdown: {
+      onlyRemote: [],
+      toCreate: [],
+      toUpdate: [],
+      fromDashboard: [],
+    },
+    extensionsToConfirm: {
+      validMatches: {},
+      extensionsToCreate: [],
+      dashboardOnlyExtensions: [],
+    },
+    remoteExtensionsRegistrations: {
+      extensionRegistrations: [],
+      configurationRegistrations: [],
+      dashboardManagedExtensionRegistrations: [],
+    },
   }
 }
 
-let EXTENSION_A: ExtensionInstance
-let EXTENSION_A_2: ExtensionInstance
-let FUNCTION_C: ExtensionInstance
-
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('../dev/fetch')
-vi.mock('./identifiers-extensions')
-
-beforeAll(async () => {
-  EXTENSION_A = await testUIExtension({
-    directory: '/EXTENSION_A',
-    configuration: {
-      name: 'EXTENSION A',
-      type: 'checkout_post_purchase',
-      metafields: [],
-      capabilities: {
-        network_access: false,
-        block_progress: false,
-        api_access: false,
-        collect_buyer_consent: {
-          sms_marketing: false,
-          write_privacy_consent: false,
-        },
-      },
-    },
-    entrySourceFilePath: '',
-    devUUID: 'devUUID',
-  })
-
-  EXTENSION_A_2 = await testUIExtension({
-    directory: '/EXTENSION_A_2',
-    configuration: {
-      name: 'EXTENSION A 2',
-      type: 'checkout_post_purchase',
-      metafields: [],
-      capabilities: {
-        network_access: false,
-        block_progress: false,
-        api_access: false,
-        collect_buyer_consent: {
-          sms_marketing: false,
-          write_privacy_consent: false,
-        },
-      },
-    },
-    entrySourceFilePath: '',
-    devUUID: 'devUUID',
-  })
-
-  FUNCTION_C = await testFunctionExtension({
-    dir: '/FUNCTION_C',
-    config: {
-      name: 'FUNCTION_C',
-      type: 'product_discounts',
-      description: 'Function',
-      build: {
-        command: 'make build',
-        path: 'dist/index.wasm',
-      },
-      configuration_ui: false,
-      api_version: '2022-07',
-      metafields: [],
-    },
-  })
-})
-
-beforeEach(() => {
-  vi.mocked(ensureAuthenticatedPartners).mockResolvedValue('token')
-  vi.mocked(fetchAppExtensionRegistrations).mockResolvedValue({
-    app: {
-      extensionRegistrations: [REGISTRATION_A, REGISTRATION_B],
-      dashboardManagedExtensionRegistrations: [],
-    },
-  })
-})
-
-describe('ensureDeploymentIdsPresence: matchmaking returns invalid', () => {
-  test('throw an invalid environment error if functions is invalid', async () => {
-    // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(err('invalid-environment'))
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
-
-    // Then
-    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
-  })
-
-  test('throw an invalid environment error if there are pending remote matches', async () => {
-    // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(err('pending-remote'))
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
-
-    // Then
-    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
-  })
-
-  test('throw an invalid environment error if extensions is invalid', async () => {
-    // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(err('invalid-environment'))
-
-    // When
-    const got = ensureDeploymentIdsPresence(options([EXTENSION_A, EXTENSION_A_2], [FUNCTION_C]))
-
-    // Then
-    await expect(got).rejects.toThrow(/Deployment failed because this local project doesn't seem to match the app/)
-  })
-})
-
-describe('app has no local extensions', () => {
-  test('ensureDeploymentIdsPresence() fully executes when releasing', async () => {
-    // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
-
-    // When
-    const got = await ensureDeploymentIdsPresence(options([], {}, testOrganizationApp(), true))
-
-    // Then
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
-    expect(ensureExtensionsIds).toHaveBeenCalledOnce()
-    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
-  })
-
-  test('ensureDeploymentIdsPresence() fully executes when not releasing', async () => {
-    // Given
-    vi.mocked(ensureExtensionsIds).mockResolvedValue(ok({extensions: {}, extensionIds: {}}))
-
-    // When
-    const got = await ensureDeploymentIdsPresence(options([], {}, testOrganizationApp(), false))
-
-    // Then
-    expect(fetchAppExtensionRegistrations).toHaveBeenCalledOnce()
-    expect(ensureExtensionsIds).toHaveBeenCalledOnce()
-    expect(got).toEqual({app: 'appId', extensions: {}, extensionIds: {}})
-  })
-})
+function buildConfigBreakdown() {
+  return {
+    existingFieldNames: [],
+    existingUpdatedFieldNames: [],
+    newFieldNames: [],
+    deletedFieldNames: [],
+  }
+}

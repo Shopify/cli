@@ -4,7 +4,6 @@ import {AppInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import Command from '../../utilities/app-command.js'
-import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
@@ -94,8 +93,7 @@ export default class Deploy extends Command {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const specifications = await loadLocalExtensionsSpecifications(this.config)
-    const app: AppInterface = await loadApp({specifications, directory: flags.path, configName: flags.config})
+    const app: AppInterface = await loadApp({directory: flags.path, configName: flags.config})
 
     const requiredNonTTYFlags = ['force']
     if (!apiKey && !app.configuration.client_id) requiredNonTTYFlags.push('client-id')
@@ -110,7 +108,6 @@ export default class Deploy extends Command {
       message: flags.message,
       version: flags.version,
       commitReference: flags['source-control-url'],
-      commandConfig: this.config,
     })
   }
 }

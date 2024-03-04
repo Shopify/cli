@@ -14,7 +14,6 @@ on:
         default: '18.12.0'
         type: choice
         options:
-          - 16.17.0
           - 18.12.0
           - 20.2.0
       os:
@@ -46,10 +45,7 @@ env:
   DEBUG: '1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
-  RUBY_VERSION: '3.1.2'
-  BUNDLER_VERSION: '2.3.18'
   PNPM_VERSION: '8.7.0'
-  BUNDLE_GEMFILE: ${{ github.workspace }}/packages/cli-kit/assets/cli-ruby/Gemfile
   BUNDLE_WITHOUT: 'test:development'
   SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
   SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
@@ -63,7 +59,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['16.17.0', '18.12.0', '20.2.0']
+        node: ['18.12.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         name: Checkout [${{ github.ref_name }}]
@@ -73,7 +69,6 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
-          needs-ruby: ${{ matrix.os != 'windows-latest' }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache  --target=build
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '18.12.0' }}
@@ -165,7 +160,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
-        node: ['16.17.0', '18.12.0', '20.2.0']
+        node: ['18.12.0', '20.2.0']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -176,7 +171,6 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
-          needs-ruby: false
       - name: Unit tests
         run: pnpm test:unit
 
@@ -199,7 +193,6 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ matrix.node }}
-          needs-ruby: ${{ matrix.os != 'windows-latest' }}
       - name: Acceptance tests
         run: pnpm test:features
 

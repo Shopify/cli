@@ -9,9 +9,11 @@ export const ActiveAppVersionQuery = gql`
           registrationUuid
           registrationTitle
           type
+          config
           specification {
             identifier
             name
+            experience
             options {
               managementExperience
             }
@@ -29,15 +31,17 @@ export interface ActiveAppVersionQueryVariables {
 interface AppModuleVersionSpecification {
   identifier: string
   name: string
+  experience: 'extension' | 'configuration' | 'deprecated'
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
   }
 }
 
-interface AppModuleVersion {
+export interface AppModuleVersion {
   registrationId: string
   registrationUuid: string
   registrationTitle: string
+  config?: string
   type: string
   specification?: AppModuleVersionSpecification
 }

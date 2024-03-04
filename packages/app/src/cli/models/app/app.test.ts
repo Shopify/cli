@@ -48,6 +48,7 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   build: {
     automatically_update_urls_on_dev: true,
     dev_store_url: 'https://google.com',
+    include_config_on_deploy: true,
   },
 }
 
@@ -79,18 +80,11 @@ describe('app schema validation', () => {
     test('checks whether current app schema is valid -- fail', () => {
       const config = {
         ...CORRECT_CURRENT_APP_SCHEMA,
-        bad_key: 'i will fail',
-      }
-      expect(isCurrentAppSchema(config)).toBe(false)
-    })
-    test('checks whether current app schema is valid -- fail', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
       }
 
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      delete config.name
+      delete config.client_id
 
       expect(isCurrentAppSchema(config)).toBe(false)
     })

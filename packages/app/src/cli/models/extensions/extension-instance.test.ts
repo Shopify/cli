@@ -1,17 +1,25 @@
 import {
   testApp,
+  testAppConfigExtensions,
   testFunctionExtension,
   testTaxCalculationExtension,
   testThemeExtensions,
+  testPaymentExtensions,
   testUIExtension,
   testWebPixelExtension,
+  testWebhookExtensions,
+  testFlowActionExtension,
+  testDeveloperPlatformClient,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 function functionConfiguration(): FunctionConfigType {
   return {
@@ -35,7 +43,7 @@ describe('watchPaths', async () => {
       dir: 'foo',
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([joinPath('foo', 'src', 'single-path.foo'), joinPath('foo', '**', '!(.)*.graphql')])
   })
@@ -49,7 +57,7 @@ describe('watchPaths', async () => {
       dir: 'foo',
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([joinPath('foo', 'src', '**', '*.{js,ts}'), joinPath('foo', '**', '!(.)*.graphql')])
   })
@@ -57,7 +65,7 @@ describe('watchPaths', async () => {
   test('returns js and ts paths for esbuild extensions', async () => {
     const extensionInstance = await testUIExtension({directory: 'foo'})
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([joinPath('foo', 'src', '**', '*.{ts,tsx,js,jsx}')])
   })
@@ -65,7 +73,7 @@ describe('watchPaths', async () => {
   test('return empty array for non-function non-esbuild extensions', async () => {
     const extensionInstance = await testTaxCalculationExtension('foo')
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([])
   })
@@ -80,7 +88,7 @@ describe('watchPaths', async () => {
       dir: 'foo',
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([
       joinPath('foo', 'src/**/*.rs'),
@@ -96,7 +104,7 @@ describe('watchPaths', async () => {
       config,
     })
 
-    const got = extensionInstance.watchPaths
+    const got = extensionInstance.watchBuildPaths
 
     expect(got).toBeNull()
   })
@@ -109,6 +117,14 @@ describe('isDraftable', () => {
     const got1 = extensionInstance.isDraftable()
 
     expect(got1).toBe(false)
+  })
+
+  test('returns false for app config extensions', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got1 = extensionInstance.isDraftable()
+
+    expect(got1).toBe(true)
   })
 
   test('returns true for web pixel extensions', async () => {
@@ -157,5 +173,209 @@ describe('build', async () => {
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
     })
+  })
+})
+
+describe('deployConfig', async () => {
+  test('returns deployConfig when defined', async () => {
+    const extensionInstance = await testThemeExtensions()
+
+    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
+
+    expect(got).toMatchObject({theme_extension: {files: {}}})
+  })
+
+  test('returns transformed config when defined', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
+
+    expect(got).toMatchObject({embedded: true})
+  })
+
+  test('returns undefined when the transformed config is empty', async () => {
+    const extensionInstance = await testAppConfigExtensions(true)
+
+    const got = await extensionInstance.deployConfig({developerPlatformClient, apiKey: 'apiKey'})
+
+    expect(got).toBeUndefined()
+  })
+})
+
+describe('bundleConfig', async () => {
+  test('returns the uuid from extensions when the extension is uuid managed', async () => {
+    const extensionInstance = await testThemeExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {'theme-extension-name': 'theme-uuid'},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {},
+      },
+      developerPlatformClient,
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        uuid: 'theme-uuid',
+        context: '',
+      }),
+    )
+  })
+
+  test('returns the target in context for a payments app', async () => {
+    const extensionInstance = await testPaymentExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {'payment-extension-name': 'payment-uuid'},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {},
+      },
+      developerPlatformClient,
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        uuid: 'payment-uuid',
+        context: 'payments.offsite.render',
+      }),
+    )
+  })
+
+  test('returns the uuid from extensionsNonUuidManaged when the extension is not uuid managed', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {'point-of-sale': 'uuid'},
+      },
+      developerPlatformClient,
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        uuid: 'uuid',
+      }),
+    )
+  })
+
+  test('returns arrays formatted properly inside the config', async () => {
+    const extensionInstance = await testWebhookExtensions()
+
+    const got = await extensionInstance.bundleConfig({
+      identifiers: {
+        extensions: {},
+        extensionIds: {},
+        app: 'My app',
+        extensionsNonUuidManaged: {webhooks: 'uuid'},
+      },
+      developerPlatformClient,
+      apiKey: 'apiKey',
+    })
+
+    expect(got).toEqual(
+      expect.objectContaining({
+        config: '{"subscriptions":[{"uri":"https://my-app.com/webhooks","topic":"orders/delete"}]}',
+      }),
+    )
+  })
+})
+
+describe('contextValue', async () => {
+  test('returns the target value in context for a payments extension', async () => {
+    const extensionInstance = await testPaymentExtensions()
+
+    const got = extensionInstance.contextValue
+
+    expect(got).toEqual('payments.offsite.render')
+  })
+
+  test('returns an empty string for an extension without targets', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = extensionInstance.contextValue
+
+    expect(got).toEqual('')
+  })
+
+  test('returns an empty string for an extension with multiple targets', async () => {
+    const extensionInstance = await testUIExtension()
+
+    const got = extensionInstance.contextValue
+
+    expect(got).toEqual('')
+  })
+})
+
+describe('isFlow', async () => {
+  test('returns true for a flow extension', async () => {
+    const extensionInstance = await testFlowActionExtension()
+
+    const got = extensionInstance.isFlow
+
+    expect(got).toBe(true)
+  })
+
+  test('returns false for a non-flow extension', async () => {
+    const extensionInstance = await testAppConfigExtensions()
+
+    const got = extensionInstance.isFlow
+
+    expect(got).toBe(false)
+  })
+})
+
+describe('draftMessages', async () => {
+  test('returns correct success message when the extension is draftable and not configuration', async () => {
+    // Given
+    const extensionInstance = await testUIExtension()
+
+    // When
+    const result = extensionInstance.draftMessages.successMessage
+
+    // Then
+    expect(result).toEqual('Draft updated successfully for extension: test-ui-extension')
+  })
+
+  test('returns no success message when the extension is draftable but configuration', async () => {
+    // Given
+    const extensionInstance = await testAppConfigExtensions()
+
+    // When
+    const result = extensionInstance.draftMessages.successMessage
+
+    // Then
+    expect(result).toBeUndefined()
+  })
+
+  test('returns correct error message when the extension is draftable and not configuration', async () => {
+    // Given
+    const extensionInstance = await testUIExtension()
+
+    // When
+    const result = extensionInstance.draftMessages.errorMessage
+
+    // Then
+    expect(result).toEqual('Error while deploying updated extension draft')
+  })
+
+  test('returns no error message when the extension is draftable but configuration', async () => {
+    // Given
+    const extensionInstance = await testAppConfigExtensions()
+
+    // When
+    const result = extensionInstance.draftMessages.successMessage
+
+    // Then
+    expect(result).toBeUndefined()
   })
 })

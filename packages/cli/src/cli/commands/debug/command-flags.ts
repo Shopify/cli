@@ -19,7 +19,7 @@ export default class CommandFlags extends Command {
     const {flags} = await this.parse(CommandFlags)
 
     const data: {pluginName: string; command: string; flagName: string; flagChar: string; flagEnv?: string}[] = []
-    for (const plugin of this.config.plugins) {
+    for (const [_, plugin] of this.config.plugins) {
       for (const command of plugin.commands) {
         // We have to load the command, otherwise OCLIF will just use the manifest, and we need the actual class
         // eslint-disable-next-line no-await-in-loop

@@ -10,7 +10,7 @@ import Command from '@shopify/cli-kit/node/base-command'
  */
 export default class KitchenSinkAll extends Command {
   static description = 'View all the available UI kit components'
-  static aliases = ['kitchen-sink all']
+  static hiddenAliases = ['kitchen-sink all']
   static hidden = true
 
   async run(): Promise<void> {

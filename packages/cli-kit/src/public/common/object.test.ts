@@ -1,4 +1,4 @@
-import {deepCompare, deepDifference, deepMergeObjects, mapValues, pickBy} from './object.js'
+import {deepCompare, deepDifference, deepMergeObjects, getPathValue, mapValues, pickBy, setPathValue} from './object.js'
 import {describe, expect, test} from 'vitest'
 
 describe('deepMergeObjects', () => {
@@ -128,5 +128,108 @@ describe('deepDifference', () => {
 
     // Then
     expect(result).toEqual([{key2: {subkey1: 1}}, {key2: {subkey1: 2}}])
+  })
+})
+
+describe('getPathValue', () => {
+  test('returns the path value at the top level if it exists', () => {
+    // Given
+    const obj: object = {
+      key1: 1,
+    }
+
+    // When
+    const result = getPathValue(obj, 'key1')
+
+    // Then
+    expect(result).toEqual(1)
+  })
+
+  test('returns the path value inside a nested object if it exists', () => {
+    // Given
+    const obj: object = {
+      key1: {
+        key11: 2,
+      },
+    }
+
+    // When
+    const result = getPathValue(obj, 'key1.key11')
+
+    // Then
+    expect(result).toEqual(2)
+  })
+
+  test("returns undefined if the path value doesn't exists", () => {
+    // Given
+    const obj: object = {
+      key1: {
+        key11: 2,
+      },
+    }
+
+    // When
+    const result = getPathValue(obj, 'key1.key21')
+
+    // Then
+    expect(result).toBeUndefined()
+  })
+})
+
+describe('setPathValue', () => {
+  test('set the path value at the top level if it exists', () => {
+    // Given
+    const obj: object = {
+      key1: '1',
+    }
+
+    // When
+    const result = setPathValue(obj, 'key1', 2)
+
+    // Then
+    expect(getPathValue(result, 'key1')).toEqual(2)
+  })
+
+  test('set the path value inside a nested object if it exists', () => {
+    // Given
+    const obj: object = {
+      key1: {
+        key11: 2,
+      },
+    }
+
+    // When
+    const result = setPathValue(obj, 'key1.key11', 3)
+
+    // Then
+    expect(getPathValue(result, 'key1.key11')).toEqual(3)
+  })
+
+  test("do nothing if the path to set the value doesn't exists", () => {
+    // Given
+    const obj: object = {
+      key1: {
+        key11: 3,
+      },
+    }
+
+    // When
+    const result = setPathValue(obj, 'key1.key21', 4)
+
+    // Then
+    expect(result).toEqual(obj)
+  })
+
+  test('set the path value using an object', () => {
+    // Given
+    const obj: object = {
+      key1: '1',
+    }
+
+    // When
+    const result = setPathValue(obj, 'key1', {key11: 2})
+
+    // Then
+    expect(getPathValue(result, 'key1')).toEqual({key11: 2})
   })
 })

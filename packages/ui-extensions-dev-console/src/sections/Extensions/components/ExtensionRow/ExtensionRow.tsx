@@ -6,17 +6,23 @@ import {QRCodeModal, Row, Status} from '..'
 import {useExtension} from '../../hooks/useExtension'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
-import {ExtensionPayload, isUIExtension} from '@shopify/ui-extensions-server-kit'
+import {ExtensionPayload, ExtensionPoint, isUIExtension} from '@shopify/ui-extensions-server-kit'
 import {Button} from '@/components/Button'
 
 interface Props {
   uuid: ExtensionPayload['uuid']
 }
 
+function isUnifiedPOSUIExtension(extension: ExtensionPayload): boolean {
+  return (extension.extensionPoints as ExtensionPoint[])?.some((point) => {
+    return point.surface === 'point_of_sale'
+  })
+}
+
 function showMobileQrCode(extension: ExtensionPayload) {
   if (isUIExtension(extension)) {
-    // We currently don't have support for any of the new UI extensions on Mobile
-    return false
+    // We currently only support POS UI Extensions for mobile. We don't have support for Admin yet.
+    return isUnifiedPOSUIExtension(extension)
   }
 
   return extension.surface === 'point_of_sale' || extension.surface === 'admin'
@@ -54,7 +60,7 @@ export function ExtensionRow({uuid}: Props) {
             showModal
               ? {
                   url: extension.development.root.url,
-                  type: extension.surface,
+                  type: isUnifiedPOSUIExtension(extension) ? 'point_of_sale' : extension.surface,
                   title: extension.handle,
                 }
               : undefined

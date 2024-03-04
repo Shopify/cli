@@ -155,11 +155,25 @@ export async function fetchOrgAndApps(
   return {organization: parsedOrg, apps: org.apps, stores: []}
 }
 
+export enum BetaFlag {}
+
+const FlagMap: {[key: string]: BetaFlag} = {}
+
 export async function fetchAppDetailsFromApiKey(apiKey: string, token: string): Promise<OrganizationApp | undefined> {
   const res: FindAppQuerySchema = await partnersRequest(FindAppQuery, token, {
     apiKey,
   })
-  return res.app
+  const app = res.app
+  if (app) {
+    const betas = filterDisabledBetas(app.disabledBetas)
+    return {...app, betas}
+  }
+}
+
+export function filterDisabledBetas(disabledBetas: string[] = []): BetaFlag[] {
+  const defaultActiveBetas: BetaFlag[] = []
+  const remoteDisabledFlags = disabledBetas.map((flag) => FlagMap[flag])
+  return defaultActiveBetas.filter((beta) => !remoteDisabledFlags.includes(beta))
 }
 
 export async function fetchAppPreviewMode(apiKey: string, token: string): Promise<boolean | undefined> {

@@ -1,5 +1,11 @@
 # @shopify/eslint-plugin-cli
 
+## 3.47.0
+
+### Minor Changes
+
+- 0896e62b1: Versioned app config support
+
 ## 3.46.0
 
 ### Minor Changes

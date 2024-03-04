@@ -34,6 +34,35 @@ module ShopifyCLI
 
           @watcher.upload_files_when_changed([included_path, ignored_path], [], [])
         end
+
+        def test_delete_files_when_removed
+          included_path = "layout/theme.liquid"
+          included_file = @theme[included_path]
+          ignored_path = "foo/bar.liquid"
+          ignored_file = @theme[ignored_path]
+
+          @syncer.expects(:remote_file?).with(included_path).returns(true)
+          @syncer.expects(:remote_file?).with(ignored_path).returns(true)
+
+          @theme.expects(:[]).with(included_path).returns(included_file)
+          @theme.expects(:[]).with(ignored_path).returns(ignored_file)
+
+          @syncer.expects(:ignore_file?).with(included_file).returns(false)
+          @syncer.expects(:ignore_file?).with(ignored_file).returns(true)
+
+          @syncer.expects(:enqueue_deletes).with([included_file])
+
+          @watcher.upload_files_when_changed([], [], [included_path, ignored_path])
+        end
+
+        def test_can_skip_delete_files_when_removed
+          watcher = Watcher.new(@ctx, theme: @theme, syncer: @syncer, delete: false)
+
+          @syncer.expects(:remote_file?).never
+          @syncer.expects(:enqueue_deletes).never
+
+          watcher.upload_files_when_changed([], [], ["foo"])
+        end
       end
     end
   end

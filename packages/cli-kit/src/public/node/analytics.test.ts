@@ -74,16 +74,12 @@ describe('event tracking', () => {
       }))
 
       // When
+      const pluginsMap = new Map()
+      pluginsMap.set('@shopify/built-in', {})
+      pluginsMap.set('a-custom-plugin', {})
       const config = {
         runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
-        plugins: [
-          {
-            name: '@shopify/built-in',
-          },
-          {
-            name: 'a-custom-plugin',
-          },
-        ],
+        plugins: pluginsMap,
       } as any
       await reportAnalyticsEvent({config, exitMode: 'ok'})
       // Then

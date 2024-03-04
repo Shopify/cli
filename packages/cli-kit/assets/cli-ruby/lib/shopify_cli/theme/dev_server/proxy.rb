@@ -35,10 +35,11 @@ module ShopifyCLI
           wpm
         ]
 
-        def initialize(ctx, theme, param_builder)
+        def initialize(ctx, theme, param_builder, cache_cleaned = false)
           @ctx = ctx
           @theme = theme
           @param_builder = param_builder
+          @cache_cleaned = cache_cleaned
 
           @core_endpoints = Set.new
           @secure_session_id = nil
@@ -49,12 +50,16 @@ module ShopifyCLI
           return [204, {}, []] if IGNORED_ENDPOINTS.any? { |endpoint| env["PATH_INFO"].include?(endpoint) }
 
           headers = extract_http_request_headers(env)
+          is_chrome = headers["User-Agent"] =~ /[Cc]hrome/
           headers["Host"] = shop
           headers["Cookie"] = add_session_cookie(headers["Cookie"])
           headers["Accept-Encoding"] = "none"
           headers["User-Agent"] = "Shopify CLI"
           query = URI.decode_www_form(env["QUERY_STRING"])
           replace_templates = build_replacement_param(env)
+
+          clean_sfr_cache(env, query, headers)
+
           response = if replace_templates.any?
             # Pass to SFR the recently modified templates in `replace_templates` or
             # `replace_extension_templates` body param
@@ -76,6 +81,7 @@ module ShopifyCLI
           end
 
           headers = get_response_headers(response, env)
+          headers = modify_headers(headers) unless is_chrome
 
           unless headers["x-storefront-renderer-rendered"]
             @core_endpoints << env["PATH_INFO"]
@@ -98,6 +104,22 @@ module ShopifyCLI
         end
 
         private
+
+        def clean_sfr_cache(env, query, headers)
+          return if @cache_cleaned
+
+          @cache_cleaned = true
+
+          query = query.dup
+          query << ["preview_theme_id", theme_id]
+
+          request(
+            env["REQUEST_METHOD"], env["PATH_INFO"],
+            headers: headers,
+            query: query,
+            body_stream: (env["rack.input"] if has_body?(headers))
+          )
+        end
 
         def patch_body(env, body)
           return [""] unless body
@@ -267,6 +289,18 @@ module ShopifyCLI
           return false if path.start_with?("/cart/")
 
           true
+        end
+
+        def modify_headers(headers)
+          if headers["set-cookie"]&.include?("storefront_digest")
+            headers["set-cookie"] = modify_set_cookie_header_for_safari(headers["set-cookie"])
+          end
+
+          headers
+        end
+
+        def modify_set_cookie_header_for_safari(set_cookie_header)
+          set_cookie_header.gsub("secure;", "secure: false;")
         end
       end
     end

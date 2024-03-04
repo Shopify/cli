@@ -7,6 +7,7 @@ import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {
   testAppWithConfig,
+  testDeveloperPlatformClient,
   testTaxCalculationExtension,
   testThemeExtensions,
   testUIExtension,
@@ -14,9 +15,12 @@ import {
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
 import {fetchAppExtensionRegistrations} from '../fetch.js'
+import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
 import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
+
+const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -24,7 +28,12 @@ vi.mock('../fetch.js')
 
 beforeEach(() => {
   // mocked for draft extensions
-  vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({extensionIds: {}, app: 'app-id', extensions: {}})
+  vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue({
+    extensionIds: {},
+    app: 'app-id',
+    extensions: {},
+    extensionsNonUuidManaged: {},
+  })
 
   // mocked for theme app extensions
   vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue({
@@ -42,6 +51,7 @@ beforeEach(() => {
           title: 'mock-theme',
         },
       ],
+      configurationRegistrations: [],
       dashboardManagedExtensionRegistrations: [],
     },
   })
@@ -49,7 +59,6 @@ beforeEach(() => {
 
 describe('setup-dev-processes', () => {
   test('can create a process list', async () => {
-    const token = 'token'
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
     const remoteAppUpdated = true
@@ -75,6 +84,9 @@ describe('setup-dev-processes', () => {
         redirectUrlWhitelist: ['https://example.com/redirect'],
       },
     }
+    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
+    const draftable = await testTaxCalculationExtension()
+    const theme = await testThemeExtensions()
     const localApp = testAppWithConfig({
       config: {},
       app: {
@@ -91,17 +103,9 @@ describe('setup-dev-processes', () => {
             },
           },
         ],
+        allExtensions: [previewable, draftable, theme],
       },
     })
-
-    const previewable = await testUIExtension({type: 'checkout_ui_extension'})
-    localApp.allExtensions.push(previewable)
-
-    const draftable = await testTaxCalculationExtension()
-    localApp.allExtensions.push(draftable)
-
-    const theme = await testThemeExtensions()
-    localApp.allExtensions.push(theme)
 
     const remoteApp: DevConfig['remoteApp'] = {
       apiKey: 'api-key',
@@ -110,8 +114,7 @@ describe('setup-dev-processes', () => {
       title: 'App',
       organizationId: '5678',
       grantedScopes: [],
-      applicationUrl: 'https://example.com/application',
-      redirectUrlWhitelist: [],
+      betas: [],
     }
 
     const graphiqlKey = 'somekey'
@@ -124,7 +127,7 @@ describe('setup-dev-processes', () => {
       remoteAppUpdated,
       storeFqdn,
       storeId,
-      token,
+      developerPlatformClient,
       partnerUrlsUpdated: true,
       graphiqlPort,
       graphiqlKey,
@@ -191,7 +194,7 @@ describe('setup-dev-processes', () => {
       options: {
         localApp,
         apiKey: 'api-key',
-        token,
+        developerPlatformClient,
         extensions: expect.arrayContaining([draftable]),
         remoteExtensionIds: {},
         proxyUrl: 'https://example.com/proxy',
@@ -211,7 +214,7 @@ describe('setup-dev-processes', () => {
             ' ',
           ),
         storefrontToken: 'storefront-token',
-        token,
+        token: 'token',
       },
     })
     expect(res.processes[5]).toMatchObject({

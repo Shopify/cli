@@ -60,7 +60,7 @@ export const FunctionExtensionSchema = BaseSchema.extend({
     .optional(),
 })
 
-const spec = createExtensionSpecification({
+const functionSpec = createExtensionSpecification({
   identifier: 'function',
   additionalIdentifiers: [
     'order_discounts',
@@ -73,6 +73,7 @@ const spec = createExtensionSpecification({
     'fulfillment_constraints',
     'order_routing_location_rule',
     'local_pickup_delivery_option_generator',
+    'pickup_point_delivery_option_generator',
   ],
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
@@ -156,4 +157,4 @@ async function readInputQuery(path: string): Promise<string> {
   }
 }
 
-export default spec
+export default functionSpec
