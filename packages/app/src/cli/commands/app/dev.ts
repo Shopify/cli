@@ -33,7 +33,7 @@ If you're using the PHP or Ruby app template, then you need to complete the foll
 - Ruby: [Set up your Rails app](https://github.com/Shopify/shopify-app-template-ruby#setting-up-your-rails-app)
 
 > Caution: To use a development store or Plus sandbox store with Shopify CLI, you need to be the store owner, or have a staff account on the store. Staff accounts are created automatically the first time you access a development store with your Partner staff account through the Partner Dashboard.
-  `
+`
 
   static flags = {
     ...globalFlags,
